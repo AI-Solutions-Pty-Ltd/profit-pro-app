@@ -1,0 +1,20 @@
+# Core
+django
+django-extensions
+django-import-export
+django-phonenumber-field
+django-phonenumber-field[phonenumbers]
+django-autoslug
+django-cleanup
+
+# database tools
+phonenumberslite
+
+za-id-number
+
+# environment tools
+python-dotenv
+
+# Crispy forms
+django-crispy-forms
+crispy-tailwind

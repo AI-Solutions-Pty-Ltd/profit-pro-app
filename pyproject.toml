@@ -1,0 +1,20 @@
+[tool.ty.environment]
+extra-paths = ["app"]
+
+[tool.pytest.ini_options]
+addopts = "--ds=settings.test --reuse-db"
+
+[tool.coverage.run]
+omit = [
+    "*/migrations/*",
+    "*/__init__*",
+    "*/apps*",
+    "*/urls*",
+    "*/test/*",
+    "*/tests/*",
+    "*/tests/*",
+    "*/conftest*",
+    "*/factories*",
+    "*app/Logging/*",
+    "*app/utils/*",
+]

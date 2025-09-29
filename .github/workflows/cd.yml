@@ -1,0 +1,82 @@
+name: CD - Deploy to Production
+
+on:
+  workflow_run:
+    workflows: ["CI - Test and Validate"]
+    types: [completed]
+    branches: [main, staging]
+  push:
+    branches: [staging]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' || github.ref == 'refs/heads/staging' }}
+    environment:
+      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/staging' && 'staging') || 'production' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Display Deployment Environment
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment || (github.ref == 'refs/heads/staging' && 'staging') || 'production' }}"
+          echo "🚀 Deploying to $ENVIRONMENT environment"
+          echo "Branch: ${{ github.ref }}"
+          echo "Triggered by: ${{ github.event_name }}"
+          echo "Environment: $ENVIRONMENT"
+
+      - name: Generate Production Secret Key
+        id: generate-secret
+        run: |
+          SECRET_KEY=$(openssl rand -base64 50 | tr -dc 'A-Za-z0-9!@#$%^&*(-_=+)')
+          echo "SECRET_KEY=$SECRET_KEY" >> $GITHUB_ENV
+          echo "secret_key=$SECRET_KEY" >> $GITHUB_OUTPUT
+
+      - name: Create ${{ github.event.inputs.environment }} .env File
+        run: |
+          touch .env
+          # Core settings
+          echo "SITE_NAME=${{ vars.SITE_NAME }}" >> .env
+          echo "DJANGO_SETTINGS_MODULE=${{ vars.DJANGO_SETTINGS_MODULE }}" >> .env
+          echo "SECRET_KEY=${{ env.SECRET_KEY }}" >> .env
+          echo "ALLOWED_HOSTS=${{ vars.ALLOWED_HOSTS }}" >> .env
+
+          # Database settings
+          echo "DB=${{ vars.DB }}" >> .env
+          echo "DB_HOST=${{ vars.DB_HOST }}" >> .env
+          echo "DB_USER=${{ vars.DB_USER }}" >> .env
+          echo "DB_USER_PWD=${{ secrets.DB_USER_PWD }}" >> .env
+
+          # Static files settings
+          echo "STATIC_ROOT=${{ vars.STATIC_ROOT }}" >> .env
+          echo "STATIC_URL=${{ vars.STATIC_URL }}" >> .env
+
+          # Email settings
+          echo "USE_EMAIL=${{ vars.USE_EMAIL }}" >> .env
+          echo "DEFAULT_FROM_EMAIL=${{ vars.DEFAULT_FROM_EMAIL }}" >> .env
+          echo "ADMIN_EMAIL=${{ vars.ADMIN_EMAIL }}" >> .env
+          echo "DEFAULT_EMAIL_HOST=${{ vars.DEFAULT_EMAIL_HOST }}" >> .env
+          echo "EMAIL_HOST=${{ vars.EMAIL_HOST }}" >> .env
+          echo "EMAIL_HOST_USER=${{ vars.EMAIL_HOST_USER }}" >> .env
+          echo "EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}" >> .env
+          echo "EMAIL_PORT=${{ vars.EMAIL_PORT }}" >> .env
+          echo "EMAIL_USE_TLS=${{ vars.EMAIL_USE_TLS }}" >> .env
+
+      - name: FTP Deploy
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ vars.FTP_SERVER }}
+          username: ${{ vars.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ vars.FTP_BACKEND_DIR }}

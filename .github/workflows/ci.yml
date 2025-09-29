@@ -1,0 +1,62 @@
+name: CI - Test and Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Display CI Environment
+        run: |
+          echo "🔍 Running CI checks"
+          echo "Branch: ${{ github.ref }}"
+          echo "Event: ${{ github.event_name }}"
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: "pip"
+      - run: pip install -r requirements/test.txt
+
+      - name: Run Ruff format check
+        run: ruff format . --check
+
+      - name: Run Ruff linting
+        run: ruff check . --fix
+
+      - name: Run Ty type checking
+        run: |
+          echo "Python version: $(python --version)"
+          echo "Python path: $(python -c 'import sys; print(sys.executable)')"
+          python -m ty check . --python $(python -c 'import sys; print(sys.executable)')
+
+      - name: Run tests
+        run: pytest -v -n auto --reuse-db --durations=10
+
+      - name: Upload test database as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-database
+          path: test_db.sqlite3
+          retention-days: 7
+
+      - name: Clean up
+        run: |
+          find . -type d -name "__pycache__" -exec rm -r {} + || true
+          find . -type f -name "*.pyc" -delete || true
+          find . -type f -name "*.pyo" -delete || true
+          find . -type f -name "*.pyd" -delete || true
+          find . -type f -name ".coverage" -delete || true
+          find . -type d -name "*.egg-info" -exec rm -r {} + || true
+          find . -type d -name "*.egg" -exec rm -r {} + || true
+          find . -type d -name ".pytest_cache" -exec rm -r {} + || true
+          find . -type d -name ".ruff_cache" -exec rm -r {} + || true

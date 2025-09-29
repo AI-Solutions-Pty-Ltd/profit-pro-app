@@ -1,0 +1,115 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "serve",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": ["${workspaceFolder}/manage.py", "runserver"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "pwd": "${workspaceFolder}"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "makemigrations",
+      "type": "shell",
+      "isBackground": true,
+      "command": "${command:python.interpreterPath}",
+      "args": ["${workspaceFolder}/manage.py", "makemigrations"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "pwd": "${workspaceFolder}"
+        }
+      }
+    },
+    {
+      "label": "migrate",
+      "type": "shell",
+      "isBackground": true,
+      "command": "${command:python.interpreterPath}",
+      "args": ["${workspaceFolder}/manage.py", "migrate"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "pwd": "${workspaceFolder}"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "full_migrate",
+      "isBackground": true,
+      "type": "shell",
+      "command": "echo starting",
+      "dependsOn": ["makemigrations", "migrate"],
+      "problemMatcher": []
+    },
+    {
+      "label": "full-check",
+      "type": "shell",
+      "command": "${command:python.interpreterPath} -m ruff format . && ${command:python.interpreterPath} -m ruff check . --fix && ${command:python.interpreterPath} -m ty check .",
+      "problemMatcher": []
+    },
+    {
+      "label": "test-cov",
+      "type": "shell",
+      "args": [
+        "-m",
+        "pytest",
+        "-v",
+        "-n", "auto",
+        "--reuse-db",
+        "--durations=10",
+        "--cov=.",
+        "--cov-report=html"
+      ],
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "windows": {
+        "command": ".venv\\Scripts\\python.exe"
+      },
+      "linux": {
+        "command": ".venv/bin/python"
+      },
+      "osx": {
+        "command": ".venv/bin/python"
+      }
+    },
+    {
+      "label": "deploy-staging",
+      "type": "shell",
+      "command": "git push && git checkout staging && git pull && git merge develop && git push && git checkout develop",
+      "problemMatcher": []
+    },
+    {
+      "label": "deploy-main",
+      "type": "shell",
+      "command": "git push && git checkout main && git pull && git merge staging && git push && git checkout develop",
+      "problemMatcher": []
+    },
+    {
+      "label": "full-deploy",
+      "type": "shell",
+      "command": "echo starting",
+      "dependsOn": ["deploy-staging", "deploy-main"],
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "showReuseMessage": false,
+        "close": true
+      }
+    }
+  ]
+}

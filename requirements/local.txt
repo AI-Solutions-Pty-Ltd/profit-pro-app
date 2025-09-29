@@ -1,0 +1,15 @@
+-r base.txt
+
+# Testing dependencies
+pytest
+pytest-django
+pytest-xdist
+factory-boy
+pytest-cov
+django-stubs
+django-tailwind[reload]
+
+# Code quality tools
+ruff
+ty
+

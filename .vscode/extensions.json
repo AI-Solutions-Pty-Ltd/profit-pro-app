@@ -1,0 +1,14 @@
+{
+    "recommendations": [
+        "pinage404.git-extension-pack",
+        "github.vscode-github-actions",
+        "github.vscode-pull-request-github",
+        "christian-kohler.path-intellisense",
+        "donjayamanne.python-extension-pack",
+        "actboy168.tasks",
+        "astral-sh.ty",
+        "codeium.windsurfpyright",
+        "hbenl.vscode-test-explorer",
+        "charliermarsh.ruff"
+    ]
+}
