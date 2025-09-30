@@ -1,5 +1,7 @@
-from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand
+
+User = get_user_model()
 
 
 class Command(BaseCommand):
@@ -10,7 +12,6 @@ class Command(BaseCommand):
         parser.add_argument("password", type=str, help="Password for the superuser")
 
     def handle(self, *args, **options):
-        User = get_user_model()
         email = options["email"]
         password = options["password"]
 

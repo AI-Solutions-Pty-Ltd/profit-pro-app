@@ -1,6 +1,7 @@
 import json
-from django.forms import Textarea
+
 from django.db.models import JSONField
+from django.forms import Textarea
 
 
 class JSONPrettyWidget(Textarea):

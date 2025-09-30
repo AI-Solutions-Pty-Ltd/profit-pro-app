@@ -1,6 +1,7 @@
-from django.conf import settings
-import os
 import glob
+import os
+
+from django.conf import settings
 
 
 def get_apps():

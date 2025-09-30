@@ -1,5 +1,6 @@
+from factory import Faker
 from factory.django import DjangoModelFactory
-from factory import Faker, SubFactory, RelatedFactory
+
 from Account.models import Account
 
 

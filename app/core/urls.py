@@ -1,8 +1,8 @@
-from django.contrib import admin
-from django.urls import path
-from .views import HomeView, FeaturesView, PricingView, AboutView, RegisterView
 from django.conf import settings
-from django.urls import include
+from django.contrib import admin
+from django.urls import include, path
+
+from .views import AboutView, FeaturesView, HomeView, PricingView, RegisterView
 
 urlpatterns = [
     path("admin/", admin.site.urls),

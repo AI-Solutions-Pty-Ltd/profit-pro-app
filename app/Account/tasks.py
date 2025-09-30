@@ -1,6 +1,7 @@
+from django.conf import settings
+
 from Account.models import Account
 from app.core.Utilities.django_email_service import django_email_service
-from django.conf import settings
 
 
 def send_welcome_email(account: Account):

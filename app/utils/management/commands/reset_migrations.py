@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+
 from utils.database import (
     full_reset_migration_files_and_migration_table,
     reset_migrations_table,

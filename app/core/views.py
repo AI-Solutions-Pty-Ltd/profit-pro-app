@@ -1,13 +1,13 @@
+from django import forms
+from django.contrib import messages
+from django.contrib.auth import get_user_model, login
+from django.contrib.auth.forms import BaseUserCreationForm
+from django.urls import reverse_lazy
 from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView
-from django.contrib.auth.forms import BaseUserCreationForm
-from django.contrib.auth import login
-from django.urls import reverse_lazy
-from django.contrib.auth import get_user_model
-from django.contrib import messages
-from django import forms
 
 User = get_user_model()
+
 
 class HomeView(TemplateView):
     """Home page view for the application."""

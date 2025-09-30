@@ -1,20 +1,21 @@
-from typing import List, Optional, Any
-from django.core.mail import EmailMultiAlternatives, get_connection
-from django.core.files.base import ContentFile
-from django.core.mail.backends.smtp import EmailBackend
-from threading import Lock
-from datetime import datetime, timedelta
-import time
-from functools import wraps
 import mimetypes
+import time
+from datetime import datetime, timedelta
+from functools import wraps
+from threading import Lock
+from typing import Any
+
 from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.mail import EmailMultiAlternatives, get_connection
+from django.core.mail.backends.smtp import EmailBackend
 
 
 class EmailConnectionManager:
     _instance = None
     _lock = Lock()
-    _connection: Optional[EmailBackend] = None
-    _last_used: Optional[datetime] = None
+    _connection: EmailBackend | None = None
+    _last_used: datetime | None = None
     _connection_errors = 0
 
     # Configuration
@@ -102,7 +103,7 @@ class EmailConnectionManager:
 _connection_manager = EmailConnectionManager()
 
 
-def convert_email_to_list(email: str | List[str]) -> List[str]:
+def convert_email_to_list(email: str | list[str]) -> list[str]:
     """Convert various email input formats to a list of email addresses.
 
     Args:
@@ -141,7 +142,7 @@ def with_retries(max_retries: int = 3, initial_delay: float = 1.0):
                 except Exception as e:
                     last_exception = e
                     if attempt == max_retries:  # Last attempt failed
-                        raise last_exception
+                        raise last_exception from None
 
                     # Exponential backoff with jitter
                     jitter = (time.time() * 1000) % 0.1  # Small random jitter
@@ -168,20 +169,20 @@ def _send_email_internal(
         connection_manager.record_error()
         if connection_manager._connection_errors >= connection_manager.MAX_ERRORS:
             connection_manager.close_connection()
-        raise Exception(f"Failed to send email: {str(e)}")
+        raise Exception(f"Failed to send email: {str(e)}") from e
 
 
 def django_email_service(
-    to: str | List[str],
+    to: str | list[str],
     subject: str,
     plain_body: str = "",
     html_body: str = "",
-    attachments: List[ContentFile] = [],  # In-memory file attachments
+    attachments: list[ContentFile] | None = None,  # In-memory file attachments
     from_email: str | None = None,
     max_retries: int = 3,
     initial_delay: float = 1.0,
-    cc: str | List[str] = [],
-    bcc: str | List[str] = [],
+    cc: str | list[str] | None = None,
+    bcc: str | list[str] | None = None,
 ) -> tuple[bool, str]:
     """Send an email using the connection pool with retry logic.
 
@@ -211,6 +212,12 @@ def django_email_service(
     Returns:
         tuple[bool, str]: (success, message)
     """
+    if bcc is None:
+        bcc = []
+    if cc is None:
+        cc = []
+    if attachments is None:
+        attachments = []
     if not settings.USE_EMAIL:
         return True, "Email sending is disabled"
     try:

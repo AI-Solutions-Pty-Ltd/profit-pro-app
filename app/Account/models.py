@@ -1,11 +1,11 @@
-from phonenumber_field.modelfields import PhoneNumberField
 from typing import Any
 
-from django.db import models
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
+from django.db import models
 from django.utils.translation import gettext_lazy as _
+from phonenumber_field.modelfields import PhoneNumberField
 
 from app.core.Utilities.models import BaseModel
 
@@ -44,7 +44,6 @@ class Suburb(BaseModel):
     postcode = models.CharField(
         max_length=4,
         blank=True,
-        null=True,
         validators=[
             RegexValidator(
                 regex=r"^.{4}$",
@@ -96,7 +95,6 @@ class Account(AbstractUser, BaseModel):
         max_length=50,
         choices=Ownership.choices,
         blank=True,
-        null=True,
         default=Ownership.PERSONAL,
     )
 
@@ -109,12 +107,11 @@ class Account(AbstractUser, BaseModel):
         max_length=50,
         choices=IdentificationType.choices,
         blank=True,
-        null=True,
         default=IdentificationType.SOUTH_AFRICA_ID,
     )
-    identification_number = models.CharField(max_length=15, blank=True, null=True)
+    identification_number = models.CharField(max_length=15, blank=True)
 
-    address = models.TextField(blank=True, null=True)
+    address = models.TextField(blank=True)
     notification_preferences = models.CharField(
         max_length=20, choices=NotificationType.choices, default=NotificationType.EMAIL
     )

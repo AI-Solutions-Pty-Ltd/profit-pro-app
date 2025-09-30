@@ -1,5 +1,6 @@
 # This script will lowercase all account emails in the database
 from django.core.management.base import BaseCommand
+
 from app.Account.models import Account
 
 

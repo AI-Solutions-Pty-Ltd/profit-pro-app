@@ -1,11 +1,12 @@
 # views.py
-from django.http import Http404, HttpResponseForbidden
-from django.conf import settings
-from django.views.static import serve
 import os
 
-from Account.models import Account
+from django.conf import settings
+from django.http import Http404, HttpResponseForbidden
+from django.views.static import serve
 from rest_framework.authtoken.models import Token
+
+from Account.models import Account
 
 
 def protected_media_view(request, path):
