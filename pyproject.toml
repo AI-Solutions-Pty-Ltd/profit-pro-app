@@ -20,7 +20,7 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 
 # Ty (type checking) configuration
 [tool.ty.environment]
-extra-paths = ["app", "settings"]
+root = ["."]
 
 # Pytest configuration
 [tool.pytest.ini_options]

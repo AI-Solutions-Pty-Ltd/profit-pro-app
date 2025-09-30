@@ -1,5 +1,5 @@
-from settings.base import *  # noqa
-from settings.base import BASE_DIR
+from .base import *  # noqa
+from .base import BASE_DIR
 
 DEBUG = True
 SECRET_KEY = "django-insecure-l^sjb(j9w-3fe0+!qiu!j7c&bu!vrv=m@#1e6zwuwfqbm35v!i"

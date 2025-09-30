@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from Account.models import Account
+from app.Account.models import Account
 from app.core.Utilities.django_email_service import django_email_service
 
 

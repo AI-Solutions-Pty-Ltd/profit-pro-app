@@ -5,7 +5,7 @@ from django.conf import settings
 from django.http import Http404, HttpResponseForbidden
 from django.views.static import serve
 
-from Account.models import Account
+from app.Account.models import Account
 
 
 def protected_media_view(request, path):

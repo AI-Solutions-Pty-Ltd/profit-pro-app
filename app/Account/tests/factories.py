@@ -1,7 +1,7 @@
 from factory import Faker
 from factory.django import DjangoModelFactory
 
-from Account.models import Account
+from app.Account.models import Account
 
 
 class AdminUserFactory(DjangoModelFactory):
