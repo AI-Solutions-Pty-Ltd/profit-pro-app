@@ -1,5 +1,5 @@
 from .base import *  # noqa
-from .base import BASE_DIR, INSTALLED_APPS, MIDDLEWARE
+from .base import BASE_DIR
 import os
 
 print("Local settings loaded")

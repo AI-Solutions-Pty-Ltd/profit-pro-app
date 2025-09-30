@@ -5,7 +5,6 @@ from django.views.static import serve
 import os
 
 from Account.models import Account
-from rest_framework.authtoken.models import Token
 
 
 def protected_media_view(request, path):
@@ -14,7 +13,6 @@ def protected_media_view(request, path):
     """
 
     directories = path.split("/")
-    token = request.GET.get("token")
 
     file_path = os.path.join(settings.MEDIA_ROOT, path)
     if not os.path.exists(file_path):
@@ -23,30 +21,32 @@ def protected_media_view(request, path):
     if not directories:
         return HttpResponseForbidden("You do not have permission to access this file")
 
-    # no auth directories
+    # no auth directories - publicly accessible
     if directories[0] in ["products", "categories"]:
         return serve(request, path, document_root=settings.MEDIA_ROOT)
 
-    # auth directories
-    try:
-        token = Token.objects.get(key=token)
-    except Token.DoesNotExist:
+    # auth directories - require authenticated user
+    if not request.user.is_authenticated:
         return HttpResponseForbidden("You do not have permission to access this file")
 
-    user: Account = token.user
+    user: Account = request.user
+    
+    # Staff and superusers have access to all files
     if user.is_staff or user.is_superuser:
         return serve(request, path, document_root=settings.MEDIA_ROOT)
 
+    # Reports directory - only staff and superusers
     if directories[0] == "reports":
-        if not user.is_staff or user.is_superuser:
+        if not (user.is_staff or user.is_superuser):
             return HttpResponseForbidden(
                 "You do not have permission to access this file"
             )
 
+    # Parents directory - users can only access their own files
     if directories[0] == "parents":
         try:
             parent_id = int(directories[1])
-        except ValueError:
+        except (ValueError, IndexError):
             return HttpResponseForbidden(
                 "You do not have permission to access this file"
             )

@@ -4,24 +4,43 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Account', '0001_initial'),
+        ("Account", "0001_initial"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='account',
-            name='user_type',
+            model_name="account",
+            name="user_type",
         ),
         migrations.AlterField(
-            model_name='account',
-            name='identification_type',
-            field=models.CharField(blank=True, choices=[('South African ID', 'South African ID'), ('Passport', 'Passport'), ('Company', 'Company')], default='South African ID', max_length=50, null=True),
+            model_name="account",
+            name="identification_type",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("South African ID", "South African ID"),
+                    ("Passport", "Passport"),
+                    ("Company", "Company"),
+                ],
+                default="South African ID",
+                max_length=50,
+                null=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='account',
-            name='ownership',
-            field=models.CharField(blank=True, choices=[('Personal', 'Personal'), ('Company', 'Company'), ('Tenant', 'Tenant')], default='Personal', max_length=50, null=True),
+            model_name="account",
+            name="ownership",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("Personal", "Personal"),
+                    ("Company", "Company"),
+                    ("Tenant", "Tenant"),
+                ],
+                default="Personal",
+                max_length=50,
+                null=True,
+            ),
         ),
     ]

@@ -9,6 +9,7 @@ from django import forms
 
 User = get_user_model()
 
+
 class HomeView(TemplateView):
     """Home page view for the application."""
 
