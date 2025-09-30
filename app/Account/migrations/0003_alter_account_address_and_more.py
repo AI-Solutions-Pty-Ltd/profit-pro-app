@@ -5,38 +5,65 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Account', '0002_remove_account_user_type_and_more'),
+        ("Account", "0002_remove_account_user_type_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='account',
-            name='address',
-            field=models.TextField(blank=True, default=''),
+            model_name="account",
+            name="address",
+            field=models.TextField(blank=True, default=""),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='account',
-            name='identification_number',
-            field=models.CharField(blank=True, default='', max_length=15),
+            model_name="account",
+            name="identification_number",
+            field=models.CharField(blank=True, default="", max_length=15),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='account',
-            name='identification_type',
-            field=models.CharField(blank=True, choices=[('South African ID', 'South African ID'), ('Passport', 'Passport'), ('Company', 'Company')], default='South African ID', max_length=50),
+            model_name="account",
+            name="identification_type",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("South African ID", "South African ID"),
+                    ("Passport", "Passport"),
+                    ("Company", "Company"),
+                ],
+                default="South African ID",
+                max_length=50,
+            ),
         ),
         migrations.AlterField(
-            model_name='account',
-            name='ownership',
-            field=models.CharField(blank=True, choices=[('Personal', 'Personal'), ('Company', 'Company'), ('Tenant', 'Tenant')], default='Personal', max_length=50),
+            model_name="account",
+            name="ownership",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("Personal", "Personal"),
+                    ("Company", "Company"),
+                    ("Tenant", "Tenant"),
+                ],
+                default="Personal",
+                max_length=50,
+            ),
         ),
         migrations.AlterField(
-            model_name='suburb',
-            name='postcode',
-            field=models.CharField(blank=True, default='', max_length=4, validators=[django.core.validators.RegexValidator(message='The Post Code Number must be 4 characters in length.', regex='^.{4}$')]),
+            model_name="suburb",
+            name="postcode",
+            field=models.CharField(
+                blank=True,
+                default="",
+                max_length=4,
+                validators=[
+                    django.core.validators.RegexValidator(
+                        message="The Post Code Number must be 4 characters in length.",
+                        regex="^.{4}$",
+                    )
+                ],
+            ),
             preserve_default=False,
         ),
     ]

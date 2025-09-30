@@ -4,7 +4,6 @@ import os
 from django.conf import settings
 from django.http import Http404, HttpResponseForbidden
 from django.views.static import serve
-import os
 
 from Account.models import Account
 
@@ -32,7 +31,7 @@ def protected_media_view(request, path):
         return HttpResponseForbidden("You do not have permission to access this file")
 
     user: Account = request.user
-    
+
     # Staff and superusers have access to all files
     if user.is_staff or user.is_superuser:
         return serve(request, path, document_root=settings.MEDIA_ROOT)

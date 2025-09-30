@@ -1,6 +1,6 @@
 from factory import Faker
 from factory.django import DjangoModelFactory
-from factory import Faker
+
 from Account.models import Account
 
 
