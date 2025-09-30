@@ -34,9 +34,9 @@ jobs:
 
       - name: Run Ty type checking
         run: |
-          echo "Python version: $(python --version)"
-          echo "Python path: $(python -c 'import sys; print(sys.executable)')"
-          python -m ty check . --python $(python -c 'import sys; print(sys.executable)')
+          # echo "Python version: $(python --version)"
+          # echo "Python path: $(python -c 'import sys; print(sys.executable)')"
+          ty check .
 
       - name: Run tests
         run: pytest -v -n auto --reuse-db --durations=10
