@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: "3.13"
           cache: "pip"
-      - run: pip install -r requirements/test.txt
+      - run: pip install -r requirements/local.txt
 
       - name: Run Ruff format check
         run: ruff format . --check
@@ -40,14 +40,6 @@ jobs:
 
       - name: Run tests
         run: pytest -v -n auto --reuse-db --durations=10
-
-      - name: Upload test database as artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-database
-          path: test_db.sqlite3
-          retention-days: 7
 
       - name: Clean up
         run: |
