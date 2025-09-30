@@ -74,15 +74,6 @@ jobs:
           echo "EMAIL_USE_TLS=${{ vars.EMAIL_USE_TLS }}" >> .env
           echo "USE_EMAIL=${{ vars.USE_EMAIL }}" >> .env
 
-      - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-          cache: "pip"
-
-      - name: Install Python dependencies
-        run: pip install -r requirements/prod.txt
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -97,12 +88,6 @@ jobs:
       - name: Build Tailwind CSS
         working-directory: app/theme/static_src
         run: npm run build
-
-      - name: Collect static files
-        run: python manage.py collectstatic --noinput
-        env:
-          SECRET_KEY: ${{ env.SECRET_KEY }}
-          DEBUG: 'False'
 
       - name: FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
