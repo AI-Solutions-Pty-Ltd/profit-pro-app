@@ -63,15 +63,46 @@ jobs:
           echo "STATIC_URL=${{ vars.STATIC_URL }}" >> .env
 
           # Email settings
-          echo "USE_EMAIL=${{ vars.USE_EMAIL }}" >> .env
-          echo "DEFAULT_FROM_EMAIL=${{ vars.DEFAULT_FROM_EMAIL }}" >> .env
           echo "ADMIN_EMAIL=${{ vars.ADMIN_EMAIL }}" >> .env
           echo "DEFAULT_EMAIL_HOST=${{ vars.DEFAULT_EMAIL_HOST }}" >> .env
+          echo "DEFAULT_FROM_EMAIL=${{ vars.DEFAULT_FROM_EMAIL }}" >> .env
           echo "EMAIL_HOST=${{ vars.EMAIL_HOST }}" >> .env
-          echo "EMAIL_HOST_USER=${{ vars.EMAIL_HOST_USER }}" >> .env
           echo "EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}" >> .env
+          echo "EMAIL_HOST_USER=${{ vars.EMAIL_HOST_USER }}" >> .env
           echo "EMAIL_PORT=${{ vars.EMAIL_PORT }}" >> .env
+          echo "EMAIL_USE_SSL=${{ vars.EMAIL_USE_SSL }}" >> .env
           echo "EMAIL_USE_TLS=${{ vars.EMAIL_USE_TLS }}" >> .env
+          echo "USE_EMAIL=${{ vars.USE_EMAIL }}" >> .env
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: "pip"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: app/theme/static_src/package-lock.json
+
+      - name: Install Node dependencies
+        working-directory: app/theme/static_src
+        run: npm ci
+
+      - name: Build Tailwind CSS
+        working-directory: app/theme/static_src
+        run: npm run build
+
+      - name: Collect static files
+        run: python manage.py collectstatic --noinput
+        env:
+          SECRET_KEY: ${{ env.SECRET_KEY }}
+          DEBUG: 'False'
 
       - name: FTP Deploy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
