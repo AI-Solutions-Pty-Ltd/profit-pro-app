@@ -18,7 +18,7 @@
       "django": true,
       "autoStartBrowser": false,
       "program": "${workspaceFolder}/manage.py",
-      "args": ["runserver", "8001"],
+      "args": ["runserver", "8000"],
       "justMyCode": false
     }
   ]
