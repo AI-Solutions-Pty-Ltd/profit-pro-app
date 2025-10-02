@@ -49,12 +49,15 @@ class ProjectCreateView(LoginRequiredMixin, CreateView):
     model = Project
     form_class = ProjectForm
     template_name = "project/project_form.html"
-    success_url = reverse_lazy("project:project-list")
 
     def form_valid(self, form):
         """Set the account to the current user before saving."""
         form.instance.account = self.request.user
         return super().form_valid(form)
+
+    def get_success_url(self):
+        """Redirect to the project list."""
+        return reverse_lazy("project:project-detail", kwargs={"pk": self.object.pk})
 
 
 class ProjectUpdateView(LoginRequiredMixin, UpdateView):
@@ -63,11 +66,14 @@ class ProjectUpdateView(LoginRequiredMixin, UpdateView):
     model = Project
     form_class = ProjectForm
     template_name = "project/project_form.html"
-    success_url = reverse_lazy("project:project-list")
 
     def get_queryset(self):
         """Filter projects by current user."""
         return Project.objects.filter(account=self.request.user, deleted=False)
+
+    def get_success_url(self):
+        """Redirect to the project list."""
+        return reverse_lazy("project:project-detail", kwargs={"pk": self.object.pk})
 
 
 class ProjectDeleteView(LoginRequiredMixin, DeleteView):
