@@ -34,6 +34,7 @@ THIRD_PARTY_APPS = [
 
 SHARED_APPS = [
     "app.Account",
+    "app.Project",
 ]
 
 INSTALLED_APPS = CORE_APPS + THIRD_PARTY_APPS + SHARED_APPS

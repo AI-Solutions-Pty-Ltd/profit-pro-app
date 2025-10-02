@@ -12,6 +12,8 @@ urlpatterns = [
     path("", HomeView.as_view(), name="home"),
     path("", include("app.core.auth_urls")),
     path("register/", RegisterView.as_view(), name="register"),
+    # app urls
+    path("project/", include("app.Project.urls", namespace="project")),
 ]
 
 

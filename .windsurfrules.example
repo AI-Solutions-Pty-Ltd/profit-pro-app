@@ -1,0 +1,282 @@
+# Windsurf AI Assistant Rules for Profit Pro Django Application
+
+## Critical Rules (ALWAYS Follow)
+
+1. **Virtual Environment**: ALWAYS check for `.venv` directory existence. If missing, create it with `python -m venv .venv`. ALL commands MUST use `.venv\Scripts\python.exe` or `.venv\Scripts\activate`. NEVER use global Python.
+
+2. **Test Data Creation**: ALWAYS use factory_boy factories from `app/<app_name>/factories.py`. NEVER manually create test objects with `Model.objects.create()`. Import factories at the top of test files.
+
+3. **Base Model**: ALL new models MUST inherit from `app.core.Utilities.models.BaseModel` which provides `created_at`, `updated_at`, `deleted`, `soft_delete()`, `restore()`, and `is_deleted` property.
+
+4. **User Model**: The custom user model is `Account` (not Django's User). Email is USERNAME_FIELD. Use `Account.objects.create_user()` for users, `Account.objects.create_superuser()` for admins. Primary contact (phone) is required.
+
+5. **Soft Delete**: Use `soft_delete()` method instead of `delete()` where appropriate. Use `restore()` to undelete. Check `is_deleted` property.
+
+## Project Structure
+
+- Django application with Python 3.11+
+- Testing: pytest, pytest-django, factory_boy
+- Linting: ruff (88 char line length)
+- Type checking: ty
+- Phone validation: django-phonenumber-field
+- Forms: django-crispy-forms + crispy-tailwind
+
+## Code Style
+
+### Imports (Order Matters)
+```python
+# 1. Standard library
+import os
+from typing import Any
+
+# 2. Third-party
+import pytest
+from django.db import models
+
+# 3. First-party (app modules)
+from app.Account.models import Account
+from app.core.Utilities.models import BaseModel
+```
+
+### Naming
+- Classes: `PascalCase` (AccountFactory, ProjectModel)
+- Functions/methods: `snake_case` (create_user, soft_delete)
+- Constants: `UPPER_SNAKE_CASE` (MAX_LENGTH)
+- Private: prefix with `_` (_create, _validate)
+
+### Docstrings
+Use Google-style docstrings for all classes and functions.
+
+## Django Model Pattern
+
+```python
+from app.core.Utilities.models import BaseModel
+
+class MyModel(BaseModel):
+    """Model description."""
+    
+    name = models.CharField(max_length=255, help_text="Model name")
+    
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        verbose_name = "My Model"
+        verbose_name_plural = "My Models"
+        ordering = ["-created_at"]
+```
+
+## Testing Pattern (CRITICAL)
+
+### Directory Structure
+```
+app/<AppName>/
+├── factories.py          # Factory definitions
+└── tests/
+    ├── __init__.py
+    ├── test_models.py
+    ├── test_views.py
+    └── test_urls.py
+```
+
+### Test Class Pattern
+```python
+"""Tests for <Feature> models."""
+
+import pytest
+from django.db import IntegrityError
+
+from app.Account.factories import AccountFactory
+from app.Project.factories import ProjectFactory
+
+class TestProjectModel:
+    """Test cases for Project model."""
+    
+    def test_project_creation(self):
+        """Test creating a project with valid data."""
+        project = ProjectFactory(name="Test Project")
+        assert project.id is not None
+        assert project.name == "Test Project"
+```
+
+### Factory Pattern
+```python
+"""Factories for <App> models."""
+
+import factory
+from factory.django import DjangoModelFactory
+
+from app.Account.factories import AccountFactory
+from app.Project.models import Project
+
+class ProjectFactory(DjangoModelFactory):
+    """Factory for Project model."""
+    
+    class Meta:
+        model = Project
+    
+    account = factory.SubFactory(AccountFactory)
+    name = factory.Sequence(lambda n: f"Project {n}")
+```
+
+## Available Factories
+
+- `AccountFactory` - Regular users (email, password defaults to "testpass123")
+- `SuperuserFactory` - Admin users (is_staff=True, is_superuser=True)
+- `CompanyAccountFactory` - Company accounts
+- `TenantAccountFactory` - Tenant accounts
+- `SuburbFactory` - Suburbs with auto-generated names/postcodes
+- `TownFactory` - Towns with auto-generated names
+- `ProjectFactory` - Projects with SubFactory for accounts
+
+## Common Commands
+
+```bash
+# Run tests
+.venv\Scripts\python.exe -m pytest
+
+# Run specific test file
+.venv\Scripts\python.exe -m pytest app/Project/tests/test_models.py -v
+
+# Run with coverage
+.venv\Scripts\python.exe -m pytest --cov=app --cov-report=html
+
+# Run migrations
+.venv\Scripts\python.exe manage.py migrate
+
+# Create migrations
+.venv\Scripts\python.exe manage.py makemigrations
+
+# Run server
+.venv\Scripts\python.exe manage.py runserver
+
+# Lint code
+.venv\Scripts\python.exe -m ruff check .
+
+# Format code
+.venv\Scripts\python.exe -m ruff format .
+```
+
+## File Organization
+
+```
+app/
+├── <AppName>/
+│   ├── models.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── admin.py
+│   ├── factories.py      # Test factories
+│   └── tests/
+│       ├── __init__.py
+│       ├── test_models.py
+│       └── test_views.py
+├── core/
+│   └── Utilities/
+│       └── models.py      # BaseModel
+└── conftest.py           # Shared pytest fixtures
+
+settings/
+├── base.py               # Base settings
+├── local.py              # Development
+├── test.py               # Testing
+└── prod.py               # Production
+
+requirements/
+├── base.txt              # Core dependencies
+├── local.txt             # Dev dependencies
+└── prod.txt              # Production dependencies
+```
+
+## Workflow for New Model
+
+1. Create model in `models.py` (inherit from BaseModel)
+2. Add `__str__` method and Meta class
+3. Create factory in `factories.py`
+4. Create tests in `tests/test_models.py` using factory
+5. Register in `admin.py` if needed
+6. Run: `.venv\Scripts\python.exe manage.py makemigrations`
+7. Run: `.venv\Scripts\python.exe manage.py migrate`
+
+## Workflow for New Test
+
+1. Import necessary factories (NEVER use Model.objects.create)
+2. Create test class: `class TestFeatureName:`
+3. Write test methods: `def test_specific_behavior(self):`
+4. Use factories: `obj = FactoryName(field=value)`
+5. Assert expected behavior
+6. Run: `.venv\Scripts\python.exe -m pytest path/to/test.py -v`
+
+## Database Best Practices
+
+- Use `select_related()` for ForeignKey
+- Use `prefetch_related()` for ManyToMany and reverse ForeignKey
+- Avoid N+1 queries
+- Use `.exists()` instead of `len(queryset)` for existence checks
+- Add indexes to frequently queried fields
+
+## Security
+
+- NEVER commit `.env` files
+- Use environment variables for secrets
+- Validate all user input
+- Use Django's CSRF protection
+- Always use `create_user()` (hashes passwords), never `create()`
+
+## Error Handling
+
+- Catch specific exceptions, not bare `except:`
+- Use `pytest.raises()` for testing exceptions
+- Provide meaningful error messages
+- Log errors appropriately
+
+## Pre-commit Checklist
+
+- [ ] All tests pass: `.venv\Scripts\python.exe -m pytest`
+- [ ] Ruff passes: `.venv\Scripts\python.exe -m ruff check .`
+- [ ] Using factories (not manual object creation)
+- [ ] Docstrings added
+- [ ] No debug print statements
+- [ ] No sensitive data in code
+- [ ] Migrations created if models changed
+
+## AI Assistant Instructions
+
+### When Writing Tests
+1. ALWAYS import and use factories from `app/<app_name>/factories.py`
+2. NEVER use `Model.objects.create()` or `Model.objects.create_user()`
+3. Structure: import factories → create test class → write test methods
+4. One assertion focus per test method
+5. Use descriptive test names that explain what is tested
+
+### When Creating Models
+1. ALWAYS inherit from `BaseModel`
+2. ALWAYS add `__str__` method
+3. ALWAYS add Meta class with verbose_name and verbose_name_plural
+4. Add help_text to fields
+5. Create corresponding factory immediately
+6. Create tests using the factory
+
+### When Running Commands
+1. ALWAYS check if `.venv` directory exists first
+2. ALWAYS use `.venv\Scripts\python.exe` prefix
+3. NEVER run commands without .venv
+4. Verify current directory is project root
+
+### When Modifying Code
+1. Check existing patterns in similar files first
+2. Follow established project structure
+3. Use factories for any test data
+4. Add type hints where appropriate
+5. Write docstrings for new functions/classes
+
+### Code Generation Priorities
+1. Correctness (follows Django best practices)
+2. Consistency (matches existing codebase patterns)
+3. Testability (uses factories, easy to test)
+4. Readability (clear names, docstrings)
+5. Maintainability (DRY, simple solutions)
+
+## Type Checker Note
+
+The `ty` type checker may show warnings like `ProjectFactory has no attribute 'id'`. This is expected - factories return model instances at runtime, but the type checker sees the factory class. These warnings are safe to ignore.

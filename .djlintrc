@@ -1,0 +1,8 @@
+{
+  "ignore": "H031",
+  "indent": 2,
+  "max_line_length": 120,
+  "format_css": true,
+  "format_js": true,
+  "profile": "django"
+}

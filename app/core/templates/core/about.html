@@ -1,114 +1,111 @@
-{% extends 'base.html' %}
-
-{% block title %}{{ page_title }}{% endblock %}
-
+{% extends "base.html" %}
+{% block title %}
+    {{ page_title }}
+{% endblock title %}
 {% block content %}
-<!-- Hero Section -->
-<section class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center">
-            <h1 class="text-4xl md:text-5xl font-bold mb-4">About Profit Pro</h1>
-            <p class="text-xl md:text-2xl opacity-90 max-w-3xl mx-auto">
-                We're on a mission to empower businesses worldwide
-            </p>
-        </div>
-    </div>
-</section>
-
-<!-- Mission & Vision -->
-<section class="py-16 bg-white">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-            <div>
-                <h2 class="text-3xl font-bold text-gray-900 mb-4">Our Mission</h2>
-                <p class="text-lg text-gray-600 leading-relaxed">{{ mission }}</p>
-            </div>
-            <div>
-                <h2 class="text-3xl font-bold text-gray-900 mb-4">Our Vision</h2>
-                <p class="text-lg text-gray-600 leading-relaxed">{{ vision }}</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Values Section -->
-<section class="py-16 bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold text-gray-900 mb-4">Our Values</h2>
-            <p class="text-xl text-gray-600">The principles that guide everything we do</p>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {% for value in values %}
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center">
-                <div class="text-4xl mb-4">{{ value.icon }}</div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ value.title }}</h3>
-                <p class="text-gray-600">{{ value.description }}</p>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-
-<!-- Team Section -->
-<section class="py-16 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold text-gray-900 mb-4">Meet Our Team</h2>
-            <p class="text-xl text-gray-600">The passionate people behind Profit Pro</p>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {% for member in team %}
-            <div class="text-center">
-                <img src="{{ member.image }}" alt="{{ member.name }}" class="w-32 h-32 rounded-full mx-auto mb-4 object-cover">
-                <h3 class="text-xl font-semibold text-gray-900 mb-1">{{ member.name }}</h3>
-                <p class="text-indigo-600 font-medium mb-2">{{ member.role }}</p>
-                <p class="text-gray-600">{{ member.bio }}</p>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-
-<!-- Stats Section -->
-<section class="py-16 bg-indigo-600 text-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-            <div>
-                <div class="text-4xl font-bold mb-2">10,000+</div>
-                <div class="text-indigo-200">Happy Customers</div>
-            </div>
-            <div>
-                <div class="text-4xl font-bold mb-2">50+</div>
-                <div class="text-indigo-200">Countries Served</div>
-            </div>
-            <div>
-                <div class="text-4xl font-bold mb-2">99.9%</div>
-                <div class="text-indigo-200">Uptime</div>
-            </div>
-            <div>
-                <div class="text-4xl font-bold mb-2">24/7</div>
-                <div class="text-indigo-200">Support</div>
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">About Profit Pro</h1>
+                <p class="text-xl md:text-2xl opacity-90 max-w-3xl mx-auto">We're on a mission to empower businesses worldwide</p>
             </div>
         </div>
-    </div>
-</section>
-
-<!-- Contact CTA -->
-<section class="py-16 bg-gray-50">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h2 class="text-3xl font-bold text-gray-900 mb-4">Get In Touch</h2>
-        <p class="text-xl text-gray-600 mb-8">Have questions or want to learn more? We'd love to hear from you!</p>
-        <div class="space-x-4">
-            <a href="mailto:hello@profitpro.com" class="bg-indigo-600 text-white px-8 py-3 rounded-md font-semibold hover:bg-indigo-700 transition-colors">
-                Email Us
-            </a>
-            <a href="{% url 'pricing' %}" class="border-2 border-indigo-600 text-indigo-600 px-8 py-3 rounded-md font-semibold hover:bg-indigo-600 hover:text-white transition-colors">
-                View Pricing
-            </a>
+    </section>
+    <!-- Mission & Vision -->
+    <section class="py-16 bg-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Our Mission</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed">{{ mission }}</p>
+                </div>
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Our Vision</h2>
+                    <p class="text-lg text-gray-600 leading-relaxed">{{ vision }}</p>
+                </div>
+            </div>
         </div>
-    </div>
-</section>
-{% endblock %}
+    </section>
+    <!-- Values Section -->
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Our Values</h2>
+                <p class="text-xl text-gray-600">The principles that guide everything we do</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {% for value in values %}
+                    <div class="text-center">
+                        <div class="text-4xl mb-4">{{ value.icon }}</div>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ value.title }}</h3>
+                        <p class="text-gray-600">{{ value.description }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    <!-- Team Section -->
+    <section class="py-16 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Meet Our Team</h2>
+                <p class="text-xl text-gray-600">The passionate people behind Profit Pro</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {% for member in team %}
+                    <div class="text-center">
+                        <img src="{{ member.image }}"
+                             height="128"
+                             width="128"
+                             alt="{{ member.name }}"
+                             class="w-32 h-32 rounded-full mx-auto mb-4 object-cover">
+                        <h3 class="text-xl font-semibold text-gray-900 mb-1">{{ member.name }}</h3>
+                        <p class="text-indigo-600 font-medium mb-2">{{ member.role }}</p>
+                        <p class="text-gray-600">{{ member.bio }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+    <!-- Stats Section -->
+    <section class="py-16 bg-indigo-600 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+                <div>
+                    <div class="text-4xl font-bold mb-2">10,000+</div>
+                    <div class="text-indigo-200">Happy Customers</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold mb-2">50+</div>
+                    <div class="text-indigo-200">Countries Served</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold mb-2">99.9%</div>
+                    <div class="text-indigo-200">Uptime</div>
+                </div>
+                <div>
+                    <div class="text-4xl font-bold mb-2">24/7</div>
+                    <div class="text-indigo-200">Support</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Contact CTA -->
+    <section class="py-16 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Get In Touch</h2>
+            <p class="text-xl text-gray-600 mb-8">Have questions or want to learn more? We'd love to hear from you!</p>
+            <div class="space-x-4">
+                <a href="mailto:hello@profitpro.com"
+                   class="bg-indigo-600 text-white px-8 py-3 rounded-md font-semibold hover:bg-indigo-700 transition-colors">
+                    Email Us
+                </a>
+                <a href="{% url 'pricing' %}"
+                   class="border-2 border-indigo-600 text-indigo-600 px-8 py-3 rounded-md font-semibold hover:bg-indigo-600 hover:text-white transition-colors">
+                    View Pricing
+                </a>
+            </div>
+        </div>
+    </section>
+{% endblock content %}

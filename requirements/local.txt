@@ -12,4 +12,5 @@ django-tailwind[reload]
 # Code quality tools
 ruff
 ty
+djlint
 
