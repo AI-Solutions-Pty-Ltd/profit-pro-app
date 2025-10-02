@@ -4,5 +4,6 @@
   "max_line_length": 120,
   "format_css": true,
   "format_js": true,
-  "profile": "django"
+  "profile": "django",
+  "extend_exclude": "htmlcov,.venv,documentation,app/theme,app/core/templates/auth/password_reset_email.html"
 }

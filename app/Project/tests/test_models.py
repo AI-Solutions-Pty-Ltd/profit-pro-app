@@ -1,5 +1,7 @@
 """Tests for Project models."""
 
+import time
+
 import pytest
 from django.db import IntegrityError
 
@@ -118,6 +120,7 @@ class TestProjectModel:
     def test_project_timestamps_auto_update(self):
         """Test that updated_at timestamp changes on save."""
         project = ProjectFactory.create()
+        time.sleep(0.5)
         original_updated_at = project.updated_at
         project.name = "Updated Project Name"
         project.save()

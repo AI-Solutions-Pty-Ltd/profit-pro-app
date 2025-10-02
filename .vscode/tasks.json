@@ -50,9 +50,9 @@
       "problemMatcher": []
     },
     {
-      "label": "full-check",
+      "label": "checks",
       "type": "shell",
-      "command": "${command:python.interpreterPath} -m ruff format . && ${command:python.interpreterPath} -m ruff check . --fix && ${command:python.interpreterPath} -m ty check .",
+      "command": "${command:python.interpreterPath} -m djlint --check . && ${command:python.interpreterPath} -m ruff format . && ${command:python.interpreterPath} -m ruff check . --fix && ${command:python.interpreterPath} -m ty check .",
       "problemMatcher": []
     },
     {
@@ -62,7 +62,8 @@
         "-m",
         "pytest",
         "-v",
-        "-n", "auto",
+        "-n",
+        "auto",
         "--reuse-db",
         "--durations=10",
         "--cov=.",
@@ -84,6 +85,18 @@
       },
       "osx": {
         "command": ".venv/bin/python"
+      }
+    },
+    {
+      "label": "preflight",
+      "type": "shell",
+      "command": "echo starting",
+      "dependsOn": ["checks", "test-cov"],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "showReuseMessage": false,
+        "close": true
       }
     },
     {

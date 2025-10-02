@@ -17,5 +17,8 @@
   "python.testing.pytestArgs": ["."],
   "github-actions.workflows.pinned.workflows": [
     ".github/workflows/build-django.yml"
+  ],
+  "djlint.extendExclude": [
+    "htmlcov,.venv,documentation,app/theme,app/core/templates/auth/password_reset_email.html"
   ]
 }
