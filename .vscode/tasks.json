@@ -5,7 +5,20 @@
       "label": "serve",
       "type": "shell",
       "command": "${command:python.interpreterPath}",
-      "args": ["${workspaceFolder}/manage.py", "tailwind", "dev"],
+      "args": ["${workspaceFolder}/manage.py", "runserver"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "pwd": "${workspaceFolder}"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "tailwind",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": ["${workspaceFolder}/manage.py", "tailwind", "start"],
       "options": {
         "cwd": "${workspaceFolder}",
         "env": {
