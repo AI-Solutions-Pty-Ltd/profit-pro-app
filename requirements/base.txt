@@ -18,6 +18,7 @@ python-dotenv
 # Crispy forms
 django-crispy-forms
 crispy-tailwind
+heroicons[django]
 
 # excel uploads
 pandas
