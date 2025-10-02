@@ -26,6 +26,9 @@ jobs:
           cache: "pip"
       - run: pip install -r requirements/local.txt
 
+      - name: Run djlint linting
+        run: djlint --check .
+
       - name: Run Ruff format check
         run: ruff format . --check
 
