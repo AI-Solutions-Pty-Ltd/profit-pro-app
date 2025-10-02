@@ -37,8 +37,10 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
     context_object_name = "project"
 
     def get_queryset(self):
-        """Filter projects by current user."""
-        return Project.objects.filter(account=self.request.user, deleted=False)
+        """Filter projects by current user and prefetch structures."""
+        return Project.objects.filter(
+            account=self.request.user, deleted=False
+        ).prefetch_related("structures")
 
 
 class ProjectCreateView(LoginRequiredMixin, CreateView):

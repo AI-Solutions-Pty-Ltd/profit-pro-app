@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}
+  {{ structure.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex mb-6" aria-label="Breadcrumb">
+      <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+          <a href="{% url 'project:project-detail' project.pk %}"
+             class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">
+            <svg class="w-4 h-4 mr-2"
+                 fill="currentColor"
+                 viewBox="0 0 20 20"
+                 xmlns="http://www.w3.org/2000/svg">
+              <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z">
+              </path>
+            </svg>
+            Structures
+          </a>
+        </li>
+        <li>
+          <div class="flex items-center">
+            <svg class="w-6 h-6 text-gray-400"
+                 fill="currentColor"
+                 viewBox="0 0 20 20"
+                 xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd">
+              </path>
+            </svg>
+            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ structure.name }}</span>
+          </div>
+        </li>
+      </ol>
+    </nav>
+    <!-- Structure Card -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+      <!-- Header -->
+      <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+        <div class="flex items-center justify-between">
+          <h1 class="text-2xl font-bold text-gray-900">{{ structure.name }}</h1>
+          <div class="flex space-x-3">
+            <a href="{% url 'structure:structure-update' structure.pk %}"
+               class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+              <svg class="-ml-1 mr-2 h-5 w-5"
+                   xmlns="http://www.w3.org/2000/svg"
+                   fill="none"
+                   viewBox="0 0 24 24"
+                   stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit
+            </a>
+            <a href="{% url 'structure:structure-delete' structure.pk %}"
+               class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+              <svg class="-ml-1 mr-2 h-5 w-5"
+                   xmlns="http://www.w3.org/2000/svg"
+                   fill="none"
+                   viewBox="0 0 24 24"
+                   stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.146A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.854L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Delete
+            </a>
+          </div>
+        </div>
+      </div>
+      <!-- Content -->
+      <div class="px-6 py-6">
+        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+          <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500">Structure Name</dt>
+            <dd class="mt-1 text-sm text-gray-900">
+              {{ structure.name }}
+            </dd>
+          </div>
+          <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500">Project</dt>
+            <dd class="mt-1 text-sm text-gray-900">
+              <a href="{% url 'project:project-detail' structure.project.pk %}"
+                 class="text-indigo-600 hover:text-indigo-900">{{ structure.project.name }}</a>
+            </dd>
+          </div>
+          <div class="sm:col-span-2">
+            <dt class="text-sm font-medium text-gray-500">Description</dt>
+            <dd class="mt-1 text-sm text-gray-900">
+              {% if structure.description %}
+                {{ structure.description }}
+              {% else %}
+                <span class="text-gray-400 italic">No description provided</span>
+              {% endif %}
+            </dd>
+          </div>
+          <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500">Created</dt>
+            <dd class="mt-1 text-sm text-gray-900">
+              {{ structure.created_at|date:"F d, Y \a\t g:i A" }}
+            </dd>
+          </div>
+          <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500">Last Updated</dt>
+            <dd class="mt-1 text-sm text-gray-900">
+              {{ structure.updated_at|date:"F d, Y \a\t g:i A" }}
+            </dd>
+          </div>
+        </dl>
+      </div>
+      <!-- Footer -->
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+        <div class="flex justify-between items-center">
+          <a href="{% url 'project:project-detail' structure.project.pk %}"
+             class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+            <svg class="mr-2 h-5 w-5"
+                 xmlns="http://www.w3.org/2000/svg"
+                 fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back to Structures
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

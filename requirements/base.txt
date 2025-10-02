@@ -18,3 +18,7 @@ python-dotenv
 # Crispy forms
 django-crispy-forms
 crispy-tailwind
+
+# excel uploads
+pandas
+openpyxl

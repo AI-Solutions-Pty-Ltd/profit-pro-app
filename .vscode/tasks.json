@@ -5,7 +5,7 @@
       "label": "serve",
       "type": "shell",
       "command": "${command:python.interpreterPath}",
-      "args": ["${workspaceFolder}/manage.py", "runserver"],
+      "args": ["${workspaceFolder}/manage.py", "tailwind", "dev"],
       "options": {
         "cwd": "${workspaceFolder}",
         "env": {
@@ -52,7 +52,7 @@
     {
       "label": "checks",
       "type": "shell",
-      "command": "${command:python.interpreterPath} -m djlint --check . && ${command:python.interpreterPath} -m ruff format . && ${command:python.interpreterPath} -m ruff check . --fix && ${command:python.interpreterPath} -m ty check .",
+      "command": "${command:python.interpreterPath} -m djlint --reformat . && ${command:python.interpreterPath} -m djlint --lint . && ${command:python.interpreterPath} -m ruff format . && ${command:python.interpreterPath} -m ruff check . --fix && ${command:python.interpreterPath} -m ty check .",
       "problemMatcher": []
     },
     {

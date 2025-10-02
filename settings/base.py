@@ -35,6 +35,7 @@ THIRD_PARTY_APPS = [
 SHARED_APPS = [
     "app.Account",
     "app.Project",
+    "app.Structure",
 ]
 
 INSTALLED_APPS = CORE_APPS + THIRD_PARTY_APPS + SHARED_APPS
@@ -63,6 +64,7 @@ TEMPLATES = [
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
+                "django.template.context_processors.debug",
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
