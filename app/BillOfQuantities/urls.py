@@ -2,7 +2,7 @@
 
 from django.urls import path
 
-from app.Structure import views
+from app.BillOfQuantities import views
 
 app_name = "structure"
 

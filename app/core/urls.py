@@ -14,7 +14,10 @@ urlpatterns = [
     path("register/", RegisterView.as_view(), name="register"),
     # app urls
     path("project/", include("app.Project.urls", namespace="project")),
-    path("structure/", include("app.Structure.urls", namespace="structure")),
+    path(
+        "bill-of-quantities/",
+        include("app.BillOfQuantities.urls", namespace="bill-of-quantities"),
+    ),
 ]
 
 

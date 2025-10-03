@@ -3,9 +3,9 @@
 import pytest
 from django.db import IntegrityError
 
+from app.BillOfQuantities.factories import StructureFactory
+from app.BillOfQuantities.models import Structure
 from app.Project.factories import ProjectFactory
-from app.Structure.factories import StructureFactory
-from app.Structure.models import Structure
 
 
 class TestStructureModel:

@@ -13,9 +13,9 @@ from django.views.generic import (
 )
 from django.views.generic.edit import FormView
 
+from app.BillOfQuantities.forms import StructureExcelUploadForm, StructureForm
+from app.BillOfQuantities.models import Structure
 from app.Project.models import Project
-from app.Structure.forms import StructureExcelUploadForm, StructureForm
-from app.Structure.models import Structure
 
 
 class StructureDetailView(LoginRequiredMixin, DetailView):

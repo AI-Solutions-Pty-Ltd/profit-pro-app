@@ -3,8 +3,8 @@
 import factory
 from factory.django import DjangoModelFactory
 
+from app.BillOfQuantities.models import Structure
 from app.Project.factories import ProjectFactory
-from app.Structure.models import Structure
 
 
 class StructureFactory(DjangoModelFactory):

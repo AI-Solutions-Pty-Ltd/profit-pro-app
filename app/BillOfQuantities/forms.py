@@ -2,7 +2,7 @@
 
 from django import forms
 
-from app.Structure.models import Structure
+from app.BillOfQuantities.models import Structure
 
 
 class StructureForm(forms.ModelForm):
