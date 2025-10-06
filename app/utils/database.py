@@ -5,14 +5,17 @@ from django.conf import settings
 
 
 def get_apps():
-    return settings.SHARED_APPS
+    shared_apps = settings.SHARED_APPS
+    # strip 'app.' from the string
+    shared_apps = [app.replace("app.", "") for app in shared_apps]
+    return shared_apps
 
 
 def find_all_migration_files():
     """Find all python files (excl init files) in the migrations directory of each app."""
     files = []
     for app in get_apps():
-        migration_files = glob.glob(f"{app}/migrations/*.py")
+        migration_files = glob.glob(f"app/{app}/migrations/*.py")
         # Filter out __init__.py files
         migration_files = [f for f in migration_files if not f.endswith("__init__.py")]
         files.extend(migration_files)
