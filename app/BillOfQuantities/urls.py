@@ -9,11 +9,6 @@ app_name = "structure"
 urlpatterns = [
     # Project-scoped structure URLs
     path(
-        "project/<int:project_pk>/create/",
-        views.StructureCreateView.as_view(),
-        name="structure-create",
-    ),
-    path(
         "project/<int:project_pk>/upload/",
         views.StructureExcelUploadView.as_view(),
         name="structure-upload",

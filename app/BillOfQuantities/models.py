@@ -68,34 +68,35 @@ class Package(BaseModel):
 
 
 class LineItem(BaseModel):
-    class UnitMeasurement(models.TextChoices):
-        meters = "m", "Meters"
-        square_meters = "m2", "Square Meters"
-        cubic_meters = "m3", "Cubic Meters"
-        cubic_meters_per_kilometer = "m3.km", "Cubic Meters per Kilometer"
-        grams = "g", "Grams"
-        kilograms = "kg", "Kilograms"
-        liters = "l", "Liters"
-        tons = "t", "Tons"
-        percentage = "%", "Percentage"
-        quantity = "q", "Quantity"
-
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="line_items"
+    )
+    structure = models.ForeignKey(
+        Structure, on_delete=models.CASCADE, related_name="line_items"
+    )
+    bill = models.ForeignKey(Bill, on_delete=models.CASCADE, related_name="line_items")
     package = models.ForeignKey(
-        Package, on_delete=models.CASCADE, related_name="line_items"
+        Package,
+        on_delete=models.CASCADE,
+        related_name="line_items",
+        null=True,
+        blank=True,
     )
     row_index = models.IntegerField()
 
     # headings / etc
-    item_number = models.CharField(max_length=100)
-    payment_reference = models.CharField(max_length=100)
-    description = models.TextField()
+    item_number = models.CharField(max_length=100, blank=True)
+    payment_reference = models.CharField(max_length=100, blank=True)
+    description = models.TextField(blank=True)
 
     # for work line items
     is_work = models.BooleanField(default=False)
-    unit_measurement = models.CharField(max_length=10, choices=UnitMeasurement.choices)
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-    budgeted_quantity = models.IntegerField()
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    unit_measurement = models.CharField(max_length=10, blank=True)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    budgeted_quantity = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
+
+    # for addendum line items
     addendum = models.BooleanField(default=False)
 
     class Meta:

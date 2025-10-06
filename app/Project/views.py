@@ -10,6 +10,7 @@ from django.views.generic import (
     UpdateView,
 )
 
+from app.BillOfQuantities.models import LineItem
 from app.Project.forms import ProjectForm
 from app.Project.models import Project
 
@@ -41,6 +42,18 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
         return Project.objects.filter(
             account=self.request.user, deleted=False
         ).prefetch_related("structures")
+
+    def get_context_data(self, **kwargs):
+        """Add structures to context."""
+        from django.db.models import Sum
+
+        context = super().get_context_data(**kwargs)
+        line_items = self.object.line_items.all()
+        # Calculate total
+        total = line_items.aggregate(total=Sum("total_price"))["total"] or 0
+        context["line_items_total"] = total
+
+        return context
 
 
 class ProjectCreateView(LoginRequiredMixin, CreateView):

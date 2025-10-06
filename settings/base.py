@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 AUTH_USER_MODEL = "Account.Account"
 
 SITE_ID = 1
@@ -15,6 +16,7 @@ CORE_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.humanize",
     "django_cleanup.apps.CleanupConfig",
     "django.contrib.sites",
     "app.core",
