@@ -2,7 +2,13 @@
 
 from django import forms
 
-from app.BillOfQuantities.models import Bill, LineItem, Package, Structure
+from app.BillOfQuantities.models import (
+    Bill,
+    LineItem,
+    Package,
+    PaymentCertificate,
+    Structure,
+)
 from app.Project.models import Project
 
 
@@ -126,3 +132,38 @@ class LineItemExcelUploadForm(forms.ModelForm):
         if commit:
             line_item.save()
         return line_item
+
+
+class PaymentCertificateFinalApprovalForm(forms.ModelForm):
+    """Form for final approval or rejection of payment certificates."""
+
+    class Meta:
+        model = PaymentCertificate
+        fields = ["status"]
+        widgets = {
+            "status": forms.RadioSelect(
+                attrs={
+                    "class": "focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
+                }
+            ),
+        }
+        labels = {
+            "status": "Decision",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only allow APPROVED or REJECTED status choices
+        self.fields["status"].choices = [
+            (PaymentCertificate.Status.APPROVED, "Approve Certificate"),
+            (PaymentCertificate.Status.REJECTED, "Reject Certificate"),
+        ]
+
+    def clean_status(self):
+        status = self.cleaned_data.get("status")
+        if status not in [
+            PaymentCertificate.Status.APPROVED,
+            PaymentCertificate.Status.REJECTED,
+        ]:
+            raise forms.ValidationError("Please select either Approve or Reject.")
+        return status

@@ -5,91 +5,231 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('Project', '0001_initial'),
+        ("Project", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Bill',
+            name="Bill",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last modified')),
-                ('deleted', models.BooleanField(default=False, help_text='Soft delete flag')),
-                ('name', models.CharField(max_length=100)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last modified"
+                    ),
+                ),
+                (
+                    "deleted",
+                    models.BooleanField(default=False, help_text="Soft delete flag"),
+                ),
+                ("name", models.CharField(max_length=100)),
             ],
             options={
-                'verbose_name': 'Bill',
-                'verbose_name_plural': 'Bills',
+                "verbose_name": "Bill",
+                "verbose_name_plural": "Bills",
             },
         ),
         migrations.CreateModel(
-            name='Package',
+            name="Package",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last modified')),
-                ('deleted', models.BooleanField(default=False, help_text='Soft delete flag')),
-                ('name', models.CharField(max_length=100)),
-                ('bill', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='packages', to='BillOfQuantities.bill')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last modified"
+                    ),
+                ),
+                (
+                    "deleted",
+                    models.BooleanField(default=False, help_text="Soft delete flag"),
+                ),
+                ("name", models.CharField(max_length=100)),
+                (
+                    "bill",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="packages",
+                        to="BillOfQuantities.bill",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Package',
-                'verbose_name_plural': 'Packages',
+                "verbose_name": "Package",
+                "verbose_name_plural": "Packages",
             },
         ),
         migrations.CreateModel(
-            name='Structure',
+            name="Structure",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last modified')),
-                ('deleted', models.BooleanField(default=False, help_text='Soft delete flag')),
-                ('name', models.CharField(max_length=255)),
-                ('description', models.TextField(blank=True, default='')),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='structures', to='Project.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last modified"
+                    ),
+                ),
+                (
+                    "deleted",
+                    models.BooleanField(default=False, help_text="Soft delete flag"),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("description", models.TextField(blank=True, default="")),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="structures",
+                        to="Project.project",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Structure',
-                'verbose_name_plural': 'Structures',
-                'ordering': ['name'],
+                "verbose_name": "Structure",
+                "verbose_name_plural": "Structures",
+                "ordering": ["name"],
             },
         ),
         migrations.CreateModel(
-            name='LineItem',
+            name="LineItem",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last modified')),
-                ('deleted', models.BooleanField(default=False, help_text='Soft delete flag')),
-                ('row_index', models.IntegerField()),
-                ('item_number', models.CharField(blank=True, max_length=100)),
-                ('payment_reference', models.CharField(blank=True, max_length=100)),
-                ('description', models.TextField(blank=True)),
-                ('is_work', models.BooleanField(default=False)),
-                ('unit_measurement', models.CharField(blank=True, max_length=10)),
-                ('unit_price', models.DecimalField(blank=True, decimal_places=2, max_digits=10)),
-                ('budgeted_quantity', models.DecimalField(blank=True, decimal_places=2, max_digits=10)),
-                ('total_price', models.DecimalField(blank=True, decimal_places=2, max_digits=10)),
-                ('addendum', models.BooleanField(default=False)),
-                ('bill', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='line_items', to='BillOfQuantities.bill')),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='line_items', to='Project.project')),
-                ('package', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='line_items', to='BillOfQuantities.package')),
-                ('structure', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='line_items', to='BillOfQuantities.structure')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last modified"
+                    ),
+                ),
+                (
+                    "deleted",
+                    models.BooleanField(default=False, help_text="Soft delete flag"),
+                ),
+                ("row_index", models.IntegerField()),
+                ("item_number", models.CharField(blank=True, max_length=100)),
+                ("payment_reference", models.CharField(blank=True, max_length=100)),
+                ("description", models.TextField(blank=True)),
+                ("is_work", models.BooleanField(default=False)),
+                ("unit_measurement", models.CharField(blank=True, max_length=10)),
+                (
+                    "unit_price",
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=10),
+                ),
+                (
+                    "budgeted_quantity",
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=10),
+                ),
+                (
+                    "total_price",
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=10),
+                ),
+                ("addendum", models.BooleanField(default=False)),
+                (
+                    "bill",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="line_items",
+                        to="BillOfQuantities.bill",
+                    ),
+                ),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="line_items",
+                        to="Project.project",
+                    ),
+                ),
+                (
+                    "package",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="line_items",
+                        to="BillOfQuantities.package",
+                    ),
+                ),
+                (
+                    "structure",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="line_items",
+                        to="BillOfQuantities.structure",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Line Item',
-                'verbose_name_plural': 'Line Items',
-                'ordering': ['row_index'],
+                "verbose_name": "Line Item",
+                "verbose_name_plural": "Line Items",
+                "ordering": ["row_index"],
             },
         ),
         migrations.AddField(
-            model_name='bill',
-            name='structure',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='bills', to='BillOfQuantities.structure'),
+            model_name="bill",
+            name="structure",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="bills",
+                to="BillOfQuantities.structure",
+            ),
         ),
     ]

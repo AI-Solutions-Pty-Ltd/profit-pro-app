@@ -10,7 +10,6 @@ from django.views.generic import (
     UpdateView,
 )
 
-from app.BillOfQuantities.models import LineItem
 from app.Project.forms import ProjectForm
 from app.Project.models import Project
 

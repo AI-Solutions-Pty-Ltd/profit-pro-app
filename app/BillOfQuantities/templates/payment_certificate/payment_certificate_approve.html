@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+  Approve Payment Certificate - {{ project.name }}
+{% endblock title %}
+{% block content %}
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+      <div class="px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
+            <p class="text-sm text-gray-600 mt-1">Approve Payment Certificate: #{{ payment_certificate.certificate_number }}</p>
+            <p class="text-sm text-gray-600 mt-1">
+              Current Status: <span class="font-semibold">{{ payment_certificate.get_status_display }}</span>
+            </p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <a href="{% url 'project:project-list' %}"
+               class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+              {% heroicon_outline "arrow-left" class="w-4 h-4 mr-2" %}
+              Back to Projects
+            </a>
+            <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk payment_certificate.pk %}"
+               class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+              {% heroicon_outline "arrow-left" class="w-4 h-4 mr-2" %}
+              Back to Certificate
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Summary Section -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-bold text-gray-900">Certificate Summary</h2>
+      </div>
+      <div class="px-6 py-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-gray-50 rounded-lg p-4">
+            <dt class="text-sm font-medium text-gray-500">Certificate Number</dt>
+            <dd class="mt-1 text-2xl font-semibold text-gray-900">
+              #{{ payment_certificate.certificate_number }}
+            </dd>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-4">
+            <dt class="text-sm font-medium text-gray-500">Total Transactions</dt>
+            <dd class="mt-1 text-2xl font-semibold text-gray-900">
+              {{ payment_certificate.actual_transactions.count }}
+            </dd>
+          </div>
+          <div class="bg-indigo-50 rounded-lg p-4">
+            <dt class="text-sm font-medium text-indigo-600">Total Amount</dt>
+            <dd class="mt-1 text-2xl font-semibold text-indigo-900">
+              R {{ total_amount|floatformat:2|intcomma }}
+            </dd>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Transactions Preview -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-bold text-gray-900">Transactions</h2>
+        <p class="text-sm text-gray-600">Review the transactions before approving</p>
+      </div>
+      <div class="overflow-x-auto">
+        {% if payment_certificate.actual_transactions.exists %}
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item No.</th>
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Budgeted Quantity</th>
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progressive Previous</th>
+                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progressive to Date</th>
+                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">This Claim</th>
+                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
+                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Price</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              {% for transaction in payment_certificate.actual_transactions.select_related %}
+                <tr class="hover:bg-gray-50">
+                  <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ transaction.line_item.item_number|default:"-" }}</td>
+                  <td class="px-3 py-2 text-sm text-gray-900">{{ transaction.line_item.description|truncatewords:15 }}</td>
+                  <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                    {{ transaction.line_item.unit_measurement|default:"-" }}
+                  </td>
+                  <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                    {{ transaction.line_item.budgeted_quantity|floatformat:2|intcomma }}
+                  </td>
+                  <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                    {{ transaction.line_item.claimed_to_date|floatformat:2|intcomma }}
+                  </td>
+                  <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                    {{ transaction.line_item.claimed_to_date|add:transaction.quantity|floatformat:2|intcomma }}
+                  </td>
+                  <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                    {{ transaction.quantity|floatformat:2|intcomma }}
+                  </td>
+                  <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                    R {{ transaction.unit_price|floatformat:2|intcomma }}
+                  </td>
+                  <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">
+                    R {{ transaction.total_price|floatformat:2|intcomma }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot class="bg-gray-50">
+              <tr>
+                <td colspan="8"
+                    class="px-3 py-3 text-right text-sm font-bold text-gray-900">Total:</td>
+                <td class="px-3 py-3 whitespace-nowrap text-sm font-bold text-indigo-600 text-right">
+                  R {{ total_amount|floatformat:2|intcomma }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        {% else %}
+          <div class="text-center py-12">
+            {% heroicon_outline "clipboard-document-list" class="w-12 h-12 mx-auto text-gray-400" %}
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No Transactions</h3>
+            <p class="mt-1 text-sm text-gray-500">This payment certificate has no transactions to approve.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    <!-- Approval Form -->
+    <div class="bg-white shadow-sm rounded-lg">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-bold text-gray-900">Approve Payment Certificate</h2>
+        <p class="text-sm text-gray-600">
+          Review the transactions above and click the button below to approve this payment certificate.
+          All transactions will be marked as approved.
+        </p>
+      </div>
+      <div class="px-6 py-6">
+        {% if form.errors %}
+          <div class="mb-4 bg-red-50 border border-red-500 text-red-500 px-4 py-3 rounded relative"
+               role="alert">
+            <strong class="font-bold">Error!</strong>
+            <span class="block sm:inline">{{ form.errors }}</span>
+          </div>
+        {% endif %}
+        <form method="post">
+          {% csrf_token %}
+          <!-- Hidden input defaulted to APPROVED -->
+          <input type="hidden" name="status" value="SUBMITTED">
+          <!-- Action Buttons -->
+          <div class="flex items-center justify-end space-x-3">
+            <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk payment_certificate.pk %}"
+               class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+              {% heroicon_outline "x-mark" class="w-5 h-5 mr-2" %}
+              Cancel
+            </a>
+            <button type="submit"
+                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+              {% heroicon_outline "check-circle" class="w-5 h-5 mr-2" %}
+              Approve Payment Certificate
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

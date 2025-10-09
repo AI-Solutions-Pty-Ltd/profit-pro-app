@@ -14,7 +14,7 @@
           <p class="mt-2">This action cannot be undone.</p>
         </div>
         <form method="post"
-              action="{% url 'structure:structure-delete' structure.pk %}">
+              action="{% url 'bill_of_quantities:structure-delete' structure.pk %}">
           {% csrf_token %}
           <div class="mt-6 flex items-center justify-end space-x-3">
             <a href="{{ project.get_structure_list_url }}"

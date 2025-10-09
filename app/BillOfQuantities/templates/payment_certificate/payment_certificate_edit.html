@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}
+  {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% load humanize %}
+{% block content %}
+  <div class="px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex mb-6" aria-label="Breadcrumb">
+      <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+          <a href="{% url 'project:project-list' %}"
+             class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
+            {% heroicon_outline "home" size="20" class="text-indigo-600" %}
+            Projects
+          </a>
+        </li>
+        <li>
+          <div class="flex items-center">
+            {% heroicon_outline "chevron-right" %}
+            <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ project.name }}</span>
+          </div>
+        </li>
+      </ol>
+    </nav>
+    <!-- Project Card -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+      <!-- Header -->
+      <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+        <div class="flex items-center justify-between">
+          <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
+          <div class="flex space-x-3">
+            <a href="{% url 'project:project-list' %}"
+               class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+              {% heroicon_outline "arrow-left" class="w-4 h-4 mr-2" %}
+              Back to Projects
+            </a>
+            <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
+               class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+              {% heroicon_outline "arrow-left" class="w-4 h-4 mr-2" %}
+              Back to Payment Certificates
+            </a>
+          </div>
+        </div>
+      </div>
+      <!-- Content -->
+      <div class="px-6 py-6">
+        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+          <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500">Project Name</dt>
+            <dd class="mt-1 text-sm text-gray-900">
+              {{ project.name }}
+            </dd>
+          </div>
+          <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500">Owner</dt>
+            <dd class="mt-1 text-sm text-gray-900">
+              {{ project.account.email }}
+            </dd>
+          </div>
+          <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500">Created</dt>
+            <dd class="mt-1 text-sm text-gray-900">
+              {{ project.created_at|date:"F d, Y \a\t g:i A" }}
+            </dd>
+          </div>
+          <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500">Last Updated</dt>
+            <dd class="mt-1 text-sm text-gray-900">
+              {{ project.updated_at|date:"F d, Y \a\t g:i A" }}
+            </dd>
+          </div>
+        </dl>
+        <!-- Project Description -->
+        {% if project.description %}
+          <div class="mt-6 pt-6 border-t border-gray-200">
+            <h3 class="text-sm font-medium text-gray-500 mb-2">Description</h3>
+            <div class="prose prose-sm max-w-none text-gray-900">{{ project.description|linebreaks }}</div>
+          </div>
+        {% endif %}
+      </div>
+      <!-- Line Items Section -->
+      {% if line_items %}
+        <div class="overflow-x-auto">
+          <form method="post">
+            {% csrf_token %}
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50 sticky top-0">
+                <tr>
+                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Structure</th>
+                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bill</th>
+                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package</th>
+                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item No.</th>
+                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pay Ref</th>
+                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
+                  <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Qty</th>
+                  <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Claimed to date</th>
+                  <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actual Quantity</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                {% for line_item in line_items %}
+                  <tr class="hover:bg-gray-50 {% if not line_item.is_work %}bg-gray-100 font-semibold{% endif %}">
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.structure.name }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.bill.name }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.package.name|default:"" }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.item_number|default:"" }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.payment_reference|default:"" }}</td>
+                    <td class="px-3 py-2 text-sm text-gray-900">{{ line_item.description|default:"" }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.unit_measurement|default:"" }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.budgeted_quantity|default:"" }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                      {{ line_item.claimed_to_date|default:""|floatformat:2|intcomma }}
+                    </td>
+                    {% if line_item.budgeted_quantity %}
+                      <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                        {% if line_item.current_transaction %}
+                          <input name="edit_actual_quantity_{{ line_item.current_transaction.pk }}"
+                                 type="number"
+                                 step="0.01"
+                                 max="{{ line_item.budgeted_quantity }}"
+                                 value="{{ line_item.claimed_to_date|add:line_item.current_transaction.quantity }}"
+                                 class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                 placeholder="0.00">
+                        {% else %}
+                          <input name="new_actual_quantity_{{ line_item.pk }}"
+                                 type="number"
+                                 step="0.01"
+                                 max="{{ line_item.budgeted_quantity }}"
+                                 class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                 placeholder="0.00">
+                        </td>
+                      {% endif %}
+                    {% else %}
+                      <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right"></td>
+                      <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right"></td>
+                    {% endif %}
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            <div class="flex justify-end mt-6 p-4">
+              <button type="submit"
+                      class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                {% heroicon_outline "check-circle" size="20" %}
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
+      {% else %}
+        <div class="text-center py-6 flex flex-col items-center">
+          {% heroicon_outline "document" %}
+          <p class="mt-2 text-sm text-gray-500">Project WBS not loaded, please upload.</p>
+          <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
+             class="mt-2 inline-flex items-center px-3 py-1.5 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+            {% heroicon_outline "arrow-up-tray" size="20" %}
+            Upload
+          </a>
+        </div>
+      {% endif %}
+      <!-- Footer -->
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+        <div class="flex justify-between items-center">
+          <a href="{% url 'project:project-list' %}"
+             class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+            {% heroicon_outline "chevron-left" %}
+            Back to Projects
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

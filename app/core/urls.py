@@ -16,7 +16,7 @@ urlpatterns = [
     path("project/", include("app.Project.urls", namespace="project")),
     path(
         "bill-of-quantities/",
-        include("app.BillOfQuantities.urls", namespace="bill-of-quantities"),
+        include("app.BillOfQuantities.urls", namespace="bill_of_quantities"),
     ),
 ]
 

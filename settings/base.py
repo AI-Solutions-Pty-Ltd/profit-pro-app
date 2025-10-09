@@ -32,6 +32,7 @@ THIRD_PARTY_APPS = [
     "crispy_tailwind",
     "app.theme",
     "heroicons",
+    "django_filters",
     # Core/shared apps
 ]
 
@@ -73,7 +74,10 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
             ],
             "builtins": [
+                "django.templatetags.static",
+                "django.contrib.humanize.templatetags.humanize",
                 "heroicons.templatetags.heroicons",
+                "crispy_forms.templatetags.crispy_forms_tags",
             ],
         },
     },

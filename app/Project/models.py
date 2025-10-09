@@ -5,10 +5,17 @@ from app.Account.models import Account
 from app.core.Utilities.models import BaseModel
 
 
+class Client(BaseModel):
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+
+
 class Project(BaseModel):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     description = models.TextField()
+
+    client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -36,7 +43,26 @@ class Project(BaseModel):
         return reverse("project:project-delete", kwargs={"pk": self.pk})
 
     def get_structure_create_url(self):
-        return reverse("structure:structure-create", kwargs={"project_pk": self.pk})
+        return reverse(
+            "bill_of_quantities:structure-create", kwargs={"project_pk": self.pk}
+        )
 
     def get_structure_upload_url(self):
-        return reverse("structure:structure-upload", kwargs={"project_pk": self.pk})
+        return reverse(
+            "bill_of_quantities:structure-upload", kwargs={"project_pk": self.pk}
+        )
+
+    @property
+    def get_active_payment_certificate(self):
+        from app.BillOfQuantities.models import PaymentCertificate
+
+        try:
+            return self.payment_certificates.get(
+                status__in=[
+                    PaymentCertificate.Status.DRAFT,
+                    PaymentCertificate.Status.SUBMITTED,
+                    PaymentCertificate.Status.REJECTED,
+                ]
+            )
+        except Exception:
+            return None

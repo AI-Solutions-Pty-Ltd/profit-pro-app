@@ -39,6 +39,11 @@
                     {% endif %}
                   </div>
                   <div class="flex items-center space-x-3 ml-4">
+                    <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
+                       class="inline-flex items-center px-3 py-1.5 gap-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors z-10">
+                      {% heroicon_outline "eye" size="20" %}
+                      Payment Certificates
+                    </a>
                     <a href="{% url 'project:project-detail' project.pk %}"
                        class="inline-flex items-center px-3 py-1.5 gap-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors z-10">
                       {% heroicon_outline "eye" size="20" %}
