@@ -33,6 +33,7 @@ THIRD_PARTY_APPS = [
     "app.theme",
     "heroicons",
     "django_filters",
+    "mathfilters",
     # Core/shared apps
 ]
 
@@ -79,6 +80,7 @@ TEMPLATES = [
                 "heroicons.templatetags.heroicons",
                 "crispy_forms.templatetags.crispy_forms_tags",
                 "app.BillOfQuantities.templatetags.template_extras",
+                "mathfilters.templatetags.mathfilters",
             ],
         },
     },
