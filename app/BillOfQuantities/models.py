@@ -190,23 +190,27 @@ class PaymentCertificate(BaseModel):
     @property
     def items_submitted(self):
         approved_line_items = self.actual_transactions.filter(approved=True)
-        return approved_line_items.aggregate(total=models.Sum("total_price"))["total"]
+        return approved_line_items.aggregate(total=models.Sum("total_price"))[
+            "total"
+        ] or Decimal(0)
 
     @property
     def items_claimed(self):
         approved_line_items = self.actual_transactions.filter(approved=True)
-        return approved_line_items.aggregate(total=models.Sum("total_price"))["total"]
+        return approved_line_items.aggregate(total=models.Sum("total_price"))[
+            "total"
+        ] or Decimal(0)
 
     @property
     def total_submitted(self):
-        total = 0
+        total = Decimal(0)
         total += self.items_submitted
         # leaving space for other categories to be added at a later stage
         return total
 
     @property
     def total_claimed(self):
-        total = 0
+        total = Decimal(0)
         total += self.items_claimed
         # leaving space for other categories to be added at a later stage
         return total

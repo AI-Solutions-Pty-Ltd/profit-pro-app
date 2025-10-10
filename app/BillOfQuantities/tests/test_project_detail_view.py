@@ -20,11 +20,15 @@ class TestProjectPaymentCertificateDetailView:
     def project(self, user):
         return ProjectFactory(account=user)
 
-    def test_view_requires_login(self, client, project):
+    @pytest.fixture
+    def certificate(self, project):
+        return PaymentCertificateFactory(project=project)
+
+    def test_view_requires_login(self, client, certificate):
         """Test that view requires login."""
         url = reverse(
-            "bill_of_quantities:payment-certificate-project-detail",
-            kwargs={"project_pk": project.pk},
+            "bill_of_quantities:payment-certificate-detail",
+            kwargs={"pk": certificate.pk, "project_pk": certificate.project.pk},
         )
         response = client.get(url)
         assert response.status_code == 302
@@ -34,38 +38,35 @@ class TestProjectPaymentCertificateDetailView:
         """Test view shows no certificates message."""
         client.force_login(user)
         url = reverse(
-            "bill_of_quantities:payment-certificate-project-detail",
+            "bill_of_quantities:payment-certificate-list",
             kwargs={"project_pk": project.pk},
         )
         response = client.get(url)
         assert response.status_code == 200
         assert "No Active Certificate" in response.content.decode()
 
-    def test_view_shows_active_certificate(self, client, user, project):
+    def test_view_shows_active_certificate(self, client, user, project, certificate):
         """Test view shows active certificate."""
         client.force_login(user)
-        certificate = PaymentCertificateFactory(
-            project=project, status=PaymentCertificate.Status.DRAFT
-        )
         url = reverse(
-            "bill_of_quantities:payment-certificate-project-detail",
-            kwargs={"project_pk": project.pk},
+            "bill_of_quantities:payment-certificate-detail",
+            kwargs={"pk": certificate.pk, "project_pk": certificate.project.pk},
         )
         response = client.get(url)
         assert response.status_code == 200
         assert (
-            f"Certificate #{certificate.certificate_number}"
+            f"Certificate: #{certificate.certificate_number}"
             in response.content.decode()
         )
 
     def test_view_shows_completed_certificates(self, client, user, project):
         """Test view shows completed certificates with totals."""
         client.force_login(user)
-        _certificate = PaymentCertificateFactory(
+        _certificate = PaymentCertificateFactory.create(
             project=project, status=PaymentCertificate.Status.APPROVED
         )
         url = reverse(
-            "bill_of_quantities:payment-certificate-project-detail",
+            "bill_of_quantities:payment-certificate-list",
             kwargs={"project_pk": project.pk},
         )
         response = client.get(url)
@@ -76,12 +77,12 @@ class TestProjectPaymentCertificateDetailView:
         """Test view only shows certificates for correct project."""
         client.force_login(user)
         other_project = ProjectFactory(account=user)
-        PaymentCertificateFactory(
-            project=other_project, status=PaymentCertificate.Status.DRAFT
+        PaymentCertificateFactory.create(
+            project=other_project, status=PaymentCertificate.Status.SUBMITTED
         )
 
         url = reverse(
-            "bill_of_quantities:payment-certificate-project-detail",
+            "bill_of_quantities:payment-certificate-list",
             kwargs={"project_pk": project.pk},
         )
         response = client.get(url)
@@ -90,12 +91,12 @@ class TestProjectPaymentCertificateDetailView:
 
     def test_user_can_only_see_own_projects(self, client, user):
         """Test user can only see their own projects."""
-        other_user = AccountFactory()
+        other_user = AccountFactory.create()
         other_project = ProjectFactory.create(account=other_user)
 
         client.force_login(user)
         url = reverse(
-            "bill_of_quantities:payment-certificate-project-detail",
+            "bill_of_quantities:payment-certificate-list",
             kwargs={"project_pk": other_project.pk},
         )
         response = client.get(url)

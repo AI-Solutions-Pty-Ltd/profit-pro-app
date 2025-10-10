@@ -15,7 +15,6 @@ class TestProjectUrls:
         delete_url = project.get_delete_url()
 
         # structure related urls
-        structure_create_url = project.get_structure_create_url()
         structure_upload_url = project.get_structure_upload_url()
 
         # Test authenticated access - should all return 200
@@ -26,7 +25,6 @@ class TestProjectUrls:
         assert client.get(delete_url).status_code == 200
 
         # structure related urls
-        assert client.get(structure_create_url).status_code == 200
         assert client.get(structure_upload_url).status_code == 200
 
     def test_project_urls_unauthenticated(self, client):
@@ -40,7 +38,6 @@ class TestProjectUrls:
         delete_url = project.get_delete_url()
 
         # structure related urls
-        structure_create_url = project.get_structure_create_url()
         structure_upload_url = project.get_structure_upload_url()
 
         # Test unauthenticated access - should redirect to login (302)
@@ -51,5 +48,4 @@ class TestProjectUrls:
         assert client.get(delete_url).status_code == 302
 
         # structure related urls
-        assert client.get(structure_create_url).status_code == 302
         assert client.get(structure_upload_url).status_code == 302

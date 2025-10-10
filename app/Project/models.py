@@ -42,11 +42,6 @@ class Project(BaseModel):
     def get_delete_url(self):
         return reverse("project:project-delete", kwargs={"pk": self.pk})
 
-    def get_structure_create_url(self):
-        return reverse(
-            "bill_of_quantities:structure-create", kwargs={"project_pk": self.pk}
-        )
-
     def get_structure_upload_url(self):
         return reverse(
             "bill_of_quantities:structure-upload", kwargs={"project_pk": self.pk}
