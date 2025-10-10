@@ -78,6 +78,7 @@ TEMPLATES = [
                 "django.contrib.humanize.templatetags.humanize",
                 "heroicons.templatetags.heroicons",
                 "crispy_forms.templatetags.crispy_forms_tags",
+                "app.BillOfQuantities.templatetags.template_extras",
             ],
         },
     },
