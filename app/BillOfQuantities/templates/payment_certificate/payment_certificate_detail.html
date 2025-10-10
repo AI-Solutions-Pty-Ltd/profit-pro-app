@@ -14,6 +14,11 @@
             <p class="text-sm text-gray-600 mt-1">Status: {{ payment_certificate.status }}</p>
           </div>
           <div class="flex items-center space-x-3">
+            <a href="{% url 'bill_of_quantities:payment-certificate-download-pdf' project.pk payment_certificate.pk %}"
+               class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+              {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-2" %}
+              Download PDF
+            </a>
             <a href="{% url 'project:project-list' %}"
                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
               {% heroicon_outline "arrow-left" class="w-4 h-4 mr-2" %}

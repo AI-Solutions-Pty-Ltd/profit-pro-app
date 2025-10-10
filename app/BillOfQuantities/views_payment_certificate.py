@@ -2,11 +2,13 @@ from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, UpdateView, View
 
 from app.BillOfQuantities.forms import PaymentCertificateFinalApprovalForm
 from app.BillOfQuantities.models import ActualTransaction, LineItem, PaymentCertificate
+from app.BillOfQuantities.tasks import generate_payment_certificate_pdf
 from app.Project.models import Project
 
 
@@ -356,3 +358,26 @@ class PaymentCertificateFinalApprovalView(
             project_pk=self.kwargs["project_pk"],
             pk=payment_certificate.pk,
         )
+
+
+class PaymentCertificateDownloadPDFView(LoginRequiredMixin, View, GetProjectMixin):
+    """Download payment certificate as PDF."""
+
+    def get(self, request, pk=None, project_pk=None):
+        project = self.get_project()
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=pk, project=project
+        )
+
+        # Generate PDF in memory
+        pdf_content = generate_payment_certificate_pdf(payment_certificate)
+
+        # Return PDF as download from memory
+        response = FileResponse(
+            pdf_content,
+            content_type="application/pdf",
+            as_attachment=True,
+            filename=f"payment_certificate_{payment_certificate.certificate_number}.pdf",
+        )
+
+        return response

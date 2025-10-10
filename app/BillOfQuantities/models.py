@@ -215,6 +215,33 @@ class PaymentCertificate(BaseModel):
         # leaving space for other categories to be added at a later stage
         return total
 
+    @property
+    def progressive_previous(self):
+        """Calculate total of all previously approved certificates."""
+        previous_certificates = PaymentCertificate.objects.filter(
+            project=self.project,
+            certificate_number__lt=self.certificate_number,
+            status=PaymentCertificate.Status.APPROVED,
+        )
+        total = Decimal(0)
+        for cert in previous_certificates:
+            total += cert.total_claimed
+        return total
+
+    @property
+    def current_claim_total(self):
+        """Calculate total for current certificate (all transactions)."""
+        return self.actual_transactions.aggregate(total=models.Sum("total_price"))[
+            "total"
+        ] or Decimal(0)
+
+    @property
+    def progressive_to_date(self):
+        """Calculate progressive total including this certificate."""
+        # For progressive to date, we include all transactions in current certificate
+        # regardless of approval status (for reporting purposes)
+        return self.progressive_previous + self.current_claim_total
+
 
 class ActualTransaction(BaseModel):
     """Capture actual work completed against a line item"""

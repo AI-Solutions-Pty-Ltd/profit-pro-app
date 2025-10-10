@@ -62,7 +62,9 @@ class LineItemFactory(DjangoModelFactory):
     description = factory.Faker("sentence")
     is_work = True
     unit_measurement = "m"
-    unit_price = factory.Faker("pydecimal", left_digits=4, right_digits=2, positive=True)
+    unit_price = factory.Faker(
+        "pydecimal", left_digits=4, right_digits=2, positive=True
+    )
     budgeted_quantity = factory.Faker(
         "pydecimal", left_digits=3, right_digits=2, positive=True
     )

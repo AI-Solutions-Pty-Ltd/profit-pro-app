@@ -312,3 +312,148 @@ class TestPaymentCertificateProperties:
         )
 
         assert certificate.items_claimed == Decimal("500.00")
+
+    def test_progressive_previous_first_certificate(self):
+        """Test progressive_previous returns 0 for first certificate."""
+        project = ProjectFactory.create()
+        cert1 = PaymentCertificateFactory.create(
+            project=project,
+            certificate_number=1,
+            status=PaymentCertificate.Status.DRAFT,
+        )
+
+        assert cert1.progressive_previous == Decimal("0")
+
+    def test_progressive_previous_with_approved_certificates(self):
+        """Test progressive_previous calculates total from previous approved certificates."""
+        project = ProjectFactory.create()
+        line_item = LineItemFactory.create(
+            project=project, unit_price=Decimal("100.00")
+        )
+
+        # Certificate 1 - Approved
+        cert1 = PaymentCertificateFactory.create(
+            project=project,
+            certificate_number=1,
+            status=PaymentCertificate.Status.APPROVED,
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert1,
+            line_item=line_item,
+            quantity=Decimal("5.00"),
+            unit_price=Decimal("100.00"),
+            total_price=Decimal("500.00"),
+            approved=True,
+        )
+
+        # Certificate 2 - Approved
+        cert2 = PaymentCertificateFactory.create(
+            project=project,
+            certificate_number=2,
+            status=PaymentCertificate.Status.APPROVED,
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert2,
+            line_item=line_item,
+            quantity=Decimal("3.00"),
+            unit_price=Decimal("100.00"),
+            total_price=Decimal("300.00"),
+            approved=True,
+        )
+
+        # Certificate 3 - Draft (current)
+        cert3 = PaymentCertificateFactory.create(
+            project=project,
+            certificate_number=3,
+            status=PaymentCertificate.Status.DRAFT,
+        )
+
+        # Progressive previous should be cert1 + cert2 = 500 + 300 = 800
+        assert cert3.progressive_previous == Decimal("800.00")
+
+    def test_progressive_previous_ignores_non_approved(self):
+        """Test progressive_previous only includes approved certificates."""
+        project = ProjectFactory.create()
+        line_item = LineItemFactory.create(
+            project=project, unit_price=Decimal("100.00")
+        )
+
+        # Certificate 1 - Approved
+        cert1 = PaymentCertificateFactory.create(
+            project=project,
+            certificate_number=1,
+            status=PaymentCertificate.Status.APPROVED,
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert1,
+            line_item=line_item,
+            quantity=Decimal("5.00"),
+            unit_price=Decimal("100.00"),
+            total_price=Decimal("500.00"),
+            approved=True,
+        )
+
+        # Certificate 2 - Rejected (should be ignored)
+        cert2 = PaymentCertificateFactory.create(
+            project=project,
+            certificate_number=2,
+            status=PaymentCertificate.Status.REJECTED,
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert2,
+            line_item=line_item,
+            quantity=Decimal("3.00"),
+            unit_price=Decimal("100.00"),
+            total_price=Decimal("300.00"),
+            approved=False,
+        )
+
+        # Certificate 3 - Draft (current)
+        cert3 = PaymentCertificateFactory.create(
+            project=project,
+            certificate_number=3,
+            status=PaymentCertificate.Status.DRAFT,
+        )
+
+        # Progressive previous should only include cert1 = 500
+        assert cert3.progressive_previous == Decimal("500.00")
+
+    def test_progressive_to_date(self):
+        """Test progressive_to_date includes current certificate."""
+        project = ProjectFactory.create()
+        line_item = LineItemFactory.create(
+            project=project, unit_price=Decimal("100.00")
+        )
+
+        # Certificate 1 - Approved
+        cert1 = PaymentCertificateFactory.create(
+            project=project,
+            certificate_number=1,
+            status=PaymentCertificate.Status.APPROVED,
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert1,
+            line_item=line_item,
+            quantity=Decimal("5.00"),
+            unit_price=Decimal("100.00"),
+            total_price=Decimal("500.00"),
+            approved=True,
+        )
+
+        # Certificate 2 - Draft (current)
+        cert2 = PaymentCertificateFactory.create(
+            project=project,
+            certificate_number=2,
+            status=PaymentCertificate.Status.DRAFT,
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert2,
+            line_item=line_item,
+            quantity=Decimal("3.00"),
+            unit_price=Decimal("100.00"),
+            total_price=Decimal("300.00"),
+            approved=False,
+        )
+
+        # Progressive to date = previous (500) + current (300) = 800
+        assert cert2.progressive_to_date == Decimal("800.00")
