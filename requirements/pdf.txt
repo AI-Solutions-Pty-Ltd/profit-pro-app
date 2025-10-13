@@ -1,0 +1,10 @@
+arabic-reshaper==3.0.0
+html5lib==1.1
+pillow==11.0.0
+pyHanko==0.25.3
+pyhanko-certvalidator==0.26.5
+pypdf==5.1.0
+python-bidi==0.6.3
+reportlab==4.2.5
+svglib==1.5.1
+xhtml2pdf==0.2.16

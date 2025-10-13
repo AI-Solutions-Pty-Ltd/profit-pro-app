@@ -1,3 +1,5 @@
 -r base.txt
-mysqlclient==2.2.6
+-r pdf.txt
+
+mysqlclient
 django-tailwind

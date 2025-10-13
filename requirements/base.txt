@@ -25,6 +25,3 @@ heroicons[django]
 # excel uploads
 pandas
 openpyxl
-
-# pdf generation
-xhtml2pdf
