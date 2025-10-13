@@ -1,225 +1,229 @@
 <!DOCTYPE html>
 <html lang="en" class="h-full">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description"
-          content="{% block meta_description %}Profit Pro - Streamline your business operations with our comprehensive management platform. Track finances, manage customers, and grow your business with confidence.{% endblock meta_description %}" />
-    <title>
-      {% block title %}
-        {{ SITE_NAME|default:"Profit Pro" }}
-      {% endblock title %}
-    </title>
-    <!-- Tailwind CSS -->
-    {% load tailwind_filters %}
-    {% load static tailwind_tags %}
-    {% tailwind_css %}
-    <!-- Crispy Forms -->
-    {% load crispy_forms_tags %}
-    {% block extra_css %}
-    {% endblock extra_css %}
-  </head>
-  <body class="flex flex-col min-h-screen bg-gray-50">
-    <!-- Sticky Top Navigation -->
-    <nav class="sticky top-0 z-50 bg-white shadow-lg">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-          <!-- Logo/Brand -->
-          <div class="flex-shrink-0 flex items-center">
-            <a href="{% url 'home' %}" class="text-2xl font-bold text-indigo-600">{{ SITE_NAME|default:"Profit Pro" }}</a>
-          </div>
-          <!-- Navigation Links -->
-          <div class="hidden md:block">
-            <div class="ml-10 flex items-baseline space-x-4">
-              <a href="{% url 'home' %}"
-                 class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Home
-              </a>
-              {% if user.is_authenticated %}
-                <a href="{% url 'project:project-list' %}"
-                   class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Projects
-                </a>
-              {% endif %}
-              <a href="{% url 'features' %}"
-                 class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Features
-              </a>
-              <a href="{% url 'pricing' %}"
-                 class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Pricing
-              </a>
-              <a href="{% url 'about' %}"
-                 class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                About
-              </a>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description"
+              content="{% block meta_description %}Profit Pro - Streamline your business operations with our comprehensive management platform. Track finances, manage customers, and grow your business with confidence.{% endblock meta_description %}" />
+        <meta name="keywords"
+              content="{% block meta_keywords %}Profit Pro, business management, finance tracking, customer management, business growth{% endblock meta_keywords %}" />
+        <title>
+            {% block title %}
+                {{ SITE_NAME|default:"Profit Pro" }}
+            {% endblock title %}
+        </title>
+        <!-- Tailwind CSS -->
+        {% load tailwind_filters %}
+        {% load static tailwind_tags %}
+        {% tailwind_css %}
+        <!-- Crispy Forms -->
+        {% load crispy_forms_tags %}
+        {% block extra_css %}
+        {% endblock extra_css %}
+    </head>
+    <body class="flex flex-col min-h-screen bg-gray-50">
+        <!-- Sticky Top Navigation -->
+        <nav class="sticky top-0 z-50 bg-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <!-- Logo/Brand -->
+                    <div class="flex-shrink-0 flex items-center">
+                        <a href="{% url 'home' %}" class="text-2xl font-bold text-indigo-600">{{ SITE_NAME|default:"Profit Pro" }}</a>
+                    </div>
+                    <!-- Navigation Links -->
+                    <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="{% url 'home' %}"
+                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                                Home
+                            </a>
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'project:project-list' %}"
+                                   class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                                    Projects
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'features' %}"
+                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                                Features
+                            </a>
+                            <a href="{% url 'pricing' %}"
+                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                                Pricing
+                            </a>
+                            <a href="{% url 'about' %}"
+                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                                About
+                            </a>
+                        </div>
+                    </div>
+                    <!-- User Actions -->
+                    <div class="hidden md:block">
+                        <div class="ml-4 flex items-center md:ml-6 space-x-4">
+                            {% if user.is_authenticated %}
+                                <span class="text-gray-700 text-sm">Welcome, {{ user.first_name|default:user.email }}</span>
+                                <form method="post" action="{% url 'logout' %}">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors"
+                                            onclick="return confirm('Are you sure you want to logout?')">
+                                        Logout
+                                    </button>
+                                </form>
+                            {% else %}
+                                <a href="{% url 'login' %}"
+                                   class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                                    Login
+                                </a>
+                                <a href="{% url 'register' %}"
+                                   class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors">
+                                    Sign Up
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Mobile menu button -->
+                    <div class="md:hidden">
+                        <button type="button"
+                                class="bg-gray-100 inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-indigo-600 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                            <span class="sr-only">Open main menu</span>
+                            <svg class="h-6 w-6"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 fill="none"
+                                 viewBox="0 0 24 24"
+                                 stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
-          </div>
-          <!-- User Actions -->
-          <div class="hidden md:block">
-            <div class="ml-4 flex items-center md:ml-6 space-x-4">
-              {% if user.is_authenticated %}
-                <span class="text-gray-700 text-sm">Welcome, {{ user.first_name|default:user.email }}</span>
-                <form method="post" action="{% url 'logout' %}">
-                  {% csrf_token %}
-                  <button type="submit"
-                          class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors"
-                          onclick="return confirm('Are you sure you want to logout?')">Logout</button>
-                </form>
-              {% else %}
-                <a href="{% url 'login' %}"
-                   class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Login
-                </a>
-                <a href="{% url 'register' %}"
-                   class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors">
-                  Sign Up
-                </a>
-              {% endif %}
+        </nav>
+        <!-- Main Content -->
+        <main class="flex-grow">
+            {% block content %}
+            {% endblock content %}
+        </main>
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white">
+            <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Company Info -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">{{ SITE_NAME|default:"Profit Pro" }}</h3>
+                        <p class="text-gray-300 text-sm">Empowering businesses with smart financial solutions.</p>
+                    </div>
+                    <!-- Quick Links -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                        <ul class="space-y-2">
+                            <li>
+                                <a href="{% url 'home' %}"
+                                   class="text-gray-300 hover:text-white text-sm transition-colors">Home</a>
+                            </li>
+                            <li>
+                                <a href="{% url 'features' %}"
+                                   class="text-gray-300 hover:text-white text-sm transition-colors">Features</a>
+                            </li>
+                            <li>
+                                <a href="{% url 'pricing' %}"
+                                   class="text-gray-300 hover:text-white text-sm transition-colors">Pricing</a>
+                            </li>
+                            <li>
+                                <a href="{% url 'about' %}"
+                                   class="text-gray-300 hover:text-white text-sm transition-colors">About</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <!-- Contact Info -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-4">Contact Us</h3>
+                        <ul class="space-y-2 text-sm text-gray-300">
+                            <li>Email: {{ CONTACT_EMAIL|default:"support@profitpro.com" }}</li>
+                            <li>Phone: +1 (555) 123-4567</li>
+                            <li>Address: 123 Business St, Suite 100, City, State 12345</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-8 pt-8 border-t border-gray-700">
+                    <div class="flex flex-col md:flex-row justify-between items-center">
+                        <p class="text-gray-300 text-sm">
+                            {% now "Y" %} {{ SITE_NAME|default:"Profit Pro" }}. All
+                            rights reserved.
+                        </p>
+                        <div class="flex space-x-4 mt-4 md:mt-0">
+                            <a href="#"
+                               class="text-gray-300 hover:text-white text-sm transition-colors">Privacy Policy</a>
+                            <a href="#"
+                               class="text-gray-300 hover:text-white text-sm transition-colors">Terms of Service</a>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-          <!-- Mobile menu button -->
-          <div class="md:hidden">
-            <button type="button"
-                    class="bg-gray-100 inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-indigo-600 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
-              <span class="sr-only">Open main menu</span>
-              <svg class="h-6 w-6"
-                   xmlns="http://www.w3.org/2000/svg"
-                   fill="none"
-                   viewBox="0 0 24 24"
-                   stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
+        </footer>
+        <!-- Toast Notifications Container -->
+        <div id="toast-container" class="fixed top-20 right-4 z-50 space-y-2">
+            {% for message in messages %}
+                <div class="toast-notification w-96 bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden"
+                     role="alert">
+                    <div class="p-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                {% if message.tags == 'success' %}
+                                    <svg class="h-6 w-6 text-green-400"
+                                         fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                {% elif message.tags == 'error' %}
+                                    <svg class="h-6 w-6 text-red-400"
+                                         fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                {% elif message.tags == 'warning' %}
+                                    <svg class="h-6 w-6 text-yellow-400"
+                                         fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                    </svg>
+                                {% else %}
+                                    <svg class="h-6 w-6 text-blue-400"
+                                         fill="none"
+                                         viewBox="0 0 24 24"
+                                         stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                {% endif %}
+                            </div>
+                            <div class="ml-3 flex-1 pt-0.5 min-w-0">
+                                <p class="text-sm font-medium text-gray-900">{{ message.tags|title }}</p>
+                                <p class="mt-1 text-sm text-gray-600 break-words">{{ message }}</p>
+                            </div>
+                            <div class="ml-4 flex-shrink-0 flex">
+                                <button type="button"
+                                        class="toast-close bg-white rounded-md inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                        aria-label="Close">
+                                    <span class="sr-only">Close</span>
+                                    <svg class="h-5 w-5"
+                                         xmlns="http://www.w3.org/2000/svg"
+                                         viewBox="0 0 20 20"
+                                         fill="currentColor">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
-      </div>
-    </nav>
-    <!-- Main Content -->
-    <main class="flex-grow">
-      {% block content %}
-      {% endblock content %}
-    </main>
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white">
-      <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <!-- Company Info -->
-          <div>
-            <h3 class="text-lg font-semibold mb-4">{{ SITE_NAME|default:"Profit Pro" }}</h3>
-            <p class="text-gray-300 text-sm">Empowering businesses with smart financial solutions.</p>
-          </div>
-          <!-- Quick Links -->
-          <div>
-            <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
-            <ul class="space-y-2">
-              <li>
-                <a href="{% url 'home' %}"
-                   class="text-gray-300 hover:text-white text-sm transition-colors">Home</a>
-              </li>
-              <li>
-                <a href="{% url 'features' %}"
-                   class="text-gray-300 hover:text-white text-sm transition-colors">Features</a>
-              </li>
-              <li>
-                <a href="{% url 'pricing' %}"
-                   class="text-gray-300 hover:text-white text-sm transition-colors">Pricing</a>
-              </li>
-              <li>
-                <a href="{% url 'about' %}"
-                   class="text-gray-300 hover:text-white text-sm transition-colors">About</a>
-              </li>
-            </ul>
-          </div>
-          <!-- Contact Info -->
-          <div>
-            <h3 class="text-lg font-semibold mb-4">Contact Us</h3>
-            <ul class="space-y-2 text-sm text-gray-300">
-              <li>Email: {{ CONTACT_EMAIL|default:"support@profitpro.com" }}</li>
-              <li>Phone: +1 (555) 123-4567</li>
-              <li>Address: 123 Business St, Suite 100, City, State 12345</li>
-            </ul>
-          </div>
-        </div>
-        <div class="mt-8 pt-8 border-t border-gray-700">
-          <div class="flex flex-col md:flex-row justify-between items-center">
-            <p class="text-gray-300 text-sm">
-              {% now "Y" %} {{ SITE_NAME|default:"Profit Pro" }}. All
-              rights reserved.
-            </p>
-            <div class="flex space-x-4 mt-4 md:mt-0">
-              <a href="#"
-                 class="text-gray-300 hover:text-white text-sm transition-colors">Privacy Policy</a>
-              <a href="#"
-                 class="text-gray-300 hover:text-white text-sm transition-colors">Terms of Service</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </footer>
-    <!-- Toast Notifications Container -->
-    <div id="toast-container" class="fixed top-20 right-4 z-50 space-y-2">
-      {% for message in messages %}
-        <div class="toast-notification w-96 bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden"
-             role="alert">
-          <div class="p-4">
-            <div class="flex items-start">
-              <div class="flex-shrink-0">
-                {% if message.tags == 'success' %}
-                  <svg class="h-6 w-6 text-green-400"
-                       fill="none"
-                       viewBox="0 0 24 24"
-                       stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                {% elif message.tags == 'error' %}
-                  <svg class="h-6 w-6 text-red-400"
-                       fill="none"
-                       viewBox="0 0 24 24"
-                       stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                {% elif message.tags == 'warning' %}
-                  <svg class="h-6 w-6 text-yellow-400"
-                       fill="none"
-                       viewBox="0 0 24 24"
-                       stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                {% else %}
-                  <svg class="h-6 w-6 text-blue-400"
-                       fill="none"
-                       viewBox="0 0 24 24"
-                       stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                {% endif %}
-              </div>
-              <div class="ml-3 flex-1 pt-0.5 min-w-0">
-                <p class="text-sm font-medium text-gray-900">{{ message.tags|title }}</p>
-                <p class="mt-1 text-sm text-gray-600 break-words">{{ message }}</p>
-              </div>
-              <div class="ml-4 flex-shrink-0 flex">
-                <button type="button"
-                        class="toast-close bg-white rounded-md inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                        aria-label="Close">
-                  <span class="sr-only">Close</span>
-                  <svg class="h-5 w-5"
-                       xmlns="http://www.w3.org/2000/svg"
-                       viewBox="0 0 20 20"
-                       fill="currentColor">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      {% endfor %}
-    </div>
-    {% block extra_js %}
-    {% endblock extra_js %}
-    <script>
+        {% block extra_js %}
+        {% endblock extra_js %}
+        <script>
         // Toast functionality
         document.addEventListener('DOMContentLoaded', function() {
             const toastContainer = document.getElementById('toast-container');
@@ -279,6 +283,6 @@
                 });
             });
         });
-    </script>
-  </body>
+        </script>
+    </body>
 </html>

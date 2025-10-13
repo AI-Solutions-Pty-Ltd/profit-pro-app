@@ -1,10 +1,10 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Three-Stage Development Plan — Governance & Project Automation</title>
-  <style>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Three-Stage Development Plan — Governance & Project Automation</title>
+        <style>
     :root {
       --bg: #fafbfc;
       --panel: #ffffff;
@@ -305,140 +305,192 @@
         color: #2563eb !important;
       }
     }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>Three-stage development plan</h1>
-      <div class="subtitle">Governance & Project Automation Management App — based on process and claims/payment flows</div>
-      <div class="controls">
-        <button class="btn" onclick="window.print()">Print / Save as PDF</button>
-      </div>
-      <div class="callout">
-        Tip: Click “Print / Save as PDF” to export. For best results, set margins to Default and enable background graphics (if prompted).
-      </div>
-    </header>
-
-    <section class="panel stage stage-1">
-      <h2>Stage 1 – Initial development</h2>
-      <p><strong>Goal:</strong> Establish the technical and operational foundation for governance and claims/payment workflows.</p>
-
-      <h3>Activities</h3>
-      <ul>
-        <li><strong>Requirements gathering:</strong> Map process steps, decision points, and critical paths; identify all user roles (Client PM, Contractor, Inspector, Consultant, PA/PM, Client Rep).</li>
-        <li><strong>System architecture:</strong> Define modules (Project Setup, Contractor Management, Inspection Scheduling, Claims & Payments), data flow, and integration points (e.g., compliance doc storage, inspector assignment).</li>
-        <li><strong>Environment setup:</strong> Prepare development, test, and staging environments with CI/CD scaffolding.</li>
-        <li><strong>Core data models:</strong> Create entities for Project, House, Contractor, Inspection, Claim, Payment, and relationships.</li>
-        <li><strong>Security & access control:</strong> Implement role-based permissions, authentication, and audit logging baseline.</li>
-        <li><strong>Baseline UI/UX:</strong> Wireframes and design tokens for project setup, inspection scheduling, and claim submission.</li>
-      </ul>
-
-      <h3>Deliverables</h3>
-      <ul>
-        <li><strong>Approved requirements:</strong> Functional and non-functional scope with acceptance criteria.</li>
-        <li><strong>Architecture pack:</strong> System and data flow diagrams; integration contract outlines.</li>
-        <li><strong>Initial schema:</strong> Database schema with migrations.</li>
-        <li><strong>Clickable wireframes:</strong> Key journeys across governance and claims/payment.</li>
-      </ul>
-
-      <div class="badges">
-        <span class="badge">Foundation</span>
-        <span class="badge">Security</span>
-        <span class="badge">Architecture</span>
-      </div>
-    </section>
-
-    <section class="panel stage stage-2">
-      <h2>Stage 2 – MVP</h2>
-      <p><strong>Goal:</strong> Deliver an end‑to‑end working version of governance and claims/payment critical paths.</p>
-
-      <h3>Scope</h3>
-      <ul>
-        <li><strong>Project governance core:</strong> Project and house setup, contractor and inspector assignment, inspection scheduling and results, payment trigger on pass.</li>
-        <li><strong>Claims & payments:</strong> Contractor claim submission on approved template, consultant assessment, compliance docs, PM/PA/Client approvals, payment or amendment routing.</li>
-        <li><strong>Reporting:</strong> Governance reporting in accordance to EPWP requirements </li>
-        <li><strong>Notifications & tracking:</strong> Alerts for approvals, rejections, inspection outcomes, and payment status.</li>
-        <li><strong>Audit trail:</strong> Immutable logs for reviews and compliance.</li>
-      </ul>
-
-      <h3>Testing</h3>
-      <ul>
-        <li><strong>Quality gates:</strong> Unit, integration, and UAT with representative sample projects and claims.</li>
-        <li><strong>Decision loops:</strong> Simulate rejection/rectification and resubmission flows for inspections and claims.</li>
-      </ul>
-
-      <h3>Deliverables</h3>
-      <ul>
-        <li><strong>Deployed MVP:</strong> Production deployment with monitoring.</li>
-        <li><strong>User onboarding:</strong> Role‑specific quick start guides and training sessions.</li>
-        <li><strong>MVP documentation:</strong> Admin and user guides, runbooks.</li>
-      </ul>
-
-      <div class="badges">
-        <span class="badge">E2E Flow</span>
-        <span class="badge">UAT</span>
-        <span class="badge">Go‑Live</span>
-      </div>
-    </section>
-
-    <section class="panel stage stage-3">
-      <h2>Stage 3 – Post go‑live support & updates</h2>
-      <p><strong>Goal:</strong> Stabilize, optimize, and enhance the system based on real‑world usage.</p>
-
-      <h3>Support & maintenance</h3>
-      <ul>
-        <li><strong>Monitoring:</strong> Track performance, errors, and usage patterns; establish SLOs and incident response workflow.</li>
-        <li><strong>Bug fixes:</strong> Triage and resolve issues via a prioritised backlog.</li>
-        <li><strong>User feedback loop:</strong> Capture insights from contractors, inspectors, consultants, and client reps; feed into roadmap.</li>
-        <li><strong>Enhancements:</strong> Reporting dashboards, mobile optimizations, external integrations as needed.</li>
-        <li><strong>Scaling & security:</strong> Performance tuning, capacity planning, and security hardening.</li>
-        <li><strong>Training & handover:</strong> Updated documentation and enablement for internal teams.</li>
-      </ul>
-
-      <h3>Deliverables</h3>
-      <ul>
-        <li><strong>Operational reports:</strong> Monthly performance and feedback summaries.</li>
-        <li><strong>Roadmap updates:</strong> Prioritized enhancements with release cadence.</li>
-        <li><strong>Documentation set:</strong> Up‑to‑date technical and user materials.</li>
-      </ul>
-
-      <div class="badges">
-        <span class="badge">Stability</span>
-        <span class="badge">Insights</span>
-        <span class="badge">Scale</span>
-      </div>
-    </section>
-
-    <section class="panel" style="border-left-color: #6366f1;">
-      <h2>Terms & Conditions</h2>
-      
-      <h3>Change Requests</h3>
-      <p>Any scope additions or modifications beyond the agreed deliverables outlined in this development plan must be quoted separately and require written approval before implementation. Change requests may impact project timelines and costs.</p>
-
-      <h3>Warranties</h3>
-      <p>The Developer provides a 30-day warranty period from final delivery for bug-fixing related to the agreed specifications. This warranty covers only defects in functionality as outlined in the approved requirements. The Developer does not guarantee fitness for purpose beyond the explicitly agreed specifications and deliverables.</p>
-
-      <h3>Force Majeure</h3>
-      <p>Neither party shall be liable for delays or failures in performance resulting from events beyond reasonable control, including but not limited to: power outages, internet service disruptions, strikes, natural disasters, government actions, or other external events. Project timelines will be adjusted accordingly upon written notice.</p>
-
-      <h3>Support & Maintenance</h3>
-      <p>Post-deployment support and maintenance services are governed by the ProfitPro Hosting & Maintenance SLA, available separately. This includes:</p>
-      <ul>
-        <li>Monthly hosting and monitoring services (R750/month)</li>
-        <li>2 hours standby support per month (R500/month)</li>
-        <li>Additional support hours as needed (R500-R750/hour based on timing)</li>
-        <li>99.9% uptime guarantee with 4-hour response time during business hours</li>
-      </ul>
-    </section>
-
-    <hr class="sep" />
-
-    <footer>
-      <div style="text-align: center; padding: 20px 0;">
-        <p style="margin-bottom: 15px;">If you have any questions or suggestions, feel free to reach out to us.</p>
-      </div>
-    </footer>
-  </div>
-</body>
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>Three-stage development plan</h1>
+                <div class="subtitle">Governance & Project Automation Management App — based on process and claims/payment flows</div>
+                <div class="controls">
+                    <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+                </div>
+                <div class="callout">
+                    Tip: Click “Print / Save as PDF” to export. For best results, set margins to Default and enable background graphics (if prompted).
+                </div>
+            </header>
+            <section class="panel stage stage-1">
+                <h2>Stage 1 – Initial development</h2>
+                <p>
+                    <strong>Goal:</strong> Establish the technical and operational foundation for governance and claims/payment workflows.
+                </p>
+                <h3>Activities</h3>
+                <ul>
+                    <li>
+                        <strong>Requirements gathering:</strong> Map process steps, decision points, and critical paths; identify all user roles (Client PM, Contractor, Inspector, Consultant, PA/PM, Client Rep).
+                    </li>
+                    <li>
+                        <strong>System architecture:</strong> Define modules (Project Setup, Contractor Management, Inspection Scheduling, Claims & Payments), data flow, and integration points (e.g., compliance doc storage, inspector assignment).
+                    </li>
+                    <li>
+                        <strong>Environment setup:</strong> Prepare development, test, and staging environments with CI/CD scaffolding.
+                    </li>
+                    <li>
+                        <strong>Core data models:</strong> Create entities for Project, House, Contractor, Inspection, Claim, Payment, and relationships.
+                    </li>
+                    <li>
+                        <strong>Security & access control:</strong> Implement role-based permissions, authentication, and audit logging baseline.
+                    </li>
+                    <li>
+                        <strong>Baseline UI/UX:</strong> Wireframes and design tokens for project setup, inspection scheduling, and claim submission.
+                    </li>
+                </ul>
+                <h3>Deliverables</h3>
+                <ul>
+                    <li>
+                        <strong>Approved requirements:</strong> Functional and non-functional scope with acceptance criteria.
+                    </li>
+                    <li>
+                        <strong>Architecture pack:</strong> System and data flow diagrams; integration contract outlines.
+                    </li>
+                    <li>
+                        <strong>Initial schema:</strong> Database schema with migrations.
+                    </li>
+                    <li>
+                        <strong>Clickable wireframes:</strong> Key journeys across governance and claims/payment.
+                    </li>
+                </ul>
+                <div class="badges">
+                    <span class="badge">Foundation</span>
+                    <span class="badge">Security</span>
+                    <span class="badge">Architecture</span>
+                </div>
+            </section>
+            <section class="panel stage stage-2">
+                <h2>Stage 2 – MVP</h2>
+                <p>
+                    <strong>Goal:</strong> Deliver an end‑to‑end working version of governance and claims/payment critical paths.
+                </p>
+                <h3>Scope</h3>
+                <ul>
+                    <li>
+                        <strong>Project governance core:</strong> Project and house setup, contractor and inspector assignment, inspection scheduling and results, payment trigger on pass.
+                    </li>
+                    <li>
+                        <strong>Claims & payments:</strong> Contractor claim submission on approved template, consultant assessment, compliance docs, PM/PA/Client approvals, payment or amendment routing.
+                    </li>
+                    <li>
+                        <strong>Reporting:</strong> Governance reporting in accordance to EPWP requirements
+                    </li>
+                    <li>
+                        <strong>Notifications & tracking:</strong> Alerts for approvals, rejections, inspection outcomes, and payment status.
+                    </li>
+                    <li>
+                        <strong>Audit trail:</strong> Immutable logs for reviews and compliance.
+                    </li>
+                </ul>
+                <h3>Testing</h3>
+                <ul>
+                    <li>
+                        <strong>Quality gates:</strong> Unit, integration, and UAT with representative sample projects and claims.
+                    </li>
+                    <li>
+                        <strong>Decision loops:</strong> Simulate rejection/rectification and resubmission flows for inspections and claims.
+                    </li>
+                </ul>
+                <h3>Deliverables</h3>
+                <ul>
+                    <li>
+                        <strong>Deployed MVP:</strong> Production deployment with monitoring.
+                    </li>
+                    <li>
+                        <strong>User onboarding:</strong> Role‑specific quick start guides and training sessions.
+                    </li>
+                    <li>
+                        <strong>MVP documentation:</strong> Admin and user guides, runbooks.
+                    </li>
+                </ul>
+                <div class="badges">
+                    <span class="badge">E2E Flow</span>
+                    <span class="badge">UAT</span>
+                    <span class="badge">Go‑Live</span>
+                </div>
+            </section>
+            <section class="panel stage stage-3">
+                <h2>Stage 3 – Post go‑live support & updates</h2>
+                <p>
+                    <strong>Goal:</strong> Stabilize, optimize, and enhance the system based on real‑world usage.
+                </p>
+                <h3>Support & maintenance</h3>
+                <ul>
+                    <li>
+                        <strong>Monitoring:</strong> Track performance, errors, and usage patterns; establish SLOs and incident response workflow.
+                    </li>
+                    <li>
+                        <strong>Bug fixes:</strong> Triage and resolve issues via a prioritised backlog.
+                    </li>
+                    <li>
+                        <strong>User feedback loop:</strong> Capture insights from contractors, inspectors, consultants, and client reps; feed into roadmap.
+                    </li>
+                    <li>
+                        <strong>Enhancements:</strong> Reporting dashboards, mobile optimizations, external integrations as needed.
+                    </li>
+                    <li>
+                        <strong>Scaling & security:</strong> Performance tuning, capacity planning, and security hardening.
+                    </li>
+                    <li>
+                        <strong>Training & handover:</strong> Updated documentation and enablement for internal teams.
+                    </li>
+                </ul>
+                <h3>Deliverables</h3>
+                <ul>
+                    <li>
+                        <strong>Operational reports:</strong> Monthly performance and feedback summaries.
+                    </li>
+                    <li>
+                        <strong>Roadmap updates:</strong> Prioritized enhancements with release cadence.
+                    </li>
+                    <li>
+                        <strong>Documentation set:</strong> Up‑to‑date technical and user materials.
+                    </li>
+                </ul>
+                <div class="badges">
+                    <span class="badge">Stability</span>
+                    <span class="badge">Insights</span>
+                    <span class="badge">Scale</span>
+                </div>
+            </section>
+            <section class="panel" style="border-left-color: #6366f1;">
+                <h2>Terms & Conditions</h2>
+                <h3>Change Requests</h3>
+                <p>
+                    Any scope additions or modifications beyond the agreed deliverables outlined in this development plan must be quoted separately and require written approval before implementation. Change requests may impact project timelines and costs.
+                </p>
+                <h3>Warranties</h3>
+                <p>
+                    The Developer provides a 30-day warranty period from final delivery for bug-fixing related to the agreed specifications. This warranty covers only defects in functionality as outlined in the approved requirements. The Developer does not guarantee fitness for purpose beyond the explicitly agreed specifications and deliverables.
+                </p>
+                <h3>Force Majeure</h3>
+                <p>
+                    Neither party shall be liable for delays or failures in performance resulting from events beyond reasonable control, including but not limited to: power outages, internet service disruptions, strikes, natural disasters, government actions, or other external events. Project timelines will be adjusted accordingly upon written notice.
+                </p>
+                <h3>Support & Maintenance</h3>
+                <p>
+                    Post-deployment support and maintenance services are governed by the ProfitPro Hosting & Maintenance SLA, available separately. This includes:
+                </p>
+                <ul>
+                    <li>Monthly hosting and monitoring services (R750/month)</li>
+                    <li>2 hours standby support per month (R500/month)</li>
+                    <li>Additional support hours as needed (R500-R750/hour based on timing)</li>
+                    <li>99.9% uptime guarantee with 4-hour response time during business hours</li>
+                </ul>
+            </section>
+            <hr class="sep" />
+            <footer>
+                <div style="text-align: center; padding: 20px 0;">
+                    <p style="margin-bottom: 15px;">If you have any questions or suggestions, feel free to reach out to us.</p>
+                </div>
+            </footer>
+        </div>
+    </body>
 </html>

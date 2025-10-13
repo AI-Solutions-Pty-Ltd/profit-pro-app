@@ -5,9 +5,9 @@ import time
 import pytest
 from django.db import IntegrityError
 
-from app.Account.factories import AccountFactory
-from app.Project.factories import ProjectFactory
+from app.Account.tests.factories import AccountFactory
 from app.Project.models import Project
+from app.Project.tests.factories import ProjectFactory
 
 
 class TestProjectModel:
@@ -45,7 +45,8 @@ class TestProjectModel:
         account = AccountFactory.create()
         project = ProjectFactory.create(account=account)
         assert project.account == account
-        assert project in account.project_set.all()
+
+        assert project in account.projects.all()
 
     def test_project_cascade_delete(self):
         """Test that projects are deleted when account is deleted."""
@@ -112,10 +113,10 @@ class TestProjectModel:
         project2 = ProjectFactory.create(account=account, name="Project 2")
         project3 = ProjectFactory.create(account=account, name="Project 3")
 
-        assert account.project_set.count() == 3
-        assert project1 in account.project_set.all()
-        assert project2 in account.project_set.all()
-        assert project3 in account.project_set.all()
+        assert account.projects.count() == 3
+        assert project1 in account.projects.all()
+        assert project2 in account.projects.all()
+        assert project3 in account.projects.all()
 
     def test_project_timestamps_auto_update(self):
         """Test that updated_at timestamp changes on save."""

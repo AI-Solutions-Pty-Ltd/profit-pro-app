@@ -3,7 +3,7 @@
 import factory
 from factory.django import DjangoModelFactory
 
-from app.Account.factories import AccountFactory
+from app.Account.tests.factories import AccountFactory
 from app.BillOfQuantities.models import (
     ActualTransaction,
     Bill,
@@ -12,7 +12,7 @@ from app.BillOfQuantities.models import (
     PaymentCertificate,
     Structure,
 )
-from app.Project.factories import ProjectFactory
+from app.Project.tests.factories import ProjectFactory
 
 
 class StructureFactory(DjangoModelFactory):

@@ -9,6 +9,7 @@ from django.views.generic import DetailView, ListView, UpdateView, View
 from app.BillOfQuantities.forms import PaymentCertificateFinalApprovalForm
 from app.BillOfQuantities.models import ActualTransaction, LineItem, PaymentCertificate
 from app.BillOfQuantities.tasks import generate_payment_certificate_pdf
+from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.models import Project
 
 
@@ -300,7 +301,7 @@ class PaymentCertificateSubmitView(LoginRequiredMixin, UpdateView, GetProjectMix
 
 
 class PaymentCertificateFinalApprovalView(
-    LoginRequiredMixin, UpdateView, GetProjectMixin
+    LoginRequiredMixin, UserHasGroupGenericMixin, UpdateView, GetProjectMixin
 ):
     """Final approval/rejection view - choose between APPROVED or REJECTED."""
 
@@ -308,11 +309,12 @@ class PaymentCertificateFinalApprovalView(
     form_class = PaymentCertificateFinalApprovalForm
     template_name = "payment_certificate/payment_certificate_final_approval.html"
     context_object_name = "payment_certificate"
+    permissions = ["consultant"]
 
     def get_queryset(self):
         return (
             PaymentCertificate.objects.filter(
-                project__account=self.request.user, deleted=False
+                project__client__consultant=self.request.user, deleted=False
             )
             .select_related("project")
             .prefetch_related(

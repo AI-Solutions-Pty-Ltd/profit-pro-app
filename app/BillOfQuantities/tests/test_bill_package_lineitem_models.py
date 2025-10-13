@@ -4,7 +4,8 @@ from decimal import Decimal
 
 import pytest
 
-from app.BillOfQuantities.factories import (
+from app.BillOfQuantities.models import Bill, LineItem, Package, PaymentCertificate
+from app.BillOfQuantities.tests.factories import (
     ActualTransactionFactory,
     BillFactory,
     LineItemFactory,
@@ -12,8 +13,7 @@ from app.BillOfQuantities.factories import (
     PaymentCertificateFactory,
     StructureFactory,
 )
-from app.BillOfQuantities.models import Bill, LineItem, Package, PaymentCertificate
-from app.Project.factories import ProjectFactory
+from app.Project.tests.factories import ProjectFactory
 
 
 @pytest.mark.django_db

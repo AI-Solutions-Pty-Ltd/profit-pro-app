@@ -1,109 +1,104 @@
 {% extends "base.html" %}
 {% block title %}
-  Projects - {{ block.super }}
+    Projects - {{ block.super }}
 {% endblock title %}
 {% block content %}
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Header -->
-    <div class="mb-8">
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-3xl font-bold text-gray-900">Projects</h1>
-          <p class="mt-2 text-sm text-gray-600">Manage your projects</p>
-        </div>
-        <a href="{% url 'project:project-create' %}"
-           class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-          {% heroicon_outline "plus" size="20" %}
-          New Project
-        </a>
-      </div>
-    </div>
-    <!-- Projects List -->
-    {% if projects %}
-      <div class="bg-white shadow-md rounded-lg overflow-hidden">
-        <ul class="divide-y divide-gray-200">
-          {% for project in projects %}
-            <li class="group relative border-l-4 border-transparent hover:border-indigo-500 transition-all duration-200 p-4">
-              <a href="{% url 'project:project-detail' project.pk %}"
-                 class="block p-2 hover:bg-gray-50 transition-colors">
-                <div class="flex items-center justify-between">
-                  <div class="flex-1">
-                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors flex items-center gap-2">
-                      {% heroicon_outline "eye" size="20" %}
-                      {{ project.name }}
-                      <span class="absolute inset-0" aria-hidden="true"></span>
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-500">Created {{ project.created_at|date:"F d, Y" }}</p>
-                    {% if project.description %}
-                      <p class="mt-2 text-sm text-gray-600 line-clamp-2">{{ project.description|truncatewords:20 }}</p>
-                    {% endif %}
-                  </div>
-                  <div class="flex items-center space-x-3 ml-4">
-                    <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
-                       class="inline-flex items-center px-3 py-1.5 gap-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors z-10">
-                      {% heroicon_outline "eye" size="20" %}
-                      Payment Certificates
-                    </a>
-                    <a href="{% url 'project:project-detail' project.pk %}"
-                       class="inline-flex items-center px-3 py-1.5 gap-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors z-10">
-                      {% heroicon_outline "eye" size="20" %}
-                      View
-                    </a>
-                  </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Projects</h1>
+                    <p class="mt-2 text-sm text-gray-600">Manage your projects</p>
                 </div>
-              </a>
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-      <!-- Pagination -->
-      {% if is_paginated %}
-        <div class="mt-6 flex justify-center">
-          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-            {% if page_obj.has_previous %}
-              <a href="?page={{ page_obj.previous_page_number }}"
-                 class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                <span class="sr-only">Previous</span>
-                <svg class="h-5 w-5"
-                     xmlns="http://www.w3.org/2000/svg"
-                     viewBox="0 0 20 20"
-                     fill="currentColor">
-                  <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-                </svg>
-              </a>
-            {% endif %}
-            <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
-              Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-            </span>
-            {% if page_obj.has_next %}
-              <a href="?page={{ page_obj.next_page_number }}"
-                 class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                <span class="sr-only">Next</span>
-                <svg class="h-5 w-5"
-                     xmlns="http://www.w3.org/2000/svg"
-                     viewBox="0 0 20 20"
-                     fill="currentColor">
-                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                </svg>
-              </a>
-            {% endif %}
-          </nav>
+                <a href="{% url 'project:project-create' %}"
+                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    {% heroicon_outline "plus" size="20" %}
+                    New Project
+                </a>
+            </div>
         </div>
-      {% endif %}
-    {% else %}
-      <!-- Empty State -->
-      <div class="bg-white shadow-md rounded-lg p-12 text-center">
-        {% heroicon_outline "document" size="20" %}
-        <h3 class="mt-2 text-lg font-medium text-gray-900">No projects</h3>
-        <p class="mt-1 text-sm text-gray-500">Get started by creating a new project.</p>
-        <div class="mt-6">
-          <a href="{% url 'project:project-create' %}"
-             class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-            {% heroicon_outline "plus" size="20" %}
-            Create Your First Project
-          </a>
-        </div>
-      </div>
-    {% endif %}
-  </div>
+        <!-- Projects List -->
+        {% if projects %}
+            <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                <ul class="divide-y divide-gray-200">
+                    {% for project in projects %}
+                        <li class="group relative border-l-4 border-transparent hover:border-indigo-500 transition-all duration-200 p-4">
+                            <a href="{% url 'project:project-detail' project.pk %}"
+                               class="block p-2 hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <h3 class="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors flex items-center gap-2">
+                                            {% heroicon_outline "eye" size="20" %}
+                                            {{ project.name }}
+                                            <span class="absolute inset-0" aria-hidden="true"></span>
+                                        </h3>
+                                        <p class="mt-1 text-sm text-gray-500">Created {{ project.created_at|date:"F d, Y" }}</p>
+                                        {% if project.description %}
+                                            <p class="mt-2 text-sm text-gray-600 line-clamp-2">{{ project.description|truncatewords:20 }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex items-center space-x-3 ml-4">
+                                        <a href="{% url 'project:project-detail' project.pk %}"
+                                           class="inline-flex items-center px-3 py-1.5 gap-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors z-10">
+                                            {% heroicon_outline "eye" size="20" %}
+                                            View
+                                        </a>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <div class="mt-6 flex justify-center">
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}"
+                               class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Previous</span>
+                                <svg class="h-5 w-5"
+                                     xmlns="http://www.w3.org/2000/svg"
+                                     viewBox="0 0 20 20"
+                                     fill="currentColor">
+                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        {% endif %}
+                        <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                        </span>
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}"
+                               class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Next</span>
+                                <svg class="h-5 w-5"
+                                     xmlns="http://www.w3.org/2000/svg"
+                                     viewBox="0 0 20 20"
+                                     fill="currentColor">
+                                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            {% endif %}
+        {% else %}
+            <!-- Empty State -->
+            <div class="bg-white shadow-md rounded-lg p-12 text-center">
+                {% heroicon_outline "document" size="20" %}
+                <h3 class="mt-2 text-lg font-medium text-gray-900">No projects</h3>
+                <p class="mt-1 text-sm text-gray-500">Get started by creating a new project.</p>
+                <div class="mt-6">
+                    <a href="{% url 'project:project-create' %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        {% heroicon_outline "plus" size="20" %}
+                        Create Your First Project
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
 {% endblock content %}

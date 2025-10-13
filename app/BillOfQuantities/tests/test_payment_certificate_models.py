@@ -4,13 +4,13 @@ from decimal import Decimal
 
 import pytest
 
-from app.BillOfQuantities.factories import (
+from app.BillOfQuantities.models import ActualTransaction, PaymentCertificate
+from app.BillOfQuantities.tests.factories import (
     ActualTransactionFactory,
     LineItemFactory,
     PaymentCertificateFactory,
 )
-from app.BillOfQuantities.models import ActualTransaction, PaymentCertificate
-from app.Project.factories import ProjectFactory
+from app.Project.tests.factories import ProjectFactory
 
 
 @pytest.mark.django_db
@@ -72,7 +72,10 @@ class TestPaymentCertificateModel:
 
         certificates = PaymentCertificate.objects.filter(project=project)
         # Most recent first
-        assert list(certificates) == [cert1, cert2, cert3]
+        cert_list = list(certificates)
+        assert cert_list[0] == cert1
+        assert cert_list[1] == cert2
+        assert cert_list[2] == cert3
 
     def test_payment_certificate_project_relationship(self):
         """Test the relationship between PaymentCertificate and Project."""

@@ -4,7 +4,7 @@
         <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Password Reset - {{ site_name }}</title>
+            <title>Added to Project - {{ site_name }}</title>
         </head>
         <body style="margin: 0;
                      padding: 0;
@@ -24,12 +24,12 @@
                                       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)">
                             <!-- Header -->
                             <tr>
-                                <td style="background-color: #667eea;
+                                <td style="background-color: #10b981;
                                            padding: 32px;
                                            text-align: center;
                                            border-radius: 12px 12px 0 0">
                                     <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: bold">{{ site_name }}</h1>
-                                    <p style="color: #ffffff; margin: 8px 0 0 0; font-size: 14px;">Password Reset Request</p>
+                                    <p style="color: #ffffff; margin: 8px 0 0 0; font-size: 14px;">You've Been Added to a Project!</p>
                                 </td>
                             </tr>
                             <!-- Body -->
@@ -38,58 +38,56 @@
                                     <h2 style="color: #1f2937;
                                                margin: 0 0 16px 0;
                                                font-size: 20px;
-                                               font-weight: 600">Hello {{ user.first_name|default:user.email }},</h2>
+                                               font-weight: 600">Hello {{ user.first_name|default:user.email }}!</h2>
                                     <p style="color: #6b7280;
                                               margin: 0 0 24px 0;
                                               font-size: 16px;
                                               line-height: 1.6">
-                                        We received a request to reset the password for your account associated with this email address. If you made this request, please click the button below to reset your password:
+                                        Great news! You have been added to <strong>{{ client_name }}</strong> on {{ site_name }}. You can now access this project using your existing account.
                                     </p>
+                                    <!-- Project Details -->
+                                    {% if project_name %}
+                                        <div style="background-color: #eff6ff;
+                                                    border-left: 4px solid #3b82f6;
+                                                    padding: 16px;
+                                                    margin: 24px 0;
+                                                    border-radius: 6px">
+                                            <p style="color: #1e40af;
+                                                      margin: 0 0 8px 0;
+                                                      font-size: 14px;
+                                                      font-weight: 600">📋 Project Information</p>
+                                            <p style="color: #1e40af; margin: 0; font-size: 14px;">
+                                                <strong>Project:</strong> {{ project_name }}
+                                            </p>
+                                            {% if project_description %}
+                                                <p style="color: #1e40af; margin: 8px 0 0 0; font-size: 14px;">
+                                                    <strong>Description:</strong> {{ project_description }}
+                                                </p>
+                                            {% endif %}
+                                            <p style="color: #1e40af; margin: 8px 0 0 0; font-size: 14px;">
+                                                <strong>Client:</strong> {{ client_name }}
+                                            </p>
+                                        </div>
+                                    {% endif %}
                                     <!-- CTA Button -->
                                     <div style="text-align: center; margin: 32px 0;">
                                         <table cellpadding="0" cellspacing="0" style="margin: 0 auto;">
                                             <tr>
-                                                <td style="background-color: #667eea;
+                                                <td style="background-color: #10b981;
                                                            padding: 16px 32px;
                                                            border-radius: 8px;
                                                            text-align: center">
-                                                    <a href="{{ protocol }}://{{ domain }}{% url 'password_reset_confirm' uidb64=uid token=token %}"
+                                                    <a href="{{ protocol }}://{{ domain }}"
                                                        style="color: #ffffff;
                                                               text-decoration: none;
                                                               font-weight: 600;
                                                               font-size: 16px;
                                                               font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
                                                               display: inline-block;
-                                                              line-height: 1.5">Reset My Password</a>
+                                                              line-height: 1.5">Go to {{ site_name }}</a>
                                                 </td>
                                             </tr>
                                         </table>
-                                    </div>
-                                    <!-- Alternative Link -->
-                                    <p style="color: #6b7280;
-                                              margin: 0 0 16px 0;
-                                              font-size: 14px;
-                                              text-align: center">Or copy and paste this link into your browser:</p>
-                                    <p style="color: #667eea;
-                                              margin: 0 0 24px 0;
-                                              font-size: 12px;
-                                              word-break: break-all;
-                                              text-align: center;
-                                              background-color: #f3f4f6;
-                                              padding: 12px;
-                                              border-radius: 6px">
-                                        {{ protocol }}://{{ domain }}{% url 'password_reset_confirm' uidb64=uid token=token %}
-                                    </p>
-                                    <!-- Security Info -->
-                                    <div style="background-color: #fef3c7;
-                                                border-left: 4px solid #f59e0b;
-                                                padding: 16px;
-                                                margin: 24px 0;
-                                                border-radius: 6px">
-                                        <p style="color: #92400e; margin: 0; font-size: 14px; font-weight: 600;">⚠️ Security Notice</p>
-                                        <p style="color: #92400e; margin: 8px 0 0 0; font-size: 14px;">
-                                            This link will expire in {{ expiry_hours|default:"24" }} hours for security purposes.
-                                        </p>
                                     </div>
                                     <!-- Account Info -->
                                     <div style="background-color: #f3f4f6;
@@ -99,14 +97,15 @@
                                         <p style="color: #374151;
                                                   margin: 0 0 8px 0;
                                                   font-size: 14px;
-                                                  font-weight: 600">Account Details:</p>
+                                                  font-weight: 600">Your Account:</p>
                                         <p style="color: #6b7280; margin: 0; font-size: 14px;">
                                             <strong>Email:</strong> {{ user.email }}
                                         </p>
+                                        <p style="color: #6b7280; margin: 8px 0 0 0; font-size: 14px;">You can log in using your existing credentials.</p>
                                     </div>
                                     <!-- Footer -->
                                     <p style="color: #6b7280; margin: 0; font-size: 14px; line-height: 1.6;">
-                                        If you didn't request this password reset, you can safely ignore this email. Your password will remain unchanged.
+                                        If you have any questions about this project, please contact the project administrator.
                                     </p>
                                 </td>
                             </tr>
@@ -120,7 +119,7 @@
                                         Thanks for using {{ site_name }}!
                                         <br>
                                         <a href="{{ protocol }}://{{ domain }}"
-                                           style="color: #667eea;
+                                           style="color: #10b981;
                                                   text-decoration: none">{{ protocol }}://{{ domain }}</a>
                                     </p>
                                     <p style="color: #9ca3af; margin: 16px 0 0 0; font-size: 12px;">

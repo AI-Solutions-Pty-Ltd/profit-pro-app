@@ -1,7 +1,7 @@
-from app.BillOfQuantities.factories import StructureFactory
 from app.BillOfQuantities.models import Structure
-from app.Project.factories import ProjectFactory
+from app.BillOfQuantities.tests.factories import StructureFactory
 from app.Project.models import Project
+from app.Project.tests.factories import ProjectFactory
 
 
 class TestStructureUrls:

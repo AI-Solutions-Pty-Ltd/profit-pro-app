@@ -3,13 +3,13 @@
 import pytest
 from django.test import Client
 
-from app.Account.factories import (
+from app.Account.tests.factories import (
     AccountFactory,
     SuburbFactory,
     SuperuserFactory,
     TownFactory,
 )
-from app.Project.factories import ProjectFactory
+from app.Project.tests.factories import ProjectFactory
 
 
 @pytest.fixture(autouse=True)

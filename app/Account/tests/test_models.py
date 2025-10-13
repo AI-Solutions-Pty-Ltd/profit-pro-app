@@ -4,13 +4,13 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
-from app.Account.factories import (
+from app.Account.models import Account, Suburb, Town
+from app.Account.tests.factories import (
     AccountFactory,
     SuburbFactory,
     SuperuserFactory,
     TownFactory,
 )
-from app.Account.models import Account, Suburb, Town
 
 
 class TestSuburbModel:
@@ -200,15 +200,15 @@ class TestAccountModel:
                 is_superuser=False,
             )
 
-    def test_account_ownership_choices(self):
-        """Test ownership field choices."""
+    def test_account_type_choices(self):
+        """Test type field choices."""
         account = AccountFactory.create()
-        assert account.ownership == Account.Ownership.PERSONAL
+        assert account.type == Account.Type.CLIENT
 
-        account.ownership = Account.Ownership.COMPANY
+        account.type = Account.Type.CLIENT
         account.save()
         account.refresh_from_db()
-        assert account.ownership == Account.Ownership.COMPANY
+        assert account.type == Account.Type.CLIENT
 
     def test_account_identification_type_choices(self):
         """Test identification type choices."""

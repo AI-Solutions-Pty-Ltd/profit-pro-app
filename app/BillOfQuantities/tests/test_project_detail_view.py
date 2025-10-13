@@ -3,10 +3,10 @@
 import pytest
 from django.urls import reverse
 
-from app.Account.factories import AccountFactory
-from app.BillOfQuantities.factories import PaymentCertificateFactory
+from app.Account.tests.factories import AccountFactory
 from app.BillOfQuantities.models import PaymentCertificate
-from app.Project.factories import ProjectFactory
+from app.BillOfQuantities.tests.factories import PaymentCertificateFactory
+from app.Project.tests.factories import ProjectFactory
 
 
 class TestProjectPaymentCertificateDetailView:

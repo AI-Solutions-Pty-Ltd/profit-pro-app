@@ -55,6 +55,33 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
+class ProjectWBSDetailView(LoginRequiredMixin, DetailView):
+    """Display project WBS/BOQ detailed view."""
+
+    model = Project
+    template_name = "project/project_detail_wbs.html"
+    context_object_name = "project"
+
+    def get_queryset(self):
+        """Filter projects by current user."""
+        return Project.objects.filter(account=self.request.user, deleted=False)
+
+    def get_context_data(self, **kwargs):
+        """Add line items total to context."""
+        from django.db.models import Sum
+
+        context = super().get_context_data(**kwargs)
+        project = self.get_object()
+
+        # Calculate total of all line items
+        line_items_total = (
+            project.line_items.aggregate(total=Sum("total_price"))["total"] or 0
+        )
+        context["line_items_total"] = line_items_total
+
+        return context
+
+
 class ProjectCreateView(LoginRequiredMixin, CreateView):
     """Create a new project."""
 

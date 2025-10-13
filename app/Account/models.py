@@ -70,10 +70,10 @@ class Town(BaseModel):
 
 
 class Account(AbstractUser, BaseModel):
-    class Ownership(models.TextChoices):
-        PERSONAL = "Personal", "Personal"
-        COMPANY = "Company", "Company"
-        TENANT = "Tenant", "Tenant"
+    class Type(models.TextChoices):
+        CONTRACTOR = "Contractor", "Contractor"
+        CLIENT = "Client", "Client"
+        CONSULTANT = "Consultant", "Consultant"
 
     class IdentificationType(models.TextChoices):
         SOUTH_AFRICA_ID = "South African ID", "South African ID"
@@ -91,11 +91,11 @@ class Account(AbstractUser, BaseModel):
         _("first name"), max_length=150, blank=False
     )  # override first_name field from AbstractUser to make it required
 
-    ownership = models.CharField(
+    type = models.CharField(
         max_length=50,
-        choices=Ownership.choices,
+        choices=Type.choices,
         blank=True,
-        default=Ownership.PERSONAL,
+        default=Type.CONTRACTOR,
     )
 
     primary_contact = PhoneNumberField(
