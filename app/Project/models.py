@@ -1,7 +1,8 @@
-from django.db import models
-from django.urls import reverse
-from django.db.models import Sum
 from decimal import Decimal
+
+from django.db import models
+from django.db.models import Sum
+from django.urls import reverse
 
 from app.Account.models import Account
 from app.core.Utilities.models import BaseModel

@@ -2,10 +2,10 @@ from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Sum
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, UpdateView, View
-from django.db.models import Sum
 
 from app.BillOfQuantities.forms import PaymentCertificateFinalApprovalForm
 from app.BillOfQuantities.models import ActualTransaction, LineItem, PaymentCertificate
@@ -58,9 +58,11 @@ class PaymentCertificateListView(LoginRequiredMixin, ListView, GetProjectMixin):
         total_claimed = sum(t.total_claimed for t in completed_certificates)
         total_active = 0
         if active_payment_certificate:
-            total_active = active_payment_certificate.actual_transactions.aggregate(
-                total=Sum("total_price")
-            )["total"]
+            total_active = Decimal(
+                active_payment_certificate.actual_transactions.aggregate(
+                    total=Sum("total_price")
+                )["total"]
+            )
         remaining_amount = (
             project.get_total_contract_value - total_claimed - total_active
         )

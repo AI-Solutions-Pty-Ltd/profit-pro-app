@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('BillOfQuantities', '0004_alter_actualtransaction_options'),
+        ("BillOfQuantities", "0004_alter_actualtransaction_options"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='paymentcertificate',
-            name='notes',
-            field=models.TextField(blank=True, default='', help_text='Additional notes or comments'),
+            model_name="paymentcertificate",
+            name="notes",
+            field=models.TextField(
+                blank=True, default="", help_text="Additional notes or comments"
+            ),
         ),
     ]
