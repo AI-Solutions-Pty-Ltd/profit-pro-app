@@ -36,7 +36,9 @@
             <div class="px-6 py-4">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
+                        <h1 class="text-2xl font-bold text-gray-900">
+                            {{ project.name }} | R {{ project.get_total_contract_value|default:"0"|floatformat:2|intcomma }}
+                        </h1>
                         <p class="text-sm text-gray-600 mt-1">Payment Certificates</p>
                     </div>
                 </div>
@@ -50,7 +52,7 @@
             </div>
             <div class="px-6 py-4">
                 {% if active_certificate %}
-                    <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                    <div class="flex items-center justify-between p-4 {% if active_certificate.status == 'DRAFT' %}bg-blue-50{% elif active_certificate.status == 'REJECTED' %}bg-red-50{% else %}bg-green-50{% endif %} rounded-lg">
                         <div class="flex items-center space-x-4">
                             <div class="flex-shrink-0">
                                 {% if active_certificate.status == 'DRAFT' %}
@@ -60,11 +62,16 @@
                                 {% endif %}
                             </div>
                             <div>
-                                <h3 class="text-sm font-medium text-blue-900">Certificate #{{ active_certificate.certificate_number }}</h3>
+                                <h3 class="text-sm font-medium text-blue-900">
+                                    Certificate #{{ active_certificate.certificate_number }} | R {{ active_certificate.total_amount|default:"0"|floatformat:2|intcomma }}
+                                </h3>
                                 <p class="text-sm text-blue-700 mt-1">
                                     Status: <span class="font-medium">{{ active_certificate.get_status_display }}</span>
                                 </p>
                                 <p class="text-xs text-blue-600 mt-1">Created: {{ active_certificate.created_at|date:"M d, Y" }}</p>
+                                {% if active_certificate.notes %}
+                                    <p class="text-xs text-blue-600 mt-1">Notes: {{ active_certificate.notes }}</p>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="flex items-center space-x-3">
@@ -98,10 +105,39 @@
                 {% endif %}
             </div>
         </div>
+        <!-- Summary Stats -->
+        <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-3 mb-6">
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Total Claimed to date</dt>
+                    <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                        R {{ total_claimed|default:"0"|floatformat:2|intcomma }}
+                    </dd>
+                </div>
+            </div>
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Active Claim</dt>
+                    <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                        R {{ active_claimed|default:"0"|floatformat:2|intcomma }}
+                    </dd>
+                </div>
+            </div>
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <dt class="text-sm font-medium text-gray-500 truncate">Remaining Amount</dt>
+                    <dd class="mt-1 text-3xl font-semibold text-gray-900">
+                        R {{ remaining_amount|default:"0"|floatformat:2|intcomma }}
+                    </dd>
+                </div>
+            </div>
+        </div>
         <!-- Completed Payment Certificates Section -->
         <div class="bg-white shadow-sm rounded-lg">
             <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-medium text-gray-900">Completed Payment Certificates</h2>
+                <h2 class="text-lg font-medium text-gray-900">
+                    Completed Payment Certificates ({{ completed_payment_certificates.count }})
+                </h2>
                 <p class="text-sm text-gray-600">Approved and rejected certificates with claimed amounts</p>
             </div>
             <div class="px-6 py-4">
@@ -145,37 +181,6 @@
                         <p class="mt-1 text-sm text-gray-500">There are no completed payment certificates for this project yet.</p>
                     </div>
                 {% endif %}
-            </div>
-        </div>
-        <!-- Summary Stats -->
-        <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-3">
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="px-4 py-5 sm:p-6">
-                    <dt class="text-sm font-medium text-gray-500 truncate">Total Certificates</dt>
-                    <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                        {{ payment_certificates.count }}
-                    </dd>
-                </div>
-            </div>
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="px-4 py-5 sm:p-6">
-                    <dt class="text-sm font-medium text-gray-500 truncate">Completed</dt>
-                    <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                        {{ completed_payment_certificates.count }}
-                    </dd>
-                </div>
-            </div>
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="px-4 py-5 sm:p-6">
-                    <dt class="text-sm font-medium text-gray-500 truncate">Active</dt>
-                    <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                        {% if active_certificate %}
-                            1
-                        {% else %}
-                            0
-                        {% endif %}
-                    </dd>
-                </div>
             </div>
         </div>
     </div>

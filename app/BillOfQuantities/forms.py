@@ -139,16 +139,24 @@ class PaymentCertificateFinalApprovalForm(forms.ModelForm):
 
     class Meta:
         model = PaymentCertificate
-        fields = ["status"]
+        fields = ["status", "notes"]
         widgets = {
             "status": forms.RadioSelect(
                 attrs={
                     "class": "focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
                 }
             ),
+            "notes": forms.Textarea(
+                attrs={
+                    "class": "block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm",
+                    "rows": 4,
+                    "placeholder": "Add any notes or comments about this decision...",
+                }
+            ),
         }
         labels = {
             "status": "Decision",
+            "notes": "Notes (Optional)",
         }
 
     def __init__(self, *args, **kwargs):

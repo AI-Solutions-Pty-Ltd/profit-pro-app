@@ -23,10 +23,17 @@ class ProjectListView(LoginRequiredMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        """Filter projects by current user."""
-        return Project.objects.filter(
+        """Filter projects by current user and search query."""
+        queryset = Project.objects.filter(
             account=self.request.user, deleted=False
         ).order_by("-created_at")
+
+        # Search filter
+        search = self.request.GET.get("search")
+        if search:
+            queryset = queryset.filter(name__icontains=search)
+
+        return queryset
 
 
 class ProjectDetailView(LoginRequiredMixin, DetailView):
@@ -67,17 +74,46 @@ class ProjectWBSDetailView(LoginRequiredMixin, DetailView):
         return Project.objects.filter(account=self.request.user, deleted=False)
 
     def get_context_data(self, **kwargs):
-        """Add line items total to context."""
+        """Add line items total and filter options to context."""
         from django.db.models import Sum
+
+        from app.BillOfQuantities.models import Bill, Package, Structure
 
         context = super().get_context_data(**kwargs)
         project = self.get_object()
 
-        # Calculate total of all line items
-        line_items_total = (
-            project.line_items.aggregate(total=Sum("total_price"))["total"] or 0
-        )
+        # Get unique structures, bills, packages for dropdowns
+        structures = Structure.objects.filter(project=project).distinct()
+        bills = Bill.objects.filter(structure__project=project).distinct()
+        packages = Package.objects.filter(bill__structure__project=project).distinct()
+
+        # Get filter parameters
+        structure_id = self.request.GET.get("structure")
+        bill_id = self.request.GET.get("bill")
+        package_id = self.request.GET.get("package")
+        description = self.request.GET.get("description")
+
+        # Filter line items
+        line_items = project.line_items.all()
+        if structure_id:
+            bills = bills.filter(structure__id=structure_id)
+            line_items = line_items.filter(structure_id=structure_id)
+        if bill_id:
+            packages = packages.filter(bill__id=bill_id)
+            line_items = line_items.filter(bill_id=bill_id)
+        if package_id:
+            line_items = line_items.filter(package_id=package_id)
+        if description:
+            line_items = line_items.filter(description__icontains=description)
+
+        # Calculate total of filtered line items
+        line_items_total = line_items.aggregate(total=Sum("total_price"))["total"] or 0
+
+        context["filtered_line_items"] = line_items
         context["line_items_total"] = line_items_total
+        context["structures"] = structures
+        context["bills"] = bills
+        context["packages"] = packages
 
         return context
 

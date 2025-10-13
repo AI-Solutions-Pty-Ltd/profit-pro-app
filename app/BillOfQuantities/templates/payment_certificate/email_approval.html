@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="Payment Certificate Approved">
+        <meta name="keywords" content="Payment Certificate Approved">
+        <meta name="author" content="Profit Pro">
+        <title>Payment Certificate Approved</title>
+        <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #4F46E5;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background-color: #f9fafb;
+            padding: 30px;
+            border: 1px solid #e5e7eb;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+        }
+        .info-box {
+            background-color: white;
+            padding: 20px;
+            border-left: 4px solid #10B981;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .info-row {
+            margin: 10px 0;
+        }
+        .label {
+            font-weight: bold;
+            color: #6B7280;
+        }
+        .value {
+            color: #111827;
+            font-size: 1.1em;
+        }
+        .notes {
+            background-color: #FEF3C7;
+            padding: 15px;
+            border-left: 4px solid #F59E0B;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #6B7280;
+            font-size: 0.9em;
+        }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1 class="m-0">Payment Certificate Approved ✓</h1>
+        </div>
+        <div class="content">
+            <p>Dear {{ project.account.get_full_name }},</p>
+            <p>We are pleased to inform you that your payment certificate has been approved.</p>
+            <div class="info-box">
+                <div class="info-row">
+                    <span class="label">Certificate Number:</span>
+                    <span class="value">#{{ payment_certificate.certificate_number }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Project:</span>
+                    <span class="value">{{ project.name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Total Amount:</span>
+                    <span class="value text-green-500 font-bold">R {{ payment_certificate.total_claimed|floatformat:2|intcomma }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Approved Date:</span>
+                    <span class="value">{{ payment_certificate.updated_at|date:"F d, Y" }}</span>
+                </div>
+            </div>
+            {% if payment_certificate.notes %}
+                <div class="notes">
+                    <p class="mb-2">
+                        <strong>Notes:</strong>
+                    </p>
+                    <p>{{ payment_certificate.notes|linebreaks }}</p>
+                </div>
+            {% endif %}
+            <p>The approved amount will be processed according to the payment terms outlined in your contract.</p>
+            <p>Thank you for your continued partnership.</p>
+            <p>
+                Best regards,
+                <br>
+                <strong>Profit Pro Team</strong>
+            </p>
+        </div>
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </body>
+</html>

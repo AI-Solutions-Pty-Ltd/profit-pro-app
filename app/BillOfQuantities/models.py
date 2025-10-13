@@ -128,9 +128,11 @@ class LineItem(BaseModel):
             actual_transactions = actual_transactions.exclude(
                 id__in=current_transactions_ids
             )
-        return actual_transactions.aggregate(total=models.Sum("quantity"))[
-            "total"
-        ] or Decimal(0)
+        value = (
+            actual_transactions.aggregate(total=models.Sum("quantity"))["total"] or 0
+        )
+        value = Decimal(value)
+        return value
 
     @property
     def remaining_quantity(self):
@@ -171,6 +173,9 @@ class PaymentCertificate(BaseModel):
     )
 
     certificate_number = models.IntegerField()
+    notes = models.TextField(
+        blank=True, default="", help_text="Additional notes or comments"
+    )
 
     class Meta:
         verbose_name = "Payment Certificate"
@@ -188,6 +193,12 @@ class PaymentCertificate(BaseModel):
         return total_payment_certificates + 1
 
     @property
+    def total_amount(self):
+        return self.actual_transactions.aggregate(total=models.Sum("total_price"))[
+            "total"
+        ] or Decimal(0)
+
+    @property
     def items_submitted(self):
         approved_line_items = self.actual_transactions.filter(approved=True)
         return approved_line_items.aggregate(total=models.Sum("total_price"))[
@@ -196,7 +207,7 @@ class PaymentCertificate(BaseModel):
 
     @property
     def items_claimed(self):
-        approved_line_items = self.actual_transactions.filter(approved=True)
+        approved_line_items = self.actual_transactions.filter(claimed=True)
         return approved_line_items.aggregate(total=models.Sum("total_price"))[
             "total"
         ] or Decimal(0)

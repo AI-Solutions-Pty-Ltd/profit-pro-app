@@ -5,6 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, UpdateView, View
+from django.db.models import Sum
 
 from app.BillOfQuantities.forms import PaymentCertificateFinalApprovalForm
 from app.BillOfQuantities.models import ActualTransaction, LineItem, PaymentCertificate
@@ -47,14 +48,25 @@ class PaymentCertificateListView(LoginRequiredMixin, ListView, GetProjectMixin):
 
         # Completed payment certificates (APPROVED or REJECTED)
         if active_payment_certificate:
-            context["completed_payment_certificates"] = self.object_list.exclude(
+            completed_certificates = self.object_list.exclude(
                 pk=active_payment_certificate.pk
             ).order_by("-created_at")
         else:
-            context["completed_payment_certificates"] = self.object_list.order_by(
-                "-created_at"
-            )
+            completed_certificates = self.object_list.order_by("-created_at")
 
+        context["completed_payment_certificates"] = completed_certificates
+        total_claimed = sum(t.total_claimed for t in completed_certificates)
+        total_active = 0
+        if active_payment_certificate:
+            total_active = active_payment_certificate.actual_transactions.aggregate(
+                total=Sum("total_price")
+            )["total"]
+        remaining_amount = (
+            project.get_total_contract_value - total_claimed - total_active
+        )
+        context["total_claimed"] = total_claimed
+        context["active_claimed"] = total_active
+        context["remaining_amount"] = remaining_amount
         return context
 
 
@@ -92,6 +104,12 @@ class PaymentCertificateEditView(LoginRequiredMixin, View):
 
     def get(self, request, pk=None, project_pk=None):
         project = get_object_or_404(Project, pk=project_pk, account=request.user)
+        # Get unique structures, bills, packages for dropdowns
+        from app.BillOfQuantities.models import Bill, Package, Structure
+
+        structures = Structure.objects.filter(project=project).distinct()
+        bills = Bill.objects.filter(structure__project=project).distinct()
+        packages = Package.objects.filter(bill__structure__project=project).distinct()
         if not project.line_items:
             messages.error(request, "Project has no WBS loaded, please upload!")
             return redirect(
@@ -142,10 +160,30 @@ class PaymentCertificateEditView(LoginRequiredMixin, View):
             "structure", "bill", "package"
         ).prefetch_related("actual_transactions")
 
+        # Apply filters
+        structure_id = request.GET.get("structure")
+        bill_id = request.GET.get("bill")
+        package_id = request.GET.get("package")
+        description = request.GET.get("description")
+
+        if structure_id:
+            line_items = line_items.filter(structure_id=structure_id)
+            bills = bills.filter(structure_id=structure_id)
+        if bill_id:
+            line_items = line_items.filter(bill_id=bill_id)
+            packages = packages.filter(bill_id=bill_id)
+        if package_id:
+            line_items = line_items.filter(package_id=package_id)
+        if description:
+            line_items = line_items.filter(description__icontains=description)
+
         context = {
             "project": project,
             "payment_certificate": payment_certificate,
             "line_items": line_items,
+            "structures": structures,
+            "bills": bills,
+            "packages": packages,
         }
         return render(request, self.template_name, context)
 
@@ -335,7 +373,12 @@ class PaymentCertificateFinalApprovalView(
         return context
 
     def form_valid(self, form):
+        from django.template.loader import render_to_string
+
+        from app.core.Utilities.django_email_service import django_email_service
+
         payment_certificate = form.save(commit=False)
+        project = payment_certificate.project
 
         # Mark all transactions as claimed based on status
         if payment_certificate.status == PaymentCertificate.Status.APPROVED:
@@ -344,6 +387,25 @@ class PaymentCertificateFinalApprovalView(
                 self.request,
                 f"Payment Certificate #{payment_certificate.certificate_number} has been approved!",
             )
+            payment_certificate.refresh_from_db()
+
+            # Send approval email
+            subject = f"Payment Certificate #{payment_certificate.certificate_number} Approved"
+            context = {
+                "payment_certificate": payment_certificate,
+                "project": project,
+            }
+            html_body = render_to_string(
+                "payment_certificate/email_approval.html", context
+            )
+
+            django_email_service(
+                to=project.account.email,
+                subject=subject,
+                html_body=html_body,
+                plain_body="",
+            )
+
         else:
             payment_certificate.actual_transactions.update(
                 claimed=False, approved=False
@@ -351,6 +413,23 @@ class PaymentCertificateFinalApprovalView(
             messages.warning(
                 self.request,
                 f"Payment Certificate #{payment_certificate.certificate_number} has been rejected.",
+            )
+
+            # Send rejection email
+            subject = f"Payment Certificate #{payment_certificate.certificate_number} Rejected"
+            context = {
+                "payment_certificate": payment_certificate,
+                "project": project,
+            }
+            html_body = render_to_string(
+                "payment_certificate/email_rejection.html", context
+            )
+
+            django_email_service(
+                to=project.account.email,
+                subject=subject,
+                html_body=html_body,
+                plain_body="",
             )
 
         payment_certificate.save()

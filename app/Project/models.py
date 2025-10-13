@@ -1,5 +1,7 @@
 from django.db import models
 from django.urls import reverse
+from django.db.models import Sum
+from decimal import Decimal
 
 from app.Account.models import Account
 from app.core.Utilities.models import BaseModel
@@ -66,6 +68,14 @@ class Project(BaseModel):
         return reverse(
             "bill_of_quantities:structure-upload", kwargs={"project_pk": self.pk}
         )
+
+    @property
+    def get_total_contract_value(self):
+        line_items = self.line_items.all()
+        total_contract_value = line_items.aggregate(total=Sum("total_price"))[
+            "total"
+        ] or Decimal(0)
+        return total_contract_value
 
     @property
     def get_active_payment_certificate(self):

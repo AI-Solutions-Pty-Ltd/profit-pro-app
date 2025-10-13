@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="Payment Certificate Rejected">
+        <meta name="keywords" content="Payment Certificate Rejected">
+        <meta name="author" content="Profit Pro">
+        <title>Payment Certificate Rejected</title>
+        <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #DC2626;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background-color: #f9fafb;
+            padding: 30px;
+            border: 1px solid #e5e7eb;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+        }
+        .info-box {
+            background-color: white;
+            padding: 20px;
+            border-left: 4px solid #EF4444;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .info-row {
+            margin: 10px 0;
+        }
+        .label {
+            font-weight: bold;
+            color: #6B7280;
+        }
+        .value {
+            color: #111827;
+            font-size: 1.1em;
+        }
+        .reason {
+            background-color: #FEE2E2;
+            padding: 15px;
+            border-left: 4px solid #DC2626;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #6B7280;
+            font-size: 0.9em;
+        }
+        .action-box {
+            background-color: #DBEAFE;
+            padding: 15px;
+            border-left: 4px solid #3B82F6;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1 class="m-0">Payment Certificate Rejected</h1>
+        </div>
+        <div class="content">
+            <p>Dear {{ project.account.get_full_name }},</p>
+            <p>We regret to inform you that your payment certificate has been rejected and requires revision.</p>
+            <div class="info-box">
+                <div class="info-row">
+                    <span class="label">Certificate Number:</span>
+                    <span class="value">#{{ payment_certificate.certificate_number }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Project:</span>
+                    <span class="value">{{ project.name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Submitted Amount:</span>
+                    <span class="value">R {{ payment_certificate.total_submitted|floatformat:2 }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Rejection Date:</span>
+                    <span class="value">{{ payment_certificate.updated_at|date:"F d, Y" }}</span>
+                </div>
+            </div>
+            {% if payment_certificate.notes %}
+                <div class="reason">
+                    <p class="mb-2">
+                        <strong>Reason for Rejection:</strong>
+                    </p>
+                    <p>{{ payment_certificate.notes|linebreaks }}</p>
+                </div>
+            {% endif %}
+            <div class="action-box">
+                <p class="mb-2">
+                    <strong>Next Steps:</strong>
+                </p>
+                <ul class="mb-2">
+                    <li>Review the rejection reason above</li>
+                    <li>Make necessary corrections to your submission</li>
+                    <li>Resubmit the payment certificate for review</li>
+                </ul>
+            </div>
+            <p>If you have any questions or need clarification regarding this rejection, please don't hesitate to contact us.</p>
+            <p>
+                Best regards,
+                <br>
+                <strong>Profit Pro Team</strong>
+            </p>
+        </div>
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </body>
+</html>

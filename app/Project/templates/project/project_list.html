@@ -18,6 +18,37 @@
                 </a>
             </div>
         </div>
+        <!-- Filter -->
+        <div class="mb-6 bg-white shadow-md rounded-lg p-4">
+            <form method="get" class="flex items-center gap-4">
+                <div class="flex-1">
+                    <label for="search" class="sr-only">Search projects</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            {% heroicon_outline "magnifying-glass" size="20" class="text-gray-400" %}
+                        </div>
+                        <input type="text"
+                               name="search"
+                               id="search"
+                               value="{{ request.GET.search }}"
+                               class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                               placeholder="Search projects by name...">
+                    </div>
+                </div>
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_outline "magnifying-glass" size="20" %}
+                    Search
+                </button>
+                {% if request.GET.search %}
+                    <a href="{% url 'project:project-list' %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "x-mark" size="20" %}
+                        Clear
+                    </a>
+                {% endif %}
+            </form>
+        </div>
         <!-- Projects List -->
         {% if projects %}
             <div class="bg-white shadow-md rounded-lg overflow-hidden">
