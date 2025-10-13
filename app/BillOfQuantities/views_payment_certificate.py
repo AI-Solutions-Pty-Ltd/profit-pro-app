@@ -62,6 +62,7 @@ class PaymentCertificateListView(LoginRequiredMixin, ListView, GetProjectMixin):
                 active_payment_certificate.actual_transactions.aggregate(
                     total=Sum("total_price")
                 )["total"]
+                or 0
             )
         remaining_amount = (
             project.get_total_contract_value - total_claimed - total_active
