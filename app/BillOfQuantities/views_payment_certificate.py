@@ -455,14 +455,17 @@ class PaymentCertificateDownloadPDFView(LoginRequiredMixin, View, GetProjectMixi
         )
 
         # Generate PDF in memory
-        pdf_content = generate_payment_certificate_pdf(payment_certificate)
-
+        pdf = generate_payment_certificate_pdf(payment_certificate)
+        pdf.name = f"payment_certificate_{payment_certificate.certificate_number}.pdf"
+        pdf.type = "application/pdf"  # type: ignore
+        payment_certificate.pdf = pdf
+        payment_certificate.save()
         # Wrap ContentFile in BytesIO for FileResponse
-        pdf_bytes = BytesIO(pdf_content.read())
+        file = payment_certificate.pdf.open("rb")
 
         # Return PDF as download from memory
         response = FileResponse(
-            pdf_bytes,
+            file,
             content_type="application/pdf",
             as_attachment=True,
             filename=f"payment_certificate_{payment_certificate.certificate_number}.pdf",

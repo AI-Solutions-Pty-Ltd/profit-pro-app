@@ -159,6 +159,9 @@ class LineItem(BaseModel):
 class PaymentCertificate(BaseModel):
     """Used to send to clients for payment"""
 
+    def upload_to(self, filename):
+        return f"payment_certificates/{self.project.name}/{filename}"
+
     class Status(models.TextChoices):
         DRAFT = "DRAFT", "Draft"
         SUBMITTED = "SUBMITTED", "Submitted"
@@ -176,6 +179,7 @@ class PaymentCertificate(BaseModel):
     notes = models.TextField(
         blank=True, default="", help_text="Additional notes or comments"
     )
+    pdf = models.FileField(upload_to=upload_to, blank=True, null=True)
 
     class Meta:
         verbose_name = "Payment Certificate"
