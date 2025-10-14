@@ -158,21 +158,30 @@
         <!-- Toast Notifications Container -->
         <div id="toast-container" class="fixed top-20 right-4 z-50 space-y-2">
             {% for message in messages %}
-                <div class="toast-notification w-96 bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden"
+                {% if message.tags == 'success' %}
+                    {% define "bg-green-200" as bg_color %}
+                    {% define "check-circle" as icon %}
+                {% elif message.tags == 'error' %}
+                    {% define "bg-red-200" as bg_color %}
+                    {% define "x-circle" as icon %}
+                {% elif message.tags == 'warning' %}
+                    {% define "bg-yellow-200" as bg_color %}
+                    {% define "exclamation-circle" as icon %}
+                {% elif message.tags == 'info' %}
+                    {% define "bg-blue-200" as bg_color %}
+                    {% define "information-circle" as icon %}
+                {% elif message.tags == 'debug' %}
+                    {% define "bg-gray-200" as bg_color %}
+                    {% define "bug" as icon %}
+                {% else %}
+                    {% define "bg-gray-200" as bg_color %}
+                    {% define "information-circle" as icon %}
+                {% endif %}
+                <div class="toast-notification w-96 {{ bg_color }} shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden"
                      role="alert">
                     <div class="p-4">
                         <div class="flex items-start">
-                            <div class="flex-shrink-0">
-                                {% if message.tags == 'success' %}
-                                    {% heroicon_outline name="check-circle" size="20" %}
-                                {% elif message.tags == 'error' %}
-                                    {% heroicon_outline name="x-circle" size="20" %}
-                                {% elif message.tags == 'warning' %}
-                                    {% heroicon_outline name="exclamation-circle" size="20" %}
-                                {% else %}
-                                    {% heroicon_outline name="information-circle" size="20" %}
-                                {% endif %}
-                            </div>
+                            <div class="flex-shrink-0">{% heroicon_outline name=icon size="20" %}</div>
                             <div class="ml-3 flex-1 pt-0.5 min-w-0">
                                 <p class="text-sm font-medium text-gray-900">{{ message.tags|title }}</p>
                                 <p class="mt-1 text-sm text-gray-600 break-words">{{ message }}</p>

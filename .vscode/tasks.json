@@ -12,7 +12,26 @@
           "pwd": "${workspaceFolder}"
         }
       },
-      "problemMatcher": []
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "python",
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^Performing system checks",
+          "endsPattern": "^(Starting development server|Quit the server|Watching for file changes)"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "showReuseMessage": false
+      }
     },
     {
       "label": "tailwind",
