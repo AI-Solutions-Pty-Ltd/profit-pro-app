@@ -1,3 +1,9 @@
+[project]
+name = "profit-pro-app"
+version = "0.1.0"
+description = "Profit Pro App"
+authors = [{ name = "Rudolf Jacobs", email = "rudolf@a-i-solutions.co.za" }]
+
 # Ruff configuration
 [tool.ruff]
 src = ["app", "settings"]

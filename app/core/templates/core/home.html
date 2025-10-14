@@ -8,7 +8,11 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center">
                 <h1 class="text-4xl md:text-6xl font-bold mb-6">
-                    Welcome to <span class="text-yellow-300">Profit Pro</span>
+                    {% if user.is_authenticated %}
+                        Welcome {{ user.first_name }} {{ user.last_name }} to <span class="text-yellow-300">Profit Pro</span>
+                    {% else %}
+                        Welcome to <span class="text-yellow-300">Profit Pro</span>
+                    {% endif %}
                 </h1>
                 <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
                     Streamline your business operations with our comprehensive management platform.
@@ -21,7 +25,7 @@
                             Get Started
                         </a>
                     {% endif %}
-                    <a href="#features"
+                    <a href="{% url 'features' %}"
                        class="border-2 border-white text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-white hover:text-indigo-600 transition-colors">
                         Learn More
                     </a>

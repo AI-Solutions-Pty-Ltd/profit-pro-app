@@ -32,8 +32,8 @@ else:
         }
     }
 
-# INSTALLED_APPS += ["django_browser_reload"]
+INSTALLED_APPS += ["django_browser_reload"]  # noqa: F405
 
-# MIDDLEWARE += [
-#     "django_browser_reload.middleware.BrowserReloadMiddleware",
-# ]
+MIDDLEWARE += [  # noqa: F405
+    "django_browser_reload.middleware.BrowserReloadMiddleware",
+]

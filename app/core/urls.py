@@ -1,4 +1,5 @@
-from django.conf import settings
+import os
+
 from django.contrib import admin
 from django.urls import include, path
 
@@ -10,7 +11,7 @@ urlpatterns = [
     path("pricing/", PricingView.as_view(), name="pricing"),
     path("about/", AboutView.as_view(), name="about"),
     path("", HomeView.as_view(), name="home"),
-    path("", include("app.core.auth_urls")),
+    path("", include("app.Account.auth_urls")),
     path("register/", RegisterView.as_view(), name="register"),
     # app urls
     path("project/", include("app.Project.urls", namespace="project")),
@@ -20,8 +21,7 @@ urlpatterns = [
     ),
 ]
 
-
-if settings.DEBUG:
+if os.getenv("DJANGO_SETTINGS_MODULE") == "settings.local":
     urlpatterns += [
         path("__reload__/", include("django_browser_reload.urls")),
     ]
