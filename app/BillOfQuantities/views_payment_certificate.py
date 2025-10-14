@@ -1,5 +1,4 @@
 from decimal import Decimal, InvalidOperation
-from io import BytesIO
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
