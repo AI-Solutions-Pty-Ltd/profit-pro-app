@@ -1,4 +1,5 @@
 from decimal import Decimal, InvalidOperation
+from io import BytesIO
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -456,9 +457,12 @@ class PaymentCertificateDownloadPDFView(LoginRequiredMixin, View, GetProjectMixi
         # Generate PDF in memory
         pdf_content = generate_payment_certificate_pdf(payment_certificate)
 
+        # Wrap ContentFile in BytesIO for FileResponse
+        pdf_bytes = BytesIO(pdf_content.read())
+
         # Return PDF as download from memory
         response = FileResponse(
-            pdf_content,
+            pdf_bytes,
             content_type="application/pdf",
             as_attachment=True,
             filename=f"payment_certificate_{payment_certificate.certificate_number}.pdf",

@@ -1,9 +1,10 @@
+from django.core.files.base import ContentFile
 from django.template.loader import get_template
 
 from app.core.Utilities.generate_pdf import generate_pdf
 
 
-def generate_payment_certificate_pdf(payment_certificate):
+def generate_payment_certificate_pdf(payment_certificate) -> ContentFile:
     """Generate payment certificate PDF in memory.
 
     Args:
