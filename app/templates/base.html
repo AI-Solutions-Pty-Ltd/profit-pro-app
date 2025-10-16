@@ -43,6 +43,12 @@
                                     Projects
                                 </a>
                             {% endif %}
+                            {% if user|useringroup:"consultant" %}
+                                <a href="{% url 'consultant:client-list' %}"
+                                   class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                                    Clients
+                                </a>
+                            {% endif %}
                             <a href="{% url 'features' %}"
                                class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                                 Features

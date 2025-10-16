@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}
+    Server Error
+{% endblock title %}
+{% block content %}
+    <div class="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full text-center">
+            <!-- 500 Illustration -->
+            <div class="mb-8">
+                <div class="mx-auto h-32 w-32 text-red-600 mb-6">{% heroicon_outline name="exclamation-circle" size="128" %}</div>
+                <h1 class="text-9xl font-bold text-red-600 mb-4">500</h1>
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Server Error</h2>
+                <p class="text-lg text-gray-600 mb-8">
+                    Something went wrong on our end. We're working to fix it!
+                </p>
+            </div>
+            <!-- Action Buttons -->
+            <div class="space-y-4">
+                <a href="{% url 'home' %}"
+                   class="inline-flex items-center justify-center w-full px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                    {% heroicon_outline name="home" size="20" class="-ml-1 mr-2" %}
+                    Go to Homepage
+                </a>
+                <button onclick="window.location.reload()"
+                        class="inline-flex items-center justify-center w-full px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    {% heroicon_outline name="arrow-path" size="20" class="-ml-1 mr-2" %}
+                    Try Again
+                </button>
+            </div>
+            <!-- Help Text -->
+            <div class="mt-8 pt-8 border-t border-gray-200">
+                <p class="text-sm text-gray-500">
+                    If this problem persists, please
+                    <a href="mailto:{{ CONTACT_EMAIL }}" class="text-indigo-600 hover:text-indigo-800 font-medium">contact support</a>.
+                </p>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

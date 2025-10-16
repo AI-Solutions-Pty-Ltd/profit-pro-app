@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}
+    Page Not Found
+{% endblock title %}
+{% block content %}
+    <div class="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full text-center">
+            <!-- 404 Illustration -->
+            <div class="mb-8">
+                <div class="mx-auto h-32 w-32 text-indigo-600 mb-6">{% heroicon_outline name="exclamation-triangle" size="128" %}</div>
+                <h1 class="text-9xl font-bold text-indigo-600 mb-4">404</h1>
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Page Not Found</h2>
+                <p class="text-lg text-gray-600 mb-8">
+                    Oops! The page you're looking for doesn't exist or has been moved.
+                </p>
+            </div>
+            <!-- Action Buttons -->
+            <div class="space-y-4">
+                <a href="{% url 'home' %}"
+                   class="inline-flex items-center justify-center w-full px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                    {% heroicon_outline name="home" size="20" class="-ml-1 mr-2" %}
+                    Go to Homepage
+                </a>
+                <button onclick="window.history.back()"
+                        class="inline-flex items-center justify-center w-full px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    {% heroicon_outline name="arrow-left" size="20" class="-ml-1 mr-2" %}
+                    Go Back
+                </button>
+            </div>
+            <!-- Help Text -->
+            <div class="mt-8 pt-8 border-t border-gray-200">
+                <p class="text-sm text-gray-500">
+                    If you believe this is an error, please
+                    <a href="mailto:{{ CONTACT_EMAIL }}" class="text-indigo-600 hover:text-indigo-800 font-medium">contact support</a>.
+                </p>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

@@ -25,3 +25,8 @@ if os.getenv("DJANGO_SETTINGS_MODULE") == "settings.local":
     urlpatterns += [
         path("__reload__/", include("django_browser_reload.urls")),
     ]
+
+# Custom error handlers
+handler404 = "app.core.views.custom_404"
+handler500 = "app.core.views.custom_500"
+handler403 = "app.core.views.custom_403"
