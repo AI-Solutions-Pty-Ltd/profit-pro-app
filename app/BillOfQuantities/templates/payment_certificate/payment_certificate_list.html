@@ -134,14 +134,14 @@
         </div>
         <!-- Completed Payment Certificates Section -->
         <div class="bg-white shadow-sm rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-medium text-gray-900">
-                    Completed Payment Certificates ({{ completed_payment_certificates.count }})
-                </h2>
-                <p class="text-sm text-gray-600">Approved and rejected certificates with claimed amounts</p>
-            </div>
-            <div class="px-6 py-4">
-                {% if completed_payment_certificates %}
+            {% if completed_payment_certificates %}
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">
+                        Completed Payment Certificates ({{ completed_payment_certificates.count }})
+                    </h2>
+                    <p class="text-sm text-gray-600">Approved and rejected certificates with claimed amounts</p>
+                </div>
+                <div class="px-6 py-4">
                     <div class="space-y-4">
                         {% for cert in completed_payment_certificates %}
                             <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
@@ -174,14 +174,14 @@
                             </div>
                         {% endfor %}
                     </div>
-                {% else %}
-                    <div class="text-center py-8">
-                        {% heroicon_outline "clipboard-document-check" class="w-12 h-12 text-gray-400" %}
-                        <h3 class="mt-2 text-sm font-medium text-gray-900">No Completed Certificates</h3>
-                        <p class="mt-1 text-sm text-gray-500">There are no completed payment certificates for this project yet.</p>
-                    </div>
-                {% endif %}
-            </div>
+                </div>
+            {% else %}
+                <div class="flex flex-col items-center justify-center text-center py-8">
+                    {% heroicon_outline "clipboard-document-check" class="w-12 h-12 text-gray-400" %}
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No Completed Certificates</h3>
+                    <p class="mt-1 text-sm text-gray-500">There are no completed payment certificates for this project yet.</p>
+                </div>
+            {% endif %}
         </div>
     </div>
 {% endblock content %}

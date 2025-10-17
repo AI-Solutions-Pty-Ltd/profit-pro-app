@@ -16,6 +16,18 @@ class PaymentCertificateMixin(UserHasGroupGenericMixin):
     permissions = ["contractor"]
     project_slug = "project_pk"
 
+    def dispatch(self, request, *args, **kwargs):
+        """Check if project has line items before allowing any view access."""
+        project = self.get_project()
+        if not project.line_items.exists():
+            messages.error(
+                request, "Project has no WBS loaded, please upload!"
+            )
+            return redirect(
+                "bill_of_quantities:structure-upload", project_pk=project.pk
+            )
+        return super().dispatch(request, *args, **kwargs)
+
     def get_project(self) -> Project:
         if not hasattr(self, "project"):
             self.project = get_object_or_404(
@@ -68,7 +80,11 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
             completed_certificates = self.get_queryset()
 
         context["completed_payment_certificates"] = completed_certificates
-        total_claimed = sum(t.total_claimed for t in completed_certificates)
+        total_claimed = (
+            sum(t.total_claimed for t in completed_certificates)
+            if completed_certificates
+            else Decimal(0)
+        )
         active_claimed = 0
         if active_payment_certificate:
             active_claimed = Decimal(
@@ -107,12 +123,6 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
 
     def get(self, request, pk=None, project_pk=None):
         project = self.get_project()
-        # Get unique structures, bills, packages for dropdowns
-        if not project.line_items:
-            messages.error(request, "Project has no WBS loaded, please upload!")
-            return redirect(
-                "bill_of_quantities:structure-upload", project_pk=project_pk
-            )
 
         from app.BillOfQuantities.models import Bill, Package, Structure
 
