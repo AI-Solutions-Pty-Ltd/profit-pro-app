@@ -93,63 +93,65 @@
                                 <tr>
                                     <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item No.</th>
                                     <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Budgeted Qty</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Progressive Previous</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Progressive to Date</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">This Claim</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Price</th>
+                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price/Unit</th>
+                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Previous Quantity</th>
+                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Quantity</th>
+                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Quantity</th>
+                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Previous Claim</th>
+                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Claim</th>
+                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Claimed</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                {% for transaction in payment_certificate.actual_transactions.select_related %}
-                                    {% if not structure_name or structure_name != transaction.line_item.structure.name %}
-                                        {% define transaction.line_item.structure.name as structure_name %}
-                                        <tr>
-                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900center header"
-                                                colspan="{{ colSpan }}">{{ structure_name }}</td>
+                                {% for transaction in line_items %}
+                                    {% if transaction.current_claim %}
+                                        {% if not structure_name or structure_name != transaction.structure.name %}
+                                            {% define transaction.structure.name as structure_name %}
+                                            <tr>
+                                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900center header"
+                                                    colspan="{{ colSpan }}">{{ structure_name }}</td>
+                                            </tr>
+                                        {% endif %}
+                                        {% if not bill_name or bill_name != transaction.bill.name %}
+                                            {% define transaction.bill.name as bill_name %}
+                                            <tr>
+                                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 header"
+                                                    colspan="{{ colSpan }}">{{ bill_name }}</td>
+                                            </tr>
+                                        {% endif %}
+                                        {% if not package_name or package_name != transaction.package.name %}
+                                            {% define transaction.package.name as package_name %}
+                                            <tr>
+                                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 header"
+                                                    colspan="{{ colSpan }}">{{ package_name }}</td>
+                                            </tr>
+                                        {% endif %}
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ transaction.item_number|default:"-" }}</td>
+                                            <td class="px-3 py-2 text-sm text-gray-900">{{ transaction.description|truncatewords:10 }}</td>
+                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                                R {{ transaction.unit_price|floatformat:2|intcomma }} / {{ transaction.unit_measurement }}
+                                            </td>
+                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                                {{ transaction.previous_qty|floatformat:2|intcomma }}
+                                            </td>
+                                            <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
+                                                {{ transaction.current_qty|floatformat:2|intcomma }}
+                                            </td>
+                                            <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">
+                                                R {{ transaction.total_qty|floatformat:2|intcomma }}
+                                            </td>
+                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                                {{ transaction.previous_claimed|floatformat:2|intcomma }}
+                                            </td>
+                                            <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
+                                                {{ transaction.current_claim|floatformat:2|intcomma }}
+                                            </td>
+                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                                R {{ transaction.total_claimed|floatformat:2|intcomma }}
+                                            </td>
                                         </tr>
                                     {% endif %}
-                                    {% if not bill_name or bill_name != transaction.line_item.bill.name %}
-                                        {% define transaction.line_item.bill.name as bill_name %}
-                                        <tr>
-                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 header"
-                                                colspan="{{ colSpan }}">{{ bill_name }}</td>
-                                        </tr>
-                                    {% endif %}
-                                    {% if not package_name or package_name != transaction.line_item.package.name %}
-                                        {% define transaction.line_item.package.name as package_name %}
-                                        <tr>
-                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 header"
-                                                colspan="{{ colSpan }}">{{ package_name }}</td>
-                                        </tr>
-                                    {% endif %}
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ transaction.line_item.item_number|default:"-" }}</td>
-                                        <td class="px-3 py-2 text-sm text-gray-900">{{ transaction.line_item.description|truncatewords:10 }}</td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                                            {{ transaction.line_item.unit_measurement|default:"-" }}
-                                        </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                            {{ transaction.line_item.budgeted_quantity|floatformat:2|intcomma }}
-                                        </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                            {{ transaction.line_item.claimed_to_date|floatformat:2|intcomma }}
-                                        </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
-                                            {{ transaction.line_item.claimed_to_date|addition:transaction.quantity|floatformat:2|intcomma }}
-                                        </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
-                                            {{ transaction.quantity|floatformat:2|intcomma }}
-                                        </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                            R {{ transaction.unit_price|floatformat:2|intcomma }}
-                                        </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">
-                                            R {{ transaction.total_price|floatformat:2|intcomma }}
-                                        </td>
-                                    </tr>
                                 {% endfor %}
                             </tbody>
                             <tfoot class="bg-gray-50">

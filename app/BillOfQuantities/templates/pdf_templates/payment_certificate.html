@@ -115,7 +115,6 @@
         }
 
         .item-row td {
-            border-bottom: none;
             padding-bottom: 1px;
         }
 
@@ -190,45 +189,50 @@
         <div id="section-c-detailed-line-items">
             <h2 class="new-page">C. DETAILED LINE ITEMS - CURRENT CLAIM</h2>
             <table>
-                {% define "6" as colSpan %}
+                {% define "9" as colSpan %}
                 <tr>
                     <th class="text-center">Item No.</th>
-                    <th class="text-center">Payment Ref.</th>
-                    <th class="text-center">Unit</th>
-                    <th class="text-right">Unit Price (R)</th>
-                    <th class="text-right">Quantity</th>
-                    <th class="text-right">Total (R)</th>
+                    <th class="text-center">Description</th>
+                    <th class="text-center">Unit Price</th>
+                    <th class="text-right">Previous Quantity</th>
+                    <th class="text-right">Current Quantity</th>
+                    <th class="text-right">Total Quantity</th>
+                    <th class="text-right">Previous Claimed</th>
+                    <th class="text-right">Current Claimed</th>
+                    <th class="text-right">Total Claimed</th>
                 </tr>
-                {% for transaction in payment_certificate.actual_transactions.all %}
-                    {% if not structure_name or structure_name != transaction.line_item.structure.name %}
-                        {% define transaction.line_item.structure.name as structure_name %}
-                        <tr>
-                            <td colspan="{{ colSpan }}" class="text-center header">{{ structure_name }}</td>
+                {% for transaction in line_items.all %}
+                    {% if transaction.current_claim %}
+                        {% if not structure_name or structure_name != transaction.structure.name %}
+                            {% define transaction.structure.name as structure_name %}
+                            <tr>
+                                <td colspan="{{ colSpan }}" class="text-center header">{{ structure_name }}</td>
+                            </tr>
+                        {% endif %}
+                        {% if not bill_name or bill_name != transaction.bill.name %}
+                            {% define transaction.bill.name as bill_name %}
+                            <tr>
+                                <td colspan="{{ colSpan }}" class="text-center header">{{ bill_name }}</td>
+                            </tr>
+                        {% endif %}
+                        {% if not package_name or package_name != transaction.package.name %}
+                            {% define transaction.package.name as package_name %}
+                            <tr>
+                                <td colspan="{{ colSpan }}" class="text-center header">{{ package_name }}</td>
+                            </tr>
+                        {% endif %}
+                        <tr class="item-row">
+                            <td class="text-center">{{ transaction.bill.name|default:"" }}</td>
+                            <td class="text-center">{{ transaction.description|default:"" }}</td>
+                            <td class="text-center">R{{ transaction.unit_price }}/{{ transaction.unit_measurement|default:"" }}</td>
+                            <td class="text-right">{{ transaction.previous_qty|floatformat:2|intcomma }}</td>
+                            <td class="text-right">{{ transaction.current_qty|floatformat:2|intcomma }}</td>
+                            <td class="text-right">{{ transaction.total_qty|floatformat:2|intcomma }}</td>
+                            <td class="text-right">R {{ transaction.previous_claimed|floatformat:2|intcomma }}</td>
+                            <td class="text-right">R {{ transaction.current_claim|floatformat:2|intcomma }}</td>
+                            <td class="text-right">R {{ transaction.total_claimed|floatformat:2|intcomma }}</td>
                         </tr>
                     {% endif %}
-                    {% if not bill_name or bill_name != transaction.line_item.bill.name %}
-                        {% define transaction.line_item.bill.name as bill_name %}
-                        <tr>
-                            <td colspan="{{ colSpan }}" class="text-center header">{{ bill_name }}</td>
-                        </tr>
-                    {% endif %}
-                    {% if not package_name or package_name != transaction.line_item.package.name %}
-                        {% define transaction.line_item.package.name as package_name %}
-                        <tr>
-                            <td colspan="{{ colSpan }}" class="text-center header">{{ package_name }}</td>
-                        </tr>
-                    {% endif %}
-                    <tr class="item-row">
-                        <td class="text-center">{{ transaction.line_item.item_number|default:"" }}</td>
-                        <td class="text-center">{{ transaction.line_item.payment_reference|default:"" }}</td>
-                        <td class="text-center">{{ transaction.line_item.unit_measurement|default:"" }}</td>
-                        <td class="text-right">R {{ transaction.unit_price|floatformat:2|intcomma }}</td>
-                        <td class="text-right">{{ transaction.quantity|floatformat:2|intcomma }}</td>
-                        <td class="text-right">R {{ transaction.total_price|floatformat:2|intcomma }}</td>
-                    </tr>
-                    <tr class="description-row">
-                        <td colspan="{{ colSpan }}">{{ transaction.line_item.description }}</td>
-                    </tr>
                 {% empty %}
                     <tr>
                         <td colspan="{{ colSpan }}" class="text-center header">No line items in this payment certificate</td>

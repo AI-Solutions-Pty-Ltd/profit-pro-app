@@ -37,6 +37,9 @@ class Project(BaseModel):
     )
     name = models.CharField(max_length=255)
     description = models.TextField()
+    contract_number = models.CharField(max_length=255, blank=True)
+    contract_clause = models.CharField(max_length=255, blank=True)
+    vat = models.BooleanField(default=False)
 
     client = models.ForeignKey(
         Client,
@@ -98,3 +101,19 @@ class Project(BaseModel):
             )
         except Exception:
             return None
+
+
+class Signatories(BaseModel):
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="signatories"
+    )
+    name = models.CharField(max_length=255)
+    title = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Signatory"
+        verbose_name_plural = "Signatories"
+        ordering = ["-created_at"]

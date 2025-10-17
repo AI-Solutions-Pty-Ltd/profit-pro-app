@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.db import models
+from django.db.models import Sum, Q
 from django.urls import reverse
 
 from app.Account.models import Account
@@ -110,6 +111,58 @@ class LineItem(BaseModel):
     def __str__(self):
         return self.item_number
 
+    @staticmethod
+    def construct_payment_certificate(
+        payment_certificate: "PaymentCertificate",
+    ):
+        project = payment_certificate.project
+        project = project.line_items.select_related(
+            "structure",
+            "bill",
+            "package",
+        ).annotate(
+            # Sum transactions from previous approved certificates only
+            previous_claimed=Sum(
+                "actual_transactions__total_price",
+                filter=Q(
+                    actual_transactions__payment_certificate__certificate_number__lt=payment_certificate.certificate_number,
+                ),
+            ),
+            previous_qty=Sum(
+                "actual_transactions__quantity",
+                filter=Q(
+                    actual_transactions__payment_certificate__certificate_number__lt=payment_certificate.certificate_number,
+                ),
+            ),
+            # Sum transactions from current certificate only
+            current_claim=Sum(
+                "actual_transactions__total_price",
+                filter=Q(
+                    actual_transactions__payment_certificate=payment_certificate,
+                ),
+            ),
+            current_qty=Sum(
+                "actual_transactions__quantity",
+                filter=Q(
+                    actual_transactions__payment_certificate=payment_certificate,
+                ),
+            ),
+            # Sum all claimed transactions up to and including current
+            total_claimed=Sum(
+                "actual_transactions__total_price",
+                filter=Q(
+                    actual_transactions__payment_certificate__certificate_number__lte=payment_certificate.certificate_number,
+                ),
+            ),
+            total_qty=Sum(
+                "actual_transactions__quantity",
+                filter=Q(
+                    actual_transactions__payment_certificate__certificate_number__lte=payment_certificate.certificate_number,
+                ),
+            ),
+        )
+        return project
+
     @property
     def claimed_to_date(self) -> Decimal:
         # historically claim, excluding current pmt cert
@@ -131,8 +184,7 @@ class LineItem(BaseModel):
         value = (
             actual_transactions.aggregate(total=models.Sum("quantity"))["total"] or 0
         )
-        value = Decimal(value)
-        return value
+        return Decimal(value)
 
     @property
     def remaining_quantity(self):
@@ -197,61 +249,74 @@ class PaymentCertificate(BaseModel):
         return total_payment_certificates + 1
 
     @property
-    def total_amount(self):
-        return self.actual_transactions.aggregate(total=models.Sum("total_price"))[
-            "total"
-        ] or Decimal(0)
+    def previous_certificates(self) -> list["PaymentCertificate"]:
+        return PaymentCertificate.objects.filter(
+            project=self.project,
+            certificate_number__lt=self.certificate_number,
+            status=PaymentCertificate.Status.APPROVED,
+        )
 
     @property
-    def items_submitted(self):
+    def total_amount(self) -> Decimal:
+        total_amount = (
+            self.actual_transactions.aggregate(total=models.Sum("total_price"))["total"]
+            or 0
+        )
+        return Decimal(total_amount)
+
+    @property
+    def items_submitted(self) -> Decimal:
         approved_line_items = self.actual_transactions.filter(approved=True)
-        return approved_line_items.aggregate(total=models.Sum("total_price"))[
-            "total"
-        ] or Decimal(0)
+        total_submitted = (
+            approved_line_items.aggregate(total=models.Sum("total_price"))["total"] or 0
+        )
+        return Decimal(total_submitted)
 
     @property
-    def items_claimed(self):
+    def items_claimed(self) -> Decimal:
         approved_line_items = self.actual_transactions.filter(claimed=True)
-        return approved_line_items.aggregate(total=models.Sum("total_price"))[
-            "total"
-        ] or Decimal(0)
+        total_claimed = (
+            approved_line_items.aggregate(total=models.Sum("total_price"))["total"] or 0
+        )
+        return Decimal(total_claimed)
 
     @property
-    def total_submitted(self):
+    def total_submitted(self) -> Decimal:
         total = Decimal(0)
         total += self.items_submitted
         # leaving space for other categories to be added at a later stage
         return total
 
     @property
-    def total_claimed(self):
+    def total_claimed(self) -> Decimal:
         total = Decimal(0)
         total += self.items_claimed
         # leaving space for other categories to be added at a later stage
         return total
 
     @property
-    def progressive_previous(self):
+    def progressive_previous(self) -> Decimal:
         """Calculate total of all previously approved certificates."""
-        previous_certificates = PaymentCertificate.objects.filter(
-            project=self.project,
-            certificate_number__lt=self.certificate_number,
-            status=PaymentCertificate.Status.APPROVED,
+        previous_certificates = self.previous_certificates
+        total = (
+            previous_certificates.aggregate(
+                total=models.Sum("actual_transactions__total_price")
+            )["total"]
+            or 0
         )
-        total = Decimal(0)
-        for cert in previous_certificates:
-            total += cert.total_claimed
-        return total
+        return Decimal(total)
 
     @property
-    def current_claim_total(self):
+    def current_claim_total(self) -> Decimal:
         """Calculate total for current certificate (all transactions)."""
-        return self.actual_transactions.aggregate(total=models.Sum("total_price"))[
-            "total"
-        ] or Decimal(0)
+        current_claim_total = (
+            self.actual_transactions.aggregate(total=models.Sum("total_price"))["total"]
+            or 0
+        )
+        return Decimal(current_claim_total)
 
     @property
-    def progressive_to_date(self):
+    def progressive_to_date(self) -> Decimal:
         """Calculate progressive total including this certificate."""
         # For progressive to date, we include all transactions in current certificate
         # regardless of approval status (for reporting purposes)

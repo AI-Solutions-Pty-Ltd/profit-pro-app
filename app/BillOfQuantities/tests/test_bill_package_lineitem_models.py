@@ -262,3 +262,261 @@ class TestLineItemModel:
         assert line_item.description == ""
         assert line_item.unit_measurement == ""
         assert line_item.package is None
+
+    def test_construct_payment_certificate_with_no_transactions(self):
+        """Test construct_payment_certificate with no transactions."""
+        project = ProjectFactory.create()
+        LineItemFactory.create(project=project)
+        LineItemFactory.create(project=project)
+        certificate = PaymentCertificateFactory.create(
+            project=project, certificate_number=1
+        )
+
+        result = LineItem.construct_payment_certificate(certificate)
+
+        assert len(result) == 2
+        for item in result:
+            assert item.previous_claimed is None
+            assert item.current_claim is None
+            assert item.total_claimed is None
+
+    def test_construct_payment_certificate_with_current_transactions_only(self):
+        """Test construct_payment_certificate with only current certificate transactions."""
+        project = ProjectFactory.create()
+        line_item1 = LineItemFactory.create(project=project, unit_price=Decimal("100.00"))
+        line_item2 = LineItemFactory.create(project=project, unit_price=Decimal("200.00"))
+
+        certificate = PaymentCertificateFactory.create(
+            project=project, certificate_number=1
+        )
+
+        # Add transactions to current certificate
+        ActualTransactionFactory.create(
+            payment_certificate=certificate,
+            line_item=line_item1,
+            quantity=Decimal("10.00"),
+            unit_price=Decimal("100.00"),
+            total_price=Decimal("1000.00"),
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=certificate,
+            line_item=line_item2,
+            quantity=Decimal("5.00"),
+            unit_price=Decimal("200.00"),
+            total_price=Decimal("1000.00"),
+        )
+
+        result = LineItem.construct_payment_certificate(certificate)
+
+        line_item1_result = result.get(id=line_item1.id)
+        line_item2_result = result.get(id=line_item2.id)
+
+        # No previous certificates
+        assert line_item1_result.previous_claimed is None
+        assert line_item2_result.previous_claimed is None
+
+        # Current claims should match
+        assert line_item1_result.current_claim == Decimal("1000.00")
+        assert line_item2_result.current_claim == Decimal("1000.00")
+
+        # Total claimed should equal current (no previous)
+        assert line_item1_result.total_claimed == Decimal("1000.00")
+        assert line_item2_result.total_claimed == Decimal("1000.00")
+
+    def test_construct_payment_certificate_with_previous_certificates(self):
+        """Test construct_payment_certificate with previous approved certificates."""
+        project = ProjectFactory.create()
+        line_item = LineItemFactory.create(project=project, unit_price=Decimal("100.00"))
+
+        # Certificate 1 (previous, approved)
+        cert1 = PaymentCertificateFactory.create(
+            project=project, certificate_number=1, status=PaymentCertificate.Status.APPROVED
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert1,
+            line_item=line_item,
+            total_price=Decimal("500.00"),
+        )
+
+        # Certificate 2 (previous, approved)
+        cert2 = PaymentCertificateFactory.create(
+            project=project, certificate_number=2, status=PaymentCertificate.Status.APPROVED
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert2,
+            line_item=line_item,
+            total_price=Decimal("300.00"),
+        )
+
+        # Certificate 3 (current)
+        cert3 = PaymentCertificateFactory.create(
+            project=project, certificate_number=3
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert3,
+            line_item=line_item,
+            total_price=Decimal("200.00"),
+        )
+
+        result = LineItem.construct_payment_certificate(cert3)
+        line_item_result = result.get(id=line_item.id)
+
+        # Previous claimed should be sum of cert1 and cert2
+        assert line_item_result.previous_claimed == Decimal("800.00")
+
+        # Current claim should be cert3 only
+        assert line_item_result.current_claim == Decimal("200.00")
+
+        # Total claimed should be all three
+        assert line_item_result.total_claimed == Decimal("1000.00")
+
+    def test_construct_payment_certificate_excludes_future_certificates(self):
+        """Test that future certificates are not included in calculations."""
+        project = ProjectFactory.create()
+        line_item = LineItemFactory.create(project=project)
+
+        # Certificate 1 (previous)
+        cert1 = PaymentCertificateFactory.create(
+            project=project, certificate_number=1, status=PaymentCertificate.Status.APPROVED
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert1,
+            line_item=line_item,
+            total_price=Decimal("500.00"),
+        )
+
+        # Certificate 2 (current)
+        cert2 = PaymentCertificateFactory.create(
+            project=project, certificate_number=2
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert2,
+            line_item=line_item,
+            total_price=Decimal("300.00"),
+        )
+
+        # Certificate 3 (future - should be excluded)
+        cert3 = PaymentCertificateFactory.create(
+            project=project, certificate_number=3
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert3,
+            line_item=line_item,
+            total_price=Decimal("200.00"),
+        )
+
+        result = LineItem.construct_payment_certificate(cert2)
+        line_item_result = result.get(id=line_item.id)
+
+        # Previous should only include cert1
+        assert line_item_result.previous_claimed == Decimal("500.00")
+
+        # Current should only be cert2
+        assert line_item_result.current_claim == Decimal("300.00")
+
+        # Total should not include cert3
+        assert line_item_result.total_claimed == Decimal("800.00")
+
+    def test_construct_payment_certificate_multiple_line_items(self):
+        """Test construct_payment_certificate with multiple line items."""
+        project = ProjectFactory.create()
+        line_item1 = LineItemFactory.create(project=project)
+        line_item2 = LineItemFactory.create(project=project)
+        line_item3 = LineItemFactory.create(project=project)
+
+        # Previous certificate
+        cert1 = PaymentCertificateFactory.create(
+            project=project, certificate_number=1, status=PaymentCertificate.Status.APPROVED
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert1,
+            line_item=line_item1,
+            total_price=Decimal("100.00"),
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert1,
+            line_item=line_item2,
+            total_price=Decimal("200.00"),
+        )
+
+        # Current certificate
+        cert2 = PaymentCertificateFactory.create(
+            project=project, certificate_number=2
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert2,
+            line_item=line_item1,
+            total_price=Decimal("50.00"),
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=cert2,
+            line_item=line_item3,
+            total_price=Decimal("150.00"),
+        )
+
+        result = LineItem.construct_payment_certificate(cert2)
+
+        item1 = result.get(id=line_item1.id)
+        item2 = result.get(id=line_item2.id)
+        item3 = result.get(id=line_item3.id)
+
+        # Line item 1: has previous and current
+        assert item1.previous_claimed == Decimal("100.00")
+        assert item1.current_claim == Decimal("50.00")
+        assert item1.total_claimed == Decimal("150.00")
+
+        # Line item 2: has previous only
+        assert item2.previous_claimed == Decimal("200.00")
+        assert item2.current_claim is None
+        assert item2.total_claimed == Decimal("200.00")
+
+        # Line item 3: has current only
+        assert item3.previous_claimed is None
+        assert item3.current_claim == Decimal("150.00")
+        assert item3.total_claimed == Decimal("150.00")
+
+    def test_construct_payment_certificate_multiple_transactions_per_line_item(self):
+        """Test construct_payment_certificate with multiple transactions for same line item."""
+        project = ProjectFactory.create()
+        line_item = LineItemFactory.create(project=project)
+
+        certificate = PaymentCertificateFactory.create(
+            project=project, certificate_number=1
+        )
+
+        # Multiple transactions for same line item in same certificate
+        ActualTransactionFactory.create(
+            payment_certificate=certificate,
+            line_item=line_item,
+            total_price=Decimal("100.00"),
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=certificate,
+            line_item=line_item,
+            total_price=Decimal("150.00"),
+        )
+        ActualTransactionFactory.create(
+            payment_certificate=certificate,
+            line_item=line_item,
+            total_price=Decimal("250.00"),
+        )
+
+        result = LineItem.construct_payment_certificate(certificate)
+        line_item_result = result.get(id=line_item.id)
+
+        # Should sum all transactions
+        assert line_item_result.current_claim == Decimal("500.00")
+        assert line_item_result.total_claimed == Decimal("500.00")
+
+    def test_construct_payment_certificate_returns_queryset(self):
+        """Test that construct_payment_certificate returns a queryset."""
+        project = ProjectFactory.create()
+        LineItemFactory.create(project=project)
+        certificate = PaymentCertificateFactory.create(project=project)
+
+        result = LineItem.construct_payment_certificate(certificate)
+
+        # Should be a queryset
+        assert hasattr(result, "filter")
+        assert hasattr(result, "count")
+        assert hasattr(result, "order_by")

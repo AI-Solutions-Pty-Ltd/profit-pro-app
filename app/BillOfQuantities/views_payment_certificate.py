@@ -20,9 +20,7 @@ class PaymentCertificateMixin(UserHasGroupGenericMixin):
         """Check if project has line items before allowing any view access."""
         project = self.get_project()
         if not project.line_items.exists():
-            messages.error(
-                request, "Project has no WBS loaded, please upload!"
-            )
+            messages.error(request, "Project has no WBS loaded, please upload!")
             return redirect(
                 "bill_of_quantities:structure-upload", project_pk=project.pk
             )
@@ -39,7 +37,7 @@ class PaymentCertificateMixin(UserHasGroupGenericMixin):
         return self.project
 
     def get_queryset(self):
-        if not hasattr(self, "queryset"):
+        if not hasattr(self, "queryset") or not self.queryset:
             self.queryset = (
                 PaymentCertificate.objects.filter(
                     project=self.get_project(), project__account=self.request.user
@@ -47,10 +45,6 @@ class PaymentCertificateMixin(UserHasGroupGenericMixin):
                 .select_related("project")
                 .prefetch_related("actual_transactions")
                 .prefetch_related("actual_transactions__line_item")
-                .prefetch_related("line_items")
-                .prefetch_related("line_items__structure")
-                .prefetch_related("line_items__bill")
-                .prefetch_related("line_items__package")
                 .order_by("certificate_number")
             )
         return self.queryset
@@ -72,12 +66,11 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
         context["active_certificate"] = active_payment_certificate
 
         # Completed payment certificates (APPROVED or REJECTED)
-        if active_payment_certificate:
-            completed_certificates = self.get_queryset().exclude(
+        completed_certificates = self.get_queryset()
+        if active_payment_certificate and completed_certificates:
+            completed_certificates = completed_certificates.exclude(
                 pk=active_payment_certificate.pk
             )
-        else:
-            completed_certificates = self.get_queryset()
 
         context["completed_payment_certificates"] = completed_certificates
         total_claimed = (
@@ -110,6 +103,7 @@ class PaymentCertificateDetailView(PaymentCertificateMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
+        context["line_items"] = LineItem.construct_payment_certificate(self.object)
 
         # Calculate total for all transactions
         total_amount = sum(t.total_price for t in self.object.actual_transactions.all())
@@ -235,12 +229,13 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
                 # Only store non-zero quantities
                 if quantity:
                     line_item: LineItem = project.line_items.get(pk=int(line_item_pk))
+                    claimed_qty = quantity - line_item.claimed_to_date
                     ActualTransaction.objects.create(
                         payment_certificate=payment_certificate,
                         line_item=line_item,
-                        quantity=quantity - line_item.claimed_to_date,
+                        quantity=claimed_qty,
                         unit_price=line_item.unit_price,
-                        total_price=line_item.unit_price * quantity,
+                        total_price=line_item.unit_price * claimed_qty,
                         captured_by=request.user,
                     )
                     transactions_created += 1
@@ -273,10 +268,11 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
                     continue
 
                 # Only update non-zero quantities
-                actual_transaction.quantity = quantity - line_item.claimed_to_date
+                claimed_qty = quantity - line_item.claimed_to_date
+                actual_transaction.quantity = claimed_qty
                 actual_transaction.unit_price = actual_transaction.line_item.unit_price
                 actual_transaction.total_price = (
-                    actual_transaction.quantity * actual_transaction.unit_price
+                    claimed_qty * actual_transaction.unit_price
                 )
                 actual_transaction.save()
                 transactions_updated += 1
