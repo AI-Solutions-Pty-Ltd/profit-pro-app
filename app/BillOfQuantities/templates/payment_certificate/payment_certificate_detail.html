@@ -34,7 +34,7 @@
                 <li>
                     <div class="flex items-center">
                         {% heroicon_outline "chevron-right" %}
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ project.name }}</span>
+                        <span class="ml-1 text-sm font-medium text-gray-500">{{ project.name }}</span>
                     </div>
                 </li>
             </ol>
@@ -51,13 +51,13 @@
                     <div class="flex items-center space-x-3">
                         <a href="{% url 'bill_of_quantities:payment-certificate-download-pdf' project.pk payment_certificate.pk %}"
                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-2" %}
+                            {% heroicon_outline "arrow-down-tray" class="w-4 h-4" %}
                             Download Abridged PDF
                         </a>
                         {% if payment_certificate.status == "DRAFT" %}
                             <a href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk payment_certificate.pk %}"
                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                {% heroicon_outline "pencil" class="w-4 h-4 mr-2" %}
+                                {% heroicon_outline "pencil" class="w-4 h-4" %}
                                 Edit
                             </a>
                         {% endif %}
@@ -65,7 +65,7 @@
                             {% if payment_certificate.status == 'DRAFT' or payment_certificate.status == 'REJECTED' %}
                                 <a href="{% url 'bill_of_quantities:payment-certificate-submit' project.pk payment_certificate.pk %}"
                                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    {% heroicon_outline "check" class="w-4 h-4 mr-2" %}
+                                    {% heroicon_outline "check" class="w-4 h-4" %}
                                     Submit Payment Certificate
                                 </a>
                             {% endif %}
@@ -163,13 +163,13 @@
                         </table>
                     {% else %}
                         <div class="text-center py-12">
-                            {% heroicon_outline "clipboard-document-list" class="w-12 h-12 mx-auto text-gray-400" %}
+                            {% heroicon_outline "clipboard-document-list" class="w-12 h-12 text-gray-400" %}
                             <h3 class="mt-2 text-sm font-medium text-gray-900">No Transactions</h3>
                             <p class="mt-1 text-sm text-gray-500">This payment certificate has no actual transactions yet.</p>
                             <div class="mt-6">
                                 <a href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk payment_certificate.pk %}"
                                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    {% heroicon_outline "plus" class="w-5 h-5 mr-2" %}
+                                    {% heroicon_outline "plus" class="w-5 h-5" %}
                                     Add Transactions
                                 </a>
                             </div>

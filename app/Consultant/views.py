@@ -11,7 +11,9 @@ from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.models import Client, Project
 
 
-class GetProjectMixin:
+class GetProjectMixin(UserHasGroupGenericMixin):
+    permissions = ["consultant"]
+
     def get_project(self) -> Project:
         return get_object_or_404(
             Project,
@@ -21,36 +23,31 @@ class GetProjectMixin:
         )
 
 
-class ConsultantMixin(LoginRequiredMixin):
+class ConsultantMixin(GetProjectMixin):
     def get_queryset(self):
         return Client.objects.filter(consultant=self.request.user)
 
 
 # Create your views here.
-class ClientListView(ConsultantMixin, UserHasGroupGenericMixin, ListView):
+class ClientListView(ConsultantMixin, ListView):
     model = Client
     template_name = "consultant/client_list.html"
     context_object_name = "clients"
-    permissions = ["consultant"]
 
 
-class ClientDetailView(ConsultantMixin, UserHasGroupGenericMixin, DetailView):
+class ClientDetailView(ConsultantMixin, DetailView):
     model = Client
     template_name = "consultant/client_detail.html"
     context_object_name = "client"
-    permissions = ["consultant"]
 
 
-class PaymentCertificateFinalApprovalView(
-    LoginRequiredMixin, UserHasGroupGenericMixin, UpdateView, GetProjectMixin
-):
+class PaymentCertificateFinalApprovalView(ConsultantMixin, UpdateView):
     """Final approval/rejection view - choose between APPROVED or REJECTED."""
 
     model = PaymentCertificate
     form_class = PaymentCertificateFinalApprovalForm
     template_name = "consultant/payment_certificate_final_approval.html"
     context_object_name = "payment_certificate"
-    permissions = ["consultant"]
 
     def get_queryset(self):
         return (

@@ -20,5 +20,6 @@
   ],
   "djlint.extendExclude": [
     "htmlcov,.venv,documentation,app/theme,app/core/templates/auth/password_reset_email.html"
-  ]
+  ],
+  "cSpell.words": ["heroicon"]
 }

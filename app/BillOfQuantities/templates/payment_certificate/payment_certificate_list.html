@@ -26,7 +26,7 @@
                 <li>
                     <div class="flex items-center">
                         {% heroicon_outline "chevron-right" %}
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ project.name }}</span>
+                        <span class="text-sm font-medium text-gray-500">{{ project.name }}</span>
                     </div>
                 </li>
             </ol>
@@ -77,13 +77,13 @@
                         <div class="flex items-center space-x-3">
                             <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk active_certificate.pk %}"
                                class="inline-flex items-center px-3 py-2 border border-blue-300 text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                {% heroicon_outline "eye" class="w-4 h-4 mr-1" %}
+                                {% heroicon_outline "eye" class="w-4 h-4" %}
                                 View Details
                             </a>
                             {% if active_certificate.status == 'DRAFT' %}
                                 <a href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk active_certificate.pk %}"
                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    {% heroicon_outline "pencil" class="w-4 h-4 mr-1" %}
+                                    {% heroicon_outline "pencil" class="w-4 h-4" %}
                                     Edit
                                 </a>
                             {% endif %}
@@ -91,13 +91,13 @@
                     </div>
                 {% else %}
                     <div class="text-center py-8">
-                        {% heroicon_outline "document-text" class="w-12 h-12 mx-auto text-gray-400" %}
+                        {% heroicon_outline "document-text" class="w-12 h-12 text-gray-400" %}
                         <h3 class="mt-2 text-sm font-medium text-gray-900">No Active Certificate</h3>
                         <p class="mt-1 text-sm text-gray-500">There are no active payment certificates for this project.</p>
                         <div class="mt-4">
                             <a href="{% url 'bill_of_quantities:payment-certificate-new' project.pk %}"
                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}
+                                {% heroicon_outline "plus" class="w-4 h-4" %}
                                 Create New Certificate
                             </a>
                         </div>
@@ -176,7 +176,7 @@
                     </div>
                 {% else %}
                     <div class="text-center py-8">
-                        {% heroicon_outline "clipboard-document-check" class="w-12 h-12 mx-auto text-gray-400" %}
+                        {% heroicon_outline "clipboard-document-check" class="w-12 h-12 text-gray-400" %}
                         <h3 class="mt-2 text-sm font-medium text-gray-900">No Completed Certificates</h3>
                         <p class="mt-1 text-sm text-gray-500">There are no completed payment certificates for this project yet.</p>
                     </div>

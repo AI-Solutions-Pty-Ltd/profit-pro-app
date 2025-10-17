@@ -17,6 +17,6 @@ class UserHasGroupGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
         """Redirect to home with error message if user lacks permission."""
         messages.error(
             self.request,
-            "You do not have permission to access this page. Only consultants can approve payment certificates.",
+            f"Page restricted to {', '.join(self.permissions)}.",
         )
         return redirect("home")

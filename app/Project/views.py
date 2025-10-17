@@ -16,7 +16,7 @@ from app.Project.forms import ProjectForm
 from app.Project.models import Project
 
 
-class ProjectMixin(LoginRequiredMixin, UserHasGroupGenericMixin):
+class ProjectMixin(UserHasGroupGenericMixin):
     permissions = ["contractor"]
 
     def get_queryset(self):

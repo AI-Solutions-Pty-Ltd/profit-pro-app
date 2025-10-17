@@ -74,7 +74,7 @@
                                                     <p class="mb-2">Certificate #{{ active_payment_certificate.certificate_number }} is awaiting approval</p>
                                                     <a href="{% url 'consultant:payment-certificate-approve' project.pk active_payment_certificate.pk %}"
                                                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-yellow-800 bg-yellow-100 hover:bg-yellow-200 transition-colors">
-                                                        {% heroicon_outline name="clipboard-document-check" size="16" class="-ml-0.5 mr-2" %}
+                                                        {% heroicon_outline name="clipboard-document-check" size="16" %}
                                                         Review & Approve
                                                     </a>
                                                 </div>
@@ -83,7 +83,7 @@
                                     </div>
                                 {% else %}
                                     <div class="mt-4 flex items-center text-sm text-gray-500">
-                                        {% heroicon_outline name="check-circle" size="16" class="mr-2 text-green-500" %}
+                                        {% heroicon_outline name="check-circle" size="16" class="text-green-500" %}
                                         No pending payment certificates
                                     </div>
                                 {% endif %}
