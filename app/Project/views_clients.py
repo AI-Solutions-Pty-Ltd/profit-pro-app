@@ -1,9 +1,15 @@
 """Views for managing Project.clients"""
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404, redirect
+from django.template.loader import render_to_string
 from django.urls import reverse_lazy
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from django.views.generic import (
     CreateView,
     DetailView,
@@ -13,11 +19,52 @@ from django.views.generic import (
 )
 
 from app.Account.models import Account
+from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import ClientForm, ClientUserInviteForm
 from app.Project.models import Client, Project
 
 
-class ProjectAddClientView(LoginRequiredMixin, CreateView):
+class GetProjectMixin(UserHasGroupGenericMixin):
+    permissions = ["contractor"]
+
+    def get_project(self, slug):
+        return get_object_or_404(
+            Project,
+            pk=slug,
+            account=self.request.user,
+            deleted=False,
+        )
+
+
+class ClientMixin(GetProjectMixin):
+    def get_queryset(self):
+        if not hasattr(self, "project") or not self.project:
+            self.project = self.get_project(self.kwargs["project_pk"])
+        return Client.objects.filter(projects=self.project, deleted=False).order_by(
+            "-created_at"
+        )
+
+    def get_object(self):
+        if not hasattr(self, "project") or not self.project:
+            self.project = self.get_project(self.kwargs["project_pk"])
+        queryset = self.get_queryset()
+        return get_object_or_404(
+            queryset,
+            pk=self.kwargs["pk"],  ## MAKE SURE SLUG REMAINS "pk"
+            deleted=False,
+        )
+
+    def get_client(self, slug):
+        if not hasattr(self, "project") or not self.project:
+            self.project = self.get_project(self.kwargs["project_pk"])
+        return get_object_or_404(
+            Client,
+            pk=slug,
+            deleted=False,
+        )
+
+
+class ProjectAddClientView(GetProjectMixin, CreateView):
     """Add a client to a project."""
 
     model = Client
@@ -26,12 +73,7 @@ class ProjectAddClientView(LoginRequiredMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         """Get the project and verify ownership."""
-        self.project = get_object_or_404(
-            Project,
-            pk=self.kwargs["project_pk"],
-            account=self.request.user,
-            deleted=False,
-        )
+        self.project = self.get_project(self.kwargs["project_pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -55,7 +97,7 @@ class ProjectAddClientView(LoginRequiredMixin, CreateView):
         return redirect("project:project-detail", pk=self.project.pk)
 
 
-class ClientInviteUserView(LoginRequiredMixin, FormView):
+class ClientInviteUserView(ClientMixin, FormView):
     """Invite a user to a client."""
 
     form_class = ClientUserInviteForm
@@ -63,20 +105,9 @@ class ClientInviteUserView(LoginRequiredMixin, FormView):
 
     def dispatch(self, request, *args, **kwargs):
         """Get the client and verify project ownership."""
-        self.client = get_object_or_404(
-            Client, pk=self.kwargs["client_pk"], deleted=False
-        )
-
         # Verify that the user owns the project associated with this client
-        if not Project.objects.filter(
-            client=self.client, account=self.request.user, deleted=False
-        ).exists():
-            messages.error(
-                self.request,
-                "You do not have permission to invite users to this client.",
-            )
-            return redirect("project:project-list")
-
+        self.project = self.get_project(self.kwargs["project_pk"])
+        self.client = self.get_client(self.kwargs["pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -87,12 +118,6 @@ class ClientInviteUserView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         """Create the user account and associate with client."""
-        from django.conf import settings
-        from django.contrib.auth.tokens import default_token_generator
-        from django.core.mail import send_mail
-        from django.template.loader import render_to_string
-        from django.utils.encoding import force_bytes
-        from django.utils.http import urlsafe_base64_encode
 
         email = form.cleaned_data["email"]
 
@@ -120,16 +145,14 @@ class ClientInviteUserView(LoginRequiredMixin, FormView):
         # Send email
         if settings.USE_EMAIL:
             # Get project details
-            project = Project.objects.filter(client=self.client, deleted=False).first()
-
             if user_exists:
                 # Send notification email for existing user
                 context = {
                     "user": user,
                     "site_name": "Profit Pro",
                     "client_name": self.client.name,
-                    "project_name": project.name if project else None,
-                    "project_description": project.description if project else None,
+                    "project_name": self.project.name,
+                    "project_description": self.project.description,
                     "protocol": "https" if self.request.is_secure() else "http",
                     "domain": self.request.get_host(),
                 }
@@ -152,8 +175,8 @@ class ClientInviteUserView(LoginRequiredMixin, FormView):
                     "site_name": "Profit Pro",
                     "expiry_hours": 24,
                     "client_name": self.client.name,
-                    "project_name": project.name if project else None,
-                    "project_description": project.description if project else None,
+                    "project_name": self.project.name,
+                    "project_description": self.project.description,
                 }
 
                 subject = f"You've been invited to {self.client.name} on Profit Pro"
@@ -203,25 +226,17 @@ class ClientInviteUserView(LoginRequiredMixin, FormView):
         return redirect("project:project-list")
 
 
-class ProjectEditClientView(LoginRequiredMixin, UpdateView):
+class ClientEditView(ClientMixin, UpdateView):
     """Edit a client for a project."""
 
     model = Client
     form_class = ClientForm
     template_name = "client/client_form.html"
 
-    def get_queryset(self):
-        """Filter clients by current user and project."""
-        return Client.objects.filter(
-            project=self.kwargs["project_pk"],
-            id=self.kwargs["pk"],
-            deleted=False,
-        )
-
     def get_context_data(self, **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
-        context["project"] = Project.objects.get(pk=self.kwargs["project_pk"])
+        context["project"] = self.get_project(self.kwargs["project_pk"])
         return context
 
     def get_success_url(self):
@@ -231,25 +246,14 @@ class ProjectEditClientView(LoginRequiredMixin, UpdateView):
         )
 
 
-class ClientRemoveUserView(LoginRequiredMixin, View):
+class ClientRemoveUserView(ClientMixin, View):
     """Remove user association from client."""
 
     def dispatch(self, request, *args, **kwargs):
         """Get the client and verify project ownership."""
-        self.client = get_object_or_404(
-            Client, pk=self.kwargs["client_pk"], deleted=False
-        )
-
         # Verify that the user owns the project associated with this client
-        if not Project.objects.filter(
-            client=self.client, account=self.request.user, deleted=False
-        ).exists():
-            messages.error(
-                self.request,
-                "You do not have permission to modify this client.",
-            )
-            return redirect("project:project-list")
-
+        self.project = self.get_project(self.kwargs["project_pk"])
+        self.client = self.get_client(self.kwargs["pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -268,53 +272,34 @@ class ClientRemoveUserView(LoginRequiredMixin, View):
             )
 
         # Redirect back to project detail
-        project = Project.objects.filter(client=self.client, deleted=False).first()
-        if project:
-            return redirect("project:project-detail", pk=project.pk)
+        if self.project:
+            return redirect("project:project-detail", pk=self.project.pk)
         return redirect("project:project-list")
 
 
-class ClientResendInviteView(LoginRequiredMixin, DetailView):
+class ClientResendInviteView(ClientMixin, DetailView):
     """Resend invitation email to client user."""
 
     model = Client
 
     def dispatch(self, request, *args, **kwargs):
         """Get the client and verify project ownership."""
-        self.client = get_object_or_404(
-            Client, pk=self.kwargs["client_pk"], deleted=False
-        )
-
-        # Verify that the user owns the project associated with this client
-        if not Project.objects.filter(
-            client=self.client, account=self.request.user, deleted=False
-        ).exists():
-            messages.error(
-                self.request,
-                "You do not have permission to resend invites for this client.",
-            )
-            return redirect("project:project-list")
+        self.project = self.get_project(self.kwargs["project_pk"])
+        self.client = self.get_client(self.kwargs["pk"])
 
         # Check if client has a user
         if not self.client.user:
             messages.error(
                 self.request, "This client does not have an associated user to invite."
             )
-            project = Project.objects.filter(client=self.client, deleted=False).first()
-            if project:
-                return redirect("project:project-detail", pk=project.pk)
+            if self.project:
+                return redirect("project:project-detail", pk=self.project.pk)
             return redirect("project:project-list")
 
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         """Send the invitation email."""
-        from django.conf import settings
-        from django.contrib.auth.tokens import default_token_generator
-        from django.core.mail import send_mail
-        from django.template.loader import render_to_string
-        from django.utils.encoding import force_bytes
-        from django.utils.http import urlsafe_base64_encode
 
         user = self.client.user
 

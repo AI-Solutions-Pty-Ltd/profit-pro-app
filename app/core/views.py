@@ -2,6 +2,7 @@ from django import forms
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.forms import BaseUserCreationForm
+from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView
@@ -286,3 +287,19 @@ class RegisterView(CreateView):
         login(self.request, form.instance)
         messages.success(self.request, "Registration successful.")
         return response
+
+
+# Custom error handlers
+def custom_404(request, exception):
+    """Custom 404 error handler."""
+    return render(request, "404.html", status=404)
+
+
+def custom_500(request):
+    """Custom 500 error handler."""
+    return render(request, "500.html", status=500)
+
+
+def custom_403(request, exception):
+    """Custom 403 error handler."""
+    return render(request, "403.html", status=403)

@@ -19,15 +19,17 @@ from app.BillOfQuantities.forms import (
     StructureForm,
 )
 from app.BillOfQuantities.models import Bill, LineItem, Package, Structure
+from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.models import Project
 
 
-class StructureDetailView(LoginRequiredMixin, DetailView):
+class StructureDetailView(UserHasGroupGenericMixin, DetailView):
     """Display a single structure."""
 
     model = Structure
     template_name = "structure/structure_detail.html"
     context_object_name = "structure"
+    permissions = ["contractor"]
 
     def get_queryset(self):
         """Filter structures by the current project."""
@@ -42,12 +44,13 @@ class StructureDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class StructureUpdateView(LoginRequiredMixin, UpdateView):
+class StructureUpdateView(UserHasGroupGenericMixin, UpdateView):
     """Update an existing structure."""
 
     model = Structure
     form_class = StructureForm
     template_name = "structure/structure_form.html"
+    permissions = ["contractor"]
 
     def form_valid(self, form):
         """Add success message."""
@@ -68,11 +71,12 @@ class StructureUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
 
-class StructureDeleteView(LoginRequiredMixin, DeleteView):
+class StructureDeleteView(UserHasGroupGenericMixin, DeleteView):
     """Delete a structure."""
 
     model = Structure
     template_name = "structure/structure_confirm_delete.html"
+    permissions = ["contractor"]
 
     def get_queryset(self):
         """Filter structures by the current project."""
@@ -99,11 +103,12 @@ class StructureDeleteView(LoginRequiredMixin, DeleteView):
         return context
 
 
-class StructureExcelUploadView(LoginRequiredMixin, FormView):
+class StructureExcelUploadView(UserHasGroupGenericMixin, FormView):
     """Upload structures from Excel file."""
 
     form_class = StructureExcelUploadForm
     template_name = "structure/structure_excel_upload.html"
+    permissions = ["contractor"]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""

@@ -57,11 +57,6 @@ payment_certificate_urls = [
         name="payment-certificate-submit",
     ),
     path(
-        "project/<int:project_pk>/payment-certificates/<int:pk>/approve/",
-        views_payment_certificate.PaymentCertificateFinalApprovalView.as_view(),
-        name="payment-certificate-approve",
-    ),
-    path(
         "project/<int:project_pk>/payment-certificates/<int:pk>/download-pdf/",
         views_payment_certificate.PaymentCertificateDownloadPDFView.as_view(),
         name="payment-certificate-download-pdf",

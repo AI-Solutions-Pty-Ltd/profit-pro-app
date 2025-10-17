@@ -6,7 +6,7 @@ from app.Project import views, views_clients
 
 app_name = "project"
 
-urlpatterns = [
+project_urls = [
     path("", views.ProjectListView.as_view(), name="project-list"),
     path("create/", views.ProjectCreateView.as_view(), name="project-create"),
     path("<int:pk>/", views.ProjectDetailView.as_view(), name="project-detail"),
@@ -15,29 +15,34 @@ urlpatterns = [
     ),
     path("<int:pk>/update/", views.ProjectUpdateView.as_view(), name="project-update"),
     path("<int:pk>/delete/", views.ProjectDeleteView.as_view(), name="project-delete"),
+]
+
+client_urls = [
     path(
-        "<int:project_pk>/add-client/",
+        "project/<int:project_pk>/add-client/",
         views_clients.ProjectAddClientView.as_view(),
         name="project-add-client",
     ),
     path(
-        "<int:project_pk>/edit-client/<int:pk>/",
-        views_clients.ProjectEditClientView.as_view(),
-        name="project-edit-client",
+        "project/<int:project_pk>/edit-client/<int:pk>/",
+        views_clients.ClientEditView.as_view(),
+        name="client-edit",
     ),
     path(
-        "client/<int:client_pk>/invite-user/",
+        "project/<int:project_pk>/client/<int:pk>/invite-user/",
         views_clients.ClientInviteUserView.as_view(),
         name="client-invite-user",
     ),
     path(
-        "client/<int:client_pk>/resend-invite/",
+        "project/<int:project_pk>/client/<int:pk>/resend-invite/",
         views_clients.ClientResendInviteView.as_view(),
         name="client-resend-invite",
     ),
     path(
-        "client/<int:client_pk>/remove-user/",
+        "project/<int:project_pk>/client/<int:pk>/remove-user/",
         views_clients.ClientRemoveUserView.as_view(),
         name="client-remove-user",
     ),
 ]
+
+urlpatterns = project_urls + client_urls

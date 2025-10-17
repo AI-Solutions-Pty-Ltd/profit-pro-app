@@ -95,7 +95,7 @@
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-lg font-semibold text-gray-900">Client</h2>
                         <div class="flex space-x-2">
-                            <a href="{% url 'project:project-edit-client' project.pk project.client.pk %}"
+                            <a href="{% url 'project:client-edit' project.pk project.client.pk %}"
                                class="inline-flex items-center px-3 py-1.5 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                                 {% heroicon_outline "pencil" size="20" %}
                                 Edit Client
@@ -130,13 +130,13 @@
                             </div>
                             <div class="sm:col-span-2">
                                 <div class="flex space-x-2">
-                                    <a href="{% url 'project:client-resend-invite' project.client.pk %}"
+                                    <a href="{% url 'project:client-resend-invite' project.pk project.client.pk %}"
                                        class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                                         {% heroicon_outline "envelope" size="20" %}
                                         Resend Invite
                                     </a>
                                     <form method="post"
-                                          action="{% url 'project:client-remove-user' project.client.pk %}"
+                                          action="{% url 'project:client-remove-user' project.pk project.client.pk %}"
                                           onsubmit="return confirm('Are you sure you want to remove this user from the client? They will lose access to this project.');">
                                         {% csrf_token %}
                                         <button type="submit"
@@ -150,7 +150,7 @@
                         {% else %}
                             <!-- invite user -->
                             <div class="sm:col-span-1">
-                                <a href="{% url 'project:client-invite-user' project.client.pk %}"
+                                <a href="{% url 'project:client-invite-user' project.pk project.client.pk %}"
                                    class="inline-flex items-center px-3 py-1.5 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                                     {% heroicon_outline "plus" size="20" %}
                                     Invite User

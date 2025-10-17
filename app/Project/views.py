@@ -1,6 +1,7 @@
 """Views for Project app."""
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import Http404
 from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView,
@@ -10,11 +11,27 @@ from django.views.generic import (
     UpdateView,
 )
 
+from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import ProjectForm
 from app.Project.models import Project
 
 
-class ProjectListView(LoginRequiredMixin, ListView):
+class ProjectMixin(LoginRequiredMixin, UserHasGroupGenericMixin):
+    permissions = ["contractor"]
+
+    def get_queryset(self):
+        return Project.objects.filter(
+            account=self.request.user, deleted=False
+        ).order_by("-created_at")
+
+    def get_object(self):
+        project = super().get_object()
+        if project.account != self.request.user:
+            raise Http404("You do not have permission to view this project.")
+        return project
+
+
+class ProjectListView(ProjectMixin, ListView):
     """List all projects for the current user."""
 
     model = Project
@@ -24,9 +41,7 @@ class ProjectListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         """Filter projects by current user and search query."""
-        queryset = Project.objects.filter(
-            account=self.request.user, deleted=False
-        ).order_by("-created_at")
+        queryset = super().get_queryset()
 
         # Search filter
         search = self.request.GET.get("search")
@@ -36,18 +51,12 @@ class ProjectListView(LoginRequiredMixin, ListView):
         return queryset
 
 
-class ProjectDetailView(LoginRequiredMixin, DetailView):
+class ProjectDetailView(ProjectMixin, DetailView):
     """Display a single project."""
 
     model = Project
     template_name = "project/project_detail.html"
     context_object_name = "project"
-
-    def get_queryset(self):
-        """Filter projects by current user and prefetch structures."""
-        return Project.objects.filter(
-            account=self.request.user, deleted=False
-        ).prefetch_related("structures")
 
     def get_context_data(self, **kwargs):
         """Add structures to context."""
@@ -62,16 +71,12 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class ProjectWBSDetailView(LoginRequiredMixin, DetailView):
+class ProjectWBSDetailView(ProjectMixin, DetailView):
     """Display project WBS/BOQ detailed view."""
 
     model = Project
     template_name = "project/project_detail_wbs.html"
     context_object_name = "project"
-
-    def get_queryset(self):
-        """Filter projects by current user."""
-        return Project.objects.filter(account=self.request.user, deleted=False)
 
     def get_context_data(self, **kwargs):
         """Add line items total and filter options to context."""
@@ -118,12 +123,13 @@ class ProjectWBSDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class ProjectCreateView(LoginRequiredMixin, CreateView):
+class ProjectCreateView(UserHasGroupGenericMixin, CreateView):
     """Create a new project."""
 
     model = Project
     form_class = ProjectForm
     template_name = "project/project_form.html"
+    permissions = ["contractor"]
 
     def form_valid(self, form):
         """Set the account to the current user before saving."""
@@ -135,29 +141,21 @@ class ProjectCreateView(LoginRequiredMixin, CreateView):
         return reverse_lazy("project:project-detail", kwargs={"pk": self.object.pk})
 
 
-class ProjectUpdateView(LoginRequiredMixin, UpdateView):
+class ProjectUpdateView(ProjectMixin, UpdateView):
     """Update an existing project."""
 
     model = Project
     form_class = ProjectForm
     template_name = "project/project_form.html"
 
-    def get_queryset(self):
-        """Filter projects by current user."""
-        return Project.objects.filter(account=self.request.user, deleted=False)
-
     def get_success_url(self):
         """Redirect to the project list."""
         return reverse_lazy("project:project-detail", kwargs={"pk": self.object.pk})
 
 
-class ProjectDeleteView(LoginRequiredMixin, DeleteView):
+class ProjectDeleteView(ProjectMixin, DeleteView):
     """Delete a project."""
 
     model = Project
     template_name = "project/project_confirm_delete.html"
     success_url = reverse_lazy("project:project-list")
-
-    def get_queryset(self):
-        """Filter projects by current user."""
-        return Project.objects.filter(account=self.request.user, deleted=False)

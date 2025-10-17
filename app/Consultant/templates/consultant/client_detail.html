@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}
+    {{ client.name }} - Client Details
+{% endblock title %}
+{% block content %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Breadcrumb -->
+        <nav class="flex mb-8" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{% url 'consultant:client-list' %}"
+                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">
+                        {% heroicon_outline name="chevron-left" size="20" %}
+                        Clients
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        {% heroicon_outline name="chevron-right" size="20" %}
+                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ client.name }}</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+        <!-- Client Header -->
+        <div class="bg-white shadow-sm rounded-lg overflow-hidden mb-8">
+            <div class="px-6 py-8">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="h-20 w-20 rounded-full bg-indigo-100 flex items-center justify-center">
+                            <span class="text-indigo-600 font-bold text-3xl">{{ client.name|first|upper }}</span>
+                        </div>
+                    </div>
+                    <div class="ml-6">
+                        <h1 class="text-3xl font-bold text-gray-900">{{ client.name }}</h1>
+                        <p class="mt-2 text-sm text-gray-500">
+                            {{ client.projects.count }} active project{{ client.projects.count|pluralize }}
+                        </p>
+                    </div>
+                </div>
+                {% if client.description %}
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <h2 class="text-sm font-medium text-gray-500 mb-2">Description</h2>
+                        <p class="text-gray-700">{{ client.description }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <!-- Projects Section -->
+        <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-900">Projects</h2>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {% for project in client.projects.all %}
+                    <div class="px-6 py-6 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center">
+                                    <p class="text-lg font-semibold text-indigo-600 hover:text-indigo-900 transition-colors">{{ project.name }}</p>
+                                </div>
+                                {% if project.description %}
+                                    <p class="mt-2 text-sm text-gray-600">{{ project.description|truncatewords:30 }}</p>
+                                {% endif %}
+                                <!-- Active Payment Certificate -->
+                                {% if project.get_active_payment_certificate %}
+                                    {% define project.get_active_payment_certificate as active_payment_certificate %}
+                                    <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                                        <div class="flex items-start">
+                                            <div class="flex-shrink-0">{% heroicon_outline name="document-text" size="20" class="text-yellow-600" %}</div>
+                                            <div class="ml-3 flex-1">
+                                                <h3 class="text-sm font-medium text-yellow-800">Active Payment Certificate</h3>
+                                                <div class="mt-2 text-sm text-yellow-700">
+                                                    <p class="mb-2">Certificate #{{ active_payment_certificate.certificate_number }} is awaiting approval</p>
+                                                    <a href="{% url 'consultant:payment-certificate-approve' project.pk active_payment_certificate.pk %}"
+                                                       class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-yellow-800 bg-yellow-100 hover:bg-yellow-200 transition-colors">
+                                                        {% heroicon_outline name="clipboard-document-check" size="16" class="-ml-0.5 mr-2" %}
+                                                        Review & Approve
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="mt-4 flex items-center text-sm text-gray-500">
+                                        {% heroicon_outline name="check-circle" size="16" class="mr-2 text-green-500" %}
+                                        No pending payment certificates
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="px-6 py-12 text-center">
+                        <div class="mx-auto h-16 w-16 text-gray-400 mb-4">{% heroicon_outline name="folder-open" size="64" %}</div>
+                        <h3 class="text-sm font-medium text-gray-900 mb-2">No projects</h3>
+                        <p class="text-sm text-gray-500">This client doesn't have any projects yet.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock content %}

@@ -1,95 +1,95 @@
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, UpdateView, View
 
-from app.BillOfQuantities.forms import PaymentCertificateFinalApprovalForm
 from app.BillOfQuantities.models import ActualTransaction, LineItem, PaymentCertificate
 from app.BillOfQuantities.tasks import generate_payment_certificate_pdf
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.models import Project
 
 
-class GetProjectMixin:
+class PaymentCertificateMixin(UserHasGroupGenericMixin):
+    permissions = ["contractor"]
+    project_slug = "project_pk"
+
     def get_project(self) -> Project:
-        return get_object_or_404(
-            Project,
-            pk=self.kwargs["project_pk"],
-            account=self.request.user,
-            deleted=False,
-        )
+        if not hasattr(self, "project"):
+            self.project = get_object_or_404(
+                Project,
+                pk=self.kwargs[self.project_slug],
+                account=self.request.user,
+                deleted=False,
+            )
+        return self.project
+
+    def get_queryset(self):
+        if not hasattr(self, "queryset"):
+            self.queryset = (
+                PaymentCertificate.objects.filter(
+                    project=self.get_project(), project__account=self.request.user
+                )
+                .select_related("project")
+                .prefetch_related("actual_transactions")
+                .prefetch_related("actual_transactions__line_item")
+                .prefetch_related("line_items")
+                .prefetch_related("line_items__structure")
+                .prefetch_related("line_items__bill")
+                .prefetch_related("line_items__package")
+                .order_by("certificate_number")
+            )
+        return self.queryset
 
 
-class PaymentCertificateListView(LoginRequiredMixin, ListView, GetProjectMixin):
+class PaymentCertificateListView(PaymentCertificateMixin, ListView):
     model = PaymentCertificate
     template_name = "payment_certificate/payment_certificate_list.html"
     context_object_name = "payment_certificates"
 
-    def get_queryset(self):
-        project = self.get_project()
-        return (
-            PaymentCertificate.objects.filter(project=project)
-            .select_related("project")
-            .prefetch_related("actual_transactions")
-        )
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        project: Project = self.get_project()
-        context["project"] = project
+        context["project"] = self.get_project()
 
         # Active payment certificate (DRAFT or SUBMITTED)
-        active_payment_certificate = project.get_active_payment_certificate
+        active_payment_certificate: PaymentCertificate | None = (
+            self.get_project().get_active_payment_certificate
+        )
         context["active_certificate"] = active_payment_certificate
 
         # Completed payment certificates (APPROVED or REJECTED)
         if active_payment_certificate:
-            completed_certificates = self.object_list.exclude(
+            completed_certificates = self.get_queryset().exclude(
                 pk=active_payment_certificate.pk
-            ).order_by("-created_at")
+            )
         else:
-            completed_certificates = self.object_list.order_by("-created_at")
+            completed_certificates = self.get_queryset()
 
         context["completed_payment_certificates"] = completed_certificates
         total_claimed = sum(t.total_claimed for t in completed_certificates)
-        total_active = 0
+        active_claimed = 0
         if active_payment_certificate:
-            total_active = Decimal(
+            active_claimed = Decimal(
                 active_payment_certificate.actual_transactions.aggregate(
                     total=Sum("total_price")
                 )["total"]
                 or 0
             )
         remaining_amount = (
-            project.get_total_contract_value - total_claimed - total_active
+            self.project.get_total_contract_value - total_claimed - active_claimed
         )
         context["total_claimed"] = total_claimed
-        context["active_claimed"] = total_active
+        context["active_claimed"] = active_claimed
         context["remaining_amount"] = remaining_amount
         return context
 
 
-class PaymentCertificateDetailView(LoginRequiredMixin, DetailView, GetProjectMixin):
+class PaymentCertificateDetailView(PaymentCertificateMixin, DetailView):
     model = PaymentCertificate
     template_name = "payment_certificate/payment_certificate_detail.html"
     context_object_name = "payment_certificate"
-
-    def get_queryset(self):
-        return (
-            PaymentCertificate.objects.filter(
-                project__account=self.request.user, deleted=False
-            )
-            .select_related("project")
-            .prefetch_related(
-                "actual_transactions__line_item__structure",
-                "actual_transactions__line_item__bill",
-                "actual_transactions__line_item__package",
-            )
-        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -102,22 +102,24 @@ class PaymentCertificateDetailView(LoginRequiredMixin, DetailView, GetProjectMix
         return context
 
 
-class PaymentCertificateEditView(LoginRequiredMixin, View):
+class PaymentCertificateEditView(PaymentCertificateMixin, View):
     template_name = "payment_certificate/payment_certificate_edit.html"
 
     def get(self, request, pk=None, project_pk=None):
-        project = get_object_or_404(Project, pk=project_pk, account=request.user)
+        project = self.get_project()
         # Get unique structures, bills, packages for dropdowns
-        from app.BillOfQuantities.models import Bill, Package, Structure
-
-        structures = Structure.objects.filter(project=project).distinct()
-        bills = Bill.objects.filter(structure__project=project).distinct()
-        packages = Package.objects.filter(bill__structure__project=project).distinct()
         if not project.line_items:
             messages.error(request, "Project has no WBS loaded, please upload!")
             return redirect(
                 "bill_of_quantities:structure-upload", project_pk=project_pk
             )
+
+        from app.BillOfQuantities.models import Bill, Package, Structure
+
+        structures = Structure.objects.filter(project=project).distinct()
+        bills = Bill.objects.filter(structure__project=project).distinct()
+        packages = Package.objects.filter(bill__structure__project=project).distinct()
+
         if not pk:
             # no payment certificate selected, check if any active, or create new one
             payment_certificates = PaymentCertificate.objects.filter(
@@ -286,7 +288,7 @@ class PaymentCertificateEditView(LoginRequiredMixin, View):
         )
 
 
-class PaymentCertificateSubmitView(LoginRequiredMixin, UpdateView, GetProjectMixin):
+class PaymentCertificateSubmitView(PaymentCertificateMixin, UpdateView):
     model = PaymentCertificate
     fields = ["status"]
     template_name = "payment_certificate/payment_certificate_approve.html"
@@ -341,116 +343,13 @@ class PaymentCertificateSubmitView(LoginRequiredMixin, UpdateView, GetProjectMix
         )
 
 
-class PaymentCertificateFinalApprovalView(
-    LoginRequiredMixin, UserHasGroupGenericMixin, UpdateView, GetProjectMixin
-):
-    """Final approval/rejection view - choose between APPROVED or REJECTED."""
-
-    model = PaymentCertificate
-    form_class = PaymentCertificateFinalApprovalForm
-    template_name = "payment_certificate/payment_certificate_final_approval.html"
-    context_object_name = "payment_certificate"
-    permissions = ["consultant"]
-
-    def get_queryset(self):
-        return (
-            PaymentCertificate.objects.filter(
-                project__client__consultant=self.request.user, deleted=False
-            )
-            .select_related("project")
-            .prefetch_related(
-                "actual_transactions__line_item__structure",
-                "actual_transactions__line_item__bill",
-                "actual_transactions__line_item__package",
-            )
-        )
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
-
-        # Calculate total for all transactions
-        total_amount = sum(t.total_price for t in self.object.actual_transactions.all())
-        context["total_amount"] = total_amount
-
-        return context
-
-    def form_valid(self, form):
-        from django.template.loader import render_to_string
-
-        from app.core.Utilities.django_email_service import django_email_service
-
-        payment_certificate = form.save(commit=False)
-        project = payment_certificate.project
-
-        # Mark all transactions as claimed based on status
-        if payment_certificate.status == PaymentCertificate.Status.APPROVED:
-            payment_certificate.actual_transactions.update(claimed=True)
-            messages.success(
-                self.request,
-                f"Payment Certificate #{payment_certificate.certificate_number} has been approved!",
-            )
-            payment_certificate.refresh_from_db()
-
-            # Send approval email
-            subject = f"Payment Certificate #{payment_certificate.certificate_number} Approved"
-            context = {
-                "payment_certificate": payment_certificate,
-                "project": project,
-            }
-            html_body = render_to_string(
-                "payment_certificate/email_approval.html", context
-            )
-
-            django_email_service(
-                to=project.account.email,
-                subject=subject,
-                html_body=html_body,
-                plain_body="",
-            )
-
-        else:
-            payment_certificate.actual_transactions.update(
-                claimed=False, approved=False
-            )
-            messages.warning(
-                self.request,
-                f"Payment Certificate #{payment_certificate.certificate_number} has been rejected.",
-            )
-
-            # Send rejection email
-            subject = f"Payment Certificate #{payment_certificate.certificate_number} Rejected"
-            context = {
-                "payment_certificate": payment_certificate,
-                "project": project,
-            }
-            html_body = render_to_string(
-                "payment_certificate/email_rejection.html", context
-            )
-
-            django_email_service(
-                to=project.account.email,
-                subject=subject,
-                html_body=html_body,
-                plain_body="",
-            )
-
-        payment_certificate.save()
-
-        return redirect(
-            "bill_of_quantities:payment-certificate-detail",
-            project_pk=self.kwargs["project_pk"],
-            pk=payment_certificate.pk,
-        )
-
-
-class PaymentCertificateDownloadPDFView(LoginRequiredMixin, View, GetProjectMixin):
+class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
     """Download payment certificate as PDF."""
 
     def get(self, request, pk=None, project_pk=None):
         project = self.get_project()
         payment_certificate = get_object_or_404(
-            PaymentCertificate, pk=pk, project=project
+            PaymentCertificate, pk=pk, project=project, project__account=request.user
         )
 
         # Generate PDF in memory

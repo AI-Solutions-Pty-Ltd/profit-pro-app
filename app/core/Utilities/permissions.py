@@ -1,9 +1,9 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect
 
 
-class UserHasGroupGenericMixin(UserPassesTestMixin):
+class UserHasGroupGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Generic mixin for user group permissions."""
 
     permissions = []

@@ -19,6 +19,7 @@ urlpatterns = [
         "bill-of-quantities/",
         include("app.BillOfQuantities.urls", namespace="bill_of_quantities"),
     ),
+    path("consultant/", include("app.Consultant.urls", namespace="consultant")),
 ]
 
 if os.getenv("DJANGO_SETTINGS_MODULE") == "settings.local":
