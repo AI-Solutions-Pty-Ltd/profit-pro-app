@@ -22,23 +22,22 @@ CORE_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
-    "django_cleanup.apps.CleanupConfig",
     "django.contrib.sites",
     "app.core",
     "app.utils",
 ]
 
 THIRD_PARTY_APPS = [
-    "import_export",
-    "phonenumber_field",
     "django_extensions",
+    "django_filters",
+    "import_export",
+    "mathfilters",
+    "phonenumber_field",
     "tailwind",
     "crispy_forms",
     "crispy_tailwind",
     "app.theme",
     "heroicons",
-    "django_filters",
-    "mathfilters",
     # Core/shared apps
 ]
 
@@ -49,7 +48,11 @@ SHARED_APPS = [
     "app.BillOfQuantities",
 ]
 
-INSTALLED_APPS = CORE_APPS + THIRD_PARTY_APPS + SHARED_APPS
+CLEANUP_APPS = [
+    "django_cleanup.apps.CleanupConfig",
+]
+
+INSTALLED_APPS = CORE_APPS + THIRD_PARTY_APPS + SHARED_APPS + CLEANUP_APPS
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

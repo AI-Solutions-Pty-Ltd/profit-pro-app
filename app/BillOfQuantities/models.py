@@ -1,7 +1,9 @@
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from django.db import models
-from django.db.models import Sum, Q
+from django.db.models import DecimalField, Q, QuerySet, Sum, Value
+from django.db.models.functions import Coalesce
 from django.urls import reverse
 
 from app.Account.models import Account
@@ -115,53 +117,132 @@ class LineItem(BaseModel):
     def construct_payment_certificate(
         payment_certificate: "PaymentCertificate",
     ):
+        """
+        Construct optimized queryset of line items with payment certificate data.
+
+        Performance optimizations:
+        - Uses select_related to avoid N+1 queries on ForeignKeys
+        - Uses only() to fetch only required fields
+        - Uses Coalesce to handle NULL values from annotations
+        - Filters to only include line items with transactions in current certificate
+        """
         project = payment_certificate.project
-        project = project.line_items.select_related(
-            "structure",
-            "bill",
-            "package",
-        ).annotate(
-            # Sum transactions from previous approved certificates only
-            previous_claimed=Sum(
-                "actual_transactions__total_price",
-                filter=Q(
-                    actual_transactions__payment_certificate__certificate_number__lt=payment_certificate.certificate_number,
+        cert_number = payment_certificate.certificate_number
+        line_items = project.line_items.all()
+
+        return (
+            line_items.select_related(
+                "structure",
+                "bill",
+                "package",
+            )
+            .only(
+                # LineItem fields
+                "id",
+                "item_number",
+                "description",
+                "unit_price",
+                "unit_measurement",
+                "budgeted_quantity",
+                "total_price",
+                "row_index",
+                # Structure fields
+                "structure__id",
+                "structure__name",
+                # Bill fields
+                "bill__id",
+                "bill__name",
+                # Package fields
+                "package__id",
+                "package__name",
+            )
+            .annotate(
+                # Use Coalesce to return 0 instead of None for NULL aggregations
+                previous_qty=Coalesce(
+                    Sum(
+                        "actual_transactions__quantity",
+                        filter=Q(
+                            actual_transactions__payment_certificate__certificate_number__lt=cert_number,
+                            actual_transactions__payment_certificate__status=PaymentCertificate.Status.APPROVED,
+                        ),
+                    ),
+                    Value(0),
+                    output_field=DecimalField(),
                 ),
-            ),
-            previous_qty=Sum(
-                "actual_transactions__quantity",
-                filter=Q(
-                    actual_transactions__payment_certificate__certificate_number__lt=payment_certificate.certificate_number,
+                current_qty=Coalesce(
+                    Sum(
+                        "actual_transactions__quantity",
+                        filter=Q(
+                            actual_transactions__payment_certificate=payment_certificate,
+                        ),
+                    ),
+                    Value(0),
+                    output_field=DecimalField(),
                 ),
-            ),
-            # Sum transactions from current certificate only
-            current_claim=Sum(
-                "actual_transactions__total_price",
-                filter=Q(
-                    actual_transactions__payment_certificate=payment_certificate,
+                total_qty=Coalesce(
+                    Sum(
+                        "actual_transactions__quantity",
+                        filter=Q(
+                            actual_transactions__payment_certificate__certificate_number__lte=cert_number,
+                        ),
+                    ),
+                    Value(0),
+                    output_field=DecimalField(),
                 ),
-            ),
-            current_qty=Sum(
-                "actual_transactions__quantity",
-                filter=Q(
-                    actual_transactions__payment_certificate=payment_certificate,
+                previous_claimed=Coalesce(
+                    Sum(
+                        "actual_transactions__total_price",
+                        filter=Q(
+                            actual_transactions__payment_certificate__certificate_number__lt=cert_number,
+                            actual_transactions__payment_certificate__status=PaymentCertificate.Status.APPROVED,
+                        ),
+                    ),
+                    Value(0),
+                    output_field=DecimalField(),
                 ),
-            ),
-            # Sum all claimed transactions up to and including current
-            total_claimed=Sum(
-                "actual_transactions__total_price",
-                filter=Q(
-                    actual_transactions__payment_certificate__certificate_number__lte=payment_certificate.certificate_number,
+                current_claim=Coalesce(
+                    Sum(
+                        "actual_transactions__total_price",
+                        filter=Q(
+                            actual_transactions__payment_certificate=payment_certificate,
+                        ),
+                    ),
+                    Value(0),
+                    output_field=DecimalField(),
                 ),
-            ),
-            total_qty=Sum(
-                "actual_transactions__quantity",
-                filter=Q(
-                    actual_transactions__payment_certificate__certificate_number__lte=payment_certificate.certificate_number,
+                total_claimed=Coalesce(
+                    Sum(
+                        "actual_transactions__total_price",
+                        filter=Q(
+                            actual_transactions__payment_certificate__certificate_number__lte=cert_number,
+                        ),
+                    ),
+                    Value(0),
+                    output_field=DecimalField(),
                 ),
-            ),
+            )
+            .distinct()
         )
-        return project
+
+    @staticmethod
+    def abridged_payment_certificate(payment_certificate):
+        """
+        Construct abridged queryset of line items with only claimed items.
+
+        This method builds on construct_payment_certificate and filters to only
+        include line items where current_claim > 0 (items with actual monetary claims).
+
+        Note: This excludes non-work items (headings) and items with zero claims.
+        Use construct_payment_certificate() if you need all line items including headings.
+
+        Args:
+            payment_certificate: PaymentCertificate instance
+
+        Returns:
+            QuerySet: Filtered line items with current_claim > 0
+        """
+        line_items = LineItem.construct_payment_certificate(payment_certificate)
+        return line_items.exclude(current_claim=0)
 
     @property
     def claimed_to_date(self) -> Decimal:
@@ -211,6 +292,10 @@ class LineItem(BaseModel):
 class PaymentCertificate(BaseModel):
     """Used to send to clients for payment"""
 
+    if TYPE_CHECKING:
+        # Type hint for reverse relationship from ActualTransaction
+        actual_transactions: QuerySet["ActualTransaction"]
+
     def upload_to(self, filename):
         return f"payment_certificates/{self.project.name}/{filename}"
 
@@ -227,16 +312,21 @@ class PaymentCertificate(BaseModel):
         max_length=10, choices=Status.choices, default=Status.DRAFT
     )
 
-    certificate_number = models.IntegerField()
+    certificate_number = models.IntegerField(unique=True)
     notes = models.TextField(
         blank=True, default="", help_text="Additional notes or comments"
     )
     pdf = models.FileField(upload_to=upload_to, blank=True, null=True)
+    abridged_pdf = models.FileField(upload_to=upload_to, blank=True, null=True)
 
     class Meta:
         verbose_name = "Payment Certificate"
         verbose_name_plural = "Payment Certificates"
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["certificate_number", "status"]),
+            models.Index(fields=["project", "certificate_number"]),
+        ]
 
     def __str__(self):
         return f"# {self.certificate_number}: {self.project} - {self.status}"
@@ -249,7 +339,7 @@ class PaymentCertificate(BaseModel):
         return total_payment_certificates + 1
 
     @property
-    def previous_certificates(self) -> list["PaymentCertificate"]:
+    def previous_certificates(self) -> QuerySet["PaymentCertificate"]:
         return PaymentCertificate.objects.filter(
             project=self.project,
             certificate_number__lt=self.certificate_number,
@@ -359,6 +449,18 @@ class ActualTransaction(BaseModel):
         verbose_name = "Actual Transaction"
         verbose_name_plural = "Actual Transactions"
         ordering = ["line_item__row_index"]
+        indexes = [
+            models.Index(fields=["payment_certificate", "line_item"]),
+            models.Index(fields=["line_item", "claimed"]),
+        ]
 
     def __str__(self):
         return f"{self.line_item} - {self.quantity}"
+
+    def save(self, *args, **kwargs):
+        if self.payment_certificate.pdf:
+            self.payment_certificate.pdf = None
+        if self.payment_certificate.abridged_pdf:
+            self.payment_certificate.abridged_pdf = None
+        self.payment_certificate.save()
+        super().save(*args, **kwargs)

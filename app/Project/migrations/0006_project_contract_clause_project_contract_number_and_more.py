@@ -5,42 +5,69 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0005_alter_project_client'),
+        ("Project", "0005_alter_project_client"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='project',
-            name='contract_clause',
+            model_name="project",
+            name="contract_clause",
             field=models.CharField(blank=True, max_length=255),
         ),
         migrations.AddField(
-            model_name='project',
-            name='contract_number',
+            model_name="project",
+            name="contract_number",
             field=models.CharField(blank=True, max_length=255),
         ),
         migrations.AddField(
-            model_name='project',
-            name='vat',
+            model_name="project",
+            name="vat",
             field=models.BooleanField(default=False),
         ),
         migrations.CreateModel(
-            name='Signatories',
+            name="Signatories",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last modified')),
-                ('deleted', models.BooleanField(default=False, help_text='Soft delete flag')),
-                ('name', models.CharField(max_length=255)),
-                ('title', models.CharField(max_length=255)),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='signatories', to='Project.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last modified"
+                    ),
+                ),
+                (
+                    "deleted",
+                    models.BooleanField(default=False, help_text="Soft delete flag"),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("title", models.CharField(max_length=255)),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="signatories",
+                        to="Project.project",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Signatory',
-                'verbose_name_plural': 'Signatories',
-                'ordering': ['-created_at'],
+                "verbose_name": "Signatory",
+                "verbose_name_plural": "Signatories",
+                "ordering": ["-created_at"],
             },
         ),
     ]

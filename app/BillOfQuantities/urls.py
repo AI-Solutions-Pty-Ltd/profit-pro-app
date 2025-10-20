@@ -61,6 +61,11 @@ payment_certificate_urls = [
         views_payment_certificate.PaymentCertificateDownloadPDFView.as_view(),
         name="payment-certificate-download-pdf",
     ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/download-abridged-pdf/",
+        views_payment_certificate.PaymentCertificateDownloadAbridgedPDFView.as_view(),
+        name="payment-certificate-download-abridged-pdf",
+    ),
 ]
 
 urlpatterns = structure_urls + payment_certificate_urls

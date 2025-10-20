@@ -42,18 +42,14 @@
         <!-- Header -->
         <div class="bg-white shadow-sm rounded-lg mb-6">
             <div class="px-6 py-4">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mb-4">
                     <div>
                         <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
                         <p class="text-sm text-gray-600 mt-1">Payment Certificate: #{{ payment_certificate.certificate_number }}</p>
                         <p class="text-sm text-gray-600 mt-1">Status: {{ payment_certificate.status }}</p>
+                        <p class="text-sm text-gray-600 mt-1">Date: {{ payment_certificate.date|date:"d M Y" }}</p>
                     </div>
                     <div class="flex items-center space-x-3">
-                        <a href="{% url 'bill_of_quantities:payment-certificate-download-pdf' project.pk payment_certificate.pk %}"
-                           class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {% heroicon_outline "arrow-down-tray" class="w-4 h-4" %}
-                            Download Abridged PDF
-                        </a>
                         {% if payment_certificate.status == "DRAFT" %}
                             <a href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk payment_certificate.pk %}"
                                class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -71,6 +67,61 @@
                             {% endif %}
                         {% endif %}
                         {% if payment_certificate.status == 'SUBMITTED' %}<p>Awaiting Final Payment Certificate Review</p>{% endif %}
+                    </div>
+                </div>
+                <div id="pdf-download" class="mt-6 pt-6 border-t border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Download PDF Reports</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Full PDF Form -->
+                        <form method="get"
+                              class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-indigo-300 transition-colors"
+                              action="{% url 'bill_of_quantities:payment-certificate-download-pdf' project.pk payment_certificate.pk %}">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-900">Full Payment Certificate</h3>
+                                    <p class="text-xs text-gray-600 mt-1">Complete certificate with all line items</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <label class="flex items-center text-xs text-gray-700 cursor-pointer">
+                                    <input type="checkbox"
+                                           name="force"
+                                           value="true"
+                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                    <span>Force regenerate</span>
+                                </label>
+                                <button type="submit"
+                                        class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                    {% heroicon_outline "arrow-down-tray" class="w-4 h-4" %}
+                                    Download
+                                </button>
+                            </div>
+                        </form>
+                        <!-- Abridged PDF Form -->
+                        <form method="get"
+                              class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-indigo-300 transition-colors"
+                              action="{% url 'bill_of_quantities:payment-certificate-download-abridged-pdf' project.pk payment_certificate.pk %}">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-900">Abridged Certificate</h3>
+                                    <p class="text-xs text-gray-600 mt-1">Summary with claimed items only</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <label class="flex items-center text-xs text-gray-700 cursor-pointer">
+                                    <input type="checkbox"
+                                           name="force"
+                                           value="true"
+                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                    <span>Force regenerate</span>
+                                </label>
+                                <button type="submit"
+                                        class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                    {% heroicon_outline "arrow-down-tray" class="w-4 h-4" %}
+                                    Download
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -103,55 +154,52 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                {% for transaction in line_items %}
-                                    {% if transaction.current_claim %}
-                                        {% if not structure_name or structure_name != transaction.structure.name %}
-                                            {% define transaction.structure.name as structure_name %}
-                                            <tr>
-                                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900center header"
-                                                    colspan="{{ colSpan }}">{{ structure_name }}</td>
-                                            </tr>
-                                        {% endif %}
-                                        {% if not bill_name or bill_name != transaction.bill.name %}
-                                            {% define transaction.bill.name as bill_name %}
-                                            <tr>
-                                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 header"
-                                                    colspan="{{ colSpan }}">{{ bill_name }}</td>
-                                            </tr>
-                                        {% endif %}
-                                        {% if not package_name or package_name != transaction.package.name %}
-                                            {% define transaction.package.name as package_name %}
-                                            <tr>
-                                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 header"
-                                                    colspan="{{ colSpan }}">{{ package_name }}</td>
-                                            </tr>
-                                        {% endif %}
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ transaction.item_number|default:"-" }}</td>
-                                            <td class="px-3 py-2 text-sm text-gray-900">{{ transaction.description|truncatewords:10 }}</td>
-                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                                                R {{ transaction.unit_price|floatformat:2|intcomma }} / {{ transaction.unit_measurement }}
-                                            </td>
-                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ transaction.previous_qty|floatformat:2|intcomma }}
-                                            </td>
-                                            <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
-                                                {{ transaction.current_qty|floatformat:2|intcomma }}
-                                            </td>
-                                            <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">
-                                                R {{ transaction.total_qty|floatformat:2|intcomma }}
-                                            </td>
-                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {{ transaction.previous_claimed|floatformat:2|intcomma }}
-                                            </td>
-                                            <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
-                                                {{ transaction.current_claim|floatformat:2|intcomma }}
-                                            </td>
-                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                R {{ transaction.total_claimed|floatformat:2|intcomma }}
-                                            </td>
+                                {% for structure_group in grouped_line_items %}
+                                    <tr>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900center header"
+                                            colspan="{{ colSpan }}">{{ structure_group.structure.name }}</td>
+                                    </tr>
+                                    {% for bill_group in structure_group.bills %}
+                                        <tr>
+                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 header"
+                                                colspan="{{ colSpan }}">{{ bill_group.bill.name }}</td>
                                         </tr>
-                                    {% endif %}
+                                        {% for package_group in bill_group.packages %}
+                                            {% if package_group.package.name %}
+                                                <tr>
+                                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 header"
+                                                        colspan="{{ colSpan }}">{{ package_group.package.name }}</td>
+                                                </tr>
+                                            {% endif %}
+                                            {% for line_item in package_group.line_items %}
+                                                <tr class="hover:bg-gray-50">
+                                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.item_number|default:"-" }}</td>
+                                                    <td class="px-3 py-2 text-sm text-gray-900">{{ line_item.description|truncatewords:10 }}</td>
+                                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                                        R {{ line_item.unit_price|floatformat:2|intcomma }} / {{ line_item.unit_measurement }}
+                                                    </td>
+                                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                                        {{ line_item.previous_qty|floatformat:2|intcomma }}
+                                                    </td>
+                                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
+                                                        {{ line_item.current_qty|floatformat:2|intcomma }}
+                                                    </td>
+                                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">
+                                                        R {{ line_item.total_qty|floatformat:2|intcomma }}
+                                                    </td>
+                                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                                        {{ line_item.previous_claimed|floatformat:2|intcomma }}
+                                                    </td>
+                                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
+                                                        {{ line_item.current_claim|floatformat:2|intcomma }}
+                                                    </td>
+                                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                                        R {{ line_item.total_claimed|floatformat:2|intcomma }}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% endfor %}
+                                    {% endfor %}
                                 {% endfor %}
                             </tbody>
                             <tfoot class="bg-gray-50">

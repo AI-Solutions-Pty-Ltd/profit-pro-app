@@ -283,8 +283,12 @@ class TestLineItemModel:
     def test_construct_payment_certificate_with_current_transactions_only(self):
         """Test construct_payment_certificate with only current certificate transactions."""
         project = ProjectFactory.create()
-        line_item1 = LineItemFactory.create(project=project, unit_price=Decimal("100.00"))
-        line_item2 = LineItemFactory.create(project=project, unit_price=Decimal("200.00"))
+        line_item1 = LineItemFactory.create(
+            project=project, unit_price=Decimal("100.00")
+        )
+        line_item2 = LineItemFactory.create(
+            project=project, unit_price=Decimal("200.00")
+        )
 
         certificate = PaymentCertificateFactory.create(
             project=project, certificate_number=1
@@ -326,11 +330,15 @@ class TestLineItemModel:
     def test_construct_payment_certificate_with_previous_certificates(self):
         """Test construct_payment_certificate with previous approved certificates."""
         project = ProjectFactory.create()
-        line_item = LineItemFactory.create(project=project, unit_price=Decimal("100.00"))
+        line_item = LineItemFactory.create(
+            project=project, unit_price=Decimal("100.00")
+        )
 
         # Certificate 1 (previous, approved)
         cert1 = PaymentCertificateFactory.create(
-            project=project, certificate_number=1, status=PaymentCertificate.Status.APPROVED
+            project=project,
+            certificate_number=1,
+            status=PaymentCertificate.Status.APPROVED,
         )
         ActualTransactionFactory.create(
             payment_certificate=cert1,
@@ -340,7 +348,9 @@ class TestLineItemModel:
 
         # Certificate 2 (previous, approved)
         cert2 = PaymentCertificateFactory.create(
-            project=project, certificate_number=2, status=PaymentCertificate.Status.APPROVED
+            project=project,
+            certificate_number=2,
+            status=PaymentCertificate.Status.APPROVED,
         )
         ActualTransactionFactory.create(
             payment_certificate=cert2,
@@ -349,9 +359,7 @@ class TestLineItemModel:
         )
 
         # Certificate 3 (current)
-        cert3 = PaymentCertificateFactory.create(
-            project=project, certificate_number=3
-        )
+        cert3 = PaymentCertificateFactory.create(project=project, certificate_number=3)
         ActualTransactionFactory.create(
             payment_certificate=cert3,
             line_item=line_item,
@@ -377,7 +385,9 @@ class TestLineItemModel:
 
         # Certificate 1 (previous)
         cert1 = PaymentCertificateFactory.create(
-            project=project, certificate_number=1, status=PaymentCertificate.Status.APPROVED
+            project=project,
+            certificate_number=1,
+            status=PaymentCertificate.Status.APPROVED,
         )
         ActualTransactionFactory.create(
             payment_certificate=cert1,
@@ -386,9 +396,7 @@ class TestLineItemModel:
         )
 
         # Certificate 2 (current)
-        cert2 = PaymentCertificateFactory.create(
-            project=project, certificate_number=2
-        )
+        cert2 = PaymentCertificateFactory.create(project=project, certificate_number=2)
         ActualTransactionFactory.create(
             payment_certificate=cert2,
             line_item=line_item,
@@ -396,9 +404,7 @@ class TestLineItemModel:
         )
 
         # Certificate 3 (future - should be excluded)
-        cert3 = PaymentCertificateFactory.create(
-            project=project, certificate_number=3
-        )
+        cert3 = PaymentCertificateFactory.create(project=project, certificate_number=3)
         ActualTransactionFactory.create(
             payment_certificate=cert3,
             line_item=line_item,
@@ -426,7 +432,9 @@ class TestLineItemModel:
 
         # Previous certificate
         cert1 = PaymentCertificateFactory.create(
-            project=project, certificate_number=1, status=PaymentCertificate.Status.APPROVED
+            project=project,
+            certificate_number=1,
+            status=PaymentCertificate.Status.APPROVED,
         )
         ActualTransactionFactory.create(
             payment_certificate=cert1,
@@ -440,9 +448,7 @@ class TestLineItemModel:
         )
 
         # Current certificate
-        cert2 = PaymentCertificateFactory.create(
-            project=project, certificate_number=2
-        )
+        cert2 = PaymentCertificateFactory.create(project=project, certificate_number=2)
         ActualTransactionFactory.create(
             payment_certificate=cert2,
             line_item=line_item1,

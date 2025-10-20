@@ -7,7 +7,11 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, UpdateView, View
 
 from app.BillOfQuantities.models import ActualTransaction, LineItem, PaymentCertificate
-from app.BillOfQuantities.tasks import generate_payment_certificate_pdf
+from app.BillOfQuantities.tasks import (
+    generate_abridged_payment_certificate_pdf,
+    generate_payment_certificate_pdf,
+    group_line_items_by_hierarchy,
+)
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.models import Project
 
@@ -103,7 +107,8 @@ class PaymentCertificateDetailView(PaymentCertificateMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
-        context["line_items"] = LineItem.construct_payment_certificate(self.object)
+        line_items = LineItem.abridged_payment_certificate(self.object)
+        context["grouped_line_items"] = group_line_items_by_hierarchy(line_items)
 
         # Calculate total for all transactions
         total_amount = sum(t.total_price for t in self.object.actual_transactions.all())
@@ -156,7 +161,7 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
 
         if payment_certificate.status != PaymentCertificate.Status.DRAFT:
             messages.error(
-                request, "Payment certifciate already approved, cannot edit anymore."
+                request, "Payment certificate already approved, cannot edit anymore."
             )
             return redirect(
                 "bill_of_quantities:payment-certificate-detail",
@@ -358,12 +363,16 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
             PaymentCertificate, pk=pk, project=project, project__account=request.user
         )
 
-        # Generate PDF in memory
-        pdf = generate_payment_certificate_pdf(payment_certificate)
-        pdf.name = f"payment_certificate_{payment_certificate.certificate_number}.pdf"
-        pdf.type = "application/pdf"  # type: ignore
-        payment_certificate.pdf = pdf
-        payment_certificate.save()
+        if not payment_certificate.pdf or not request.GET.get("force"):
+            # Generate PDF in memory
+            pdf = generate_payment_certificate_pdf(payment_certificate)
+            pdf.name = (
+                f"payment_certificate_{payment_certificate.certificate_number}.pdf"
+            )
+            pdf.type = "application/pdf"  # type: ignore
+            payment_certificate.pdf = pdf
+            payment_certificate.save()
+
         # Wrap ContentFile in BytesIO for FileResponse
         file = payment_certificate.pdf.open("rb")
 
@@ -373,6 +382,37 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
             content_type="application/pdf",
             as_attachment=True,
             filename=f"payment_certificate_{payment_certificate.certificate_number}.pdf",
+        )
+
+        return response
+
+
+class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
+    """Download abridged payment certificate as PDF."""
+
+    def get(self, request, pk=None, project_pk=None):
+        project = self.get_project()
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=pk, project=project, project__account=request.user
+        )
+
+        # Generate PDF in memory
+        if not payment_certificate.abridged_pdf or bool(request.GET.get("force")):
+            pdf = generate_abridged_payment_certificate_pdf(payment_certificate)
+            pdf.name = f"payment_certificate_{payment_certificate.certificate_number}_abridged.pdf"
+            pdf.type = "application/pdf"  # type: ignore
+            payment_certificate.abridged_pdf = pdf
+            payment_certificate.save()
+
+        # Wrap ContentFile in BytesIO for FileResponse
+        file = payment_certificate.abridged_pdf.open("rb")
+
+        # Return PDF as download from memory
+        response = FileResponse(
+            file,
+            content_type="application/pdf",
+            as_attachment=True,
+            filename=f"payment_certificate_{payment_certificate.certificate_number}_abridged.pdf",
         )
 
         return response

@@ -2,7 +2,6 @@
 
 import pandas as pd
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
