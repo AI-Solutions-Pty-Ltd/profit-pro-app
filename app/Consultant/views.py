@@ -18,7 +18,6 @@ class GetProjectMixin(UserHasGroupGenericMixin):
             Project,
             pk=self.kwargs["project_pk"],
             client__consultant=self.request.user,
-            deleted=False,
         )
 
 
@@ -51,7 +50,7 @@ class PaymentCertificateFinalApprovalView(ConsultantMixin, UpdateView):
     def get_queryset(self):
         return (
             PaymentCertificate.objects.filter(
-                project__client__consultant=self.request.user, deleted=False
+                project__client__consultant=self.request.user
             )
             .select_related("project")
             .prefetch_related(

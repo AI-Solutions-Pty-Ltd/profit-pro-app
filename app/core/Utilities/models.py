@@ -1,14 +1,45 @@
+from django.contrib import admin
 from django.db import models
 
 
+class SoftDeleteManager(models.Manager):
+    """Custom manager that excludes soft-deleted objects by default."""
+
+    def get_queryset(self):
+        """Return queryset excluding soft-deleted objects."""
+        return super().get_queryset().filter(deleted=False)
+
+
+class AllObjectsManager(models.Manager):
+    """Manager that includes all objects, even soft-deleted ones."""
+
+    pass
+
+
 class BaseModel(models.Model):
-    """Abstract model for time-stamped models with history tracking.
+    """Abstract model for time-stamped models with soft delete support.
 
     Attributes:
         created_at (DateTimeField): The date and time when the object was created.
         updated_at (DateTimeField): The date and time when the object was last updated.
-        history (HistoricalRecords): The history of changes to the object.
         deleted (BooleanField): Soft delete flag.
+
+    Managers:
+        objects (SoftDeleteManager): Default manager that excludes soft-deleted objects.
+        all_objects (AllObjectsManager): Manager that includes all objects, even soft-deleted ones.
+
+    Usage:
+        # Get only active (non-deleted) objects
+        MyModel.objects.all()
+
+        # Get all objects including soft-deleted ones
+        MyModel.all_objects.all()
+
+        # Soft delete an object
+        obj.soft_delete()
+
+        # Restore a soft-deleted object
+        obj.restore()
     """
 
     created_at = models.DateTimeField(
@@ -20,6 +51,11 @@ class BaseModel(models.Model):
         help_text="When this record was last modified",
     )
     deleted = models.BooleanField(default=False, help_text="Soft delete flag")
+
+    # Default manager excludes soft-deleted objects
+    objects = SoftDeleteManager()
+    # Manager to access all objects including soft-deleted ones
+    all_objects = AllObjectsManager()
 
     class Meta:
         abstract = True

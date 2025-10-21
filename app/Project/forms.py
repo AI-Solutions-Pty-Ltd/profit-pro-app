@@ -69,9 +69,7 @@ class ClientForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Filter consultants to only show users with type CONSULTANT
-        consultant_users = Account.objects.filter(
-            groups__name="consultant", deleted=False
-        )
+        consultant_users = Account.objects.filter(groups__name="consultant")
         self.fields["consultant"].queryset = consultant_users
         self.fields["consultant"].required = False
 

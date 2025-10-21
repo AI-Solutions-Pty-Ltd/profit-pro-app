@@ -31,7 +31,6 @@ class GetProjectMixin(UserHasGroupGenericMixin):
             Project,
             pk=slug,
             account=self.request.user,
-            deleted=False,
         )
 
 
@@ -39,9 +38,7 @@ class ClientMixin(GetProjectMixin):
     def get_queryset(self):
         if not hasattr(self, "project") or not self.project:
             self.project = self.get_project(self.kwargs["project_pk"])
-        return Client.objects.filter(projects=self.project, deleted=False).order_by(
-            "-created_at"
-        )
+        return Client.objects.filter(projects=self.project).order_by("-created_at")
 
     def get_object(self):
         if not hasattr(self, "project") or not self.project:
@@ -50,17 +47,12 @@ class ClientMixin(GetProjectMixin):
         return get_object_or_404(
             queryset,
             pk=self.kwargs["pk"],  ## MAKE SURE SLUG REMAINS "pk"
-            deleted=False,
         )
 
     def get_client(self, slug):
         if not hasattr(self, "project") or not self.project:
             self.project = self.get_project(self.kwargs["project_pk"])
-        return get_object_or_404(
-            Client,
-            pk=slug,
-            deleted=False,
-        )
+        return get_object_or_404(Client, pk=slug)
 
 
 class ProjectAddClientView(GetProjectMixin, CreateView):
@@ -122,7 +114,7 @@ class ClientInviteUserView(ClientMixin, FormView):
 
         # Check if user already exists
         try:
-            user = Account.objects.get(email=email, deleted=False)
+            user = Account.objects.get(email=email)
             user_exists = True
         except Account.DoesNotExist:
             # Create user account with type CLIENT and unusable password
@@ -219,7 +211,7 @@ class ClientInviteUserView(ClientMixin, FormView):
             )
 
         # Get the project associated with this client
-        project = Project.objects.filter(client=self.client, deleted=False).first()
+        project = Project.objects.filter(client=self.client).first()
         if project:
             return redirect("project:project-detail", pk=project.pk)
         return redirect("project:project-list")
@@ -313,7 +305,7 @@ class ClientResendInviteView(ClientMixin, DetailView):
             domain = self.request.get_host()
 
             # Get project details
-            project = Project.objects.filter(client=self.client, deleted=False).first()
+            project = Project.objects.filter(client=self.client).first()
 
             # Prepare email context
             context = {
@@ -359,7 +351,7 @@ class ClientResendInviteView(ClientMixin, DetailView):
             )
 
         # Redirect back to project detail
-        project = Project.objects.filter(client=self.client, deleted=False).first()
+        project = Project.objects.filter(client=self.client).first()
         if project:
             return redirect("project:project-detail", pk=project.pk)
         return redirect("project:project-list")

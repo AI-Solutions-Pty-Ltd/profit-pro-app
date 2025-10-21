@@ -1,7 +1,31 @@
-# Register your models here.
+"""Admin configuration for Project app."""
+
 from django.contrib import admin
 
-from .models import Client, Project
+from app.core.Utilities.admin import SoftDeleteAdmin
 
-admin.site.register(Project)
-admin.site.register(Client)
+from .models import Client, Project, Signatories
+
+
+@admin.register(Project)
+class ProjectAdmin(SoftDeleteAdmin):
+    list_display = ["name", "account", "deleted", "created_at"]
+    list_filter = ["deleted", "created_at", "vat"]
+    search_fields = ["name", "description", "account__email"]
+    readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(Client)
+class ClientAdmin(SoftDeleteAdmin):
+    list_display = ["name", "user", "consultant", "deleted", "created_at"]
+    list_filter = ["deleted", "created_at"]
+    search_fields = ["name", "description", "user__email"]
+    readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(Signatories)
+class SignatoriesAdmin(SoftDeleteAdmin):
+    list_display = ["name", "title", "email", "project", "deleted", "created_at"]
+    list_filter = ["deleted", "created_at", "project"]
+    search_fields = ["name", "title", "email", "project__name"]
+    readonly_fields = ["created_at", "updated_at"]

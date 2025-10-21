@@ -19,9 +19,7 @@ class ProjectMixin(UserHasGroupGenericMixin):
     permissions = ["contractor"]
 
     def get_queryset(self):
-        return Project.objects.filter(
-            account=self.request.user, deleted=False
-        ).order_by("-created_at")
+        return Project.objects.filter(account=self.request.user).order_by("-created_at")
 
     def get_object(self):
         project = super().get_object()

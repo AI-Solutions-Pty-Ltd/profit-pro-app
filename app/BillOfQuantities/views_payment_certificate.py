@@ -35,7 +35,6 @@ class PaymentCertificateMixin(UserHasGroupGenericMixin):
                 Project,
                 pk=self.kwargs[self.project_slug],
                 account=self.request.user,
-                deleted=False,
             )
         return self.project
 
@@ -306,9 +305,7 @@ class PaymentCertificateSubmitView(PaymentCertificateMixin, UpdateView):
 
     def get_queryset(self):
         return (
-            PaymentCertificate.objects.filter(
-                project__account=self.request.user, deleted=False
-            )
+            PaymentCertificate.objects.filter(project__account=self.request.user)
             .select_related("project")
             .prefetch_related(
                 "actual_transactions__line_item__structure",
