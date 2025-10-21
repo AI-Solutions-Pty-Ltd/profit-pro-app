@@ -345,7 +345,7 @@ class PaymentCertificate(BaseModel):
 
     @property
     def previous_certificates(self) -> QuerySet["PaymentCertificate"]:
-        return PaymentCertificate.objects.filter(
+        return PaymentCertificate.all_objects.filter(
             project=self.project,
             certificate_number__lt=self.certificate_number,
             status=PaymentCertificate.Status.APPROVED,

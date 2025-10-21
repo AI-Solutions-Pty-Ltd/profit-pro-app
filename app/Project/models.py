@@ -109,6 +109,9 @@ class Signatories(BaseModel):
     )
     name = models.CharField(max_length=255)
     title = models.CharField(max_length=255)
+    email = models.EmailField(
+        max_length=255, help_text="Email address for sending payment certificates"
+    )
 
     def __str__(self):
         return self.name

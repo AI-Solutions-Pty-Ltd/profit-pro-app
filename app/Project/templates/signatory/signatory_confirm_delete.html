@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}
+    Delete Signatory - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Breadcrumb -->
+        <nav class="flex mb-6" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{% url 'project:project-list' %}"
+                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
+                        {% heroicon_outline "home" size="20" class="text-indigo-600" %}
+                        Projects
+                    </a>
+                </li>
+                <li class="inline-flex items-center">
+                    <a href="{% url 'project:project-detail' project.pk %}"
+                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
+                        {% heroicon_outline "chevron-right" size="20" %}
+                        {{ project.name }}
+                    </a>
+                </li>
+                <li class="inline-flex items-center">
+                    <a href="{% url 'project:signatory-list' project.pk %}"
+                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
+                        {% heroicon_outline "chevron-right" size="20" %}
+                        Signatories
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        {% heroicon_outline "chevron-right" %}
+                        <span class="ml-1 text-sm font-medium text-gray-500">Delete</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+        <!-- Confirmation Card -->
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <!-- Header -->
+            <div class="px-6 py-5 border-b border-gray-200 bg-red-50">
+                <div class="flex items-center">
+                    {% heroicon_outline "exclamation-triangle" class="h-6 w-6 text-red-600 mr-3" %}
+                    <h1 class="text-2xl font-bold text-gray-900">Delete Signatory</h1>
+                </div>
+            </div>
+            <!-- Content -->
+            <div class="px-6 py-6">
+                <p class="text-gray-700 mb-4">Are you sure you want to delete the following signatory?</p>
+                <div class="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
+                    <dl class="grid grid-cols-1 gap-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Name</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {{ object.name }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Title</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {{ object.title }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Email</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {{ object.email }}
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" class="h-5 w-5 text-yellow-400" %}</div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">This action cannot be undone. The signatory will be removed from the project.</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Form Actions -->
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="flex items-center justify-end space-x-3">
+                        <a href="{% url 'project:signatory-list' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                            {% heroicon_outline "chevron-left" size="20" %}
+                            Cancel
+                        </a>
+                        <button type="submit"
+                                class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                            {% heroicon_outline "trash" size="20" %}
+                            Delete Signatory
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

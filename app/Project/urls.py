@@ -2,7 +2,7 @@
 
 from django.urls import path
 
-from app.Project import views, views_clients
+from app.Project import views, views_clients, views_signatories
 
 app_name = "project"
 
@@ -45,4 +45,27 @@ client_urls = [
     ),
 ]
 
-urlpatterns = project_urls + client_urls
+signatory_urls = [
+    path(
+        "project/<int:project_pk>/signatories/",
+        views_signatories.SignatoryListView.as_view(),
+        name="signatory-list",
+    ),
+    path(
+        "project/<int:project_pk>/signatories/create/",
+        views_signatories.SignatoryCreateView.as_view(),
+        name="signatory-create",
+    ),
+    path(
+        "project/<int:project_pk>/signatories/<int:pk>/update/",
+        views_signatories.SignatoryUpdateView.as_view(),
+        name="signatory-update",
+    ),
+    path(
+        "project/<int:project_pk>/signatories/<int:pk>/delete/",
+        views_signatories.SignatoryDeleteView.as_view(),
+        name="signatory-delete",
+    ),
+]
+
+urlpatterns = project_urls + client_urls + signatory_urls

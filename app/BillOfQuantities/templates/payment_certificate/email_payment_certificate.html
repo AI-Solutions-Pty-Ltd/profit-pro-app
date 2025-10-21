@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description"
+              content="Payment Certificate #{{ payment_certificate.certificate_number }}">
+        <meta name="keywords"
+              content="Payment Certificate, {{ payment_certificate.certificate_number }}">
+        <meta name="author" content="Profit Pro">
+        <title>Payment Certificate #{{ payment_certificate.certificate_number }}</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            .header {
+                background-color: #4F46E5;
+                color: white;
+                padding: 20px;
+                text-align: center;
+                border-radius: 8px 8px 0 0;
+            }
+            .content {
+                background-color: #f9fafb;
+                padding: 30px;
+                border: 1px solid #e5e7eb;
+                border-top: none;
+                border-radius: 0 0 8px 8px;
+            }
+            .info-box {
+                background-color: white;
+                padding: 20px;
+                border-left: 4px solid #4F46E5;
+                margin: 20px 0;
+                border-radius: 4px;
+            }
+            .info-row {
+                margin: 10px 0;
+                display: flex;
+                justify-content: space-between;
+            }
+            .label {
+                font-weight: bold;
+                color: #6B7280;
+            }
+            .value {
+                color: #111827;
+                font-size: 1.1em;
+            }
+            .amount {
+                color: #10B981;
+                font-weight: bold;
+                font-size: 1.2em;
+            }
+            .notes {
+                background-color: #FEF3C7;
+                padding: 15px;
+                border-left: 4px solid #F59E0B;
+                margin: 20px 0;
+                border-radius: 4px;
+            }
+            .footer {
+                text-align: center;
+                margin-top: 30px;
+                color: #6B7280;
+                font-size: 0.9em;
+            }
+            .attachment-notice {
+                background-color: #DBEAFE;
+                padding: 15px;
+                border-left: 4px solid #3B82F6;
+                margin: 20px 0;
+                border-radius: 4px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1 style="margin: 0;">Payment Certificate #{{ payment_certificate.certificate_number }}</h1>
+            <p style="margin: 5px 0 0 0; opacity: 0.9;">{{ payment_certificate.project.name }}</p>
+        </div>
+        <div class="content">
+            <p>Dear Signatory,</p>
+            <p>Please find attached the approved payment certificate for the following project:</p>
+            <div class="info-box">
+                <div class="info-row">
+                    <span class="label">Certificate Number:</span>
+                    <span class="value">#{{ payment_certificate.certificate_number }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Project:</span>
+                    <span class="value">{{ payment_certificate.project.name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Status:</span>
+                    <span class="value">{{ payment_certificate.get_status_display }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Date:</span>
+                    <span class="value">{{ payment_certificate.created_at|date:"F d, Y" }}</span>
+                </div>
+            </div>
+            <div class="info-box">
+                <h3 style="margin-top: 0; color: #111827;">Payment Summary</h3>
+                <div class="info-row">
+                    <span class="label">Progressive to Date:</span>
+                    <span class="value">R {{ payment_certificate.progressive_to_date|floatformat:2|intcomma }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Progressive Previous:</span>
+                    <span class="value">R {{ payment_certificate.progressive_previous|floatformat:2|intcomma }}</span>
+                </div>
+                <div class="info-row"
+                     style="border-top: 2px solid #e5e7eb;
+                            padding-top: 10px;
+                            margin-top: 10px">
+                    <span class="label">Total Payable This Claim:</span>
+                    <span class="amount">R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}</span>
+                </div>
+            </div>
+            {% if payment_certificate.notes %}
+                <div class="notes">
+                    <p style="margin-top: 0;">
+                        <strong>Notes:</strong>
+                    </p>
+                    <p style="margin-bottom: 0;">{{ payment_certificate.notes|linebreaks }}</p>
+                </div>
+            {% endif %}
+            <div class="attachment-notice">
+                <p style="margin: 0;">
+                    <strong>📎 Attachment:</strong> The full payment certificate PDF is attached to this email.
+                </p>
+            </div>
+            <p>
+                Please review the attached payment certificate. If you have any questions or concerns, please don't hesitate to contact us.
+            </p>
+            <p>
+                Best regards,
+                <br>
+                <strong>{{ payment_certificate.project.account.get_full_name|default:payment_certificate.project.account.email }}</strong>
+                <br>
+                {{ payment_certificate.project.account.email }}
+            </p>
+        </div>
+        <div class="footer">
+            <p>This is an automated message from Profit Pro.</p>
+            <p style="font-size: 0.8em; color: #9CA3AF;">
+                Payment terms as per contract agreement. All amounts are exclusive of VAT unless otherwise stated.
+            </p>
+        </div>
+    </body>
+</html>

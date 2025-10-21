@@ -3,7 +3,7 @@
 from django import forms
 
 from app.Account.models import Account
-from app.Project.models import Client, Project
+from app.Project.models import Client, Project, Signatories
 
 
 class ProjectForm(forms.ModelForm):
@@ -117,3 +117,39 @@ class ClientUserInviteForm(forms.Form):
         ),
         label="Phone Number",
     )
+
+
+class SignatoryForm(forms.ModelForm):
+    """Form for creating and updating signatories."""
+
+    class Meta:
+        model = Signatories
+        fields = ["name", "title", "email"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter signatory name",
+                }
+            ),
+            "title": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter signatory title/position",
+                }
+            ),
+            "email": forms.EmailInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "signatory@example.com",
+                }
+            ),
+        }
+        labels = {
+            "name": "Full Name",
+            "title": "Title/Position",
+            "email": "Email Address",
+        }
+        help_texts = {
+            "email": "Email address where payment certificates will be sent",
+        }

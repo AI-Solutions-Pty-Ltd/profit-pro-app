@@ -87,5 +87,6 @@ extend_exclude = """
 ./app/theme/templates,
 ./app/Account/templates/auth/password_reset_email.html,
 ./app/Project/templates/client/password_reset_email.html,
-./app/Project/templates/client/client_added_email.html
+./app/Project/templates/client/client_added_email.html,
+./app/BillOfQuantities/templates/payment_certificate/email_payment_certificate.html
 """

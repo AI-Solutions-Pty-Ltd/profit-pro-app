@@ -3,10 +3,12 @@ from collections import defaultdict
 from typing import Literal
 
 from django.core.files.base import ContentFile
-from django.template.loader import get_template
+from django.template.loader import get_template, render_to_string
 
-from app.BillOfQuantities.models import LineItem
+from app.BillOfQuantities.models import LineItem, PaymentCertificate
+from app.core.Utilities.django_email_service import django_email_service
 from app.core.Utilities.generate_pdf import generate_pdf
+from app.Project.models import Project
 
 
 def group_line_items_by_hierarchy(line_items):
@@ -34,7 +36,7 @@ def group_line_items_by_hierarchy(line_items):
             }
         ]
     """
-    # Use nested defaultdicts for efficient grouping
+    # Use nested default dicts for efficient grouping
     hierarchy = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 
     for line_item in line_items:
@@ -245,3 +247,43 @@ def generate_pdf_async(
             daemon=True,
         )
         thread.start()
+
+
+def send_payment_certificate_to_signatories(payment_certificate_id: int):
+    # Get all signatories
+    payment_certificate = PaymentCertificate.objects.get(id=payment_certificate_id)
+    project: Project = payment_certificate.project
+    signatories = project.signatories.all()
+    if not signatories.exists():
+        raise Exception("No signatories found for this project.")
+
+    # Send email to each signatory
+    to_emails = []
+    for signatory in signatories:
+        to_emails.append(signatory.email)
+
+    # Render email template
+    context = {
+        "payment_certificate": payment_certificate,
+    }
+    html_message = render_to_string(
+        "payment_certificate/email_payment_certificate.html", context
+    )
+
+    # Create email with attachment
+    subject = (
+        f"{payment_certificate.project.name} - "
+        f"Payment Certificate #{payment_certificate.certificate_number} for signatories"
+    )
+
+    files = [
+        payment_certificate.pdf,
+        payment_certificate.abridged_pdf,
+    ]
+
+    return django_email_service(
+        to=to_emails,
+        subject=subject,
+        html_body=html_message,
+        attachments=files,
+    )

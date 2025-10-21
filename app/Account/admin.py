@@ -12,35 +12,82 @@ class AccountAdmin(SoftDeleteImportExportAdmin, BaseUserAdmin):
 
     # Override UserAdmin's fieldsets with our custom ones
     fieldsets = (
-        (None, {
-            "fields": ("email", "password")
-        }),
-        ("Personal Information", {
-            "fields": ("first_name", "last_name", "primary_contact", "alternative_contact", "type")
-        }),
-        ("Permissions", {
-            "fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions"),
-            "classes": ("collapse",),
-        }),
-        ("Important Dates", {
-            "fields": ("last_login", "date_joined", "created_at", "updated_at"),
-            "classes": ("collapse",),
-        }),
-        ("Status", {
-            "fields": ("deleted",),
-        }),
+        (None, {"fields": ("email", "password")}),
+        (
+            "Personal Information",
+            {
+                "fields": (
+                    "first_name",
+                    "last_name",
+                    "primary_contact",
+                    "alternative_contact",
+                    "type",
+                )
+            },
+        ),
+        (
+            "Permissions",
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Important Dates",
+            {
+                "fields": ("last_login", "date_joined", "created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Status",
+            {
+                "fields": ("deleted",),
+            },
+        ),
     )
 
     # Fields to use when creating a new user
     add_fieldsets = (
-        (None, {
-            "classes": ("wide",),
-            "fields": ("email", "first_name", "last_name", "primary_contact", "password1", "password2"),
-        }),
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": (
+                    "email",
+                    "first_name",
+                    "last_name",
+                    "primary_contact",
+                    "password1",
+                    "password2",
+                ),
+            },
+        ),
     )
 
-    list_display = ["email", "first_name", "last_name", "type", "is_staff", "deleted", "created_at"]
-    list_filter = ["deleted", "created_at", "is_staff", "is_superuser", "type", "groups"]
+    list_display = [
+        "email",
+        "first_name",
+        "last_name",
+        "type",
+        "is_staff",
+        "deleted",
+        "created_at",
+    ]
+    list_filter = [
+        "deleted",
+        "created_at",
+        "is_staff",
+        "is_superuser",
+        "type",
+        "groups",
+    ]
     search_fields = ("email", "first_name", "last_name")
     ordering = ("email",)
 

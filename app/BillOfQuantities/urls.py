@@ -71,6 +71,11 @@ payment_certificate_urls = [
         views_payment_certificate.PaymentCertificatePDFStatusView.as_view(),
         name="payment-certificate-pdf-status",
     ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/email/",
+        views_payment_certificate.PaymentCertificateEmailView.as_view(),
+        name="payment-certificate-email",
+    ),
 ]
 
 urlpatterns = structure_urls + payment_certificate_urls

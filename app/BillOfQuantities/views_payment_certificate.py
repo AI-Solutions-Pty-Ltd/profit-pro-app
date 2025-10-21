@@ -1,4 +1,5 @@
 from decimal import Decimal, InvalidOperation
+from typing import cast
 
 from django.contrib import messages
 from django.db.models import Sum
@@ -10,6 +11,7 @@ from app.BillOfQuantities.models import ActualTransaction, LineItem, PaymentCert
 from app.BillOfQuantities.tasks import (
     generate_pdf_async,
     group_line_items_by_hierarchy,
+    send_payment_certificate_to_signatories,
 )
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.models import Project
@@ -127,13 +129,17 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
         bills = Bill.objects.filter(structure__project=project).distinct()
         packages = Package.objects.filter(bill__structure__project=project).distinct()
 
+        payment_certificate: PaymentCertificate
+
         if not pk:
             # no payment certificate selected, check if any active, or create new one
             payment_certificates = PaymentCertificate.objects.filter(
                 project=project, status=PaymentCertificate.Status.DRAFT
             )
             if payment_certificates.exists():
-                payment_certificate = payment_certificates.first()
+                payment_certificate = cast(
+                    PaymentCertificate, payment_certificates.first()
+                )
             else:
                 # create new pmt cert, and redirect to edit page
                 next_certificate_number = (
@@ -153,7 +159,7 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
                 )
 
         else:
-            payment_certificate = get_object_or_404(
+            payment_certificate: PaymentCertificate = get_object_or_404(
                 PaymentCertificate, pk=pk, project=project
             )
 
@@ -459,4 +465,64 @@ class PaymentCertificatePDFStatusView(PaymentCertificateMixin, View):
                 "abridged_pdf_generating": payment_certificate.abridged_pdf_generating,
                 "abridged_pdf_available": bool(payment_certificate.abridged_pdf),
             }
+        )
+
+
+class PaymentCertificateEmailView(PaymentCertificateMixin, View):
+    """Email payment certificate PDF to all signatories."""
+
+    def post(self, request, pk=None, project_pk=None):
+        project = self.get_project()
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=pk, project=project, project__account=request.user
+        )
+
+        # Check if payment certificate is approved
+        if payment_certificate.status != PaymentCertificate.Status.APPROVED:
+            messages.error(
+                request,
+                "Payment certificate must be approved before sending emails.",
+            )
+            return redirect(
+                "bill_of_quantities:payment-certificate-detail",
+                project_pk=project_pk,
+                pk=pk,
+            )
+
+        # Check if PDFs exists
+        generate_pdf = False
+        generate_abridged = False
+        if not payment_certificate.pdf:
+            generate_pdf = True
+            generate_pdf_async(payment_certificate.id, "full")
+        if not payment_certificate.abridged_pdf:
+            generate_abridged = True
+            generate_pdf_async(payment_certificate.id, "abridged")
+        if generate_pdf or generate_abridged:
+            messages.error(
+                request,
+                "Payment certificate is being generated, please wait for the process to complete.",
+            )
+            return redirect(
+                "bill_of_quantities:payment-certificate-detail",
+                project_pk=project_pk,
+                pk=pk,
+            )
+
+        # Send email to signatories
+        response, message = send_payment_certificate_to_signatories(
+            payment_certificate.id
+        )
+
+        if response:
+            messages.success(
+                request, "Payment certificate sent to signatories successfully!"
+            )
+        else:
+            messages.error(request, message)
+
+        return redirect(
+            "bill_of_quantities:payment-certificate-detail",
+            project_pk=project_pk,
+            pk=pk,
         )

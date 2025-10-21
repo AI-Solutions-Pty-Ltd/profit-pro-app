@@ -166,24 +166,36 @@
             </ul>
         </div>
         <div class="signatures">
-            <div class="signature">
-                <div class="signature-line">
-                    <strong>Contractor Signature</strong>
-                    <br>
-                    Name: {{ payment_certificate.project.account.get_full_name|default:payment_certificate.project.account.email }}
-                    <br>
-                    Date: _________________
+            {% for signatory in payment_certificate.project.signatories.all %}
+                <div class="signature">
+                    <div class="signature-line">
+                        <strong>{{ signatory.title }}</strong>
+                        <br>
+                        Name: {{ signatory.name }}
+                        <br>
+                        Date: _________________
+                    </div>
                 </div>
-            </div>
-            <div class="signature">
-                <div class="signature-line">
-                    <strong>Client/Authorized Representative</strong>
-                    <br>
-                    Name: _______________________________
-                    <br>
-                    Date: _________________
+            {% empty %}
+                <div class="signature">
+                    <div class="signature-line">
+                        <strong>Contractor Signature</strong>
+                        <br>
+                        Name: {{ payment_certificate.project.account.get_full_name|default:payment_certificate.project.account.email }}
+                        <br>
+                        Date: _________________
+                    </div>
                 </div>
-            </div>
+                <div class="signature">
+                    <div class="signature-line">
+                        <strong>Client/Authorized Representative</strong>
+                        <br>
+                        Name: _______________________________
+                        <br>
+                        Date: _________________
+                    </div>
+                </div>
+            {% endfor %}
         </div>
     </body>
     <style id="general">
@@ -368,13 +380,17 @@
         }
     </style>
     <style id="signatures">
-                .signatures {
+        .signatures {
             margin-top: 40px;
             width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
         }
 
         .signature {
-            width: 50%;
+            flex: 1 1 45%;
+            min-width: 250px;
             padding-top: 10px;
             padding-bottom: 10px;
             padding-left: 10px;
