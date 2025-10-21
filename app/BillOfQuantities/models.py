@@ -312,7 +312,7 @@ class PaymentCertificate(BaseModel):
         max_length=10, choices=Status.choices, default=Status.DRAFT
     )
 
-    certificate_number = models.IntegerField(unique=True)
+    certificate_number = models.IntegerField()
     notes = models.TextField(
         blank=True, default="", help_text="Additional notes or comments"
     )
@@ -331,6 +331,7 @@ class PaymentCertificate(BaseModel):
             models.Index(fields=["certificate_number", "status"]),
             models.Index(fields=["project", "certificate_number"]),
         ]
+        unique_together = ("project", "certificate_number")
 
     def __str__(self):
         return f"# {self.certificate_number}: {self.project} - {self.status}"
