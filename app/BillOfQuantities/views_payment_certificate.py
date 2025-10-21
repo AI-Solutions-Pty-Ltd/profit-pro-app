@@ -2,14 +2,13 @@ from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.db.models import Sum
-from django.http import FileResponse
+from django.http import FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import DetailView, ListView, UpdateView, View
 
 from app.BillOfQuantities.models import ActualTransaction, LineItem, PaymentCertificate
 from app.BillOfQuantities.tasks import (
-    generate_abridged_payment_certificate_pdf,
-    generate_payment_certificate_pdf,
+    generate_pdf_async,
     group_line_items_by_hierarchy,
 )
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
@@ -347,6 +346,13 @@ class PaymentCertificateSubmitView(PaymentCertificateMixin, UpdateView):
 
         payment_certificate.save()
 
+        # Generate PDFs asynchronously if they don't exist
+        generate_pdf_async(payment_certificate.id, "both")
+        messages.info(
+            self.request,
+            "Payment Certificate is being generated in the background. Please be patient.",
+        )
+
         return redirect(
             "bill_of_quantities:payment-certificate-detail",
             project_pk=self.kwargs["project_pk"],
@@ -363,20 +369,30 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
             PaymentCertificate, pk=pk, project=project, project__account=request.user
         )
 
-        if not payment_certificate.pdf or not request.GET.get("force"):
-            # Generate PDF in memory
-            pdf = generate_payment_certificate_pdf(payment_certificate)
-            pdf.name = (
-                f"payment_certificate_{payment_certificate.certificate_number}.pdf"
+        # Check if PDF is currently being generated
+        if payment_certificate.pdf_generating:
+            messages.info(
+                request,
+                "PDF is currently being generated. Please try again in a few moments.",
             )
-            pdf.type = "application/pdf"  # type: ignore
-            payment_certificate.pdf = pdf
-            payment_certificate.save()
+            return redirect(
+                "bill_of_quantities:payment-certificate-detail",
+                project_pk=project_pk,
+                pk=pk,
+            )
 
-        # Wrap ContentFile in BytesIO for FileResponse
+        # Check if we need to generate or regenerate the PDF
+        force_regenerate = bool(request.GET.get("force"))
+        if not payment_certificate.pdf or force_regenerate:
+            # Start async generation
+            generate_pdf_async(payment_certificate.id, "full")
+            return redirect(
+                "bill_of_quantities:payment-certificate-detail",
+                project_pk=project_pk,
+                pk=pk,
+            )
+        # PDF exists and is ready - serve it
         file = payment_certificate.pdf.open("rb")
-
-        # Return PDF as download from memory
         response = FileResponse(
             file,
             content_type="application/pdf",
@@ -396,18 +412,30 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
             PaymentCertificate, pk=pk, project=project, project__account=request.user
         )
 
-        # Generate PDF in memory
-        if not payment_certificate.abridged_pdf or bool(request.GET.get("force")):
-            pdf = generate_abridged_payment_certificate_pdf(payment_certificate)
-            pdf.name = f"payment_certificate_{payment_certificate.certificate_number}_abridged.pdf"
-            pdf.type = "application/pdf"  # type: ignore
-            payment_certificate.abridged_pdf = pdf
-            payment_certificate.save()
+        # Check if abridged PDF is currently being generated
+        if payment_certificate.abridged_pdf_generating:
+            messages.info(
+                request,
+                "Abridged PDF is currently being generated. Please try again in a few moments.",
+            )
+            return redirect(
+                "bill_of_quantities:payment-certificate-detail",
+                project_pk=project_pk,
+                pk=pk,
+            )
 
-        # Wrap ContentFile in BytesIO for FileResponse
+        # Check if we need to generate or regenerate the abridged PDF
+        force_regenerate = bool(request.GET.get("force"))
+        if not payment_certificate.abridged_pdf or force_regenerate:
+            # Start async generation
+            generate_pdf_async(payment_certificate.id, "abridged")
+            return redirect(
+                "bill_of_quantities:payment-certificate-detail",
+                project_pk=project_pk,
+                pk=pk,
+            )
+        # Abridged PDF exists and is ready - serve it
         file = payment_certificate.abridged_pdf.open("rb")
-
-        # Return PDF as download from memory
         response = FileResponse(
             file,
             content_type="application/pdf",
@@ -416,3 +444,22 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
         )
 
         return response
+
+
+class PaymentCertificatePDFStatusView(PaymentCertificateMixin, View):
+    """API endpoint to check PDF generation status."""
+
+    def get(self, request, pk=None, project_pk=None):
+        project = self.get_project()
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=pk, project=project, project__account=request.user
+        )
+
+        return JsonResponse(
+            {
+                "pdf_generating": payment_certificate.pdf_generating,
+                "pdf_available": bool(payment_certificate.pdf),
+                "abridged_pdf_generating": payment_certificate.abridged_pdf_generating,
+                "abridged_pdf_available": bool(payment_certificate.abridged_pdf),
+            }
+        )

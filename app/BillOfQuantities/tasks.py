@@ -1,4 +1,6 @@
+import threading
 from collections import defaultdict
+from typing import Literal
 
 from django.core.files.base import ContentFile
 from django.template.loader import get_template
@@ -97,3 +99,149 @@ def generate_abridged_payment_certificate_pdf(payment_certificate) -> ContentFil
     pdf_content = generate_pdf(html)
 
     return pdf_content
+
+
+def generate_and_save_pdf(
+    payment_certificate_id: int, pdf_type: Literal["full", "abridged"] = "full"
+):
+    """
+    Internal function to generate and save PDF in a separate thread.
+
+    Args:
+        payment_certificate_id: ID of the PaymentCertificate
+        pdf_type: Either 'full' or 'abridged'
+    """
+    import logging
+
+    from app.BillOfQuantities.models import PaymentCertificate
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        # Re-fetch the payment certificate in this thread
+        payment_certificate = PaymentCertificate.objects.get(id=payment_certificate_id)
+
+        logger.info(
+            f"Starting {pdf_type} PDF generation for certificate {payment_certificate.certificate_number}"
+        )
+
+        update_fields = []
+
+        if pdf_type == "full":
+            # Generate full PDF
+            pdf = generate_payment_certificate_pdf(payment_certificate)
+            pdf.name = (
+                f"payment_certificate_{payment_certificate.certificate_number}.pdf"
+            )
+            pdf.type = "application/pdf"  # type: ignore
+            payment_certificate.pdf = pdf
+            payment_certificate.pdf_generating = False
+            update_fields.append("pdf")
+            update_fields.append("pdf_generating")
+            logger.info(
+                f"Full PDF generated successfully for certificate {payment_certificate.certificate_number}"
+            )
+        else:
+            # Generate abridged PDF
+            pdf = generate_abridged_payment_certificate_pdf(payment_certificate)
+            pdf.name = f"payment_certificate_{payment_certificate.certificate_number}_abridged.pdf"
+            pdf.type = "application/pdf"  # type: ignore
+            payment_certificate.abridged_pdf = pdf
+            payment_certificate.abridged_pdf_generating = False
+            update_fields.append("abridged_pdf")
+            update_fields.append("abridged_pdf_generating")
+            logger.info(
+                f"Abridged PDF generated successfully for certificate {payment_certificate.certificate_number}"
+            )
+
+        payment_certificate.save(update_fields=update_fields)
+
+    except Exception as e:
+        # On error, reset the generating flag
+        logger.error(f"Error generating {pdf_type} PDF: {e}", exc_info=True)
+        try:
+            payment_certificate = PaymentCertificate.objects.get(
+                id=payment_certificate_id
+            )
+            if pdf_type == "full":
+                payment_certificate.pdf_generating = False
+            else:
+                payment_certificate.abridged_pdf_generating = False
+            payment_certificate.save()
+            logger.info(f"Reset {pdf_type} generating flag after error")
+        except Exception as save_error:
+            logger.error(f"Failed to reset generating flag: {save_error}")
+
+
+def generate_pdf_async(
+    payment_certificate_id: int,
+    pdf_type: Literal["full", "abridged", "both"] | None = None,
+) -> None:
+    """
+    Start PDF generation in a background thread.
+
+    Args:
+        payment_certificate_id: ID of the PaymentCertificate
+        pdf_type: Which PDF to generate - 'full', 'abridged', 'both', or None (auto-detect)
+    """
+    import logging
+
+    from app.BillOfQuantities.models import PaymentCertificate
+
+    logger = logging.getLogger(__name__)
+
+    # Mark as generating
+    payment_certificate = PaymentCertificate.objects.get(id=payment_certificate_id)
+    generate_pdf = False
+    generate_abridged_pdf = False
+
+    if pdf_type == "both":
+        # Force regeneration of both PDFs
+        generate_pdf = True
+        generate_abridged_pdf = True
+    elif pdf_type == "full":
+        # Only generate full PDF
+        generate_pdf = True
+    elif pdf_type == "abridged":
+        # Only generate abridged PDF
+        generate_abridged_pdf = True
+    else:
+        # Auto-detect: Only generate if missing and not already generating
+        if not payment_certificate.pdf and not payment_certificate.pdf_generating:
+            generate_pdf = True
+        if (
+            not payment_certificate.abridged_pdf
+            and not payment_certificate.abridged_pdf_generating
+        ):
+            generate_abridged_pdf = True
+
+    # Set flags before starting threads
+    if generate_pdf:
+        payment_certificate.pdf_generating = True
+    if generate_abridged_pdf:
+        payment_certificate.abridged_pdf_generating = True
+
+    payment_certificate.save()
+
+    if generate_pdf:
+        logger.info(
+            f"Starting full PDF generation thread for certificate {payment_certificate.certificate_number}"
+        )
+        # Start generation in background thread
+        thread = threading.Thread(
+            target=generate_and_save_pdf,
+            args=(payment_certificate_id, "full"),
+            daemon=True,
+        )
+        thread.start()
+    if generate_abridged_pdf:
+        logger.info(
+            f"Starting abridged PDF generation thread for certificate {payment_certificate.certificate_number}"
+        )
+        # Start generation in background thread
+        thread = threading.Thread(
+            target=generate_and_save_pdf,
+            args=(payment_certificate_id, "abridged"),
+            daemon=True,
+        )
+        thread.start()

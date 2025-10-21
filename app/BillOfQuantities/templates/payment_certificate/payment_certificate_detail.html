@@ -77,8 +77,27 @@
                               class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-indigo-300 transition-colors"
                               action="{% url 'bill_of_quantities:payment-certificate-download-pdf' project.pk payment_certificate.pk %}">
                             <div class="flex items-start justify-between mb-3">
-                                <div>
-                                    <h3 class="text-sm font-semibold text-gray-900">Full Payment Certificate</h3>
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-sm font-semibold text-gray-900">Full Payment Certificate</h3>
+                                        {% if payment_certificate.pdf_generating %}
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Generating...
+                                            </span>
+                                        {% elif payment_certificate.pdf %}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                ✓ Available
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                Not generated
+                                            </span>
+                                        {% endif %}
+                                    </div>
                                     <p class="text-xs text-gray-600 mt-1">Complete certificate with all line items</p>
                                 </div>
                             </div>
@@ -91,7 +110,8 @@
                                     <span>Force regenerate</span>
                                 </label>
                                 <button type="submit"
-                                        class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                        {% if payment_certificate.pdf_generating %}disabled{% endif %}
+                                        class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white {% if payment_certificate.pdf_generating %}bg-gray-400 cursor-not-allowed{% else %}bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500{% endif %} transition-colors">
                                     {% heroicon_outline "arrow-down-tray" class="w-4 h-4" %}
                                     Download
                                 </button>
@@ -102,8 +122,27 @@
                               class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-indigo-300 transition-colors"
                               action="{% url 'bill_of_quantities:payment-certificate-download-abridged-pdf' project.pk payment_certificate.pk %}">
                             <div class="flex items-start justify-between mb-3">
-                                <div>
-                                    <h3 class="text-sm font-semibold text-gray-900">Abridged Certificate</h3>
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-sm font-semibold text-gray-900">Abridged Certificate</h3>
+                                        {% if payment_certificate.abridged_pdf_generating %}
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Generating...
+                                            </span>
+                                        {% elif payment_certificate.abridged_pdf %}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                ✓ Available
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                Not generated
+                                            </span>
+                                        {% endif %}
+                                    </div>
                                     <p class="text-xs text-gray-600 mt-1">Summary with claimed items only</p>
                                 </div>
                             </div>
@@ -116,7 +155,8 @@
                                     <span>Force regenerate</span>
                                 </label>
                                 <button type="submit"
-                                        class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                        {% if payment_certificate.abridged_pdf_generating %}disabled{% endif %}
+                                        class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white {% if payment_certificate.abridged_pdf_generating %}bg-gray-400 cursor-not-allowed{% else %}bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500{% endif %} transition-colors">
                                     {% heroicon_outline "arrow-down-tray" class="w-4 h-4" %}
                                     Download
                                 </button>
@@ -233,8 +273,140 @@
 {% block extra_js %}
     <script>
       document.addEventListener('DOMContentLoaded', function() {
-          // Add any interactive features here
-          console.log('Payment certificate detail loaded');
+          const statusUrl = "{% url 'bill_of_quantities:payment-certificate-pdf-status' project.pk payment_certificate.pk %}";
+          
+          // Independent polling for each PDF type
+          const pdfPoller = {
+              interval: null,
+              isPolling: false,
+              type: 'pdf'
+          };
+          
+          const abridgedPdfPoller = {
+              interval: null,
+              isPolling: false,
+              type: 'abridged_pdf'
+          };
+          
+          // Check initial state and start polling if needed
+          const pdfGenerating = {{ payment_certificate.pdf_generating|lower }};
+          const abridgedPdfGenerating = {{ payment_certificate.abridged_pdf_generating|lower }};
+          
+          if (pdfGenerating) {
+              console.log('Full PDF generation in progress, starting polling...');
+              startPolling(pdfPoller);
+          }
+          
+          if (abridgedPdfGenerating) {
+              console.log('Abridged PDF generation in progress, starting polling...');
+              startPolling(abridgedPdfPoller);
+          }
+          
+          function startPolling(poller) {
+              if (poller.isPolling) return; // Already polling
+              
+              poller.isPolling = true;
+              // Poll every 2 seconds
+              poller.interval = setInterval(() => checkStatus(poller), 2000);
+          }
+          
+          function stopPolling(poller) {
+              if (poller.interval) {
+                  clearInterval(poller.interval);
+                  poller.interval = null;
+                  poller.isPolling = false;
+                  console.log(`${poller.type} polling stopped`);
+              }
+          }
+          
+          async function checkStatus(poller) {
+              try {
+                  const response = await fetch(statusUrl);
+                  const data = await response.json();
+                  
+                  console.log(`${poller.type} status update:`, data);
+                  
+                  if (poller.type === 'pdf') {
+                      // Update full PDF status
+                      updatePDFStatus('pdf', data.pdf_generating, data.pdf_available);
+                      
+                      // Stop polling if generation complete
+                      if (!data.pdf_generating) {
+                          stopPolling(poller);
+                          // Reload page to show updated state
+                          setTimeout(() => {
+                              window.location.reload();
+                          }, 500);
+                      }
+                  } else if (poller.type === 'abridged_pdf') {
+                      // Update abridged PDF status
+                      updatePDFStatus('abridged_pdf', data.abridged_pdf_generating, data.abridged_pdf_available);
+                      
+                      // Stop polling if generation complete
+                      if (!data.abridged_pdf_generating) {
+                          stopPolling(poller);
+                          // Reload page to show updated state
+                          setTimeout(() => {
+                              window.location.reload();
+                          }, 500);
+                      }
+                  }
+              } catch (error) {
+                  console.error(`Error checking ${poller.type} status:`, error);
+              }
+          }
+          
+          function updatePDFStatus(type, isGenerating, isAvailable) {
+              const formSelector = type === 'pdf' ? 'form[action*="download-pdf"]:not([action*="abridged"])' : 'form[action*="download-abridged-pdf"]';
+              const form = document.querySelector(formSelector);
+              
+              if (!form) return;
+              
+              const badgeContainer = form.querySelector('.flex.items-center.gap-2');
+              const button = form.querySelector('button[type="submit"]');
+              
+              if (!badgeContainer || !button) return;
+              
+              // Remove existing badge
+              const existingBadge = badgeContainer.querySelector('span.inline-flex.items-center');
+              if (existingBadge) {
+                  existingBadge.remove();
+              }
+              
+              // Add new badge based on status
+              let badgeHTML = '';
+              if (isGenerating) {
+                  badgeHTML = `
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Generating...
+                      </span>
+                  `;
+                  button.disabled = true;
+                  button.className = 'inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-400 cursor-not-allowed transition-colors';
+              } else if (isAvailable) {
+                  badgeHTML = `
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          ✓ Available
+                      </span>
+                  `;
+                  button.disabled = false;
+                  button.className = 'inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors';
+              } else {
+                  badgeHTML = `
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          Not generated
+                      </span>
+                  `;
+                  button.disabled = false;
+                  button.className = 'inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors';
+              }
+              
+              badgeContainer.insertAdjacentHTML('beforeend', badgeHTML);
+          }
       });
     </script>
 {% endblock extra_js %}

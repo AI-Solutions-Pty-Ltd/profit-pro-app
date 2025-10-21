@@ -319,6 +319,10 @@ class PaymentCertificate(BaseModel):
     pdf = models.FileField(upload_to=upload_to, blank=True, null=True)
     abridged_pdf = models.FileField(upload_to=upload_to, blank=True, null=True)
 
+    # PDF generation status tracking
+    pdf_generating = models.BooleanField(default=False)
+    abridged_pdf_generating = models.BooleanField(default=False)
+
     class Meta:
         verbose_name = "Payment Certificate"
         verbose_name_plural = "Payment Certificates"
