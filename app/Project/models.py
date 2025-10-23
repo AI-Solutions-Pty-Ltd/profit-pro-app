@@ -80,6 +80,33 @@ class Project(BaseModel):
         )
 
     @property
+    def get_original_contract_value(self):
+        all_line_items = self.line_items.all()
+        original_line_items = all_line_items.filter(addendum=False, special_item=False)
+        total_contract_value = original_line_items.aggregate(total=Sum("total_price"))[
+            "total"
+        ] or Decimal(0)
+        return total_contract_value
+
+    @property
+    def get_addendum_contract_value(self):
+        all_line_items = self.line_items.all()
+        addendum_line_items = all_line_items.filter(addendum=True)
+        total_contract_value = addendum_line_items.aggregate(total=Sum("total_price"))[
+            "total"
+        ] or Decimal(0)
+        return total_contract_value
+
+    @property
+    def get_special_contract_value(self):
+        all_line_items = self.line_items.all()
+        special_line_items = all_line_items.filter(special_item=True)
+        total_contract_value = special_line_items.aggregate(total=Sum("total_price"))[
+            "total"
+        ] or Decimal(0)
+        return total_contract_value
+
+    @property
     def get_total_contract_value(self):
         line_items = self.line_items.all()
         total_contract_value = line_items.aggregate(total=Sum("total_price"))[
@@ -107,6 +134,14 @@ class Project(BaseModel):
         return self.line_items.select_related(
             "structure", "bill", "package"
         ).prefetch_related("actual_transactions")
+
+    @property
+    def get_special_line_items(self):
+        return (
+            self.line_items.filter(special_item=True)
+            .select_related("structure", "bill", "package")
+            .prefetch_related("actual_transactions")
+        )
 
 
 class Signatories(BaseModel):

@@ -1,5 +1,5 @@
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
-from typing import cast
 
 from django.contrib import messages
 from django.db.models import Sum
@@ -362,6 +362,8 @@ class PaymentCertificateSubmitView(PaymentCertificateMixin, UpdateView):
                 self.request,
                 f"Payment Certificate #{payment_certificate.certificate_number} has been submitted!",
             )
+            payment_certificate.approved_on = datetime.now()
+            payment_certificate.approved_by = self.request.user
         else:
             payment_certificate.actual_transactions.update(approved=False)
             messages.warning(

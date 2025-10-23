@@ -20,13 +20,13 @@
                     <a href="{% url 'project:project-detail' project.pk %}"
                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
                         {% heroicon_outline "chevron-right" size="20" %}
-                        Project Details
+                        {{ project.name }}
                     </a>
                 </li>
                 <li>
                     <div class="flex items-center">
                         {% heroicon_outline "chevron-right" %}
-                        <span class="text-sm font-medium text-gray-500">{{ project.name }}</span>
+                        <span class="text-sm font-medium text-gray-500">Payment Certificates</span>
                     </div>
                 </li>
             </ol>

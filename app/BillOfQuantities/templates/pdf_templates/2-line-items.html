@@ -17,10 +17,12 @@
                 <h2 class="section-header">C. DETAILED LINE ITEMS - CURRENT CLAIM</h2>
                 {% include "pdf_templates/line_items_table.html" with line_items=grouped_line_items %}
             </div>
-            <div id="section-c-addendum_items">
-                <h2 class="section-header">D. CONTRACT AMENDMENTS</h2>
-                {% include "pdf_templates/line_items_table.html" with line_items=addendum_items %}
-            </div>
+            {% if addendum_items %}
+                <div id="section-c-addendum_items">
+                    <h2 class="section-header">D. CONTRACT AMENDMENTS</h2>
+                    {% include "pdf_templates/line_items_table.html" with line_items=addendum_items %}
+                </div>
+            {% endif %}
         </div>
     </body>
     <style id="page-style">

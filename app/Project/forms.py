@@ -11,7 +11,7 @@ class ProjectForm(forms.ModelForm):
 
     class Meta:
         model = Project
-        fields = ["name", "description"]
+        fields = ["name", "description", "contract_number", "contract_clause"]
         widgets = {
             "name": forms.TextInput(
                 attrs={
@@ -25,9 +25,25 @@ class ProjectForm(forms.ModelForm):
                     "placeholder": "Enter project description",
                 }
             ),
+            "contract_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter contract number",
+                }
+            ),
+            "contract_clause": forms.Textarea(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter contract clause",
+                    "rows": 3,
+                }
+            ),
         }
         labels = {
             "name": "Project Name",
+            "description": "Description",
+            "contract_number": "Contract Number",
+            "contract_clause": "Contract Clause",
         }
 
 

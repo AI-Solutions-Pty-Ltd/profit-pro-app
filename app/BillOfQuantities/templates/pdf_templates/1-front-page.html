@@ -6,10 +6,10 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="description"
-              content="Payment Certificate #{{ payment_certificate.certificate_number }} for {{ payment_certificate.project.name }}">
+              content="Payment Certificate #{{ payment_certificate.certificate_number }} for {{ project.name }}">
         <meta name="keywords"
-              content="Payment Certificate, {{ payment_certificate.certificate_number }}, {{ payment_certificate.project.name }}">
-        <title>Payment Certificate #{{ payment_certificate.certificate_number }} - {{ payment_certificate.project.name }}</title>
+              content="Payment Certificate, {{ payment_certificate.certificate_number }}, {{ project.name }}">
+        <title>Payment Certificate #{{ payment_certificate.certificate_number }} - {{ project.name }}</title>
     </head>
     <body>
         <h1>
@@ -20,32 +20,37 @@
             {% endif %}
             #{{ payment_certificate.certificate_number }}
             <br>
-            <small>{{ payment_certificate.created_at|date:"d F Y" }}</small>
+            <small>Assessment Date: {{ payment_certificate.approved_on|date:"d F Y" }}</small>
+            <br>
+            <small>Date of Certificate: {{ now|date:"d F Y" }}</small>
         </h1>
         <div id="section-a-project-details">
             <h2 class="section-header">A. PROJECT DETAILS</h2>
             <table>
                 <tr>
-                    <th>Project Name:</th>
-                    <td>{{ payment_certificate.project.name }}</td>
+                    <th>CONTRACT:</th>
+                    <td>{{ project.name }}</td>
+                </tr>
+                <tr>
+                    <th>Contract Number:</th>
+                    <td>{{ project.contract_number }}</td>
+                </tr>
+                <tr>
+                    <td colspan="2">{{ project.contract_clause }}</td>
                 </tr>
                 <tr>
                     <th>Project Description:</th>
-                    <td>{{ payment_certificate.project.description|default:"N/A" }}</td>
+                    <td>{{ project.description|default:"N/A" }}</td>
                 </tr>
                 <tr>
                     <th>Client:</th>
                     <td>
-                        {% if payment_certificate.project.client %}
-                            {{ payment_certificate.project.client.name }}
+                        {% if project.client %}
+                            {{ project.client.name }}
                         {% else %}
                             [Client Details to be Added]
                         {% endif %}
                     </td>
-                </tr>
-                <tr>
-                    <th>Contractor:</th>
-                    <td>{{ payment_certificate.project.account.get_full_name|default:payment_certificate.project.account.email }}</td>
                 </tr>
                 <tr>
                     <th>Status:</th>
@@ -53,25 +58,112 @@
                 </tr>
             </table>
         </div>
-        <div id="section-b-payment-certificate-summary">
-            <h2 class="section-header">B. PAYMENT CERTIFICATE SUMMARY</h2>
-            <table>
-                <tr>
-                    <th>Description</th>
-                    <th class="text-right">Amount (R)</th>
-                </tr>
-                <tr>
-                    <td>Progressive to Date (Including This Claim)</td>
-                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2|intcomma }}</td>
-                </tr>
-                <tr>
-                    <td>Progressive Previous (Excluding This Claim)</td>
-                    <td class="text-right">{{ payment_certificate.progressive_previous|floatformat:2|intcomma }}</td>
-                </tr>
-                <tr class="total-row">
-                    <td>Total Payable This Claim</td>
-                    <td class="text-right">{{ payment_certificate.current_claim_total|floatformat:2|intcomma }}</td>
-                </tr>
+        <div id="section-b-contract-summary">
+            <h2 class="section-header">B. CONTRACT SUMMARY</h2>
+            <table class="text-small">
+                <thead>
+                    <tr>
+                        <th>Contract</th>
+                        <th class="text-right">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Original Contract Value</td>
+                        <td class="text-right">{{ project.get_original_contract_value|floatformat:2|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Total Contract Amendments To Date</td>
+                        <td class="text-right">{{ project.get_addendum_contract_value|floatformat:2|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Sub Total</td>
+                        <td class="text-right">{{ project.get_total_contract_value|floatformat:2|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            {% if project.vat %}
+                                {% define project.get_total_contract_value|mul:0.15 as vat_value %}
+                                VAT 15%
+                            {% else %}
+                                {% define 0 as vat_value %}
+                                No VAT
+                            {% endif %}
+                        </td>
+                        <td class="text-right">{{ vat_value|floatformat:2|intcomma }}</td>
+                    </tr>
+                    <tr class="total-row">
+                        <td>Total Contract Value</td>
+                        <td class="text-right">{{ project.get_total_contract_value|add:vat_value|floatformat:2|intcomma }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="section-c-payment-certificate-summary">
+            <h2 class="section-header">C. PAYMENT CERTIFICATE SUMMARY</h2>
+            <table class="text-small">
+                <thead>
+                    <tr>
+                        <th>Payment Due:</th>
+                        <th class="text-right">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Value of work done up to the assessment interval no. 11</td>
+                        <td class="text-right">{{ payment_certificate.line_items_progressive_previous|floatformat:2|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Plus : Compensation Events</td>
+                        <td class="text-right">{{ payment_certificate.line_items_current_claim_total|floatformat:2|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Total value of work done</td>
+                        <td class="text-right">{{ payment_certificate.line_items_progressive_to_date|floatformat:2|intcomma }}</td>
+                    </tr>
+                    {% for special_item in payment_certificate.special_items_annotated %}
+                        <tr>
+                            <td>
+                                {% if special_item.total > 0 %}
+                                    ADD: {{ special_item.description }}
+                                {% else %}
+                                    LESS: {{ special_item.description }}
+                                {% endif %}
+                            </td>
+                            <td class="text-right">{{ special_item.total|floatformat:2|intcomma }}</td>
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <td>Sub Total</td>
+                        <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Less : Previous Amount Due</td>
+                        <td class="text-right">{{ payment_certificate.progressive_previous|floatformat:2|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Sub Total</td>
+                        <td class="text-right">{{ payment_certificate.current_claim_total|floatformat:2|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            {% if project.vat %}
+                                {% define 0.15 as vat_percentage %}
+                                {% define 1.15 as vat_incl %}
+                                VAT 15%
+                            {% else %}
+                                {% define 0.00 as vat_percentage %}
+                                {% define 1.00 as vat_incl %}
+                                No VAT
+                            {% endif %}
+                        </td>
+                        <td class="text-right">{{ payment_certificate.current_claim_total|mul:vat_percentage|floatformat:2|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>TOTAL AMOUNT NOW CERTIFIED</td>
+                        <td class="text-right">{{ payment_certificate.current_claim_total|mul:vat_incl|floatformat:2|intcomma }}</td>
+                    </tr>
+                </tbody>
             </table>
         </div>
     </body>
@@ -128,11 +220,16 @@
 
         small {
             font-size: 12pt;
+            margin-bottom: 10px;
+        }
+
+        .text-small {
+            font-size: 8pt;
         }
 
         table {
             width: 100%;
-            font-size: 10pt;
+            font-size: 8pt;
         }
 
         td,

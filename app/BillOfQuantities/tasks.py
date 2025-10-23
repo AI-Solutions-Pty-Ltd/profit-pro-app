@@ -2,6 +2,7 @@ import threading
 from collections import defaultdict
 from io import BytesIO
 from typing import Literal
+from datetime import datetime
 
 from pypdf import PdfReader, PdfWriter
 
@@ -72,6 +73,8 @@ def generate_payment_certificate_pdf(context) -> ContentFile:
     Returns:
         ContentFile: In-memory PDF file
     """
+    # add current date to context
+    context["now"] = datetime.now()
     front_page_template = get_template("pdf_templates/1-front-page.html")
     line_items_template = get_template("pdf_templates/2-line-items.html")
     footer_template = get_template("pdf_templates/3-footer.html")

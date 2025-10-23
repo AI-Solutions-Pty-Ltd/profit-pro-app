@@ -39,6 +39,13 @@
                     </a>
                 </li>
                 <li class="inline-flex items-center">
+                    <a href="{% url 'project:project-detail' project.pk %}"
+                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
+                        {% heroicon_outline "chevron-right" size="20" %}
+                        {{ project.name }}
+                    </a>
+                </li>
+                <li class="inline-flex items-center">
                     <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
                         {% heroicon_outline "chevron-right" size="20" %}
@@ -49,13 +56,13 @@
                     <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk payment_certificate.pk %}"
                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
                         {% heroicon_outline "chevron-right" size="20" %}
-                        Payment Certificate Details
+                        #{{ payment_certificate.certificate_number }}
                     </a>
                 </li>
                 <li>
                     <div class="flex items-center">
                         {% heroicon_outline "chevron-right" %}
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ project.name }}</span>
+                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Edit</span>
                     </div>
                 </li>
             </ol>

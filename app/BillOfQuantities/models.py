@@ -321,6 +321,14 @@ class LineItem(BaseModel):
                 pass
         return None
 
+    @property
+    def total_claimed_to_date(self):
+        total = (
+            self.actual_transactions.aggregate(total=models.Sum("total_price"))["total"]
+            or 0
+        )
+        return Decimal(total)
+
 
 class PaymentCertificate(BaseModel):
     """Used to send to clients for payment"""
@@ -349,6 +357,12 @@ class PaymentCertificate(BaseModel):
     notes = models.TextField(
         blank=True, default="", help_text="Additional notes or comments"
     )
+    approved_on = models.DateTimeField(blank=True, null=True)
+    approved_by = models.ForeignKey(
+        Account, on_delete=models.SET_NULL, null=True, blank=True
+    )
+
+    # files
     pdf = models.FileField(upload_to=upload_to, blank=True, null=True)
     abridged_pdf = models.FileField(upload_to=upload_to, blank=True, null=True)
 
@@ -385,16 +399,99 @@ class PaymentCertificate(BaseModel):
         )
 
     @property
+    def actual_line_items(self):
+        return self.actual_transactions.all()
+
+    @property
+    def line_items(self):
+        return self.actual_line_items.filter(line_item__special_item=False)
+
+    @property
+    def special_line_items(self):
+        special_items = self.actual_line_items.filter(line_item__special_item=True)
+        print(special_items)
+        return special_items
+
+    @property
     def total_amount(self) -> Decimal:
         total_amount = (
-            self.actual_transactions.aggregate(total=models.Sum("total_price"))["total"]
+            self.actual_line_items.aggregate(total=models.Sum("total_price"))["total"]
             or 0
         )
         return Decimal(total_amount)
 
+    # line_items summary
+    @property
+    def line_items_progressive_previous(self) -> Decimal:
+        previous_certificates = self.previous_certificates
+        previous_actual_items = ActualTransaction.objects.filter(
+            payment_certificate__in=previous_certificates
+        ).exclude(line_item__special_item=True)
+        total = (
+            previous_actual_items.aggregate(total=models.Sum("total_price"))["total"]
+            or 0
+        )
+        return Decimal(total)
+
+    @property
+    def line_items_current_claim_total(self) -> Decimal:
+        total = self.line_items.aggregate(total=models.Sum("total_price"))["total"] or 0
+        return Decimal(total)
+
+    @property
+    def line_items_progressive_to_date(self) -> Decimal:
+        return (
+            self.line_items_progressive_previous + self.line_items_current_claim_total
+        )
+
+    # special items summary
+    @property
+    def special_items_progressive_previous(self):
+        previous_certificates = self.previous_certificates
+        previous_actual_items = ActualTransaction.objects.filter(
+            payment_certificate__in=previous_certificates
+        ).filter(line_item__special_item=True)
+        total = (
+            previous_actual_items.aggregate(total=models.Sum("total_price"))["total"]
+            or 0
+        )
+        return Decimal(total)
+
+    @property
+    def special_items_current_claim_total(self) -> Decimal:
+        previous_actual_items = ActualTransaction.objects.filter(
+            payment_certificate__certificate_number__lte=self.certificate_number
+        ).filter(line_item__special_item=True)
+        total = (
+            previous_actual_items.aggregate(total=models.Sum("total_price"))["total"]
+            or 0
+        )
+        return Decimal(total)
+
+    @property
+    def special_items_progressive_to_date(self) -> Decimal:
+        return (
+            self.special_items_progressive_previous
+            + self.special_items_current_claim_total
+        )
+
+    @property
+    def special_items_annotated(self):
+        # annotate all project special items with total_price up to current certificate
+        special_items = self.project.get_special_line_items
+        return special_items.annotate(
+            total=models.Sum(
+                "actual_transactions__total_price",
+                filter=models.Q(
+                    actual_transactions__payment_certificate__certificate_number__lte=self.certificate_number
+                ),
+            )
+        )
+
+    # payment certificate summary
     @property
     def items_submitted(self) -> Decimal:
-        approved_line_items = self.actual_transactions.filter(approved=True)
+        approved_line_items = self.actual_line_items.filter(approved=True)
         total_submitted = (
             approved_line_items.aggregate(total=models.Sum("total_price"))["total"] or 0
         )
@@ -402,7 +499,7 @@ class PaymentCertificate(BaseModel):
 
     @property
     def items_claimed(self) -> Decimal:
-        approved_line_items = self.actual_transactions.filter(claimed=True)
+        approved_line_items = self.actual_line_items.filter(claimed=True)
         total_claimed = (
             approved_line_items.aggregate(total=models.Sum("total_price"))["total"] or 0
         )
@@ -422,6 +519,7 @@ class PaymentCertificate(BaseModel):
         # leaving space for other categories to be added at a later stage
         return total
 
+    # wholistic properties
     @property
     def progressive_previous(self) -> Decimal:
         """Calculate total of all previously approved certificates."""
