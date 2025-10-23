@@ -121,14 +121,16 @@
                                     <input type="checkbox"
                                            name="force"
                                            value="true"
+                                           id="force-full-pdf"
                                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
                                     <span>Force regenerate</span>
                                 </label>
                                 <button type="submit"
+                                        id="full-pdf-button"
                                         {% if payment_certificate.pdf_generating %}disabled{% endif %}
                                         class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white {% if payment_certificate.pdf_generating %}bg-gray-400 cursor-not-allowed{% else %}bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500{% endif %} transition-colors">
                                     {% heroicon_outline "arrow-down-tray" class="w-4 h-4" %}
-                                    Download
+                                    <span id="full-pdf-button-text">Download</span>
                                 </button>
                             </div>
                         </form>
@@ -170,14 +172,16 @@
                                     <input type="checkbox"
                                            name="force"
                                            value="true"
+                                           id="force-abridged-pdf"
                                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
                                     <span>Force regenerate</span>
                                 </label>
                                 <button type="submit"
+                                        id="abridged-pdf-button"
                                         {% if payment_certificate.abridged_pdf_generating %}disabled{% endif %}
                                         class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white {% if payment_certificate.abridged_pdf_generating %}bg-gray-400 cursor-not-allowed{% else %}bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500{% endif %} transition-colors">
                                     {% heroicon_outline "arrow-down-tray" class="w-4 h-4" %}
-                                    Download
+                                    <span id="abridged-pdf-button-text">Download</span>
                                 </button>
                             </div>
                         </form>
@@ -545,5 +549,23 @@
               badgeContainer.insertAdjacentHTML('beforeend', badgeHTML);
           }
       });
+
+      // Handle button text change when force regenerate checkbox is checked
+      const forceFullCheckbox = document.getElementById('force-full-pdf');
+      const fullButtonText = document.getElementById('full-pdf-button-text');
+      const forceAbridgedCheckbox = document.getElementById('force-abridged-pdf');
+      const abridgedButtonText = document.getElementById('abridged-pdf-button-text');
+
+      if (forceFullCheckbox && fullButtonText) {
+          forceFullCheckbox.addEventListener('change', function() {
+              fullButtonText.textContent = this.checked ? 'Regenerate Payment Certificate' : 'Download';
+          });
+      }
+
+      if (forceAbridgedCheckbox && abridgedButtonText) {
+          forceAbridgedCheckbox.addEventListener('change', function() {
+              abridgedButtonText.textContent = this.checked ? 'Regenerate Abridged Certificate' : 'Download';
+          });
+      }
     </script>
 {% endblock extra_js %}

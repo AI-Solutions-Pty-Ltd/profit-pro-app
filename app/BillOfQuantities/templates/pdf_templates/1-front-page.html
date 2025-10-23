@@ -12,69 +12,67 @@
         <title>Payment Certificate #{{ payment_certificate.certificate_number }} - {{ payment_certificate.project.name }}</title>
     </head>
     <body>
-        <div class="portrait-section">
-            <h1>
-                {% if is_abridged %}
-                    Abridged Payment Certificate
-                {% else %}
-                    Payment Certificate
-                {% endif %}
-                #{{ payment_certificate.certificate_number }}
-                <br>
-                <small>{{ payment_certificate.created_at|date:"d F Y" }}</small>
-            </h1>
-            <div id="section-a-project-details">
-                <h2 class="section-header">A. PROJECT DETAILS</h2>
-                <table>
-                    <tr>
-                        <th>Project Name:</th>
-                        <td>{{ payment_certificate.project.name }}</td>
-                    </tr>
-                    <tr>
-                        <th>Project Description:</th>
-                        <td>{{ payment_certificate.project.description|default:"N/A" }}</td>
-                    </tr>
-                    <tr>
-                        <th>Client:</th>
-                        <td>
-                            {% if payment_certificate.project.client %}
-                                {{ payment_certificate.project.client.name }}
-                            {% else %}
-                                [Client Details to be Added]
-                            {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Contractor:</th>
-                        <td>{{ payment_certificate.project.account.get_full_name|default:payment_certificate.project.account.email }}</td>
-                    </tr>
-                    <tr>
-                        <th>Status:</th>
-                        <td>{{ payment_certificate.get_status_display }}</td>
-                    </tr>
-                </table>
-            </div>
-            <div id="section-b-payment-certificate-summary">
-                <h2 class="section-header">B. PAYMENT CERTIFICATE SUMMARY</h2>
-                <table>
-                    <tr>
-                        <th>Description</th>
-                        <th class="text-right">Amount (R)</th>
-                    </tr>
-                    <tr>
-                        <td>Progressive to Date (Including This Claim)</td>
-                        <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2|intcomma }}</td>
-                    </tr>
-                    <tr>
-                        <td>Progressive Previous (Excluding This Claim)</td>
-                        <td class="text-right">{{ payment_certificate.progressive_previous|floatformat:2|intcomma }}</td>
-                    </tr>
-                    <tr class="total-row">
-                        <td>Total Payable This Claim</td>
-                        <td class="text-right">{{ payment_certificate.current_claim_total|floatformat:2|intcomma }}</td>
-                    </tr>
-                </table>
-            </div>
+        <h1>
+            {% if is_abridged %}
+                Abridged Payment Certificate
+            {% else %}
+                Payment Certificate
+            {% endif %}
+            #{{ payment_certificate.certificate_number }}
+            <br>
+            <small>{{ payment_certificate.created_at|date:"d F Y" }}</small>
+        </h1>
+        <div id="section-a-project-details">
+            <h2 class="section-header">A. PROJECT DETAILS</h2>
+            <table>
+                <tr>
+                    <th>Project Name:</th>
+                    <td>{{ payment_certificate.project.name }}</td>
+                </tr>
+                <tr>
+                    <th>Project Description:</th>
+                    <td>{{ payment_certificate.project.description|default:"N/A" }}</td>
+                </tr>
+                <tr>
+                    <th>Client:</th>
+                    <td>
+                        {% if payment_certificate.project.client %}
+                            {{ payment_certificate.project.client.name }}
+                        {% else %}
+                            [Client Details to be Added]
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Contractor:</th>
+                    <td>{{ payment_certificate.project.account.get_full_name|default:payment_certificate.project.account.email }}</td>
+                </tr>
+                <tr>
+                    <th>Status:</th>
+                    <td>{{ payment_certificate.get_status_display }}</td>
+                </tr>
+            </table>
+        </div>
+        <div id="section-b-payment-certificate-summary">
+            <h2 class="section-header">B. PAYMENT CERTIFICATE SUMMARY</h2>
+            <table>
+                <tr>
+                    <th>Description</th>
+                    <th class="text-right">Amount (R)</th>
+                </tr>
+                <tr>
+                    <td>Progressive to Date (Including This Claim)</td>
+                    <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2|intcomma }}</td>
+                </tr>
+                <tr>
+                    <td>Progressive Previous (Excluding This Claim)</td>
+                    <td class="text-right">{{ payment_certificate.progressive_previous|floatformat:2|intcomma }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td>Total Payable This Claim</td>
+                    <td class="text-right">{{ payment_certificate.current_claim_total|floatformat:2|intcomma }}</td>
+                </tr>
+            </table>
         </div>
     </body>
     <style id="page-style">
@@ -100,8 +98,6 @@
             background-color: #e5e7eb;
         }
 
-
-
         .section-header {
             font-size: 12pt;
             background-color: #f0f0f0;
@@ -109,7 +105,6 @@
             margin: 20px 0 10px 0;
             border-left: 4px solid #000;
         }
-
 
         .text-left {
             text-align: left;
@@ -129,52 +124,6 @@
 
         .text-wrap {
             white-space: normal;
-        }
-
-        .grey-background {
-            background-color: #f0f0f0;
-        }
-
-        .text-white {
-            color: white;
-            font-size: 1pt;
-        }
-
-        .text-grey {
-            color: #f0f0f0;
-            font-size: 1pt;
-        }
-
-        .text-normal-weight {
-            font-weight: 400 !important;
-        }
-
-        .text-bold {
-            font-weight: bold;
-        }
-
-        .notes {
-            margin-top: 30px;
-            font-size: 9pt;
-        }
-
-        ul {
-            margin-left: 20px;
-            margin-top: 5px;
-            margin-bottom: 5px;
-        }
-
-        li {
-            margin: 2px 0 2px 0;
-            padding: 0;
-        }
-
-        .medium-text {
-            font-size: 10pt;
-        }
-
-        .small-text {
-            font-size: 8pt;
         }
 
         small {
@@ -203,57 +152,6 @@
         
         thead {
             font-weight: bold;
-        }
-    </style>
-    <style id="item-table">
-        table.items {
-            font-size: 8pt;
-        }
-
-        table.items td, 
-        table.items th {
-            padding: 2px 2px 0px 2px;
-        }
-
-        table.items thead {
-            font-weight: bold;
-            white-space: normal;
-        }
-
-        .subsection-header {
-            padding: 8px 10px 0px 10px;
-            margin: 20px 0 10px 0;
-            font-weight: bold;
-            font-size: 8pt;
-        }
-
-        .item-row {
-            font-size: 6pt;
-        }
-        
-        .small-column {
-            width: 35px;
-        }
-
-        .large-column {
-            width: 400px;
-        }
-
-        .border-left-none {
-            border-left: none;
-        }
-
-        .border-right-none {
-            border-right: none;
-        }
-        
-        .total-row {
-            font-weight: bold;
-            background-color: #f5f5f5;
-        }
-
-        .total-row td {
-            border-top: 2px solid #000;
         }
     </style>
 </html>
