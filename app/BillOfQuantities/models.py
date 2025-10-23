@@ -75,12 +75,24 @@ class Package(BaseModel):
 
 class LineItem(BaseModel):
     project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="line_items"
+        Project,
+        on_delete=models.CASCADE,
+        related_name="line_items",
     )
     structure = models.ForeignKey(
-        Structure, on_delete=models.CASCADE, related_name="line_items"
+        Structure,
+        on_delete=models.CASCADE,
+        related_name="line_items",
+        null=True,
+        blank=True,
     )
-    bill = models.ForeignKey(Bill, on_delete=models.CASCADE, related_name="line_items")
+    bill = models.ForeignKey(
+        Bill,
+        on_delete=models.CASCADE,
+        related_name="line_items",
+        null=True,
+        blank=True,
+    )
     package = models.ForeignKey(
         Package,
         on_delete=models.CASCADE,
@@ -104,6 +116,7 @@ class LineItem(BaseModel):
 
     # for addendum line items
     addendum = models.BooleanField(default=False)
+    special_item = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Line Item"
@@ -111,7 +124,17 @@ class LineItem(BaseModel):
         ordering = ["row_index"]
 
     def __str__(self):
-        return self.item_number
+        parts = []
+        if self.item_number:
+            parts.append(self.item_number)
+        if self.structure:
+            parts.append(self.structure.name)
+        if self.bill:
+            parts.append(self.bill.name)
+        if self.package:
+            parts.append(self.package.name)
+        parts.append(self.description or str(self.pk))
+        return " - ".join(parts)
 
     @staticmethod
     def construct_payment_certificate(
@@ -126,17 +149,11 @@ class LineItem(BaseModel):
         - Uses Coalesce to handle NULL values from annotations
         - Filters to only include line items with transactions in current certificate
         """
-        project = payment_certificate.project
+        project: Project = payment_certificate.project
         cert_number = payment_certificate.certificate_number
-        line_items = project.line_items.all()
 
         return (
-            line_items.select_related(
-                "structure",
-                "bill",
-                "package",
-            )
-            .only(
+            project.get_line_items.only(
                 # LineItem fields
                 "id",
                 "item_number",
@@ -246,7 +263,7 @@ class LineItem(BaseModel):
 
     @property
     def claimed_to_date(self) -> Decimal:
-        # historically claim, excluding current pmt cert
+        # historically qty claimed, excluding current pmt cert
         project: Project = self.project
         active_payment_certificate: PaymentCertificate = (
             project.get_active_payment_certificate
@@ -262,8 +279,24 @@ class LineItem(BaseModel):
             actual_transactions = actual_transactions.exclude(
                 id__in=current_transactions_ids
             )
+        value = actual_transactions.aggregate(qty=models.Sum("quantity"))["qty"] or 0
+        return Decimal(value)
+
+    @property
+    def claimed_to_date_value(self) -> Decimal:
+        # historically claim value, excluding current pmt cert
+        project: Project = self.project
+        active_payment_certificate: PaymentCertificate = (
+            project.get_active_payment_certificate
+        )
+        previous_actual_transactions = self.actual_transactions.filter(
+            payment_certificate__certificate_number__lt=active_payment_certificate.certificate_number
+        )
         value = (
-            actual_transactions.aggregate(total=models.Sum("quantity"))["total"] or 0
+            previous_actual_transactions.aggregate(
+                total_claimed=models.Sum("total_price")
+            )["total_claimed"]
+            or 0
         )
         return Decimal(value)
 
@@ -460,7 +493,7 @@ class ActualTransaction(BaseModel):
         ]
 
     def __str__(self):
-        return f"{self.line_item} - {self.quantity}"
+        return f"{self.line_item.description if self.line_item else self.line_item.pk} - {self.quantity}"
 
     def save(self, *args, **kwargs):
         if self.payment_certificate.pdf:

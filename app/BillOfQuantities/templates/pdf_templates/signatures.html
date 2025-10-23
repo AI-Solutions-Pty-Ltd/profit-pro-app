@@ -1,0 +1,54 @@
+{% for signatory in signatories %}
+    <div class="signature">
+        <div class="signature-line">
+            <strong>{{ signatory.title }}</strong>
+            <br>
+            Name: {{ signatory.name }}
+            <br>
+            Date: _________________
+        </div>
+    </div>
+{% empty %}
+    <div class="signature">
+        <div class="signature-line">
+            <strong>Contractor Signature</strong>
+            <br>
+            Name: {{ payment_certificate.project.account.get_full_name|default:payment_certificate.project.account.email }}
+            <br>
+            Date: _________________
+        </div>
+    </div>
+    <div class="signature">
+        <div class="signature-line">
+            <strong>Client/Authorized Representative</strong>
+            <br>
+            Name: _______________________________
+            <br>
+            Date: _________________
+        </div>
+    </div>
+{% endfor %}
+<style id="signatures">
+    .signatures {
+        margin-top: 40px;
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .signature {
+        flex: 1 1 45%;
+        min-width: 250px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .signature-line {
+        border-top: 1px solid #000;
+        margin-top: 50px;
+        padding-top: 5px;
+    }
+</style>

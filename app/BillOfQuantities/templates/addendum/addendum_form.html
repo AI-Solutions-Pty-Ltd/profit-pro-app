@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load heroicons %}
+{% block title %}
+    {% if object %}
+        Edit
+    {% else %}
+        Add
+    {% endif %}
+    Addendum Item - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block extra_css %}
+    <style>
+        /* Loading animation for select dropdowns */
+        select:disabled {
+            background-color: #f3f4f6;
+            cursor: wait;
+            opacity: 0.7;
+        }
+        
+        /* Spinner animation */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #e5e7eb;
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+    </style>
+{% endblock extra_css %}
+{% block content %}
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Breadcrumb -->
+        <nav class="flex mb-6" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{% url 'project:project-list' %}"
+                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
+                        {% heroicon_outline "home" size="20" class="text-indigo-600" %}
+                        Projects
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        {% heroicon_outline "chevron-right" %}
+                        <a href="{% url 'project:project-detail' project.pk %}"
+                           class="ml-1 text-sm font-medium text-gray-700 hover:text-indigo-600 md:ml-2">{{ project.name }}</a>
+                    </div>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        {% heroicon_outline "chevron-right" %}
+                        <a href="{% url 'bill_of_quantities:addendum-list' project.pk %}"
+                           class="ml-1 text-sm font-medium text-gray-700 hover:text-indigo-600 md:ml-2">Addendum Items</a>
+                    </div>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        {% heroicon_outline "chevron-right" %}
+                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">
+                            {% if object %}
+                                Edit
+                            {% else %}
+                                Add
+                            {% endif %}
+                        </span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+        <!-- Form Card -->
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <!-- Header -->
+            <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+                <h1 class="text-2xl font-bold text-gray-900">
+                    {% if object %}
+                        Edit Addendum Item
+                    {% else %}
+                        Add Addendum Item
+                    {% endif %}
+                </h1>
+                <p class="mt-1 text-sm text-gray-600">
+                    {% if object %}
+                        Update the details of this addendum item
+                    {% else %}
+                        Create a new addendum item for {{ project.name }}
+                    {% endif %}
+                </p>
+            </div>
+            <!-- Form -->
+            <form method="post" class="px-6 py-6">
+                {% csrf_token %}
+                <div class="space-y-6">
+                    <!-- Structure and Bill -->
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div>{{ form.structure|as_crispy_field }}</div>
+                        <div>{{ form.bill|as_crispy_field }}</div>
+                    </div>
+                    <!-- Package (optional) -->
+                    <div>{{ form.package|as_crispy_field }}</div>
+                    <!-- Item Details -->
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div>{{ form.item_number|as_crispy_field }}</div>
+                        <div>{{ form.payment_reference|as_crispy_field }}</div>
+                    </div>
+                    <!-- Description -->
+                    <div>{{ form.description|as_crispy_field }}</div>
+                    <!-- Is Work Checkbox -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">{{ form.is_work }}</div>
+                            <div class="ml-3 text-sm">
+                                <label for="{{ form.is_work.id_for_label }}"
+                                       class="font-medium text-gray-700">Work Item</label>
+                                <p class="text-gray-500">Check this if this is a work item (requires quantity and pricing)</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Work Item Fields (shown when is_work is checked) -->
+                    <div id="work-fields" class="space-y-6">
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                            <div>{{ form.unit_measurement|as_crispy_field }}</div>
+                            <div>{{ form.budgeted_quantity|as_crispy_field }}</div>
+                            <div>{{ form.unit_price|as_crispy_field }}</div>
+                        </div>
+                        <!-- Calculated Total Display -->
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700">Calculated Total:</span>
+                                <span id="calculated-total" class="text-lg font-bold text-gray-900">R 0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Form Actions -->
+                <div class="mt-6 flex items-center justify-end gap-3">
+                    <a href="{% url 'bill_of_quantities:addendum-list' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Cancel</a>
+                    <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "check" size="20" %}
+                        {% if object %}
+                            Update
+                        {% else %}
+                            Create
+                        {% endif %}
+                        Addendum Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        // Toggle work fields visibility
+        const isWorkCheckbox = document.getElementById('{{ form.is_work.id_for_label }}');
+        const workFields = document.getElementById('work-fields');
+        const quantityInput = document.getElementById('{{ form.budgeted_quantity.id_for_label }}');
+        const priceInput = document.getElementById('{{ form.unit_price.id_for_label }}');
+        const totalDisplay = document.getElementById('calculated-total');
+
+        // Cascade filtering elements
+        const structureSelect = document.getElementById('{{ form.structure.id_for_label }}');
+        const billSelect = document.getElementById('{{ form.bill.id_for_label }}');
+        const packageSelect = document.getElementById('{{ form.package.id_for_label }}');
+
+        // Store initial values for edit mode
+        const initialBillValue = billSelect.value;
+        const initialPackageValue = packageSelect.value;
+        const projectPk = {{ project.pk }};
+
+        // Initially disable bill and package if no structure selected
+        if (!structureSelect.value) {
+            billSelect.disabled = true;
+            billSelect.innerHTML = '<option value="">Select a structure first</option>';
+        }
+        packageSelect.disabled = true;
+        packageSelect.innerHTML = '<option value="">Select a bill first</option>';
+
+        function toggleWorkFields() {
+            workFields.style.display = 'block';
+        }
+
+        function calculateTotal() {
+            if (isWorkCheckbox.checked) {
+                const quantity = parseFloat(quantityInput.value) || 0;
+                const price = parseFloat(priceInput.value) || 0;
+                const total = quantity * price;
+                totalDisplay.textContent = 'R ' + total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            } else {
+                totalDisplay.textContent = 'R 0.00';
+            }
+        }
+
+        async function filterBillsByStructure() {
+            const structureId = structureSelect.value;
+            
+            // If no structure selected, reset and disable bill and package
+            if (!structureId) {
+                billSelect.innerHTML = '<option value="">Select a structure first</option>';
+                billSelect.disabled = true;
+                billSelect.value = '';
+                packageSelect.innerHTML = '<option value="">Select a bill first</option>';
+                packageSelect.disabled = true;
+                packageSelect.value = '';
+                return;
+            }
+
+            // Store current bill value before clearing
+            const currentBillValue = billSelect.value;
+
+            // Show loading state
+            billSelect.innerHTML = '<option value="">Loading bills...</option>';
+            billSelect.disabled = true;
+            packageSelect.innerHTML = '<option value="">Select a bill first</option>';
+            packageSelect.disabled = true;
+            packageSelect.value = '';
+
+            try {
+                // Fetch bills for selected structure
+                const response = await fetch(
+                    `/bill-of-quantities/project/${projectPk}/api/bills/?structure_id=${structureId}`
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    console.error('Permission error:', data.error);
+                    alert('You do not have permission to access this data.');
+                    billSelect.innerHTML = '<option value="">Select a structure first</option>';
+                    billSelect.disabled = true;
+                    packageSelect.innerHTML = '<option value="">Select a bill first</option>';
+                    packageSelect.disabled = true;
+                    return;
+                }
+
+                // Clear and populate bill select
+                billSelect.innerHTML = '<option value="">---------</option>';
+                data.bills.forEach(bill => {
+                    const option = document.createElement('option');
+                    option.value = bill.id;
+                    option.textContent = bill.name;
+                    billSelect.appendChild(option);
+                });
+
+                // Re-enable bill select
+                billSelect.disabled = false;
+
+                // Restore previous selection if still valid
+                if (currentBillValue && Array.from(billSelect.options).some(opt => opt.value === currentBillValue)) {
+                    billSelect.value = currentBillValue;
+                    await filterPackagesByBill();
+                }
+                // Package remains disabled until bill is selected
+            } catch (error) {
+                console.error('Error fetching bills:', error);
+                billSelect.innerHTML = '<option value="">Error loading bills</option>';
+                billSelect.disabled = false;
+                packageSelect.innerHTML = '<option value="">Select a bill first</option>';
+                packageSelect.disabled = true;
+            }
+        }
+
+        async function filterPackagesByBill() {
+            const billId = billSelect.value;
+            
+            // If no bill selected, reset and disable package
+            if (!billId) {
+                packageSelect.innerHTML = '<option value="">Select a bill first</option>';
+                packageSelect.disabled = true;
+                packageSelect.value = '';
+                return;
+            }
+
+            // Store current package value before clearing
+            const currentPackageValue = packageSelect.value;
+
+            // Show loading state
+            packageSelect.innerHTML = '<option value="">Loading packages...</option>';
+            packageSelect.disabled = true;
+
+            try {
+                // Fetch packages for selected bill
+                const response = await fetch(
+                    `/bill-of-quantities/project/${projectPk}/api/packages/?bill_id=${billId}`
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    console.error('Permission error:', data.error);
+                    alert('You do not have permission to access this data.');
+                    packageSelect.innerHTML = '<option value="">---------</option>';
+                    packageSelect.disabled = false;
+                    return;
+                }
+
+                // Clear and populate package select
+                packageSelect.innerHTML = '<option value="">---------</option>';
+                data.packages.forEach(pkg => {
+                    const option = document.createElement('option');
+                    option.value = pkg.id;
+                    option.textContent = pkg.name;
+                    packageSelect.appendChild(option);
+                });
+
+                // Re-enable package select
+                packageSelect.disabled = false;
+
+                // Restore previous selection if still valid
+                if (currentPackageValue && Array.from(packageSelect.options).some(opt => opt.value === currentPackageValue)) {
+                    packageSelect.value = currentPackageValue;
+                }
+            } catch (error) {
+                console.error('Error fetching packages:', error);
+                packageSelect.innerHTML = '<option value="">Error loading packages</option>';
+                packageSelect.disabled = false;
+            }
+        }
+
+        // Initialize
+        toggleWorkFields();
+        calculateTotal();
+
+        // Initialize cascade filters on page load (for edit mode)
+        if (structureSelect.value) {
+            filterBillsByStructure();
+        }
+
+        // Event listeners
+        isWorkCheckbox.addEventListener('change', function() {
+            toggleWorkFields();
+            calculateTotal();
+        });
+
+        quantityInput.addEventListener('input', calculateTotal);
+        priceInput.addEventListener('input', calculateTotal);
+
+        // Cascade filtering listeners
+        structureSelect.addEventListener('change', filterBillsByStructure);
+        billSelect.addEventListener('change', filterPackagesByBill);
+    </script>
+{% endblock content %}

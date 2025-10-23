@@ -35,8 +35,15 @@ class PackageAdmin(SoftDeleteAdmin):
 
 @admin.register(LineItem)
 class LineItemAdmin(SoftDeleteAdmin):
-    list_display = ["item_number", "description", "project", "deleted", "created_at"]
-    list_filter = ["deleted", "created_at", "is_work", "project"]
+    list_display = ["description", "item_number", "project", "deleted", "created_at"]
+    list_filter = [
+        "project__name",
+        "deleted",
+        "is_work",
+        "addendum",
+        "special_item",
+        "created_at",
+    ]
     search_fields = ["item_number", "description", "project__name"]
 
 
@@ -50,15 +57,28 @@ class PaymentCertificateAdmin(SoftDeleteAdmin):
 @admin.register(ActualTransaction)
 class ActualTransactionAdmin(SoftDeleteAdmin):
     list_display = [
-        "line_item",
         "payment_certificate",
+        "get_line_item_description",
         "quantity",
+        "total_price",
         "approved",
         "deleted",
-        "created_at",
     ]
-    list_filter = ["deleted", "approved", "claimed", "created_at"]
+    list_filter = [
+        "payment_certificate__certificate_number",
+        "deleted",
+        "approved",
+        "claimed",
+        "line_item__special_item",
+        "line_item__addendum",
+    ]
     search_fields = [
         "line_item__description",
         "payment_certificate__certificate_number",
     ]
+    autocomplete_fields = ["line_item"]
+
+    @admin.display(description="Line Item", ordering="line_item__description")
+    def get_line_item_description(self, obj):
+        """Display the line item description."""
+        return obj.line_item.description if obj.line_item else "-"

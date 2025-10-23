@@ -1,6 +1,9 @@
 import threading
 from collections import defaultdict
+from io import BytesIO
 from typing import Literal
+
+from pypdf import PdfReader, PdfWriter
 
 from django.core.files.base import ContentFile
 from django.template.loader import get_template, render_to_string
@@ -60,16 +63,43 @@ def group_line_items_by_hierarchy(line_items):
     return grouped
 
 
-def generate_payment_certificate_pdf(payment_certificate) -> ContentFile:
+def generate_payment_certificate_pdf(context) -> ContentFile:
     """Generate payment certificate PDF in memory.
 
     Args:
-        payment_certificate: PaymentCertificate instance to generate PDF for
+        context: Context to generate PDF for
 
     Returns:
         ContentFile: In-memory PDF file
     """
-    template = get_template("pdf_templates/payment_certificate.html")
+    front_page_template = get_template("pdf_templates/1-front-page.html")
+    line_items_template = get_template("pdf_templates/2-line-items.html")
+    footer_template = get_template("pdf_templates/3-footer.html")
+
+    # Generate individual PDFs in memory
+    front_page_pdf = generate_pdf(front_page_template.render(context))
+    line_items_pdf = generate_pdf(line_items_template.render(context))
+    footer_pdf = generate_pdf(footer_template.render(context))
+
+    # Merge PDFs using pypdf
+    merger = PdfWriter()
+
+    # Read each ContentFile and append to merger
+    for pdf_content in [front_page_pdf, line_items_pdf, footer_pdf]:
+        pdf_reader = PdfReader(BytesIO(pdf_content.read()))
+        for page in pdf_reader.pages:
+            merger.add_page(page)
+
+    # Write merged PDF to BytesIO
+    merged_output = BytesIO()
+    merger.write(merged_output)
+    merged_output.seek(0)
+
+    # Return as ContentFile
+    return ContentFile(merged_output.getvalue())
+
+
+def generate_full_payment_certificate_pdf(payment_certificate) -> ContentFile:
     project = payment_certificate.project
     line_items = LineItem.construct_payment_certificate(payment_certificate)
 
@@ -79,28 +109,27 @@ def generate_payment_certificate_pdf(payment_certificate) -> ContentFile:
         "grouped_line_items": group_line_items_by_hierarchy(line_items),
         "is_abridged": False,
     }
-    html = template.render(context)
-    pdf_content = generate_pdf(html)
-
-    return pdf_content
+    return generate_payment_certificate_pdf(context)
 
 
 def generate_abridged_payment_certificate_pdf(payment_certificate) -> ContentFile:
     """Generate abridged payment certificate PDF in memory."""
-    template = get_template("pdf_templates/payment_certificate.html")
     project = payment_certificate.project
-    line_items = LineItem.abridged_payment_certificate(payment_certificate)
+    all_line_items = LineItem.abridged_payment_certificate(payment_certificate)
+    line_items = all_line_items.filter(addendum=False, special_item=False)
+    special_items = all_line_items.filter(addendum=False, special_item=True)
+    addendum_items = all_line_items.filter(addendum=True)
 
     context = {
         "payment_certificate": payment_certificate,
         "project": project,
         "grouped_line_items": group_line_items_by_hierarchy(line_items),
+        "addendum_items": group_line_items_by_hierarchy(addendum_items),
         "is_abridged": True,
+        "special_items": special_items,
     }
-    html = template.render(context)
-    pdf_content = generate_pdf(html)
 
-    return pdf_content
+    return generate_payment_certificate_pdf(context)
 
 
 def generate_and_save_pdf(
@@ -131,7 +160,7 @@ def generate_and_save_pdf(
 
         if pdf_type == "full":
             # Generate full PDF
-            pdf = generate_payment_certificate_pdf(payment_certificate)
+            pdf = generate_full_payment_certificate_pdf(payment_certificate)
             pdf.name = (
                 f"payment_certificate_{payment_certificate.certificate_number}.pdf"
             )

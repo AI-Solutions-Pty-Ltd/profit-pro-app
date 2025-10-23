@@ -1,0 +1,80 @@
+{% define "11" as colSpan %}
+<table class="items" repeat="1">
+    <thead class="text-bold">
+        <tr id="header-row-1">
+            <th id="col-1" rowspan="2" class="subsection-header">Item No.</th>
+            <th id="col-2" rowspan="2" class="subsection-header">Description</th>
+            <th id="col-3-5" colspan="3" class="subsection-header text-center">CONTRACT AMOUNT</th>
+            <th id="col-6-8" colspan="3" class="subsection-header text-center">QUANTITIES</th>
+            <th id="col-9-11" colspan="3" class="subsection-header text-center">CERTIFIED AMOUNTS</th>
+        </tr>
+        <tr id="header-row-2">
+            <th id="col-3" class="text-center">Contract Rate</th>
+            <th id="col-4" class="text-center">Contract Quantity</th>
+            <th id="col-5" class="text-center">Contract Amount</th>
+            <td id="col-6" class="text-center bg-white">Previous Quantity</td>
+            <td id="col-7" class="text-center bg-white">Current Quantity</td>
+            <td id="col-8" class="text-center bg-white">Cumulative Quantity Certified</td>
+            <th id="col-9" class="text-center">Previous Amount Certified</th>
+            <th id="col-10" class="text-center">Amount Due</th>
+            <th id="col-11" class="text-center">Cumulative Amount Certified</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for structure_group in line_items %}
+            <tr>
+                <th colspan="{{ colSpan }}" class="subsection-header">{{ structure_group.structure.name }}</th>
+            </tr>
+            {% for bill_group in structure_group.bills %}
+                <tr>
+                    <th colspan="{{ colSpan }}" class="subsection-header">{{ bill_group.bill.name }}</th>
+                </tr>
+                {% for package_group in bill_group.packages %}
+                    {% if package_group.package.name %}
+                        <tr class="subsection-header">
+                            <th colspan="{{ colSpan }}">{{ package_group.package.name }}</th>
+                        </tr>
+                    {% endif %}
+                    {% for line_item in package_group.line_items %}
+                        {% if not line_item.is_work %}
+                            <tr class="item-row">
+                                <td id="col-1" class="text-center small-column text-bold">{{ line_item.item_number|default:"" }}</td>
+                                <td id="col-2" class="text-left large-column text-bold">{{ line_item.description|default:"" }}</td>
+                                {% comment %} placeholders {% endcomment %}
+                                <th id="col-3" class="text-grey">-</th>
+                                <th id="col-4" class="text-grey">-</th>
+                                <th id="col-5" class="text-grey">-</th>
+                                <td id="col-6" class="text-white">-</td>
+                                <td id="col-7" class="text-white">-</td>
+                                <td id="col-8" class="text-white">-</td>
+                                <th id="col-9" class="text-grey">-</th>
+                                <th id="col-10" class="text-grey">-</th>
+                                <th id="col-11" class="text-grey">-</th>
+                            </tr>
+                        {% else %}
+                            <tr class="item-row text-normal-weight">
+                                <td id="col-1" class="text-center small-column">{{ line_item.item_number|default:"" }}</td>
+                                <td id="col-2" class="text-left large-column">{{ line_item.description|default:"" }}</td>
+                                <th id="col-3" class="text-right text-normal-weight">
+                                    R{{ line_item.unit_price|floatformat:2|intcomma }}/{{ line_item.unit_measurement|default:"" }}
+                                </th>
+                                <th id="col-4" class="text-right text-normal-weight">{{ line_item.budgeted_quantity|floatformat:2|intcomma }}</th>
+                                <th id="col-5" class="text-right text-normal-weight">R{{ line_item.total_price|floatformat:2|intcomma }}</th>
+                                <td id="col-6" class="text-right text-normal-weight">{{ line_item.previous_qty|floatformat:2|intcomma }}</td>
+                                <td id="col-7" class="text-right text-normal-weight">{{ line_item.current_qty|floatformat:2|intcomma }}</td>
+                                <td id="col-8" class="text-right text-normal-weight">{{ line_item.total_qty|floatformat:2|intcomma }}</td>
+                                <th id="col-9" class="text-right text-normal-weight">R{{ line_item.previous_claimed|floatformat:2|intcomma }}</th>
+                                <th id="col-10" class="text-right text-normal-weight">R{{ line_item.current_claim|floatformat:2|intcomma }}</th>
+                                <th id="col-11" class="text-right text-normal-weight">R{{ line_item.total_claimed|floatformat:2|intcomma }}</th>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            {% endfor %}
+        {% empty %}
+            <tr>
+                <td colspan="{{ colSpan }}" class="text-center">No line items in this payment certificate</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

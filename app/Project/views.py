@@ -82,7 +82,7 @@ class ProjectWBSDetailView(ProjectMixin, DetailView):
         from app.BillOfQuantities.models import Bill, Package, Structure
 
         context = super().get_context_data(**kwargs)
-        project = self.get_object()
+        project: Project = self.get_object()
 
         # Get unique structures, bills, packages for dropdowns
         structures = Structure.objects.filter(project=project).distinct()
@@ -96,7 +96,10 @@ class ProjectWBSDetailView(ProjectMixin, DetailView):
         description = self.request.GET.get("description")
 
         # Filter line items
-        line_items = project.line_items.all()
+        all_line_items = project.get_line_items
+        line_items = all_line_items.filter(special_item=False, addendum=False)
+        special_items = all_line_items.filter(special_item=True, addendum=False)
+        addendum_items = all_line_items.filter(addendum=True, special_item=False)
         if structure_id:
             bills = bills.filter(structure__id=structure_id)
             line_items = line_items.filter(structure_id=structure_id)
@@ -116,6 +119,8 @@ class ProjectWBSDetailView(ProjectMixin, DetailView):
         context["structures"] = structures
         context["bills"] = bills
         context["packages"] = packages
+        context["special_items"] = special_items
+        context["addendum_items"] = addendum_items
 
         return context
 

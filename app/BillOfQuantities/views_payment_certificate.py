@@ -47,8 +47,13 @@ class PaymentCertificateMixin(UserHasGroupGenericMixin):
                     project=self.get_project(), project__account=self.request.user
                 )
                 .select_related("project")
-                .prefetch_related("actual_transactions")
-                .prefetch_related("actual_transactions__line_item")
+                .prefetch_related(
+                    "actual_transactions",
+                    "actual_transactions__line_item",
+                    "actual_transactions__line_item__structure",
+                    "actual_transactions__line_item__bill",
+                    "actual_transactions__line_item__package",
+                )
                 .order_by("certificate_number")
             )
         return self.queryset
@@ -107,8 +112,13 @@ class PaymentCertificateDetailView(PaymentCertificateMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
-        line_items = LineItem.abridged_payment_certificate(self.object)
+        all_line_items = LineItem.abridged_payment_certificate(self.object)
+        line_items = all_line_items.filter(special_item=False, addendum=False)
+        special_line_items = all_line_items.filter(special_item=True, addendum=False)
+        addendum_line_items = all_line_items.filter(addendum=True, special_item=False)
         context["grouped_line_items"] = group_line_items_by_hierarchy(line_items)
+        context["special_line_items"] = special_line_items
+        context["addendum_line_items"] = addendum_line_items
 
         # Calculate total for all transactions
         total_amount = sum(t.total_price for t in self.object.actual_transactions.all())
@@ -121,7 +131,7 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
     template_name = "payment_certificate/payment_certificate_edit.html"
 
     def get(self, request, pk=None, project_pk=None):
-        project = self.get_project()
+        project: Project = self.get_project()
 
         from app.BillOfQuantities.models import Bill, Package, Structure
 
@@ -137,8 +147,14 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
                 project=project, status=PaymentCertificate.Status.DRAFT
             )
             if payment_certificates.exists():
-                payment_certificate = cast(
-                    PaymentCertificate, payment_certificates.first()
+                messages.warning(
+                    request,
+                    "There is an active payment certificate. Please complete it before creating a new one.",
+                )
+                return redirect(
+                    "bill_of_quantities:payment-certificate-edit",
+                    project_pk=project_pk,
+                    pk=payment_certificates.first().pk,  # type: ignore
                 )
             else:
                 # create new pmt cert, and redirect to edit page
@@ -174,9 +190,10 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
             )
 
         # Prefetch line items with related data
-        line_items = project.line_items.select_related(
-            "structure", "bill", "package"
-        ).prefetch_related("actual_transactions")
+        all_line_items = project.get_line_items
+        line_items = all_line_items.filter(special_item=False, addendum=False)
+        special_line_items = all_line_items.filter(special_item=True, addendum=False)
+        addendum_line_items = all_line_items.filter(addendum=True, special_item=False)
 
         # Apply filters
         structure_id = request.GET.get("structure")
@@ -199,6 +216,8 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
             "project": project,
             "payment_certificate": payment_certificate,
             "line_items": line_items,
+            "special_line_items": special_line_items,
+            "addendum_line_items": addendum_line_items,
             "structures": structures,
             "bills": bills,
             "packages": packages,
@@ -223,68 +242,82 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
 
         for key, value in request.POST.items():
             line_item_pk = ""
-            transaction_pk = ""
-            quantity = 0
+            actual_transaction_pk = ""
+            try:
+                value = Decimal(value)
+            except (ValueError, TypeError, InvalidOperation):
+                # ignore invalid values
+                continue
+            if value < 0:
+                # can be zero, in case someone wants to uncertify everything
+                # ignore invalid values
+                continue
+
             if key.startswith("new_actual_quantity_"):
-                if not value:
-                    continue
-
+                # new transaction
                 line_item_pk = key.replace("new_actual_quantity_", "")
-                try:
-                    quantity = Decimal(value)
-                except (ValueError, TypeError, InvalidOperation):
-                    continue
-
-                # Only store non-zero quantities
-                if quantity:
-                    line_item: LineItem = project.line_items.get(pk=int(line_item_pk))
-                    claimed_qty = quantity - line_item.claimed_to_date
+                line_item: LineItem = project.line_items.get(pk=int(line_item_pk))
+                if not line_item.special_item:
+                    # normal / addendum item - working with quantities
+                    new_quantity = value
+                    claimed_quantity = new_quantity - line_item.claimed_to_date
                     ActualTransaction.objects.create(
                         payment_certificate=payment_certificate,
                         line_item=line_item,
-                        quantity=claimed_qty,
+                        quantity=claimed_quantity,
                         unit_price=line_item.unit_price,
-                        total_price=line_item.unit_price * claimed_qty,
+                        total_price=line_item.unit_price * claimed_quantity,
+                        captured_by=request.user,
+                    )
+                    transactions_created += 1
+
+                else:
+                    # special item - working with values
+                    claimed_value = value - line_item.claimed_to_date_value
+                    ActualTransaction.objects.create(
+                        payment_certificate=payment_certificate,
+                        line_item=line_item,
+                        quantity=0,
+                        unit_price=0,
+                        total_price=claimed_value,
                         captured_by=request.user,
                     )
                     transactions_created += 1
 
             elif key.startswith("edit_actual_quantity_"):
-                transaction_pk = key.replace("edit_actual_quantity_", "")
+                # edit previously created transaction
+                actual_transaction_pk = key.replace("edit_actual_quantity_", "")
                 try:
-                    actual_transaction = ActualTransaction.objects.get(
-                        pk=transaction_pk
+                    actual_transaction: ActualTransaction = (
+                        ActualTransaction.objects.get(pk=actual_transaction_pk)
                     )
                 except ActualTransaction.DoesNotExist:
                     continue
 
-                if not value:
-                    # empty value
-                    actual_transaction.delete()
-                    transactions_updated += 1
-                    continue
-
-                try:
-                    quantity = Decimal(value)
-                except (ValueError, TypeError, InvalidOperation):
-                    # invalid value
-                    actual_transaction.delete()
-                    transactions_updated += 1
-                    continue
                 line_item = actual_transaction.line_item
-                if quantity == line_item.claimed_to_date:
-                    # no change
-                    continue
+                if not line_item.special_item:
+                    # normal item / addendum - update quantity
+                    update_quantity = value
 
-                # Only update non-zero quantities
-                claimed_qty = quantity - line_item.claimed_to_date
-                actual_transaction.quantity = claimed_qty
-                actual_transaction.unit_price = actual_transaction.line_item.unit_price
-                actual_transaction.total_price = (
-                    claimed_qty * actual_transaction.unit_price
-                )
-                actual_transaction.save()
-                transactions_updated += 1
+                    claimed_quantity = update_quantity - line_item.claimed_to_date
+                    actual_transaction.quantity = claimed_quantity
+                    actual_transaction.unit_price = (
+                        actual_transaction.line_item.unit_price
+                    )
+                    actual_transaction.total_price = (
+                        claimed_quantity * actual_transaction.unit_price
+                    )
+                    actual_transaction.save()
+                    transactions_updated += 1
+
+                else:
+                    # special item - update value
+                    claimed_value = value - line_item.claimed_to_date_value
+                    actual_transaction.quantity = 0
+                    actual_transaction.unit_price = 0
+                    actual_transaction.total_price = claimed_value
+                    actual_transaction.save()
+                    transactions_updated += 1
 
         # Show success message
         if transactions_created or transactions_updated:
@@ -308,17 +341,6 @@ class PaymentCertificateSubmitView(PaymentCertificateMixin, UpdateView):
     fields = ["status"]
     template_name = "payment_certificate/payment_certificate_approve.html"
     context_object_name = "payment_certificate"
-
-    def get_queryset(self):
-        return (
-            PaymentCertificate.objects.filter(project__account=self.request.user)
-            .select_related("project")
-            .prefetch_related(
-                "actual_transactions__line_item__structure",
-                "actual_transactions__line_item__bill",
-                "actual_transactions__line_item__package",
-            )
-        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

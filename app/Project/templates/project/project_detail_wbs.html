@@ -31,22 +31,15 @@
             </ol>
         </nav>
         <!-- Project Card -->
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="p-6 bg-white shadow-md rounded-lg overflow-hidden mb-4">
             <!-- Header -->
-            <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+            <div class="border-b border-gray-200 bg-gray-50 mb-4">
                 <div class="flex items-center justify-between">
-                    <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
-                    <div class="flex space-x-3">
-                        <a href="{% url 'project:project-detail' project.pk %}"
-                           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                            {% heroicon_outline "chevron-left" size="20" %}
-                            Back to Project Detail
-                        </a>
-                    </div>
+                    <h1 class="text-2xl font-bold text-gray-900 py-4 ">{{ project.name }}</h1>
                 </div>
             </div>
             <!-- Content -->
-            <div class="px-6 py-6">
+            <div>
                 <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Project Name</dt>
@@ -81,97 +74,237 @@
                     </div>
                 {% endif %}
             </div>
-            <!-- Line Items Section -->
-            <div class="px-6 py-6 border-t border-gray-200">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-semibold text-gray-900">Line Items ({{ project.line_items.count }})</h2>
-                    <div class="flex space-x-2">
-                        <a href="{{ project.get_structure_upload_url }}"
-                           class="inline-flex items-center px-3 py-1.5 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                            {% heroicon_outline "arrow-up-tray" size="20" %}
-                            Upload
-                        </a>
+        </div>
+        <!-- Line Items Card -->
+        <div id="line-items">
+            {% if project.line_items.count > 0 %}
+                <div class="bg-white shadow-md rounded-lg overflow-hidden mb-6">
+                    <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                            {% heroicon_outline "document-text" size="20" class="text-gray-600" %}
+                            Line Items
+                        </h2>
+                    </div>
+                    <!-- Filters Section -->
+                    <div class="px-6 py-4 bg-blue-50 border-b border-blue-100">
+                        <form id="filterForm" method="get">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                                    {% heroicon_outline "funnel" size="16" class="text-indigo-600" %}
+                                    Filter Results
+                                </h3>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label for="structure" class="block text-sm font-medium text-gray-700 mb-1">Structure</label>
+                                    <select name="structure"
+                                            id="structure"
+                                            onchange="document.getElementById('filterForm').submit()"
+                                            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                        <option value="">All Structures</option>
+                                        {% for structure in structures %}
+                                            <option value="{{ structure.id }}"
+                                                    {% if request.GET.structure == structure.id|stringformat:"s" %}selected{% endif %}>
+                                                {{ structure.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="bill" class="block text-sm font-medium text-gray-700 mb-1">Bill</label>
+                                    <select name="bill"
+                                            id="bill"
+                                            onchange="document.getElementById('filterForm').submit()"
+                                            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                        <option value="">All Bills</option>
+                                        {% for bill in bills %}
+                                            <option value="{{ bill.id }}"
+                                                    {% if request.GET.bill == bill.id|stringformat:"s" %}selected{% endif %}>
+                                                {{ bill.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="package" class="block text-sm font-medium text-gray-700 mb-1">Package</label>
+                                    <select name="package"
+                                            id="package"
+                                            onchange="document.getElementById('filterForm').submit()"
+                                            class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                        <option value="">All Packages</option>
+                                        {% for package in packages %}
+                                            <option value="{{ package.id }}"
+                                                    {% if request.GET.package == package.id|stringformat:"s" %}selected{% endif %}>
+                                                {{ package.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="description"
+                                           class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                    <input type="text"
+                                           name="description"
+                                           id="description"
+                                           value="{{ request.GET.description }}"
+                                           placeholder="Search description..."
+                                           class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                </div>
+                            </div>
+                            <div class="mt-4 flex gap-2">
+                                <button type="submit"
+                                        class="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    {% heroicon_outline "funnel" size="16" %}
+                                    <span class="ml-1">Apply</span>
+                                </button>
+                                {% if request.GET.structure or request.GET.bill or request.GET.package or request.GET.description %}
+                                    <a href="{% url 'project:project-wbs-detail' project.pk %}"
+                                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                        {% heroicon_outline "x-mark" size="16" %}
+                                        <span class="ml-1">Clear</span>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </form>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            {% define "7" as colSpan %}
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item No.</th>
+                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pay Ref</th>
+                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
+                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
+                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for line_item in filtered_line_items %}
+                                    {% if line_item.structure.name %}
+                                        {% if not structure_name or structure_name != line_item.structure.name %}
+                                            {% define line_item.structure.name as structure_name %}
+                                            <tr>
+                                                <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
+                                                    colspan="{{ colSpan }}">{{ structure_name }}</td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endif %}
+                                    {% if line_item.bill.name %}
+                                        {% if not bill_name or bill_name != line_item.bill.name %}
+                                            {% define line_item.bill.name as bill_name %}
+                                            <tr>
+                                                <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
+                                                    colspan="{{ colSpan }}">{{ bill_name }}</td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endif %}
+                                    {% if line_item.package.name %}
+                                        {% if not package_name or package_name != line_item.package.name %}
+                                            {% define line_item.package.name as package_name %}
+                                            <tr>
+                                                <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
+                                                    colspan="{{ colSpan }}">{{ package_name }}</td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endif %}
+                                    <tr class="hover:bg-gray-50 {% if not line_item.is_work %}bg-gray-100 font-semibold{% endif %}">
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.item_number|default:"" }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.payment_reference|default:"" }}</td>
+                                        <td class="px-3 py-2 text-sm text-gray-900">{{ line_item.description|default:"" }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.unit_measurement|default:"" }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                            {% if line_item.budgeted_quantity %}
+                                                {{ line_item.budgeted_quantity|floatformat:2|intcomma }}
+                                            {% else %}
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                            {% if line_item.unit_price %}
+                                                R {{ line_item.unit_price|floatformat:2|intcomma }}
+                                            {% else %}
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
+                                            {% if line_item.total_price %}
+                                                R {{ line_item.total_price|floatformat:2|intcomma }}
+                                            {% else %}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="bg-gray-50 border-t-2 border-gray-300">
+                                <tr>
+                                    <td colspan="{{ colSpan }}"
+                                        class="px-3 py-3 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
+                                        Total: R {{ line_items_total|floatformat:2|intcomma }}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
                     </div>
                 </div>
-                <!-- Filters -->
-                {% if project.line_items.count > 0 %}
-                    <form method="get" class="mb-4" id="filterForm">
-                        <h3 class="text-sm font-medium text-gray-900 mb-2">Filters</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div>
-                                <label for="structure" class="block text-sm font-medium text-gray-700 mb-1">Structure</label>
-                                <select name="structure"
-                                        id="structure"
-                                        onchange="document.getElementById('filterForm').submit()"
-                                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                    <option value="">All Structures</option>
-                                    {% for structure in structures %}
-                                        <option value="{{ structure.id }}"
-                                                {% if request.GET.structure == structure.id|stringformat:"s" %}selected{% endif %}>
-                                            {{ structure.name }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div>
-                                <label for="bill" class="block text-sm font-medium text-gray-700 mb-1">Bill</label>
-                                <select name="bill"
-                                        id="bill"
-                                        onchange="document.getElementById('filterForm').submit()"
-                                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                    <option value="">All Bills</option>
-                                    {% for bill in bills %}
-                                        <option value="{{ bill.id }}"
-                                                {% if request.GET.bill == bill.id|stringformat:"s" %}selected{% endif %}>
-                                            {{ bill.name }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div>
-                                <label for="package" class="block text-sm font-medium text-gray-700 mb-1">Package</label>
-                                <select name="package"
-                                        id="package"
-                                        onchange="document.getElementById('filterForm').submit()"
-                                        class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                    <option value="">All Packages</option>
-                                    {% for package in packages %}
-                                        <option value="{{ package.id }}"
-                                                {% if request.GET.package == package.id|stringformat:"s" %}selected{% endif %}>
-                                            {{ package.name }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div>
-                                <label for="description"
-                                       class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                <input type="text"
-                                       name="description"
-                                       id="description"
-                                       value="{{ request.GET.description }}"
-                                       placeholder="Search description..."
-                                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                            </div>
-                        </div>
-                        <div class="mt-4 flex gap-2">
-                            <button type="submit"
-                                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                {% heroicon_outline "funnel" size="20" %}
-                                Apply Filters
-                            </button>
-                            {% if request.GET.structure or request.GET.bill or request.GET.package or request.GET.description %}
-                                <a href="{% url 'project:project-wbs-detail' project.pk %}"
-                                   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    {% heroicon_outline "x-mark" size="20" %}
-                                    Clear Filters
-                                </a>
-                            {% endif %}
-                        </div>
-                    </form>
-                {% endif %}
+            {% elif filtered_line_items.count == 0 %}
+                <div class="text-center py-6 flex flex-col items-center">
+                    {% heroicon_outline "document" %}
+                    <p class="mt-2 text-sm text-gray-500">No line items found.</p>
+                </div>
+            {% else %}
+                <div class="text-center py-6 flex flex-col items-center">
+                    {% heroicon_outline "document" %}
+                    <p class="mt-2 text-sm text-gray-500">Project WBS not loaded, please upload.</p>
+                    <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
+                       class="mt-2 inline-flex items-center px-3 py-1.5 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        {% heroicon_outline "arrow-up-tray" size="20" %}
+                        Upload
+                    </a>
+                </div>
             </div>
-            {% if project.line_items.count > 0 %}
+        {% endif %}
+        <!-- Special Items Card -->
+        {% if special_items %}
+            <div class="bg-white shadow-md rounded-lg overflow-hidden mb-6">
+                <div class="px-6 py-4 bg-orange-50 border-b border-orange-200 flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        {% heroicon_outline "star" size="20" class="text-orange-600" %}
+                        Special Items
+                    </h2>
+                    <a href="{% url 'bill_of_quantities:special-item-list' project.pk %}"
+                       class="inline-flex items-center px-3 py-1.5 border border-orange-600 rounded-md shadow-sm text-sm font-medium text-orange-600 bg-white hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors">
+                        {% heroicon_outline "eye" size="16" %}
+                        <span class="ml-1">View All</span>
+                    </a>
+                </div>
+                <div class="px-6 py-4">
+                    <ul class="space-y-3">
+                        {% for item in special_items %}
+                            <li class="flex items-start gap-3 p-4 bg-orange-50 rounded-lg border border-orange-100 hover:bg-orange-100 transition-colors">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm text-gray-700 mt-1">{{ item.description|default:"No description" }}</p>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+        <!-- Addendum Items Card -->
+        {% if addendum_items %}
+            <div class="bg-white shadow-md rounded-lg overflow-hidden mb-6">
+                <div class="px-6 py-4 bg-purple-50 border-b border-purple-200 flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        {% heroicon_outline "document-plus" size="20" class="text-purple-600" %}
+                        Addendum Items
+                    </h2>
+                    <a href="{% url 'bill_of_quantities:addendum-list' project.pk %}"
+                       class="inline-flex items-center px-3 py-1.5 border border-purple-600 rounded-md shadow-sm text-sm font-medium text-purple-600 bg-white hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">
+                        {% heroicon_outline "eye" size="16" %}
+                        <span class="ml-1">View All</span>
+                    </a>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         {% define "7" as colSpan %}
@@ -187,83 +320,31 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            {% for line_item in filtered_line_items %}
-                                {% if line_item.structure.name %}
-                                    {% if not structure_name or structure_name != line_item.structure.name %}
-                                        {% define line_item.structure.name as structure_name %}
-                                        <tr>
-                                            <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
-                                                colspan="{{ colSpan }}">{{ structure_name }}</td>
-                                        </tr>
-                                    {% endif %}
-                                {% endif %}
-                                {% if line_item.bill.name %}
-                                    {% if not bill_name or bill_name != line_item.bill.name %}
-                                        {% define line_item.bill.name as bill_name %}
-                                        <tr>
-                                            <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
-                                                colspan="{{ colSpan }}">{{ bill_name }}</td>
-                                        </tr>
-                                    {% endif %}
-                                {% endif %}
-                                {% if line_item.package.name %}
-                                    {% if not package_name or package_name != line_item.package.name %}
-                                        {% define line_item.package.name as package_name %}
-                                        <tr>
-                                            <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
-                                                colspan="{{ colSpan }}">{{ package_name }}</td>
-                                        </tr>
-                                    {% endif %}
-                                {% endif %}
-                                <tr class="hover:bg-gray-50 {% if not line_item.is_work %}bg-gray-100 font-semibold{% endif %}">
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.item_number|default:"" }}</td>
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.payment_reference|default:"" }}</td>
-                                    <td class="px-3 py-2 text-sm text-gray-900">{{ line_item.description|default:"" }}</td>
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.unit_measurement|default:"" }}</td>
+                            {% for item in addendum_items %}
+                                <tr class="hover:bg-gray-50 {% if not item.is_work %}bg-gray-100 font-semibold{% endif %}">
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ item.item_number|default:"" }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ item.payment_reference|default:"" }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-900">{{ item.description|default:"" }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ item.unit_measurement|default:"" }}</td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                        {% if line_item.budgeted_quantity %}
-                                            {{ line_item.budgeted_quantity|floatformat:2|intcomma }}
-                                        {% else %}
-                                        {% endif %}
+                                        {% if item.budgeted_quantity %}{{ item.budgeted_quantity|floatformat:2|intcomma }}{% endif %}
                                     </td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                        {% if line_item.unit_price %}
-                                            R {{ line_item.unit_price|floatformat:2|intcomma }}
-                                        {% else %}
-                                        {% endif %}
+                                        {% if item.unit_price %}R {{ item.unit_price|floatformat:2|intcomma }}{% endif %}
                                     </td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
-                                        {% if line_item.total_price %}
-                                            R {{ line_item.total_price|floatformat:2|intcomma }}
-                                        {% else %}
-                                        {% endif %}
+                                        {% if item.total_price %}R {{ item.total_price|floatformat:2|intcomma }}{% endif %}
                                     </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
-                        <tfoot class="bg-gray-50 border-t-2 border-gray-300">
-                            <tr>
-                                <td colspan="{{ colSpan }}"
-                                    class="px-3 py-3 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                                    Total: R {{ line_items_total|floatformat:2|intcomma }}
-                                </td>
-                            </tr>
-                        </tfoot>
                     </table>
                 </div>
-            {% else %}
-                <div class="text-center py-6 flex flex-col items-center">
-                    {% heroicon_outline "document" %}
-                    <p class="mt-2 text-sm text-gray-500">Project WBS not loaded, please upload.</p>
-                    <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
-                       class="mt-2 inline-flex items-center px-3 py-1.5 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                        {% heroicon_outline "arrow-up-tray" size="20" %}
-                        Upload
-                    </a>
-                </div>
-            {% endif %}
-            <!-- Footer -->
-            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            </div>
+        {% endif %}
+        <!-- Footer -->
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <div class="px-6 py-4 bg-gray-50">
                 <div class="flex justify-between items-center">
                     <a href="{% url 'project:project-list' %}"
                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">

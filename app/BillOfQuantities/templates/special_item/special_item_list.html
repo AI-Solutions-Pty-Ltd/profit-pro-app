@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% load humanize %}
+{% block title %}
+    Special Items - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Breadcrumb -->
+        <nav class="flex mb-6" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{% url 'project:project-list' %}"
+                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
+                        {% heroicon_outline "home" size="20" class="text-indigo-600" %}
+                        Projects
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        {% heroicon_outline "chevron-right" %}
+                        <a href="{% url 'project:project-detail' project.pk %}"
+                           class="ml-1 text-sm font-medium text-gray-700 hover:text-indigo-600 md:ml-2">{{ project.name }}</a>
+                    </div>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        {% heroicon_outline "chevron-right" %}
+                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Special Items</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+        <!-- Header -->
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Special Items</h1>
+                        <p class="mt-1 text-sm text-gray-600">Manage special line items for {{ project.name }}</p>
+                    </div>
+                    <a href="{% url 'bill_of_quantities:special-item-create' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "plus" size="20" %}
+                        Add Special Item
+                    </a>
+                </div>
+            </div>
+            <!-- Content -->
+            <div class="px-6 py-4 flex justify-center">
+                {% if special_items %}
+                    <div class="overflow-x-auto flex justify-center">
+                        <table class="min-w-full divide-y divide-gray-200 w-auto">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Description
+                                    </th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for item in special_items %}
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 text-sm text-gray-900">{{ item.description|truncatewords:10 }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div class="flex items-center justify-end gap-2">
+                                                <a href="{% url 'bill_of_quantities:special-item-update' project.pk item.pk %}"
+                                                   class="text-indigo-600 hover:text-indigo-900">
+                                                    {% heroicon_outline "pencil" class="w-5 h-5" %}
+                                                </a>
+                                                <a href="{% url 'bill_of_quantities:special-item-delete' project.pk item.pk %}"
+                                                   class="text-red-600 hover:text-red-900">
+                                                    {% heroicon_outline "trash" class="w-5 h-5" %}
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="flex flex-col items-center justify-center py-12">
+                        {% heroicon_outline "document-plus" class="mx-auto h-12 w-12 text-gray-400" %}
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">No special items</h3>
+                        <p class="mt-1 text-sm text-gray-500">Get started by creating a new special item.</p>
+                        <div class="mt-6">
+                            <a href="{% url 'bill_of_quantities:special-item-create' project.pk %}"
+                               class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                {% heroicon_outline "plus" size="20" %}
+                                Add Special Item
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                <div class="flex justify-between items-center">
+                    <a href="{% url 'project:project-detail' project.pk %}"
+                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">
+                        {% heroicon_outline "chevron-left" %}
+                        Back to Project
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

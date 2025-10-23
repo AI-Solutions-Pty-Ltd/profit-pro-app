@@ -13,81 +13,7 @@
     </head>
     <body>
         <div class="portrait-section">
-            <h1>
-                {% if is_abridged %}
-                    Abridged Payment Certificate
-                {% else %}
-                    Payment Certificate
-                {% endif %}
-                #{{ payment_certificate.certificate_number }}
-                <br>
-                <small>{{ payment_certificate.created_at|date:"d F Y" }}</small>
-            </h1>
-            <div id="section-a-project-details">
-                <h2 class="section-header">A. PROJECT DETAILS</h2>
-                <table>
-                    <tr>
-                        <th>Project Name:</th>
-                        <td>{{ payment_certificate.project.name }}</td>
-                    </tr>
-                    <tr>
-                        <th>Project Description:</th>
-                        <td>{{ payment_certificate.project.description|default:"N/A" }}</td>
-                    </tr>
-                    <tr>
-                        <th>Client:</th>
-                        <td>
-                            {% if payment_certificate.project.client %}
-                                {{ payment_certificate.project.client.name }}
-                            {% else %}
-                                [Client Details to be Added]
-                            {% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>Contractor:</th>
-                        <td>{{ payment_certificate.project.account.get_full_name|default:payment_certificate.project.account.email }}</td>
-                    </tr>
-                    <tr>
-                        <th>Status:</th>
-                        <td>{{ payment_certificate.get_status_display }}</td>
-                    </tr>
-                </table>
-            </div>
-            <div id="section-b-payment-certificate-summary">
-                <h2 class="section-header">B. PAYMENT CERTIFICATE SUMMARY</h2>
-                <table>
-                    <tr>
-                        <th>Description</th>
-                        <th class="text-right">Amount (R)</th>
-                    </tr>
-                    <tr>
-                        <td>Progressive to Date (Including This Claim)</td>
-                        <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2|intcomma }}</td>
-                    </tr>
-                    <tr>
-                        <td>Progressive Previous (Excluding This Claim)</td>
-                        <td class="text-right">{{ payment_certificate.progressive_previous|floatformat:2|intcomma }}</td>
-                    </tr>
-                    <tr class="total-row">
-                        <td>Total Payable This Claim</td>
-                        <td class="text-right">{{ payment_certificate.current_claim_total|floatformat:2|intcomma }}</td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-        <div class="landscape-section">
-            <div id="section-c-line-items" class=" new-page">
-                <h2 class="section-header">C. DETAILED LINE ITEMS - CURRENT CLAIM</h2>
-                {% include "pdf_templates/line_items_table.html" with line_items=grouped_line_items %}
-            </div>
-            <div id="section-c-addendum_items" class="new-page">
-                <h2 class="section-header">D. CONTRACT AMENDMENTS</h2>
-                {% include "pdf_templates/line_items_table.html" with line_items=addendum_items %}
-            </div>
-        </div>
-        <div class="portrait-section">
-            <div class="notes new-page">
+            <div class="notes">
                 <strong>Notes:</strong>
                 <ul>
                     <li>This certificate is subject to final measurement and approval.</li>
@@ -101,23 +27,11 @@
         </div>
     </body>
     <style id="page-style">
-        @page portrait {
+        @page {
             size: A4 portrait;
             margin: 10mm;
         }
 
-        @page landscape {
-            size: A4 landscape;
-            margin: 10mm;
-        }
-
-        .portrait-section {
-            page: portrait;
-        }
-
-        .landscape-section {
-            page: landscape;
-        }
     </style>
     <style id="general">
         body {
@@ -192,10 +106,6 @@
         .notes {
             margin-top: 30px;
             font-size: 9pt;
-        }
-
-        .new-page {
-            page-break-before: always;
         }
 
         ul {

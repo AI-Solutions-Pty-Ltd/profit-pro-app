@@ -2,7 +2,13 @@
 
 from django.urls import path
 
-from app.BillOfQuantities import views, views_payment_certificate
+from app.BillOfQuantities import (
+    views,
+    views_addendum,
+    views_api,
+    views_payment_certificate,
+    views_special_item,
+)
 
 app_name = "bill_of_quantities"
 
@@ -78,4 +84,69 @@ payment_certificate_urls = [
     ),
 ]
 
-urlpatterns = structure_urls + payment_certificate_urls
+addendum_urls = [
+    path(
+        "project/<int:project_pk>/addendum/",
+        views_addendum.AddendumListView.as_view(),
+        name="addendum-list",
+    ),
+    path(
+        "project/<int:project_pk>/addendum/create/",
+        views_addendum.AddendumCreateView.as_view(),
+        name="addendum-create",
+    ),
+    path(
+        "project/<int:project_pk>/addendum/<int:pk>/update/",
+        views_addendum.AddendumUpdateView.as_view(),
+        name="addendum-update",
+    ),
+    path(
+        "project/<int:project_pk>/addendum/<int:pk>/delete/",
+        views_addendum.AddendumDeleteView.as_view(),
+        name="addendum-delete",
+    ),
+]
+
+special_item_urls = [
+    path(
+        "project/<int:project_pk>/special-items/",
+        views_special_item.SpecialItemListView.as_view(),
+        name="special-item-list",
+    ),
+    path(
+        "project/<int:project_pk>/special-items/create/",
+        views_special_item.SpecialItemCreateView.as_view(),
+        name="special-item-create",
+    ),
+    path(
+        "project/<int:project_pk>/special-items/<int:pk>/update/",
+        views_special_item.SpecialItemUpdateView.as_view(),
+        name="special-item-update",
+    ),
+    path(
+        "project/<int:project_pk>/special-items/<int:pk>/delete/",
+        views_special_item.SpecialItemDeleteView.as_view(),
+        name="special-item-delete",
+    ),
+]
+
+api_urls = [
+    path(
+        "project/<int:project_pk>/api/bills/",
+        views_api.GetBillsByStructureView.as_view(),
+        name="api-get-bills",
+    ),
+    path(
+        "project/<int:project_pk>/api/packages/",
+        views_api.GetPackagesByBillView.as_view(),
+        name="api-get-packages",
+    ),
+]
+
+urlpatterns = (
+    structure_urls
+    + payment_certificate_urls
+    + addendum_urls
+    + special_item_urls
+    + api_urls
+)

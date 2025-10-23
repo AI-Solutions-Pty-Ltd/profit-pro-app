@@ -102,6 +102,12 @@ class Project(BaseModel):
         except Exception:
             return None
 
+    @property
+    def get_line_items(self):
+        return self.line_items.select_related(
+            "structure", "bill", "package"
+        ).prefetch_related("actual_transactions")
+
 
 class Signatories(BaseModel):
     project = models.ForeignKey(

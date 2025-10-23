@@ -76,47 +76,11 @@
                 </table>
             </div>
         </div>
-        <div class="landscape-section">
-            <div id="section-c-line-items" class=" new-page">
-                <h2 class="section-header">C. DETAILED LINE ITEMS - CURRENT CLAIM</h2>
-                {% include "pdf_templates/line_items_table.html" with line_items=grouped_line_items %}
-            </div>
-            <div id="section-c-addendum_items" class="new-page">
-                <h2 class="section-header">D. CONTRACT AMENDMENTS</h2>
-                {% include "pdf_templates/line_items_table.html" with line_items=addendum_items %}
-            </div>
-        </div>
-        <div class="portrait-section">
-            <div class="notes new-page">
-                <strong>Notes:</strong>
-                <ul>
-                    <li>This certificate is subject to final measurement and approval.</li>
-                    <li>Payment terms as per contract agreement.</li>
-                    <li>All amounts are exclusive of VAT unless otherwise stated.</li>
-                </ul>
-            </div>
-            <div class="signatures portrait-section">
-                {% include "pdf_templates/signatures.html" with signatories=payment_certificate.project.signatories.all %}
-            </div>
-        </div>
     </body>
     <style id="page-style">
-        @page portrait {
+        @page {
             size: A4 portrait;
             margin: 10mm;
-        }
-
-        @page landscape {
-            size: A4 landscape;
-            margin: 10mm;
-        }
-
-        .portrait-section {
-            page: portrait;
-        }
-
-        .landscape-section {
-            page: landscape;
         }
     </style>
     <style id="general">
@@ -192,10 +156,6 @@
         .notes {
             margin-top: 30px;
             font-size: 9pt;
-        }
-
-        .new-page {
-            page-break-before: always;
         }
 
         ul {
