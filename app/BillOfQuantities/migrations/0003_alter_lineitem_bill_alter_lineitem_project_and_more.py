@@ -5,26 +5,43 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('BillOfQuantities', '0002_lineitem_special_item'),
-        ('Project', '0002_signatories_email'),
+        ("BillOfQuantities", "0002_lineitem_special_item"),
+        ("Project", "0002_signatories_email"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='lineitem',
-            name='bill',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='line_items', to='BillOfQuantities.bill'),
+            model_name="lineitem",
+            name="bill",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="line_items",
+                to="BillOfQuantities.bill",
+            ),
         ),
         migrations.AlterField(
-            model_name='lineitem',
-            name='project',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='line_items', to='Project.project'),
+            model_name="lineitem",
+            name="project",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="line_items",
+                to="Project.project",
+            ),
         ),
         migrations.AlterField(
-            model_name='lineitem',
-            name='structure',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='line_items', to='BillOfQuantities.structure'),
+            model_name="lineitem",
+            name="structure",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="line_items",
+                to="BillOfQuantities.structure",
+            ),
         ),
     ]

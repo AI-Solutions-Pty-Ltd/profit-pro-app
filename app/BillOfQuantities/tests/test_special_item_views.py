@@ -15,7 +15,7 @@ class TestSpecialItemListView:
 
     def test_special_item_list_view_requires_authentication(self, client):
         """Test that the special item list view requires authentication."""
-        project = ProjectFactory()
+        project = ProjectFactory.create()
         url = reverse(
             "bill_of_quantities:special-item-list", kwargs={"project_pk": project.pk}
         )
@@ -24,11 +24,11 @@ class TestSpecialItemListView:
 
     def test_special_item_list_view_displays_special_items(self, client):
         """Test that the special item list view displays special items."""
-        account = AccountFactory()
-        project = ProjectFactory(account=account)
+        account = AccountFactory.create()
+        project = ProjectFactory.create(account=account)
 
         # Create special items
-        special_item_1 = LineItemFactory(
+        special_item_1 = LineItemFactory.create(
             project=project,
             special_item=True,
             structure=None,
@@ -37,7 +37,7 @@ class TestSpecialItemListView:
             item_number="SP-001",
             description="Special Item 1",
         )
-        special_item_2 = LineItemFactory(
+        special_item_2 = LineItemFactory.create(
             project=project,
             special_item=True,
             structure=None,
@@ -48,7 +48,7 @@ class TestSpecialItemListView:
         )
 
         # Create normal item (should not appear)
-        LineItemFactory(
+        LineItemFactory.create(
             project=project,
             special_item=False,
             item_number="NORM-001",
@@ -72,7 +72,7 @@ class TestSpecialItemCreateView:
 
     def test_special_item_create_view_requires_authentication(self, client):
         """Test that the special item create view requires authentication."""
-        project = ProjectFactory()
+        project = ProjectFactory.create()
         url = reverse(
             "bill_of_quantities:special-item-create", kwargs={"project_pk": project.pk}
         )
@@ -81,12 +81,12 @@ class TestSpecialItemCreateView:
 
     def test_special_item_create_view_creates_special_item(self, client):
         """Test that the special item create view creates a special item."""
-        account = AccountFactory()
-        project = ProjectFactory(account=account)
+        account = AccountFactory.create()
+        project = ProjectFactory.create(account=account)
 
         # Create some existing line items to test row_index calculation
-        LineItemFactory(project=project, row_index=0)
-        LineItemFactory(project=project, row_index=1)
+        LineItemFactory.create(project=project, row_index=0)
+        LineItemFactory.create(project=project, row_index=1)
 
         client.force_login(account)
         url = reverse(
@@ -118,15 +118,17 @@ class TestSpecialItemCreateView:
         assert special_item.row_index == 2  # Should be after existing items
         assert special_item.total_price == 1000.00  # 100 * 10
 
-    @pytest.mark.skip(reason="Transaction issue with permission checking in test environment")
+    @pytest.mark.skip(
+        reason="Transaction issue with permission checking in test environment"
+    )
     def test_special_item_create_sets_row_index_correctly(self, client):
         """Test that row_index starts where normal line items end."""
-        account = AccountFactory()
-        project = ProjectFactory(account=account)
+        account = AccountFactory.create()
+        project = ProjectFactory.create(account=account)
 
         # Create existing line items using the factory
-        LineItemFactory(project=project, row_index=0)
-        LineItemFactory(project=project, row_index=1)
+        LineItemFactory.create(project=project, row_index=0)
+        LineItemFactory.create(project=project, row_index=1)
 
         client.force_login(account)
         url = reverse(
@@ -152,8 +154,8 @@ class TestSpecialItemUpdateView:
 
     def test_special_item_update_view_requires_authentication(self, client):
         """Test that the special item update view requires authentication."""
-        project = ProjectFactory()
-        special_item = LineItemFactory(
+        project = ProjectFactory.create()
+        special_item = LineItemFactory.create(
             project=project, special_item=True, structure=None, bill=None
         )
         url = reverse(
@@ -165,9 +167,9 @@ class TestSpecialItemUpdateView:
 
     def test_special_item_update_view_updates_special_item(self, client):
         """Test that the special item update view updates a special item."""
-        account = AccountFactory()
-        project = ProjectFactory(account=account)
-        special_item = LineItemFactory(
+        account = AccountFactory.create()
+        project = ProjectFactory.create(account=account)
+        special_item = LineItemFactory.create(
             project=project,
             special_item=True,
             structure=None,
@@ -218,8 +220,8 @@ class TestSpecialItemDeleteView:
 
     def test_special_item_delete_view_requires_authentication(self, client):
         """Test that the special item delete view requires authentication."""
-        project = ProjectFactory()
-        special_item = LineItemFactory(
+        project = ProjectFactory.create()
+        special_item = LineItemFactory.create(
             project=project, special_item=True, structure=None, bill=None
         )
         url = reverse(
@@ -231,9 +233,9 @@ class TestSpecialItemDeleteView:
 
     def test_special_item_delete_view_soft_deletes_special_item(self, client):
         """Test that the special item delete view soft deletes a special item."""
-        account = AccountFactory()
-        project = ProjectFactory(account=account)
-        special_item = LineItemFactory(
+        account = AccountFactory.create()
+        project = ProjectFactory.create(account=account)
+        special_item = LineItemFactory.create(
             project=project,
             special_item=True,
             structure=None,

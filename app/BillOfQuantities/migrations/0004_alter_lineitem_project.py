@@ -5,17 +5,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('BillOfQuantities', '0003_alter_lineitem_bill_alter_lineitem_project_and_more'),
-        ('Project', '0002_signatories_email'),
+        (
+            "BillOfQuantities",
+            "0003_alter_lineitem_bill_alter_lineitem_project_and_more",
+        ),
+        ("Project", "0002_signatories_email"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='lineitem',
-            name='project',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='line_items', to='Project.project'),
+            model_name="lineitem",
+            name="project",
+            field=models.ForeignKey(
+                default=1,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="line_items",
+                to="Project.project",
+            ),
             preserve_default=False,
         ),
     ]

@@ -79,9 +79,7 @@ class AddendumCreateView(AddendumMixin, CreateView):
         form.fields["structure"].required = True
 
         # Filter bill to current project's structures
-        form.fields["bill"].queryset = Bill.objects.filter(
-            structure__project=project
-        )
+        form.fields["bill"].queryset = Bill.objects.filter(structure__project=project)
         form.fields["bill"].required = True
 
         # Filter package to current project's bills
@@ -167,9 +165,7 @@ class AddendumUpdateView(AddendumMixin, UpdateView):
         form.fields["structure"].required = True
 
         # Filter bill to current project's structures
-        form.fields["bill"].queryset = Bill.objects.filter(
-            structure__project=project
-        )
+        form.fields["bill"].queryset = Bill.objects.filter(structure__project=project)
         form.fields["bill"].required = True
 
         # Filter package to current project's bills

@@ -1,13 +1,12 @@
 import threading
 from collections import defaultdict
+from datetime import datetime
 from io import BytesIO
 from typing import Literal
-from datetime import datetime
-
-from pypdf import PdfReader, PdfWriter
 
 from django.core.files.base import ContentFile
 from django.template.loader import get_template, render_to_string
+from pypdf import PdfReader, PdfWriter
 
 from app.BillOfQuantities.models import LineItem, PaymentCertificate
 from app.core.Utilities.django_email_service import django_email_service
