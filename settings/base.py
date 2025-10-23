@@ -43,6 +43,7 @@ THIRD_PARTY_APPS = [
 
 SHARED_APPS = [
     "app.Account",
+    "app.Cost",
     "app.Consultant",
     "app.Project",
     "app.BillOfQuantities",

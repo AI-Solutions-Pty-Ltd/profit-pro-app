@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load heroicons %}
+
+{% block title %}Cost Management - {{ project.name }}{% endblock title %}
+
+{% block content %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-6">
+            <nav class="flex mb-4" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="{% url 'project:project-list' %}" class="text-gray-700 hover:text-indigo-600">
+                            Projects
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="mx-2 text-gray-400">/</span>
+                            <a href="{% url 'project:project-detail' project.pk %}" class="text-gray-700 hover:text-indigo-600">
+                                {{ project.name }}
+                            </a>
+                        </div>
+                    </li>
+                    <li aria-current="page">
+                        <div class="flex items-center">
+                            <span class="mx-2 text-gray-400">/</span>
+                            <span class="text-gray-500">Costs</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+            
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Cost Management</h1>
+                    <p class="mt-1 text-sm text-gray-600">View and manage costs by structure and bill</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-600">Total Project Costs</p>
+                    <p class="text-2xl font-bold text-gray-900">R{{ grand_total|floatformat:2|intcomma }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cost Tree -->
+        <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+            {% if tree %}
+                {% for structure, structure_data in tree.items %}
+                    <div class="border-b border-gray-200 last:border-b-0">
+                        <!-- Structure Header -->
+                        <div class="bg-gray-50 px-6 py-4">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-lg font-semibold text-gray-900">{{ structure.name }}</h2>
+                                <span class="text-lg font-bold text-gray-900">R{{ structure_data.total|floatformat:2|intcomma }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Bills List -->
+                        <div class="divide-y divide-gray-200">
+                            {% for bill_data in structure_data.bills %}
+                                <a href="{% url 'cost:bill-cost-detail' project.pk bill_data.bill.pk %}"
+                                   class="block px-6 py-4 hover:bg-gray-50 transition-colors">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-3">
+                                                {% heroicon_outline "document-text" class="w-5 h-5 text-gray-400" %}
+                                                <div>
+                                                    <p class="text-sm font-medium text-gray-900">{{ bill_data.bill.name }}</p>
+                                                    <p class="text-xs text-gray-500">{{ bill_data.cost_count }} cost{{ bill_data.cost_count|pluralize }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-4">
+                                            <span class="text-sm font-semibold text-gray-900">R{{ bill_data.total|floatformat:2|intcomma }}</span>
+                                            {% heroicon_outline "chevron-right" class="w-5 h-5 text-gray-400" %}
+                                        </div>
+                                    </div>
+                                </a>
+                            {% empty %}
+                                <div class="px-6 py-4 text-sm text-gray-500">
+                                    No bills in this structure
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="px-6 py-12 text-center">
+                    <{% heroicon_outline "inbox" class="mx-auto h-12 w-12 text-gray-400" %}
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No structures found</h3>
+                    <p class="mt-1 text-sm text-gray-500">Get started by creating structures and bills in your project.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock content %}

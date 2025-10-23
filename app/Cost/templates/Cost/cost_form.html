@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load heroicons %}
+
+{% block title %}{% if is_edit %}Edit Cost{% else %}Add Cost{% endif %} - {{ bill.name }}{% endblock title %}
+
+{% block content %}
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-6">
+            <nav class="flex mb-4" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="{% url 'project:project-list' %}" class="text-gray-700 hover:text-indigo-600">
+                            Projects
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="mx-2 text-gray-400">/</span>
+                            <a href="{% url 'project:project-detail' project.pk %}" class="text-gray-700 hover:text-indigo-600">
+                                {{ project.name }}
+                            </a>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="mx-2 text-gray-400">/</span>
+                            <a href="{% url 'cost:project-cost-tree' project.pk %}" class="text-gray-700 hover:text-indigo-600">
+                                Costs
+                            </a>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="mx-2 text-gray-400">/</span>
+                            <a href="{% url 'cost:bill-cost-detail' project.pk bill.pk %}" class="text-gray-700 hover:text-indigo-600">
+                                {{ bill.name }}
+                            </a>
+                        </div>
+                    </li>
+                    <li aria-current="page">
+                        <div class="flex items-center">
+                            <span class="mx-2 text-gray-400">/</span>
+                            <span class="text-gray-500">{% if is_edit %}Edit Cost{% else %}Add Cost{% endif %}</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+            
+            <h1 class="text-3xl font-bold text-gray-900">{% if is_edit %}Edit Cost{% else %}Add Cost{% endif %}</h1>
+            <p class="mt-1 text-sm text-gray-600">{{ structure.name }} • {{ bill.name }}</p>
+        </div>
+
+        <!-- Form -->
+        <div class="bg-white shadow-sm rounded-lg">
+            <form method="post" class="p-6 space-y-6">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                    <div class="rounded-md bg-red-50 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                {% heroicon_outline "x-circle" class="h-5 w-5 text-red-400" %}
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">
+                                    There were errors with your submission
+                                </h3>
+                                <div class="mt-2 text-sm text-red-700">
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        {% for error in form.non_field_errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div>
+                    <label for="{{ form.date.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        {{ form.date.label }}
+                        {% if form.date.field.required %}<span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ form.date }}
+                    {% if form.date.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        {{ form.description.label }}
+                        {% if form.description.field.required %}<span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.amount.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        {{ form.amount.label }}
+                        {% if form.amount.field.required %}<span class="text-red-500">*</span>{% endif %}
+                    </label>
+                    {{ form.amount }}
+                    {% if form.amount.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.amount.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-gray-500">Enter the amount excluding VAT</p>
+                </div>
+
+                <div class="flex items-start">
+                    <div class="flex items-center h-5">
+                        {{ form.vat }}
+                    </div>
+                    <div class="ml-3 text-sm">
+                        <label for="{{ form.vat.id_for_label }}" class="font-medium text-gray-700">
+                            {{ form.vat.label }}
+                        </label>
+                        <p class="text-gray-500">Check this box to add 15% VAT to the amount</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+                    <a href="{% url 'cost:bill-cost-detail' project.pk bill.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "check" class="w-5 h-5" %}
+                        {% if is_edit %}Update Cost{% else %}Add Cost{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock content %}
