@@ -409,7 +409,6 @@ class PaymentCertificate(BaseModel):
     @property
     def special_line_items(self):
         special_items = self.actual_line_items.filter(line_item__special_item=True)
-        print(special_items)
         return special_items
 
     @property
@@ -480,11 +479,15 @@ class PaymentCertificate(BaseModel):
         # annotate all project special items with total_price up to current certificate
         special_items = self.project.get_special_line_items
         return special_items.annotate(
-            total=models.Sum(
-                "actual_transactions__total_price",
-                filter=models.Q(
-                    actual_transactions__payment_certificate__certificate_number__lte=self.certificate_number
+            total=Coalesce(
+                models.Sum(
+                    "actual_transactions__total_price",
+                    filter=models.Q(
+                        actual_transactions__payment_certificate__certificate_number__lte=self.certificate_number
+                    ),
                 ),
+                Value(Decimal("0.00")),
+                output_field=DecimalField(),
             )
         )
 
