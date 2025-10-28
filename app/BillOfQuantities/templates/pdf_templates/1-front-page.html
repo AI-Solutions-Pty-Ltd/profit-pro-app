@@ -132,7 +132,7 @@
                                     LESS: {{ special_item.description }}
                                 {% endif %}
                             </td>
-                            <td class="text-right">{{ special_item.total|floatformat:2|intcomma }}</td>
+                            <td class="text-right">{{ special_item.total|default:0|floatformat:2|intcomma }}</td>
                         </tr>
                     {% endfor %}
                     <tr>

@@ -38,8 +38,8 @@
                     {% for line_item in package_group.line_items %}
                         {% if not line_item.is_work %}
                             <tr class="item-row">
-                                <td id="col-1" class="text-center small-column text-bold">{{ line_item.item_number|default:"" }}</td>
-                                <td id="col-2" class="text-left large-column text-bold">{{ line_item.description|default:"" }}</td>
+                                <td id="col-1" class="text-center small-column text-bold">{{ line_item.item_number|default:"-" }}</td>
+                                <td id="col-2" class="text-left large-column text-bold">{{ line_item.description|default:"-" }}</td>
                                 {% comment %} placeholders {% endcomment %}
                                 <th id="col-3" class="text-grey">-</th>
                                 <th id="col-4" class="text-grey">-</th>
@@ -53,19 +53,27 @@
                             </tr>
                         {% else %}
                             <tr class="item-row text-normal-weight">
-                                <td id="col-1" class="text-center small-column">{{ line_item.item_number|default:"" }}</td>
-                                <td id="col-2" class="text-left large-column">{{ line_item.description|default:"" }}</td>
+                                <td id="col-1" class="text-center small-column">{{ line_item.item_number|default:"-" }}</td>
+                                <td id="col-2" class="text-left large-column">{{ line_item.description|default:"-" }}</td>
                                 <th id="col-3" class="text-right text-normal-weight">
-                                    R{{ line_item.unit_price|floatformat:2|intcomma }}/{{ line_item.unit_measurement|default:"" }}
+                                    R{{ line_item.unit_price|default:0|floatformat:2|intcomma }}/{{ line_item.unit_measurement|default:"-" }}
                                 </th>
-                                <th id="col-4" class="text-right text-normal-weight">{{ line_item.budgeted_quantity|floatformat:2|intcomma }}</th>
-                                <th id="col-5" class="text-right text-normal-weight">R{{ line_item.total_price|floatformat:2|intcomma }}</th>
-                                <td id="col-6" class="text-right text-normal-weight">{{ line_item.previous_qty|floatformat:2|intcomma }}</td>
-                                <td id="col-7" class="text-right text-normal-weight">{{ line_item.current_qty|floatformat:2|intcomma }}</td>
-                                <td id="col-8" class="text-right text-normal-weight">{{ line_item.total_qty|floatformat:2|intcomma }}</td>
-                                <th id="col-9" class="text-right text-normal-weight">R{{ line_item.previous_claimed|floatformat:2|intcomma }}</th>
-                                <th id="col-10" class="text-right text-normal-weight">R{{ line_item.current_claim|floatformat:2|intcomma }}</th>
-                                <th id="col-11" class="text-right text-normal-weight">R{{ line_item.total_claimed|floatformat:2|intcomma }}</th>
+                                <th id="col-4" class="text-right text-normal-weight">
+                                    {{ line_item.budgeted_quantity|default:0|floatformat:2|intcomma }}
+                                </th>
+                                <th id="col-5" class="text-right text-normal-weight">R{{ line_item.total_price|default:0|floatformat:2|intcomma }}</th>
+                                <td id="col-6" class="text-right text-normal-weight">{{ line_item.previous_qty|default:0|floatformat:2|intcomma }}</td>
+                                <td id="col-7" class="text-right text-normal-weight">{{ line_item.current_qty|default:0|floatformat:2|intcomma }}</td>
+                                <td id="col-8" class="text-right text-normal-weight">{{ line_item.total_qty|default:0|floatformat:2|intcomma }}</td>
+                                <th id="col-9" class="text-right text-normal-weight">
+                                    R{{ line_item.previous_claimed|default:0|floatformat:2|intcomma }}
+                                </th>
+                                <th id="col-10" class="text-right text-normal-weight">
+                                    R{{ line_item.current_claim|default:0|floatformat:2|intcomma }}
+                                </th>
+                                <th id="col-11" class="text-right text-normal-weight">
+                                    R{{ line_item.total_claimed|default:0|floatformat:2|intcomma }}
+                                </th>
                             </tr>
                         {% endif %}
                     {% endfor %}
