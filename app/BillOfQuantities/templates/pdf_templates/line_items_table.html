@@ -30,11 +30,6 @@
                     <th colspan="{{ colSpan }}" class="subsection-header">{{ bill_group.bill.name }}</th>
                 </tr>
                 {% for package_group in bill_group.packages %}
-                    {% if package_group.package.name %}
-                        <tr class="subsection-header">
-                            <th colspan="{{ colSpan }}">{{ package_group.package.name }}</th>
-                        </tr>
-                    {% endif %}
                     {% for line_item in package_group.line_items %}
                         {% if not line_item.is_work %}
                             <tr class="item-row">

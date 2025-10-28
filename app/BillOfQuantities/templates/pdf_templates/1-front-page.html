@@ -112,7 +112,7 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Value of work done up to the assessment interval no. 11</td>
+                        <td>Value of work done up to the assessment interval #{{ payment_certificate.certificate_number }}</td>
                         <td class="text-right">{{ payment_certificate.line_items_progressive_previous|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
@@ -124,16 +124,18 @@
                         <td class="text-right">{{ payment_certificate.line_items_progressive_to_date|floatformat:2|intcomma }}</td>
                     </tr>
                     {% for special_item in payment_certificate.special_items_annotated %}
-                        <tr>
-                            <td>
-                                {% if special_item.total > 0 %}
-                                    ADD: {{ special_item.description }}
-                                {% else %}
-                                    LESS: {{ special_item.description }}
-                                {% endif %}
-                            </td>
-                            <td class="text-right">{{ special_item.total|default:0|floatformat:2|intcomma }}</td>
-                        </tr>
+                        {% if special_item.total %}
+                            <tr>
+                                <td>
+                                    {% if special_item.total > 0 %}
+                                        ADD: {{ special_item.description }}
+                                    {% else %}
+                                        LESS: {{ special_item.description }}
+                                    {% endif %}
+                                </td>
+                                <td class="text-right">{{ special_item.total|default:0|floatformat:2|intcomma }}</td>
+                            </tr>
+                        {% endif %}
                     {% endfor %}
                     <tr>
                         <td>Sub Total</td>

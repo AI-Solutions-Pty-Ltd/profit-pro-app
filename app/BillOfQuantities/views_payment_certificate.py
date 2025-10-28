@@ -59,6 +59,46 @@ class PaymentCertificateMixin(UserHasGroupGenericMixin):
         return self.queryset
 
 
+class LineItemDetailMixin:
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        all_line_items = LineItem.abridged_payment_certificate(self.object)
+        line_items = all_line_items.filter(special_item=False, addendum=False)
+        special_line_items = all_line_items.filter(special_item=True, addendum=False)
+        addendum_line_items = all_line_items.filter(addendum=True, special_item=False)
+        context["grouped_line_items"] = group_line_items_by_hierarchy(line_items)
+        context["special_line_items"] = special_line_items
+        context["addendum_line_items"] = group_line_items_by_hierarchy(
+            addendum_line_items
+        )
+
+        line_items_total = (
+            self.object.actual_transactions.filter(
+                line_item__special_item=False, line_item__addendum=False
+            ).aggregate(total=Sum("total_price"))["total"]
+            or 0
+        )
+        special_line_items_total = (
+            self.object.actual_transactions.filter(
+                line_item__special_item=True, line_item__addendum=False
+            ).aggregate(total=Sum("total_price"))["total"]
+            or 0
+        )
+        addendum_line_items_total = (
+            self.object.actual_transactions.filter(
+                line_item__addendum=True, line_item__special_item=False
+            ).aggregate(total=Sum("total_price"))["total"]
+            or 0
+        )
+
+        context["line_items_total"] = Decimal(line_items_total)
+        context["special_line_items_total"] = Decimal(special_line_items_total)
+        context["addendum_line_items_total"] = Decimal(addendum_line_items_total)
+
+        return context
+
+
 class PaymentCertificateListView(PaymentCertificateMixin, ListView):
     model = PaymentCertificate
     template_name = "payment_certificate/payment_certificate_list.html"
@@ -104,27 +144,12 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
         return context
 
 
-class PaymentCertificateDetailView(PaymentCertificateMixin, DetailView):
+class PaymentCertificateDetailView(
+    PaymentCertificateMixin, LineItemDetailMixin, DetailView
+):
     model = PaymentCertificate
     template_name = "payment_certificate/payment_certificate_detail.html"
     context_object_name = "payment_certificate"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
-        all_line_items = LineItem.abridged_payment_certificate(self.object)
-        line_items = all_line_items.filter(special_item=False, addendum=False)
-        special_line_items = all_line_items.filter(special_item=True, addendum=False)
-        addendum_line_items = all_line_items.filter(addendum=True, special_item=False)
-        context["grouped_line_items"] = group_line_items_by_hierarchy(line_items)
-        context["special_line_items"] = special_line_items
-        context["addendum_line_items"] = addendum_line_items
-
-        # Calculate total for all transactions
-        total_amount = sum(t.total_price for t in self.object.actual_transactions.all())
-        context["total_amount"] = total_amount
-
-        return context
 
 
 class PaymentCertificateEditView(PaymentCertificateMixin, View):
@@ -336,21 +361,13 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
         )
 
 
-class PaymentCertificateSubmitView(PaymentCertificateMixin, UpdateView):
+class PaymentCertificateSubmitView(
+    PaymentCertificateMixin, LineItemDetailMixin, UpdateView
+):
     model = PaymentCertificate
     fields = ["status"]
-    template_name = "payment_certificate/payment_certificate_approve.html"
+    template_name = "payment_certificate/payment_certificate_submit.html"
     context_object_name = "payment_certificate"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
-
-        # Calculate total for all transactions
-        total_amount = sum(t.total_price for t in self.object.actual_transactions.all())
-        context["total_amount"] = total_amount
-
-        return context
 
     def form_valid(self, form):
         payment_certificate = form.save(commit=False)

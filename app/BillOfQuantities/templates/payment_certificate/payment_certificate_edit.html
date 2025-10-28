@@ -236,15 +236,6 @@
                                             </tr>
                                         {% endif %}
                                     {% endif %}
-                                    {% if line_item.package.name %}
-                                        {% if not package_name or package_name != line_item.package.name %}
-                                            {% define line_item.package.name as package_name %}
-                                            <tr>
-                                                <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
-                                                    colspan="{{ colSpan }}">{{ package_name }}</td>
-                                            </tr>
-                                        {% endif %}
-                                    {% endif %}
                                     <tr class="hover:bg-gray-50 {% if not line_item.is_work %}bg-gray-100 font-semibold{% endif %}">
                                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.item_number|default:"" }}</td>
                                         <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.payment_reference|default:"" }}</td>

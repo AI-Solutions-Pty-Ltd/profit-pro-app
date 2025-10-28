@@ -196,206 +196,28 @@
                 </div>
             </div>
         </div>
-        <!-- actual transactions -->
-        <div class="bg-white shadow-sm rounded-lg mb-6">
-            <div class="px-6 py-4">
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h2 class="text-lg font-bold text-gray-900">Actual Transactions</h2>
-                    </div>
-                    <!-- show actual transactions -->
-                </div>
-                <!-- Transactions Table -->
-                <div class="overflow-x-auto">
-                    {% if payment_certificate.line_items.exists %}
-                        <table class="min-w-full divide-y divide-gray-200">
-                            {% define "9" as colSpan %}
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item No.</th>
-                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price/Unit</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Previous Quantity</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Quantity</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Quantity</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Previous Claim</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Claim</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Claimed</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                {% for structure_group in grouped_line_items %}
-                                    <tr>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900center header"
-                                            colspan="{{ colSpan }}">{{ structure_group.structure.name }}</td>
-                                    </tr>
-                                    {% for bill_group in structure_group.bills %}
-                                        <tr>
-                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 header"
-                                                colspan="{{ colSpan }}">{{ bill_group.bill.name }}</td>
-                                        </tr>
-                                        {% for package_group in bill_group.packages %}
-                                            {% if package_group.package.name %}
-                                                <tr>
-                                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 header"
-                                                        colspan="{{ colSpan }}">{{ package_group.package.name }}</td>
-                                                </tr>
-                                            {% endif %}
-                                            {% for line_item in package_group.line_items %}
-                                                <tr class="hover:bg-gray-50">
-                                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.item_number|default:"-" }}</td>
-                                                    <td class="px-3 py-2 text-sm text-gray-900">{{ line_item.description|truncatewords:10 }}</td>
-                                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                                                        R {{ line_item.unit_price|floatformat:2|intcomma }} / {{ line_item.unit_measurement }}
-                                                    </td>
-                                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                        {{ line_item.previous_qty|floatformat:2|intcomma }}
-                                                    </td>
-                                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
-                                                        {{ line_item.current_qty|floatformat:2|intcomma }}
-                                                    </td>
-                                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">
-                                                        R {{ line_item.total_qty|floatformat:2|intcomma }}
-                                                    </td>
-                                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                        {{ line_item.previous_claimed|floatformat:2|intcomma }}
-                                                    </td>
-                                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
-                                                        {{ line_item.current_claim|floatformat:2|intcomma }}
-                                                    </td>
-                                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                        R {{ line_item.total_claimed|floatformat:2|intcomma }}
-                                                    </td>
-                                                </tr>
-                                            {% endfor %}
-                                        {% endfor %}
-                                    {% endfor %}
-                                {% endfor %}
-                            </tbody>
-                            <tfoot class="bg-gray-50">
-                                <tr>
-                                    <td colspan="{{ colSpan }}"
-                                        class="px-3 py-3 whitespace-nowrap text-sm font-bold text-indigo-600 text-right">
-                                        Total: R {{ total_amount|floatformat:2|intcomma }}
-                                    </td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    {% else %}
-                        <div class="flex flex-col items-center justify-center py-12">
-                            {% heroicon_outline "clipboard-document-list" class="w-12 h-12 text-gray-400" %}
-                            <h3 class="mt-2 text-sm font-medium text-gray-900">No Transactions</h3>
-                            <p class="mt-1 text-sm text-gray-500">This payment certificate has no actual transactions yet.</p>
-                            <div class="mt-6">
-                                <a href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk payment_certificate.pk %}"
-                                   class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    {% heroicon_outline "plus" class="w-5 h-5" %}
-                                    Add Transactions
-                                </a>
-                            </div>
-                        </div>
-                    {% endif %}
-                </div>
+        <!-- Transactions Preview -->
+        <div class="bg-white shadow-sm rounded-lg mb-6 px-6 py-4 ">
+            <div class="border-b border-gray-200 mb-4">
+                <h2 class="text-lg font-bold text-gray-900">Transactions</h2>
+                <p class="text-sm text-gray-600 mb-2">Review the transactions before approving</p>
+            </div>
+            <div id="contract-line-items" class="mb-6 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900 mb-2">Contract Line Items</h2>
+                {% include "payment_certificate/tables/line_items.html" with grouped_line_items=grouped_line_items line_items_total=line_items_total %}
+            </div>
+            <div id="addendum-line-items" class="mb-6 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-900 mb-2">Addendum Line Items</h2>
+                {% include "payment_certificate/tables/line_items.html" with grouped_line_items=addendum_line_items line_items_total=addendum_line_items_total %}
+            </div>
+            <div id="special-items"
+                 class="flex flex-col items-center justify-center gap-2 mb-6 border-b border-gray-200 mb-2">
+                <h2 class="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+                    {% heroicon_outline "star" size="20" class="text-orange-600" %} Special Items
+                </h2>
+                {% include "payment_certificate/tables/special_items.html" with special_line_items=special_line_items special_line_items_total=special_line_items_total %}
             </div>
         </div>
-        <!-- Addendum Items Section -->
-        {% if addendum_line_items %}
-            <div class="bg-white shadow-sm rounded-lg mb-6">
-                <div class="px-6 py-4">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                            {% heroicon_outline "document-plus" size="20" class="text-purple-600" %}
-                            Addendum Items
-                        </h2>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            {% define "9" as colSpan %}
-                            <thead class="bg-purple-50">
-                                <tr>
-                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item No.</th>
-                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price/Unit</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Previous Quantity</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Quantity</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Quantity</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Previous Claim</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Claim</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Claimed</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                {% for line_item in addendum_line_items %}
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{{ line_item.item_number|default:"-" }}</td>
-                                        <td class="px-3 py-2 text-sm text-gray-900">{{ line_item.description|truncatewords:10 }}</td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                                            R {{ line_item.unit_price|floatformat:2|intcomma }} / {{ line_item.unit_measurement }}
-                                        </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                            {{ line_item.previous_qty|floatformat:2|intcomma }}
-                                        </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-purple-600 text-right">
-                                            {{ line_item.current_qty|floatformat:2|intcomma }}
-                                        </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">
-                                            R {{ line_item.total_qty|floatformat:2|intcomma }}
-                                        </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                            {{ line_item.previous_claimed|floatformat:2|intcomma }}
-                                        </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-purple-600 text-right">
-                                            {{ line_item.current_claim|floatformat:2|intcomma }}
-                                        </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                            R {{ line_item.total_claimed|floatformat:2|intcomma }}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        {% endif %}
-        <!-- Special Items Section -->
-        {% if special_line_items %}
-            <div class="flex flex-col items-center justify-center mb-6">
-                <div class="bg-white shadow-sm rounded-lg px-6 py-4">
-                    <div class="flex items-center justify-center mb-4">
-                        {% heroicon_outline "star" size="20" class="text-orange-600" %}
-                        <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">Special Items</h2>
-                    </div>
-                    <table class="w-auto divide-y divide-gray-200">
-                        {% define "9" as colSpan %}
-                        <thead class="bg-orange-50">
-                            <tr>
-                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Previous Claim</th>
-                                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Claim</th>
-                                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Claimed</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            {% for line_item in special_line_items %}
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-3 py-2 text-sm text-gray-900">{{ line_item.description|truncatewords:10 }}</td>
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                        {{ line_item.previous_claimed|floatformat:2|intcomma }}
-                                    </td>
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-orange-600 text-right">
-                                        {{ line_item.current_claim|floatformat:2|intcomma }}
-                                    </td>
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                        R {{ line_item.total_claimed|floatformat:2|intcomma }}
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        {% endif %}
     </div>
 {% endblock content %}
 {% block extra_js %}

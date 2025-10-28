@@ -1,10 +1,14 @@
+from decimal import Decimal
 from django.contrib import messages
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.views.generic import DetailView, ListView, UpdateView
 
 from app.BillOfQuantities.forms import PaymentCertificateFinalApprovalForm
-from app.BillOfQuantities.models import PaymentCertificate
+from app.BillOfQuantities.models import LineItem, PaymentCertificate
+from app.BillOfQuantities.tasks import group_line_items_by_hierarchy
+from app.BillOfQuantities.views_payment_certificate import LineItemDetailMixin
 from app.core.Utilities.django_email_service import django_email_service
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.models import Client, Project
@@ -39,7 +43,9 @@ class ClientDetailView(ConsultantMixin, DetailView):
     context_object_name = "client"
 
 
-class PaymentCertificateFinalApprovalView(ConsultantMixin, UpdateView):
+class PaymentCertificateFinalApprovalView(
+    ConsultantMixin, LineItemDetailMixin, UpdateView
+):
     """Final approval/rejection view - choose between APPROVED or REJECTED."""
 
     model = PaymentCertificate
@@ -59,16 +65,6 @@ class PaymentCertificateFinalApprovalView(ConsultantMixin, UpdateView):
                 "actual_transactions__line_item__package",
             )
         )
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
-
-        # Calculate total for all transactions
-        total_amount = sum(t.total_price for t in self.object.actual_transactions.all())
-        context["total_amount"] = total_amount
-
-        return context
 
     def form_valid(self, form):
         payment_certificate = form.save(commit=False)
