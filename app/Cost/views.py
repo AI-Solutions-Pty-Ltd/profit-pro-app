@@ -303,7 +303,8 @@ class BillCostFormSetView(ProjectAccessMixin, View):
         )
 
     def post(self, request, *args, **kwargs):
-        formset = CostFormSet(request.POST, bill=self.bill)
+        bill = self.get_bill()
+        formset = CostFormSet(request.POST, bill=bill)
 
         if formset.is_valid():
             costs = []
@@ -318,7 +319,7 @@ class BillCostFormSetView(ProjectAccessMixin, View):
                         continue
 
                     cost = form.save(commit=False)
-                    cost.bill = self.get_bill()
+                    cost.bill = bill
                     cost.save()
                     costs.append(cost.description)
 
@@ -333,7 +334,7 @@ class BillCostFormSetView(ProjectAccessMixin, View):
             return redirect(
                 "cost:bill-cost-detail",
                 project_pk=self.project.pk,
-                bill_pk=self.bill.pk,
+                bill_pk=bill.pk,
             )
         else:
             # If formset is invalid, re-render with errors
@@ -343,7 +344,7 @@ class BillCostFormSetView(ProjectAccessMixin, View):
                 {
                     "formset": formset,
                     "project": self.project,
-                    "bill": self.bill,
-                    "structure": self.bill.structure,
+                    "bill": bill,
+                    "structure": bill.structure,
                 },
             )

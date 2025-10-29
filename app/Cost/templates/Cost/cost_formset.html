@@ -355,18 +355,41 @@
             // Add event listeners for real-time calculations
             if (!row || !row.cells) return;
             
+            var dateInput = row.cells[0] ? row.cells[0].querySelector('input') : null;
+            var categorySelect = row.cells[1] ? row.cells[1].querySelector('select') : null;
+            var descriptionInput = row.cells[2] ? row.cells[2].querySelector('input') : null;
             var quantityInput = row.cells[3] ? row.cells[3].querySelector('input') : null;
             var unitPriceInput = row.cells[4] ? row.cells[4].querySelector('input') : null;
             var grossInput = row.cells[5] ? row.cells[5].querySelector('input') : null;
             var vatCheckbox = row.cells[6] ? row.cells[6].querySelector('input') : null;
             
-            // Auto-calculate gross when quantity or unit price changes
-            if (quantityInput) quantityInput.addEventListener('input', function() { calculateRowGross(row); });
-            if (unitPriceInput) unitPriceInput.addEventListener('input', function() { calculateRowGross(row); });
-            
-            // Update totals when gross or VAT changes
-            if (grossInput) grossInput.addEventListener('input', function() { calculateRowVatAndNet(row); });
+            // Clear errors on input/change
+            if (dateInput) dateInput.addEventListener('input', function() { clearFieldError(this); });
+            if (categorySelect) categorySelect.addEventListener('change', function() { clearFieldError(this); });
+            if (descriptionInput) descriptionInput.addEventListener('input', function() { clearFieldError(this); });
+            if (quantityInput) quantityInput.addEventListener('input', function() { clearFieldError(this); calculateRowGross(row); });
+            if (unitPriceInput) unitPriceInput.addEventListener('input', function() { clearFieldError(this); calculateRowGross(row); });
+            if (grossInput) grossInput.addEventListener('input', function() { clearFieldError(this); calculateRowVatAndNet(row); });
             if (vatCheckbox) vatCheckbox.addEventListener('change', function() { calculateRowVatAndNet(row); });
+        }
+
+        function clearFieldError(field) {
+            if (!field) return;
+            
+            // Remove error styling
+            field.classList.remove('border-red-500', 'ring-2', 'ring-red-500');
+            
+            // Remove error message
+            var errorDiv = field.parentNode.querySelector('.field-error');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+            
+            // Remove row highlighting if no more errors in this row
+            var row = field.closest('tr');
+            if (row && !row.querySelector('.border-red-500')) {
+                row.classList.remove('bg-red-50');
+            }
         }
 
         function calculateRowGross(row) {
@@ -469,35 +492,128 @@
             var table = document.getElementById('order_table');
             if (!table || !table.tBodies || !table.tBodies[0]) return true;
             
+            // Clear previous errors
+            clearValidationErrors();
+            
             var tBodies = table.tBodies[0];
-            var row;
+            var hasErrors = false;
+            var errorRows = [];
             
             for (i = 0; i < tBodies.rows.length; i++) {
-                row = tBodies.rows[i];
+                var row = tBodies.rows[i];
+                
+                // Skip hidden/deleted rows
+                if (row.style.display === 'none') continue;
                 
                 var dateInput = row.cells[0] ? row.cells[0].querySelector('input') : null;
                 var categorySelect = row.cells[1] ? row.cells[1].querySelector('select') : null;
                 var descriptionInput = row.cells[2] ? row.cells[2].querySelector('input') : null;
                 var quantityInput = row.cells[3] ? row.cells[3].querySelector('input') : null;
+                var unitPriceInput = row.cells[4] ? row.cells[4].querySelector('input') : null;
                 var grossInput = row.cells[5] ? row.cells[5].querySelector('input') : null;
                 
                 if (!dateInput || !categorySelect || !descriptionInput || !quantityInput || !grossInput) {
                     continue; // Skip incomplete rows
                 }
                 
-                var date = dateInput.value;
-                var category = categorySelect.value;
-                var description = descriptionInput.value;
-                var quantity = quantityInput.value;
-                var gross = grossInput.value;
-
-                if (!date || !category || !description || !quantity || !gross || parseFloat(gross) <= 0) {
-                    alert('Please fill in all required fields with valid values for each cost row.');
-                    event.preventDefault();
-                    return false;
+                var rowErrors = [];
+                
+                // Validate date
+                if (!dateInput.value) {
+                    addFieldError(dateInput, 'Date is required');
+                    rowErrors.push('Date');
+                }
+                
+                // Validate category
+                if (!categorySelect.value) {
+                    addFieldError(categorySelect, 'Category is required');
+                    rowErrors.push('Category');
+                }
+                
+                // Validate description
+                if (!descriptionInput.value.trim()) {
+                    addFieldError(descriptionInput, 'Description is required');
+                    rowErrors.push('Description');
+                }
+                
+                // Validate quantity
+                if (!quantityInput.value || parseFloat(quantityInput.value) <= 0) {
+                    addFieldError(quantityInput, 'Quantity must be greater than 0');
+                    rowErrors.push('Quantity');
+                }
+                
+                // Validate unit price (optional but if provided must be > 0)
+                if (unitPriceInput.value && parseFloat(unitPriceInput.value) <= 0) {
+                    addFieldError(unitPriceInput, 'Unit price must be greater than 0');
+                    rowErrors.push('Unit Price');
+                }
+                
+                // Validate gross
+                if (!grossInput.value || parseFloat(grossInput.value) <= 0) {
+                    addFieldError(grossInput, 'Gross amount must be greater than 0');
+                    rowErrors.push('Gross');
+                }
+                
+                // If row has errors, track it
+                if (rowErrors.length > 0) {
+                    hasErrors = true;
+                    errorRows.push('Row ' + (i + 1) + ': ' + rowErrors.join(', '));
+                    
+                    // Highlight the entire row
+                    row.classList.add('bg-red-50');
+                    
+                    // Scroll to first error row
+                    if (errorRows.length === 1) {
+                        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                 }
             }
+            
+            if (hasErrors) {
+                // Show summary of errors
+                var errorMessage = 'Please fix the following errors:\n\n' + errorRows.join('\n');
+                alert(errorMessage);
+                event.preventDefault();
+                return false;
+            }
+            
             return true;
+        }
+
+        function addFieldError(field, message) {
+            if (!field) return;
+            
+            // Add error styling to field
+            field.classList.add('border-red-500', 'ring-2', 'ring-red-500');
+            
+            // Create or update error message
+            var errorDiv = field.parentNode.querySelector('.field-error');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'field-error text-red-600 text-xs mt-1 font-medium';
+                field.parentNode.appendChild(errorDiv);
+            }
+            errorDiv.textContent = message;
+        }
+
+        function clearValidationErrors() {
+            // Remove all error styling
+            var errorFields = document.querySelectorAll('.border-red-500, .ring-red-500');
+            errorFields.forEach(function(field) {
+                field.classList.remove('border-red-500', 'ring-2', 'ring-red-500');
+            });
+            
+            // Remove all error messages
+            var errorMessages = document.querySelectorAll('.field-error');
+            errorMessages.forEach(function(message) {
+                message.remove();
+            });
+            
+            // Remove row highlighting
+            var errorRows = document.querySelectorAll('.bg-red-50');
+            errorRows.forEach(function(row) {
+                row.classList.remove('bg-red-50');
+            });
         }
     </script>
 {% endblock content %}
