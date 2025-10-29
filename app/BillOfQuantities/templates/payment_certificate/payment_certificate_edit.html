@@ -195,8 +195,9 @@
                 </form>
             </div>
         </div>
-        <form method="post">
+        <form id="payment-certificate-form" method="post">
             {% csrf_token %}
+            <input type="text"  onkeydown="return (event.keyCode!=13);" />
             <!-- Line Items Section -->
             <div id="line-items"
                  class="bg-white shadow-md rounded-lg overflow-hidden mb-4">
@@ -255,7 +256,6 @@
                                                            type="number"
                                                            step="0.01"
                                                            min="0"
-                                                           max="{{ line_item.budgeted_quantity }}"
                                                            value="{{ line_item.claimed_to_date|addition:line_item.current_transaction.quantity }}"
                                                            class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
                                                            placeholder="0.00">
@@ -264,7 +264,6 @@
                                                            type="number"
                                                            step="0.01"
                                                            min="0"
-                                                           max="{{ line_item.budgeted_quantity }}"
                                                            class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
                                                            placeholder="0.00">
                                                 {% endif %}
@@ -352,7 +351,6 @@
                                                    type="number"
                                                    step="0.01"
                                                    min="0"
-                                                   max="{{ line_item.budgeted_quantity }}"
                                                    value="{{ line_item.claimed_to_date|addition:line_item.current_transaction.quantity }}"
                                                    class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
                                                    placeholder="0.00">
@@ -361,7 +359,6 @@
                                                    type="number"
                                                    step="0.01"
                                                    min="0"
-                                                   max="{{ line_item.budgeted_quantity }}"
                                                    class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
                                                    placeholder="0.00">
                                         {% endif %}
@@ -423,7 +420,8 @@
             <!-- Save button -->
             <div class="flex justify-end mt-6 p-4">
                 <button type="submit"
-                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors loading-btn"
+                        data-loading-text="Saving...">
                     {% heroicon_outline "check-circle" size="20" %}
                     Save
                 </button>
@@ -440,4 +438,50 @@
             </div>
         </div>
     </div>
+    <!-- Floating Scroll to Bottom Button -->
+    <button id="scroll-to-bottom-btn"
+            type="button"
+            class="fixed bottom-6 right-6 p-3 bg-gray-600 text-white rounded-full shadow-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200 z-50"
+            onclick="scrollToBottom()"
+            title="Scroll to bottom">{% heroicon_outline "chevron-down" size="24" class="w-6 h-6" %}</button>
+    <script language="javascript">
+        window.addEventListener('keydown',function(e) {
+        if (e.keyIdentifier=='U+000A' || e.keyIdentifier=='Enter' || e.keyCode==13) {
+            e.preventDefault();
+            const activeElement = document.activeElement;
+            
+            // Only prevent default if the active element is an input (not textarea or button)
+            if (activeElement && activeElement.tagName === 'INPUT' && activeElement.type !== 'submit') {
+                event.preventDefault();
+                const form = document.getElementById('payment-certificate-form');
+                
+                // Get all focusable elements in the form
+                const focusableElements = form.querySelectorAll(
+                    'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])'
+                );
+                
+                // Convert NodeList to Array
+                const focusableArray = Array.from(focusableElements);
+                
+                // Find the index of the current element
+                const currentIndex = focusableArray.indexOf(activeElement);
+                
+                // Move to the next focusable element
+                if (currentIndex > -1 && currentIndex < focusableArray.length - 1) {
+                    focusableArray[currentIndex + 1].focus();
+                }
+            }
+            return false;
+        }
+    }, true);
+    
+    // Scroll to bottom function
+    function scrollToBottom() {
+        window.scrollTo({
+            top: document.body.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+    
+    </script>
 {% endblock content %}

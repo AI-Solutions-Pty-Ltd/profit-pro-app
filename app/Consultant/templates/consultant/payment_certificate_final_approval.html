@@ -85,13 +85,19 @@
                     <div class="mb-6">{{ form|crispy }}</div>
                     <!-- Action Buttons -->
                     <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
-                        <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk payment_certificate.pk %}"
-                           class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <a id="cancel-btn"
+                           href="{% url 'consultant:client-detail' project.client.pk %}"
+                           class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                           data-loading-text="Canceling..."
+                           data-disable-elements="#approve-btn">
                             {% heroicon_outline "x-mark" class="w-5 h-5" %}
                             Cancel
                         </a>
-                        <button type="submit"
-                                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <button id="approve-btn"
+                                type="submit"
+                                class="loading-btn inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                data-loading-text="Submitting..."
+                                data-disable-elements="#cancel-btn">
                             {% heroicon_outline "check-circle" class="w-5 h-5" %}
                             Submit Decision
                         </button>

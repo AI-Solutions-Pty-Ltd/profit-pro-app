@@ -70,28 +70,34 @@
                 <!-- Form Actions -->
                 <div class="mt-6 flex items-center justify-end space-x-3">
                     {% if form.instance.pk %}
-                        <a href="{% url 'project:project-detail' object.pk %}"
+                        <a id="cancel-update-btn"
+                           href="{% url 'project:project-detail' object.pk %}"
                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                             {% heroicon_outline "chevron-left" size="20" %}
                             Back to Project
                         </a>
+                        <button type="submit"
+                                class="loading-btn inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                                data-loading-text="Updating..."
+                                data-disable-elements="#cancel-update-btn">
+                            {% heroicon_outline "pencil" size="20" %}
+                            Update Project
+                        </button>
                     {% else %}
-                        <a href="{% url 'project:project-list' %}"
+                        <a id="cancel-create-btn"
+                           href="{% url 'project:project-list' %}"
                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                             {% heroicon_outline "chevron-left" size="20" %}
                             Back to Projects
                         </a>
-                    {% endif %}
-                    <button type="submit"
-                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                        {% if form.instance.pk %}
-                            {% heroicon_outline "pencil" size="20" %}
-                            Update Project
-                        {% else %}
+                        <button type="submit"
+                                class="loading-btn inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                                data-loading-text="Creating..."
+                                data-disable-elements="#cancel-create-btn">
                             {% heroicon_outline "plus" size="20" %}
                             Create Project
-                        {% endif %}
-                    </button>
+                        </button>
+                    {% endif %}
                 </div>
             </form>
         </div>

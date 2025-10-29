@@ -124,13 +124,19 @@
                     <input type="hidden" name="status" value="SUBMITTED">
                     <!-- Action Buttons -->
                     <div class="flex items-center justify-start space-x-3">
-                        <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk payment_certificate.pk %}"
-                           class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <a id="cancel-btn"
+                           href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk payment_certificate.pk %}"
+                           class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                           data-loading-text="Canceling..."
+                           data-disable-elements="#approve-btn">
                             {% heroicon_outline "x-mark" class="w-5 h-5" %}
                             Cancel
                         </a>
-                        <button type="submit"
-                                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        <button id="approve-btn"
+                                type="submit"
+                                class="loading-btn inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                                data-loading-text="Approving..."
+                                data-disable-elements="#cancel-btn">
                             {% heroicon_outline "check-circle" class="w-5 h-5" %}
                             Approve Payment Certificate
                         </button>
