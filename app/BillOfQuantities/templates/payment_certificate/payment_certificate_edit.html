@@ -418,10 +418,20 @@
                 </div>
             </div>
             <!-- Save button -->
-            <div class="flex justify-end mt-6 p-4">
-                <button type="submit"
+            <div class="flex justify-end mt-6 p-4 gap-4">
+                <a id="cancel-btn"
+                   href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk payment_certificate.pk %}"
+                   class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                   data-loading-text="Canceling..."
+                   data-disable-elements="#save-btn">
+                    {% heroicon_outline "x-mark" class="w-5 h-5" %}
+                    Cancel
+                </a>
+                <button id="save-btn"
+                        type="submit"
                         class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors loading-btn"
-                        data-loading-text="Saving...">
+                        data-loading-text="Saving..."
+                        data-disable-elements="#cancel-btn">
                     {% heroicon_outline "check-circle" size="20" %}
                     Save
                 </button>

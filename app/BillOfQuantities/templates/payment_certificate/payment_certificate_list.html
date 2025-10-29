@@ -75,16 +75,20 @@
                             </div>
                         </div>
                         <div class="flex items-center space-x-3">
-                            <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk active_certificate.pk %}"
+                            <a id="view-details-btn"
+                               href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk active_certificate.pk %}"
                                class="loading-btn inline-flex items-center px-3 py-2 border border-blue-300 text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                               data-loading-text="Loading Details...">
+                               data-loading-text="Loading Details..."
+                               data-disable-elements="#edit-certificate-btn">
                                 {% heroicon_outline "eye" class="w-4 h-4" %}
                                 View Details
                             </a>
                             {% if active_certificate.status == 'DRAFT' %}
-                                <a href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk active_certificate.pk %}"
+                                <a id="edit-certificate-btn"
+                                   href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk active_certificate.pk %}"
                                    class="loading-btn inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                   data-loading-text="Loading Edit Form...">
+                                   data-loading-text="Loading Edit Form..."
+                                   data-disable-elements="#view-details-btn">
                                     {% heroicon_outline "pencil" class="w-4 h-4" %}
                                     Edit
                                 </a>
