@@ -1,0 +1,503 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% block title %}
+    Add Multiple Costs - {{ bill.name }}
+{% endblock title %}
+{% block content %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <nav class="flex mb-4" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="{% url 'project:project-list' %}"
+                           class="text-gray-700 hover:text-indigo-600">Projects</a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="mx-2 text-gray-400">/</span>
+                            <a href="{% url 'project:project-detail' project.pk %}"
+                               class="text-gray-700 hover:text-indigo-600">{{ project.name }}</a>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="mx-2 text-gray-400">/</span>
+                            <a href="{% url 'cost:project-cost-tree' project.pk %}"
+                               class="text-gray-700 hover:text-indigo-600">Costs</a>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="mx-2 text-gray-400">/</span>
+                            <a href="{% url 'cost:bill-cost-detail' project.pk bill.pk %}"
+                               class="text-gray-700 hover:text-indigo-600">{{ bill.name }}</a>
+                        </div>
+                    </li>
+                    <li aria-current="page">
+                        <div class="flex items-center">
+                            <span class="mx-2 text-gray-400">/</span>
+                            <span class="text-gray-500">Add Multiple Costs</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Add Multiple Costs</h1>
+                    <p class="mt-1 text-sm text-gray-600">{{ structure.name }} • {{ bill.name }}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button"
+                            onclick="addRow()"
+                            class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        {% heroicon_outline "plus" class="w-4 h-4" %}
+                        Add Row
+                    </button>
+                    <button type="button"
+                            onclick="delRow()"
+                            class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        {% heroicon_outline "minus" class="w-4 h-4" %}
+                        Remove Row
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Form -->
+        <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+            <form method="post" class="p-6" onsubmit="validate()">
+                {% csrf_token %}
+                {{ formset.management_form }}
+                <div class="overflow-x-auto">
+                    <table id="order_table" class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gross</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">VAT</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">VAT Amount</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for form in formset %}
+                                <tr>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ form.date }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ form.category }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ form.description }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ form.quantity }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ form.unit_price }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ form.gross }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ form.vat }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ form.vat_amount }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">{{ form.net }}</td>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <button type="button"
+                                                onclick="deleteRow(this)"
+                                                class="inline-flex items-center p-2 border border-transparent rounded-md text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                                title="Delete row">
+                                            {% heroicon_outline "trash" class="h-4 w-4" %}
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-gradient-to-r from-gray-50 to-gray-100 border-t-2 border-gray-200">
+                                <td colspan="8"
+                                    class="px-6 py-4 text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                                    Total Excl. VAT
+                                </td>
+                                <td colspan="2"
+                                    class="px-6 py-4 text-sm font-bold text-gray-900 text-right">
+                                    R <span id="total_excl">0.00</span>
+                                </td>
+                            </tr>
+                            <tr class="bg-gradient-to-r from-yellow-50 to-yellow-100 border-t border-yellow-200">
+                                <td colspan="8"
+                                    class="px-6 py-4 text-sm font-semibold text-yellow-700 uppercase tracking-wide">
+                                    Total VAT (15%)
+                                </td>
+                                <td colspan="2"
+                                    class="px-6 py-4 text-sm font-bold text-yellow-600 text-right">
+                                    R <span id="total_vat">0.00</span>
+                                </td>
+                            </tr>
+                            <tr class="bg-gradient-to-r from-indigo-50 to-indigo-100 border-t-2 border-indigo-200">
+                                <td colspan="8"
+                                    class="px-6 py-5 text-base font-bold text-indigo-700 uppercase tracking-wide">
+                                    Total Incl. VAT
+                                </td>
+                                <td colspan="2"
+                                    class="px-6 py-5 text-xl font-bold text-indigo-600 text-right">
+                                    R <span id="total_incl">0.00</span>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="flex items-center justify-between pt-6 border-t border-gray-200 mt-6">
+                    <div class="text-sm text-gray-500">
+                        <p>Tip: Use the Add/Remove Row buttons to manage multiple costs. Calculations update automatically.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <a href="{% url 'cost:bill-cost-detail' project.pk bill.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Cancel
+                        </a>
+                        <button type="submit"
+                                class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "check" class="w-5 h-5" %}
+                            Save All Costs
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            var table = document.getElementById('order_table');
+            if (table && table.tBodies && table.tBodies[0]) {
+                var rows = table.tBodies[0].rows;
+                
+                // Make vat_amount and net fields readonly
+                for (var i = 0; i < rows.length; i++) {
+                    var row = rows[i];
+                    if (!row || !row.cells) continue;
+                    
+                    var vatAmountInput = row.cells[7] ? row.cells[7].querySelector('input') : null;
+                    var netInput = row.cells[8] ? row.cells[8].querySelector('input') : null;
+                    
+                    if (vatAmountInput) {
+                        vatAmountInput.readOnly = true;
+                        vatAmountInput.style.backgroundColor = '#f3f4f6'; // Gray background
+                        vatAmountInput.style.cursor = 'not-allowed';
+                    }
+                    if (netInput) {
+                        netInput.readOnly = true;
+                        netInput.style.backgroundColor = '#f3f4f6'; // Gray background
+                        netInput.style.cursor = 'not-allowed';
+                    }
+                    
+                    // Add event listeners
+                    addEventListenersToRow(row);
+                    
+                    // Calculate initial values
+                    calculateRowVatAndNet(row);
+                }
+                
+                // Update summary totals
+                updateSummaryTotals();
+            }
+        });
+
+        function addRow() {
+            var table = document.getElementById('order_table');
+            if (!table || !table.tBodies || !table.tBodies[0]) {
+                console.log('Table or tbody not found');
+                return;
+            }
+            
+            var tBodies = table.tBodies[0];
+            if (tBodies.rows.length === 0) {
+                console.log('No rows found to clone');
+                return;
+            }
+            
+            var node = tBodies.rows[0].cloneNode(true);    //clone the previous node or row
+            tBodies.appendChild(node);   //add the node or row to the table
+
+            var num_rows = tBodies.rows.length;
+            var row = tBodies.rows[num_rows - 1];
+            
+            // Clear all input values
+            var inputs = row.querySelectorAll('input, select');
+            inputs.forEach(function(input) {
+                if (input.type === 'checkbox') {
+                    input.checked = true; // VAT checked by default
+                } else {
+                    input.value = '';
+                }
+            });
+
+            // Update form names and IDs with null checks
+            var num = num_rows - 1;
+            
+            var dateInput = row.cells[0] ? row.cells[0].querySelector('input') : null;
+            var categorySelect = row.cells[1] ? row.cells[1].querySelector('select') : null;
+            var descriptionInput = row.cells[2] ? row.cells[2].querySelector('input') : null;
+            var quantityInput = row.cells[3] ? row.cells[3].querySelector('input') : null;
+            var unitPriceInput = row.cells[4] ? row.cells[4].querySelector('input') : null;
+            var grossInput = row.cells[5] ? row.cells[5].querySelector('input') : null;
+            var vatInput = row.cells[6] ? row.cells[6].querySelector('input') : null;
+            var vatAmountInput = row.cells[7] ? row.cells[7].querySelector('input') : null;
+            var netInput = row.cells[8] ? row.cells[8].querySelector('input') : null;
+            
+            // Update DELETE field name for formset
+            var deleteInput = row.querySelector('input[name*="DELETE"]');
+            if (deleteInput) {
+                deleteInput.name = 'form-' + num + '-DELETE';
+                deleteInput.id = 'id_form-' + num + '-DELETE';
+            }
+            
+            if (dateInput) {
+                dateInput.name = 'form-' + num + '-date';
+                dateInput.id = 'id_form-' + num + '-date';
+            }
+            
+            if (categorySelect) {
+                categorySelect.name = 'form-' + num + '-category';
+                categorySelect.id = 'id_form-' + num + '-category';
+            }
+            
+            if (descriptionInput) {
+                descriptionInput.name = 'form-' + num + '-description';
+                descriptionInput.id = 'id_form-' + num + '-description';
+            }
+            
+            if (quantityInput) {
+                quantityInput.name = 'form-' + num + '-quantity';
+                quantityInput.id = 'id_form-' + num + '-quantity';
+            }
+            
+            if (unitPriceInput) {
+                unitPriceInput.name = 'form-' + num + '-unit_price';
+                unitPriceInput.id = 'id_form-' + num + '-unit_price';
+            }
+            
+            if (grossInput) {
+                grossInput.name = 'form-' + num + '-gross';
+                grossInput.id = 'id_form-' + num + '-gross';
+            }
+            
+            if (vatInput) {
+                vatInput.name = 'form-' + num + '-vat';
+                vatInput.id = 'id_form-' + num + '-vat';
+            }
+            
+            if (vatAmountInput) {
+                vatAmountInput.name = 'form-' + num + '-vat_amount';
+                vatAmountInput.id = 'id_form-' + num + '-vat_amount';
+                vatAmountInput.readOnly = true; // Make readonly
+                vatAmountInput.style.backgroundColor = '#f3f4f6'; // Gray background
+                vatAmountInput.style.cursor = 'not-allowed';
+            }
+            
+            if (netInput) {
+                netInput.name = 'form-' + num + '-net';
+                netInput.id = 'id_form-' + num + '-net';
+                netInput.readOnly = true; // Make readonly
+                netInput.style.backgroundColor = '#f3f4f6'; // Gray background
+                netInput.style.cursor = 'not-allowed';
+            }
+
+            // Update management form
+            var total_forms = document.getElementById('id_form-TOTAL_FORMS');
+            if (total_forms) total_forms.value = num_rows;
+
+            // Add event listeners to new inputs
+            addEventListenersToRow(row);
+            
+            // Initialize calculations for the new row
+            calculateRowVatAndNet(row);
+        }
+
+        function deleteRow(button) {
+            var table = document.getElementById('order_table');
+            if (!table || !table.tBodies || !table.tBodies[0]) return;
+            
+            var tbody = table.tBodies[0];
+            var row = button.closest('tr');
+            
+            if (tbody.rows.length > 1) {
+                // Mark the row for deletion using Django's DELETE field
+                var deleteInput = row.querySelector('input[name*="DELETE"]');
+                if (deleteInput) {
+                    deleteInput.value = 'on';
+                    row.style.display = 'none'; // Hide the row instead of removing it
+                } else {
+                    // If no DELETE field, just remove the row
+                    row.remove();
+                }
+                
+                // Update management form
+                var forms = document.getElementById('id_form-TOTAL_FORMS');
+                if (forms) forms.value = tbody.rows.length;
+                
+                // Update totals
+                updateSummaryTotals();
+            } else {
+                alert('Cannot delete the last row. At least one row must remain.');
+            }
+        }
+
+        function delRow() {
+            var table = document.getElementById('order_table');
+            if (!table || !table.tBodies || !table.tBodies[0]) return;
+            
+            var x = table.tBodies[0];
+            if (x.rows.length > 1) {
+                x.deleteRow(-1); //delete the last row
+            }
+            var forms = document.getElementById('id_form-TOTAL_FORMS');
+            if (forms) forms.value = x.rows.length;
+            updateSummaryTotals();
+        }
+
+        function addEventListenersToRow(row) {
+            // Add event listeners for real-time calculations
+            if (!row || !row.cells) return;
+            
+            var quantityInput = row.cells[3] ? row.cells[3].querySelector('input') : null;
+            var unitPriceInput = row.cells[4] ? row.cells[4].querySelector('input') : null;
+            var grossInput = row.cells[5] ? row.cells[5].querySelector('input') : null;
+            var vatCheckbox = row.cells[6] ? row.cells[6].querySelector('input') : null;
+            
+            // Auto-calculate gross when quantity or unit price changes
+            if (quantityInput) quantityInput.addEventListener('input', function() { calculateRowGross(row); });
+            if (unitPriceInput) unitPriceInput.addEventListener('input', function() { calculateRowGross(row); });
+            
+            // Update totals when gross or VAT changes
+            if (grossInput) grossInput.addEventListener('input', function() { calculateRowVatAndNet(row); });
+            if (vatCheckbox) vatCheckbox.addEventListener('change', function() { calculateRowVatAndNet(row); });
+        }
+
+        function calculateRowGross(row) {
+            if (!row || !row.cells) return;
+            
+            var quantityInput = row.cells[3] ? row.cells[3].querySelector('input') : null;
+            var unitPriceInput = row.cells[4] ? row.cells[4].querySelector('input') : null;
+            var grossInput = row.cells[5] ? row.cells[5].querySelector('input') : null;
+            
+            if (!quantityInput || !unitPriceInput || !grossInput) return;
+            
+            var qty = parseFloat(quantityInput.value) || 0;
+            var unitPrice = parseFloat(unitPriceInput.value) || 0;
+            
+            // Only auto-calculate if both quantity and unit price are provided
+            if (qty > 0 && unitPrice > 0) {
+                var gross = qty * unitPrice;
+                grossInput.value = gross.toFixed(2);
+            }
+            
+            // Update VAT and net amounts
+            calculateRowVatAndNet(row);
+        }
+
+        function calculateRowVatAndNet(row) {
+            if (!row || !row.cells) return;
+            
+            var grossInput = row.cells[5] ? row.cells[5].querySelector('input') : null;
+            var vatCheckbox = row.cells[6] ? row.cells[6].querySelector('input') : null;
+            var vatAmountInput = row.cells[7] ? row.cells[7].querySelector('input') : null;
+            var netInput = row.cells[8] ? row.cells[8].querySelector('input') : null;
+            
+            if (!grossInput || !vatCheckbox || !vatAmountInput || !netInput) return;
+            
+            var gross = parseFloat(grossInput.value) || 0;
+            var vatAmount = 0;
+            var net = gross;
+            
+            if (vatCheckbox.checked && gross > 0) {
+                vatAmount = gross * 0.15; // 15% VAT
+                net = gross + vatAmount;
+            }
+            
+            vatAmountInput.value = vatAmount.toFixed(2);
+            netInput.value = net.toFixed(2);
+            
+            // Update summary totals
+            updateSummaryTotals();
+        }
+
+        function updateSummaryTotals() {
+            var table = document.getElementById('order_table');
+            if (!table || !table.tBodies || !table.tBodies[0]) return;
+            
+            var tBodies = table.tBodies[0];
+            var totalExcl = 0;
+            var totalVat = 0;
+            var totalIncl = 0;
+
+            for (var i = 0; i < tBodies.rows.length; i++) {
+                var row = tBodies.rows[i];
+                
+                // Skip hidden/deleted rows
+                if (row.style.display === 'none') continue;
+                
+                // Safely get input values with null checks
+                var grossInput = row.cells[5] ? row.cells[5].querySelector('input') : null;
+                var vatAmountInput = row.cells[7] ? row.cells[7].querySelector('input') : null;
+                var netInput = row.cells[8] ? row.cells[8].querySelector('input') : null;
+                
+                var gross = grossInput ? (parseFloat(grossInput.value) || 0) : 0;
+                var vatAmount = vatAmountInput ? (parseFloat(vatAmountInput.value) || 0) : 0;
+                var net = netInput ? (parseFloat(netInput.value) || 0) : 0;
+                
+                totalExcl += gross;
+                totalVat += vatAmount;
+                totalIncl += net;
+            }
+
+            // Update summary totals with formatted numbers
+            var totalExclElement = document.getElementById('total_excl');
+            var totalVatElement = document.getElementById('total_vat');
+            var totalInclElement = document.getElementById('total_incl');
+            
+            if (totalExclElement) totalExclElement.textContent = formatNumber(totalExcl);
+            if (totalVatElement) totalVatElement.textContent = formatNumber(totalVat);
+            if (totalInclElement) totalInclElement.textContent = formatNumber(totalIncl);
+        }
+
+        function formatNumber(num) {
+            return num.toFixed(2).replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        function findTotal(x) {
+            // Legacy function - now using updateSummaryTotals() for better organization
+            updateSummaryTotals();
+        }
+
+        function validate() {
+            var table = document.getElementById('order_table');
+            if (!table || !table.tBodies || !table.tBodies[0]) return true;
+            
+            var tBodies = table.tBodies[0];
+            var row;
+            
+            for (i = 0; i < tBodies.rows.length; i++) {
+                row = tBodies.rows[i];
+                
+                var dateInput = row.cells[0] ? row.cells[0].querySelector('input') : null;
+                var categorySelect = row.cells[1] ? row.cells[1].querySelector('select') : null;
+                var descriptionInput = row.cells[2] ? row.cells[2].querySelector('input') : null;
+                var quantityInput = row.cells[3] ? row.cells[3].querySelector('input') : null;
+                var grossInput = row.cells[5] ? row.cells[5].querySelector('input') : null;
+                
+                if (!dateInput || !categorySelect || !descriptionInput || !quantityInput || !grossInput) {
+                    continue; // Skip incomplete rows
+                }
+                
+                var date = dateInput.value;
+                var category = categorySelect.value;
+                var description = descriptionInput.value;
+                var quantity = quantityInput.value;
+                var gross = grossInput.value;
+
+                if (!date || !category || !description || !quantity || !gross || parseFloat(gross) <= 0) {
+                    alert('Please fill in all required fields with valid values for each cost row.');
+                    event.preventDefault();
+                    return false;
+                }
+            }
+            return true;
+        }
+    </script>
+{% endblock content %}

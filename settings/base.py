@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from decimal import Decimal
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
@@ -184,3 +185,5 @@ CRISPY_TEMPLATE_PACK = "tailwind"
 # Tailwind Configuration
 TAILWIND_APP_NAME = "app.theme"
 NPM_BIN_PATH = os.getenv("NPM_BIN_PATH", "C:/Program Files/nodejs/npm.cmd")
+
+VAT_RATE = Decimal(os.getenv("VAT_RATE", "0.15"))

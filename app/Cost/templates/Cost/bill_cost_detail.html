@@ -39,24 +39,33 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">{{ bill.name }}</h1>
-                    <p class="mt-1 text-sm text-gray-600">{{ structure.name }} • {{ cost_count }} cost{{ cost_count|pluralize }}</p>
+                    <p class="mt-1 text-sm text-gray-600">
+                        {{ structure.name }} • {{ bill.costs.count }} cost{{ bill.costs.count|pluralize }}
+                    </p>
                 </div>
-                <a href="{% url 'cost:bill-cost-create' project.pk bill.pk %}"
-                   class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    {% heroicon_outline "plus" class="w-5 h-5" %}
-                    Add Cost
-                </a>
+                <div class="flex items-center justify-between gap-2">
+                    <a href="{% url 'cost:bill-cost-create' project.pk bill.pk %}"
+                       class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "plus" class="w-5 h-5" %}
+                        Add Cost
+                    </a>
+                    <a href="{% url 'cost:bill-cost-formset' project.pk bill.pk %}"
+                       class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "plus" class="w-5 h-5" %}
+                        Add Multiple Costs
+                    </a>
+                </div>
             </div>
         </div>
         <!-- Summary Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div class="bg-white shadow-sm rounded-lg p-6">
                 <p class="text-sm text-gray-600">Total Amount (Excl. VAT)</p>
-                <p class="text-2xl font-bold text-gray-900">R{{ total_amount|floatformat:2|intcomma }}</p>
+                <p class="text-2xl font-bold text-gray-900">R{{ gross|floatformat:2|intcomma }}</p>
             </div>
             <div class="bg-white shadow-sm rounded-lg p-6">
                 <p class="text-sm text-gray-600">Total Amount (Incl. VAT)</p>
-                <p class="text-2xl font-bold text-indigo-600">R{{ total_with_vat|floatformat:2|intcomma }}</p>
+                <p class="text-2xl font-bold text-indigo-600">R{{ net|floatformat:2|intcomma }}</p>
             </div>
         </div>
         <!-- Filters -->
@@ -101,7 +110,7 @@
         </div>
         <!-- Costs Table -->
         <div class="bg-white shadow-sm rounded-lg overflow-hidden">
-            {% if costs %}
+            {% if bill.costs.count %}
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
@@ -111,11 +120,15 @@
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Category
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Description
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Amount
+                                Gross
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -123,7 +136,7 @@
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Total
+                                Net
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -132,11 +145,12 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        {% for cost in costs %}
+                        {% for cost in bill.costs.all %}
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ cost.date|date:"d M Y" }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-900">{{ cost.category }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-900">{{ cost.description }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">R{{ cost.amount|floatformat:2|intcomma }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">R{{ cost.gross|floatformat:2|intcomma }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     {% if cost.vat %}
                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">15%</span>
@@ -145,7 +159,7 @@
                                     {% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                                    R{{ cost.total|floatformat:2|intcomma }}
+                                    R{{ cost.net|floatformat:2|intcomma }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     <a href="{% url 'cost:bill-cost-update' project.pk bill.pk cost.pk %}"
@@ -217,6 +231,11 @@
                            class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "plus" class="w-5 h-5" %}
                             Add Cost
+                        </a>
+                        <a href="{% url 'cost:bill-cost-formset' project.pk bill.pk %}"
+                           class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "plus" class="w-5 h-5" %}
+                            Add Multiple Costs
                         </a>
                     </div>
                 </div>

@@ -1,17 +1,19 @@
 from collections import defaultdict
-
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import CreateView, DetailView, ListView, UpdateView, View
+from django.shortcuts import render
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout
 
 from app.BillOfQuantities.models import Bill
 from app.Cost.models import Cost
 from app.Project.models import Project
+from app.core.Utilities.models import sum_queryset
 
-from .forms import CostForm
+from .forms import CostForm, CostFormSet
 
 
 class ProjectAccessMixin(LoginRequiredMixin):
@@ -25,9 +27,13 @@ class ProjectAccessMixin(LoginRequiredMixin):
             self.bill = get_object_or_404(Bill, pk=self.kwargs.get("bill_pk"))
         return self.bill
 
+    def get_project(self):
+        if not hasattr(self, "project") or not self.project:
+            self.project = get_object_or_404(Project, pk=self.kwargs.get("project_pk"))
+        return self.project
+
     def dispatch(self, request, *args, **kwargs):
-        project_pk = kwargs.get("project_pk")
-        self.project = get_object_or_404(Project, pk=project_pk)
+        self.project = self.get_project()
 
         # Check if user is linked to the project
         if self.project.account != request.user:
@@ -62,7 +68,7 @@ class ProjectCostTreeView(ProjectAccessMixin, DetailView):
             structure_total = 0
 
             for bill in structure.bills.all():
-                bill_total = bill.costs.aggregate(total=Sum("total"))["total"] or 0
+                bill_total = sum_queryset(bill.costs, "gross")
                 structure_total += bill_total
 
                 bills_data.append(
@@ -87,7 +93,7 @@ class ProjectCostTreeView(ProjectAccessMixin, DetailView):
 class BillCostDetailView(ProjectAccessMixin, ListView):
     """Detail view showing all costs for a specific bill."""
 
-    model = Cost
+    model = Bill
     template_name = "cost/bill_cost_detail.html"
     context_object_name = "costs"
     paginate_by = 20
@@ -109,9 +115,7 @@ class BillCostDetailView(ProjectAccessMixin, ListView):
         return response
 
     def get_queryset(self):
-        queryset = Cost.objects.filter(bill=self.get_bill()).order_by(
-            "-date", "-created_at"
-        )
+        queryset = self.get_bill().costs.order_by("-date", "-created_at")
 
         # Filter by search query
         search = self.request.GET.get("search")
@@ -131,15 +135,15 @@ class BillCostDetailView(ProjectAccessMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["project"] = self.project
-        context["bill"] = self.get_bill()
+        context["project"] = self.get_project()
         context["structure"] = self.get_bill().structure
+        context["bill"] = self.get_bill()
 
         # Calculate totals
-        costs = self.get_queryset()
-        context["total_amount"] = costs.aggregate(total=Sum("amount"))["total"] or 0
-        context["total_with_vat"] = costs.aggregate(total=Sum("total"))["total"] or 0
-        context["cost_count"] = costs.count()
+        costs = self.get_bill().costs
+        context["gross"] = sum_queryset(costs, "gross")
+        context["vat_amount"] = sum_queryset(costs, "vat_amount")
+        context["net"] = sum_queryset(costs, "net")
 
         # Pass filter values back to template
         context["search"] = self.request.GET.get("search", "")
@@ -262,3 +266,84 @@ class BillCostUpdateView(ProjectAccessMixin, UpdateView):
         context["structure"] = bill.structure or None
         context["is_edit"] = True
         return context
+
+
+class BillCostFormSetView(ProjectAccessMixin, View):
+    """View to add multiple costs using a formset."""
+
+    template_name = "cost/cost_formset.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        # Call parent dispatch first to set self.project
+        response = super().dispatch(request, *args, **kwargs)
+
+        # Get and validate bill
+        self.bill = self.get_bill()
+
+        # Ensure bill belongs to project
+        if self.bill.structure.project != self.project:
+            messages.error(
+                request, "This bill does not belong to the selected project."
+            )
+            return redirect("cost:project-cost-tree", project_pk=self.project.pk)
+
+        return response
+
+    def get(self, request, *args, **kwargs):
+        formset = CostFormSet(bill=self.get_bill())
+        return render(
+            request,
+            self.template_name,
+            {
+                "formset": formset,
+                "project": self.project,
+                "bill": self.get_bill(),
+                "structure": self.get_bill().structure,
+            },
+        )
+
+    def post(self, request, *args, **kwargs):
+        formset = CostFormSet(request.POST, bill=self.bill)
+
+        if formset.is_valid():
+            costs = []
+            for form in formset:
+                if (
+                    form.is_valid()
+                    and form.cleaned_data
+                    and not form.cleaned_data.get("DELETE")
+                ):
+                    # Skip empty forms
+                    if not form.cleaned_data.get("description"):
+                        continue
+
+                    cost = form.save(commit=False)
+                    cost.bill = self.get_bill()
+                    cost.save()
+                    costs.append(cost.description)
+
+            if costs:
+                messages.success(
+                    request,
+                    f"Successfully added {len(costs)} cost(s): {', '.join(costs)}",
+                )
+            else:
+                messages.info(request, "No costs were added.")
+
+            return redirect(
+                "cost:bill-cost-detail",
+                project_pk=self.project.pk,
+                bill_pk=self.bill.pk,
+            )
+        else:
+            # If formset is invalid, re-render with errors
+            return render(
+                request,
+                self.template_name,
+                {
+                    "formset": formset,
+                    "project": self.project,
+                    "bill": self.bill,
+                    "structure": self.bill.structure,
+                },
+            )

@@ -23,6 +23,12 @@ urlpatterns = [
         views.BillCostCreateView.as_view(),
         name="bill-cost-create",
     ),
+    # Add multiple costs to bill
+    path(
+        "project/<int:project_pk>/bill/<int:bill_pk>/add-multiple/",
+        views.BillCostFormSetView.as_view(),
+        name="bill-cost-formset",
+    ),
     # Edit cost
     path(
         "project/<int:project_pk>/bill/<int:bill_pk>/cost/<int:cost_pk>/edit/",
