@@ -113,30 +113,42 @@
             </div>
         </div>
         <!-- Summary Stats -->
-        <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-3 mb-6">
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="px-4 py-5 sm:p-6">
-                    <dt class="text-sm font-medium text-gray-500 truncate">Total Claimed to date</dt>
-                    <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                        R {{ total_claimed|default:"0"|floatformat:2|intcomma }}
-                    </dd>
-                </div>
-            </div>
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="px-4 py-5 sm:p-6">
-                    <dt class="text-sm font-medium text-gray-500 truncate">Active Claim</dt>
-                    <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                        R {{ active_claimed|default:"0"|floatformat:2|intcomma }}
-                    </dd>
-                </div>
-            </div>
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="px-4 py-5 sm:p-6">
-                    <dt class="text-sm font-medium text-gray-500 truncate">Remaining Amount</dt>
-                    <dd class="mt-1 text-3xl font-semibold text-gray-900">
-                        R {{ remaining_amount|default:"0"|floatformat:2|intcomma }}
-                    </dd>
-                </div>
+        <div class="mt-6 mb-6">
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Summary</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Contract Value</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-semibold">
+                                R {{ project.get_total_contract_value|default:"0"|floatformat:2|intcomma }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Claimed to date</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-semibold">
+                                R {{ total_claimed|default:"0"|floatformat:2|intcomma }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Active Claim</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-semibold">
+                                R {{ active_claimed|default:"0"|floatformat:2|intcomma }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Remaining Amount</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-semibold">
+                                R {{ remaining_amount|default:"0"|floatformat:2|intcomma }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
         <!-- Completed Payment Certificates Section -->

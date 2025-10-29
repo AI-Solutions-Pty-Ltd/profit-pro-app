@@ -5,7 +5,7 @@ from django.db.models import Sum
 from django.urls import reverse
 
 from app.Account.models import Account
-from app.core.Utilities.models import BaseModel
+from app.core.Utilities.models import BaseModel, sum_queryset
 
 
 class Client(BaseModel):
@@ -80,39 +80,30 @@ class Project(BaseModel):
         )
 
     @property
-    def get_original_contract_value(self):
+    def get_original_contract_value(self) -> Decimal:
         all_line_items = self.line_items.all()
         original_line_items = all_line_items.filter(addendum=False, special_item=False)
-        total_contract_value = original_line_items.aggregate(total=Sum("total_price"))[
-            "total"
-        ] or Decimal(0)
-        return total_contract_value
+        return sum_queryset(original_line_items, "total_price")
 
     @property
-    def get_addendum_contract_value(self):
+    def get_addendum_contract_value(self) -> Decimal:
         all_line_items = self.line_items.all()
         addendum_line_items = all_line_items.filter(addendum=True)
-        total_contract_value = addendum_line_items.aggregate(total=Sum("total_price"))[
-            "total"
-        ] or Decimal(0)
-        return total_contract_value
+        return sum_queryset(addendum_line_items, "total_price")
 
     @property
-    def get_special_contract_value(self):
+    def contract_addendum_value(self) -> Decimal:
+        return self.get_addendum_contract_value + self.get_special_contract_value
+
+    @property
+    def get_special_contract_value(self) -> Decimal:
         all_line_items = self.line_items.all()
         special_line_items = all_line_items.filter(special_item=True)
-        total_contract_value = special_line_items.aggregate(total=Sum("total_price"))[
-            "total"
-        ] or Decimal(0)
-        return total_contract_value
+        return sum_queryset(special_line_items, "total_price")
 
     @property
-    def get_total_contract_value(self):
-        line_items = self.line_items.all()
-        total_contract_value = line_items.aggregate(total=Sum("total_price"))[
-            "total"
-        ] or Decimal(0)
-        return total_contract_value
+    def get_total_contract_value(self) -> Decimal:
+        return sum_queryset(self.line_items.all(), "total_price")
 
     @property
     def get_active_payment_certificate(self):

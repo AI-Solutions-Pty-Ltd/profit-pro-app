@@ -7,19 +7,8 @@ from django.db.models.functions import Coalesce
 from django.urls import reverse
 
 from app.Account.models import Account
-from app.core.Utilities.models import BaseModel
+from app.core.Utilities.models import BaseModel, sum_queryset
 from app.Project.models import Project
-
-
-def sum_queryset(queryset, field: str) -> Decimal:
-    """Helper function to sum total price of queryset"""
-    return queryset.aggregate(
-        sum=Coalesce(
-            Sum(field),
-            Value(0),
-            output_field=DecimalField(),
-        )
-    )["sum"]
 
 
 class Structure(BaseModel):

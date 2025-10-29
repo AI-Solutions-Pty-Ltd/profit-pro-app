@@ -1,4 +1,7 @@
+from decimal import Decimal
 from django.db import models
+from django.db.models import DecimalField, Sum, Value
+from django.db.models.functions import Coalesce
 
 
 class SoftDeleteManager(models.Manager):
@@ -73,3 +76,14 @@ class BaseModel(models.Model):
     def is_deleted(self):
         """Check if the instance is soft-deleted"""
         return self.deleted
+
+
+def sum_queryset(queryset, field: str) -> Decimal:
+    """Helper function to sum total price of queryset"""
+    return queryset.aggregate(
+        sum=Coalesce(
+            Sum(field),
+            Value(0),
+            output_field=DecimalField(),
+        )
+    )["sum"]
