@@ -63,7 +63,7 @@
                             </div>
                             <div>
                                 <h3 class="text-sm font-medium text-blue-900">
-                                    Certificate #{{ active_certificate.certificate_number }} | R {{ active_certificate.total_amount|default:"0"|floatformat:2|intcomma }}
+                                    Certificate #{{ active_certificate.certificate_number }} | R {{ active_certificate.current_claim_total|default:"0"|floatformat:2|intcomma }}
                                 </h3>
                                 <p class="text-sm text-blue-700 mt-1">
                                     Status: <span class="font-medium">{{ active_certificate.get_status_display }}</span>

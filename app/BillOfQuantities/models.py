@@ -11,6 +11,17 @@ from app.core.Utilities.models import BaseModel
 from app.Project.models import Project
 
 
+def sum_queryset(queryset, field: str) -> Decimal:
+    """Helper function to sum total price of queryset"""
+    return queryset.aggregate(
+        sum=Coalesce(
+            Sum(field),
+            Value(0),
+            output_field=DecimalField(),
+        )
+    )["sum"]
+
+
 class Structure(BaseModel):
     """Structure model representing buildings/structures within a project."""
 
@@ -279,8 +290,7 @@ class LineItem(BaseModel):
             actual_transactions = actual_transactions.exclude(
                 id__in=current_transactions_ids
             )
-        value = actual_transactions.aggregate(qty=models.Sum("quantity"))["qty"] or 0
-        return Decimal(value)
+        return sum_queryset(actual_transactions, "quantity")
 
     @property
     def claimed_to_date_value(self) -> Decimal:
@@ -292,13 +302,7 @@ class LineItem(BaseModel):
         previous_actual_transactions = self.actual_transactions.filter(
             payment_certificate__certificate_number__lt=active_payment_certificate.certificate_number
         )
-        value = (
-            previous_actual_transactions.aggregate(
-                total_claimed=models.Sum("total_price")
-            )["total_claimed"]
-            or 0
-        )
-        return Decimal(value)
+        return sum_queryset(previous_actual_transactions, "total_price")
 
     @property
     def remaining_quantity(self):
@@ -323,11 +327,7 @@ class LineItem(BaseModel):
 
     @property
     def total_claimed_to_date(self):
-        total = (
-            self.actual_transactions.aggregate(total=models.Sum("total_price"))["total"]
-            or 0
-        )
-        return Decimal(total)
+        return sum_queryset(self.actual_transactions, "total_price")
 
 
 class PaymentCertificate(BaseModel):
@@ -398,74 +398,110 @@ class PaymentCertificate(BaseModel):
             status=PaymentCertificate.Status.APPROVED,
         )
 
+    #####
+    # related actual transactions getters
+    #####
     @property
-    def actual_line_items(self):
+    def all_actual_transactions(self):
+        """get actual transactions linked to this payment certificate"""
         return self.actual_transactions.all()
 
     @property
-    def line_items(self):
-        return self.actual_line_items.filter(line_item__special_item=False)
+    def contract_actual_items(self):
+        """get contract actual transactions linked to this payment certificate"""
+        return self.all_actual_transactions.filter(
+            line_item__special_item=False, line_item__addendum=False
+        )
 
     @property
-    def special_line_items(self):
-        special_items = self.actual_line_items.filter(line_item__special_item=True)
+    def addendum_actual_items(self):
+        """get addendum actual transactions linked to this payment certificate"""
+        return self.all_actual_transactions.filter(
+            line_item__special_item=False, line_item__addendum=True
+        )
+
+    @property
+    def special_actual_items(self):
+        """get special actual transactions linked to this payment certificate"""
+        special_items = self.all_actual_transactions.filter(
+            line_item__special_item=True
+        )
         return special_items
 
+    #####
+    # contract line_items summary
+    #####
     @property
-    def total_amount(self) -> Decimal:
-        total_amount = (
-            self.actual_line_items.aggregate(total=models.Sum("total_price"))["total"]
-            or 0
-        )
-        return Decimal(total_amount)
-
-    # line_items summary
-    @property
-    def line_items_progressive_previous(self) -> Decimal:
+    def contract_progressive_previous(self) -> Decimal:
+        """get all previously claimed contract actual transactions"""
         previous_certificates = self.previous_certificates
         previous_actual_items = ActualTransaction.objects.filter(
             payment_certificate__in=previous_certificates
         ).exclude(line_item__special_item=True)
-        total = (
-            previous_actual_items.aggregate(total=models.Sum("total_price"))["total"]
-            or 0
-        )
-        return Decimal(total)
+        return sum_queryset(previous_actual_items, "total_price")
 
     @property
-    def line_items_current_claim_total(self) -> Decimal:
-        total = self.line_items.aggregate(total=models.Sum("total_price"))["total"] or 0
-        return Decimal(total)
+    def contract_current_claim_total(self) -> Decimal:
+        """get all currently claimed contract actual transactions"""
+        return sum_queryset(self.contract_actual_items, "total_price")
 
     @property
-    def line_items_progressive_to_date(self) -> Decimal:
-        return (
-            self.line_items_progressive_previous + self.line_items_current_claim_total
-        )
+    def contract_progressive_to_date(self) -> Decimal:
+        """get contract actual transactions total claimed up to payment certificate"""
+        return self.contract_progressive_previous + self.contract_current_claim_total
 
+    #####
+    # addendum line_items summary
+    #####
+    @property
+    def addendum_progressive_previous(self) -> Decimal:
+        """get all previously claimed addendum actual transactions"""
+        previous_certificates = self.previous_certificates
+        previous_actual_items = ActualTransaction.objects.filter(
+            payment_certificate__in=previous_certificates,
+            line_item__addendum=True,
+        ).exclude(line_item__special_item=True)
+        return sum_queryset(previous_actual_items, "total_price")
+
+    @property
+    def addendum_current_claim_total(self) -> Decimal:
+        """get all currently claimed addendum actual transactions"""
+        return sum_queryset(self.addendum_actual_items, "total_price")
+
+    @property
+    def addendum_progressive_to_date(self) -> Decimal:
+        """get addendum actual transactions total claimed up to payment certificate"""
+        return self.addendum_progressive_previous + self.addendum_current_claim_total
+
+    #####
+    # contract + addendum
+    #####
+    @property
+    def work_progressive_previous(self) -> Decimal:
+        return self.contract_progressive_previous + self.addendum_progressive_previous
+
+    @property
+    def work_current_claim_total(self) -> Decimal:
+        return self.contract_current_claim_total + self.addendum_current_claim_total
+
+    @property
+    def work_progressive_to_date(self) -> Decimal:
+        return self.work_progressive_previous + self.work_current_claim_total
+
+    #####
     # special items summary
+    #####
     @property
     def special_items_progressive_previous(self):
         previous_certificates = self.previous_certificates
         previous_actual_items = ActualTransaction.objects.filter(
             payment_certificate__in=previous_certificates
         ).filter(line_item__special_item=True)
-        total = (
-            previous_actual_items.aggregate(total=models.Sum("total_price"))["total"]
-            or 0
-        )
-        return Decimal(total)
+        return sum_queryset(previous_actual_items, "total_price")
 
     @property
     def special_items_current_claim_total(self) -> Decimal:
-        previous_actual_items = ActualTransaction.objects.filter(
-            payment_certificate__certificate_number__lte=self.certificate_number
-        ).filter(line_item__special_item=True)
-        total = (
-            previous_actual_items.aggregate(total=models.Sum("total_price"))["total"]
-            or 0
-        )
-        return Decimal(total)
+        return sum_queryset(self.special_actual_items, "total_price")
 
     @property
     def special_items_progressive_to_date(self) -> Decimal:
@@ -494,19 +530,13 @@ class PaymentCertificate(BaseModel):
     # payment certificate summary
     @property
     def items_submitted(self) -> Decimal:
-        approved_line_items = self.actual_line_items.filter(approved=True)
-        total_submitted = (
-            approved_line_items.aggregate(total=models.Sum("total_price"))["total"] or 0
-        )
-        return Decimal(total_submitted)
+        approved_line_items = self.all_actual_transactions.filter(approved=True)
+        return sum_queryset(approved_line_items, "total_price")
 
     @property
     def items_claimed(self) -> Decimal:
-        approved_line_items = self.actual_line_items.filter(claimed=True)
-        total_claimed = (
-            approved_line_items.aggregate(total=models.Sum("total_price"))["total"] or 0
-        )
-        return Decimal(total_claimed)
+        approved_line_items = self.all_actual_transactions.filter(claimed=True)
+        return sum_queryset(approved_line_items, "total_price")
 
     @property
     def total_submitted(self) -> Decimal:
@@ -527,26 +557,16 @@ class PaymentCertificate(BaseModel):
     def progressive_previous(self) -> Decimal:
         """Calculate total of all previously approved certificates."""
         previous_certificates = self.previous_certificates
-        total = (
-            previous_certificates.aggregate(
-                total=models.Sum("actual_transactions__total_price")
-            )["total"]
-            or 0
-        )
-        return Decimal(total)
+        return sum_queryset(previous_certificates, "actual_transactions__total_price")
 
     @property
     def current_claim_total(self) -> Decimal:
-        """Calculate total for current certificate (all transactions)."""
-        current_claim_total = (
-            self.actual_transactions.aggregate(total=models.Sum("total_price"))["total"]
-            or 0
-        )
-        return Decimal(current_claim_total)
+        """Calculate total for current certificate (all actual transactions)."""
+        return sum_queryset(self.all_actual_transactions, "total_price")
 
     @property
     def progressive_to_date(self) -> Decimal:
-        """Calculate progressive total including this certificate."""
+        """Calculate progressive total up to this certificate."""
         # For progressive to date, we include all transactions in current certificate
         # regardless of approval status (for reporting purposes)
         return self.progressive_previous + self.current_claim_total

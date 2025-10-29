@@ -76,18 +76,16 @@ def generate_payment_certificate_pdf(context) -> ContentFile:
     context["now"] = datetime.now()
     front_page_template = get_template("pdf_templates/1-front-page.html")
     line_items_template = get_template("pdf_templates/2-line-items.html")
-    footer_template = get_template("pdf_templates/3-footer.html")
 
     # Generate individual PDFs in memory
     front_page_pdf = generate_pdf(front_page_template.render(context))
     line_items_pdf = generate_pdf(line_items_template.render(context))
-    footer_pdf = generate_pdf(footer_template.render(context))
 
     # Merge PDFs using pypdf
     merger = PdfWriter()
 
     # Read each ContentFile and append to merger
-    for pdf_content in [front_page_pdf, line_items_pdf, footer_pdf]:
+    for pdf_content in [front_page_pdf, line_items_pdf]:
         pdf_reader = PdfReader(BytesIO(pdf_content.read()))
         for page in pdf_reader.pages:
             merger.add_page(page)

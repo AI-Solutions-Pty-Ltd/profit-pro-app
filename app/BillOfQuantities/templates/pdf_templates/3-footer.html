@@ -1,208 +1,78 @@
-{% load l10n %}
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="description"
-              content="Payment Certificate #{{ payment_certificate.certificate_number }} for {{ payment_certificate.project.name }}">
-        <meta name="keywords"
-              content="Payment Certificate, {{ payment_certificate.certificate_number }}, {{ payment_certificate.project.name }}">
-        <title>Payment Certificate #{{ payment_certificate.certificate_number }} - {{ payment_certificate.project.name }}</title>
-    </head>
-    <body>
-        <div class="portrait-section">
-            <div class="notes">
-                <strong>Notes:</strong>
-                <ul>
-                    <li>This certificate is subject to final measurement and approval.</li>
-                    <li>Payment terms as per contract agreement.</li>
-                    <li>All amounts are exclusive of VAT unless otherwise stated.</li>
-                </ul>
-            </div>
-            <div class="signatures portrait-section">
-                {% include "pdf_templates/signatures.html" with signatories=payment_certificate.project.signatories.all %}
-            </div>
+<div class="notes">
+    Notes:
+    <ul>
+        <li>This certificate is subject to final measurement and approval.</li>
+        <li>Payment terms as per contract agreement.</li>
+        <li>All amounts are exclusive of VAT unless otherwise stated.</li>
+    </ul>
+</div>
+<br>
+<strong>Approval Signatures</strong>
+<br>
+<br>
+<div class="signatures">
+    {% for signatory in payment_certificate.project.signatories.all %}
+        <div class="signature">
+            <p class="spacing">Signature: ________________________</p>
+            <p class="spacing">
+                Name: <strong>{{ signatory.title }} {{ signatory.name }}</strong>
+            </p>
+            <p class="spacing">Date: ________________________</p>
         </div>
-    </body>
-    <style id="page-style">
-        @page {
-            size: A4 portrait;
-            margin: 10mm;
-        }
+    {% empty %}
+        <div class="signature">
+            <p class="spacing">Signature: ________________________</p>
+            <p class="spacing">
+                Name: <strong>Contractor</strong>
+            </p>
+            <p class="spacing">Date: ________________________</p>
+        </div>
+        <div class="signature">
+            <p class="spacing">Signature: ________________________</p>
+            <p class="spacing">
+                Name: <strong>Client/Authorized Representative</strong>
+            </p>
+            <p class="spacing">Date: ________________________</p>
+        </div>
+    {% endfor %}
+</div>
+<style id="page-style">
+    @page {
+        size: A4 portrait;
+        margin: 10mm;
+    }
+</style>
+<style id="footer">
+    ul {
+        margin: 0 0 5px 20px;
+    }
 
-    </style>
-    <style id="general">
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 10pt;
-            padding: 10px;
-            margin: 0;
-        }
+    li {
+        margin: 2px 0 2px 0;
+        padding: 0;
+    }
+    
+    .notes {
+        font-size: 9pt;
+    }
 
-        h1 {
-            text-align: center;
-            font-size: 20pt;
-            margin-bottom: 30px;
-            padding-bottom: 0px;
-            border-bottom: 3px solid #000;
-            background-color: #e5e7eb;
-        }
+    .signatures {
+        padding-top: 30px;
+    }
 
+    .signature {
+        min-width: 250px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        padding-left: 10px;
+        padding-right: 10px;
+        margin-bottom: 10px;
+    }
 
-
-        .section-header {
-            font-size: 12pt;
-            background-color: #f0f0f0;
-            padding: 8px 10px 0px 10px;
-            margin: 20px 0 10px 0;
-            border-left: 4px solid #000;
-        }
-
-
-        .text-left {
-            text-align: left;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-        
-        .text-center {
-            text-align: center;
-        }
-
-        .text-middle {
-            vertical-align: middle;
-        }
-
-        .text-wrap {
-            white-space: normal;
-        }
-
-        .grey-background {
-            background-color: #f0f0f0;
-        }
-
-        .text-white {
-            color: white;
-            font-size: 1pt;
-        }
-
-        .text-grey {
-            color: #f0f0f0;
-            font-size: 1pt;
-        }
-
-        .text-normal-weight {
-            font-weight: 400 !important;
-        }
-
-        .text-bold {
-            font-weight: bold;
-        }
-
-        .notes {
-            margin-top: 30px;
-            font-size: 9pt;
-        }
-
-        ul {
-            margin-left: 20px;
-            margin-top: 5px;
-            margin-bottom: 5px;
-        }
-
-        li {
-            margin: 2px 0 2px 0;
-            padding: 0;
-        }
-
-        .medium-text {
-            font-size: 10pt;
-        }
-
-        .small-text {
-            font-size: 8pt;
-        }
-
-        small {
-            font-size: 12pt;
-        }
-
-        table {
-            width: 100%;
-            font-size: 10pt;
-        }
-
-        td,
-        th {
-            border-collapse: collapse;
-            border: 1px solid #000;
-            padding: 2px 2px 0px 2px;
-            padding-bottom: 0 !important;
-            margin-bottom: 0 !important;
-            vertical-align: middle;
-            text-align: left;
-        }
-        
-        th {
-            background-color: #f0f0f0;
-        }
-        
-        thead {
-            font-weight: bold;
-        }
-    </style>
-    <style id="item-table">
-        table.items {
-            font-size: 8pt;
-        }
-
-        table.items td, 
-        table.items th {
-            padding: 2px 2px 0px 2px;
-        }
-
-        table.items thead {
-            font-weight: bold;
-            white-space: normal;
-        }
-
-        .subsection-header {
-            padding: 8px 10px 0px 10px;
-            margin: 20px 0 10px 0;
-            font-weight: bold;
-            font-size: 8pt;
-        }
-
-        .item-row {
-            font-size: 6pt;
-        }
-        
-        .small-column {
-            width: 35px;
-        }
-
-        .large-column {
-            width: 400px;
-        }
-
-        .border-left-none {
-            border-left: none;
-        }
-
-        .border-right-none {
-            border-right: none;
-        }
-        
-        .total-row {
-            font-weight: bold;
-            background-color: #f5f5f5;
-        }
-
-        .total-row td {
-            border-top: 2px solid #000;
-        }
-    </style>
-</html>
+    .spacing {
+        margin-top: 2px;
+        margin-bottom: 3px;
+        padding-top: 2px;
+        padding-bottom: 2px;
+    }
+</style>

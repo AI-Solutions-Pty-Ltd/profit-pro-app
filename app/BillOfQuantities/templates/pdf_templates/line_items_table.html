@@ -5,19 +5,21 @@
             <th id="col-1" rowspan="2" class="subsection-header">Item No.</th>
             <th id="col-2" rowspan="2" class="subsection-header">Description</th>
             <th id="col-3-5" colspan="3" class="subsection-header text-center">CONTRACT AMOUNT</th>
-            <th id="col-6-8" colspan="3" class="subsection-header text-center">QUANTITIES</th>
+            <td id="col-6-8"
+                colspan="3"
+                class="subsection-header text-center bg-white">QUANTITIES</td>
             <th id="col-9-11" colspan="3" class="subsection-header text-center">CERTIFIED AMOUNTS</th>
         </tr>
         <tr id="header-row-2">
             <th id="col-3" class="text-center">Contract Rate</th>
             <th id="col-4" class="text-center">Contract Quantity</th>
             <th id="col-5" class="text-center">Contract Amount</th>
+            <td id="col-8" class="text-center bg-white">Cumulative Quantity Certified</td>
             <td id="col-6" class="text-center bg-white">Previous Quantity</td>
             <td id="col-7" class="text-center bg-white">Current Quantity</td>
-            <td id="col-8" class="text-center bg-white">Cumulative Quantity Certified</td>
+            <th id="col-11" class="text-center">Cumulative Amount Certified</th>
             <th id="col-9" class="text-center">Previous Amount Certified</th>
             <th id="col-10" class="text-center">Amount Due</th>
-            <th id="col-11" class="text-center">Cumulative Amount Certified</th>
         </tr>
     </thead>
     <tbody>
@@ -57,17 +59,17 @@
                                     {{ line_item.budgeted_quantity|default:0|floatformat:2|intcomma }}
                                 </th>
                                 <th id="col-5" class="text-right text-normal-weight">R{{ line_item.total_price|default:0|floatformat:2|intcomma }}</th>
+                                <td id="col-8" class="text-right text-normal-weight">{{ line_item.total_qty|default:0|floatformat:2|intcomma }}</td>
                                 <td id="col-6" class="text-right text-normal-weight">{{ line_item.previous_qty|default:0|floatformat:2|intcomma }}</td>
                                 <td id="col-7" class="text-right text-normal-weight">{{ line_item.current_qty|default:0|floatformat:2|intcomma }}</td>
-                                <td id="col-8" class="text-right text-normal-weight">{{ line_item.total_qty|default:0|floatformat:2|intcomma }}</td>
+                                <th id="col-11" class="text-right text-normal-weight">
+                                    R{{ line_item.total_claimed|default:0|floatformat:2|intcomma }}
+                                </th>
                                 <th id="col-9" class="text-right text-normal-weight">
                                     R{{ line_item.previous_claimed|default:0|floatformat:2|intcomma }}
                                 </th>
                                 <th id="col-10" class="text-right text-normal-weight">
                                     R{{ line_item.current_claim|default:0|floatformat:2|intcomma }}
-                                </th>
-                                <th id="col-11" class="text-right text-normal-weight">
-                                    R{{ line_item.total_claimed|default:0|floatformat:2|intcomma }}
                                 </th>
                             </tr>
                         {% endif %}
@@ -80,4 +82,10 @@
             </tr>
         {% endfor %}
     </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="{{ colSpan|sub:1 }}" class="total-row text-bold text-right">Total</td>
+            <td class="total-row text-bold text-right">R{{ total|default:0|floatformat:2|intcomma }}</td>
+        </tr>
+    </tfoot>
 </table>

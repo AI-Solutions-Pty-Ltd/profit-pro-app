@@ -204,18 +204,18 @@
             </div>
             <div id="contract-line-items" class="mb-6 border-b border-gray-200">
                 <h2 class="text-lg font-bold text-gray-900 mb-2">Contract Line Items</h2>
-                {% include "payment_certificate/tables/line_items.html" with grouped_line_items=grouped_line_items line_items_total=line_items_total %}
+                {% include "payment_certificate/tables/line_items.html" with grouped_line_items=grouped_line_items line_items_total=payment_certificate.contract_current_claim_total %}
             </div>
             <div id="addendum-line-items" class="mb-6 border-b border-gray-200">
                 <h2 class="text-lg font-bold text-gray-900 mb-2">Addendum Line Items</h2>
-                {% include "payment_certificate/tables/line_items.html" with grouped_line_items=addendum_line_items line_items_total=addendum_line_items_total %}
+                {% include "payment_certificate/tables/line_items.html" with grouped_line_items=addendum_line_items line_items_total=payment_certificate.addendum_current_claim_total %}
             </div>
             <div id="special-items"
                  class="flex flex-col items-center justify-center gap-2 mb-6 border-b border-gray-200 mb-2">
                 <h2 class="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
                     {% heroicon_outline "star" size="20" class="text-orange-600" %} Special Items
                 </h2>
-                {% include "payment_certificate/tables/special_items.html" with special_line_items=special_line_items special_line_items_total=special_line_items_total %}
+                {% include "payment_certificate/tables/special_items.html" with special_line_items=special_line_items special_line_items_total=payment_certificate.special_items_current_claim_total %}
             </div>
         </div>
     </div>
@@ -284,9 +284,7 @@
                       if (!data.pdf_generating) {
                           stopPolling(poller);
                           // Reload page to show updated state
-                          setTimeout(() => {
-                              window.location.reload();
-                          }, 500);
+
                       }
                   } else if (poller.type === 'abridged_pdf') {
                       // Update abridged PDF status
@@ -296,9 +294,7 @@
                       if (!data.abridged_pdf_generating) {
                           stopPolling(poller);
                           // Reload page to show updated state
-                          setTimeout(() => {
-                              window.location.reload();
-                          }, 500);
+
                       }
                   }
               } catch (error) {

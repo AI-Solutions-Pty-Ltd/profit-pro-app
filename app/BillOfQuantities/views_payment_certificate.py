@@ -73,29 +73,6 @@ class LineItemDetailMixin:
             addendum_line_items
         )
 
-        line_items_total = (
-            self.object.actual_transactions.filter(
-                line_item__special_item=False, line_item__addendum=False
-            ).aggregate(total=Sum("total_price"))["total"]
-            or 0
-        )
-        special_line_items_total = (
-            self.object.actual_transactions.filter(
-                line_item__special_item=True, line_item__addendum=False
-            ).aggregate(total=Sum("total_price"))["total"]
-            or 0
-        )
-        addendum_line_items_total = (
-            self.object.actual_transactions.filter(
-                line_item__addendum=True, line_item__special_item=False
-            ).aggregate(total=Sum("total_price"))["total"]
-            or 0
-        )
-
-        context["line_items_total"] = Decimal(line_items_total)
-        context["special_line_items_total"] = Decimal(special_line_items_total)
-        context["addendum_line_items_total"] = Decimal(addendum_line_items_total)
-
         return context
 
 
@@ -115,7 +92,7 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
         context["active_certificate"] = active_payment_certificate
 
         # Completed payment certificates (APPROVED or REJECTED)
-        completed_certificates = self.get_queryset()
+        completed_certificates = self.get_queryset().order_by("-certificate_number")
         if active_payment_certificate and completed_certificates:
             completed_certificates = completed_certificates.exclude(
                 pk=active_payment_certificate.pk
@@ -150,6 +127,10 @@ class PaymentCertificateDetailView(
     model = PaymentCertificate
     template_name = "payment_certificate/payment_certificate_detail.html"
     context_object_name = "payment_certificate"
+
+    def dispatch(self, request, *args, **kwargs):
+        generate_pdf_async(self.get_object().id, "abridged")
+        return super().dispatch(request, *args, **kwargs)
 
 
 class PaymentCertificateEditView(PaymentCertificateMixin, View):

@@ -72,15 +72,15 @@
                 <tbody>
                     <tr>
                         <td>Original Contract Value</td>
-                        <td class="text-right">{{ project.get_original_contract_value|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ project.get_original_contract_value|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
                         <td>Total Contract Amendments To Date</td>
-                        <td class="text-right">{{ project.get_addendum_contract_value|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ project.get_addendum_contract_value|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
                         <td>Sub Total</td>
-                        <td class="text-right">{{ project.get_total_contract_value|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ project.get_total_contract_value|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
                         <td>
@@ -92,16 +92,16 @@
                                 No VAT
                             {% endif %}
                         </td>
-                        <td class="text-right">{{ vat_value|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ vat_value|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr class="total-row">
                         <td>Total Contract Value</td>
-                        <td class="text-right">{{ project.get_total_contract_value|add:vat_value|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ project.get_total_contract_value|add:vat_value|floatformat:2|intcomma }}</td>
                     </tr>
                 </tbody>
             </table>
         </div>
-        <div id="section-c-payment-certificate-summary">
+        <div id="section-c-payment-certificate-summary" class="new-page">
             <h2 class="section-header">C. PAYMENT CERTIFICATE SUMMARY</h2>
             <table class="text-small">
                 <thead>
@@ -113,15 +113,19 @@
                 <tbody>
                     <tr>
                         <td>Value of work done up to the assessment interval #{{ payment_certificate.certificate_number }}</td>
-                        <td class="text-right">{{ payment_certificate.line_items_progressive_previous|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ payment_certificate.work_progressive_previous|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
-                        <td>Plus : Compensation Events</td>
-                        <td class="text-right">{{ payment_certificate.line_items_current_claim_total|floatformat:2|intcomma }}</td>
+                        <td>Plus : Contract Compensation Events</td>
+                        <td class="text-right">R {{ payment_certificate.contract_current_claim_total|floatformat:2|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td>Plus : Addendum Compensation Events</td>
+                        <td class="text-right">R {{ payment_certificate.addendum_current_claim_total|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
                         <td>Total value of work done</td>
-                        <td class="text-right">{{ payment_certificate.line_items_progressive_to_date|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ payment_certificate.work_progressive_to_date|floatformat:2|intcomma }}</td>
                     </tr>
                     {% for special_item in payment_certificate.special_items_annotated %}
                         {% if special_item.total %}
@@ -133,21 +137,21 @@
                                         LESS: {{ special_item.description }}
                                     {% endif %}
                                 </td>
-                                <td class="text-right">{{ special_item.total|default:0|floatformat:2|intcomma }}</td>
+                                <td class="text-right">R {{ special_item.total|default:0|floatformat:2|intcomma }}</td>
                             </tr>
                         {% endif %}
                     {% endfor %}
                     <tr>
                         <td>Sub Total</td>
-                        <td class="text-right">{{ payment_certificate.progressive_to_date|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ payment_certificate.progressive_to_date|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
-                        <td>Less : Previous Amount Due</td>
-                        <td class="text-right">{{ payment_certificate.progressive_previous|floatformat:2|intcomma }}</td>
+                        <td>LESS : Previous Amount Due</td>
+                        <td class="text-right">R {{ payment_certificate.progressive_previous|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
                         <td>Sub Total</td>
-                        <td class="text-right">{{ payment_certificate.current_claim_total|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
                         <td>
@@ -159,15 +163,16 @@
                                 No VAT
                             {% endif %}
                         </td>
-                        <td class="text-right">{{ vat_incl|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ vat_incl|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
                         <td>TOTAL AMOUNT NOW CERTIFIED</td>
-                        <td class="text-right">{{ payment_certificate.current_claim_total|add:vat_incl|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ payment_certificate.current_claim_total|add:vat_incl|floatformat:2|intcomma }}</td>
                     </tr>
                 </tbody>
             </table>
         </div>
+        <div id="footer">{% include "pdf_templates/3-footer.html" with payment_certificate=payment_certificate %}</div>
     </body>
     <style id="page-style">
         @page {
@@ -181,6 +186,10 @@
             font-size: 10pt;
             padding: 10px;
             margin: 0;
+        }
+
+        .new-page {
+            page-break-before: always;
         }
 
         h1 {

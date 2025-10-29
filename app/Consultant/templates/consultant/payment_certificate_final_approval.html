@@ -66,7 +66,7 @@
                     <div class="bg-indigo-50 rounded-lg p-4">
                         <dt class="text-sm font-medium text-indigo-600">Total Amount</dt>
                         <dd class="mt-1 text-2xl font-semibold text-indigo-900">
-                            R {{ payment_certificate.total_amount|floatformat:2|intcomma }}
+                            R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}
                         </dd>
                     </div>
                 </div>
@@ -107,18 +107,18 @@
             </div>
             <div id="contract-line-items" class="mb-6 border-b border-gray-200">
                 <h2 class="text-lg font-bold text-gray-900 mb-2">Contract Line Items</h2>
-                {% include "payment_certificate/tables/line_items.html" with grouped_line_items=grouped_line_items line_items_total=line_items_total %}
+                {% include "payment_certificate/tables/line_items.html" with grouped_line_items=grouped_line_items line_items_total=payment_certificate.contract_current_claim_total %}
             </div>
             <div id="addendum-line-items" class="mb-6 border-b border-gray-200">
                 <h2 class="text-lg font-bold text-gray-900 mb-2">Addendum Line Items</h2>
-                {% include "payment_certificate/tables/line_items.html" with grouped_line_items=addendum_line_items line_items_total=addendum_line_items_total %}
+                {% include "payment_certificate/tables/line_items.html" with grouped_line_items=addendum_line_items line_items_total=payment_certificate.addendum_current_claim_total %}
             </div>
             <div id="special-items"
                  class="flex flex-col items-center justify-center gap-2 mb-6 border-b border-gray-200 mb-2">
                 <h2 class="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
                     {% heroicon_outline "star" size="20" class="text-orange-600" %} Special Items
                 </h2>
-                {% include "payment_certificate/tables/special_items.html" with special_line_items=special_line_items special_line_items_total=special_line_items_total %}
+                {% include "payment_certificate/tables/special_items.html" with special_line_items=special_line_items special_line_items_total=payment_certificate.special_items_current_claim_total %}
             </div>
         </div>
     </div>
