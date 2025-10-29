@@ -9,7 +9,9 @@ class UserHasGroupGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
     permissions = []
 
     def test_func(self):
-        if not self.permissions or not self.request.user.is_superuser:
+        if self.request.user.is_superuser:
+            return True
+        if not self.permissions:
             raise ValueError("Permissions must be specified.")
         return self.request.user.groups.filter(name__in=self.permissions).exists()
 
