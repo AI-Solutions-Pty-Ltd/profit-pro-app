@@ -7,12 +7,12 @@
                     <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item No.</th>
                     <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                     <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price/Unit</th>
+                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Quantity</th>
                     <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Previous Quantity</th>
                     <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Quantity</th>
-                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Quantity</th>
+                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Claimed</th>
                     <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Previous Claim</th>
                     <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Claim</th>
-                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Claimed</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -34,23 +34,23 @@
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
                                         R {{ line_item.unit_price|floatformat:2|intcomma }} / {{ line_item.unit_measurement }}
                                     </td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">
+                                        R {{ line_item.total_qty|floatformat:2|intcomma }}
+                                    </td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
                                         {{ line_item.previous_qty|floatformat:2|intcomma }}
                                     </td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
                                         {{ line_item.current_qty|floatformat:2|intcomma }}
                                     </td>
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">
-                                        R {{ line_item.total_qty|floatformat:2|intcomma }}
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                        R {{ line_item.total_claimed|floatformat:2|intcomma }}
                                     </td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
                                         {{ line_item.previous_claimed|floatformat:2|intcomma }}
                                     </td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
                                         {{ line_item.current_claim|floatformat:2|intcomma }}
-                                    </td>
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                        R {{ line_item.total_claimed|floatformat:2|intcomma }}
                                     </td>
                                 </tr>
                             {% endfor %}
