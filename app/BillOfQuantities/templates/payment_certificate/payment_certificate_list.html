@@ -164,8 +164,16 @@
                                 </div>
                                 <div class="flex items-center space-x-4">
                                     <div class="text-right">
-                                        <p class="text-sm font-medium text-gray-900">R {{ cert.total_claimed|default:0|floatformat:2|intcomma }}</p>
-                                        <p class="text-xs text-gray-500">Total Claimed</p>
+                                        <p class="text-xs text-gray-500">Progressive To Date</p>
+                                        <p class="text-sm font-medium text-gray-900">R {{ cert.progressive_previous|default:0|floatformat:2|intcomma }}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs text-gray-500">Cumulative Total</p>
+                                        <p class="text-sm font-medium text-gray-900">R {{ cert.progressive_to_date|default:0|floatformat:2|intcomma }}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs text-gray-500">Claim Total</p>
+                                        <p class="text-sm font-medium text-gray-900">R {{ cert.current_claim_total|default:0|floatformat:2|intcomma }}</p>
                                     </div>
                                     <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk cert.pk %}"
                                        class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
