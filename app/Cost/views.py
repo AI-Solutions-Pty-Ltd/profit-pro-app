@@ -49,7 +49,7 @@ class ProjectCostTreeView(ProjectAccessMixin, DetailView):
     """Tree view showing costs grouped by structure and bill."""
 
     model = Project
-    template_name = "cost/project_cost_tree.html"
+    template_name = "Cost/project_cost_tree.html"
     context_object_name = "project"
     pk_url_kwarg = "project_pk"
 
@@ -94,7 +94,7 @@ class BillCostDetailView(ProjectAccessMixin, ListView):
     """Detail view showing all costs for a specific bill."""
 
     model = Bill
-    template_name = "cost/bill_cost_detail.html"
+    template_name = "Cost/bill_cost_detail.html"
     context_object_name = "costs"
     paginate_by = 20
 
@@ -158,7 +158,7 @@ class BillCostCreateView(ProjectAccessMixin, CreateView):
 
     model = Cost
     form_class = CostForm
-    template_name = "cost/cost_form.html"
+    template_name = "Cost/cost_form.html"
 
     def dispatch(self, request, *args, **kwargs):
         # Call parent dispatch first to set self.project
@@ -212,7 +212,7 @@ class BillCostUpdateView(ProjectAccessMixin, UpdateView):
 
     model = Cost
     form_class = CostForm
-    template_name = "cost/cost_form.html"
+    template_name = "Cost/cost_form.html"
     pk_url_kwarg = "cost_pk"
 
     def get_bill(self):
@@ -271,7 +271,7 @@ class BillCostUpdateView(ProjectAccessMixin, UpdateView):
 class BillCostFormSetView(ProjectAccessMixin, View):
     """View to add multiple costs using a formset."""
 
-    template_name = "cost/cost_formset.html"
+    template_name = "Cost/cost_formset.html"
 
     def dispatch(self, request, *args, **kwargs):
         # Call parent dispatch first to set self.project
