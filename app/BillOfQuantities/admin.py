@@ -21,8 +21,14 @@ class StructureAdmin(SoftDeleteAdmin):
 
 @admin.register(Bill)
 class BillAdmin(SoftDeleteAdmin):
-    list_display = ["name", "structure", "deleted", "created_at"]
-    list_filter = ["deleted", "created_at"]
+    list_display = [
+        "structure__project__name",
+        "name",
+        "structure",
+        "deleted",
+        "created_at",
+    ]
+    list_filter = ["deleted", "created_at", "structure__project"]
     search_fields = ["name", "structure__name"]
 
 
