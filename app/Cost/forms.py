@@ -95,12 +95,13 @@ class CostForm(forms.ModelForm):
 
 class BaseCostFormSet(formset_factory(CostForm, extra=1, can_delete=True)):
     def __init__(self, *args, **kwargs):
-        self.bill = kwargs.pop('bill', None)
+        self.bill = kwargs.pop("bill", None)
         super().__init__(*args, **kwargs)
-        
+
     def get_form_kwargs(self, index):
         kwargs = super().get_form_kwargs(index)
-        kwargs['bill'] = self.bill
+        kwargs["bill"] = self.bill
         return kwargs
+
 
 CostFormSet = BaseCostFormSet

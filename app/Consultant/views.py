@@ -1,13 +1,10 @@
-from decimal import Decimal
 from django.contrib import messages
-from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.views.generic import DetailView, ListView, UpdateView
 
 from app.BillOfQuantities.forms import PaymentCertificateFinalApprovalForm
-from app.BillOfQuantities.models import LineItem, PaymentCertificate
-from app.BillOfQuantities.tasks import group_line_items_by_hierarchy
+from app.BillOfQuantities.models import PaymentCertificate
 from app.BillOfQuantities.views_payment_certificate import LineItemDetailMixin
 from app.core.Utilities.django_email_service import django_email_service
 from app.core.Utilities.permissions import UserHasGroupGenericMixin

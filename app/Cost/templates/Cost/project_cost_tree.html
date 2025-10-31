@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% load humanize %}
 {% load heroicons %}
-
-{% block title %}Cost Management - {{ project.name }}{% endblock title %}
-
+{% block title %}
+    Cost Management - {{ project.name }}
+{% endblock title %}
 {% block content %}
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
@@ -11,16 +11,14 @@
             <nav class="flex mb-4" aria-label="Breadcrumb">
                 <ol class="inline-flex items-center space-x-1 md:space-x-3">
                     <li class="inline-flex items-center">
-                        <a href="{% url 'project:project-list' %}" class="text-gray-700 hover:text-indigo-600">
-                            Projects
-                        </a>
+                        <a href="{% url 'project:project-list' %}"
+                           class="text-gray-700 hover:text-indigo-600">Projects</a>
                     </li>
                     <li>
                         <div class="flex items-center">
                             <span class="mx-2 text-gray-400">/</span>
-                            <a href="{% url 'project:project-detail' project.pk %}" class="text-gray-700 hover:text-indigo-600">
-                                {{ project.name }}
-                            </a>
+                            <a href="{% url 'project:project-detail' project.pk %}"
+                               class="text-gray-700 hover:text-indigo-600">{{ project.name }}</a>
                         </div>
                     </li>
                     <li aria-current="page">
@@ -31,7 +29,6 @@
                     </li>
                 </ol>
             </nav>
-            
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">Cost Management</h1>
@@ -43,7 +40,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Cost Tree -->
         <div class="bg-white shadow-sm rounded-lg overflow-hidden">
             {% if tree %}
@@ -56,7 +52,6 @@
                                 <span class="text-lg font-bold text-gray-900">R{{ structure_data.total|floatformat:2|intcomma }}</span>
                             </div>
                         </div>
-                        
                         <!-- Bills List -->
                         <div class="divide-y divide-gray-200">
                             {% for bill_data in structure_data.bills %}
@@ -79,9 +74,7 @@
                                     </div>
                                 </a>
                             {% empty %}
-                                <div class="px-6 py-4 text-sm text-gray-500">
-                                    No bills in this structure
-                                </div>
+                                <div class="px-6 py-4 text-sm text-gray-500">No bills in this structure</div>
                             {% endfor %}
                         </div>
                     </div>

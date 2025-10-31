@@ -4,18 +4,25 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Cost', '0002_alter_actualcost_options_alter_cost_options'),
+        ("Cost", "0002_alter_actualcost_options_alter_cost_options"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='actualcost',
-            options={'ordering': ['category', '-date', 'description'], 'verbose_name': 'Actual Cost', 'verbose_name_plural': 'Actual Costs'},
+            name="actualcost",
+            options={
+                "ordering": ["category", "-date", "description"],
+                "verbose_name": "Actual Cost",
+                "verbose_name_plural": "Actual Costs",
+            },
         ),
         migrations.AlterModelOptions(
-            name='cost',
-            options={'ordering': ['category', '-date', 'description'], 'verbose_name': 'Cost', 'verbose_name_plural': 'Costs'},
+            name="cost",
+            options={
+                "ordering": ["category", "-date", "description"],
+                "verbose_name": "Cost",
+                "verbose_name_plural": "Costs",
+            },
         ),
     ]
