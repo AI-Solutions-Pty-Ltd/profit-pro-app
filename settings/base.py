@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
 from decimal import Decimal
+from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
@@ -66,6 +66,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.sites.middleware.CurrentSiteMiddleware",
     "django.middleware.locale.LocaleMiddleware",
+    "app.core.middleware.timer_middleware.RequestTimerMiddleware",
 ]
 
 ROOT_URLCONF = "app.core.urls"
