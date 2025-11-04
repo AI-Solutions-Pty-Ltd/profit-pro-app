@@ -81,250 +81,138 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Key Metrics Row -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-white">
-            <div class="metric-card bg-blue-600 text-white rounded-lg shadow-lg p-6 hover:transform hover:-translate-y-1 transition-transform duration-200">
-                <div class="text-center">
-                    <i class="fas fa-project-diagram text-4xl mb-4"></i>
-                    <div class="metric-value text-3xl font-bold">{{ active_projects }}</div>
-                    <div class="metric-label text-sm">Active Projects</div>
+            <!-- Active Projects - Top Row -->
+            <div class="md:col-span-3">
+                <div class="metric-card bg-blue-600 text-white rounded-lg shadow-lg p-6 hover:transform hover:-translate-y-1 transition-transform duration-200">
+                    <div class="text-center">
+                        <i class="fas fa-project-diagram text-4xl mb-4"></i>
+                        <div class="metric-value text-3xl font-bold">{{ active_projects }}</div>
+                        <div class="metric-label text-sm">Active Projects</div>
+                    </div>
                 </div>
             </div>
+        </div>
+        <!-- Second Row Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-white">
+            <!-- Total Budget -->
             <div class="metric-card bg-green-600 text-white rounded-lg shadow-lg p-6 hover:transform hover:-translate-y-1 transition-transform duration-200">
                 <div class="text-center">
                     <i class="fas fa-dollar-sign text-4xl mb-4"></i>
-                    <div class="metric-value text-3xl font-bold">R{{ portfolio_data.costs.approved|floatformat:"2g" }}</div>
-                    <div class="metric-label text-sm">Total Budget</div>
+                    <div class="metric-value text-3xl font-bold">
+                        R{{ portfolio_data.costs.actual|floatformat:"2g" }} / R{{ portfolio_data.costs.approved|floatformat:"2g" }}
+                    </div>
+                    <div class="metric-label text-sm">
+                        Total Budget ({{ portfolio_data.costs.actual|div:portfolio_data.costs.approved|mul:100|floatformat:"2g" }}%)
+                    </div>
                 </div>
             </div>
+            <!-- Schedule -->
+            <div class="metric-card bg-orange-600 text-white rounded-lg shadow-lg p-6 hover:transform hover:-translate-y-1 transition-transform duration-200">
+                <div class="text-center">
+                    <i class="fas fa-clock text-4xl mb-4"></i>
+                    <div class="metric-value text-3xl font-bold">
+                        {{ portfolio_data.schedule.actual }}/{{ portfolio_data.schedule.approved }}
+                    </div>
+                    <div class="metric-label text-sm">
+                        Schedule ({{ portfolio_data.schedule.actual|div:portfolio_data.schedule.approved|mul:100|floatformat:"2g" }}%)
+                    </div>
+                </div>
+            </div>
+            <!-- Compliance Status -->
             <div class="metric-card bg-purple-600 text-white rounded-lg shadow-lg p-6 hover:transform hover:-translate-y-1 transition-transform duration-200">
                 <div class="text-center">
                     <i class="fas fa-tasks text-4xl mb-4"></i>
                     <div class="metric-value text-3xl font-bold">
                         {{ portfolio_data.compliance.actual }}/{{ portfolio_data.compliance.approved }}
                     </div>
-                    <div class="metric-label text-sm">Compliance Status</div>
+                    <div class="metric-label text-sm">
+                        Compliance Status ({{ portfolio_data.compliance.actual|div:portfolio_data.compliance.approved|mul:100|floatformat:"2g" }}%)
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    <!-- Forecast Variance -->
-    <div class="mb-8">
-        <!-- Performance Metrics -->
+        <!-- Forecast Variance -->
         <div class="mb-8">
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="bg-white border-b border-gray-200 px-6 py-4">
-                    <h5 class="text-lg font-semibold mb-0">
-                        <i class="fas fa-tachometer-alt mr-2"></i>Performance Metrics
-                    </h5>
-                </div>
-                <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <!-- Forecast Variance as First Column -->
-                        <div class="text-center">
-                            <h6 class="text-sm font-medium text-gray-500 mb-2">Forecast Variance</h6>
-                            <div class="space-y-4">
-                                <div>
-                                    <div class="text-sm text-gray-600">Costs</div>
-                                    <div class="text-lg font-semibold {% if forecast_variance.costs.amount > 0 %}text-red-600{% else %}text-green-600{% endif %}">
-                                        R{{ forecast_variance.costs.amount|floatformat:"2g" }}
+            <!-- Performance Metrics -->
+            <div class="mb-8">
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="bg-white border-b border-gray-200 px-6 py-4">
+                        <h5 class="text-lg font-semibold mb-0">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Performance Metrics
+                        </h5>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Forecast Variance as First Column -->
+                            <div class="text-center">
+                                <h6 class="text-sm font-medium text-gray-500 mb-2">Forecast Variance</h6>
+                                <div class="space-y-4">
+                                    <div>
+                                        <div class="text-sm text-gray-600">Costs</div>
+                                        <div class="text-lg font-semibold {% if forecast_variance.costs.amount > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                                            R{{ forecast_variance.costs.amount|floatformat:"2g" }}
+                                        </div>
+                                        <div class="text-xs text-gray-500">{{ forecast_variance.costs.percentage }}%</div>
                                     </div>
-                                    <div class="text-xs text-gray-500">{{ forecast_variance.costs.percentage }}%</div>
-                                </div>
-                                <div>
-                                    <div class="text-sm text-gray-600">Schedule</div>
-                                    <div class="text-lg font-semibold {% if forecast_variance.schedule.amount > 0 %}text-red-600{% else %}text-green-600{% endif %}">
-                                        {{ forecast_variance.schedule.amount }} days
+                                    <div>
+                                        <div class="text-sm text-gray-600">Schedule</div>
+                                        <div class="text-lg font-semibold {% if forecast_variance.schedule.amount > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                                            {{ forecast_variance.schedule.amount }} days
+                                        </div>
+                                        <div class="text-xs text-gray-500">{{ forecast_variance.schedule.percentage }}%</div>
                                     </div>
-                                    <div class="text-xs text-gray-500">{{ forecast_variance.schedule.percentage }}%</div>
-                                </div>
-                                <div>
-                                    <div class="text-sm text-gray-600">Compliance</div>
-                                    <div class="text-lg font-semibold {% if forecast_variance.compliance.amount > 0 %}text-red-600{% else %}text-green-600{% endif %}">
-                                        {{ forecast_variance.compliance.amount }} items
-                                    </div>
-                                    <div class="text-xs text-gray-500">{{ forecast_variance.compliance.percentage }}%</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-center">
-                            <h6 class="text-sm font-medium text-gray-500 mb-2">Performance Index</h6>
-                            <div class="space-y-4">
-                                <div>
-                                    <div class="text-sm text-gray-600">Costs</div>
-                                    <div class="text-lg font-semibold {% if performance_metrics.performance_index.costs >= 1 %}text-green-600{% else %}text-red-600{% endif %}">
-                                        {{ performance_metrics.performance_index.costs }}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="text-sm text-gray-600">Schedule</div>
-                                    <div class="text-lg font-semibold {% if performance_metrics.performance_index.schedule >= 1 %}text-green-600{% else %}text-red-600{% endif %}">
-                                        {{ performance_metrics.performance_index.schedule }}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="text-sm text-gray-600">Compliance</div>
-                                    <div class="text-lg font-semibold {% if performance_metrics.performance_index.compliance >= 1 %}text-green-600{% else %}text-red-600{% endif %}">
-                                        {{ performance_metrics.performance_index.compliance }}
+                                    <div>
+                                        <div class="text-sm text-gray-600">Compliance</div>
+                                        <div class="text-lg font-semibold {% if forecast_variance.compliance.amount > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                                            {{ forecast_variance.compliance.amount }} items
+                                        </div>
+                                        <div class="text-xs text-gray-500">{{ forecast_variance.compliance.percentage }}%</div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="text-center">
-                            <h6 class="text-sm font-medium text-gray-500 mb-2">Overrun/Savings</h6>
-                            <div class="space-y-4">
-                                <div>
-                                    <div class="text-sm text-gray-600">Costs</div>
-                                    <div class="text-lg font-semibold {% if performance_metrics.overrun_savings.costs > 0 %}text-red-600{% else %}text-green-600{% endif %}">
-                                        {{ performance_metrics.overrun_savings.costs }}%
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="text-sm text-gray-600">Schedule</div>
-                                    <div class="text-lg font-semibold {% if performance_metrics.overrun_savings.schedule > 0 %}text-red-600{% else %}text-green-600{% endif %}">
-                                        {{ performance_metrics.overrun_savings.schedule }}%
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="text-sm text-gray-600">Compliance</div>
-                                    <div class="text-lg font-semibold {% if performance_metrics.overrun_savings.compliance > 0 %}text-red-600{% else %}text-green-600{% endif %}">
-                                        {{ performance_metrics.overrun_savings.compliance }}%
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-center">
-                            <h6 class="text-sm font-medium text-gray-500 mb-2">Progress Percentage</h6>
-                            <div class="space-y-4">
-                                <div>
-                                    <div class="text-sm text-gray-600">Costs</div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="bg-blue-600 h-2 rounded-full"
-                                             style="width: {{ performance_metrics.progress_percentage.costs }}%"></div>
-                                    </div>
-                                    <div class="text-xs text-gray-500 mt-1">{{ performance_metrics.progress_percentage.costs }}%</div>
-                                </div>
-                                <div>
-                                    <div class="text-sm text-gray-600">Schedule</div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="bg-green-600 h-2 rounded-full"
-                                             style="width: {{ performance_metrics.progress_percentage.schedule }}%">
+                            <div class="text-center">
+                                <h6 class="text-sm font-medium text-gray-500 mb-2">Performance Index</h6>
+                                <div class="space-y-4">
+                                    <div>
+                                        <div class="text-sm text-gray-600">Costs</div>
+                                        <div class="text-lg font-semibold {% if performance_metrics.performance_index.costs >= 1 %}text-green-600{% else %}text-red-600{% endif %}">
+                                            {{ performance_metrics.performance_index.costs }}
                                         </div>
                                     </div>
-                                    <div class="text-xs text-gray-500 mt-1">{{ performance_metrics.progress_percentage.schedule }}%</div>
-                                </div>
-                                <div>
-                                    <div class="text-sm text-gray-600">Compliance</div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="bg-purple-600 h-2 rounded-full"
-                                             style="width: {{ performance_metrics.progress_percentage.compliance }}%">
+                                    <div>
+                                        <div class="text-sm text-gray-600">Schedule</div>
+                                        <div class="text-lg font-semibold {% if performance_metrics.performance_index.schedule >= 1 %}text-green-600{% else %}text-red-600{% endif %}">
+                                            {{ performance_metrics.performance_index.schedule }}
                                         </div>
                                     </div>
-                                    <div class="text-xs text-gray-500 mt-1">{{ performance_metrics.progress_percentage.compliance }}%</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Project Status Overview -->
-        <div class="mb-8">
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="bg-white border-b border-gray-200 px-6 py-4">
-                    <h5 class="text-lg font-semibold mb-0">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>Project Status Overview
-                    </h5>
-                </div>
-                <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                            <h6 class="text-sm font-medium text-gray-500 mb-4">Costs</h6>
-                            <div class="space-y-3">
-                                <div class="flex items-center">
-                                    <div class="w-4 h-4 bg-red-100 rounded mr-3"></div>
-                                    <div class="flex-1">
-                                        <div class="text-sm font-medium">Urgent Interventions</div>
-                                        <div class="text-xs text-gray-500">{{ project_status.urgent_interventions.costs }} projects</div>
-                                    </div>
-                                    <div class="text-sm font-semibold text-red-600">{{ project_status_percentages.urgent_interventions.costs }}%</div>
-                                </div>
-                                <div class="flex items-center">
-                                    <div class="w-4 h-4 bg-yellow-100 rounded mr-3"></div>
-                                    <div class="flex-1">
-                                        <div class="text-sm font-medium">Requires Attention</div>
-                                        <div class="text-xs text-gray-500">{{ project_status.requires_attention.costs }} projects</div>
-                                    </div>
-                                    <div class="text-sm font-semibold text-yellow-600">{{ project_status_percentages.requires_attention.costs }}%</div>
-                                </div>
-                                <div class="flex items-center">
-                                    <div class="w-4 h-4 bg-green-100 rounded mr-3"></div>
-                                    <div class="flex-1">
-                                        <div class="text-sm font-medium">Performing as Planned</div>
-                                        <div class="text-xs text-gray-500">{{ project_status.performing_as_planned.costs }} projects</div>
-                                    </div>
-                                    <div class="text-sm font-semibold text-green-600">{{ project_status_percentages.performing_as_planned.costs }}%</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <h6 class="text-sm font-medium text-gray-500 mb-4">Schedule</h6>
-                            <div class="space-y-3">
-                                <div class="flex items-center">
-                                    <div class="w-4 h-4 bg-red-100 rounded mr-3"></div>
-                                    <div class="flex-1">
-                                        <div class="text-sm font-medium">Urgent Interventions</div>
-                                        <div class="text-xs text-gray-500">{{ project_status.urgent_interventions.schedule }} projects</div>
-                                    </div>
-                                    <div class="text-sm font-semibold text-red-600">{{ project_status_percentages.urgent_interventions.schedule }}%</div>
-                                </div>
-                                <div class="flex items-center">
-                                    <div class="w-4 h-4 bg-yellow-100 rounded mr-3"></div>
-                                    <div class="flex-1">
-                                        <div class="text-sm font-medium">Requires Attention</div>
-                                        <div class="text-xs text-gray-500">{{ project_status.requires_attention.schedule }} projects</div>
-                                    </div>
-                                    <div class="text-sm font-semibold text-yellow-600">{{ project_status_percentages.requires_attention.schedule }}%</div>
-                                </div>
-                                <div class="flex items-center">
-                                    <div class="w-4 h-4 bg-green-100 rounded mr-3"></div>
-                                    <div class="flex-1">
-                                        <div class="text-sm font-medium">Performing as Planned</div>
-                                        <div class="text-xs text-gray-500">{{ project_status.performing_as_planned.schedule }} projects</div>
-                                    </div>
-                                    <div class="text-sm font-semibold text-green-600">
-                                        {{ project_status_percentages.performing_as_planned.schedule }}%
+                                    <div>
+                                        <div class="text-sm text-gray-600">Compliance</div>
+                                        <div class="text-lg font-semibold {% if performance_metrics.performance_index.compliance >= 1 %}text-green-600{% else %}text-red-600{% endif %}">
+                                            {{ performance_metrics.performance_index.compliance }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div>
-                            <h6 class="text-sm font-medium text-gray-500 mb-4">Compliance</h6>
-                            <div class="space-y-3">
-                                <div class="flex items-center">
-                                    <div class="w-4 h-4 bg-red-100 rounded mr-3"></div>
-                                    <div class="flex-1">
-                                        <div class="text-sm font-medium">Urgent Interventions</div>
-                                        <div class="text-xs text-gray-500">{{ project_status.urgent_interventions.compliance }} projects</div>
+                            <div class="text-center">
+                                <h6 class="text-sm font-medium text-gray-500 mb-2">Overrun/Savings</h6>
+                                <div class="space-y-4">
+                                    <div>
+                                        <div class="text-sm text-gray-600">Costs</div>
+                                        <div class="text-lg font-semibold {% if performance_metrics.overrun_savings.costs > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                                            {{ performance_metrics.overrun_savings.costs }}%
+                                        </div>
                                     </div>
-                                    <div class="text-sm font-semibold text-red-600">{{ project_status_percentages.urgent_interventions.compliance }}%</div>
-                                </div>
-                                <div class="flex items-center">
-                                    <div class="w-4 h-4 bg-yellow-100 rounded mr-3"></div>
-                                    <div class="flex-1">
-                                        <div class="text-sm font-medium">Requires Attention</div>
-                                        <div class="text-xs text-gray-500">{{ project_status.requires_attention.compliance }} projects</div>
+                                    <div>
+                                        <div class="text-sm text-gray-600">Schedule</div>
+                                        <div class="text-lg font-semibold {% if performance_metrics.overrun_savings.schedule > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                                            {{ performance_metrics.overrun_savings.schedule }}%
+                                        </div>
                                     </div>
-                                    <div class="text-sm font-semibold text-yellow-600">
-                                        {{ project_status_percentages.requires_attention.compliance }}%
-                                    </div>
-                                </div>
-                                <div class="flex items-center">
-                                    <div class="w-4 h-4 bg-green-100 rounded mr-3"></div>
-                                    <div class="flex-1">
-                                        <div class="text-sm font-medium">Performing as Planned</div>
-                                        <div class="text-xs text-gray-500">{{ project_status.performing_as_planned.compliance }} projects</div>
-                                    </div>
-                                    <div class="text-sm font-semibold text-green-600">
-                                        {{ project_status_percentages.performing_as_planned.compliance }}%
+                                    <div>
+                                        <div class="text-sm text-gray-600">Compliance</div>
+                                        <div class="text-lg font-semibold {% if performance_metrics.overrun_savings.compliance > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                                            {{ performance_metrics.overrun_savings.compliance }}%
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -332,99 +220,160 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <!-- Portfolio Overview Table -->
-        <div class="mb-8">
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="bg-white border-b border-gray-200 px-6 py-4">
-                    <h5 class="text-lg font-semibold mb-0">
-                        <i class="fas fa-chart-pie mr-2"></i>Portfolio Overview
-                    </h5>
-                </div>
-                <div class="p-6">
-                    <div class="overflow-x-auto">
-                        <table class="w-full border-collapse">
-                            <thead>
-                                <tr class="bg-gray-50">
-                                    <th class="w-1/4 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                                    <th class="w-1/4 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved</th>
-                                    <th class="w-1/4 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Planned</th>
-                                    <th class="w-1/4 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actual</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Costs</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        R{{ portfolio_data.costs.approved|floatformat:"2g" }}
-                                    </td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">R{{ portfolio_data.costs.planned|floatformat:"2g" }}</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">R{{ portfolio_data.costs.actual|floatformat:"2g" }}</td>
-                                </tr>
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Schedule</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.schedule.approved }} days</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.schedule.planned }} days</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.schedule.actual }} days</td>
-                                </tr>
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Compliance</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.compliance.approved }} items</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.compliance.planned }} items</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.compliance.actual }} items</td>
-                                </tr>
-                            </tbody>
-                        </table>
+            <!-- Project Status Overview -->
+            <div class="mb-8">
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="bg-white border-b border-gray-200 px-6 py-4">
+                        <h5 class="text-lg font-semibold mb-0">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Project Status Overview
+                        </h5>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <h6 class="text-sm font-medium text-gray-500 mb-4">Costs</h6>
+                                <div class="space-y-3">
+                                    <div class="flex items-center">
+                                        <div class="w-4 h-4 bg-red-100 rounded mr-3"></div>
+                                        <div class="flex-1">
+                                            <div class="text-sm font-medium">Urgent Interventions</div>
+                                            <div class="text-xs text-gray-500">{{ project_status.urgent_interventions.costs }} projects</div>
+                                        </div>
+                                        <div class="text-sm font-semibold text-red-600">{{ project_status_percentages.urgent_interventions.costs }}%</div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-4 h-4 bg-yellow-100 rounded mr-3"></div>
+                                        <div class="flex-1">
+                                            <div class="text-sm font-medium">Requires Attention</div>
+                                            <div class="text-xs text-gray-500">{{ project_status.requires_attention.costs }} projects</div>
+                                        </div>
+                                        <div class="text-sm font-semibold text-yellow-600">{{ project_status_percentages.requires_attention.costs }}%</div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-4 h-4 bg-green-100 rounded mr-3"></div>
+                                        <div class="flex-1">
+                                            <div class="text-sm font-medium">Performing as Planned</div>
+                                            <div class="text-xs text-gray-500">{{ project_status.performing_as_planned.costs }} projects</div>
+                                        </div>
+                                        <div class="text-sm font-semibold text-green-600">{{ project_status_percentages.performing_as_planned.costs }}%</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="text-sm font-medium text-gray-500 mb-4">Schedule</h6>
+                                <div class="space-y-3">
+                                    <div class="flex items-center">
+                                        <div class="w-4 h-4 bg-red-100 rounded mr-3"></div>
+                                        <div class="flex-1">
+                                            <div class="text-sm font-medium">Urgent Interventions</div>
+                                            <div class="text-xs text-gray-500">{{ project_status.urgent_interventions.schedule }} projects</div>
+                                        </div>
+                                        <div class="text-sm font-semibold text-red-600">{{ project_status_percentages.urgent_interventions.schedule }}%</div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-4 h-4 bg-yellow-100 rounded mr-3"></div>
+                                        <div class="flex-1">
+                                            <div class="text-sm font-medium">Requires Attention</div>
+                                            <div class="text-xs text-gray-500">{{ project_status.requires_attention.schedule }} projects</div>
+                                        </div>
+                                        <div class="text-sm font-semibold text-yellow-600">{{ project_status_percentages.requires_attention.schedule }}%</div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-4 h-4 bg-green-100 rounded mr-3"></div>
+                                        <div class="flex-1">
+                                            <div class="text-sm font-medium">Performing as Planned</div>
+                                            <div class="text-xs text-gray-500">{{ project_status.performing_as_planned.schedule }} projects</div>
+                                        </div>
+                                        <div class="text-sm font-semibold text-green-600">
+                                            {{ project_status_percentages.performing_as_planned.schedule }}%
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="text-sm font-medium text-gray-500 mb-4">Compliance</h6>
+                                <div class="space-y-3">
+                                    <div class="flex items-center">
+                                        <div class="w-4 h-4 bg-red-100 rounded mr-3"></div>
+                                        <div class="flex-1">
+                                            <div class="text-sm font-medium">Urgent Interventions</div>
+                                            <div class="text-xs text-gray-500">{{ project_status.urgent_interventions.compliance }} projects</div>
+                                        </div>
+                                        <div class="text-sm font-semibold text-red-600">{{ project_status_percentages.urgent_interventions.compliance }}%</div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-4 h-4 bg-yellow-100 rounded mr-3"></div>
+                                        <div class="flex-1">
+                                            <div class="text-sm font-medium">Requires Attention</div>
+                                            <div class="text-xs text-gray-500">{{ project_status.requires_attention.compliance }} projects</div>
+                                        </div>
+                                        <div class="text-sm font-semibold text-yellow-600">
+                                            {{ project_status_percentages.requires_attention.compliance }}%
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-4 h-4 bg-green-100 rounded mr-3"></div>
+                                        <div class="flex-1">
+                                            <div class="text-sm font-medium">Performing as Planned</div>
+                                            <div class="text-xs text-gray-500">{{ project_status.performing_as_planned.compliance }} projects</div>
+                                        </div>
+                                        <div class="text-sm font-semibold text-green-600">
+                                            {{ project_status_percentages.performing_as_planned.compliance }}%
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <!-- Quick Actions -->
-        <div class="mb-8">
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="bg-white border-b border-gray-200 px-6 py-4">
-                    <h5 class="text-lg font-semibold mb-0">
-                        <i class="fas fa-rocket mr-2"></i>Quick Actions
-                    </h5>
-                </div>
-                <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="mb-3">
-                            <a href="{% url 'account:cost_performance' %}"
-                               class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg text-center transition duration-200">
-                                <i class="fas fa-dollar-sign mr-2"></i>View Cost Details
-                            </a>
-                        </div>
-                        <div class="mb-3">
-                            <a href="{% url 'account:schedule_performance' %}"
-                               class="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg text-center transition duration-200">
-                                <i class="fas fa-clock mr-2"></i>View Schedule Details
-                            </a>
-                        </div>
-                        <div class="mb-3">
-                            <a href="{% url 'account:compliance' %}"
-                               class="block w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg text-center transition duration-200">
-                                <i class="fas fa-check-circle mr-2"></i>View Compliance Details
-                            </a>
+            <!-- Quick Actions -->
+            <div class="mb-8">
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="bg-white border-b border-gray-200 px-6 py-4">
+                        <h5 class="text-lg font-semibold mb-0">
+                            <i class="fas fa-rocket mr-2"></i>Quick Actions
+                        </h5>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="mb-3">
+                                <a href="{% url 'account:cost_performance' %}"
+                                   class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg text-center transition duration-200">
+                                    <i class="fas fa-dollar-sign mr-2"></i>View Cost Details
+                                </a>
+                            </div>
+                            <div class="mb-3">
+                                <a href="{% url 'account:schedule_performance' %}"
+                                   class="block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg text-center transition duration-200">
+                                    <i class="fas fa-clock mr-2"></i>View Schedule Details
+                                </a>
+                            </div>
+                            <div class="mb-3">
+                                <a href="{% url 'account:compliance' %}"
+                                   class="block w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg text-center transition duration-200">
+                                    <i class="fas fa-check-circle mr-2"></i>View Compliance Details
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <!-- General Comments -->
-        <div class="mb-8">
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="bg-white border-b border-gray-200 px-6 py-4">
-                    <h5 class="text-lg font-semibold mb-0">
-                        <i class="fas fa-comments mr-2"></i>General Comments
-                    </h5>
-                </div>
-                <div class="p-6">
-                    <p class="text-gray-600 mb-2">The above data reflect status as of data captured at report date.</p>
-                    <p class="text-gray-600 mb-2">The above can be accompanied by graphs showing trends over time of the above stats.</p>
-                    <p class="text-gray-600">
-                        The client should be able to click view details of costs, or schedule or compliance status by project. These views are included in the next three sheets.
-                    </p>
+            <!-- General Comments -->
+            <div class="mb-8">
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="bg-white border-b border-gray-200 px-6 py-4">
+                        <h5 class="text-lg font-semibold mb-0">
+                            <i class="fas fa-comments mr-2"></i>General Comments
+                        </h5>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-gray-600 mb-2">The above data reflect status as of data captured at report date.</p>
+                        <p class="text-gray-600 mb-2">The above can be accompanied by graphs showing trends over time of the above stats.</p>
+                        <p class="text-gray-600">
+                            The client should be able to click view details of costs, or schedule or compliance status by project. These views are included in the next three sheets.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
