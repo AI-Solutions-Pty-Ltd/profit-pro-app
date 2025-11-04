@@ -226,52 +226,6 @@
                 </div>
             </div>
         </div>
-        <!-- Portfolio Overview Table -->
-        <div class="mb-8">
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="bg-white border-b border-gray-200 px-6 py-4">
-                    <h5 class="text-lg font-semibold mb-0">
-                        <i class="fas fa-chart-pie mr-2"></i>Portfolio Overview
-                    </h5>
-                </div>
-                <div class="p-6">
-                    <div class="overflow-x-auto">
-                        <table class="w-full border-collapse">
-                            <thead>
-                                <tr class="bg-gray-50">
-                                    <th class="w-1/4 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                                    <th class="w-1/4 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved</th>
-                                    <th class="w-1/4 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Planned</th>
-                                    <th class="w-1/4 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actual</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Costs</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        R{{ portfolio_data.costs.approved|floatformat:"2g" }}
-                                    </td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">R{{ portfolio_data.costs.planned|floatformat:"2g" }}</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">R{{ portfolio_data.costs.actual|floatformat:"2g" }}</td>
-                                </tr>
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Schedule</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.schedule.approved }} days</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.schedule.planned }} days</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.schedule.actual }} days</td>
-                                </tr>
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Compliance</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.compliance.approved }} items</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.compliance.planned }} items</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.compliance.actual }} items</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
         <!-- Project Status Overview -->
         <div class="mb-8">
             <div class="bg-white rounded-lg shadow-lg overflow-hidden">
@@ -375,6 +329,52 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Portfolio Overview Table -->
+        <div class="mb-8">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-white border-b border-gray-200 px-6 py-4">
+                    <h5 class="text-lg font-semibold mb-0">
+                        <i class="fas fa-chart-pie mr-2"></i>Portfolio Overview
+                    </h5>
+                </div>
+                <div class="p-6">
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="w-1/4 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                    <th class="w-1/4 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved</th>
+                                    <th class="w-1/4 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Planned</th>
+                                    <th class="w-1/4 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actual</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Costs</td>
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        R{{ portfolio_data.costs.approved|floatformat:"2g" }}
+                                    </td>
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">R{{ portfolio_data.costs.planned|floatformat:"2g" }}</td>
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">R{{ portfolio_data.costs.actual|floatformat:"2g" }}</td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Schedule</td>
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.schedule.approved }} days</td>
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.schedule.planned }} days</td>
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.schedule.actual }} days</td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Compliance</td>
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.compliance.approved }} items</td>
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.compliance.planned }} items</td>
+                                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{{ portfolio_data.compliance.actual }} items</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
