@@ -14,6 +14,7 @@ urlpatterns = [
     path("", include("app.Account.auth_urls")),
     path("register/", RegisterView.as_view(), name="register"),
     # app urls
+    path("account/", include("app.Account.urls", namespace="account")),
     path("project/", include("app.Project.urls", namespace="project")),
     path(
         "bill-of-quantities/",
