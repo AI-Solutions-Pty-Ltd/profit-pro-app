@@ -118,6 +118,9 @@ class LineItem(BaseModel):
     addendum = models.BooleanField(default=False)
     special_item = models.BooleanField(default=False)
 
+    if TYPE_CHECKING:
+        actual_transactions: QuerySet["ActualTransaction"]
+
     class Meta:
         verbose_name = "Line Item"
         verbose_name_plural = "Line Items"
@@ -265,9 +268,10 @@ class LineItem(BaseModel):
     def claimed_to_date(self) -> Decimal:
         # historically qty claimed, excluding current pmt cert
         project: Project = self.project
-        active_payment_certificate: PaymentCertificate = (
+        active_payment_certificate: PaymentCertificate | None = (
             project.get_active_payment_certificate
         )
+
         actual_transactions = self.actual_transactions.filter(claimed=True)
 
         if active_payment_certificate:
@@ -285,12 +289,15 @@ class LineItem(BaseModel):
     def claimed_to_date_value(self) -> Decimal:
         # historically claim value, excluding current pmt cert
         project: Project = self.project
-        active_payment_certificate: PaymentCertificate = (
+        active_payment_certificate: PaymentCertificate | None = (
             project.get_active_payment_certificate
         )
-        previous_actual_transactions = self.actual_transactions.filter(
-            payment_certificate__certificate_number__lt=active_payment_certificate.certificate_number
-        )
+        if active_payment_certificate:
+            previous_actual_transactions = self.actual_transactions.filter(
+                payment_certificate__certificate_number__lt=active_payment_certificate.certificate_number
+            )
+        else:
+            previous_actual_transactions = self.actual_transactions
         return sum_queryset(previous_actual_transactions, "total_price")
 
     @property
@@ -565,7 +572,9 @@ class ActualTransaction(BaseModel):
     """Capture actual work completed against a line item"""
 
     payment_certificate = models.ForeignKey(
-        PaymentCertificate, on_delete=models.CASCADE, related_name="actual_transactions"
+        PaymentCertificate,
+        on_delete=models.CASCADE,
+        related_name="actual_transactions",
     )
     line_item = models.ForeignKey(
         LineItem, on_delete=models.CASCADE, related_name="actual_transactions"
@@ -607,8 +616,96 @@ class ActualTransaction(BaseModel):
 
     def save(self, *args, **kwargs):
         if self.payment_certificate.pdf:
+            # reset pdf as it needs to be regenerated
             self.payment_certificate.pdf = None
         if self.payment_certificate.abridged_pdf:
+            # reset abridged pdf as it needs to be regenerated
             self.payment_certificate.abridged_pdf = None
         self.payment_certificate.save()
         super().save(*args, **kwargs)
+
+
+class Forecast(BaseModel):
+    """Capture forecasted work completed against a line item"""
+
+    class Status(models.TextChoices):
+        DRAFT = "DRAFT", "Draft"
+        APPROVED = "APPROVED", "Approved"
+
+    project: Project = models.ForeignKey(  # type: ignore
+        Project, on_delete=models.CASCADE, related_name="forecasts"
+    )
+    period = models.DateField()
+    status: Status = models.CharField(  # type: ignore
+        max_length=20, choices=Status.choices, default=Status.DRAFT
+    )
+
+    approved_by: Account = models.ForeignKey(  # type: ignore
+        Account,
+        on_delete=models.SET_NULL,
+        related_name="approved_forecasts",
+        blank=True,
+        null=True,
+    )
+
+    captured_by: Account = models.ForeignKey(  # type: ignore
+        Account,
+        on_delete=models.SET_NULL,
+        related_name="captured_forecasts",
+        blank=True,
+        null=True,
+    )
+
+    if TYPE_CHECKING:
+        forecast_transactions: QuerySet["ForecastTransaction"]
+
+    class Meta:
+        verbose_name = "Forecast"
+        verbose_name_plural = "Forecasts"
+        ordering = ["period"]
+        indexes = [
+            models.Index(fields=["project", "period"]),
+            models.Index(fields=["period"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.period} - {self.status}"
+
+    @property
+    def total_forecast(self) -> Decimal:
+        # return total of forecast transactions
+        return sum_queryset(self.forecast_transactions, "total_price")
+
+
+class ForecastTransaction(BaseModel):
+    """Capture forecasted work completed against a line item"""
+
+    class Type(models.TextChoices):
+        PAYMENT_CERTIFICATE = "PAYMENT_CERTIFICATE", "Payment Certificate"
+        FORECAST = "FORECAST", "Forecast"
+
+    forecast: Forecast = models.ForeignKey(  # type: ignore
+        Forecast,
+        on_delete=models.CASCADE,
+        related_name="forecast_transactions",
+        blank=True,
+        null=True,
+    )
+    line_item: LineItem = models.ForeignKey(  # type: ignore
+        LineItem,
+        on_delete=models.CASCADE,
+        related_name="forecast_transactions",
+        blank=True,
+        null=True,
+    )
+
+    quantity: Decimal = models.DecimalField(max_digits=10, decimal_places=2)  # type: ignore
+    unit_price: Decimal = models.DecimalField(  # type: ignore
+        max_digits=10, decimal_places=2, blank=True
+    )
+    total_price: Decimal = models.DecimalField(  # type: ignore
+        max_digits=10, decimal_places=2, blank=True
+    )
+
+    def __str__(self) -> str:
+        return f"{self.line_item.description if self.line_item else self.line_item.pk} - {self.quantity}"

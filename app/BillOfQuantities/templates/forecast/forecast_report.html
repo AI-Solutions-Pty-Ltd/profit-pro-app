@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}
+    Forecast Report - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <div class="container mx-auto px-4 py-8">
+        <div class="mb-6">
+            <nav class="text-sm text-gray-600">
+                <a href="{% url 'project:project-detail' project.pk %}"
+                   class="hover:text-blue-600">{{ project.name }}</a>
+                <span class="mx-2">/</span>
+                <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
+                   class="hover:text-blue-600">Forecasts</a>
+                <span class="mx-2">/</span>
+                <span class="text-gray-900">Forecast Report</span>
+            </nav>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-900">12-Month Forecast Report</h1>
+                <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    {% heroicon_outline 'arrow-left' %}
+                    Back to Forecasts
+                </a>
+            </div>
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">{% heroicon_outline 'calculator' %}</div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-medium text-gray-900">Original Budget</h3>
+                            <p class="text-2xl font-bold text-blue-600">R {{ original_budget|default:0|floatformat:2|intcomma }}</p>
+                            <p class="text-sm text-gray-600">Total project budget</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">{% heroicon_outline 'currency-dollar' %}</div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-medium text-gray-900">Average Forecast</h3>
+                            <p class="text-2xl font-bold text-green-600">R {{ average_forecast|default:0|floatformat:2|intcomma }}</p>
+                            <p class="text-sm text-gray-600">Monthly average (last 12 months)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Chart -->
+            <div class="bg-gray-50 rounded-lg p-6 mb-8">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Forecast vs Budget Trend</h2>
+                <div class="h-96">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+            </div>
+            <!-- Data Table -->
+            <div class="mb-8">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Monthly Breakdown</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Forecast Amount</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Budget Amount</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variance</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variance %</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for month_data in months_data %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ month_data.month }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        R {{ month_data.forecast|default:0|floatformat:2|intcomma }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        R {{ original_budget|default:0|floatformat:2|intcomma }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        {% if original_budget > 0 and month_data.forecast %}
+                                            <span class="{% if month_data.variance > 0 %}text-red-600{% elif month_data.variance < 0 %}text-green-600{% else %}text-gray-600{% endif %}">
+                                                {% if month_data.variance > 0 %}+{% endif %}
+                                                R {{ month_data.variance|default:0|floatformat:2|intcomma }}
+                                            </span>
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        {% if original_budget > 0 and month_data.forecast %}
+                                            <span class="{% if month_data.variance_pct > 0 %}text-red-600{% elif month_data.variance_pct < 0 %}text-green-600{% else %}text-gray-600{% endif %}">
+                                                {% if month_data.variance_pct > 0 %}+{% endif %}
+                                                {{ month_data.variance_pct|default:0|floatformat:2|intcomma }}%
+                                            </span>
+                                        {% else %}
+                                            <span class="text-gray-600">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('forecastChart').getContext('2d');
+    
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [
+                {
+                    label: 'Forecast Amount',
+                    data: {{ forecast_data|safe }},
+                    backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                    borderColor: 'rgba(34, 197, 94, 1)',
+                    borderWidth: 1,
+                    order: 2
+                },
+                {
+                    label: 'Budget Amount',
+                    data: {{ budget_data|safe }},
+                    type: 'line',
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.1,
+                    order: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: '12-Month Forecast vs Original Budget',
+                    font: {
+                        size: 16
+                    }
+                },
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed.y !== null) {
+                                label += 'R ' + context.parsed.y.toLocaleString('en-ZA', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R ' + value.toLocaleString('en-ZA');
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Amount (R)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month'
+                    }
+                }
+            }
+        }
+    });
+});
+
+// Custom template filters for calculations
+window.addEventListener('DOMContentLoaded', function() {
+    // Add any additional JavaScript if needed
+});
+    </script>
+    {% comment %}
+Template filter equivalents for calculations (these should be in a custom template tag file):
+- add: value1 + value2
+- div: value1 / value2  
+- mul: value1 * value2
+- sub: value1 - value2
+    {% endcomment %}
+{% endblock content %}

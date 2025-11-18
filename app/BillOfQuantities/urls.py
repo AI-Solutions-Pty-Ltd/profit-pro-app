@@ -6,6 +6,7 @@ from app.BillOfQuantities import (
     views,
     views_addendum,
     views_api,
+    views_forecast,
     views_payment_certificate,
     views_special_item,
 )
@@ -130,6 +131,34 @@ special_item_urls = [
     ),
 ]
 
+forecast_urls = [
+    path(
+        "project/<int:project_pk>/forecasts/",
+        views_forecast.ForecastListView.as_view(),
+        name="forecast-list",
+    ),
+    path(
+        "project/<int:project_pk>/forecasts/create/",
+        views_forecast.ForecastCreateView.as_view(),
+        name="forecast-create",
+    ),
+    path(
+        "project/<int:project_pk>/forecasts/<int:pk>/edit/",
+        views_forecast.ForecastEditView.as_view(),
+        name="forecast-edit",
+    ),
+    path(
+        "project/<int:project_pk>/forecasts/<int:pk>/approve/",
+        views_forecast.ForecastApproveView.as_view(),
+        name="forecast-approve",
+    ),
+    path(
+        "project/<int:project_pk>/forecasts/report/",
+        views_forecast.ForecastReportView.as_view(),
+        name="forecast-report",
+    ),
+]
+
 api_urls = [
     path(
         "project/<int:project_pk>/api/bills/",
@@ -148,5 +177,6 @@ urlpatterns = (
     + payment_certificate_urls
     + addendum_urls
     + special_item_urls
+    + forecast_urls
     + api_urls
 )

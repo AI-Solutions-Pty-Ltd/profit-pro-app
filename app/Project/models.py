@@ -1,10 +1,15 @@
 from decimal import Decimal
+from typing import TYPE_CHECKING, Optional
 
 from django.db import models
+from django.db.models import QuerySet
 from django.urls import reverse
 
 from app.Account.models import Account
 from app.core.Utilities.models import BaseModel, sum_queryset
+
+if TYPE_CHECKING:
+    from app.BillOfQuantities.models import Forecast, LineItem, PaymentCertificate
 
 
 class Client(BaseModel):
@@ -47,6 +52,11 @@ class Project(BaseModel):
         blank=True,
         related_name="projects",
     )
+
+    if TYPE_CHECKING:
+        payment_certificates: QuerySet[PaymentCertificate]
+        line_items: QuerySet[LineItem]
+        forecasts: QuerySet[Forecast]
 
     def __str__(self):
         return self.name
@@ -105,9 +115,7 @@ class Project(BaseModel):
         return sum_queryset(self.line_items.all(), "total_price")
 
     @property
-    def get_active_payment_certificate(self):
-        from app.BillOfQuantities.models import PaymentCertificate
-
+    def get_active_payment_certificate(self) -> Optional["PaymentCertificate"]:
         try:
             return self.payment_certificates.get(
                 status__in=[

@@ -5,6 +5,8 @@ from app.core.Utilities.admin import SoftDeleteAdmin
 from .models import (
     ActualTransaction,
     Bill,
+    Forecast,
+    ForecastTransaction,
     LineItem,
     Package,
     PaymentCertificate,
@@ -83,6 +85,37 @@ class ActualTransactionAdmin(SoftDeleteAdmin):
         "payment_certificate__certificate_number",
     ]
     autocomplete_fields = ["line_item"]
+
+    @admin.display(description="Line Item", ordering="line_item__description")
+    def get_line_item_description(self, obj):
+        """Display the line item description."""
+        return obj.line_item.description if obj.line_item else "-"
+
+
+@admin.register(Forecast)
+class ForecastAdmin(SoftDeleteAdmin):
+    list_display = ["project", "status", "created_at", "deleted"]
+    list_filter = ["deleted", "project__name", "status", "created_at"]
+    search_fields = ["project__name"]
+
+
+@admin.register(ForecastTransaction)
+class ForecastTransactionAdmin(SoftDeleteAdmin):
+    list_display = [
+        "forecast",
+        "get_line_item_description",
+        "quantity",
+        "unit_price",
+        "total_price",
+        "deleted",
+    ]
+    list_filter = [
+        "forecast__project__name",
+        "deleted",
+        "forecast__status",
+    ]
+    search_fields = ["line_item__description", "forecast__project__name"]
+    autocomplete_fields = ["forecast", "line_item"]
 
     @admin.display(description="Line Item", ordering="line_item__description")
     def get_line_item_description(self, obj):
