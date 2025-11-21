@@ -6,12 +6,35 @@ from app.Account.models import Account
 from app.Project.models import Client, Project, Signatories
 
 
+class FilterForm(forms.Form):
+    """Form for filtering projects."""
+
+    search = forms.CharField(required=False)
+    active_projects = forms.BooleanField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["active_projects"].label = "Active Projects"
+        self.fields["search"].widget = forms.TextInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                "placeholder": "Search projects...",
+            }
+        )
+
+
 class ProjectForm(forms.ModelForm):
     """Form for creating and updating projects."""
 
     class Meta:
         model = Project
-        fields = ["name", "description", "contract_number", "contract_clause"]
+        fields = [
+            "name",
+            "description",
+            "contract_number",
+            "contract_clause",
+            "status",
+        ]
         widgets = {
             "name": forms.TextInput(
                 attrs={
@@ -86,7 +109,7 @@ class ClientForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Filter consultants to only show users with type CONSULTANT
         consultant_users = Account.objects.filter(groups__name="consultant")
-        self.fields["consultant"].queryset = consultant_users
+        self.fields["consultant"].queryset = consultant_users  # type: ignore
         self.fields["consultant"].required = False
 
 

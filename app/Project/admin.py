@@ -9,7 +9,7 @@ from .models import Client, Project, Signatories
 
 @admin.register(Project)
 class ProjectAdmin(SoftDeleteAdmin):
-    list_display = ["name", "account", "deleted", "created_at"]
+    list_display = ["name", "account", "status", "deleted", "created_at"]
     list_filter = ["deleted", "created_at", "vat"]
     search_fields = ["name", "description", "account__email"]
     readonly_fields = ["created_at", "updated_at"]

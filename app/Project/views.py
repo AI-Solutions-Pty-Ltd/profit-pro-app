@@ -19,7 +19,7 @@ from app.BillOfQuantities.models import ActualTransaction, PaymentCertificate
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
-from app.Project.forms import ProjectForm
+from app.Project.forms import FilterForm, ProjectForm
 from app.Project.models import Project
 
 
@@ -31,22 +31,55 @@ class ProjectDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     context_object_name = "projects"
     permissions = ["consultant", "contractor"]
 
+    filter_form: FilterForm | None = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.filter_form = None
+
+    def setup(self, request, *args, **kwargs):
+        """Initialize filter form during view setup."""
+        super().setup(request, *args, **kwargs)
+        self.filter_form = FilterForm(request.GET or {})  # Ensure form is never None
+
     def get_breadcrumbs(self):
         return [
             {"title": "All Projects", "url": reverse("project:project-list")},
             {"title": "Projects Dashboard", "url": None},
         ]
 
-    def get_queryset(self):
-        """Get all projects for dashboard view."""
-        if self.request.user.groups.filter(name="consultant").exists():  # type: ignore[attr-defined]
-            return Project.objects.all().order_by("-created_at")
-        return Project.objects.filter(account=self.request.user).order_by("-created_at")
+    def get_queryset(self) -> QuerySet[Project]:
+        """Get filtered projects for dashboard view."""
+        # Ensure filter_form exists and is valid
+        if not self.filter_form or not self.filter_form.is_valid():
+            # Return unfiltered queryset if form is invalid
+            return Project.objects.filter(account=self.request.user).order_by(
+                "-created_at"
+            )
+
+        projects = Project.objects.filter(account=self.request.user).order_by(
+            "-created_at"
+        )
+
+        # Apply filters from form
+        search = self.filter_form.cleaned_data.get("search")
+        active_only = self.filter_form.cleaned_data.get("active_projects")
+
+        if search:
+            projects = projects.filter(name__icontains=search)
+
+        if active_only:
+            projects = projects.filter(status=Project.Status.ACTIVE)
+
+        return projects
 
     def get_context_data(self, **kwargs):
         """Add financial metrics to context."""
         context = super().get_context_data(**kwargs)
         projects = context["projects"]
+
+        # Add the already-validated form to context
+        context["filter_form"] = self.filter_form
 
         dashboard_data = []
         for project in projects:
@@ -96,6 +129,7 @@ class ProjectDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
             projects, "forecasts__forecast_transactions__total_price"
         )
         context["dashboard_data"] = dashboard_data
+
         return context
 
 

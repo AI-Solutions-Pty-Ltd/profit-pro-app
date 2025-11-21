@@ -36,11 +36,18 @@ class Client(BaseModel):
 
 
 class Project(BaseModel):
+    class Status(models.TextChoices):
+        ACTIVE = "ACTIVE", "Active"
+        INACTIVE = "INACTIVE", "Inactive"
+
     account = models.ForeignKey(
         Account, on_delete=models.CASCADE, related_name="projects"
     )
     name = models.CharField(max_length=255)
     description = models.TextField()
+    status = models.CharField(
+        max_length=255, choices=Status.choices, default=Status.ACTIVE
+    )
     contract_number = models.CharField(max_length=255, blank=True)
     contract_clause = models.CharField(max_length=255, blank=True)
     vat = models.BooleanField(default=False)
