@@ -1,0 +1,43 @@
+﻿{% extends "base.html" %}
+{% load l10n %}
+{% block content %}
+    <div id="breadcrumb" class="no-print">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href={% url 'home' %}>Home</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href={% url 'inventories:inventory_list_view' %}>All Inventories</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href={% url 'inventories:warehouse_list_view' %}>All Warehouses</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+            </ol>
+        </nav>
+    </div>
+    <form method='POST'>
+        {% csrf_token %}
+        <table class="table" style="max-width:50%;">
+            <tr>
+                <th colspan="2">{{ title }}</th>
+            </tr>
+            {% for field in form %}
+                <tr>
+                    <td>{{ field.label }}</td>
+                    <td>{{ field }}</td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <th colspan="2">
+                    <input class="btn btn-primary"
+                           type='submit'
+                           value='Create Inventory Item'
+                           style="font:bold"
+                           name="create inventory" />
+                </th>
+            </tr>
+        </table>
+    </form>
+{% endblock %}

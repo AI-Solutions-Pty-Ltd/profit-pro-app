@@ -5,144 +5,111 @@
     Approve Payment Certificate - {{ project.name }}
 {% endblock title %}
 {% block content %}
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <nav class="flex mb-6" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                <li class="inline-flex items-center">
-                    <a href="{% url 'project:project-list' %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
-                        {% heroicon_outline "home" size="20" class="text-indigo-600" %}
-                        Projects
-                    </a>
-                </li>
-                <li class="inline-flex items-center">
-                    <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
-                        {% heroicon_outline "chevron-right" size="20" %}
-                        Payment Certificates
-                    </a>
-                </li>
-                <li class="inline-flex items-center">
-                    <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk payment_certificate.pk %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
-                        {% heroicon_outline "chevron-right" size="20" %}
-                        Payment Certificate Details
-                    </a>
-                </li>
-                <li>
-                    <div class="flex items-center">
-                        {% heroicon_outline "chevron-right" %}
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ project.name }}</span>
-                    </div>
-                </li>
-            </ol>
-        </nav>
-        <!-- Header -->
-        <div class="bg-white shadow-sm rounded-lg mb-6">
-            <div class="px-6 py-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
-                        <p class="text-sm text-gray-600 mt-1">Approve Payment Certificate: #{{ payment_certificate.certificate_number }}</p>
-                        <p class="text-sm text-gray-600 mt-1">
-                            Current Status: <span class="font-semibold">{{ payment_certificate.get_status_display }}</span>
-                        </p>
-                    </div>
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
+                    <p class="text-sm text-gray-600 mt-1">Approve Payment Certificate: #{{ payment_certificate.certificate_number }}</p>
+                    <p class="text-sm text-gray-600 mt-1">
+                        Current Status: <span class="font-semibold">{{ payment_certificate.get_status_display }}</span>
+                    </p>
                 </div>
             </div>
         </div>
-        <!-- Summary Section -->
-        <div class="bg-white shadow-sm rounded-lg mb-6">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-bold text-gray-900">Certificate Summary</h2>
-            </div>
-            <div class="px-6 py-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <dt class="text-sm font-medium text-gray-500">Certificate Number</dt>
-                        <dd class="mt-1 text-2xl font-semibold text-gray-900">
-                            #{{ payment_certificate.certificate_number }}
-                        </dd>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <dt class="text-sm font-medium text-gray-500">Total Transactions</dt>
-                        <dd class="mt-1 text-2xl font-semibold text-gray-900">
-                            {{ payment_certificate.actual_transactions.count }}
-                        </dd>
-                    </div>
-                    <div class="bg-indigo-50 rounded-lg p-4">
-                        <dt class="text-sm font-medium text-indigo-600">Total Amount</dt>
-                        <dd class="mt-1 text-2xl font-semibold text-indigo-900">
-                            R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}
-                        </dd>
-                    </div>
+    </div>
+    <!-- Summary Section -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-bold text-gray-900">Certificate Summary</h2>
+        </div>
+        <div class="px-6 py-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <dt class="text-sm font-medium text-gray-500">Certificate Number</dt>
+                    <dd class="mt-1 text-2xl font-semibold text-gray-900">
+                        #{{ payment_certificate.certificate_number }}
+                    </dd>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <dt class="text-sm font-medium text-gray-500">Total Transactions</dt>
+                    <dd class="mt-1 text-2xl font-semibold text-gray-900">
+                        {{ payment_certificate.actual_transactions.count }}
+                    </dd>
+                </div>
+                <div class="bg-indigo-50 rounded-lg p-4">
+                    <dt class="text-sm font-medium text-indigo-600">Total Amount</dt>
+                    <dd class="mt-1 text-2xl font-semibold text-indigo-900">
+                        R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}
+                    </dd>
                 </div>
             </div>
         </div>
-        <!-- Transactions Preview -->
-        <div class="bg-white shadow-sm rounded-lg mb-6 px-6 py-4 ">
-            <div class="border-b border-gray-200 mb-4">
-                <h2 class="text-lg font-bold text-gray-900">Transactions</h2>
-                <p class="text-sm text-gray-600 mb-2">Review the transactions before approving</p>
-            </div>
-            <div id="contract-line-items" class="mb-6 border-b border-gray-200">
-                <h2 class="text-lg font-bold text-gray-900 mb-2">Contract Line Items</h2>
-                {% include "payment_certificate/tables/line_items.html" with grouped_line_items=grouped_line_items line_items_total=payment_certificate.contract_current_claim_total %}
-            </div>
-            <div id="addendum-line-items" class="mb-6 border-b border-gray-200">
-                <h2 class="text-lg font-bold text-gray-900 mb-2">Addendum Line Items</h2>
-                {% include "payment_certificate/tables/line_items.html" with grouped_line_items=addendum_line_items line_items_total=payment_certificate.addendum_current_claim_total %}
-            </div>
-            <div id="special-items"
-                 class="flex flex-col items-center justify-center gap-2 mb-6 border-b border-gray-200 mb-2">
-                <h2 class="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
-                    {% heroicon_outline "star" size="20" class="text-orange-600" %} Special Items
-                </h2>
-                {% include "payment_certificate/tables/special_items.html" with special_line_items=special_line_items special_line_items_total=payment_certificate.special_items_current_claim_total %}
-            </div>
+    </div>
+    <!-- Transactions Preview -->
+    <div class="bg-white shadow-sm rounded-lg mb-6 px-6 py-4 ">
+        <div class="border-b border-gray-200 mb-4">
+            <h2 class="text-lg font-bold text-gray-900">Transactions</h2>
+            <p class="text-sm text-gray-600 mb-2">Review the transactions before approving</p>
         </div>
-        <!-- Approval Form -->
-        <div class="bg-white shadow-sm rounded-lg flex flex-col items-center justify-center">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-bold text-gray-900 text-center">Approve Payment Certificate</h2>
-                <p class="text-sm text-gray-600 text-center">
-                    Review the transactions above and click the button below to approve this payment certificate.
-                    All transactions will be marked as approved.
-                </p>
-            </div>
-            <div class="px-6 py-6 ">
-                {% if form.errors %}
-                    <div class="mb-4 bg-red-50 border border-red-500 text-red-500 px-4 py-3 rounded relative"
-                         role="alert">
-                        <strong class="font-bold">Error!</strong>
-                        <span class="block sm:inline">{{ form.errors }}</span>
-                    </div>
-                {% endif %}
-                <form method="post">
-                    {% csrf_token %}
-                    <!-- Hidden input defaulted to APPROVED -->
-                    <input type="hidden" name="status" value="SUBMITTED">
-                    <!-- Action Buttons -->
-                    <div class="flex items-center justify-start space-x-3">
-                        <a id="cancel-btn"
-                           href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk payment_certificate.pk %}"
-                           class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                           data-loading-text="Canceling..."
-                           data-disable-elements="#approve-btn">
-                            {% heroicon_outline "x-mark" class="w-5 h-5" %}
-                            Cancel
-                        </a>
-                        <button id="approve-btn"
-                                type="submit"
-                                class="loading-btn inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                                data-loading-text="Approving..."
-                                data-disable-elements="#cancel-btn">
-                            {% heroicon_outline "check-circle" class="w-5 h-5" %}
-                            Approve Payment Certificate
-                        </button>
-                    </div>
-                </form>
-            </div>
+        <div id="contract-line-items" class="mb-6 border-b border-gray-200">
+            <h2 class="text-lg font-bold text-gray-900 mb-2">Contract Line Items</h2>
+            {% include "payment_certificate/tables/line_items.html" with grouped_line_items=grouped_line_items line_items_total=payment_certificate.contract_current_claim_total %}
+        </div>
+        <div id="addendum-line-items" class="mb-6 border-b border-gray-200">
+            <h2 class="text-lg font-bold text-gray-900 mb-2">Addendum Line Items</h2>
+            {% include "payment_certificate/tables/line_items.html" with grouped_line_items=addendum_line_items line_items_total=payment_certificate.addendum_current_claim_total %}
+        </div>
+        <div id="special-items"
+             class="flex flex-col items-center justify-center gap-2 mb-6 border-b border-gray-200 mb-2">
+            <h2 class="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+                {% heroicon_outline "star" size="20" class="text-orange-600" %} Special Items
+            </h2>
+            {% include "payment_certificate/tables/special_items.html" with special_line_items=special_line_items special_line_items_total=payment_certificate.special_items_current_claim_total %}
+        </div>
+    </div>
+    <!-- Approval Form -->
+    <div class="bg-white shadow-sm rounded-lg flex flex-col items-center justify-center">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-bold text-gray-900 text-center">Approve Payment Certificate</h2>
+            <p class="text-sm text-gray-600 text-center">
+                Review the transactions above and click the button below to approve this payment certificate.
+                All transactions will be marked as approved.
+            </p>
+        </div>
+        <div class="px-6 py-6 ">
+            {% if form.errors %}
+                <div class="mb-4 bg-red-50 border border-red-500 text-red-500 px-4 py-3 rounded relative"
+                     role="alert">
+                    <strong class="font-bold">Error!</strong>
+                    <span class="block sm:inline">{{ form.errors }}</span>
+                </div>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <!-- Hidden input defaulted to APPROVED -->
+                <input type="hidden" name="status" value="SUBMITTED">
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-start space-x-3">
+                    <a id="cancel-btn"
+                       href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk payment_certificate.pk %}"
+                       class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                       data-loading-text="Canceling..."
+                       data-disable-elements="#approve-btn">
+                        {% heroicon_outline "x-mark" class="w-5 h-5" %}
+                        Cancel
+                    </a>
+                    <button id="approve-btn"
+                            type="submit"
+                            class="loading-btn inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                            data-loading-text="Approving..."
+                            data-disable-elements="#cancel-btn">
+                        {% heroicon_outline "check-circle" class="w-5 h-5" %}
+                        Approve Payment Certificate
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 {% endblock content %}

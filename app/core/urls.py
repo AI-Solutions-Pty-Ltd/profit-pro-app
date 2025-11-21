@@ -3,12 +3,20 @@ import os
 from django.contrib import admin
 from django.urls import include, path
 
-from .views import AboutView, FeaturesView, HomeView, PricingView, RegisterView
+from .views import (
+    AboutView,
+    FeaturesView,
+    FinalAccountView,
+    HomeView,
+    ImpactView,
+    RegisterView,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("features/", FeaturesView.as_view(), name="features"),
-    path("pricing/", PricingView.as_view(), name="pricing"),
+    path("final-account/", FinalAccountView.as_view(), name="final-account"),
+    path("impact/", ImpactView.as_view(), name="impact"),
     path("about/", AboutView.as_view(), name="about"),
     path("", HomeView.as_view(), name="home"),
     path("", include("app.Account.auth_urls")),
@@ -25,6 +33,11 @@ urlpatterns = [
         include("app.Cost.urls", namespace="cost"),
     ),
     path("consultant/", include("app.Consultant.urls", namespace="consultant")),
+    path("inventories/", include("app.Inventories.urls", namespace="inventories")),
+    path(
+        "suppliers/",
+        include("app.Inventories.urls_suppliers", namespace="suppliers"),
+    ),
 ]
 
 if os.getenv("DJANGO_SETTINGS_MODULE") == "settings.local":

@@ -2,6 +2,10 @@ import os
 from decimal import Decimal
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 AUTH_USER_MODEL = "Account.Account"
@@ -12,7 +16,7 @@ LOGIN_REDIRECT_URL = "home"  # Redirect to home after successful login
 LOGOUT_REDIRECT_URL = "home"  # Redirect to home after logout
 
 SITE_ID = 1
-SITE_NAME = os.getenv("SITE_NAME", "Profit Pro")
+SITE_NAME = os.getenv("SITE_NAME", "Profit Pros")
 SITE_URL = os.getenv("SITE_URL", "http://localhost:8000")
 
 CORE_APPS = [
@@ -39,15 +43,17 @@ THIRD_PARTY_APPS = [
     "crispy_tailwind",
     "app.theme",
     "heroicons",
+    "widget_tweaks",
     # Core/shared apps
 ]
 
 SHARED_APPS = [
     "app.Account",
-    "app.Cost",
-    "app.Consultant",
-    "app.Project",
     "app.BillOfQuantities",
+    "app.Consultant",
+    "app.Cost",
+    "app.Inventories",
+    "app.Project",
 ]
 
 CLEANUP_APPS = [
@@ -85,6 +91,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "app.core.Utilities.context_processors.custom_context_processor",
             ],
             "builtins": [
                 "django.templatetags.static",
@@ -93,6 +100,7 @@ TEMPLATES = [
                 "crispy_forms.templatetags.crispy_forms_tags",
                 "app.core.templatetags.template_extras",
                 "mathfilters.templatetags.mathfilters",
+                "widget_tweaks.templatetags.widget_tweaks",
             ],
         },
     },

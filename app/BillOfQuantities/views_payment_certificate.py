@@ -2,9 +2,9 @@ from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
-from django.db.models import Sum
 from django.http import FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.generic import DetailView, ListView, UpdateView, View
 
 from app.BillOfQuantities.models import ActualTransaction, LineItem, PaymentCertificate
@@ -13,11 +13,13 @@ from app.BillOfQuantities.tasks import (
     group_line_items_by_hierarchy,
     send_payment_certificate_to_signatories,
 )
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
+from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.models import Project
 
 
-class PaymentCertificateMixin(UserHasGroupGenericMixin):
+class PaymentCertificateMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
     permissions = ["contractor"]
     project_slug = "project_pk"
 
@@ -35,8 +37,8 @@ class PaymentCertificateMixin(UserHasGroupGenericMixin):
         if not hasattr(self, "project"):
             self.project = get_object_or_404(
                 Project,
-                pk=self.kwargs[self.project_slug],
-                account=self.request.user,
+                pk=self.kwargs[self.project_slug],  # type: ignore
+                account=self.request.user,  # type: ignore
             )
         return self.project
 
@@ -44,7 +46,8 @@ class PaymentCertificateMixin(UserHasGroupGenericMixin):
         if not hasattr(self, "queryset") or not self.queryset:
             self.queryset = (
                 PaymentCertificate.objects.filter(
-                    project=self.get_project(), project__account=self.request.user
+                    project=self.get_project(),
+                    project__account=self.request.user,  # type: ignore
                 )
                 .select_related("project")
                 .prefetch_related(
@@ -60,10 +63,10 @@ class PaymentCertificateMixin(UserHasGroupGenericMixin):
 
 
 class LineItemDetailMixin:
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
-        all_line_items = LineItem.abridged_payment_certificate(self.object)
+    def get_context_data(self: "LineItemDetailMixin", **kwargs):
+        context = super().get_context_data(**kwargs)  # type: ignore
+        context["project"] = self.get_project()  # type: ignore
+        all_line_items = LineItem.abridged_payment_certificate(self.object)  # type: ignore
         line_items = all_line_items.filter(special_item=False, addendum=False)
         special_line_items = all_line_items.filter(special_item=True, addendum=False)
         addendum_line_items = all_line_items.filter(addendum=True, special_item=False)
@@ -81,14 +84,36 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
     template_name = "payment_certificate/payment_certificate_list.html"
     context_object_name = "payment_certificates"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
+    def get_breadcrumbs(
+        self: "PaymentCertificateListView",
+    ) -> list[dict[str, str | None]]:
+        return [
+            {
+                "title": "Projects",
+                "url": reverse("project:project-list"),
+            },
+            {
+                "title": self.get_project().name,
+                "url": reverse(
+                    "project:project-detail",
+                    kwargs={"pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": "Payment Certificates",
+                "url": None,
+            },
+        ]
+
+    def get_context_data(self: "PaymentCertificateListView", **kwargs):
+        context = super().get_context_data(**kwargs)  # type: ignore
+        context["project"] = self.get_project()  # type: ignore
 
         # Active payment certificate (DRAFT or SUBMITTED)
         active_payment_certificate: PaymentCertificate | None = (
             self.get_project().get_active_payment_certificate
         )
+        print(f"get_active_payment_certificate returned: {active_payment_certificate}")
         context["active_certificate"] = active_payment_certificate
 
         # Completed payment certificates (APPROVED or REJECTED)
@@ -106,11 +131,8 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
         )
         active_claimed = 0
         if active_payment_certificate:
-            active_claimed = Decimal(
-                active_payment_certificate.actual_transactions.aggregate(
-                    total=Sum("total_price")
-                )["total"]
-                or 0
+            active_claimed = sum_queryset(
+                active_payment_certificate.actual_transactions.all(), "total_price"
             )
         remaining_amount = (
             self.project.get_total_contract_value - total_claimed - active_claimed
@@ -128,6 +150,30 @@ class PaymentCertificateDetailView(
     template_name = "payment_certificate/payment_certificate_detail.html"
     context_object_name = "payment_certificate"
 
+    def get_breadcrumbs(
+        self: "PaymentCertificateDetailView",
+    ) -> list[dict[str, str | None]]:
+        return [
+            {
+                "title": self.get_project().name,
+                "url": reverse(
+                    "project:project-detail",
+                    kwargs={"pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": "Payment Certificates",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": f"Payment Certificate: #{self.get_object().certificate_number}",
+                "url": None,
+            },
+        ]
+
     def dispatch(self, request, *args, **kwargs):
         generate_pdf_async(self.get_object().id, "abridged")
         return super().dispatch(request, *args, **kwargs)
@@ -136,7 +182,34 @@ class PaymentCertificateDetailView(
 class PaymentCertificateEditView(PaymentCertificateMixin, View):
     template_name = "payment_certificate/payment_certificate_edit.html"
 
-    def get(self, request, pk=None, project_pk=None):
+    def get_breadcrumbs(
+        self: "PaymentCertificateEditView", **kwargs
+    ) -> list[BreadcrumbItem]:
+        return [
+            {
+                "title": "Payment Certificates",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": f"Return to Payment Certificate: #{self.kwargs['pk']} Detail",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-detail",
+                    kwargs={
+                        "pk": self.kwargs["pk"],
+                        "project_pk": self.get_project().pk,
+                    },
+                ),
+            },
+            {
+                "title": "Edit",
+                "url": None,
+            },
+        ]
+
+    def get(self: "PaymentCertificateEditView", request, pk=None, project_pk=None):
         project: Project = self.get_project()
 
         from app.BillOfQuantities.models import Bill, Package, Structure
@@ -144,8 +217,6 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
         structures = Structure.objects.filter(project=project).distinct()
         bills = Bill.objects.filter(structure__project=project).distinct()
         packages = Package.objects.filter(bill__structure__project=project).distinct()
-
-        payment_certificate: PaymentCertificate
 
         if not pk:
             # no payment certificate selected, check if any active, or create new one
@@ -227,6 +298,7 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
             "structures": structures,
             "bills": bills,
             "packages": packages,
+            "breadcrumbs": self.get_breadcrumbs(),
         }
         return render(request, self.template_name, context)
 
@@ -350,6 +422,31 @@ class PaymentCertificateSubmitView(
     template_name = "payment_certificate/payment_certificate_submit.html"
     context_object_name = "payment_certificate"
 
+    def get_breadcrumbs(self: "PaymentCertificateSubmitView") -> list[BreadcrumbItem]:
+        return [
+            {
+                "title": "Return to Payment Certificates",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": f"Payment Certificate #{self.get_object().certificate_number}",
+                "url": reverse(
+                    "bill_of_quantities:payment-certificate-detail",
+                    kwargs={
+                        "project_pk": self.get_project().pk,
+                        "pk": self.get_object().pk,
+                    },
+                ),
+            },
+            {
+                "title": "Submit",
+                "url": None,
+            },
+        ]
+
     def form_valid(self, form):
         payment_certificate = form.save(commit=False)
 
@@ -410,7 +507,7 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
         force_regenerate = bool(request.GET.get("force"))
         if not payment_certificate.pdf or force_regenerate:
             # Start async generation
-            generate_pdf_async(payment_certificate.id, "full")
+            generate_pdf_async(payment_certificate.pk, "full")
             return redirect(
                 "bill_of_quantities:payment-certificate-detail",
                 project_pk=project_pk,
@@ -453,7 +550,7 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
         force_regenerate = bool(request.GET.get("force"))
         if not payment_certificate.abridged_pdf or force_regenerate:
             # Start async generation
-            generate_pdf_async(payment_certificate.id, "abridged")
+            generate_pdf_async(payment_certificate.pk, "abridged")
             return redirect(
                 "bill_of_quantities:payment-certificate-detail",
                 project_pk=project_pk,
@@ -516,10 +613,10 @@ class PaymentCertificateEmailView(PaymentCertificateMixin, View):
         generate_abridged = False
         if not payment_certificate.pdf:
             generate_pdf = True
-            generate_pdf_async(payment_certificate.id, "full")
+            generate_pdf_async(payment_certificate.pk, "full")
         if not payment_certificate.abridged_pdf:
             generate_abridged = True
-            generate_pdf_async(payment_certificate.id, "abridged")
+            generate_pdf_async(payment_certificate.pk, "abridged")
         if generate_pdf or generate_abridged:
             messages.error(
                 request,
@@ -533,7 +630,7 @@ class PaymentCertificateEmailView(PaymentCertificateMixin, View):
 
         # Send email to signatories
         response, message = send_payment_certificate_to_signatories(
-            payment_certificate.id
+            payment_certificate.pk
         )
 
         if response:

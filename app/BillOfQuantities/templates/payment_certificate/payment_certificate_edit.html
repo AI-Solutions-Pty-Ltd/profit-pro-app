@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_full.html" %}
 {% block title %}
     {{ project.name }} - {{ block.super }}
 {% endblock title %}
@@ -27,425 +27,384 @@
           box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
       }
     </style>
-    <div class="px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Breadcrumb -->
-        <nav class="flex mb-6" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                <li class="inline-flex items-center">
-                    <a href="{% url 'project:project-list' %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
-                        {% heroicon_outline "home" size="20" class="text-indigo-600" %}
-                        Projects
-                    </a>
-                </li>
-                <li class="inline-flex items-center">
-                    <a href="{% url 'project:project-detail' project.pk %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
-                        {% heroicon_outline "chevron-right" size="20" %}
+    <!-- Project Card -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden mb-4">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between">
+                <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
+            </div>
+        </div>
+        <!-- Content -->
+        <div class="px-6 py-6">
+            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Project Name</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
                         {{ project.name }}
-                    </a>
-                </li>
-                <li class="inline-flex items-center">
-                    <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
-                        {% heroicon_outline "chevron-right" size="20" %}
-                        Payment Certificates
-                    </a>
-                </li>
-                <li class="inline-flex items-center">
-                    <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk payment_certificate.pk %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
-                        {% heroicon_outline "chevron-right" size="20" %}
-                        #{{ payment_certificate.certificate_number }}
-                    </a>
-                </li>
-                <li>
-                    <div class="flex items-center">
-                        {% heroicon_outline "chevron-right" %}
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Edit</span>
-                    </div>
-                </li>
-            </ol>
-        </nav>
-        <!-- Project Card -->
-        <div class="bg-white shadow-md rounded-lg overflow-hidden mb-4">
-            <!-- Header -->
-            <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
-                <div class="flex items-center justify-between">
-                    <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
+                    </dd>
                 </div>
-            </div>
-            <!-- Content -->
-            <div class="px-6 py-6">
-                <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                    <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Project Name</dt>
-                        <dd class="mt-1 text-sm text-gray-900">
-                            {{ project.name }}
-                        </dd>
-                    </div>
-                    <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Owner</dt>
-                        <dd class="mt-1 text-sm text-gray-900">
-                            {{ project.account.email }}
-                        </dd>
-                    </div>
-                    <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Created</dt>
-                        <dd class="mt-1 text-sm text-gray-900">
-                            {{ project.created_at|date:"F d, Y \a\t g:i A" }}
-                        </dd>
-                    </div>
-                    <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Last Updated</dt>
-                        <dd class="mt-1 text-sm text-gray-900">
-                            {{ project.updated_at|date:"F d, Y \a\t g:i A" }}
-                        </dd>
-                    </div>
-                </dl>
-                <!-- Project Description -->
-                {% if project.description %}
-                    <div class="mt-6 pt-6 border-t border-gray-200">
-                        <h3 class="text-sm font-medium text-gray-500 mb-2">Description</h3>
-                        <div class="prose prose-sm max-w-none text-gray-900">{{ project.description|linebreaks }}</div>
-                    </div>
-                {% endif %}
-            </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Owner</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                        {{ project.account.email }}
+                    </dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Created</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                        {{ project.created_at|date:"F d, Y \a\t g:i A" }}
+                    </dd>
+                </div>
+                <div class="sm:col-span-1">
+                    <dt class="text-sm font-medium text-gray-500">Last Updated</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                        {{ project.updated_at|date:"F d, Y \a\t g:i A" }}
+                    </dd>
+                </div>
+            </dl>
+            <!-- Project Description -->
+            {% if project.description %}
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Description</h3>
+                    <div class="prose prose-sm max-w-none text-gray-900">{{ project.description|linebreaks }}</div>
+                </div>
+            {% endif %}
         </div>
-        <!-- Payment Certificate Form -->
-        <!-- Line Items Filters Section -->
-        <div id="filter-line-items"
-             class="bg-white shadow-md rounded-lg overflow-hidden mb-4 px-6 py-5">
-            <h2 class="font-medium text-gray-900 mb-2">Contract Line Items</h2>
-            <div class="border-b border-gray-200">
-                <form method="get" id="filterForm">
-                    <h3 class="text-sm font-medium text-gray-900 mb-2">Filters</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                            <label for="structure" class="block text-sm font-medium text-gray-700 mb-1">Structure</label>
-                            <select name="structure"
-                                    id="structure"
-                                    onchange="document.getElementById('filterForm').submit()"
-                                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                <option value="">All Structures</option>
-                                {% for structure in structures %}
-                                    <option value="{{ structure.id }}"
-                                            {% if request.GET.structure == structure.id|stringformat:"s" %}selected{% endif %}>
-                                        {{ structure.name }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label for="bill" class="block text-sm font-medium text-gray-700 mb-1">Bill</label>
-                            <select name="bill"
-                                    id="bill"
-                                    onchange="document.getElementById('filterForm').submit()"
-                                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                <option value="">All Bills</option>
-                                {% for bill in bills %}
-                                    <option value="{{ bill.id }}"
-                                            {% if request.GET.bill == bill.id|stringformat:"s" %}selected{% endif %}>
-                                        {{ bill.name }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label for="package" class="block text-sm font-medium text-gray-700 mb-1">Package</label>
-                            <select name="package"
-                                    id="package"
-                                    onchange="document.getElementById('filterForm').submit()"
-                                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                <option value="">All Packages</option>
-                                {% for package in packages %}
-                                    <option value="{{ package.id }}"
-                                            {% if request.GET.package == package.id|stringformat:"s" %}selected{% endif %}>
-                                        {{ package.name }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div>
-                            <label for="description"
-                                   class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                            <div class="flex gap-2">
-                                <input type="text"
-                                       name="description"
-                                       id="description"
-                                       value="{{ request.GET.description }}"
-                                       placeholder="Search description..."
-                                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                <button type="submit"
-                                        class="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
-                                    {% heroicon_outline "magnifying-glass" size="20" %}
-                                </button>
-                            </div>
+    </div>
+    <!-- Payment Certificate Form -->
+    <!-- Line Items Filters Section -->
+    <div id="filter-line-items"
+         class="bg-white shadow-md rounded-lg overflow-hidden mb-4 px-6 py-5">
+        <h2 class="font-medium text-gray-900 mb-2">Contract Line Items</h2>
+        <div class="border-b border-gray-200">
+            <form method="get" id="filterForm">
+                <h3 class="text-sm font-medium text-gray-900 mb-2">Filters</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label for="structure" class="block text-sm font-medium text-gray-700 mb-1">Structure</label>
+                        <select name="structure"
+                                id="structure"
+                                onchange="document.getElementById('filterForm').submit()"
+                                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option value="">All Structures</option>
+                            {% for structure in structures %}
+                                <option value="{{ structure.id }}"
+                                        {% if request.GET.structure == structure.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ structure.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="bill" class="block text-sm font-medium text-gray-700 mb-1">Bill</label>
+                        <select name="bill"
+                                id="bill"
+                                onchange="document.getElementById('filterForm').submit()"
+                                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option value="">All Bills</option>
+                            {% for bill in bills %}
+                                <option value="{{ bill.id }}"
+                                        {% if request.GET.bill == bill.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ bill.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="package" class="block text-sm font-medium text-gray-700 mb-1">Package</label>
+                        <select name="package"
+                                id="package"
+                                onchange="document.getElementById('filterForm').submit()"
+                                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option value="">All Packages</option>
+                            {% for package in packages %}
+                                <option value="{{ package.id }}"
+                                        {% if request.GET.package == package.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ package.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="description"
+                               class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <div class="flex gap-2">
+                            <input type="text"
+                                   name="description"
+                                   id="description"
+                                   value="{{ request.GET.description }}"
+                                   placeholder="Search description..."
+                                   class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <button type="submit"
+                                    class="inline-flex items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                                {% heroicon_outline "magnifying-glass" size="20" %}
+                            </button>
                         </div>
                     </div>
-                    {% if request.GET.structure or request.GET.bill or request.GET.package or request.GET.description %}
-                        <div class="my-3">
-                            <a href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk payment_certificate.pk %}"
-                               class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                                {% heroicon_outline "x-mark" size="20" %}
-                                Clear Filters
-                            </a>
-                        </div>
-                    {% endif %}
-                </form>
-            </div>
-        </div>
-        <form id="payment-certificate-form" method="post">
-            {% csrf_token %}
-            <input type="text"  onkeydown="return (event.keyCode!=13);" />
-            <!-- Line Items Section -->
-            <div id="line-items"
-                 class="bg-white shadow-md rounded-lg overflow-hidden mb-4">
-                {% if line_items %}
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            {% define "8" as colSpan %}
-                            <thead class="sticky-table-header">
-                                <tr>
-                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item No.</th>
-                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pay Ref</th>
-                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
-                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate / unit</th>
-                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Qty</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Claimed to date</th>
-                                    <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actual Quantity</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                {% for line_item in line_items %}
-                                    {% if line_item.structure.name %}
-                                        {% if not structure_name or structure_name != line_item.structure.name %}
-                                            {% define line_item.structure.name as structure_name %}
-                                            <tr>
-                                                <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
-                                                    colspan="{{ colSpan }}">{{ structure_name }}</td>
-                                            </tr>
-                                        {% endif %}
-                                    {% endif %}
-                                    {% if line_item.bill.name %}
-                                        {% if not bill_name or bill_name != line_item.bill.name %}
-                                            {% define line_item.bill.name as bill_name %}
-                                            <tr>
-                                                <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
-                                                    colspan="{{ colSpan }}">{{ bill_name }}</td>
-                                            </tr>
-                                        {% endif %}
-                                    {% endif %}
-                                    <tr class="hover:bg-gray-50 {% if not line_item.is_work %}bg-gray-100 font-semibold{% endif %}">
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.item_number|default:"" }}</td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.payment_reference|default:"" }}</td>
-                                        <td class="px-3 py-2 text-sm text-gray-900">{{ line_item.description|default:"" }}</td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.unit_measurement|default:"" }}</td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                                            {{ line_item.unit_price|default:""|floatformat:2|intcomma }}
-                                        </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.budgeted_quantity|default:"" }}</td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                            {{ line_item.claimed_to_date|default:""|floatformat:2|intcomma }}
-                                        </td>
-                                        {% if line_item.budgeted_quantity %}
-                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                                {% if line_item.current_transaction %}
-                                                    <input name="edit_actual_quantity_{{ line_item.current_transaction.pk }}"
-                                                           type="number"
-                                                           step="0.01"
-                                                           min="0"
-                                                           value="{{ line_item.claimed_to_date|addition:line_item.current_transaction.quantity }}"
-                                                           class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                                           placeholder="0.00">
-                                                {% else %}
-                                                    <input name="new_actual_quantity_{{ line_item.pk }}"
-                                                           type="number"
-                                                           step="0.01"
-                                                           min="0"
-                                                           class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                                           placeholder="0.00">
-                                                {% endif %}
-                                            </td>
-                                        {% else %}
-                                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right"></td>
-                                        {% endif %}
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="text-center py-6 flex flex-col items-center">
-                        {% heroicon_outline "document" %}
-                        <p class="mt-2 text-sm text-gray-500">Project WBS not loaded, please upload.</p>
-                        <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
-                           class="mt-2 inline-flex items-center px-3 py-1.5 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                            {% heroicon_outline "arrow-up-tray" size="20" %}
-                            Upload
+                </div>
+                {% if request.GET.structure or request.GET.bill or request.GET.package or request.GET.description %}
+                    <div class="my-3">
+                        <a href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk payment_certificate.pk %}"
+                           class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            {% heroicon_outline "x-mark" size="20" %}
+                            Clear Filters
                         </a>
                     </div>
                 {% endif %}
-            </div>
-            <!-- addendum items section -->
-            <div id="addendum-items">
-                <h2 class="font-medium text-gray-900 mb-4">Addendum Items</h2>
-                <table class="min-w-full divide-y divide-gray-200">
-                    {% define "8" as colSpan %}
-                    <thead class="sticky-table-header">
-                        <tr>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item No.</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pay Ref</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate / unit</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Qty</th>
-                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Claimed to date</th>
-                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actual Quantity</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        {% for line_item in addendum_line_items %}
-                            {% if line_item.structure.name %}
-                                {% if not structure_name or structure_name != line_item.structure.name %}
-                                    {% define line_item.structure.name as structure_name %}
-                                    <tr>
-                                        <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
-                                            colspan="{{ colSpan }}">{{ structure_name }}</td>
-                                    </tr>
-                                {% endif %}
-                            {% endif %}
-                            {% if line_item.bill.name %}
-                                {% if not bill_name or bill_name != line_item.bill.name %}
-                                    {% define line_item.bill.name as bill_name %}
-                                    <tr>
-                                        <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
-                                            colspan="{{ colSpan }}">{{ bill_name }}</td>
-                                    </tr>
-                                {% endif %}
-                            {% endif %}
-                            {% if line_item.package.name %}
-                                {% if not package_name or package_name != line_item.package.name %}
-                                    {% define line_item.package.name as package_name %}
-                                    <tr>
-                                        <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
-                                            colspan="{{ colSpan }}">{{ package_name }}</td>
-                                    </tr>
-                                {% endif %}
-                            {% endif %}
-                            <tr class="hover:bg-gray-50 {% if not line_item.is_work %}bg-gray-100 font-semibold{% endif %}">
-                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.item_number|default:"" }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.payment_reference|default:"" }}</td>
-                                <td class="px-3 py-2 text-sm text-gray-900">{{ line_item.description|default:"" }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                                    R{{ line_item.unit_price|default:""|floatformat:2|intcomma }}/{{ line_item.unit_measurement|default:"" }}
-                                </td>
-                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.budgeted_quantity|default:"" }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                    {{ line_item.claimed_to_date|default:""|floatformat:2|intcomma }}
-                                </td>
-                                {% if line_item.budgeted_quantity %}
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                        {% if line_item.current_transaction %}
-                                            <input name="edit_actual_quantity_{{ line_item.current_transaction.pk }}"
-                                                   type="number"
-                                                   step="0.01"
-                                                   min="0"
-                                                   value="{{ line_item.claimed_to_date|addition:line_item.current_transaction.quantity }}"
-                                                   class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                                   placeholder="0.00">
-                                        {% else %}
-                                            <input name="new_actual_quantity_{{ line_item.pk }}"
-                                                   type="number"
-                                                   step="0.01"
-                                                   min="0"
-                                                   class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                                   placeholder="0.00">
-                                        {% endif %}
-                                    </td>
-                                {% else %}
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right"></td>
-                                {% endif %}
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <!-- special items section -->
-            <div id="special-items"
-                 class="bg-white shadow-md rounded-lg overflow-hidden mb-4">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">Special Items</h2>
-                </div>
-                <div class="px-6 py-4">
-                    <table class="w-auto border-collapse">
-                        <thead>
-                            <tr class="border-b border-gray-200">
-                                <th class="py-2 pr-8 text-left text-sm font-medium text-gray-700">Description</th>
-                                <th class="py-2 pr-8 text-right text-sm font-medium text-gray-700">Claimed To Date</th>
-                                <th class="py-2 text-right text-sm font-medium text-gray-700">Actual Quantity</th>
+            </form>
+        </div>
+    </div>
+    <form id="payment-certificate-form" method="post">
+        {% csrf_token %}
+        <input type="text"  onkeydown="return (event.keyCode!=13);" />
+        <!-- Line Items Section -->
+        <div id="line-items"
+             class="bg-white shadow-md rounded-lg overflow-hidden mb-4">
+            {% if line_items %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        {% define "8" as colSpan %}
+                        <thead class="sticky-table-header">
+                            <tr>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item No.</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pay Ref</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate / unit</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Qty</th>
+                                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Claimed to date</th>
+                                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actual Quantity</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            {% for special_item in special_line_items %}
-                                <tr class="hover:bg-gray-50">
-                                    <td class="py-3 pr-8 text-sm text-gray-900">{{ special_item.description }}</td>
-                                    <td class="py-3 pr-8 text-sm text-gray-600 text-right">
-                                        {{ special_item.claimed_to_date_value|default:"0.00"|floatformat:2|intcomma }}
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for line_item in line_items %}
+                                {% if line_item.structure.name %}
+                                    {% if not structure_name or structure_name != line_item.structure.name %}
+                                        {% define line_item.structure.name as structure_name %}
+                                        <tr>
+                                            <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
+                                                colspan="{{ colSpan }}">{{ structure_name }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endif %}
+                                {% if line_item.bill.name %}
+                                    {% if not bill_name or bill_name != line_item.bill.name %}
+                                        {% define line_item.bill.name as bill_name %}
+                                        <tr>
+                                            <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
+                                                colspan="{{ colSpan }}">{{ bill_name }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endif %}
+                                <tr class="hover:bg-gray-50 {% if not line_item.is_work %}bg-gray-100 font-semibold{% endif %}">
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.item_number|default:"" }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.payment_reference|default:"" }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-900">{{ line_item.description|default:"" }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.unit_measurement|default:"" }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                        {{ line_item.unit_price|default:""|floatformat:2|intcomma }}
                                     </td>
-                                    <td class="py-3 text-right">
-                                        {% if special_item.current_transaction %}
-                                            <input name="edit_actual_quantity_{{ special_item.current_transaction.pk }}"
-                                                   type="number"
-                                                   min="0"
-                                                   step="0.01"
-                                                   value="{{ special_item.claimed_to_date_value|addition:special_item.current_transaction.total_price }}"
-                                                   class="border border-gray-300 rounded px-3 py-1 text-sm text-right focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                                   placeholder="0.00">
-                                        {% else %}
-                                            <input name="new_actual_quantity_{{ special_item.pk }}"
-                                                   type="number"
-                                                   min="0"
-                                                   step="0.01"
-                                                   class="border border-gray-300 rounded px-3 py-1 text-sm text-right focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                                   placeholder="0.00">
-                                        {% endif %}
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.budgeted_quantity|default:"" }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                        {{ line_item.claimed_to_date|default:""|floatformat:2|intcomma }}
                                     </td>
+                                    {% if line_item.budgeted_quantity %}
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                            {% if line_item.current_transaction %}
+                                                <input name="edit_actual_quantity_{{ line_item.current_transaction.pk }}"
+                                                       type="number"
+                                                       step="0.01"
+                                                       min="0"
+                                                       value="{{ line_item.claimed_to_date|addition:line_item.current_transaction.quantity }}"
+                                                       class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                       placeholder="0.00">
+                                            {% else %}
+                                                <input name="new_actual_quantity_{{ line_item.pk }}"
+                                                       type="number"
+                                                       step="0.01"
+                                                       min="0"
+                                                       class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                       placeholder="0.00">
+                                            {% endif %}
+                                        </td>
+                                    {% else %}
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right"></td>
+                                    {% endif %}
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+            {% else %}
+                <div class="text-center py-6 flex flex-col items-center">
+                    {% heroicon_outline "document" %}
+                    <p class="mt-2 text-sm text-gray-500">Project WBS not loaded, please upload.</p>
+                    <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
+                       class="mt-2 inline-flex items-center px-3 py-1.5 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        {% heroicon_outline "arrow-up-tray" size="20" %}
+                        Upload
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+        <!-- addendum items section -->
+        <div id="addendum-items">
+            <h2 class="font-medium text-gray-900 mb-4">Addendum Items</h2>
+            <table class="min-w-full divide-y divide-gray-200">
+                {% define "8" as colSpan %}
+                <thead class="sticky-table-header">
+                    <tr>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item No.</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pay Ref</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate / unit</th>
+                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Qty</th>
+                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Claimed to date</th>
+                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actual Quantity</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for line_item in addendum_line_items %}
+                        {% if line_item.structure.name %}
+                            {% if not structure_name or structure_name != line_item.structure.name %}
+                                {% define line_item.structure.name as structure_name %}
+                                <tr>
+                                    <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
+                                        colspan="{{ colSpan }}">{{ structure_name }}</td>
+                                </tr>
+                            {% endif %}
+                        {% endif %}
+                        {% if line_item.bill.name %}
+                            {% if not bill_name or bill_name != line_item.bill.name %}
+                                {% define line_item.bill.name as bill_name %}
+                                <tr>
+                                    <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
+                                        colspan="{{ colSpan }}">{{ bill_name }}</td>
+                                </tr>
+                            {% endif %}
+                        {% endif %}
+                        {% if line_item.package.name %}
+                            {% if not package_name or package_name != line_item.package.name %}
+                                {% define line_item.package.name as package_name %}
+                                <tr>
+                                    <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
+                                        colspan="{{ colSpan }}">{{ package_name }}</td>
+                                </tr>
+                            {% endif %}
+                        {% endif %}
+                        <tr class="hover:bg-gray-50 {% if not line_item.is_work %}bg-gray-100 font-semibold{% endif %}">
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.item_number|default:"" }}</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.payment_reference|default:"" }}</td>
+                            <td class="px-3 py-2 text-sm text-gray-900">{{ line_item.description|default:"" }}</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                R{{ line_item.unit_price|default:""|floatformat:2|intcomma }}/{{ line_item.unit_measurement|default:"" }}
+                            </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.budgeted_quantity|default:"" }}</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                {{ line_item.claimed_to_date|default:""|floatformat:2|intcomma }}
+                            </td>
+                            {% if line_item.budgeted_quantity %}
+                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                    {% if line_item.current_transaction %}
+                                        <input name="edit_actual_quantity_{{ line_item.current_transaction.pk }}"
+                                               type="number"
+                                               step="0.01"
+                                               min="0"
+                                               value="{{ line_item.claimed_to_date|addition:line_item.current_transaction.quantity }}"
+                                               class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                               placeholder="0.00">
+                                    {% else %}
+                                        <input name="new_actual_quantity_{{ line_item.pk }}"
+                                               type="number"
+                                               step="0.01"
+                                               min="0"
+                                               class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                               placeholder="0.00">
+                                    {% endif %}
+                                </td>
+                            {% else %}
+                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right"></td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- special items section -->
+        <div id="special-items"
+             class="bg-white shadow-md rounded-lg overflow-hidden mb-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Special Items</h2>
             </div>
-            <!-- Save button -->
-            <div class="flex justify-end mt-6 p-4 gap-4">
-                <a id="cancel-btn"
-                   href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk payment_certificate.pk %}"
-                   class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                   data-loading-text="Canceling..."
-                   data-disable-elements="#save-btn">
-                    {% heroicon_outline "x-mark" class="w-5 h-5" %}
-                    Cancel
-                </a>
-                <button id="save-btn"
-                        type="submit"
-                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors loading-btn"
-                        data-loading-text="Saving..."
-                        data-disable-elements="#cancel-btn">
-                    {% heroicon_outline "check-circle" size="20" %}
-                    Save
-                </button>
+            <div class="px-6 py-4">
+                <table class="w-auto border-collapse">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="py-2 pr-8 text-left text-sm font-medium text-gray-700">Description</th>
+                            <th class="py-2 pr-8 text-right text-sm font-medium text-gray-700">Claimed To Date</th>
+                            <th class="py-2 text-right text-sm font-medium text-gray-700">Actual Quantity</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for special_item in special_line_items %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-3 pr-8 text-sm text-gray-900">{{ special_item.description }}</td>
+                                <td class="py-3 pr-8 text-sm text-gray-600 text-right">
+                                    {{ special_item.claimed_to_date_value|default:"0.00"|floatformat:2|intcomma }}
+                                </td>
+                                <td class="py-3 text-right">
+                                    {% if special_item.current_transaction %}
+                                        <input name="edit_actual_quantity_{{ special_item.current_transaction.pk }}"
+                                               type="number"
+                                               min="0"
+                                               step="0.01"
+                                               value="{{ special_item.claimed_to_date_value|addition:special_item.current_transaction.total_price }}"
+                                               class="border border-gray-300 rounded px-3 py-1 text-sm text-right focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                               placeholder="0.00">
+                                    {% else %}
+                                        <input name="new_actual_quantity_{{ special_item.pk }}"
+                                               type="number"
+                                               min="0"
+                                               step="0.01"
+                                               class="border border-gray-300 rounded px-3 py-1 text-sm text-right focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                               placeholder="0.00">
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        </form>
-        <!-- Footer -->
-        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
-            <div class="flex justify-between items-center">
-                <a href="{% url 'project:project-list' %}"
-                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                    {% heroicon_outline "chevron-left" %}
-                    Back to Projects
-                </a>
-            </div>
+        </div>
+        <!-- Save button -->
+        <div class="flex justify-end mt-6 p-4 gap-4">
+            <a id="cancel-btn"
+               href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk payment_certificate.pk %}"
+               class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+               data-loading-text="Canceling..."
+               data-disable-elements="#save-btn">
+                {% heroicon_outline "x-mark" class="w-5 h-5" %}
+                Cancel
+            </a>
+            <button id="save-btn"
+                    type="submit"
+                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors loading-btn"
+                    data-loading-text="Saving..."
+                    data-disable-elements="#cancel-btn">
+                {% heroicon_outline "check-circle" size="20" %}
+                Save
+            </button>
+        </div>
+    </form>
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+        <div class="flex justify-between items-center">
+            <a href="{% url 'project:project-list' %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                {% heroicon_outline "chevron-left" %}
+                Back to Projects
+            </a>
         </div>
     </div>
     <!-- Floating Scroll to Bottom Button -->

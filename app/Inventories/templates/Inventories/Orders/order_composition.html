@@ -1,0 +1,179 @@
+﻿{% extends "base.html" %}
+{% load l10n %}
+{% load static %}
+{% load qr_code %}
+{% load milestone_extras %}
+{% block content %}
+    <div id="breadcrumb" class="no-print">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href={% url 'home' %}>Home</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href={% url 'inventories:order_list_view' %}>All Orders</a>
+                </li>
+                {% if order.status_id >= 1 %}
+                    <li class="breadcrumb-item">
+                        <a href={% url 'inventories:order_update_view' order=order.id %}>Update Order</a>
+                    </li>
+                {% elif order.status_id == 2 or order.status_id == 3 %}
+                    <li class="breadcrumb-item">
+                        <a href={% url 'inventories:order_receive_view' order=order.id %}>Receive Order</a>
+                    </li>
+                {% endif %}
+                <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="no-screen" style="bottom:0; left: 0; position:fixed;"></div>
+    <div style="display: table-header-group !important;">
+        <table class="table">
+            <thead style="font-size:16px !important;">
+                <tr>
+                    <th colspan="2">
+                        Purchase Order: PO-{{ order.id|stringformat:"05d" }}
+                        <br>
+                        Date: {{ order.date|date:"Y/m/d" }}
+                        {% for group in user.groups.all %}
+                            {% if group.name == 'Material Manager' and order.status_id == 1 %}
+                                <form method="post" class="no-print">
+                                    {% csrf_token %}
+                                    <input type="submit"
+                                           class="btn btn-primary"
+                                           onclick="return confirm('Are you sure you want to approve the order?')"
+                                           value="Approve Order"
+                                           name="approve order" />
+                                </form>
+                            {% elif group.name == 'Material Manager' and order.status_id == 2 %}
+                                <form method="post" class="no-print">
+                                    {% csrf_token %}
+                                    <input type="submit"
+                                           class="btn btn-danger"
+                                           onclick="return confirm('Are you sure you want to revoke this order?')"
+                                           value="Revoke Order"
+                                           name="revoke order" />
+                                </form>
+                            {% endif %}
+                        {% endfor %}
+                    </th>
+                    <th colspan="2" class="no-screen" style="text-align:right;">
+                        <img style="width: 200px; height: 60px;" src="{% static '3i logo.PNG' %}" />
+                    </th>
+                </tr>
+            </thead>
+            <tbody style="font-size:10px;">
+                <tr>
+                    <th style="text-align:right;">Company Details</th>
+                    <td style="text-align:left;">Three I Developments (Pty) Ltd</td>
+                    <th style="text-align:right;">Supplier Details</th>
+                    <td style="text-align:left;">{{ order.supplier.description }}</td>
+                </tr>
+                <tr>
+                    <th style="text-align:right;">VAT Number</th>
+                    <td style="text-align:left;">4200264689</td>
+                    <th style="text-align:right;">VAT Number</th>
+                    <td style="text-align:left;">
+                        {% if order.supplier.vat_number %}{{ order.supplier.vat_number|unlocalize }}{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th style="text-align:right;">Registration Number</th>
+                    <td style="text-align:left;">2012/117958/07</td>
+                    <th style="text-align:right;">Registration Number</th>
+                    <td style="text-align:left;">
+                        {% if order.supplier.company_registration %}{{ order.supplier.company_registration }}{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th style="text-align:right;">Telephone Number</th>
+                    <td style="text-align:left;">016 932 1141</td>
+                    <th style="text-align:right;">Telephone Number</th>
+                    <td style="text-align:left;">
+                        {% if order.supplier.primary_contact %}{{ order.supplier.primary_contact|unlocalize }}{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th style="text-align:right;">Email</th>
+                    <td style="text-align:left;">soekie@threei.co.za</td>
+                    <th style="text-align:right;">Email</th>
+                    <td style="text-align:left;">
+                        {% if order.supplier.email %}{{ order.supplier.email }}{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th style="text-align:right;">Address</th>
+                    <td style="text-align:left;">22 Hendrik van Eck, Vanderbijlpark, SE3</td>
+                    <th style="text-align:right;">Address</th>
+                    <td style="text-align:left;">
+                        {% if order.supplier.address %}{{ order.supplier.address }}{% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <br>
+    <div>
+        <table class="table" style="max-width:100%; font-size:12px;">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Warehouse</th>
+                    <th>Qty</th>
+                    <th>VAT</th>
+                    <th style="text-align:right;">Price Excl</th>
+                    <th style="text-align:right;">Price Incl</th>
+                    <th style="text-align:right;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for instance in order_composition %}
+                    <tr>
+                        <td>{{ instance.inventory.description }}</td>
+                        <td>{{ instance.warehouse.description }}</td>
+                        <td>{{ instance.qty_ordered }}</td>
+                        <td>{{ instance.vat.description }}</td>
+                        <td style="text-align:right;">R{{ instance.price_excl }}</td>
+                        <td style="text-align:right;">R{{ instance.price_incl }}</td>
+                        <td style="text-align:right;">R{{ instance.total_incl|floatformat:2 }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="6" style="text-align:right;">Total Excl:</th>
+                    <td style="text-align:right;">R{{ total_excl|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <th colspan="2" style="text-align:right;">Total VAT:</th>
+                    <td style="text-align:right;">R{{ total_vat|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <th colspan="2" style="text-align:right;">Total Incl:</th>
+                    <td style="text-align:right;">R{{ total_incl|floatformat:2 }}</td>
+                </tr>
+            </tfoot>
+        </table>
+        {% for group in user.groups.all %}
+            {% if group.name == 'Material Manager' and order.status_id == 1 %}
+                <form method="post" class="no-print">
+                    {% csrf_token %}
+                    <input type="submit"
+                           class="btn btn-primary"
+                           onclick="return confirm('Are you sure you want to approve the order?')"
+                           value="Approve Order"
+                           name="approve order" />
+                </form>
+            {% elif group.name == 'Material Manager' and order.status_id == 2 %}
+                <form method="post" class="no-print">
+                    {% csrf_token %}
+                    <input type="submit"
+                           class="btn btn-danger"
+                           onclick="return confirm('Are you sure you want to revoke this order?')"
+                           value="Revoke Order"
+                           name="revoke order" />
+                </form>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endblock %}

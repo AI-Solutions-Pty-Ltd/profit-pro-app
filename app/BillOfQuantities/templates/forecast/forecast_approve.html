@@ -4,20 +4,10 @@
     Approve Forecast - {{ project.name }}
 {% endblock title %}
 {% block content %}
-    <div class="container mx-auto px-4 py-8">
-        <div class="mb-6">
-            <nav class="text-sm text-gray-600">
-                <a href="{% url 'project:project-detail' project.pk %}"
-                   class="hover:text-blue-600">{{ project.name }}</a>
-                <span class="mx-2">/</span>
-                <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
-                   class="hover:text-blue-600">Forecasts</a>
-                <span class="mx-2">/</span>
-                <span class="text-gray-900">Approve Forecast - {{ forecast.period|date:"F Y" }}</span>
-            </nav>
-        </div>
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <div class="flex justify-between items-center mb-6">
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div id="forecast-list-header"
+             class="px-6 py-5 border-b border-gray-200 bg-gray-50 mb-4">
+            <div class="flex items-center justify-between gap-6">
                 <h1 class="text-2xl font-bold text-gray-900">Approve Forecast</h1>
                 <div class="flex items-center space-x-2">
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
@@ -25,6 +15,8 @@
                     </span>
                 </div>
             </div>
+        </div>
+        <div id="content" class="p-6">
             <div class="mb-6 text-sm text-gray-600">
                 <p>
                     <strong>Period:</strong> {{ forecast.period|date:"F Y" }}
@@ -64,7 +56,7 @@
                             {% elif difference < 0 %}
                                 {% heroicon_outline 'arrow-trending-down' %}
                             {% else %}
-                                {% heroicon_outline 'arrow-trending-neutral' %}
+                                {% heroicon_outline 'x-circle' %}
                             {% endif %}
                         </div>
                         <div class="ml-4">

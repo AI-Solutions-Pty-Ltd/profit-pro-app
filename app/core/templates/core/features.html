@@ -40,20 +40,17 @@
         </div>
     </section>
     <!-- CTA Section -->
-    <section class="bg-indigo-600 py-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>
-            <p class="text-xl text-indigo-100 mb-8">Join thousands of businesses already using Profit Pro</p>
-            <div class="space-x-4">
-                <a href="{% url 'register' %}"
-                   class="bg-white text-indigo-600 px-8 py-3 rounded-md font-semibold hover:bg-gray-100 transition-colors">
-                    Start Free Trial
-                </a>
-                <a href="{% url 'pricing' %}"
-                   class="border-2 border-white text-white px-8 py-3 rounded-md font-semibold hover:bg-white hover:text-indigo-600 transition-colors">
-                    View Pricing Plans
-                </a>
+    {% if not request.user.is_authenticated %}
+        <section class="bg-indigo-600 py-16">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-3xl font-bold text-white mb-4">Ready to Get Started?</h2>
+                <div class="space-x-4">
+                    <a href="{% url 'register' %}"
+                       class="bg-white text-indigo-600 px-8 py-3 rounded-md font-semibold hover:bg-gray-100 transition-colors">
+                        Get Started
+                    </a>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+    {% endif %}
 {% endblock content %}

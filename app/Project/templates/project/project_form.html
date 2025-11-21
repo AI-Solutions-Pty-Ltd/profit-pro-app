@@ -9,97 +9,62 @@
     - {{ block.super }}
 {% endblock title %}
 {% block content %}
-    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Breadcrumb -->
-        <nav class="flex mb-6" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                <li class="inline-flex items-center">
-                    <a href="{% url 'project:project-list' %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">
-                        {% heroicon_outline name="chevron-left" size="20" %}
-                        Projects
-                    </a>
-                </li>
+    <!-- Form Card -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+            <h1 class="text-2xl font-bold text-gray-900">
                 {% if form.instance.pk %}
-                    <li class="inline-flex items-center">
-                        <a href="{% url 'project:project-detail' project.pk %}"
-                           class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
-                            {% heroicon_outline "chevron-right" size="20" %}
-                            Project Details
-                        </a>
-                    </li>
+                    Edit Project
+                {% else %}
+                    Create New Project
                 {% endif %}
-                <li>
-                    <div class="flex items-center">
-                        {% heroicon_outline name="chevron-right" size="20" %}
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">
-                            {% if form.instance.pk %}
-                                Edit
-                            {% else %}
-                                Create
-                            {% endif %}
-                        </span>
-                    </div>
-                </li>
-            </ol>
-        </nav>
-        <!-- Form Card -->
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <!-- Header -->
-            <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
-                <h1 class="text-2xl font-bold text-gray-900">
-                    {% if form.instance.pk %}
-                        Edit Project
-                    {% else %}
-                        Create New Project
-                    {% endif %}
-                </h1>
-                <p class="mt-1 text-sm text-gray-600">
-                    {% if form.instance.pk %}
-                        Update the project details below.
-                    {% else %}
-                        Fill in the details to create a new project.
-                    {% endif %}
-                </p>
-            </div>
-            <!-- Form -->
-            <form method="post" class="px-6 py-6">
-                {% csrf_token %}
-                <!-- Display non-field errors -->
-                {{ form|crispy }}
-                <!-- Form Actions -->
-                <div class="mt-6 flex items-center justify-end space-x-3">
-                    {% if form.instance.pk %}
-                        <a id="cancel-update-btn"
-                           href="{% url 'project:project-detail' object.pk %}"
-                           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                            {% heroicon_outline "chevron-left" size="20" %}
-                            Back to Project
-                        </a>
-                        <button type="submit"
-                                class="loading-btn inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                                data-loading-text="Updating..."
-                                data-disable-elements="#cancel-update-btn">
-                            {% heroicon_outline "pencil" size="20" %}
-                            Update Project
-                        </button>
-                    {% else %}
-                        <a id="cancel-create-btn"
-                           href="{% url 'project:project-list' %}"
-                           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                            {% heroicon_outline "chevron-left" size="20" %}
-                            Back to Projects
-                        </a>
-                        <button type="submit"
-                                class="loading-btn inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                                data-loading-text="Creating..."
-                                data-disable-elements="#cancel-create-btn">
-                            {% heroicon_outline "plus" size="20" %}
-                            Create Project
-                        </button>
-                    {% endif %}
-                </div>
-            </form>
+            </h1>
+            <p class="mt-1 text-sm text-gray-600">
+                {% if form.instance.pk %}
+                    Update the project details below.
+                {% else %}
+                    Fill in the details to create a new project.
+                {% endif %}
+            </p>
         </div>
+        <!-- Form -->
+        <form method="post" class="px-6 py-6">
+            {% csrf_token %}
+            <!-- Display non-field errors -->
+            {{ form|crispy }}
+            <!-- Form Actions -->
+            <div class="mt-6 flex items-center justify-end space-x-3">
+                {% if form.instance.pk %}
+                    <a id="cancel-update-btn"
+                       href="{% url 'project:project-detail' object.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        {% heroicon_outline "chevron-left" size="20" %}
+                        Back to Project
+                    </a>
+                    <button type="submit"
+                            class="loading-btn inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                            data-loading-text="Updating..."
+                            data-disable-elements="#cancel-update-btn">
+                        {% heroicon_outline "pencil" size="20" %}
+                        Update Project
+                    </button>
+                {% else %}
+                    <a id="cancel-create-btn"
+                       href="{% url 'project:project-list' %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        {% heroicon_outline "chevron-left" size="20" %}
+                        Back to Projects
+                    </a>
+                    <button type="submit"
+                            class="loading-btn inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                            data-loading-text="Creating..."
+                            data-disable-elements="#cancel-create-btn">
+                        {% heroicon_outline "plus" size="20" %}
+                        Create Project
+                    </button>
+                {% endif %}
+            </div>
+        </form>
     </div>
 {% endblock content %}

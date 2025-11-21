@@ -6,7 +6,7 @@ from typing import Any
 
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import QuerySet, Sum
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.generic import DetailView, ListView, TemplateView
@@ -19,11 +19,12 @@ from app.BillOfQuantities.models import (
     Package,
     Structure,
 )
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.models import Project
 
 
-class ForecastMixin(UserHasGroupGenericMixin):
+class ForecastMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
     """Mixin for forecast views."""
 
     permissions = ["contractor"]
@@ -44,6 +45,20 @@ class ForecastCreateView(ForecastMixin, TemplateView):
     """Create a new forecast with period selection."""
 
     template_name = "forecast/forecast_create.html"
+
+    def get_breadcrumbs(self: "ForecastCreateView") -> list[BreadcrumbItem]:
+        """Get breadcrumbs for the current view."""
+        project = self.get_project()
+        return [
+            {
+                "title": project.name,
+                "url": reverse(
+                    "bill_of_quantities:forecast-list",
+                    kwargs={"project_pk": project.pk},
+                ),
+            },
+            {"title": "Create Forecast", "url": None},
+        ]
 
     def get_context_data(self: "ForecastCreateView", **kwargs):
         """Add project and check for active forecast."""
@@ -183,6 +198,27 @@ class ForecastEditView(ForecastMixin, DetailView):
     model = Forecast
     template_name = "forecast/forecast_edit.html"
     context_object_name = "forecast"
+
+    def get_breadcrumbs(self: "ForecastEditView") -> list[BreadcrumbItem]:
+        """Get breadcrumbs for the forecast edit view."""
+        project = self.get_project()
+        forecast = self.get_object()
+        return [
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse(
+                    "bill_of_quantities:forecast-list",
+                    kwargs={"project_pk": project.pk},
+                ),
+            ),
+            BreadcrumbItem(
+                title=forecast.period,
+                url=reverse(
+                    "bill_of_quantities:forecast-edit",
+                    kwargs={"project_pk": project.pk, "pk": forecast.pk},
+                ),
+            ),
+        ]
 
     def get_object(self: "ForecastEditView") -> Forecast:
         """Get forecast for the project."""
@@ -346,6 +382,27 @@ class ForecastApproveView(ForecastMixin, DetailView):
     template_name = "forecast/forecast_approve.html"
     context_object_name = "forecast"
 
+    def get_breadcrumbs(self: "ForecastApproveView") -> list[BreadcrumbItem]:
+        """Get breadcrumbs for the forecast approve view."""
+        project = self.get_project()
+        forecast = self.get_object()
+        return [
+            BreadcrumbItem(
+                title=f"{project.name}: Forecast",
+                url=reverse(
+                    "bill_of_quantities:forecast-list",
+                    kwargs={"project_pk": project.pk},
+                ),
+            ),
+            BreadcrumbItem(
+                title=f"{forecast.period.strftime('%B %Y')}",
+                url=reverse(
+                    "bill_of_quantities:forecast-approve",
+                    kwargs={"project_pk": project.pk, "pk": forecast.pk},
+                ),
+            ),
+        ]
+
     def get_object(self):
         """Get forecast for the project."""
         project = self.get_project()
@@ -406,7 +463,10 @@ class ForecastApproveView(ForecastMixin, DetailView):
             f"Forecast for {forecast.period.strftime('%B %Y')} approved successfully!",
         )
         return redirect(
-            reverse("project:project-detail", kwargs={"pk": forecast.project.pk})
+            reverse(
+                "bill_of_quantities:forecast-list",
+                kwargs={"project_pk": forecast.project.pk},
+            )
         )
 
 
@@ -417,12 +477,26 @@ class ForecastListView(ForecastMixin, ListView):
     template_name = "forecast/forecast_list.html"
     context_object_name = "forecasts"
 
-    def get_queryset(self):
+    def get_breadcrumbs(self: "ForecastListView") -> list[BreadcrumbItem]:
+        project = self.get_project()
+        return [
+            BreadcrumbItem(title="Projects", url=reverse("project:project-list")),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-detail", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(
+                title="Forecasts",
+                url=None,
+            ),
+        ]
+
+    def get_queryset(self: "ForecastListView") -> QuerySet[Forecast]:
         """Get forecasts for the project."""
         project = self.get_project()
         return Forecast.objects.filter(project=project).order_by("-period")
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self: "ForecastListView", **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         project = self.get_project()
@@ -437,6 +511,20 @@ class ForecastReportView(ForecastMixin, DetailView):
     model = Project
     template_name = "forecast/forecast_report.html"
     context_object_name = "project"
+
+    def get_breadcrumbs(self: "ForecastReportView") -> list[BreadcrumbItem]:
+        project = self.get_project()
+        return [
+            BreadcrumbItem(title="Projects", url=reverse("project:project-list")),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-detail", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(
+                title="Forecast Report",
+                url=None,
+            ),
+        ]
 
     def get_object(self: "ForecastReportView") -> Project:
         """Get project for the current view."""

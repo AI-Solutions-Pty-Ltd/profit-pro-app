@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="description"
+              content="{% block meta_description %}{{ SITE_NAME|default:"Profit Pro" }} - Streamline your business operations with our comprehensive management platform. Track finances, manage customers, and grow your business with confidence.{% endblock meta_description %}" />
+        <meta name="keywords"
+              content="{% block meta_keywords %}{{ SITE_NAME|default:"Profit Pro" }}, business management, finance tracking, customer management, business growth{% endblock meta_keywords %}" />
+        <title>
+            {% block title %}
+                {{ SITE_NAME|default:"Profit Pro" }}
+            {% endblock title %}
+        </title>
+        <!-- Tailwind CSS -->
+        {% load tailwind_filters %}
+        {% load static tailwind_tags %}
+        {% tailwind_css %}
+        <!-- Crispy Forms -->
+        {% load crispy_forms_tags %}
+        {% block extra_css %}
+        {% endblock extra_css %}
+        <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+    </head>
+    <body class="flex flex-col min-h-screen bg-white">
+        <!-- Sticky Top Navigation -->
+        {% include "nav.html" %}
+        <!-- Main Content -->
+        <div id="content" class="pb-6 mb-20 bg-blue-50 flex-grow">
+            {% block page_content %}
+            {% endblock page_content %}
+        </div>
+        <!-- Footer -->
+        <footer class="fixed bottom-0 w-full bg-gray-800 text-white">
+            <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-gray-300 text-sm">{% now "Y" %} {{ SITE_NAME|default:"Profit Pro" }}.</p>
+                    <p class="text-gray-300 text-sm">Empowering businesses with smart financial solutions.</p>
+                    <p class="text-gray-300 text-sm">
+                        All
+                        rights reserved.
+                    </p>
+                </div>
+            </div>
+        </footer>
+        <!-- Toast Notifications Container -->
+        <div id="toast-container" class="fixed top-20 right-4 z-50 space-y-2">
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                    {% define "bg-green-200" as bg_color %}
+                    {% define "check-circle" as icon %}
+                {% elif message.tags == 'error' %}
+                    {% define "bg-red-200" as bg_color %}
+                    {% define "x-circle" as icon %}
+                {% elif message.tags == 'warning' %}
+                    {% define "bg-yellow-200" as bg_color %}
+                    {% define "exclamation-circle" as icon %}
+                {% elif message.tags == 'info' %}
+                    {% define "bg-blue-200" as bg_color %}
+                    {% define "information-circle" as icon %}
+                {% elif message.tags == 'debug' %}
+                    {% define "bg-gray-200" as bg_color %}
+                    {% define "bug" as icon %}
+                {% else %}
+                    {% define "bg-gray-200" as bg_color %}
+                    {% define "information-circle" as icon %}
+                {% endif %}
+                <div class="toast-notification w-96 {{ bg_color }} shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden"
+                     role="alert">
+                    <div class="p-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">{% heroicon_outline name=icon size="20" %}</div>
+                            <div class="ml-3 flex-1 pt-0.5 min-w-0">
+                                <p class="text-sm font-medium text-gray-900">{{ message.tags|title }}</p>
+                                <p class="mt-1 text-sm text-gray-600 break-words">{{ message }}</p>
+                            </div>
+                            <div class="ml-4 flex-shrink-0 flex">
+                                <button type="button"
+                                        class="toast-close bg-white rounded-md inline-flex text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                        aria-label="Close">
+                                    <span class="sr-only">Close</span>
+                                    {% heroicon_outline name="x-mark" size="20" %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        {% block extra_js %}
+        {% endblock extra_js %}
+        <!-- Loading Buttons JavaScript -->
+        <script src="{% static 'js/loading-buttons.js' %}"></link>
+        <script>
+            // Toast functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                const toastContainer = document.getElementById('toast-container');
+                const toasts = toastContainer.querySelectorAll('.toast-notification');
+
+                // Auto-dismiss toasts after 5 seconds
+                toasts.forEach((toast, index) => {
+                    // Stagger the appearance slightly
+                    setTimeout(() => {
+                        toast.style.transform = 'translateX(100%)';
+                        toast.style.opacity = '0';
+                        toast.style.transition = 'all 0.3s ease-out';
+
+                        // Trigger animation
+                        setTimeout(() => {
+                            toast.style.transform = 'translateX(0)';
+                            toast.style.opacity = '1';
+                        }, 50);
+
+                        // Auto-dismiss after 5 seconds
+                        setTimeout(() => {
+                            dismissToast(toast);
+                        }, 5000 + (index * 200));
+                    }, index * 100);
+                });
+
+                // Close button functionality
+                const closeButtons = document.querySelectorAll('.toast-close');
+                closeButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const toast = this.closest('.toast-notification');
+                        dismissToast(toast);
+                    });
+                });
+
+                function dismissToast(toast) {
+                    toast.style.transform = 'translateX(100%)';
+                    toast.style.opacity = '0';
+
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 300);
+                }
+
+                // Add hover pause functionality
+                toasts.forEach(toast => {
+                    let timeoutId;
+
+                    toast.addEventListener('mouseenter', function() {
+                        clearTimeout(timeoutId);
+                    });
+
+                    toast.addEventListener('mouseleave', function() {
+                        timeoutId = setTimeout(() => {
+                            dismissToast(toast);
+                        }, 2000);
+                    });
+                });
+            });
+
+            // Dropdown toggle function
+            function toggleDropdown(dropdownId) {
+                const dropdown = document.getElementById(dropdownId);
+                const arrow = document.getElementById(dropdownId + '-arrow');
+                
+                if (dropdown.classList.contains('hidden')) {
+                    dropdown.classList.remove('hidden');
+                    arrow.classList.add('rotate-180');
+                } else {
+                    dropdown.classList.add('hidden');
+                    arrow.classList.remove('rotate-180');
+                }
+            }
+
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(event) {
+                const dropdowns = document.querySelectorAll('[id$="-dropdown"]');
+                dropdowns.forEach(dropdown => {
+                    if (!dropdown.parentElement.contains(event.target)) {
+                        dropdown.classList.add('hidden');
+                        const arrowId = dropdown.id + '-arrow';
+                        const arrow = document.getElementById(arrowId);
+                        if (arrow) {
+                            arrow.classList.remove('rotate-180');
+                        }
+                    }
+                });
+            });
+</script>
+<style>
+            svg {
+                margin-left: 5px;
+                margin-right: 5px;
+            }
+</style>
+</body>
+</html>

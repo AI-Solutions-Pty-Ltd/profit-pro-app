@@ -116,16 +116,20 @@ class Project(BaseModel):
 
     @property
     def get_active_payment_certificate(self) -> Optional["PaymentCertificate"]:
-        try:
-            return self.payment_certificates.get(
+        """Get the most recent active payment certificate (DRAFT, SUBMITTED, or REJECTED)."""
+        from app.BillOfQuantities.models import PaymentCertificate
+
+        return (
+            self.payment_certificates.filter(
                 status__in=[
                     PaymentCertificate.Status.DRAFT,
                     PaymentCertificate.Status.SUBMITTED,
                     PaymentCertificate.Status.REJECTED,
                 ]
             )
-        except Exception:
-            return None
+            .order_by("-created_at")
+            .first()
+        )
 
     @property
     def get_line_items(self):

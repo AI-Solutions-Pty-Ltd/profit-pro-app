@@ -2,16 +2,18 @@
 
 from django.contrib import messages
 from django.db.models import Max
+from django.db.models.query import QuerySet
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from app.BillOfQuantities.models import LineItem
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.models import Project
 
 
-class SpecialItemMixin(UserHasGroupGenericMixin):
+class SpecialItemMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
     """Mixin for special item views."""
 
     permissions = ["contractor"]
@@ -35,7 +37,23 @@ class SpecialItemListView(SpecialItemMixin, ListView):
     template_name = "special_item/special_item_list.html"
     context_object_name = "special_items"
 
-    def get_queryset(self):
+    def get_breadcrumbs(self: "SpecialItemListView") -> list[BreadcrumbItem]:
+        return [
+            {"title": "Projects", "url": reverse("project:project-list")},
+            {
+                "title": self.get_project().name,
+                "url": reverse(
+                    "project:project-detail",
+                    kwargs={"pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": "Special Items",
+                "url": None,
+            },
+        ]
+
+    def get_queryset(self: "SpecialItemListView") -> QuerySet[LineItem]:
         """Get special items for the project."""
         project = self.get_project()
         return (
@@ -44,7 +62,7 @@ class SpecialItemListView(SpecialItemMixin, ListView):
             .order_by("row_index")
         )
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self: "SpecialItemListView", **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
@@ -60,7 +78,30 @@ class SpecialItemCreateView(SpecialItemMixin, CreateView):
         "description",
     ]
 
-    def form_valid(self, form):
+    def get_breadcrumbs(self: "SpecialItemCreateView") -> list[BreadcrumbItem]:
+        return [
+            {"title": "Projects", "url": reverse("project:project-list")},
+            {
+                "title": self.get_project().name,
+                "url": reverse(
+                    "project:project-detail",
+                    kwargs={"pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": "Special Items",
+                "url": reverse(
+                    "bill_of_quantities:special-item-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": "Create Special Item",
+                "url": None,
+            },
+        ]
+
+    def form_valid(self: "SpecialItemCreateView", form):
         """Set project, special_item flag, and calculate row_index."""
         project = self.get_project()
         form.instance.project = project
@@ -86,14 +127,14 @@ class SpecialItemCreateView(SpecialItemMixin, CreateView):
         messages.success(self.request, "Special item created successfully!")
         return super().form_valid(form)
 
-    def get_success_url(self):
+    def get_success_url(self: "SpecialItemCreateView"):
         """Redirect to special item list."""
         return reverse(
             "bill_of_quantities:special-item-list",
             kwargs={"project_pk": self.get_project().pk},
         )
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self: "SpecialItemCreateView", **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
@@ -109,24 +150,47 @@ class SpecialItemUpdateView(SpecialItemMixin, UpdateView):
         "description",
     ]
 
-    def get_queryset(self):
+    def get_breadcrumbs(self: "SpecialItemUpdateView") -> list[BreadcrumbItem]:
+        return [
+            {"title": "Projects", "url": reverse("project:project-list")},
+            {
+                "title": self.get_project().name,
+                "url": reverse(
+                    "project:project-detail",
+                    kwargs={"pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": "Special Items",
+                "url": reverse(
+                    "bill_of_quantities:special-item-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": self.get_object().description,
+                "url": None,
+            },
+        ]
+
+    def get_queryset(self: "SpecialItemUpdateView") -> QuerySet[LineItem]:
         """Only allow editing special items from this project."""
         project = self.get_project()
         return LineItem.objects.filter(project=project, special_item=True)
 
-    def form_valid(self, form):
+    def form_valid(self: "SpecialItemUpdateView", form):
         """Recalculate total_price if is_work."""
         messages.success(self.request, "Special item updated successfully!")
         return super().form_valid(form)
 
-    def get_success_url(self):
+    def get_success_url(self: "SpecialItemUpdateView"):
         """Redirect to special item list."""
         return reverse(
             "bill_of_quantities:special-item-list",
             kwargs={"project_pk": self.get_project().pk},
         )
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self: "SpecialItemUpdateView", **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
@@ -140,25 +204,48 @@ class SpecialItemDeleteView(SpecialItemMixin, DeleteView):
     template_name = "special_item/special_item_confirm_delete.html"
     context_object_name = "special_item"
 
-    def get_queryset(self):
+    def get_breadcrumbs(self: "SpecialItemDeleteView") -> list[BreadcrumbItem]:
+        return [
+            {"title": "Projects", "url": reverse("project:project-list")},
+            {
+                "title": self.get_project().name,
+                "url": reverse(
+                    "project:project-detail",
+                    kwargs={"pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": "Special Items",
+                "url": reverse(
+                    "bill_of_quantities:special-item-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            },
+            {
+                "title": self.get_object().description,
+                "url": None,
+            },
+        ]
+
+    def get_queryset(self: "SpecialItemDeleteView") -> QuerySet[LineItem]:
         """Only allow deleting special items from this project."""
         project = self.get_project()
         return LineItem.objects.filter(project=project, special_item=True)
 
-    def form_valid(self, form):
+    def form_valid(self: "SpecialItemDeleteView", form):
         """Soft delete the special item."""
         self.object.soft_delete()
         messages.success(self.request, "Special item deleted successfully!")
         return redirect(self.get_success_url())
 
-    def get_success_url(self):
+    def get_success_url(self: "SpecialItemDeleteView"):
         """Redirect to special item list."""
         return reverse(
             "bill_of_quantities:special-item-list",
             kwargs={"project_pk": self.get_project().pk},
         )
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self: "SpecialItemDeleteView", **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()

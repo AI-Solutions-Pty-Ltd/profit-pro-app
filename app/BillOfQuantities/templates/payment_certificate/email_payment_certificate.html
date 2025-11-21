@@ -7,7 +7,7 @@
               content="Payment Certificate #{{ payment_certificate.certificate_number }}">
         <meta name="keywords"
               content="Payment Certificate, {{ payment_certificate.certificate_number }}">
-        <meta name="author" content="Profit Pro">
+        <meta name="author" content="{{ SITE_NAME|default:"Profit Pro" }}">
         <title>Payment Certificate #{{ payment_certificate.certificate_number }}</title>
         <style>
             body {
@@ -148,7 +148,7 @@
             </p>
         </div>
         <div class="footer">
-            <p>This is an automated message from Profit Pro.</p>
+            <p>This is an automated message from {{ SITE_NAME|default:"Profit Pro" }}.</p>
             <p style="font-size: 0.8em; color: #9CA3AF;">
                 Payment terms as per contract agreement. All amounts are exclusive of VAT unless otherwise stated.
             </p>

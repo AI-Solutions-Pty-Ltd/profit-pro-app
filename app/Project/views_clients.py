@@ -6,11 +6,12 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.views.generic import (
     CreateView,
+    DeleteView,
     DetailView,
     FormView,
     UpdateView,
@@ -18,12 +19,13 @@ from django.views.generic import (
 )
 
 from app.Account.models import Account
+from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import ClientForm, ClientUserInviteForm
 from app.Project.models import Client, Project
 
 
-class GetProjectMixin(UserHasGroupGenericMixin):
+class GetProjectMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
     permissions = ["contractor"]
 
     def get_project(self, slug):
@@ -49,7 +51,7 @@ class ClientMixin(GetProjectMixin):
             pk=self.kwargs["pk"],  ## MAKE SURE SLUG REMAINS "pk"
         )
 
-    def get_client(self, slug):
+    def get_client(self: "ClientMixin", slug):
         if not hasattr(self, "project") or not self.project:
             self.project = self.get_project(self.kwargs["project_pk"])
         return get_object_or_404(Client, pk=slug)
@@ -61,6 +63,18 @@ class ProjectAddClientView(GetProjectMixin, CreateView):
     model = Client
     form_class = ClientForm
     template_name = "client/client_form.html"
+
+    def get_breadcrumbs(self):
+        return [
+            {"title": "Projects", "url": reverse("project:project-list")},
+            {
+                "title": "Return to Project Detail",
+                "url": reverse(
+                    "project:project-detail", kwargs={"pk": self.project.pk}
+                ),
+            },
+            {"title": f"Add Client to {self.project.name}", "url": None},
+        ]
 
     def dispatch(self, request, *args, **kwargs):
         """Get the project and verify ownership."""
@@ -94,6 +108,18 @@ class ClientInviteUserView(ClientMixin, FormView):
     form_class = ClientUserInviteForm
     template_name = "client/client_invite_user.html"
 
+    def get_breadcrumbs(self):
+        return [
+            {"title": "Projects", "url": reverse("project:project-list")},
+            {
+                "title": "Return to Project Detail",
+                "url": reverse(
+                    "project:project-detail", kwargs={"pk": self.project.pk}
+                ),
+            },
+            {"title": f"Invite User to {self.client.name}", "url": None},
+        ]
+
     def dispatch(self, request, *args, **kwargs):
         """Get the client and verify project ownership."""
         # Verify that the user owns the project associated with this client
@@ -110,15 +136,15 @@ class ClientInviteUserView(ClientMixin, FormView):
     def form_valid(self, form):
         """Create the user account and associate with client."""
 
-        email = form.cleaned_data["email"]
+        email: str = form.cleaned_data["email"]
 
         # Check if user already exists
         try:
-            user = Account.objects.get(email=email)
+            user: Account = Account.objects.get(email=email.lower())
             user_exists = True
         except Account.DoesNotExist:
             # Create user account with type CLIENT and unusable password
-            user = Account.objects.create_user(
+            user = Account.objects.create_user(  # type: ignore
                 email=email,
                 first_name=form.cleaned_data["first_name"],
                 last_name=form.cleaned_data.get("last_name", ""),
@@ -140,7 +166,7 @@ class ClientInviteUserView(ClientMixin, FormView):
                 # Send notification email for existing user
                 context = {
                     "user": user,
-                    "site_name": "Profit Pro",
+                    "site_name": settings.SITE_NAME,
                     "client_name": self.client.name,
                     "project_name": self.project.name,
                     "project_description": self.project.description,
@@ -148,7 +174,9 @@ class ClientInviteUserView(ClientMixin, FormView):
                     "domain": self.request.get_host(),
                 }
 
-                subject = f"You've been added to {self.client.name} on Profit Pro"
+                subject = (
+                    f"You've been added to {self.client.name} on {settings.SITE_NAME}"
+                )
                 html_message = render_to_string(
                     "client/client_added_email.html", context
                 )
@@ -163,14 +191,16 @@ class ClientInviteUserView(ClientMixin, FormView):
                     "domain": self.request.get_host(),
                     "uid": uid,
                     "token": token,
-                    "site_name": "Profit Pro",
+                    "site_name": settings.SITE_NAME,
                     "expiry_hours": 24,
                     "client_name": self.client.name,
                     "project_name": self.project.name,
                     "project_description": self.project.description,
                 }
 
-                subject = f"You've been invited to {self.client.name} on Profit Pro"
+                subject = (
+                    f"You've been invited to {self.client.name} on {settings.SITE_NAME}"
+                )
                 html_message = render_to_string(
                     "client/password_reset_email.html", context
                 )
@@ -224,6 +254,21 @@ class ClientEditView(ClientMixin, UpdateView):
     form_class = ClientForm
     template_name = "client/client_form.html"
 
+    def get_breadcrumbs(self: "ClientEditView"):
+        return [
+            {"title": "Projects", "url": reverse("project:project-list")},
+            {
+                "title": "Return to Project Detail",
+                "url": reverse(
+                    "project:project-detail", kwargs={"pk": self.project.pk}
+                ),
+            },
+            {
+                "title": f"Edit Client {self.get_client(slug=self.kwargs['pk']).name}",
+                "url": None,
+            },
+        ]
+
     def get_context_data(self, **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
@@ -237,8 +282,83 @@ class ClientEditView(ClientMixin, UpdateView):
         )
 
 
+class ClientRemoveView(ClientMixin, DeleteView):
+    """Remove client from project."""
+
+    model = Client
+    template_name = "client/client_confirm_remove.html"
+
+    def get_breadcrumbs(self):
+        return [
+            {"title": "Projects", "url": reverse("project:project-list")},
+            {
+                "title": "Return to Project Detail",
+                "url": reverse(
+                    "project:project-detail", kwargs={"pk": self.project.pk}
+                ),
+            },
+            {
+                "title": f"Remove Client {self.get_client(slug=self.kwargs['pk']).name}",
+                "url": None,
+            },
+        ]
+
+    def dispatch(self, request, *args, **kwargs):
+        """Get the client and verify project ownership."""
+        # Verify that the user owns the project associated with this client
+        self.project = self.get_project(self.kwargs["project_pk"])
+        self.client = self.get_client(self.kwargs["pk"])
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_object(self):
+        """Return the client object."""
+        return self.client
+
+    def get_context_data(self, **kwargs):
+        """Add project to context."""
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.project
+        return context
+
+    def get_success_url(self):
+        return reverse_lazy("project:project-detail", kwargs={"pk": self.project.pk})
+
+    def delete(self, request, *args, **kwargs):
+        """Remove the client from the project (don't delete the client)."""
+        if self.project.client == self.client:
+            client_name = self.client.name
+            self.project.client = None
+            self.project.save()
+            messages.success(
+                self.request,
+                f"Client '{client_name}' has been removed from project '{self.project.name}'.",
+            )
+        else:
+            messages.warning(
+                self.request, "This client is not assigned to this project."
+            )
+
+        # Redirect back to project detail
+        return redirect("project:project-detail", pk=self.project.pk)
+
+
 class ClientRemoveUserView(ClientMixin, View):
     """Remove user association from client."""
+
+    def get_breadcrumbs(self: "ClientRemoveUserView"):
+        return [
+            {"title": "Projects", "url": reverse("project:project-list")},
+            {
+                "title": "Return to Project Detail",
+                "url": reverse(
+                    "project:project-detail", kwargs={"pk": self.project.pk}
+                ),
+            },
+            {
+                "title": f"Remove User from Client {self.get_client(slug=self.kwargs['pk']).name}",
+                "url": None,
+            },
+        ]
 
     def dispatch(self, request, *args, **kwargs):
         """Get the client and verify project ownership."""
@@ -314,7 +434,7 @@ class ClientResendInviteView(ClientMixin, DetailView):
                 "domain": domain,
                 "uid": uid,
                 "token": token,
-                "site_name": "Profit Pro",
+                "site_name": settings.SITE_NAME,
                 "expiry_hours": 24,
                 "client_name": self.client.name,
                 "project_name": project.name if project else None,
@@ -322,7 +442,9 @@ class ClientResendInviteView(ClientMixin, DetailView):
             }
 
             # Render email templates
-            subject = f"You've been invited to {self.client.name} on Profit Pro"
+            subject = (
+                f"You've been invited to {self.client.name} on {settings.SITE_NAME}"
+            )
             html_message = render_to_string("client/password_reset_email.html", context)
 
             # Send email

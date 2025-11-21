@@ -37,138 +37,98 @@
     </style>
 {% endblock extra_css %}
 {% block content %}
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Breadcrumb -->
-        <nav class="flex mb-6" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                <li class="inline-flex items-center">
-                    <a href="{% url 'project:project-list' %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
-                        {% heroicon_outline "home" size="20" class="text-indigo-600" %}
-                        Projects
-                    </a>
-                </li>
-                <li>
-                    <div class="flex items-center">
-                        {% heroicon_outline "chevron-right" %}
-                        <a href="{% url 'project:project-detail' project.pk %}"
-                           class="ml-1 text-sm font-medium text-gray-700 hover:text-indigo-600 md:ml-2">{{ project.name }}</a>
-                    </div>
-                </li>
-                <li>
-                    <div class="flex items-center">
-                        {% heroicon_outline "chevron-right" %}
-                        <a href="{% url 'bill_of_quantities:addendum-list' project.pk %}"
-                           class="ml-1 text-sm font-medium text-gray-700 hover:text-indigo-600 md:ml-2">Addendum Items</a>
-                    </div>
-                </li>
-                <li>
-                    <div class="flex items-center">
-                        {% heroicon_outline "chevron-right" %}
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">
-                            {% if object %}
-                                Edit
-                            {% else %}
-                                Add
-                            {% endif %}
-                        </span>
-                    </div>
-                </li>
-            </ol>
-        </nav>
-        <!-- Form Card -->
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
-            <!-- Header -->
-            <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
-                <h1 class="text-2xl font-bold text-gray-900">
-                    {% if object %}
-                        Edit Addendum Item
-                    {% else %}
-                        Add Addendum Item
-                    {% endif %}
-                </h1>
-                <p class="mt-1 text-sm text-gray-600">
-                    {% if object %}
-                        Update the details of this addendum item
-                    {% else %}
-                        Create a new addendum item for {{ project.name }}
-                    {% endif %}
-                </p>
-            </div>
-            <!-- Form -->
-            <form method="post" class="px-6 py-6">
-                {% csrf_token %}
-                <div class="space-y-6">
-                    <!-- Structure and Bill -->
-                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <div>{{ form.structure|as_crispy_field }}</div>
-                        <div>{{ form.bill|as_crispy_field }}</div>
-                    </div>
-                    <!-- Package (optional) -->
-                    <div>{{ form.package|as_crispy_field }}</div>
-                    <!-- Item Details -->
-                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                        <div>{{ form.item_number|as_crispy_field }}</div>
-                        <div>{{ form.payment_reference|as_crispy_field }}</div>
-                    </div>
-                    <!-- Description -->
-                    <div>{{ form.description|as_crispy_field }}</div>
-                    <!-- Is Work Checkbox -->
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div class="flex items-start">
-                            <div class="flex items-center h-5">{{ form.is_work }}</div>
-                            <div class="ml-3 text-sm">
-                                <label for="{{ form.is_work.id_for_label }}"
-                                       class="font-medium text-gray-700">Work Item</label>
-                                <p class="text-gray-500">Check this if this is a work item (requires quantity and pricing)</p>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Work Item Fields (shown when is_work is checked) -->
-                    <div id="work-fields" class="space-y-6">
-                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
-                            <div>{{ form.unit_measurement|as_crispy_field }}</div>
-                            <div>{{ form.budgeted_quantity|as_crispy_field }}</div>
-                            <div>{{ form.unit_price|as_crispy_field }}</div>
-                        </div>
-                        <!-- Calculated Total Display -->
-                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm font-medium text-gray-700">Calculated Total:</span>
-                                <span id="calculated-total" class="text-lg font-bold text-gray-900">R 0.00</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Form Actions -->
-                <div class="mt-6 flex items-center justify-end gap-3">
-                    <a id="cancel-btn"
-                       href="{% url 'bill_of_quantities:addendum-list' project.pk %}"
-                       class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                       data-loading-text="Canceling..."
-                       data-disable-elements="#update-btn #create-btn">Cancel</a>
-                    {% if object %}
-                        <button id="update-btn"
-                                type="submit"
-                                class="loading-btn inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                data-loading-text="Updating..."
-                                data-disable-elements="#cancel-btn">
-                            {% heroicon_outline "check" size="20" %}
-                            Update Addendum Item
-                        </button>
-                    {% else %}
-                        <button id="create-btn"
-                                type="submit"
-                                class="loading-btn inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                data-loading-text="Creating..."
-                                data-disable-elements="#cancel-btn">
-                            {% heroicon_outline "check" size="20" %}
-                            Create Addendum Item
-                        </button>
-                    {% endif %}
-                </div>
-            </form>
+    <!-- Form Card -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+            <h1 class="text-2xl font-bold text-gray-900">
+                {% if object %}
+                    Edit Addendum Item
+                {% else %}
+                    Add Addendum Item
+                {% endif %}
+            </h1>
+            <p class="mt-1 text-sm text-gray-600">
+                {% if object %}
+                    Update the details of this addendum item
+                {% else %}
+                    Create a new addendum item for {{ project.name }}
+                {% endif %}
+            </p>
         </div>
+        <!-- Form -->
+        <form method="post" class="px-6 py-6">
+            {% csrf_token %}
+            <div class="space-y-6">
+                <!-- Structure and Bill -->
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div>{{ form.structure|as_crispy_field }}</div>
+                    <div>{{ form.bill|as_crispy_field }}</div>
+                </div>
+                <!-- Package (optional) -->
+                <div>{{ form.package|as_crispy_field }}</div>
+                <!-- Item Details -->
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div>{{ form.item_number|as_crispy_field }}</div>
+                    <div>{{ form.payment_reference|as_crispy_field }}</div>
+                </div>
+                <!-- Description -->
+                <div>{{ form.description|as_crispy_field }}</div>
+                <!-- Is Work Checkbox -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">{{ form.is_work }}</div>
+                        <div class="ml-3 text-sm">
+                            <label for="{{ form.is_work.id_for_label }}"
+                                   class="font-medium text-gray-700">Work Item</label>
+                            <p class="text-gray-500">Check this if this is a work item (requires quantity and pricing)</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Work Item Fields (shown when is_work is checked) -->
+                <div id="work-fields" class="space-y-6">
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                        <div>{{ form.unit_measurement|as_crispy_field }}</div>
+                        <div>{{ form.budgeted_quantity|as_crispy_field }}</div>
+                        <div>{{ form.unit_price|as_crispy_field }}</div>
+                    </div>
+                    <!-- Calculated Total Display -->
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-gray-700">Calculated Total:</span>
+                            <span id="calculated-total" class="text-lg font-bold text-gray-900">R 0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Form Actions -->
+            <div class="mt-6 flex items-center justify-end gap-3">
+                <a id="cancel-btn"
+                   href="{% url 'bill_of_quantities:addendum-list' project.pk %}"
+                   class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                   data-loading-text="Canceling..."
+                   data-disable-elements="#update-btn #create-btn">Cancel</a>
+                {% if object %}
+                    <button id="update-btn"
+                            type="submit"
+                            class="loading-btn inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            data-loading-text="Updating..."
+                            data-disable-elements="#cancel-btn">
+                        {% heroicon_outline "check" size="20" %}
+                        Update Addendum Item
+                    </button>
+                {% else %}
+                    <button id="create-btn"
+                            type="submit"
+                            class="loading-btn inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            data-loading-text="Creating..."
+                            data-disable-elements="#cancel-btn">
+                        {% heroicon_outline "check" size="20" %}
+                        Create Addendum Item
+                    </button>
+                {% endif %}
+            </div>
+        </form>
     </div>
     <script>
         // Toggle work fields visibility

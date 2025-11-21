@@ -1,7 +1,7 @@
 [project]
-name = "profit-pro-app"
+name = "sedge-build-app"
 version = "0.1.0"
-description = "Profit Pro App"
+description = "Sedge Build App"
 authors = [{ name = "Rudolf Jacobs", email = "rudolf@a-i-solutions.co.za" }]
 
 # Ruff configuration

@@ -1,0 +1,29 @@
+<!-- Breadcrumbs -->
+<nav aria-label="Breadcrumb">
+    <div class="flex">
+        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+                <a href="{% url 'home' %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
+                    {% heroicon_outline "home" size="20" class="text-indigo-600" %}
+                </a>
+            </li>
+            {% for crumb in breadcrumbs %}
+                <li class="inline-flex items-center">
+                    {% if not crumb.url %}
+                        <div class="flex items-center">
+                            {% heroicon_outline "chevron-right" size="20" class="text-gray-400 mr-2" %}
+                            <span class="text-sm font-medium text-gray-500">{{ crumb.title }}</span>
+                        </div>
+                    {% else %}
+                        <a href="{{ crumb.url }}"
+                           class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">
+                            {% heroicon_outline "chevron-right" size="20" class="text-gray-400 mr-2" %}
+                            {{ crumb.title }}
+                        </a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ol>
+    </div>
+</nav>

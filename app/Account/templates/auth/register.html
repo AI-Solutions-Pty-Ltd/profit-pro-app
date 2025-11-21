@@ -21,7 +21,7 @@
             <div class="bg-white rounded-lg shadow-lg p-8">
                 <div class="text-center mb-8">
                     <h2 class="text-2xl font-bold text-gray-900 mb-2">Create Account</h2>
-                    <p class="text-gray-600">Join thousands of businesses already using Profit Pro</p>
+                    <p class="text-gray-600">Join thousands of businesses already using {{ SITE_NAME|default:"Profit Pro" }}</p>
                 </div>
                 <form method="post" action="{% url 'register' %}">
                     {% csrf_token %}

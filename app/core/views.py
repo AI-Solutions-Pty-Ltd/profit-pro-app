@@ -1,8 +1,11 @@
+"""Core views for the application."""
+
 from django import forms
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.forms import BaseUserCreationForm
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView
@@ -15,11 +18,20 @@ class HomeView(TemplateView):
 
     template_name = "core/home.html"
 
+    def get(self, request, *args, **kwargs):
+        """Redirect consultants to dashboard, show home page for others."""
+        if (
+            request.user.is_authenticated
+            and request.user.groups.filter(name="consultant").exists()  # type: ignore[attr-defined]
+        ):
+            return redirect("project:project-dashboard")
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(
             {
-                "page_title": "Welcome to Profit Pro",
+                "page_title": f"Welcome to {settings.SITE_NAME or 'Profit Pro'}",
                 "features": [
                     {
                         "title": "Smart Analytics",
@@ -51,7 +63,7 @@ class FeaturesView(TemplateView):
         context = super().get_context_data(**kwargs)
         context.update(
             {
-                "page_title": "Features - Profit Pro",
+                "page_title": f"Features - {settings.SITE_NAME or 'Profit Pro'}",
                 "features": [
                     {
                         "title": "Advanced Analytics Dashboard",
@@ -125,73 +137,6 @@ class FeaturesView(TemplateView):
         return context
 
 
-class PricingView(TemplateView):
-    """Pricing page view displaying subscription plans."""
-
-    template_name = "core/pricing.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "page_title": "Pricing - Profit Pro",
-                "plans": [
-                    {
-                        "name": "Starter",
-                        "price": "29",
-                        "period": "/month",
-                        "description": "Perfect for small businesses just getting started",
-                        "features": [
-                            "Up to 100 products",
-                            "Basic analytics",
-                            "Email support",
-                            "1 user account",
-                            "Standard reporting",
-                        ],
-                        "popular": False,
-                        "button_text": "Get Started",
-                    },
-                    {
-                        "name": "Professional",
-                        "price": "79",
-                        "period": "/month",
-                        "description": "Ideal for growing businesses with advanced needs",
-                        "features": [
-                            "Up to 1000 products",
-                            "Advanced analytics",
-                            "Priority support",
-                            "5 user accounts",
-                            "Custom reports",
-                            "API access",
-                            "Inventory alerts",
-                        ],
-                        "popular": True,
-                        "button_text": "Start Free Trial",
-                    },
-                    {
-                        "name": "Enterprise",
-                        "price": "199",
-                        "period": "/month",
-                        "description": "For large businesses with complex requirements",
-                        "features": [
-                            "Unlimited products",
-                            "Custom analytics",
-                            "24/7 phone support",
-                            "Unlimited users",
-                            "Custom integrations",
-                            "Dedicated account manager",
-                            "Advanced security",
-                            "SLA guarantee",
-                        ],
-                        "popular": False,
-                        "button_text": "Contact Sales",
-                    },
-                ],
-            }
-        )
-        return context
-
-
 class AboutView(TemplateView):
     """About page view with company information."""
 
@@ -201,7 +146,7 @@ class AboutView(TemplateView):
         context = super().get_context_data(**kwargs)
         context.update(
             {
-                "page_title": "About Us - Profit Pro",
+                "page_title": f"About Us - {settings.SITE_NAME or 'Profit Pro'}",
                 "mission": "Empowering businesses of all sizes to achieve their full potential through intelligent, user-friendly software solutions.",
                 "vision": "To become the world's most trusted business management platform, helping millions of entrepreneurs and business owners succeed.",
                 "values": [
@@ -248,6 +193,7 @@ class AboutView(TemplateView):
                 ],
             }
         )
+        context["admin_email"] = settings.ADMIN_EMAIL
         return context
 
 
@@ -276,7 +222,7 @@ class RegisterView(CreateView):
         context = super().get_context_data(**kwargs)
         context.update(
             {
-                "page_title": "Register - Profit Pro",
+                "page_title": f"Register - {settings.SITE_NAME or 'Profit Pro'}",
                 "next": self.request.GET.get("next", "home"),
             }
         )
@@ -287,6 +233,36 @@ class RegisterView(CreateView):
         login(self.request, form.instance)
         messages.success(self.request, "Registration successful.")
         return response
+
+
+class FinalAccountView(TemplateView):
+    """Final account page view."""
+
+    template_name = "core/final_account.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "page_title": f"Final Account - {settings.SITE_NAME or 'Profit Pro'}",
+            }
+        )
+        return context
+
+
+class ImpactView(TemplateView):
+    """Impact page view."""
+
+    template_name = "core/impact.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "page_title": f"Impact - {settings.SITE_NAME or 'Profit Pro'}",
+            }
+        )
+        return context
 
 
 # Custom error handlers

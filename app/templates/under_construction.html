@@ -1,0 +1,115 @@
+{% load static %}
+{% block content %}
+  <div>
+    <h1 class="text-4xl font-bold mb-2 text-primary fade-in centered-content">
+      Under Construction
+      <div class="construction-container mb-4">
+        {% heroicon_outline name="cog" class="construction-icon text-yellow-500" size="3rem" %}
+      </div>
+    </h1>
+    <div class="centered-content">
+      <!-- Optional description of what's coming -->
+      <p class="text-center text-600 px-3 max-w-30rem bounce-in mb-4">
+        {% if description %}{{ description }}{% endif %}
+      </p>
+      <p class="text-center text-600 px-3 max-w-30rem bounce-in mb-4 fs-6">
+        We are working hard to bring you exciting new features and improvements.
+        Thank you for your patience!
+      </p>
+    </div>
+  </div>
+{% endblock content %}
+{% block extra_css %}
+  <style>
+    .construction-container {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .construction-icon {
+      font-size: 3rem;
+      animation: spin 4s linear infinite;
+    }
+
+    .construction-icon-secondary {
+      font-size: 2.5rem;
+      animation: spin-reverse 5s linear infinite;
+    }
+
+    .construction-progress {
+      height: 0.5rem;
+    }
+
+    /* Animations */
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes spin-reverse {
+      from {
+        transform: rotate(360deg);
+      }
+
+      to {
+        transform: rotate(0deg);
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 1.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+      0% {
+        opacity: 0;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
+    .bounce-in {
+      animation: bounceIn 1s ease;
+    }
+
+    @keyframes bounceIn {
+      0% {
+        transform: scale(0.8);
+        opacity: 0;
+      }
+
+      70% {
+        transform: scale(1.1);
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .typewriter {
+      overflow: hidden;
+      white-space: nowrap;
+      animation: typing 3.5s steps(40, end);
+    }
+
+    @keyframes typing {
+      from {
+        width: 0;
+      }
+
+      to {
+        width: 100%;
+      }
+    }
+  </style>
+{% endblock extra_css %}

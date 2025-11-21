@@ -3,129 +3,103 @@
     Final Approval - Payment Certificate - {{ project.name }}
 {% endblock title %}
 {% block content %}
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <nav class="flex mb-6" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                <li class="inline-flex items-center">
-                    <a href="{% url 'consultant:client-list' %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
-                        {% heroicon_outline "home" size="20" class="text-indigo-600" %}
-                        Clients
-                    </a>
-                </li>
-                <li class="inline-flex items-center">
-                    <a href="{% url 'consultant:client-detail' project.client.pk %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
-                        {% heroicon_outline "chevron-right" size="20" %}
-                        {{ project.client.name }}
-                    </a>
-                </li>
-                <li>
-                    <div class="flex items-center">
-                        {% heroicon_outline "chevron-right" %}
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">{{ project.name }}</span>
-                    </div>
-                </li>
-            </ol>
-        </nav>
-        <!-- Header -->
-        <div class="bg-white shadow-sm rounded-lg mb-6">
-            <div class="px-6 py-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
-                        <p class="text-sm text-gray-600 mt-1">
-                            Final Approval - Payment Certificate: #{{ payment_certificate.certificate_number }}
-                        </p>
-                        <p class="text-sm text-gray-600 mt-1">
-                            Current Status: <span class="font-semibold">{{ payment_certificate.get_status_display }}</span>
-                        </p>
-                    </div>
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
+                    <p class="text-sm text-gray-600 mt-1">
+                        Final Approval - Payment Certificate: #{{ payment_certificate.certificate_number }}
+                    </p>
+                    <p class="text-sm text-gray-600 mt-1">
+                        Current Status: <span class="font-semibold">{{ payment_certificate.get_status_display }}</span>
+                    </p>
                 </div>
             </div>
         </div>
-        <!-- Summary Section -->
-        <div class="bg-white shadow-sm rounded-lg mb-6">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-bold text-gray-900">Certificate Summary</h2>
-            </div>
-            <div class="px-6 py-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <dt class="text-sm font-medium text-gray-500">Certificate Number</dt>
-                        <dd class="mt-1 text-2xl font-semibold text-gray-900">
-                            #{{ payment_certificate.certificate_number }}
-                        </dd>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg p-4">
-                        <dt class="text-sm font-medium text-gray-500">Total Transactions</dt>
-                        <dd class="mt-1 text-2xl font-semibold text-gray-900">
-                            {{ payment_certificate.actual_transactions.count }}
-                        </dd>
-                    </div>
-                    <div class="bg-indigo-50 rounded-lg p-4">
-                        <dt class="text-sm font-medium text-indigo-600">Total Amount</dt>
-                        <dd class="mt-1 text-2xl font-semibold text-indigo-900">
-                            R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}
-                        </dd>
-                    </div>
+    </div>
+    <!-- Summary Section -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-bold text-gray-900">Certificate Summary</h2>
+        </div>
+        <div class="px-6 py-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <dt class="text-sm font-medium text-gray-500">Certificate Number</dt>
+                    <dd class="mt-1 text-2xl font-semibold text-gray-900">
+                        #{{ payment_certificate.certificate_number }}
+                    </dd>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <dt class="text-sm font-medium text-gray-500">Total Transactions</dt>
+                    <dd class="mt-1 text-2xl font-semibold text-gray-900">
+                        {{ payment_certificate.actual_transactions.count }}
+                    </dd>
+                </div>
+                <div class="bg-indigo-50 rounded-lg p-4">
+                    <dt class="text-sm font-medium text-indigo-600">Total Amount</dt>
+                    <dd class="mt-1 text-2xl font-semibold text-indigo-900">
+                        R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}
+                    </dd>
                 </div>
             </div>
         </div>
-        <!-- Approval Form -->
-        <div class="bg-white shadow-sm rounded-lg mb-5">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-bold text-gray-900">Final Approval Decision</h2>
-                <p class="text-sm text-gray-600">Choose to approve or reject this payment certificate</p>
-            </div>
-            <div class="px-6 py-6">
-                <form method="post">
-                    {% csrf_token %}
-                    <!-- Status Radio Buttons -->
-                    <div class="mb-6">{{ form|crispy }}</div>
-                    <!-- Action Buttons -->
-                    <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
-                        <a id="cancel-btn"
-                           href="{% url 'consultant:client-detail' project.client.pk %}"
-                           class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                           data-loading-text="Canceling..."
-                           data-disable-elements="#approve-btn">
-                            {% heroicon_outline "x-mark" class="w-5 h-5" %}
-                            Cancel
-                        </a>
-                        <button id="approve-btn"
-                                type="submit"
-                                class="loading-btn inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                data-loading-text="Submitting..."
-                                data-disable-elements="#cancel-btn">
-                            {% heroicon_outline "check-circle" class="w-5 h-5" %}
-                            Submit Decision
-                        </button>
-                    </div>
-                </form>
-            </div>
+    </div>
+    <!-- Approval Form -->
+    <div class="bg-white shadow-sm rounded-lg mb-5">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-bold text-gray-900">Final Approval Decision</h2>
+            <p class="text-sm text-gray-600">Choose to approve or reject this payment certificate</p>
         </div>
-        <!-- Transactions Preview -->
-        <div class="bg-white shadow-sm rounded-lg mb-6 px-6 py-4 ">
-            <div class="border-b border-gray-200 mb-4">
-                <h2 class="text-lg font-bold text-gray-900">Transactions</h2>
-                <p class="text-sm text-gray-600 mb-2">Review the transactions before approving</p>
-            </div>
-            <div id="contract-line-items" class="mb-6 border-b border-gray-200">
-                <h2 class="text-lg font-bold text-gray-900 mb-2">Contract Line Items</h2>
-                {% include "payment_certificate/tables/line_items.html" with grouped_line_items=grouped_line_items line_items_total=payment_certificate.contract_current_claim_total %}
-            </div>
-            <div id="addendum-line-items" class="mb-6 border-b border-gray-200">
-                <h2 class="text-lg font-bold text-gray-900 mb-2">Addendum Line Items</h2>
-                {% include "payment_certificate/tables/line_items.html" with grouped_line_items=addendum_line_items line_items_total=payment_certificate.addendum_current_claim_total %}
-            </div>
-            <div id="special-items"
-                 class="flex flex-col items-center justify-center gap-2 mb-6 border-b border-gray-200 mb-2">
-                <h2 class="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
-                    {% heroicon_outline "star" size="20" class="text-orange-600" %} Special Items
-                </h2>
-                {% include "payment_certificate/tables/special_items.html" with special_line_items=special_line_items special_line_items_total=payment_certificate.special_items_current_claim_total %}
-            </div>
+        <div class="px-6 py-6">
+            <form method="post">
+                {% csrf_token %}
+                <!-- Status Radio Buttons -->
+                <div class="mb-6">{{ form|crispy }}</div>
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+                    <a id="cancel-btn"
+                       href="{% url 'consultant:client-detail' project.client.pk %}"
+                       class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                       data-loading-text="Canceling..."
+                       data-disable-elements="#approve-btn">
+                        {% heroicon_outline "x-mark" class="w-5 h-5" %}
+                        Cancel
+                    </a>
+                    <button id="approve-btn"
+                            type="submit"
+                            class="loading-btn inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                            data-loading-text="Submitting..."
+                            data-disable-elements="#cancel-btn">
+                        {% heroicon_outline "check-circle" class="w-5 h-5" %}
+                        Submit Decision
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Transactions Preview -->
+    <div class="bg-white shadow-sm rounded-lg mb-6 px-6 py-4 ">
+        <div class="border-b border-gray-200 mb-4">
+            <h2 class="text-lg font-bold text-gray-900">Transactions</h2>
+            <p class="text-sm text-gray-600 mb-2">Review the transactions before approving</p>
+        </div>
+        <div id="contract-line-items" class="mb-6 border-b border-gray-200">
+            <h2 class="text-lg font-bold text-gray-900 mb-2">Contract Line Items</h2>
+            {% include "payment_certificate/tables/line_items.html" with grouped_line_items=grouped_line_items line_items_total=payment_certificate.contract_current_claim_total %}
+        </div>
+        <div id="addendum-line-items" class="mb-6 border-b border-gray-200">
+            <h2 class="text-lg font-bold text-gray-900 mb-2">Addendum Line Items</h2>
+            {% include "payment_certificate/tables/line_items.html" with grouped_line_items=addendum_line_items line_items_total=payment_certificate.addendum_current_claim_total %}
+        </div>
+        <div id="special-items"
+             class="flex flex-col items-center justify-center gap-2 mb-6 border-b border-gray-200 mb-2">
+            <h2 class="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+                {% heroicon_outline "star" size="20" class="text-orange-600" %} Special Items
+            </h2>
+            {% include "payment_certificate/tables/special_items.html" with special_line_items=special_line_items special_line_items_total=payment_certificate.special_items_current_claim_total %}
         </div>
     </div>
 {% endblock content %}

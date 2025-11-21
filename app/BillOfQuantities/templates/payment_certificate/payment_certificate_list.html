@@ -6,210 +6,184 @@
     Payment Certificates - {{ project.name }}
 {% endblock title %}
 {% block content %}
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <nav class="flex mb-6" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                <li class="inline-flex items-center">
-                    <a href="{% url 'project:project-list' %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
-                        {% heroicon_outline "home" size="20" class="text-indigo-600" %}
-                        Projects
-                    </a>
-                </li>
-                <li class="inline-flex items-center">
-                    <a href="{% url 'project:project-detail' project.pk %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 gap-2">
-                        {% heroicon_outline "chevron-right" size="20" %}
-                        {{ project.name }}
-                    </a>
-                </li>
-                <li>
-                    <div class="flex items-center">
-                        {% heroicon_outline "chevron-right" %}
-                        <span class="text-sm font-medium text-gray-500">Payment Certificates</span>
-                    </div>
-                </li>
-            </ol>
-        </nav>
-        <!-- Header -->
-        <div class="bg-white shadow-sm rounded-lg mb-6">
-            <div class="px-6 py-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-2xl font-bold text-gray-900">
-                            {{ project.name }} | R {{ project.get_total_contract_value|default:"0"|floatformat:2|intcomma }}
-                        </h1>
-                        <p class="text-sm text-gray-600 mt-1">Payment Certificates</p>
-                    </div>
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        {{ project.name }} | R {{ project.get_total_contract_value|default:"0"|floatformat:2|intcomma }}
+                    </h1>
+                    <p class="text-sm text-gray-600 mt-1">Payment Certificates</p>
                 </div>
             </div>
         </div>
-        <!-- Active Payment Certificate Section -->
-        <div class="bg-white shadow-sm rounded-lg mb-6">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-medium text-gray-900">Active Payment Certificate</h2>
-                <p class="text-sm text-gray-600">Current draft or submitted certificate</p>
-            </div>
-            <div class="px-6 py-4">
-                {% if active_certificate %}
-                    <div class="flex items-center justify-between p-4 {% if active_certificate.status == 'DRAFT' %}bg-blue-50{% elif active_certificate.status == 'REJECTED' %}bg-red-50{% else %}bg-green-50{% endif %} rounded-lg">
-                        <div class="flex items-center space-x-4">
-                            <div class="flex-shrink-0">
-                                {% if active_certificate.status == 'DRAFT' %}
-                                    {% heroicon_outline "pencil-square" class="w-8 h-8 text-blue-500" %}
-                                {% else %}
-                                    {% heroicon_outline "paper-airplane" class="w-8 h-8 text-blue-500" %}
-                                {% endif %}
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-medium text-blue-900">
-                                    Certificate #{{ active_certificate.certificate_number }} | R {{ active_certificate.current_claim_total|default:"0"|floatformat:2|intcomma }}
-                                </h3>
-                                <p class="text-sm text-blue-700 mt-1">
-                                    Status: <span class="font-medium">{{ active_certificate.get_status_display }}</span>
-                                </p>
-                                <p class="text-xs text-blue-600 mt-1">Created: {{ active_certificate.created_at|date:"M d, Y" }}</p>
-                                {% if active_certificate.notes %}
-                                    <p class="text-xs text-blue-600 mt-1">Notes: {{ active_certificate.notes }}</p>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <a id="view-details-btn"
-                               href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk active_certificate.pk %}"
-                               class="loading-btn inline-flex items-center px-3 py-2 border border-blue-300 text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                               data-loading-text="Loading Details..."
-                               data-disable-elements="#edit-certificate-btn">
-                                {% heroicon_outline "eye" class="w-4 h-4" %}
-                                View Details
-                            </a>
+    </div>
+    <!-- Active Payment Certificate Section -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Active Payment Certificate</h2>
+            <p class="text-sm text-gray-600">Current draft or submitted certificate</p>
+        </div>
+        <div class="px-6 py-4">
+            {% if active_certificate %}
+                <div class="flex items-center justify-between p-4 {% if active_certificate.status == 'DRAFT' %}bg-blue-50{% elif active_certificate.status == 'REJECTED' %}bg-red-50{% else %}bg-green-50{% endif %} rounded-lg">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex-shrink-0">
                             {% if active_certificate.status == 'DRAFT' %}
-                                <a id="edit-certificate-btn"
-                                   href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk active_certificate.pk %}"
-                                   class="loading-btn inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                   data-loading-text="Loading Edit Form..."
-                                   data-disable-elements="#view-details-btn">
-                                    {% heroicon_outline "pencil" class="w-4 h-4" %}
-                                    Edit
-                                </a>
+                                {% heroicon_outline "pencil-square" class="w-8 h-8 text-blue-500" %}
+                            {% else %}
+                                {% heroicon_outline "paper-airplane" class="w-8 h-8 text-blue-500" %}
+                            {% endif %}
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-medium text-blue-900">
+                                Certificate #{{ active_certificate.certificate_number }} | R {{ active_certificate.current_claim_total|default:"0"|floatformat:2|intcomma }}
+                            </h3>
+                            <p class="text-sm text-blue-700 mt-1">
+                                Status: <span class="font-medium">{{ active_certificate.get_status_display }}</span>
+                            </p>
+                            <p class="text-xs text-blue-600 mt-1">Created: {{ active_certificate.created_at|date:"M d, Y" }}</p>
+                            {% if active_certificate.notes %}
+                                <p class="text-xs text-blue-600 mt-1">Notes: {{ active_certificate.notes }}</p>
                             {% endif %}
                         </div>
                     </div>
-                {% else %}
-                    <div class="text-center py-8">
-                        {% heroicon_outline "document-text" class="w-12 h-12 text-gray-400" %}
-                        <h3 class="mt-2 text-sm font-medium text-gray-900">No Active Certificate</h3>
-                        <p class="mt-1 text-sm text-gray-500">There are no active payment certificates for this project.</p>
-                        <div class="mt-4">
-                            <a href="{% url 'bill_of_quantities:payment-certificate-new' project.pk %}"
-                               class="loading-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                               data-loading-text="Creating New Certificate...">
-                                {% heroicon_outline "plus" class="w-4 h-4" %}
-                                Create New Certificate
+                    <div class="flex items-center space-x-3">
+                        <a id="view-details-btn"
+                           href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk active_certificate.pk %}"
+                           class="loading-btn inline-flex items-center px-3 py-2 border border-blue-300 text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                           data-loading-text="Loading Details..."
+                           data-disable-elements="#edit-certificate-btn">
+                            {% heroicon_outline "eye" class="w-4 h-4" %}
+                            View Details
+                        </a>
+                        {% if active_certificate.status == 'DRAFT' %}
+                            <a id="edit-certificate-btn"
+                               href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk active_certificate.pk %}"
+                               class="loading-btn inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                               data-loading-text="Loading Edit Form..."
+                               data-disable-elements="#view-details-btn">
+                                {% heroicon_outline "pencil" class="w-4 h-4" %}
+                                Edit
                             </a>
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-        <!-- Summary Stats -->
-        <div class="mt-6 mb-6">
-            <div class="bg-white shadow rounded-lg overflow-hidden">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Summary</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Contract Value</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-semibold">
-                                R {{ project.get_total_contract_value|default:"0"|floatformat:2|intcomma }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Claimed to date</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-semibold">
-                                R {{ total_claimed|default:"0"|floatformat:2|intcomma }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Active Claim</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-semibold">
-                                R {{ active_claimed|default:"0"|floatformat:2|intcomma }}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Remaining Amount</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-semibold">
-                                R {{ remaining_amount|default:"0"|floatformat:2|intcomma }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <!-- Completed Payment Certificates Section -->
-        <div class="bg-white shadow-sm rounded-lg">
-            {% if completed_payment_certificates %}
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-medium text-gray-900">
-                        Completed Payment Certificates ({{ completed_payment_certificates.count }})
-                    </h2>
-                    <p class="text-sm text-gray-600">Approved and rejected certificates with claimed amounts</p>
-                </div>
-                <div class="px-6 py-4">
-                    <div class="space-y-4">
-                        {% for cert in completed_payment_certificates %}
-                            <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                                <div class="flex items-center space-x-4">
-                                    <div class="flex-shrink-0">
-                                        {% if cert.status == 'APPROVED' %}
-                                            {% heroicon_outline "check-circle" class="w-8 h-8 text-green-500" %}
-                                        {% elif cert.status == 'REJECTED' %}
-                                            {% heroicon_outline "x-circle" class="w-8 h-8 text-red-500" %}
-                                        {% endif %}
-                                    </div>
-                                    <div>
-                                        <h3 class="text-sm font-medium text-gray-900">Certificate #{{ cert.certificate_number }}</h3>
-                                        <p class="text-sm text-gray-600">
-                                            Status: <span class="font-medium">{{ cert.get_status_display }}</span>
-                                        </p>
-                                        <p class="text-xs text-gray-500">{{ cert.created_at|date:"M d, Y" }}</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-4">
-                                    <div class="text-right">
-                                        <p class="text-xs text-gray-500">Cumulative Total</p>
-                                        <p class="text-sm font-medium text-gray-900">R {{ cert.progressive_to_date|default:0|floatformat:2|intcomma }}</p>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-xs text-gray-500">Progressive To Date</p>
-                                        <p class="text-sm font-medium text-gray-900">R {{ cert.progressive_previous|default:0|floatformat:2|intcomma }}</p>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-xs text-gray-500">Claim Total</p>
-                                        <p class="text-sm font-medium text-gray-900">R {{ cert.current_claim_total|default:0|floatformat:2|intcomma }}</p>
-                                    </div>
-                                    <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk cert.pk %}"
-                                       class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                        {% heroicon_outline "eye" class="w-4 h-4" %}
-                                    </a>
-                                </div>
-                            </div>
-                        {% endfor %}
+                        {% endif %}
                     </div>
                 </div>
             {% else %}
-                <div class="flex flex-col items-center justify-center text-center py-8">
-                    {% heroicon_outline "clipboard-document-check" class="w-12 h-12 text-gray-400" %}
-                    <h3 class="mt-2 text-sm font-medium text-gray-900">No Completed Certificates</h3>
-                    <p class="mt-1 text-sm text-gray-500">There are no completed payment certificates for this project yet.</p>
+                <div class="text-center py-8 flex items-center justify-center flex-col">
+                    {% heroicon_outline "document-text" class="w-12 h-12 text-gray-400" %}
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No Active Certificate</h3>
+                    <p class="mt-1 text-sm text-gray-500">There are no active payment certificates for this project.</p>
+                    <div class="mt-4">
+                        <a href="{% url 'bill_of_quantities:payment-certificate-new' project.pk %}"
+                           class="loading-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                           data-loading-text="Creating New Certificate...">
+                            {% heroicon_outline "plus" class="w-4 h-4" %}
+                            Create New Certificate
+                        </a>
+                    </div>
                 </div>
             {% endif %}
         </div>
+    </div>
+    <!-- Summary Stats -->
+    <div class="mt-6 mb-6">
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Summary</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Contract Value</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-semibold">
+                            R {{ project.get_total_contract_value|default:"0"|floatformat:2|intcomma }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total Claimed to date</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-semibold">
+                            R {{ total_claimed|default:"0"|floatformat:2|intcomma }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Active Claim</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-semibold">
+                            R {{ active_claimed|default:"0"|floatformat:2|intcomma }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Remaining Amount</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-semibold">
+                            R {{ remaining_amount|default:"0"|floatformat:2|intcomma }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Completed Payment Certificates Section -->
+    <div class="bg-white shadow-sm rounded-lg">
+        {% if completed_payment_certificates %}
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">
+                    Completed Payment Certificates ({{ completed_payment_certificates.count }})
+                </h2>
+                <p class="text-sm text-gray-600">Approved and rejected certificates with claimed amounts</p>
+            </div>
+            <div class="px-6 py-4">
+                <div class="space-y-4">
+                    {% for cert in completed_payment_certificates %}
+                        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                            <div class="flex items-center space-x-4">
+                                <div class="flex-shrink-0">
+                                    {% if cert.status == 'APPROVED' %}
+                                        {% heroicon_outline "check-circle" class="w-8 h-8 text-green-500" %}
+                                    {% elif cert.status == 'REJECTED' %}
+                                        {% heroicon_outline "x-circle" class="w-8 h-8 text-red-500" %}
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-medium text-gray-900">Certificate #{{ cert.certificate_number }}</h3>
+                                    <p class="text-sm text-gray-600">
+                                        Status: <span class="font-medium">{{ cert.get_status_display }}</span>
+                                    </p>
+                                    <p class="text-xs text-gray-500">{{ cert.created_at|date:"M d, Y" }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="text-right">
+                                    <p class="text-xs text-gray-500">Cumulative Total</p>
+                                    <p class="text-sm font-medium text-gray-900">R {{ cert.progressive_to_date|default:0|floatformat:2|intcomma }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-gray-500">Progressive To Date</p>
+                                    <p class="text-sm font-medium text-gray-900">R {{ cert.progressive_previous|default:0|floatformat:2|intcomma }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs text-gray-500">Claim Total</p>
+                                    <p class="text-sm font-medium text-gray-900">R {{ cert.current_claim_total|default:0|floatformat:2|intcomma }}</p>
+                                </div>
+                                <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk cert.pk %}"
+                                   class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    {% heroicon_outline "eye" class="w-4 h-4" %}
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <div class="flex flex-col items-center justify-center text-center py-8 px-4">
+                {% heroicon_outline "clipboard-document-check" class="w-12 h-12 text-gray-400" %}
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No Completed Certificates</h3>
+                <p class="mt-1 text-sm text-gray-500">There are no completed payment certificates for this project yet.</p>
+            </div>
+        {% endif %}
     </div>
 {% endblock content %}
 {% block extra_js %}

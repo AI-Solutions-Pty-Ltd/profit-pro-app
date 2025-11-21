@@ -1,22 +1,24 @@
 """Views for managing Project signatories."""
 
 from django.contrib import messages
+from django.db.models import QuerySet
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
+from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import SignatoryForm
 from app.Project.models import Project, Signatories
 
 
-class SignatoryMixin(UserHasGroupGenericMixin):
+class SignatoryMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
     """Mixin for signatory views."""
 
     permissions = ["contractor"]
 
-    def get_project(self):
+    def get_project(self: "SignatoryMixin") -> Project:
         """Get the project for the current view."""
         if not hasattr(self, "project"):
             self.project = get_object_or_404(
@@ -26,16 +28,16 @@ class SignatoryMixin(UserHasGroupGenericMixin):
             )
         return self.project
 
-    def get_queryset(self):
+    def get_queryset(self: "SignatoryMixin") -> QuerySet[Signatories]:
         """Filter signatories by project."""
         project = self.get_project()
         return Signatories.objects.filter(
             project=project, project__account=self.request.user
         ).order_by("-created_at")
 
-    def get_object(self):
+    def get_object(self: "SignatoryMixin") -> Signatories:
         """Get signatory and verify project ownership."""
-        signatory = super().get_object()
+        signatory: Signatories = super().get_object()  # type: ignore
         if signatory.project.account != self.request.user:
             raise Http404("You do not have permission to view this signatory.")
         return signatory
@@ -48,7 +50,19 @@ class SignatoryListView(SignatoryMixin, ListView):
     template_name = "signatory/signatory_list.html"
     context_object_name = "signatories"
 
-    def get_context_data(self, **kwargs):
+    def get_breadcrumbs(self: "SignatoryListView") -> list[dict[str, str | None]]:
+        return [
+            {"title": "Projects", "url": reverse("project:project-list")},
+            {
+                "title": "Return to Project Detail",
+                "url": reverse(
+                    "project:project-detail", kwargs={"pk": self.get_project().pk}
+                ),
+            },
+            {"title": f"Signatories for {self.get_project().name}", "url": None},
+        ]
+
+    def get_context_data(self: "SignatoryListView", **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
@@ -62,7 +76,19 @@ class SignatoryCreateView(SignatoryMixin, CreateView):
     form_class = SignatoryForm
     template_name = "signatory/signatory_form.html"
 
-    def get_context_data(self, **kwargs):
+    def get_breadcrumbs(self: "SignatoryCreateView") -> list[dict[str, str | None]]:
+        return [
+            {"title": "Projects", "url": reverse("project:project-list")},
+            {
+                "title": "Return to Project Detail",
+                "url": reverse(
+                    "project:project-detail", kwargs={"pk": self.get_project().pk}
+                ),
+            },
+            {"title": f"Add Signatory to {self.get_project().name}", "url": None},
+        ]
+
+    def get_context_data(self: "SignatoryCreateView", **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
@@ -91,6 +117,18 @@ class SignatoryUpdateView(SignatoryMixin, UpdateView):
     form_class = SignatoryForm
     template_name = "signatory/signatory_form.html"
 
+    def get_breadcrumbs(self: "SignatoryUpdateView") -> list[dict[str, str | None]]:
+        return [
+            {"title": "Projects", "url": reverse("project:project-list")},
+            {
+                "title": "Return to Project Detail",
+                "url": reverse(
+                    "project:project-detail", kwargs={"pk": self.get_project().pk}
+                ),
+            },
+            {"title": f"Update Signatory {self.get_object().name}", "url": None},
+        ]
+
     def get_context_data(self, **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
@@ -118,20 +156,32 @@ class SignatoryDeleteView(SignatoryMixin, DeleteView):
     model = Signatories
     template_name = "signatory/signatory_confirm_delete.html"
 
+    def get_breadcrumbs(self: "SignatoryDeleteView") -> list[dict[str, str | None]]:
+        return [
+            {"title": "Projects", "url": reverse("project:project-list")},
+            {
+                "title": "Return to Project Detail",
+                "url": reverse(
+                    "project:project-detail", kwargs={"pk": self.get_project().pk}
+                ),
+            },
+            {"title": f"Delete Signatory {self.get_object().name}", "url": None},
+        ]
+
     def get_context_data(self, **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         return context
 
-    def form_valid(self, form):
+    def form_valid(self: "SignatoryDeleteView", form):
         """Soft delete the signatory."""
         signatory = self.get_object()
         signatory.soft_delete()
         messages.success(
             self.request, f"Signatory '{signatory.name}' has been deleted successfully."
         )
-        return redirect(self.get_success_url())
+        return redirect(self.get_success_url())  # type: ignore
 
     def get_success_url(self):
         """Redirect to the signatory list."""

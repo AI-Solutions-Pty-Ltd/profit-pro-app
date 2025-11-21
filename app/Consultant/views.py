@@ -1,17 +1,19 @@
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.views.generic import DetailView, ListView, UpdateView
 
 from app.BillOfQuantities.forms import PaymentCertificateFinalApprovalForm
 from app.BillOfQuantities.models import PaymentCertificate
 from app.BillOfQuantities.views_payment_certificate import LineItemDetailMixin
 from app.core.Utilities.django_email_service import django_email_service
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.models import Client, Project
 
 
-class GetProjectMixin(UserHasGroupGenericMixin):
+class GetProjectMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
     permissions = ["consultant"]
 
     def get_project(self) -> Project:
@@ -39,6 +41,12 @@ class ClientDetailView(ConsultantMixin, DetailView):
     template_name = "consultant/client_detail.html"
     context_object_name = "client"
 
+    def get_breadcrumbs(self: "ClientDetailView") -> list[BreadcrumbItem]:
+        return [
+            {"title": "Return to Clients", "url": reverse("consultant:client-list")},
+            {"title": f"Client {self.get_object().name}", "url": None},
+        ]
+
 
 class PaymentCertificateFinalApprovalView(
     ConsultantMixin, LineItemDetailMixin, UpdateView
@@ -49,6 +57,24 @@ class PaymentCertificateFinalApprovalView(
     form_class = PaymentCertificateFinalApprovalForm
     template_name = "consultant/payment_certificate_final_approval.html"
     context_object_name = "payment_certificate"
+
+    def get_breadcrumbs(
+        self: "PaymentCertificateFinalApprovalView",
+    ) -> list[BreadcrumbItem]:
+        return [
+            {"title": "Return to Clients", "url": reverse("consultant:client-list")},
+            {
+                "title": f"{self.get_object().project.client.name}",
+                "url": reverse(
+                    "consultant:client-detail",
+                    kwargs={"pk": self.get_object().project.client.pk},
+                ),
+            },
+            {
+                "title": f"Payment Certificate #{self.get_object().certificate_number}",
+                "url": None,
+            },
+        ]
 
     def get_queryset(self):
         return (
