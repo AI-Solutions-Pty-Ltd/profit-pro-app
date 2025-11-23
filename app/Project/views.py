@@ -356,10 +356,10 @@ class ProjectCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
         return super().form_valid(form)
 
     def get_success_url(self: "ProjectCreateView"):
-        """Redirect to the project list."""
-        return reverse_lazy(
-            "project:project-detail", kwargs={"pk": self.get_object().pk}
-        )
+        """Redirect to the project detail."""
+        if self.object and self.object.pk:
+            return reverse_lazy("project:project-detail", kwargs={"pk": self.object.pk})
+        return reverse_lazy("project:project-list")
 
 
 class ProjectUpdateView(ProjectMixin, UpdateView):
