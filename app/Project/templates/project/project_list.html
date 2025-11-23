@@ -11,11 +11,18 @@
                 <h1 class="text-3xl font-bold text-gray-900">Projects</h1>
                 <p class="mt-2 text-gray-600">Manage your construction projects</p>
             </div>
-            <a href="{% url 'project:project-dashboard' %}"
-               class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 hover:scale-105">
-                {% heroicon_outline "chart-bar" size="20" %}
-                <span class="ml-2">Dashboard</span>
-            </a>
+            <div class="flex items-center gap-4">
+                <a href="{% url 'project:project-dashboard' %}"
+                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 hover:scale-105">
+                    {% heroicon_outline "chart-bar" size="20" %}
+                    <span class="ml-2">Dashboard</span>
+                </a>
+                <a href="{% url 'project:project-create' %}"
+                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    {% heroicon_outline "plus" size="20" %}
+                    Create Project
+                </a>
+            </div>
         </div>
         <!-- Filter -->
         <form method="get" class="flex items-center gap-4">
