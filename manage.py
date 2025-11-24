@@ -11,7 +11,11 @@ load_dotenv(override=True)
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings.local")
+    if not os.getenv("DJANGO_SETTINGS_MODULE"):
+        raise ValueError("DJANGO_SETTINGS_MODULE environment variable is not set")
+    os.environ.setdefault(
+        "DJANGO_SETTINGS_MODULE", os.getenv("DJANGO_SETTINGS_MODULE", "Not Set")
+    )
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
