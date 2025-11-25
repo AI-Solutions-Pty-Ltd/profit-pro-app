@@ -82,7 +82,7 @@ class LineItemDetailMixin:
 
 class PaymentCertificateListView(PaymentCertificateMixin, ListView):
     model = PaymentCertificate
-    template_name = "payment_certificate/payment_certificate_list.html"
+    template_name = "payment_certificate/dashboard.html"
     context_object_name = "payment_certificates"
 
     def get_breadcrumbs(
