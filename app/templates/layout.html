@@ -90,65 +90,77 @@
         {% block extra_js %}
         {% endblock extra_js %}
         <!-- Loading Buttons JavaScript -->
-        <script src="{% static 'js/loading-buttons.js' %}"></link>
+        <script src="{% static 'js/loading-buttons.js' %}"></script>
         <script>
             // Toast functionality
             document.addEventListener('DOMContentLoaded', function() {
                 const toastContainer = document.getElementById('toast-container');
+                if (!toastContainer) return;
+                
                 const toasts = toastContainer.querySelectorAll('.toast-notification');
-
-                // Auto-dismiss toasts after 5 seconds
+                
                 toasts.forEach((toast, index) => {
-                    // Stagger the appearance slightly
-                    setTimeout(() => {
-                        toast.style.transform = 'translateX(100%)';
-                        toast.style.opacity = '0';
-                        toast.style.transition = 'all 0.3s ease-out';
-
-                        // Trigger animation
-                        setTimeout(() => {
-                            toast.style.transform = 'translateX(0)';
-                            toast.style.opacity = '1';
-                        }, 50);
-
-                        // Auto-dismiss after 5 seconds
-                        setTimeout(() => {
-                            dismissToast(toast);
-                        }, 5000 + (index * 200));
-                    }, index * 100);
-                });
-
-                // Close button functionality
-                const closeButtons = document.querySelectorAll('.toast-close');
-                closeButtons.forEach(button => {
-                    button.addEventListener('click', function() {
-                        const toast = this.closest('.toast-notification');
-                        dismissToast(toast);
-                    });
-                });
-
-                function dismissToast(toast) {
+                    let dismissTimeout = null;
+                    let isPaused = false;
+                    
+                    // Set initial styles for slide-in animation
                     toast.style.transform = 'translateX(100%)';
                     toast.style.opacity = '0';
-
+                    toast.style.transition = 'all 0.3s ease-out';
+                    
+                    // Slide in with stagger
                     setTimeout(() => {
-                        toast.remove();
-                    }, 300);
-                }
-
-                // Add hover pause functionality
-                toasts.forEach(toast => {
-                    let timeoutId;
-
+                        toast.style.transform = 'translateX(0)';
+                        toast.style.opacity = '1';
+                    }, 50 + (index * 100));
+                    
+                    // Function to dismiss toast
+                    function dismissToast() {
+                        toast.style.transform = 'translateX(100%)';
+                        toast.style.opacity = '0';
+                        setTimeout(() => {
+                            toast.remove();
+                        }, 300);
+                    }
+                    
+                    // Start auto-dismiss timer
+                    function startDismissTimer(delay) {
+                        dismissTimeout = setTimeout(() => {
+                            if (!isPaused) {
+                                dismissToast();
+                            }
+                        }, delay);
+                    }
+                    
+                    // Start initial timer (5 seconds + stagger)
+                    startDismissTimer(5000 + (index * 200));
+                    
+                    // Pause on hover
                     toast.addEventListener('mouseenter', function() {
-                        clearTimeout(timeoutId);
+                        isPaused = true;
+                        if (dismissTimeout) {
+                            clearTimeout(dismissTimeout);
+                        }
                     });
-
+                    
+                    // Resume on mouse leave (2 second delay)
                     toast.addEventListener('mouseleave', function() {
-                        timeoutId = setTimeout(() => {
-                            dismissToast(toast);
-                        }, 2000);
+                        isPaused = false;
+                        startDismissTimer(2000);
                     });
+                    
+                    // Close button
+                    const closeBtn = toast.querySelector('.toast-close');
+                    if (closeBtn) {
+                        closeBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (dismissTimeout) {
+                                clearTimeout(dismissTimeout);
+                            }
+                            dismissToast();
+                        });
+                    }
                 });
             });
 
@@ -180,12 +192,12 @@
                     }
                 });
             });
-</script>
-<style>
+        </script>
+        <style>
             svg {
                 margin-left: 5px;
                 margin-right: 5px;
             }
-</style>
-</body>
+        </style>
+    </body>
 </html>
