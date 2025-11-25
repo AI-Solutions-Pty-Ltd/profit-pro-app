@@ -1,6 +1,7 @@
 """Views for Project app."""
 
-from datetime import timedelta
+import json
+from datetime import datetime, timedelta
 from typing import cast
 
 from django.db.models import QuerySet, Sum
@@ -123,6 +124,17 @@ class ProjectDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
                 certified_percentage = (certified_amount / contract_value) * 100
                 forecast_percentage = (forecast_amount / contract_value) * 100
 
+            # Get CPI and SPI for this project
+            current_date = datetime.now()
+            try:
+                project_cpi = project.cost_performance_index(current_date)
+            except (ZeroDivisionError, TypeError):
+                project_cpi = None
+            try:
+                project_spi = project.schedule_performance_index(current_date)
+            except (ZeroDivisionError, TypeError):
+                project_spi = None
+
             dashboard_data.append(
                 {
                     "project": project,
@@ -131,6 +143,8 @@ class ProjectDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
                     "forecast_amount": forecast_amount,
                     "certified_percentage": certified_percentage,
                     "forecast_percentage": forecast_percentage,
+                    "cpi": project_cpi,
+                    "spi": project_spi,
                 }
             )
 
@@ -144,8 +158,60 @@ class ProjectDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
             projects, "forecasts__forecast_transactions__total_price"
         )
         context["dashboard_data"] = dashboard_data
-        context["portfolio"] = cast(Account, self.request.user).portfolio
+        portfolio = cast(Account, self.request.user).portfolio
+        context["portfolio"] = portfolio
+        context["current_date"] = datetime.now()
+
+        # Generate 12 months of CPI/SPI data for charts
+        performance_data = self._get_performance_chart_data(portfolio)
+        context["performance_labels"] = json.dumps(performance_data["labels"])
+        context["cpi_data"] = json.dumps(performance_data["cpi"])
+        context["spi_data"] = json.dumps(performance_data["spi"])
+        context["current_cpi"] = performance_data["current_cpi"]
+        context["current_spi"] = performance_data["current_spi"]
+
         return context
+
+    def _get_performance_chart_data(self, portfolio) -> dict:
+        """Generate 12 months of CPI/SPI data for portfolio."""
+        labels = []
+        cpi_values = []
+        spi_values = []
+
+        current_date = datetime.now()
+
+        # Generate data for last 12 months (oldest to newest)
+        for i in range(11, -1, -1):
+            # Calculate the date for this month
+            month_date = current_date - timedelta(days=i * 30)
+            # Normalize to first of month
+            month_date = month_date.replace(day=1)
+
+            labels.append(month_date.strftime("%b %Y"))
+
+            if portfolio:
+                try:
+                    cpi = portfolio.cost_performance_index(month_date)
+                    cpi_values.append(float(cpi) if cpi else None)
+                except (ZeroDivisionError, TypeError, Exception):
+                    cpi_values.append(None)
+
+                try:
+                    spi = portfolio.schedule_performance_index(month_date)
+                    spi_values.append(float(spi) if spi else None)
+                except (ZeroDivisionError, TypeError, Exception):
+                    spi_values.append(None)
+            else:
+                cpi_values.append(None)
+                spi_values.append(None)
+
+        return {
+            "labels": labels,
+            "cpi": cpi_values,
+            "spi": spi_values,
+            "current_cpi": cpi_values[-1] if cpi_values else None,
+            "current_spi": spi_values[-1] if spi_values else None,
+        }
 
 
 class ProjectPerformanceReportView(
@@ -244,7 +310,53 @@ class ProjectDetailView(ProjectMixin, DetailView):
         total = sum_queryset(line_items, "total_price")
         context["line_items_total"] = total
 
+        # Add CPI/SPI chart data
+        performance_data = self._get_project_performance_data(self.object)
+        context["performance_labels"] = json.dumps(performance_data["labels"])
+        context["cpi_data"] = json.dumps(performance_data["cpi"])
+        context["spi_data"] = json.dumps(performance_data["spi"])
+        context["current_cpi"] = performance_data["current_cpi"]
+        context["current_spi"] = performance_data["current_spi"]
+        context["current_date"] = datetime.now()
+
         return context
+
+    def _get_project_performance_data(self, project: Project) -> dict:
+        """Generate 12 months of CPI/SPI data for a single project."""
+        labels = []
+        cpi_values = []
+        spi_values = []
+
+        current_date = datetime.now()
+
+        # Generate data for last 12 months (oldest to newest)
+        for i in range(11, -1, -1):
+            # Calculate the date for this month
+            month_date = current_date - timedelta(days=i * 30)
+            # Normalize to first of month
+            month_date = month_date.replace(day=1)
+
+            labels.append(month_date.strftime("%b %Y"))
+
+            try:
+                cpi = project.cost_performance_index(month_date)
+                cpi_values.append(float(cpi) if cpi else None)
+            except (ZeroDivisionError, TypeError, Exception):
+                cpi_values.append(None)
+
+            try:
+                spi = project.schedule_performance_index(month_date)
+                spi_values.append(float(spi) if spi else None)
+            except (ZeroDivisionError, TypeError, Exception):
+                spi_values.append(None)
+
+        return {
+            "labels": labels,
+            "cpi": cpi_values,
+            "spi": spi_values,
+            "current_cpi": cpi_values[-1] if cpi_values else None,
+            "current_spi": spi_values[-1] if spi_values else None,
+        }
 
 
 class ProjectWBSDetailView(ProjectMixin, DetailView):

@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
@@ -75,6 +76,48 @@ class Portfolio(BaseModel):
             "payment_certificates__actual_transactions__total_price",
         )
 
+    def cost_performance_index(self, date: datetime | None) -> Decimal | None:
+        """Portfolio-level CPI (average of all active projects)."""
+        if not date:
+            date = datetime.now()
+        active_count = self.active_projects.count()
+        if active_count == 0:
+            return None
+        cpi = Decimal(0)
+        valid_projects = 0
+        for project in self.active_projects:
+            try:
+                project_cpi = project.cost_performance_index(date)
+                if project_cpi:
+                    cpi += project_cpi
+                    valid_projects += 1
+            except (ZeroDivisionError, TypeError):
+                continue
+        if valid_projects == 0:
+            return None
+        return round(cpi / Decimal(valid_projects), 2)
+
+    def schedule_performance_index(self, date: datetime | None) -> Decimal | None:
+        """Portfolio-level SPI (average of all active projects)."""
+        if not date:
+            date = datetime.now()
+        active_count = self.active_projects.count()
+        if active_count == 0:
+            return None
+        spi = Decimal(0)
+        valid_projects = 0
+        for project in self.active_projects:
+            try:
+                project_spi = project.schedule_performance_index(date)
+                if project_spi:
+                    spi += project_spi
+                    valid_projects += 1
+            except (ZeroDivisionError, TypeError):
+                continue
+        if valid_projects == 0:
+            return None
+        return round(spi / Decimal(valid_projects), 2)
+
 
 class Project(BaseModel):
     class Status(models.TextChoices):
@@ -111,8 +154,8 @@ class Project(BaseModel):
         payment_certificates: QuerySet[PaymentCertificate]
         line_items: QuerySet[LineItem]
         forecasts: QuerySet[Forecast]
-        signatories: QuerySet["Signatories"] | None
-        planned_values: QuerySet["PlannedValue"] | None
+        signatories: QuerySet["Signatories"]
+        planned_values: QuerySet["PlannedValue"]
 
     def __str__(self):
         return self.name
@@ -200,3 +243,88 @@ class Project(BaseModel):
             .select_related("structure", "bill", "package")
             .prefetch_related("actual_transactions")
         )
+
+    ##################
+    # Final Reports
+    ##################
+
+    def planned_value(self, date: datetime) -> Decimal:
+        """From Cashflow Forecast included as part of the baseline/Contract WBS"""
+        planned_values = self.planned_values.filter(
+            period__month=date.month,
+            period__year=date.year,
+        )
+        return sum_queryset(planned_values, "value")
+
+    def actual_cost(self, date: datetime) -> Decimal:
+        """From cumulative Amount Certified in  payment certificate"""
+        payment_certificates = self.payment_certificates.filter(
+            approved_on__month=date.month,
+            approved_on__year=date.year,
+            status="APPROVED",
+        )
+        total_certified = sum_queryset(
+            payment_certificates, "actual_transactions__total_price"
+        )
+        if not self.contract_addendum_value or self.contract_addendum_value == 0:
+            return Decimal(0)
+        return (
+            total_certified / self.contract_addendum_value
+        ) * self.contract_addendum_value
+
+    def forecast_cost(self, date: datetime) -> Decimal:
+        """From Forecast to Completion Cost in the Cost Report"""
+        forecasts = self.forecasts.filter(
+            period__month=date.month,
+            period__year=date.year,
+            status="APPROVED",
+        )
+        return sum_queryset(forecasts, "forecast_transactions__total_price")
+
+    def earned_value(self, date: datetime) -> Decimal | None:
+        """Forecast/Actual Cost Amounts *Budgeted Amount"""
+        actual = self.actual_cost(date)
+        forecast = self.forecast_cost(date)
+        if not forecast or forecast == 0:
+            return None
+        if not self.contract_addendum_value:
+            return None
+        return (actual / forecast) * self.contract_addendum_value
+
+    # def cost_variance(self, date) -> Decimal:
+    #     """Earned Value - Actual Cost"""
+    #     raise NotImplementedError
+
+    # def schedule_variance(self, date) -> Decimal:
+    #     """Earned Value - Planned Value"""
+    #     raise NotImplementedError
+
+    def cost_performance_index(self, date: datetime | None) -> Decimal | None:
+        """Earned Value/Actual Cost
+        CPI Interpretations:
+            CPI < 1 Means the project has overrun the budget
+            CPI = 0 Means the project is on Budget
+            CPI > 1 Means the Project is under Budget
+        """
+        if not date:
+            date = datetime.now()
+        earned = self.earned_value(date)
+        actual = self.actual_cost(date)
+        if not earned or not actual or actual == 0:
+            return None
+        return round(earned / actual, 2)
+
+    def schedule_performance_index(self, date: datetime | None) -> Decimal | None:
+        """Earned Value/Planned Value
+        SPI Interpretations:
+            SPI < 1 Means the project is behind schedule
+            SPI = 0 Means the project is on Schedule
+            SPI > 1 Means the Project is ahead of Schedule
+        """
+        if not date:
+            date = datetime.now()
+        earned = self.earned_value(date)
+        planned = self.planned_value(date)
+        if not earned or not planned or planned == 0:
+            return None
+        return round(earned / planned, 2)
