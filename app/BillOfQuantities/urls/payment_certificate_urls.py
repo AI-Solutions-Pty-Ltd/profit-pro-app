@@ -1,0 +1,55 @@
+"""URL configuration for Structure app."""
+
+from django.urls import path
+
+from app.BillOfQuantities.views import (
+    payment_certificate_views,
+)
+
+payment_certificate_urls = [
+    path(
+        "project/<int:project_pk>/payment-certificates/",
+        payment_certificate_views.PaymentCertificateListView.as_view(),
+        name="payment-certificate-list",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/detail/",
+        payment_certificate_views.PaymentCertificateDetailView.as_view(),
+        name="payment-certificate-detail",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/new/",
+        payment_certificate_views.PaymentCertificateEditView.as_view(),
+        name="payment-certificate-new",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/edit/",
+        payment_certificate_views.PaymentCertificateEditView.as_view(),
+        name="payment-certificate-edit",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/submit/",
+        payment_certificate_views.PaymentCertificateSubmitView.as_view(),
+        name="payment-certificate-submit",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/download-pdf/",
+        payment_certificate_views.PaymentCertificateDownloadPDFView.as_view(),
+        name="payment-certificate-download-pdf",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/download-abridged-pdf/",
+        payment_certificate_views.PaymentCertificateDownloadAbridgedPDFView.as_view(),
+        name="payment-certificate-download-abridged-pdf",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/pdf-status/",
+        payment_certificate_views.PaymentCertificatePDFStatusView.as_view(),
+        name="payment-certificate-pdf-status",
+    ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/email/",
+        payment_certificate_views.PaymentCertificateEmailView.as_view(),
+        name="payment-certificate-email",
+    ),
+]

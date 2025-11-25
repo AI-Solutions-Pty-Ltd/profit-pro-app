@@ -1,0 +1,21 @@
+"""URL configuration for Structure app."""
+
+from django.urls import path
+
+from .addendum_urls import addendum_urls
+from .api_urls import api_urls
+from .forecast_urls import forecast_urls
+from .payment_certificate_urls import payment_certificate_urls
+from .special_item_urls import special_item_urls
+from .structure_urls import structure_urls
+
+app_name = "bill_of_quantities"
+
+urlpatterns = (
+    structure_urls
+    + payment_certificate_urls
+    + addendum_urls
+    + special_item_urls
+    + forecast_urls
+    + api_urls
+)

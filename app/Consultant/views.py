@@ -6,7 +6,7 @@ from django.views.generic import DetailView, ListView, UpdateView
 
 from app.BillOfQuantities.forms import PaymentCertificateFinalApprovalForm
 from app.BillOfQuantities.models import PaymentCertificate
-from app.BillOfQuantities.views_payment_certificate import LineItemDetailMixin
+from app.BillOfQuantities.views.payment_certificate_views import LineItemDetailMixin
 from app.core.Utilities.django_email_service import django_email_service
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
