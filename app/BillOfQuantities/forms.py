@@ -139,8 +139,14 @@ class PaymentCertificateFinalApprovalForm(forms.ModelForm):
 
     class Meta:
         model = PaymentCertificate
-        fields = ["status", "notes"]
+        fields = ["approved_on", "status", "notes"]
         widgets = {
+            "approved_on": forms.DateInput(
+                attrs={
+                    "type": "date",
+                    "class": "block w-fit border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm",
+                }
+            ),
             "status": forms.RadioSelect(
                 attrs={
                     "class": "focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300"
