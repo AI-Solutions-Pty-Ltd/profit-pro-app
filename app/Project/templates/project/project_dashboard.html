@@ -41,7 +41,7 @@
                             <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
                                 {% heroicon_outline "banknotes" size="20" class="text-white" %}
                             </div>
-                            <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Contract Value</p>
+                            <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Contract Amount</p>
                             <p class="text-xl font-bold text-green-700 mt-1">R {{ portfolio.total_contract_value|floatformat:0|intcomma }}</p>
                         </div>
                         <!-- Total Forecasted Value -->
@@ -49,7 +49,7 @@
                             <div class="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-3">
                                 {% heroicon_outline "calculator" size="20" class="text-white" %}
                             </div>
-                            <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Forecasted Value</p>
+                            <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Forecasted Amount</p>
                             <p class="text-xl font-bold text-amber-700 mt-1">R {{ portfolio.total_forecast_value|floatformat:0|intcomma }}</p>
                         </div>
                         <!-- Total Certified -->
@@ -222,7 +222,7 @@
                     <div class="flex items-center justify-center space-x-6 text-sm">
                         <div class="flex items-center">
                             <div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>
-                            <span class="text-gray-600 font-semibold">Contract Value</span>
+                            <span class="text-gray-600 font-semibold">Contract Amount</span>
                         </div>
                         <div class="flex items-center">
                             <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>

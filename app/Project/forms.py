@@ -81,8 +81,8 @@ class ProjectForm(forms.ModelForm):
             "description": "Description",
             "start_date": "Start Date",
             "end_date": "End Date",
-            "contract_number": "Contract Number",
-            "contract_clause": "Contract Clause",
+            "contract_number": "Payment Certificate Contract Number",
+            "contract_clause": "Payment Certificate Contract Clause",
         }
 
     def clean(self):
