@@ -4,9 +4,16 @@
 {% block content %}
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Projects Dashboard</h1>
-            <p class="mt-2 text-gray-600">Financial overview of all projects</p>
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Projects Dashboard</h1>
+                <p class="mt-2 text-gray-600">Financial overview of all projects</p>
+            </div>
+            <a href="{% url 'project:project-create' %}"
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                {% heroicon_outline "plus" size="20" class="mr-2" %}
+                Create Project
+            </a>
         </div>
         <!-- Summary Metrics -->
         <div class="mb-8">
@@ -146,7 +153,17 @@
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No projects found</td>
+                                    <td colspan="4" class="px-6 py-12 text-center">
+                                        <div class="flex flex-col items-center">
+                                            {% heroicon_outline "folder-plus" size="48" class="text-gray-300 mb-4" %}
+                                            <p class="text-sm text-gray-500 mb-4">No projects found</p>
+                                            <a href="{% url 'project:project-create' %}"
+                                               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                {% heroicon_outline "plus" size="16" class="mr-2" %}
+                                                Create Your First Project
+                                            </a>
+                                        </div>
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
