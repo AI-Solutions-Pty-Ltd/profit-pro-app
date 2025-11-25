@@ -107,6 +107,14 @@
                                     <span class="font-medium">All certificates up to date</span>
                                 </div>
                             {% endif %}
+                            <!-- footer -->
+                            <div class="mt-6 pt-4 border-t border-gray-200">
+                                <a href="{% url 'consultant:payment-certificate-list' project.pk %}"
+                                   class="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">
+                                    {% heroicon_outline "clipboard-document-list" size="16" class="mr-2" %}
+                                    View All Certificates
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>

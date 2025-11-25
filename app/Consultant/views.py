@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
@@ -11,6 +12,25 @@ from app.core.Utilities.django_email_service import django_email_service
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.models import Client, Project
+
+
+class PaymentCertificateApprovedDateForm(forms.ModelForm):
+    """Form for editing only the approved_on date."""
+
+    class Meta:
+        model = PaymentCertificate
+        fields = ["approved_on"]
+        widgets = {
+            "approved_on": forms.DateInput(
+                attrs={
+                    "type": "date",
+                    "class": "block w-fit border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm",
+                }
+            ),
+        }
+        labels = {
+            "approved_on": "Approval Date",
+        }
 
 
 class GetProjectMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
@@ -145,4 +165,91 @@ class PaymentCertificateFinalApprovalView(
         return redirect(
             "consultant:client-detail",
             pk=payment_certificate.project.client.pk,
+        )
+
+
+class PaymentCertificateListView(GetProjectMixin, ListView):
+    """List all payment certificates for a project."""
+
+    model = PaymentCertificate
+    template_name = "consultant/payment_certificate_list.html"
+    context_object_name = "payment_certificates"
+
+    def get_breadcrumbs(self: "PaymentCertificateListView") -> list[BreadcrumbItem]:
+        project = self.get_project()
+        return [
+            {"title": "Return to Clients", "url": reverse("consultant:client-list")},
+            {
+                "title": f"{project.client.name}",
+                "url": reverse(
+                    "consultant:client-detail",
+                    kwargs={"pk": project.client.pk},
+                ),
+            },
+            {"title": f"{project.name} - Certificates", "url": None},
+        ]
+
+    def get_queryset(self):
+        project = self.get_project()
+        return PaymentCertificate.objects.filter(project=project).order_by(
+            "-created_at"
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context
+
+
+class PaymentCertificateEditApprovedDateView(GetProjectMixin, UpdateView):
+    """Edit only the approved_on date for a payment certificate."""
+
+    model = PaymentCertificate
+    form_class = PaymentCertificateApprovedDateForm
+    template_name = "consultant/payment_certificate_edit_date.html"
+    context_object_name = "payment_certificate"
+
+    def get_breadcrumbs(
+        self: "PaymentCertificateEditApprovedDateView",
+    ) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        return [
+            {"title": "Return to Clients", "url": reverse("consultant:client-list")},
+            {
+                "title": f"{project.client.name}",
+                "url": reverse(
+                    "consultant:client-detail",
+                    kwargs={"pk": project.client.pk},
+                ),
+            },
+            {
+                "title": f"{project.name} - Certificates",
+                "url": reverse(
+                    "consultant:payment-certificate-list",
+                    kwargs={"project_pk": project.pk},
+                ),
+            },
+            {
+                "title": f"Edit Certificate #{self.get_object().certificate_number}",
+                "url": None,
+            },
+        ]
+
+    def get_queryset(self):
+        project = self.get_project()
+        return PaymentCertificate.objects.filter(project=project)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context
+
+    def get_success_url(self):
+        messages.success(
+            self.request,
+            f"Approval date updated for Certificate #{self.object.certificate_number}",
+        )
+        return reverse(
+            "consultant:payment-certificate-list",
+            kwargs={"project_pk": self.get_project().pk},
         )

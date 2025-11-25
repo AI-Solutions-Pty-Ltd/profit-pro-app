@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load heroicons %}
+{% load humanize %}
+{% block title %}
+    Edit Certificate Date - {{ payment_certificate.certificate_number }}
+{% endblock title %}
+{% block content %}
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white shadow-sm rounded-lg">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h1 class="text-2xl font-bold text-gray-900">Edit Approval Date</h1>
+                <p class="text-sm text-gray-600 mt-1">
+                    Certificate #{{ payment_certificate.certificate_number }} - {{ project.name }}
+                </p>
+            </div>
+            <!-- Form -->
+            <form method="post" class="px-6 py-6">
+                {% csrf_token %}
+                <div class="space-y-6">
+                    <!-- Certificate Info -->
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p class="text-gray-500">Status</p>
+                                <p class="font-medium text-gray-900 mt-1">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if payment_certificate.status == 'APPROVED' %}bg-green-100 text-green-800{% elif payment_certificate.status == 'REJECTED' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                                        {{ payment_certificate.get_status_display }}
+                                    </span>
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500">Current Claim</p>
+                                <p class="font-medium text-gray-900 mt-1">
+                                    R {{ payment_certificate.current_claim_total|floatformat:2|default:"0.00" }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Approved On Field -->
+                    <div>
+                        <label for="id_approved_on"
+                               class="block text-sm font-medium text-gray-700 mb-2">Approval Date</label>
+                        {{ form.approved_on }}
+                        {% if form.approved_on.errors %}<p class="mt-2 text-sm text-red-600">{{ form.approved_on.errors.0 }}</p>{% endif %}
+                        <p class="mt-2 text-sm text-gray-500">This is the date when the certificate was officially approved.</p>
+                    </div>
+                </div>
+                <!-- Actions -->
+                <div class="mt-6 flex items-center justify-between pt-6 border-t border-gray-200">
+                    <a href="{% url 'consultant:payment-certificate-list' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "arrow-left" size="16" class="mr-2" %}
+                        Cancel
+                    </a>
+                    <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "check" size="16" class="mr-2" %}
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock content %}

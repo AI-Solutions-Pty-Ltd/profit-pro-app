@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load heroicons %}
+{% block title %}
+    Payment Certificates - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-900">Payment Certificates</h1>
+            <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+        </div>
+        <!-- Certificates List -->
+        <div class="px-6 py-4">
+            {% if payment_certificates %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Certificate #
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Approved On
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Current Claim
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Cumulative
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for cert in payment_certificates %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ cert.certificate_number }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if cert.status == 'APPROVED' %}bg-green-100 text-green-800{% elif cert.status == 'SUBMITTED' %}bg-blue-100 text-blue-800{% elif cert.status == 'REJECTED' %}bg-red-100 text-red-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ cert.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {% if cert.approved_on %}
+                                            {{ cert.approved_on|date:"M d, Y" }}
+                                        {% else %}
+                                            <span class="text-gray-400">--</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                                        R {{ cert.current_claim_total|default:0|floatformat:2|intcomma }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                                        R {{ cert.progressive_to_date|default:0|floatformat:2|intcomma }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                                        <div class="flex items-center justify-center space-x-2">
+                                            <!-- View Button -->
+                                            <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk cert.pk %}"
+                                               class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                {% heroicon_outline "eye" size="14" %}
+                                                <span class="ml-1">View</span>
+                                            </a>
+                                            <!-- Edit Date Button -->
+                                            <a href="{% url 'consultant:payment-certificate-edit-date' project.pk cert.pk %}"
+                                               class="inline-flex items-center px-3 py-1.5 border border-indigo-300 text-xs font-medium rounded text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                {% heroicon_outline "pencil" size="14" %}
+                                                <span class="ml-1">Edit Date</span>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    {% heroicon_outline "clipboard-document-list" class="mx-auto h-12 w-12 text-gray-400" %}
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No certificates</h3>
+                    <p class="mt-1 text-sm text-gray-500">No payment certificates have been created for this project yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock content %}
