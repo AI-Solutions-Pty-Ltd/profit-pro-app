@@ -11,8 +11,8 @@ from app.core.Utilities.models import BaseModel, sum_queryset
 if TYPE_CHECKING:
     from app.BillOfQuantities.models import Forecast, LineItem, PaymentCertificate
 
-    from .planned_value import PlannedValue
-    from .signatories import Signatories
+    from .planned_value_models import PlannedValue
+    from .signatories_models import Signatories
 
 
 class Client(BaseModel):

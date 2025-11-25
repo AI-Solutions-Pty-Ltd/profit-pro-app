@@ -3,9 +3,8 @@
 from django.contrib import admin
 
 from app.core.Utilities.admin import SoftDeleteAdmin
-from app.Project.models.planned_value import PlannedValue
 
-from .models import Client, Portfolio, Project, Signatories
+from .models import Client, PlannedValue, Portfolio, Project, Signatories
 
 
 @admin.register(Project)

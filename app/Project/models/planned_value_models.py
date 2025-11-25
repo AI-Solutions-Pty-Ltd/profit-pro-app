@@ -1,7 +1,7 @@
 from django.db import models
 
 from app.core.Utilities.models import BaseModel
-from app.Project.models.projects import Project
+from app.Project.models.projects_models import Project
 
 
 class PlannedValue(BaseModel):
