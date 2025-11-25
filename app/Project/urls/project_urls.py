@@ -14,11 +14,6 @@ project_urls = [
         name="project-wbs-detail",
     ),
     path(
-        "<int:pk>/performance/",
-        project_views.ProjectPerformanceReportView.as_view(),
-        name="project-performance-report",
-    ),
-    path(
         "<int:pk>/update/",
         project_views.ProjectUpdateView.as_view(),
         name="project-update",

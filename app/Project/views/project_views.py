@@ -5,10 +5,8 @@ from datetime import datetime, timedelta
 from typing import cast
 
 from django.db.models import QuerySet, Sum
-from django.db.models.functions import TruncMonth
 from django.http import Http404
 from django.urls import reverse, reverse_lazy
-from django.utils import timezone
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -212,81 +210,6 @@ class ProjectDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
             "current_cpi": cpi_values[-1] if cpi_values else None,
             "current_spi": spi_values[-1] if spi_values else None,
         }
-
-
-class ProjectPerformanceReportView(
-    UserHasGroupGenericMixin, BreadcrumbMixin, DetailView
-):
-    """Project performance report showing cumulative certified amounts month-by-month."""
-
-    model = Project
-    template_name = "project/project_performance_report.html"
-    context_object_name = "project"
-    permissions = ["consultant", "contractor"]
-
-    def get_breadcrumbs(self):
-        return [
-            {"title": "Projects", "url": reverse("project:project-list")},
-            {
-                "title": "Project Details",
-                "url": reverse("project:project-detail", kwargs={"pk": self.object.pk}),
-            },
-            {"title": f"{self.object.name} Performance Report", "url": None},
-        ]
-
-    def get_context_data(self, **kwargs):
-        """Add performance data to context."""
-        context = super().get_context_data(**kwargs)
-        project = context["project"]
-
-        # Get monthly certified amounts for last 12 months
-        twelve_months_ago = timezone.now() - timedelta(days=365)
-        monthly_data = (
-            ActualTransaction.objects.filter(
-                line_item__project=project,
-                payment_certificate__status=PaymentCertificate.Status.APPROVED,
-                payment_certificate__created_at__gte=twelve_months_ago,
-            )
-            .annotate(month=TruncMonth("payment_certificate__created_at"))
-            .values("month")
-            .annotate(monthly_total=Sum("total_price"))
-            .order_by("month")
-        )
-
-        # Prepare data for Chart.js
-        chart_labels = []
-        monthly_amounts = []
-        cumulative_amounts = []
-
-        running_total = 0
-        contract_value = float(project.get_total_contract_value)
-
-        for item in monthly_data:
-            month_label = item["month"].strftime("%b %Y")
-            monthly_amount = float(item["monthly_total"] or 0)
-
-            running_total += monthly_amount
-
-            chart_labels.append(month_label)
-            monthly_amounts.append(monthly_amount)
-            cumulative_amounts.append(running_total)
-
-        # Create contract value baseline (same value for all months)
-        contract_baseline = [contract_value] * len(chart_labels)
-
-        context.update(
-            {
-                "chart_labels": chart_labels,
-                "monthly_amounts": monthly_amounts,
-                "cumulative_amounts": cumulative_amounts,
-                "contract_baseline": contract_baseline,
-                "contract_value": contract_value,
-                "total_certified": running_total,
-                "performance_data": cumulative_amounts,  # Keep for summary section
-            }
-        )
-
-        return context
 
 
 class ProjectDetailView(ProjectMixin, DetailView):
