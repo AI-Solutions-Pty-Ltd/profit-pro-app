@@ -248,16 +248,20 @@ class Project(BaseModel):
     # Final Reports
     ##################
 
-    def planned_value(self, date: datetime) -> Decimal:
+    def planned_value(self, date: datetime | None) -> Decimal:
         """From Cashflow Forecast included as part of the baseline/Contract WBS"""
+        if not date:
+            date = datetime.now()
         planned_values = self.planned_values.filter(
             period__month=date.month,
             period__year=date.year,
         )
         return sum_queryset(planned_values, "value")
 
-    def actual_cost(self, date: datetime) -> Decimal:
+    def actual_cost(self, date: datetime | None) -> Decimal:
         """From cumulative Amount Certified in  payment certificate"""
+        if not date:
+            date = datetime.now()
         payment_certificates = self.payment_certificates.filter(
             approved_on__month=date.month,
             approved_on__year=date.year,
@@ -272,8 +276,10 @@ class Project(BaseModel):
             total_certified / self.contract_addendum_value
         ) * self.contract_addendum_value
 
-    def forecast_cost(self, date: datetime) -> Decimal:
+    def forecast_cost(self, date: datetime | None) -> Decimal:
         """From Forecast to Completion Cost in the Cost Report"""
+        if not date:
+            date = datetime.now()
         forecasts = self.forecasts.filter(
             period__month=date.month,
             period__year=date.year,
@@ -281,8 +287,10 @@ class Project(BaseModel):
         )
         return sum_queryset(forecasts, "forecast_transactions__total_price")
 
-    def earned_value(self, date: datetime) -> Decimal | None:
+    def earned_value(self, date: datetime | None) -> Decimal | None:
         """Forecast/Actual Cost Amounts *Budgeted Amount"""
+        if not date:
+            date = datetime.now()
         actual = self.actual_cost(date)
         forecast = self.forecast_cost(date)
         if not forecast or forecast == 0:
