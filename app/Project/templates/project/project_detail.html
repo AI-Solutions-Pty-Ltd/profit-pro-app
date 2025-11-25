@@ -40,12 +40,12 @@
                         </div>
                     </div>
                     <div class="space-y-2">
-                        <a href="{% url 'project:project-wbs-detail' project.pk %}"
-                           class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
-                            <span class="text-sm font-medium text-blue-700">Main Structure</span>
-                            {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                        </a>
                         {% if project.line_items.exists %}
+                            <a href="{% url 'project:project-wbs-detail' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-blue-700">Main Structure</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
                             <a href="{% url 'bill_of_quantities:addendum-list' project.pk %}"
                                class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors group/btn">
                                 <span class="text-sm font-medium text-purple-700">Addendum Items</span>
@@ -55,6 +55,12 @@
                                class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
                                 <span class="text-sm font-medium text-orange-700">Special Items</span>
                                 {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% else %}
+                            <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-red-700">Upload BOQ first</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-red-500 transition-opacity" %}
                             </a>
                         {% endif %}
                     </div>
@@ -78,10 +84,11 @@
                                 {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                         {% else %}
-                            <div class="w-full flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200">
-                                <span class="text-sm font-medium text-gray-500">Upload BOQ first</span>
-                                {% heroicon_outline "lock-closed" size="16" class="text-gray-400" %}
-                            </div>
+                            <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-red-700">Upload BOQ first</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-red-500 transition-opacity" %}
+                            </a>
                         {% endif %}
                     </div>
                 </div>
@@ -104,10 +111,11 @@
                                 {% heroicon_outline "arrow-right" size="16" class="text-purple-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                         {% else %}
-                            <div class="w-full flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200">
-                                <span class="text-sm font-medium text-gray-500">Upload BOQ first</span>
-                                {% heroicon_outline "lock-closed" size="16" class="text-gray-400" %}
-                            </div>
+                            <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-red-700">Upload BOQ first</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-red-500 transition-opacity" %}
+                            </a>
                         {% endif %}
                     </div>
                 </div>
@@ -135,44 +143,11 @@
                                 </div>
                             {% endif %}
                         {% else %}
-                            <div class="w-full flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200">
-                                <span class="text-sm font-medium text-gray-500">Set project dates first</span>
-                                {% heroicon_outline "lock-closed" size="16" class="text-gray-400" %}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            <!-- Second Row - Reports -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-                <!-- Reports Section -->
-                <div class="group relative bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                    <div class="flex items-center mb-3">
-                        <div class="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center mr-3">
-                            {% heroicon_outline "chart-bar" size="20" class="text-white" %}
-                        </div>
-                        <div>
-                            <h3 class="text-sm font-bold text-amber-900">Reports</h3>
-                            <p class="text-xs text-amber-600">Project analytics</p>
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        {% if project.line_items.exists %}
-                            <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
-                               class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-amber-700">Forecast Report</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            <a href="{% url 'project:project-update' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-red-200 hover:bg-cyan-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-red-700">Set project dates first</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-cyan-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
-                            <a href="{% url 'project:project-performance-report' project.pk %}"
-                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-orange-700">Performance Report</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                            </a>
-                        {% else %}
-                            <div class="w-full flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200">
-                                <span class="text-sm font-medium text-gray-500">Upload BOQ first</span>
-                                {% heroicon_outline "lock-closed" size="16" class="text-gray-400" %}
-                            </div>
                         {% endif %}
                     </div>
                 </div>
@@ -189,13 +164,6 @@
                                 <span class="ml-1">Cost Analysis</span>
                             </a>
                         </div>
-                        {% if not project.line_items.exists %}
-                            <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
-                               class="inline-flex items-center px-3 py-1.5 border border-red-600 rounded-md shadow-sm text-sm font-medium text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 hover:scale-105">
-                                {% heroicon_outline "arrow-up-tray" size="16" %}
-                                <span class="ml-1">Upload BOQ</span>
-                            </a>
-                        {% endif %}
                     </div>
                 </div>
             {% else %}
@@ -205,6 +173,17 @@
                            class="inline-flex items-center px-4 py-2 border border-red-600 rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 hover:scale-105 hover:shadow-lg">
                             {% heroicon_outline "arrow-up-tray" size="20" %}
                             <span class="ml-2">Upload BOQ to Get Started</span>
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+            {% if not project.start_date or not project.end_date %}
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex items-center justify-center">
+                        <a href="{% url 'project:project-update' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-red-600 rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 hover:scale-105 hover:shadow-lg">
+                            {% heroicon_outline "arrow-up-tray" size="20" %}
+                            <span class="ml-2">Set project dates first</span>
                         </a>
                     </div>
                 </div>
