@@ -3,7 +3,7 @@
 from django import forms
 
 from app.Account.models import Account
-from app.Project.models import Client, Project, Signatories
+from app.Project.models import Client, PlannedValue, Project, Signatories
 
 
 class FilterForm(forms.Form):
@@ -31,6 +31,8 @@ class ProjectForm(forms.ModelForm):
         fields = [
             "name",
             "description",
+            "start_date",
+            "end_date",
             "contract_number",
             "contract_clause",
             "status",
@@ -46,6 +48,18 @@ class ProjectForm(forms.ModelForm):
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                     "placeholder": "Enter project description",
+                }
+            ),
+            "start_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                }
+            ),
+            "end_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
                 }
             ),
             "contract_number": forms.TextInput(
@@ -65,9 +79,22 @@ class ProjectForm(forms.ModelForm):
         labels = {
             "name": "Project Name",
             "description": "Description",
+            "start_date": "Start Date",
+            "end_date": "End Date",
             "contract_number": "Contract Number",
             "contract_clause": "Contract Clause",
         }
+
+    def clean(self):
+        """Validate that end_date is after start_date."""
+        cleaned_data = super().clean() or {}
+        start_date = cleaned_data.get("start_date")
+        end_date = cleaned_data.get("end_date")
+
+        if start_date and end_date and end_date < start_date:
+            raise forms.ValidationError("End date must be after start date.")
+
+        return cleaned_data
 
 
 class ClientForm(forms.ModelForm):
@@ -191,4 +218,25 @@ class SignatoryForm(forms.ModelForm):
         }
         help_texts = {
             "email": "Email address where payment certificates will be sent",
+        }
+
+
+class PlannedValueForm(forms.ModelForm):
+    """Form for individual planned value entry."""
+
+    class Meta:
+        model = PlannedValue
+        fields = ["value"]
+        widgets = {
+            "value": forms.NumberInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "0.00",
+                    "step": "0.01",
+                    "min": "0",
+                }
+            ),
+        }
+        labels = {
+            "value": "Planned Value",
         }

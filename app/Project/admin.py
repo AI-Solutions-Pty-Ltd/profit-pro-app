@@ -3,8 +3,9 @@
 from django.contrib import admin
 
 from app.core.Utilities.admin import SoftDeleteAdmin
+from app.Project.models.planned_value import PlannedValue
 
-from .models import Client, Project, Signatories
+from .models import Client, Portfolio, Project, Signatories
 
 
 @admin.register(Project)
@@ -28,4 +29,20 @@ class SignatoriesAdmin(SoftDeleteAdmin):
     list_display = ["name", "title", "email", "project", "deleted", "created_at"]
     list_filter = ["deleted", "created_at", "project"]
     search_fields = ["name", "title", "email", "project__name"]
+    readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(Portfolio)
+class PortfolioAdmin(SoftDeleteAdmin):
+    list_display = ["pk", "deleted", "created_at", "updated_at"]
+    list_filter = ["deleted", "created_at", "projects", "users"]
+    search_fields = ["users__email", "project__name", "project__description"]
+    readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(PlannedValue)
+class PlannedValueAdmin(SoftDeleteAdmin):
+    list_display = ["pk", "project", "period", "value"]
+    list_filter = ["deleted", "created_at", "project"]
+    search_fields = ["project__name", "project__description"]
     readonly_fields = ["created_at", "updated_at"]

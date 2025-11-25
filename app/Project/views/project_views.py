@@ -1,6 +1,7 @@
 """Views for Project app."""
 
 from datetime import timedelta
+from typing import cast
 
 from django.db.models import QuerySet, Sum
 from django.db.models.functions import TruncMonth
@@ -15,12 +16,26 @@ from django.views.generic import (
     UpdateView,
 )
 
+from app.Account.models import Account
 from app.BillOfQuantities.models import ActualTransaction, PaymentCertificate
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import FilterForm, ProjectForm
 from app.Project.models import Project
+
+
+class ProjectMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
+    permissions = ["contractor"]
+
+    def get_queryset(self: "ProjectMixin") -> QuerySet[Project]:
+        return Project.objects.filter(account=self.request.user).order_by("-created_at")
+
+    def get_object(self: "ProjectMixin") -> Project:
+        project = super().get_object()  # type: ignore
+        if project.account != self.request.user:
+            raise Http404("You do not have permission to view this project.")
+        return project
 
 
 class ProjectDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
@@ -129,7 +144,7 @@ class ProjectDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
             projects, "forecasts__forecast_transactions__total_price"
         )
         context["dashboard_data"] = dashboard_data
-
+        context["portfolio"] = cast(Account, self.request.user).portfolio
         return context
 
 
@@ -206,44 +221,6 @@ class ProjectPerformanceReportView(
         )
 
         return context
-
-
-class ProjectMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
-    permissions = ["contractor"]
-
-    def get_queryset(self: "ProjectMixin") -> QuerySet[Project]:
-        return Project.objects.filter(account=self.request.user).order_by("-created_at")
-
-    def get_object(self: "ProjectMixin") -> Project:
-        project = super().get_object()  # type: ignore
-        if project.account != self.request.user:
-            raise Http404("You do not have permission to view this project.")
-        return project
-
-
-class ProjectListView(ProjectMixin, ListView):
-    """List all projects for the current user."""
-
-    model = Project
-    template_name = "project/project_list.html"
-    context_object_name = "projects"
-    paginate_by = 10
-
-    def get_breadcrumbs(self):
-        return [
-            {"title": "All Projects", "url": None},
-        ]
-
-    def get_queryset(self: "ProjectListView") -> QuerySet[Project]:
-        """Filter projects by current user and search query."""
-        queryset = super().get_queryset()
-
-        # Search filter
-        search = self.request.GET.get("search")
-        if search:
-            queryset = queryset.filter(name__icontains=search)
-
-        return queryset
 
 
 class ProjectDetailView(ProjectMixin, DetailView):

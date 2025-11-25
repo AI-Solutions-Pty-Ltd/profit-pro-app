@@ -4,15 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0002_signatories_email'),
+        ("Project", "0002_signatories_email"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='project',
-            name='status',
-            field=models.CharField(choices=[('ACTIVE', 'Active'), ('INACTIVE', 'Inactive')], default='ACTIVE', max_length=255),
+            model_name="project",
+            name="status",
+            field=models.CharField(
+                choices=[("ACTIVE", "Active"), ("INACTIVE", "Inactive")],
+                default="ACTIVE",
+                max_length=255,
+            ),
         ),
     ]

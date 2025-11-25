@@ -22,21 +22,21 @@ urlpatterns = [
     path("", include("app.Account.auth_urls")),
     path("register/", RegisterView.as_view(), name="register"),
     # app urls
-    path("account/", include("app.Account.urls", namespace="account")),
-    path("project/", include("app.Project.urls", namespace="project")),
+    path("account/", include("app.Account.urls", "account")),
+    path("project/", include("app.Project.urls", "project")),
     path(
         "bill-of-quantities/",
-        include("app.BillOfQuantities.urls", namespace="bill_of_quantities"),
+        include("app.BillOfQuantities.urls", "bill_of_quantities"),
     ),
     path(
         "cost/",
-        include("app.Cost.urls", namespace="cost"),
+        include("app.Cost.urls", "cost"),
     ),
-    path("consultant/", include("app.Consultant.urls", namespace="consultant")),
-    path("inventories/", include("app.Inventories.urls", namespace="inventories")),
+    path("consultant/", include("app.Consultant.urls", "consultant")),
+    path("inventories/", include("app.Inventories.urls", "inventories")),
     path(
         "suppliers/",
-        include("app.Inventories.urls_suppliers", namespace="suppliers"),
+        include("app.Inventories.urls_suppliers", "suppliers"),
     ),
 ]
 

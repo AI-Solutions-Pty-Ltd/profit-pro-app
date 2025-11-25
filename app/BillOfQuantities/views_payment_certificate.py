@@ -1,7 +1,8 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
+from django.db.models import Sum
 from django.http import FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -16,7 +17,7 @@ from app.BillOfQuantities.tasks import (
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
-from app.Project.models import Project
+from app.Project.models import PlannedValue, Project
 
 
 class PaymentCertificateMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
@@ -140,7 +141,73 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
         context["total_claimed"] = total_claimed
         context["active_claimed"] = active_claimed
         context["remaining_amount"] = remaining_amount
+
+        # Chart data: Cumulative Actuals vs Planned Values
+        chart_data = self._get_chart_data()
+        context["chart_labels"] = chart_data["labels"]
+        context["chart_planned_cumulative"] = chart_data["planned_cumulative"]
+        context["chart_actual_cumulative"] = chart_data["actual_cumulative"]
+        context["has_chart_data"] = chart_data["has_data"]
+
         return context
+
+    def _get_chart_data(self) -> dict:
+        """Generate chart data comparing cumulative actuals vs planned values."""
+        from dateutil.relativedelta import relativedelta
+
+        project = self.get_project()
+
+        # Get planned values ordered by period
+        planned_values = list(
+            PlannedValue.objects.filter(project=project).order_by("period")
+        )
+
+        if not planned_values:
+            return {
+                "labels": [],
+                "planned_cumulative": [],
+                "actual_cumulative": [],
+                "has_data": False,
+            }
+
+        # Build month labels and cumulative planned values
+        labels = []
+        planned_cumulative = []
+        actual_cumulative = []
+        running_planned = Decimal("0")
+        running_actual = Decimal("0")
+
+        for pv in planned_values:
+            # Period label
+            labels.append(pv.period.strftime("%b %Y"))
+
+            # Cumulative planned
+            running_planned += pv.value
+            planned_cumulative.append(float(running_planned))
+
+            # Calculate actual for this period
+            # Get the start and end of this month
+            period_start = pv.period.replace(day=1)
+            period_end = period_start + relativedelta(months=1)
+
+            # Sum all actual transactions from approved payment certificates
+            # where the certificate was approved in this period (using approved_on date)
+            period_actual = ActualTransaction.objects.filter(
+                payment_certificate__project=project,
+                payment_certificate__status=PaymentCertificate.Status.APPROVED,
+                payment_certificate__approved_on__gte=period_start,
+                payment_certificate__approved_on__lt=period_end,
+            ).aggregate(total=Sum("total_price"))["total"] or Decimal("0")
+
+            running_actual += period_actual
+            actual_cumulative.append(float(running_actual))
+
+        return {
+            "labels": labels,
+            "planned_cumulative": planned_cumulative,
+            "actual_cumulative": actual_cumulative,
+            "has_data": True,
+        }
 
 
 class PaymentCertificateDetailView(
@@ -220,6 +287,39 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
 
         if not pk:
             # no payment certificate selected, check if any active, or create new one
+
+            # Validate project dates are set and current date is within project period
+            today = date.today()
+            if not project.start_date or not project.end_date:
+                messages.error(
+                    request,
+                    "Cannot create payment certificate: Project start date and end date must be set.",
+                )
+                return redirect(
+                    "bill_of_quantities:payment-certificate-list",
+                    project_pk=project_pk,
+                )
+
+            if today < project.start_date:
+                messages.error(
+                    request,
+                    f"Cannot create payment certificate: Project has not started yet (starts {project.start_date.strftime('%d %b %Y')}).",
+                )
+                return redirect(
+                    "bill_of_quantities:payment-certificate-list",
+                    project_pk=project_pk,
+                )
+
+            if today > project.end_date:
+                messages.error(
+                    request,
+                    f"Cannot create payment certificate: Project has ended ({project.end_date.strftime('%d %b %Y')}). Please update project end date if needed.",
+                )
+                return redirect(
+                    "bill_of_quantities:payment-certificate-list",
+                    project_pk=project_pk,
+                )
+
             payment_certificates = PaymentCertificate.objects.filter(
                 project=project, status=PaymentCertificate.Status.DRAFT
             )

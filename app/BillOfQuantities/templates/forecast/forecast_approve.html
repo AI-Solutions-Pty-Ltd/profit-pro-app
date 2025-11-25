@@ -1,32 +1,75 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
+{% load heroicons %}
+{% load humanize %}
 {% block title %}
-    Approve Forecast - {{ project.name }}
+    {% if forecast.status == 'DRAFT' %}
+        Review & Approve
+    {% else %}
+        View
+    {% endif %}
+    Forecast - {{ project.name }}
 {% endblock title %}
 {% block content %}
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
         <div id="forecast-list-header"
-             class="px-6 py-5 border-b border-gray-200 bg-gray-50 mb-4">
+             class="px-6 py-5 border-b border-gray-200 bg-gray-50 mb-4 sticky top-0 z-10">
             <div class="flex items-center justify-between gap-6">
-                <h1 class="text-2xl font-bold text-gray-900">Approve Forecast</h1>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
+                       class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
+                        Dashboard
+                    </a>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">
+                            {% if forecast.status == 'DRAFT' %}
+                                Review & Approve
+                            {% else %}
+                                View
+                            {% endif %}
+                            Forecast
+                        </h1>
+                        <p class="text-sm text-gray-600">{{ forecast.period|date:"F Y" }}</p>
+                    </div>
+                </div>
                 <div class="flex items-center space-x-2">
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {% if forecast.status == 'DRAFT' %}bg-amber-100 text-amber-800{% else %}bg-green-100 text-green-800{% endif %}">
                         {{ forecast.get_status_display }}
                     </span>
+                    {% if forecast.status == 'DRAFT' %}
+                        <button type="button"
+                                onclick="document.getElementById('approval-section').scrollIntoView({behavior: 'smooth'})"
+                                class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            {% heroicon_outline "arrow-down" class="w-4 h-4 mr-1" %}
+                            Jump to Approval
+                        </button>
+                        <form method="post" class="inline">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                {% heroicon_outline "check" class="w-4 h-4 mr-1" %}
+                                Approve Now
+                            </button>
+                        </form>
+                    {% endif %}
                 </div>
             </div>
         </div>
         <div id="content" class="p-6">
-            <div class="mb-6 text-sm text-gray-600">
-                <p>
-                    <strong>Period:</strong> {{ forecast.period|date:"F Y" }}
-                </p>
-                <p>
-                    <strong>Captured by:</strong> {{ forecast.captured_by.get_full_name|default:forecast.captured_by.email }}
-                </p>
-                <p>
-                    <strong>Created on:</strong> {{ forecast.created_at|date:"d M Y H:i" }}
-                </p>
+            <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <p class="text-gray-500">Period</p>
+                    <p class="font-semibold text-gray-900">{{ forecast.period|date:"F Y" }}</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <p class="text-gray-500">Captured by</p>
+                    <p class="font-semibold text-gray-900">{{ forecast.captured_by.get_full_name|default:forecast.captured_by.email }}</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <p class="text-gray-500">Created on</p>
+                    <p class="font-semibold text-gray-900">{{ forecast.created_at|date:"d M Y H:i" }}</p>
+                </div>
             </div>
             <!-- Summary Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -120,54 +163,61 @@
                     </table>
                 </div>
             </div>
-            <!-- Approval Form -->
-            {% if forecast.status == 'DRAFT' %}
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
+            <!-- Approval Section -->
+            <div id="approval-section" class="mt-8 pt-6 border-t border-gray-200">
+                {% if forecast.status == 'DRAFT' %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                            <div class="flex">
+                                <div class="flex-shrink-0">{% heroicon_outline 'exclamation-triangle' class="w-6 h-6 text-amber-600" %}</div>
+                                <div class="ml-3">
+                                    <h3 class="text-lg font-medium text-amber-800">Approval Confirmation</h3>
+                                    <div class="mt-2 text-sm text-amber-700">
+                                        <p>
+                                            Are you sure you want to approve this forecast? <strong>Once approved, it cannot be edited.</strong>
+                                        </p>
+                                        <p class="mt-2">You will be recorded as the approver.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <a href="{% url 'bill_of_quantities:forecast-edit' project.pk forecast.pk %}"
+                               class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                                {% heroicon_outline "pencil" class="w-4 h-4 mr-1" %}
+                                Back to Edit
+                            </a>
+                            <button type="submit"
+                                    class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 shadow-lg">
+                                {% heroicon_outline "check-circle" class="w-5 h-5 mr-2" %}
+                                Approve Forecast
+                            </button>
+                        </div>
+                    </form>
+                {% else %}
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
                         <div class="flex">
-                            <div class="flex-shrink-0">{% heroicon_outline 'exclamation-circle' %}</div>
+                            <div class="flex-shrink-0">{% heroicon_outline 'check-circle' class="w-6 h-6 text-green-600" %}</div>
                             <div class="ml-3">
-                                <h3 class="text-sm font-medium text-yellow-800">Approval Confirmation</h3>
-                                <div class="mt-2 text-sm text-yellow-700">
-                                    <p>Are you sure you want to approve this forecast? Once approved, it cannot be edited.</p>
-                                    <p class="mt-1">
-                                        <strong>You will be recorded as the approver.</strong>
+                                <h3 class="text-lg font-medium text-green-800">Forecast Approved</h3>
+                                <div class="mt-2 text-sm text-green-700">
+                                    <p>
+                                        This forecast was approved by <strong>{{ forecast.approved_by.get_full_name|default:forecast.approved_by.email }}</strong>.
                                     </p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="flex items-center justify-between">
-                        <a href="{% url 'bill_of_quantities:forecast-edit' project.pk forecast.pk %}"
-                           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Back to Edit
+                    <div class="mt-6">
+                        <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
+                            Back to Dashboard
                         </a>
-                        <button type="submit"
-                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                            Approve Forecast
-                        </button>
                     </div>
-                </form>
-            {% else %}
-                <div class="bg-green-50 border border-green-200 rounded-md p-4">
-                    <div class="flex">
-                        <div class="flex-shrink-0">{% heroicon_outline 'check-circle' %}</div>
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-green-800">Already Approved</h3>
-                            <div class="mt-2 text-sm text-green-700">
-                                <p>This forecast was approved by {{ forecast.approved_by.get_full_name|default:forecast.approved_by.email }}.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-6">
-                    <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        Back to Forecasts
-                    </a>
-                </div>
-            {% endif %}
+                {% endif %}
+            </div>
         </div>
     </div>
 {% endblock content %}

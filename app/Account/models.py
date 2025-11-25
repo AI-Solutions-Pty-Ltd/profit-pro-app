@@ -1,19 +1,25 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
+from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 
 from app.core.Utilities.models import BaseModel
 
+if TYPE_CHECKING:
+    from app.Project.models import Portfolio, Project
+
 
 class UserManager(BaseUserManager):
     use_in_migrations = True
 
-    def _create_user(self, email: str, password: str, **extra_fields: dict[str, Any]):
+    def _create_user(
+        self, email: str, password: str | None, **extra_fields: dict[str, Any]
+    ):
         if not email:
             raise ValueError("Users require an email field")
         email: str = self.normalize_email(email)
@@ -121,5 +127,13 @@ class Account(AbstractUser, BaseModel):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
+    if TYPE_CHECKING:
+        projects: QuerySet[Project]
+        portfolios: QuerySet[Portfolio]
+
     def __str__(self):
         return self.email
+
+    @property
+    def portfolio(self) -> Optional["Portfolio"]:
+        return self.portfolios.first()

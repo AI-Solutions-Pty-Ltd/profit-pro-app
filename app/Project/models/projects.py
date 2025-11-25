@@ -11,6 +11,9 @@ from app.core.Utilities.models import BaseModel, sum_queryset
 if TYPE_CHECKING:
     from app.BillOfQuantities.models import Forecast, LineItem, PaymentCertificate
 
+    from .planned_value import PlannedValue
+    from .signatories import Signatories
+
 
 class Client(BaseModel):
     name = models.CharField(max_length=255)
@@ -25,6 +28,8 @@ class Client(BaseModel):
         related_name="consultant",
     )
     description = models.TextField()
+    if TYPE_CHECKING:
+        projects: QuerySet["Project"]
 
     def __str__(self):
         return self.name
@@ -35,19 +40,61 @@ class Client(BaseModel):
         ordering = ["-created_at"]
 
 
+class Portfolio(BaseModel):
+    users = models.ManyToManyField(Account, null=True, related_name="portfolios")
+
+    def __str__(self) -> str:
+        return super().__str__()
+
+    if TYPE_CHECKING:
+        projects: QuerySet["Project"]
+
+    @property
+    def active_projects(self) -> QuerySet["Project"]:
+        return self.projects.filter(status=Project.Status.ACTIVE)
+
+    @property
+    def total_contract_value(self) -> Decimal:
+        return sum_queryset(self.active_projects, "line_items__total_price")
+
+    @property
+    def total_forecast_value(self) -> Decimal:
+        total_forecast_value = Decimal(0)
+        for project in self.active_projects:
+            last_forecast: Forecast | None = project.forecasts.order_by(
+                "-period"
+            ).last()
+            if last_forecast:
+                total_forecast_value += last_forecast.total_forecast
+        return total_forecast_value
+
+    @property
+    def total_certified_value(self) -> Decimal:
+        return sum_queryset(
+            self.active_projects,
+            "payment_certificates__actual_transactions__total_price",
+        )
+
+
 class Project(BaseModel):
     class Status(models.TextChoices):
+        SETUP = "SETUP", "Setup"
         ACTIVE = "ACTIVE", "Active"
         INACTIVE = "INACTIVE", "Inactive"
 
+    portfolio = models.ForeignKey(
+        Portfolio, on_delete=models.SET_NULL, null=True, related_name="projects"
+    )
     account = models.ForeignKey(
         Account, on_delete=models.CASCADE, related_name="projects"
     )
     name = models.CharField(max_length=255)
     description = models.TextField()
     status = models.CharField(
-        max_length=255, choices=Status.choices, default=Status.ACTIVE
+        max_length=255, choices=Status.choices, default=Status.SETUP
     )
+    start_date = models.DateField(null=True)
+    end_date = models.DateField(null=True)
     contract_number = models.CharField(max_length=255, blank=True)
     contract_clause = models.CharField(max_length=255, blank=True)
     vat = models.BooleanField(default=False)
@@ -64,6 +111,8 @@ class Project(BaseModel):
         payment_certificates: QuerySet[PaymentCertificate]
         line_items: QuerySet[LineItem]
         forecasts: QuerySet[Forecast]
+        signatories: QuerySet["Signatories"] | None
+        planned_values: QuerySet["PlannedValue"] | None
 
     def __str__(self):
         return self.name
@@ -151,22 +200,3 @@ class Project(BaseModel):
             .select_related("structure", "bill", "package")
             .prefetch_related("actual_transactions")
         )
-
-
-class Signatories(BaseModel):
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="signatories"
-    )
-    name = models.CharField(max_length=255)
-    title = models.CharField(max_length=255)
-    email = models.EmailField(
-        max_length=255, help_text="Email address for sending payment certificates"
-    )
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = "Signatory"
-        verbose_name_plural = "Signatories"
-        ordering = ["-created_at"]

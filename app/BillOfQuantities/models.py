@@ -663,6 +663,7 @@ class Forecast(BaseModel):
         verbose_name = "Forecast"
         verbose_name_plural = "Forecasts"
         ordering = ["period"]
+        unique_together = [["project", "period"]]
         indexes = [
             models.Index(fields=["project", "period"]),
             models.Index(fields=["period"]),
@@ -670,6 +671,15 @@ class Forecast(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.period} - {self.status}"
+
+    def clean(self) -> None:
+        """Normalize period to first day of month (mm-yyyy format)."""
+        if self.period:
+            self.period = self.period.replace(day=1)
+
+    def save(self, *args, **kwargs) -> None:
+        self.clean()
+        return super().save(*args, **kwargs)
 
     @property
     def total_forecast(self) -> Decimal:

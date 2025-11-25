@@ -1,0 +1,11 @@
+"""URL configuration for Project app."""
+
+from app.Project.urls.client_urls import client_urls
+from app.Project.urls.planned_value_urls import planned_value_urls
+from app.Project.urls.project_urls import project_urls
+from app.Project.urls.signatory_urls import signatory_urls
+
+app_name = "project"
+
+# Combine all URL patterns
+urlpatterns = project_urls + client_urls + signatory_urls + planned_value_urls

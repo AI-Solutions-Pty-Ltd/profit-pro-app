@@ -367,6 +367,16 @@ class ForecastEditView(ForecastMixin, DetailView):
                     )
 
         messages.success(request, "Forecast updated successfully!")
+
+        # Check if we should redirect to approve page
+        if request.GET.get("next") == "approve":
+            return redirect(
+                reverse(
+                    "bill_of_quantities:forecast-approve",
+                    kwargs={"project_pk": forecast.project.pk, "pk": forecast.pk},
+                )
+            )
+
         return redirect(
             reverse(
                 "bill_of_quantities:forecast-edit",
@@ -471,10 +481,10 @@ class ForecastApproveView(ForecastMixin, DetailView):
 
 
 class ForecastListView(ForecastMixin, ListView):
-    """List all forecasts for a project."""
+    """Forecast Dashboard - List all forecasts with chart and summary."""
 
     model = Forecast
-    template_name = "forecast/forecast_list.html"
+    template_name = "forecast/forecast_dashboard.html"
     context_object_name = "forecasts"
 
     def get_breadcrumbs(self: "ForecastListView") -> list[BreadcrumbItem]:
@@ -497,59 +507,33 @@ class ForecastListView(ForecastMixin, ListView):
         return Forecast.objects.filter(project=project).order_by("-period")
 
     def get_context_data(self: "ForecastListView", **kwargs):
-        """Add project to context."""
+        """Add project and chart data to context."""
         context = super().get_context_data(**kwargs)
         project = self.get_project()
-
         context["project"] = project
-        return context
 
-
-class ForecastReportView(ForecastMixin, DetailView):
-    """Generate Chart.js report showing 12 months forecast vs budget."""
-
-    model = Project
-    template_name = "forecast/forecast_report.html"
-    context_object_name = "project"
-
-    def get_breadcrumbs(self: "ForecastReportView") -> list[BreadcrumbItem]:
-        project = self.get_project()
-        return [
-            BreadcrumbItem(title="Projects", url=reverse("project:project-list")),
-            BreadcrumbItem(
-                title=project.name,
-                url=reverse("project:project-detail", kwargs={"pk": project.pk}),
-            ),
-            BreadcrumbItem(
-                title="Forecast Report",
-                url=None,
-            ),
-        ]
-
-    def get_object(self: "ForecastReportView") -> Project:
-        """Get project for the current view."""
-        return self.get_project()
-
-    def get_context_data(self: "ForecastReportView", **kwargs):
-        """Add chart data to context."""
-        context = super().get_context_data(**kwargs)
-        project = self.get_object()
-
-        # Get original budget total first
+        # Get original budget total
         original_budget = LineItem.objects.filter(
             project=project, is_work=True, special_item=False
         ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
 
-        # Get last 12 months of data with proper month calculation
-        last_forecast: Forecast | None = project.forecasts.last()
+        # Get draft forecast if any
+        draft_forecast = Forecast.objects.filter(
+            project=project, status=Forecast.Status.DRAFT
+        ).first()
+        context["draft_forecast"] = draft_forecast
+
+        # Get last 12 months of chart data
+        last_forecast: Forecast | None = project.forecasts.order_by("period").last()
         if not last_forecast:
             today = date.today()
         else:
             today = last_forecast.period
-        months_data = []
+
+        chart_labels = []
+        forecast_data = []
 
         for i in range(11, -1, -1):
-            # Calculate month start and end properly
             if today.month - i <= 0:
                 month = today.month - i + 12
                 year = today.year - 1
@@ -558,8 +542,9 @@ class ForecastReportView(ForecastMixin, DetailView):
                 year = today.year
 
             month_start = date(year, month, 1)
+            chart_labels.append(month_start.strftime("%b %Y"))
 
-            # Get forecast for this month
+            # Get approved forecast for this month
             forecast = Forecast.objects.filter(
                 project=project,
                 period__year=year,
@@ -573,36 +558,46 @@ class ForecastReportView(ForecastMixin, DetailView):
                     total=Sum("total_price")
                 )["total"] or Decimal("0.00")
 
-            # Calculate variance and percentage
-            variance = forecast_total - original_budget
-            variance_pct = (
-                ((forecast_total / original_budget - 1) * 100)
-                if original_budget > 0
-                else Decimal("0.00")
-            )
+            forecast_data.append(float(forecast_total))
 
-            months_data.append(
-                {
-                    "month": month_start.strftime("%b %Y"),
-                    "forecast": float(forecast_total),
-                    "variance": float(variance),
-                    "variance_pct": float(variance_pct),
-                }
-            )
-
-        # Calculate average forecast
-        total_forecast = sum(item["forecast"] for item in months_data)
-        average_forecast = (
-            total_forecast / 12 if total_forecast > 0 else Decimal("0.00")
+        # Calculate totals
+        approved_forecasts = context["forecasts"].filter(
+            status=Forecast.Status.APPROVED
         )
+        total_approved = approved_forecasts.count()
+        total_draft = context["forecasts"].filter(status=Forecast.Status.DRAFT).count()
 
-        context["months_data"] = months_data
+        # Latest approved forecast total
+        latest_approved = approved_forecasts.order_by("-period").first()
+        latest_forecast_total = Decimal("0.00")
+        if latest_approved:
+            latest_forecast_total = latest_approved.forecast_transactions.aggregate(
+                total=Sum("total_price")
+            )["total"] or Decimal("0.00")
+
         context["original_budget"] = float(original_budget)
-        context["average_forecast"] = float(average_forecast)
-        context["chart_labels"] = [item["month"] for item in months_data]
-        context["forecast_data"] = [item["forecast"] for item in months_data]
-        context["budget_data"] = [
-            float(original_budget)
-        ] * 12  # Same budget for all months
+        context["latest_forecast_total"] = float(latest_forecast_total)
+        context["total_approved"] = total_approved
+        context["total_draft"] = total_draft
+        context["chart_labels"] = chart_labels
+        context["forecast_data"] = forecast_data
+        context["budget_data"] = [float(original_budget)] * 12
+        context["has_chart_data"] = any(f > 0 for f in forecast_data)
 
         return context
+
+
+# Keep ForecastReportView for backwards compatibility but redirect to dashboard
+class ForecastReportView(ForecastMixin, DetailView):
+    """Redirect to forecast dashboard."""
+
+    model = Project
+
+    def get(self, request, *args, **kwargs):
+        """Redirect to forecast list/dashboard."""
+        return redirect(
+            reverse(
+                "bill_of_quantities:forecast-list",
+                kwargs={"project_pk": self.kwargs["project_pk"]},
+            )
+        )

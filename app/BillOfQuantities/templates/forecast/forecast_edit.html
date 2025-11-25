@@ -1,22 +1,40 @@
 {% extends "base_full.html" %}
 {% load crispy_forms_tags %}
+{% load heroicons %}
 {% block title %}
     Edit Forecast - {{ project.name }}
 {% endblock title %}
 {% block content %}
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
         <div id="forecast-list-header"
-             class="px-6 py-5 border-b border-gray-200 bg-gray-50 mb-4">
+             class="px-6 py-5 border-b border-gray-200 bg-gray-50 mb-4 sticky top-0 z-10">
             <div class="flex items-center justify-between gap-6">
-                <h1 class="text-2xl font-bold text-gray-900">Edit Forecast</h1>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
+                       class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
+                        Dashboard
+                    </a>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">Edit Forecast</h1>
+                        <p class="text-sm text-gray-600">{{ forecast.period|date:"F Y" }}</p>
+                    </div>
+                </div>
                 <div class="flex items-center space-x-2">
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {% if forecast.status == 'DRAFT' %}bg-yellow-100 text-yellow-800{% else %}bg-green-100 text-green-800{% endif %}">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {% if forecast.status == 'DRAFT' %}bg-amber-100 text-amber-800{% else %}bg-green-100 text-green-800{% endif %}">
                         {{ forecast.get_status_display }}
                     </span>
                     {% if forecast.status == 'DRAFT' %}
+                        <button type="button"
+                                onclick="document.getElementById('bottom-actions').scrollIntoView({behavior: 'smooth'})"
+                                class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            {% heroicon_outline "arrow-down" class="w-4 h-4 mr-1" %}
+                            Jump to Bottom
+                        </button>
                         <a href="{% url 'bill_of_quantities:forecast-approve' project.pk forecast.pk %}"
                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                            Approve Forecast
+                            {% heroicon_outline "check" class="w-4 h-4 mr-1" %}
+                            Review & Approve
                         </a>
                     {% endif %}
                 </div>
@@ -227,34 +245,53 @@
                         </tfoot>
                     </table>
                 </div>
-                <div class="flex items-center justify-end gap-2 mt-6 p-6">
+                <div id="bottom-actions"
+                     class="flex items-center justify-between mt-6 p-6 bg-gray-50 border-t border-gray-200">
                     <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        {% heroicon_outline "x-mark" class="w-4 h-4 mr-1" %}
                         Cancel
                     </a>
-                    <button type="submit"
-                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        Save Forecast
-                    </button>
+                    <div class="flex items-center space-x-3">
+                        <button type="submit"
+                                class="inline-flex items-center px-4 py-2 border border-indigo-300 text-sm font-medium rounded-md text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "arrow-path" class="w-4 h-4 mr-1" %}
+                            Save Draft
+                        </button>
+                        <button type="submit"
+                                formaction="{% url 'bill_of_quantities:forecast-edit' project.pk forecast.pk %}?next=approve"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            {% heroicon_outline "check" class="w-4 h-4 mr-1" %}
+                            Save & Review
+                        </button>
+                    </div>
                 </div>
             </form>
         {% else %}
-            <div class="bg-green-50 border border-green-200 rounded-md p-4">
-                <div class="flex">
-                    <div class="flex-shrink-0">{% heroicon_outline 'check-circle' %}</div>
-                    <div class="ml-3">
-                        <h3 class="text-sm font-medium text-green-800">Forecast Approved</h3>
-                        <div class="mt-2 text-sm text-green-700">
-                            <p>This forecast has been approved and cannot be edited.</p>
+            <div class="p-6">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">{% heroicon_outline 'check-circle' class="w-6 h-6 text-green-600" %}</div>
+                        <div class="ml-3">
+                            <h3 class="text-lg font-medium text-green-800">Forecast Approved</h3>
+                            <div class="mt-2 text-sm text-green-700">
+                                <p>This forecast has been approved and cannot be edited.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="mt-6">
-                <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
-                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    Back to Forecasts
-                </a>
+                <div class="mt-6 flex items-center space-x-3">
+                    <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
+                        Back to Dashboard
+                    </a>
+                    <a href="{% url 'bill_of_quantities:forecast-approve' project.pk forecast.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        {% heroicon_outline "eye" class="w-4 h-4 mr-1" %}
+                        View Details
+                    </a>
+                </div>
             </div>
         {% endif %}
     </div>

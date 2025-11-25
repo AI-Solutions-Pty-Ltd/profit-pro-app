@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load heroicons %}
+{% block title %}
+    Forecasts - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
+                    <p class="text-sm text-gray-600 mt-1">Forecast Dashboard</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    {% if draft_forecast %}
+                        <a href="{% url 'bill_of_quantities:forecast-edit' project.pk draft_forecast.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-amber-300 text-sm font-medium rounded-md text-amber-700 bg-amber-50 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+                            {% heroicon_outline "pencil-square" class="w-4 h-4 mr-2" %}
+                            Continue Draft ({{ draft_forecast.period|date:"M Y" }})
+                        </a>
+                    {% else %}
+                        <a href="{% url 'bill_of_quantities:forecast-create' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}
+                            Create Forecast
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Chart Section - Featured -->
+    <div class="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-xl shadow-xl mb-6 p-1">
+        <div class="bg-white rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">12-Month Forecast Trend</h2>
+                        <p class="text-sm text-gray-600">Approved forecasts vs Original Budget</p>
+                    </div>
+                    {% if has_chart_data %}
+                        <div class="flex items-center space-x-4 text-sm">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-emerald-500 rounded-full mr-2"></div>
+                                <span class="text-gray-600">Forecast</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                                <span class="text-gray-600">Budget</span>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="p-6">
+                {% if has_chart_data %}
+                    <div class="h-80">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                {% else %}
+                    <div class="flex flex-col items-center justify-center py-12 text-center">
+                        {% heroicon_outline "chart-bar" class="w-16 h-16 text-gray-300" %}
+                        <h3 class="mt-4 text-lg font-medium text-gray-900">No Approved Forecasts Yet</h3>
+                        <p class="mt-2 text-sm text-gray-500 max-w-md">Create and approve forecasts to see the trend chart.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Summary Stats Row -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow p-4">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Original Budget</p>
+            <p class="mt-1 text-xl font-bold text-gray-900">R {{ original_budget|floatformat:2|intcomma }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Latest Forecast</p>
+            <p class="mt-1 text-xl font-bold text-emerald-600">R {{ latest_forecast_total|floatformat:2|intcomma }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Approved</p>
+            <p class="mt-1 text-xl font-bold text-blue-600">{{ total_approved }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Drafts</p>
+            <p class="mt-1 text-xl font-bold text-amber-600">{{ total_draft }}</p>
+        </div>
+    </div>
+    <!-- Active Draft Section (if exists) -->
+    {% if draft_forecast %}
+        <div class="bg-amber-50 border border-amber-200 rounded-lg mb-6 p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-shrink-0">{% heroicon_outline "pencil-square" class="w-8 h-8 text-amber-500" %}</div>
+                    <div>
+                        <h3 class="text-sm font-medium text-amber-900">Draft Forecast in Progress</h3>
+                        <p class="text-sm text-amber-700">
+                            Period: <strong>{{ draft_forecast.period|date:"F Y" }}</strong> |
+                            Total: <strong>R {{ draft_forecast.total_forecast|floatformat:2|intcomma }}</strong>
+                        </p>
+                        <p class="text-xs text-amber-600 mt-1">
+                            Created by {{ draft_forecast.captured_by.get_full_name|default:draft_forecast.captured_by.email }}
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'bill_of_quantities:forecast-edit' project.pk draft_forecast.pk %}"
+                       class="inline-flex items-center px-3 py-2 border border-amber-300 text-sm leading-4 font-medium rounded-md text-amber-700 bg-amber-100 hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+                        {% heroicon_outline "pencil" class="w-4 h-4 mr-1" %}
+                        Edit
+                    </a>
+                    <a href="{% url 'bill_of_quantities:forecast-approve' project.pk draft_forecast.pk %}"
+                       class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        {% heroicon_outline "check" class="w-4 h-4 mr-1" %}
+                        Review & Approve
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    <!-- Forecasts List -->
+    <div class="bg-white shadow-sm rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-medium text-gray-900">All Forecasts</h2>
+                    <p class="text-sm text-gray-600">Complete history of project forecasts</p>
+                </div>
+                {% if not draft_forecast %}
+                    <a href="{% url 'bill_of_quantities:forecast-create' project.pk %}"
+                       class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "plus" class="w-4 h-4 mr-1" %}
+                        New Forecast
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% if forecasts %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Forecast</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Variance</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Captured By</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for forecast in forecasts %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-sm font-medium text-gray-900">{{ forecast.period|date:"F Y" }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if forecast.status == 'DRAFT' %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                            {% heroicon_mini "pencil" class="w-3 h-3 mr-1" %}
+                                            Draft
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            {% heroicon_mini "check" class="w-3 h-3 mr-1" %}
+                                            Approved
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-sm font-semibold text-gray-900">R {{ forecast.total_forecast|floatformat:2|intcomma }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% with variance=forecast.total_forecast|add:original_budget|add:original_budget|add:0 %}
+                                        {% if forecast.total_forecast > original_budget %}
+                                            <span class="text-sm text-red-600">+R {{ forecast.total_forecast|add:original_budget|floatformat:2|intcomma }}</span>
+                                        {% elif forecast.total_forecast < original_budget %}
+                                            <span class="text-sm text-green-600">-R {{ original_budget|add:forecast.total_forecast|floatformat:2|intcomma }}</span>
+                                        {% else %}
+                                            <span class="text-sm text-gray-500">-</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ forecast.captured_by.get_full_name|default:forecast.captured_by.email }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ forecast.created_at|date:"d M Y" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="flex items-center justify-end space-x-2">
+                                        {% if forecast.status == 'DRAFT' %}
+                                            <a href="{% url 'bill_of_quantities:forecast-edit' project.pk forecast.pk %}"
+                                               class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                {% heroicon_mini "pencil" class="w-3 h-3 mr-1" %}
+                                                Edit
+                                            </a>
+                                            <a href="{% url 'bill_of_quantities:forecast-approve' project.pk forecast.pk %}"
+                                               class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                                {% heroicon_mini "check" class="w-3 h-3 mr-1" %}
+                                                Approve
+                                            </a>
+                                        {% else %}
+                                            <a href="{% url 'bill_of_quantities:forecast-approve' project.pk forecast.pk %}"
+                                               class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                {% heroicon_mini "eye" class="w-3 h-3 mr-1" %}
+                                                View
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-12 flex flex-col items-center">
+                {% heroicon_outline "document-chart-bar" class="w-16 h-16 text-gray-300" %}
+                <h3 class="mt-4 text-lg font-medium text-gray-900">No Forecasts Yet</h3>
+                <p class="mt-2 text-sm text-gray-500">Get started by creating your first forecast for this project.</p>
+                <div class="mt-6">
+                    <a href="{% url 'bill_of_quantities:forecast-create' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}
+                        Create First Forecast
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock content %}
+{% block extra_js %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if has_chart_data %}
+        const ctx = document.getElementById('forecastChart').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ chart_labels|safe }},
+                datasets: [
+                    {
+                        label: 'Forecast Amount',
+                        data: {{ forecast_data|safe }},
+                        backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        borderWidth: 1,
+                        order: 2
+                    },
+                    {
+                        label: 'Budget Amount',
+                        data: {{ budget_data|safe }},
+                        type: 'line',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.1,
+                        order: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += 'R ' + context.parsed.y.toLocaleString('en-ZA', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    });
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R ' + value.toLocaleString('en-ZA');
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+    });
+    </script>
+{% endblock extra_js %}
