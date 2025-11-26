@@ -531,7 +531,7 @@ class ForecastListView(ForecastMixin, ListView):
             today = last_forecast.period
 
         chart_labels = []
-        forecast_data = []
+        variance_data = []
 
         for i in range(11, -1, -1):
             if today.month - i <= 0:
@@ -552,13 +552,16 @@ class ForecastListView(ForecastMixin, ListView):
                 status=Forecast.Status.APPROVED,
             ).first()
 
-            forecast_total = Decimal("0.00")
             if forecast:
                 forecast_total = forecast.forecast_transactions.aggregate(
                     total=Sum("total_price")
                 )["total"] or Decimal("0.00")
+                # Calculate variance: forecast - budget
+                variance = float(forecast_total - original_budget)
+            else:
+                variance = float(0)  # No data for this month
 
-            forecast_data.append(float(forecast_total))
+            variance_data.append(variance)
 
         # Calculate totals
         approved_forecasts = context["forecasts"].filter(
@@ -580,9 +583,8 @@ class ForecastListView(ForecastMixin, ListView):
         context["total_approved"] = total_approved
         context["total_draft"] = total_draft
         context["chart_labels"] = chart_labels
-        context["forecast_data"] = forecast_data
-        context["budget_data"] = [float(original_budget)] * 12
-        context["has_chart_data"] = any(f > 0 for f in forecast_data)
+        context["variance_data"] = variance_data
+        context["has_chart_data"] = any(v is not None for v in variance_data)
 
         return context
 
