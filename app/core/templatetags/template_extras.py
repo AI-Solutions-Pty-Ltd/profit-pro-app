@@ -43,3 +43,37 @@ def ifinlist(value, compare_list):
 def notinlist(value, compare_list):
     """Check if a value is not in a list."""
     return False if value in compare_list else True
+
+
+@register.filter(name="numsign")
+def numsign(value, arg=None):
+    """Return one of three values based on number sign.
+
+    Similar to Django's |yesno filter but for number sign checking.
+
+    Usage:
+        {{ value|numsign:"positive,negative,zero" }}
+        {{ value|numsign }}  # Returns "positive", "negative", or "zero"
+
+    Args:
+        value: The number to check.
+        arg: Comma-separated string of three values for positive, negative, zero.
+
+    Returns:
+        The appropriate value based on the number's sign.
+    """
+    if arg is None:
+        arg = "positive,negative,zero"
+
+    bits = arg.split(",")
+    if len(bits) < 3:
+        raise ValueError("numsign filter requires at least three arguments")
+
+    value = float(value)
+
+    if value > 0:
+        return bits[0]
+    elif value < 0:
+        return bits[1]
+    else:
+        return bits[2]
