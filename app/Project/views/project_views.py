@@ -52,27 +52,65 @@ class ProjectDashboardView(ProjectMixin, DetailView):
     def get_context_data(self: "ProjectDashboardView", **kwargs):
         """Add chart data to context."""
         context = super().get_context_data(**kwargs)
-        line_items = self.object.line_items.all()
-        # Calculate total
-        total = sum_queryset(line_items, "total_price")
-        context["line_items_total"] = total
+        project = self.object
+        current_date = datetime.now()
 
-        # Add CPI/SPI chart data
-        performance_data = self._get_project_performance_data(self.object)
-        context["performance_labels"] = json.dumps(performance_data["labels"])
-        context["cpi_data"] = json.dumps(performance_data["cpi"])
-        context["spi_data"] = json.dumps(performance_data["spi"])
-        context["current_cpi"] = performance_data["current_cpi"]
-        context["current_spi"] = performance_data["current_spi"]
-        context["current_date"] = datetime.now()
+        # Contract values
+        original_contract_value = project.get_original_contract_value
+        revised_contract_value = project.get_total_contract_value
+        context["original_contract_value"] = original_contract_value
+        context["revised_contract_value"] = revised_contract_value
 
-        # Add financial comparison chart data (new bar chart)
-        financial_data = self._get_financial_comparison_data(self.object)
+        # Latest forecast value and variance
+        latest_forecast = (
+            Forecast.objects.filter(project=project, status=Forecast.Status.APPROVED)
+            .order_by("-period")
+            .first()
+        )
+        if latest_forecast:
+            latest_forecast_value = latest_forecast.total_forecast
+            context["latest_forecast_value"] = latest_forecast_value
+            if revised_contract_value and revised_contract_value != 0:
+                variance = (
+                    (latest_forecast_value - revised_contract_value)
+                    / revised_contract_value
+                ) * 100
+                context["forecast_variance_percent"] = round(variance, 1)
+            else:
+                context["forecast_variance_percent"] = None
+        else:
+            context["latest_forecast_value"] = None
+            context["forecast_variance_percent"] = None
+
+        # Certified to date - sum all approved payment certificate transactions
+        certified_to_date = (
+            ActualTransaction.objects.filter(
+                line_item__project=project,
+                payment_certificate__status=PaymentCertificate.Status.APPROVED,
+            ).aggregate(total=Sum("total_price"))["total"]
+            or 0
+        )
+        context["certified_to_date"] = certified_to_date
+        if revised_contract_value and revised_contract_value != 0:
+            certified_percent = (
+                float(certified_to_date) / float(revised_contract_value)
+            ) * 100
+            context["certified_percent"] = round(certified_percent, 1)
+        else:
+            context["certified_percent"] = None
+
+        # Latest CPI and SPI
+        context["current_cpi"] = project.cost_performance_index(current_date)
+        context["current_spi"] = project.schedule_performance_index(current_date)
+        context["current_date"] = current_date
+
+        # Add financial comparison chart data
+        financial_data = self._get_financial_comparison_data(project)
         context["financial_labels"] = json.dumps(financial_data["labels"])
         context["planned_values"] = json.dumps(financial_data["planned_values"])
         context["forecast_values"] = json.dumps(financial_data["forecast_values"])
         context["certified_values"] = json.dumps(financial_data["certified_values"])
-        context["contract_value"] = float(self.object.get_total_contract_value)
+        context["contract_value"] = float(revised_contract_value)
 
         return context
 

@@ -259,7 +259,7 @@ class Project(BaseModel):
         return sum_queryset(planned_values, "value")
 
     def actual_cost(self, date: datetime | None) -> Decimal:
-        """From cumulative Amount Certified in  payment certificate"""
+        """Total certified amount from approved payment certificates for the given month."""
         if not date:
             date = datetime.now()
         payment_certificates = self.payment_certificates.filter(
@@ -267,14 +267,7 @@ class Project(BaseModel):
             approved_on__year=date.year,
             status="APPROVED",
         )
-        total_certified = sum_queryset(
-            payment_certificates, "actual_transactions__total_price"
-        )
-        if not self.contract_addendum_value or self.contract_addendum_value == 0:
-            return Decimal(0)
-        return (
-            total_certified / self.contract_addendum_value
-        ) * self.contract_addendum_value
+        return sum_queryset(payment_certificates, "actual_transactions__total_price")
 
     def forecast_cost(self, date: datetime | None) -> Decimal:
         """From Forecast to Completion Cost in the Cost Report"""
@@ -288,16 +281,17 @@ class Project(BaseModel):
         return sum_queryset(forecasts, "forecast_transactions__total_price")
 
     def earned_value(self, date: datetime | None) -> Decimal | None:
-        """Forecast/Actual Cost Amounts *Budgeted Amount"""
+        """Earned Value = (Actual Cost / Forecast Cost) * Budgeted Amount (Total Contract Value)"""
         if not date:
             date = datetime.now()
         actual = self.actual_cost(date)
         forecast = self.forecast_cost(date)
         if not forecast or forecast == 0:
             return None
-        if not self.contract_addendum_value:
+        budget = self.get_total_contract_value
+        if not budget or budget == 0:
             return None
-        return (actual / forecast) * self.contract_addendum_value
+        return (actual / forecast) * budget
 
     # def cost_variance(self, date) -> Decimal:
     #     """Earned Value - Actual Cost"""

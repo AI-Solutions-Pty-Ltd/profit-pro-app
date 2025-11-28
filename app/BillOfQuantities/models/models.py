@@ -46,6 +46,24 @@ class Structure(BaseModel):
             kwargs={"pk": self.pk},
         )
 
+    @property
+    def budget_total(self) -> Decimal:
+        """Get total budget for all line items in this structure."""
+        return self.line_items.filter(is_work=True, special_item=False).aggregate(
+            total=Coalesce(Sum("total_price"), Value(Decimal("0.00")))
+        )["total"]
+
+    def get_forecast_total(self, forecast: "Forecast") -> Decimal:
+        """Get total forecast for all line items in this structure for a specific forecast."""
+        from app.BillOfQuantities.models import ForecastTransaction
+
+        return ForecastTransaction.objects.filter(
+            forecast=forecast,
+            line_item__structure=self,
+            line_item__is_work=True,
+            line_item__special_item=False,
+        ).aggregate(total=Coalesce(Sum("total_price"), Value(Decimal("0.00"))))["total"]
+
 
 class Bill(BaseModel):
     structure = models.ForeignKey(
@@ -59,6 +77,24 @@ class Bill(BaseModel):
 
     def __str__(self):
         return self.name
+
+    @property
+    def budget_total(self) -> Decimal:
+        """Get total budget for all line items in this bill."""
+        return self.line_items.filter(is_work=True, special_item=False).aggregate(
+            total=Coalesce(Sum("total_price"), Value(Decimal("0.00")))
+        )["total"]
+
+    def get_forecast_total(self, forecast: "Forecast") -> Decimal:
+        """Get total forecast for all line items in this bill for a specific forecast."""
+        from app.BillOfQuantities.models import ForecastTransaction
+
+        return ForecastTransaction.objects.filter(
+            forecast=forecast,
+            line_item__bill=self,
+            line_item__is_work=True,
+            line_item__special_item=False,
+        ).aggregate(total=Coalesce(Sum("total_price"), Value(Decimal("0.00"))))["total"]
 
 
 class Package(BaseModel):
@@ -647,6 +683,7 @@ class Forecast(BaseModel):
         blank=True,
         null=True,
     )
+    notes = models.TextField(blank=True)
 
     captured_by: Account = models.ForeignKey(  # type: ignore
         Account,
@@ -716,6 +753,7 @@ class ForecastTransaction(BaseModel):
     total_price: Decimal = models.DecimalField(  # type: ignore
         max_digits=10, decimal_places=2, blank=True
     )
+    notes = models.TextField(blank=True)
 
     def __str__(self) -> str:
         return f"{self.line_item.description if self.line_item else self.line_item.pk} - {self.quantity}"

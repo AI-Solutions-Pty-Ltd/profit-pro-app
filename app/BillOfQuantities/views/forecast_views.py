@@ -1,9 +1,11 @@
 """Views for managing forecasts."""
 
-from datetime import date
+import json
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
+from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import QuerySet, Sum
@@ -122,6 +124,42 @@ class ForecastCreateView(ForecastMixin, TemplateView):
             period = date.fromisoformat(f"{period_str}-01")
         except ValueError:
             messages.error(request, "Invalid period format.")
+            return redirect(
+                reverse(
+                    "bill_of_quantities:forecast-create",
+                    kwargs={"project_pk": project.pk},
+                )
+            )
+
+        # Validate period falls within project dates
+        if project.start_date and period < project.start_date.replace(day=1):
+            messages.error(
+                request,
+                f"Forecast period cannot be before project start date ({project.start_date.strftime('%b %Y')}).",
+            )
+            return redirect(
+                reverse(
+                    "bill_of_quantities:forecast-create",
+                    kwargs={"project_pk": project.pk},
+                )
+            )
+        if project.end_date and period > project.end_date.replace(day=1):
+            messages.error(
+                request,
+                f"Forecast period cannot be after project end date ({project.end_date.strftime('%b %Y')}).",
+            )
+            return redirect(
+                reverse(
+                    "bill_of_quantities:forecast-create",
+                    kwargs={"project_pk": project.pk},
+                )
+            )
+
+        if Forecast.objects.filter(project=project, period=period).exists():
+            messages.error(
+                request,
+                f"Forecast for {period.strftime('%B %Y')} already exists.",
+            )
             return redirect(
                 reverse(
                     "bill_of_quantities:forecast-create",
@@ -319,7 +357,9 @@ class ForecastEditView(ForecastMixin, DetailView):
         for key, value in request.POST.items():
             if key.startswith("quantity_"):
                 transaction_id = key.split("_")[1]
-                transaction_data[transaction_id] = {"quantity": value}
+                if transaction_id not in transaction_data:
+                    transaction_data[transaction_id] = {}
+                transaction_data[transaction_id]["quantity"] = value
             elif key.startswith("unit_price_"):
                 transaction_id = key.split("_")[2]
                 if transaction_id not in transaction_data:
@@ -330,6 +370,11 @@ class ForecastEditView(ForecastMixin, DetailView):
                 if transaction_id not in transaction_data:
                     transaction_data[transaction_id] = {}
                 transaction_data[transaction_id]["total_price"] = value
+            elif key.startswith("notes_"):
+                transaction_id = key.split("_")[1]
+                if transaction_id not in transaction_data:
+                    transaction_data[transaction_id] = {}
+                transaction_data[transaction_id]["notes"] = value
 
         with transaction.atomic():
             for transaction_id, data in transaction_data.items():
@@ -343,6 +388,8 @@ class ForecastEditView(ForecastMixin, DetailView):
                         ft.quantity = Decimal(data["quantity"])
                     if "unit_price" in data:
                         ft.unit_price = Decimal(data["unit_price"])
+                    if "notes" in data:
+                        ft.notes = data["notes"]
 
                     # Recalculate total price
                     ft.total_price = ft.quantity * ft.unit_price
@@ -425,14 +472,86 @@ class ForecastApproveView(ForecastMixin, DetailView):
         project = self.get_project()
 
         context["project"] = project
-        context["forecast_transactions"] = (
-            forecast.forecast_transactions.select_related(
-                "line_item",
-                "line_item__structure",
-                "line_item__bill",
-                "line_item__package",
-            ).order_by("line_item__row_index")
-        )
+
+        # Get all forecast transactions
+        all_transactions = forecast.forecast_transactions.select_related(
+            "line_item",
+            "line_item__structure",
+            "line_item__bill",
+            "line_item__package",
+        ).order_by("line_item__row_index")
+
+        # Filter to only show transactions that differ from original line item
+        # (quantity or total_price differs)
+        changed_transactions = [
+            t
+            for t in all_transactions
+            if t.quantity != t.line_item.budgeted_quantity
+            or t.total_price != t.line_item.total_price
+            or t.notes  # Also show if there are notes
+        ]
+
+        # Group changed transactions by structure > bill > package for header rows
+        grouped_transactions = []
+        current_structure = None
+        current_bill = None
+        current_package = None
+
+        for t in changed_transactions:
+            structure = t.line_item.structure
+            bill = t.line_item.bill
+            package = t.line_item.package
+
+            # Add structure header if changed
+            if structure != current_structure:
+                current_structure = structure
+                current_bill = None
+                current_package = None
+                if structure:
+                    grouped_transactions.append(
+                        {
+                            "type": "structure",
+                            "name": structure.name,
+                            "object": structure,
+                        }
+                    )
+
+            # Add bill header if changed
+            if bill != current_bill:
+                current_bill = bill
+                current_package = None
+                if bill:
+                    grouped_transactions.append(
+                        {
+                            "type": "bill",
+                            "name": bill.name,
+                            "object": bill,
+                        }
+                    )
+
+            # Add package header if changed
+            if package != current_package:
+                current_package = package
+                if package:
+                    grouped_transactions.append(
+                        {
+                            "type": "package",
+                            "name": package.name,
+                            "object": package,
+                        }
+                    )
+
+            # Add the transaction
+            grouped_transactions.append(
+                {
+                    "type": "transaction",
+                    "transaction": t,
+                }
+            )
+
+        context["forecast_transactions"] = grouped_transactions
+        context["total_transactions"] = all_transactions.count()
+        context["changed_count"] = len(changed_transactions)
 
         # Calculate totals
         total_forecast = forecast.forecast_transactions.aggregate(
@@ -444,9 +563,63 @@ class ForecastApproveView(ForecastMixin, DetailView):
             project=project, is_work=True, special_item=False
         ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
 
+        # Get prior forecast (most recent approved forecast before this one)
+        prior_forecast = (
+            Forecast.objects.filter(
+                project=project,
+                status=Forecast.Status.APPROVED,
+                period__lt=forecast.period,
+            )
+            .order_by("-period")
+            .first()
+        )
+
+        if prior_forecast:
+            prior_forecast_total = prior_forecast.forecast_transactions.aggregate(
+                total=Sum("total_price")
+            )["total"] or Decimal("0.00")
+            context["prior_forecast"] = prior_forecast
+            context["prior_forecast_total"] = prior_forecast_total
+        else:
+            context["prior_forecast"] = None
+            context["prior_forecast_total"] = None
+
         context["total_forecast"] = total_forecast
         context["original_budget"] = original_budget
         context["difference"] = total_forecast - original_budget
+
+        # Build L1/L2 summary data (structures and bills) - use default ordering
+        structure_summary = []
+        for structure in project.structures.all():
+            budget_total = structure.budget_total
+            forecast_total = structure.get_forecast_total(forecast)
+            variance = forecast_total - budget_total
+
+            bills_data = []
+            for bill in structure.bills.all():
+                bill_budget = bill.budget_total
+                bill_forecast = bill.get_forecast_total(forecast)
+                bill_variance = bill_forecast - bill_budget
+                bills_data.append(
+                    {
+                        "bill": bill,
+                        "budget_total": bill_budget,
+                        "forecast_total": bill_forecast,
+                        "variance": bill_variance,
+                    }
+                )
+
+            structure_summary.append(
+                {
+                    "structure": structure,
+                    "budget_total": budget_total,
+                    "forecast_total": forecast_total,
+                    "variance": variance,
+                    "bills": bills_data,
+                }
+            )
+
+        context["structure_summary"] = structure_summary
 
         return context
 
@@ -463,7 +636,8 @@ class ForecastApproveView(ForecastMixin, DetailView):
                 )
             )
 
-        # Approve the forecast
+        # Capture approval notes and approve the forecast
+        forecast.notes = request.POST.get("notes", "")
         forecast.status = Forecast.Status.APPROVED
         forecast.approved_by = request.user
         forecast.save()
@@ -511,11 +685,13 @@ class ForecastListView(ForecastMixin, ListView):
         context = super().get_context_data(**kwargs)
         project = self.get_project()
         context["project"] = project
+        current_date = datetime.now()
 
-        # Get original budget total
-        original_budget = LineItem.objects.filter(
-            project=project, is_work=True, special_item=False
-        ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
+        # Get original budget total (excl addendums)
+        original_budget = project.get_original_contract_value
+
+        # Get revised contract value (total including addendums)
+        revised_contract_value = project.get_total_contract_value
 
         # Get draft forecast if any
         draft_forecast = Forecast.objects.filter(
@@ -523,52 +699,10 @@ class ForecastListView(ForecastMixin, ListView):
         ).first()
         context["draft_forecast"] = draft_forecast
 
-        # Get last 12 months of chart data
-        last_forecast: Forecast | None = project.forecasts.order_by("period").last()
-        if not last_forecast:
-            today = date.today()
-        else:
-            today = last_forecast.period
-
-        chart_labels = []
-        variance_data = []
-
-        for i in range(11, -1, -1):
-            if today.month - i <= 0:
-                month = today.month - i + 12
-                year = today.year - 1
-            else:
-                month = today.month - i
-                year = today.year
-
-            month_start = date(year, month, 1)
-            chart_labels.append(month_start.strftime("%b %Y"))
-
-            # Get approved forecast for this month
-            forecast = Forecast.objects.filter(
-                project=project,
-                period__year=year,
-                period__month=month,
-                status=Forecast.Status.APPROVED,
-            ).first()
-
-            if forecast:
-                forecast_total = forecast.forecast_transactions.aggregate(
-                    total=Sum("total_price")
-                )["total"] or Decimal("0.00")
-                # Calculate variance: forecast - budget
-                variance = float(forecast_total - original_budget)
-            else:
-                variance = float(0)  # No data for this month
-
-            variance_data.append(variance)
-
-        # Calculate totals
+        # Get approved forecasts
         approved_forecasts = context["forecasts"].filter(
             status=Forecast.Status.APPROVED
         )
-        total_approved = approved_forecasts.count()
-        total_draft = context["forecasts"].filter(status=Forecast.Status.DRAFT).count()
 
         # Latest approved forecast total
         latest_approved = approved_forecasts.order_by("-period").first()
@@ -578,13 +712,83 @@ class ForecastListView(ForecastMixin, ListView):
                 total=Sum("total_price")
             )["total"] or Decimal("0.00")
 
+        # CPI and SPI
+        context["current_cpi"] = project.cost_performance_index(current_date)
+        context["current_spi"] = project.schedule_performance_index(current_date)
+
+        # Chart data - respect project start/end dates
+        chart_labels = []
+        forecast_values = []
+        contract_value = float(revised_contract_value)
+
+        if project.start_date and project.end_date:
+            # Normalize to first of month
+            project_start = project.start_date.replace(day=1)
+            project_end = project.end_date.replace(day=1)
+            today = date.today().replace(day=1)
+
+            # Determine chart range
+            chart_start = project_start
+            chart_end = min(project_end, today)
+
+            # If chart_end is before chart_start, start from project start
+            if chart_end < chart_start:
+                chart_end = chart_start
+
+            # Calculate months coverage
+            months_diff = (
+                (chart_end.year - chart_start.year) * 12
+                + (chart_end.month - chart_start.month)
+                + 1
+            )
+
+            # Pad into future if less than 12 months, but cap at project end
+            if months_diff < 12:
+                needed_months = 12 - months_diff
+                extended_end = chart_end + relativedelta(months=needed_months)
+                chart_end = min(extended_end, project_end)
+
+            # Recalculate months
+            months_diff = (
+                (chart_end.year - chart_start.year) * 12
+                + (chart_end.month - chart_start.month)
+                + 1
+            )
+
+            # If more than 12 months, show most recent 12
+            if months_diff > 12:
+                chart_start = chart_end - relativedelta(months=11)
+
+            # Generate data for each month
+            current_month = chart_start
+            while current_month <= chart_end:
+                chart_labels.append(current_month.strftime("%b %Y"))
+
+                # Get approved forecast for this month
+                forecast = Forecast.objects.filter(
+                    project=project,
+                    period__year=current_month.year,
+                    period__month=current_month.month,
+                    status=Forecast.Status.APPROVED,
+                ).first()
+
+                if forecast:
+                    forecast_total = forecast.forecast_transactions.aggregate(
+                        total=Sum("total_price")
+                    )["total"] or Decimal("0.00")
+                    forecast_values.append(float(forecast_total))
+                else:
+                    forecast_values.append(None)  # No data for this month
+
+                current_month = current_month + relativedelta(months=1)
+
         context["original_budget"] = float(original_budget)
+        context["revised_contract_value"] = float(revised_contract_value)
         context["latest_forecast_total"] = float(latest_forecast_total)
-        context["total_approved"] = total_approved
-        context["total_draft"] = total_draft
-        context["chart_labels"] = chart_labels
-        context["variance_data"] = variance_data
-        context["has_chart_data"] = any(v is not None for v in variance_data)
+        context["chart_labels"] = json.dumps(chart_labels)
+        context["forecast_values"] = json.dumps(forecast_values)
+        context["contract_value"] = contract_value
+        context["has_chart_data"] = any(v is not None for v in forecast_values)
 
         return context
 

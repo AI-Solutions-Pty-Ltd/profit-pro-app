@@ -36,18 +36,18 @@
             <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900">12-Month Variance Profile</h2>
-                        <p class="text-sm text-gray-600">Forecast variance from Original Budget (zero = on budget)</p>
+                        <h2 class="text-xl font-bold text-gray-900">Forecast Trend</h2>
+                        <p class="text-sm text-gray-600">Monthly forecast values vs contract baseline</p>
                     </div>
                     {% if has_chart_data %}
                         <div class="flex items-center space-x-4 text-sm">
                             <div class="flex items-center">
-                                <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                                <span class="text-gray-600">Under Budget</span>
+                                <div class="w-8 h-0.5 bg-emerald-500 mr-2"></div>
+                                <span class="text-gray-600">Forecast</span>
                             </div>
                             <div class="flex items-center">
-                                <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-                                <span class="text-gray-600">Over Budget</span>
+                                <div class="w-8 border-t-2 border-dashed border-red-500 mr-2"></div>
+                                <span class="text-gray-600">Contract Value</span>
                             </div>
                         </div>
                     {% endif %}
@@ -69,22 +69,54 @@
         </div>
     </div>
     <!-- Summary Stats Row -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
         <div class="bg-white rounded-lg shadow p-4">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Original Budget</p>
-            <p class="mt-1 text-xl font-bold text-gray-900">R {{ original_budget|floatformat:2|intcomma }}</p>
+            <p class="mt-1 text-lg font-bold text-gray-900">R {{ original_budget|floatformat:0|intcomma }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Revised Contract</p>
+            <p class="mt-1 text-lg font-bold text-indigo-600">R {{ revised_contract_value|floatformat:0|intcomma }}</p>
         </div>
         <div class="bg-white rounded-lg shadow p-4">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Latest Forecast</p>
-            <p class="mt-1 text-xl font-bold text-emerald-600">R {{ latest_forecast_total|floatformat:2|intcomma }}</p>
+            <p class="mt-1 text-lg font-bold text-emerald-600">R {{ latest_forecast_total|floatformat:0|intcomma }}</p>
         </div>
+        <!-- CPI -->
         <div class="bg-white rounded-lg shadow p-4">
-            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Approved</p>
-            <p class="mt-1 text-xl font-bold text-blue-600">{{ total_approved }}</p>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">CPI</p>
+            <p class="mt-1 text-lg font-bold {% if current_cpi > 1 %}text-green-600{% elif current_cpi == 1 %}text-cyan-600{% elif current_cpi %}text-red-600{% else %}text-gray-500{% endif %}">
+                {{ current_cpi|default:"--" }}
+            </p>
+            {% if current_cpi %}
+                <p class="text-xs {% if current_cpi > 1 %}text-green-600{% elif current_cpi == 1 %}text-cyan-600{% else %}text-red-600{% endif %}">
+                    {% if current_cpi > 1 %}
+                        Under Budget
+                    {% elif current_cpi == 1 %}
+                        On Budget
+                    {% else %}
+                        Over Budget
+                    {% endif %}
+                </p>
+            {% endif %}
         </div>
+        <!-- SPI -->
         <div class="bg-white rounded-lg shadow p-4">
-            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Drafts</p>
-            <p class="mt-1 text-xl font-bold text-amber-600">{{ total_draft }}</p>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">SPI</p>
+            <p class="mt-1 text-lg font-bold {% if current_spi > 1 %}text-green-600{% elif current_spi == 1 %}text-violet-600{% elif current_spi %}text-red-600{% else %}text-gray-500{% endif %}">
+                {{ current_spi|default:"--" }}
+            </p>
+            {% if current_spi %}
+                <p class="text-xs {% if current_spi > 1 %}text-green-600{% elif current_spi == 1 %}text-violet-600{% else %}text-red-600{% endif %}">
+                    {% if current_spi > 1 %}
+                        Ahead
+                    {% elif current_spi == 1 %}
+                        On Schedule
+                    {% else %}
+                        Behind
+                    {% endif %}
+                </p>
+            {% endif %}
         </div>
     </div>
     <!-- Active Draft Section (if exists) -->
@@ -226,6 +258,21 @@
                 </div>
             </div>
         {% endif %}
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'project:project-management' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Back to Project
+                </a>
+                <a href="{% url 'project:project-dashboard' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    Project Dashboard
+                    {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+                </a>
+            </div>
+        </div>
     </div>
 {% endblock content %}
 {% block extra_js %}
@@ -234,65 +281,86 @@
     document.addEventListener('DOMContentLoaded', function() {
         {% if has_chart_data %}
         const ctx = document.getElementById('forecastChart').getContext('2d');
-        const varianceData = {{ variance_data|safe }};
-        
-        // Generate colors based on positive/negative values
-        const backgroundColors = varianceData.map(value => {
-            if (value === null) return 'rgba(156, 163, 175, 0.3)'; // gray for no data
-            return value >= 0 ? 'rgba(239, 68, 68, 0.7)' : 'rgba(34, 197, 94, 0.7)'; // red for over, green for under
-        });
-        const borderColors = varianceData.map(value => {
-            if (value === null) return 'rgba(156, 163, 175, 1)';
-            return value >= 0 ? 'rgba(239, 68, 68, 1)' : 'rgba(34, 197, 94, 1)';
-        });
+        const forecastData = {{ forecast_values|safe }};
+        const chartLabels = {{ chart_labels|safe }};
+        const contractValue = {{ contract_value }};
         
         new Chart(ctx, {
-            type: 'bar',
+            type: 'line',
             data: {
-                labels: {{ chart_labels|safe }},
+                labels: chartLabels,
                 datasets: [
                     {
-                        label: 'Variance',
-                        data: varianceData,
-                        backgroundColor: backgroundColors,
-                        borderColor: borderColors,
-                        borderWidth: 1
+                        label: 'Forecast',
+                        data: forecastData,
+                        borderColor: 'rgb(16, 185, 129)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        pointBackgroundColor: 'rgb(16, 185, 129)',
+                        fill: true,
+                        tension: 0.3,
+                        spanGaps: true
+                    },
+                    {
+                        label: 'Contract Value',
+                        data: Array(chartLabels.length).fill(contractValue),
+                        borderColor: 'rgb(239, 68, 68)',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        fill: false,
+                        tension: 0
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
                 plugins: {
                     legend: {
                         display: false
                     },
                     tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: { size: 13 },
+                        bodyFont: { size: 12 },
                         callbacks: {
                             label: function(context) {
-                                if (context.parsed.y === null) {
-                                    return 'No forecast data';
-                                }
                                 const value = context.parsed.y;
-                                const prefix = value >= 0 ? '+R ' : '-R ';
-                                const absValue = Math.abs(value).toLocaleString('en-ZA', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2
-                                });
-                                const status = value > 0 ? ' (Over Budget)' : value < 0 ? ' (Under Budget)' : ' (On Budget)';
-                                return prefix + absValue + status;
+                                if (value === null) return 'No forecast data';
+                                return `${context.dataset.label}: R ${value.toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
                             }
                         }
                     }
                 },
                 scales: {
-                    y: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
                         ticks: {
-                            callback: function(value) {
-                                const prefix = value >= 0 ? '+R ' : '-R ';
-                                return prefix + Math.abs(value).toLocaleString('en-ZA');
-                            }
+                            font: { size: 10 },
+                            maxRotation: 45,
+                            minRotation: 45
                         }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            font: { size: 10 },
+                            callback: function(value) {
+                                return 'R ' + value.toLocaleString('en-ZA');
+                            }
+                        },
+                        beginAtZero: true
                     }
                 }
             }

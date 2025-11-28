@@ -125,22 +125,44 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
             )
 
         context["completed_payment_certificates"] = completed_certificates
-        total_claimed = (
+
+        # Contract values
+        revised_contract_value = self.project.get_total_contract_value
+        context["revised_contract_value"] = revised_contract_value
+
+        # Total certified (from approved certificates)
+        total_certified = (
             sum(t.total_claimed for t in completed_certificates)
             if completed_certificates
             else Decimal(0)
         )
-        active_claimed = 0
+        context["total_certified"] = total_certified
+
+        # Calculate percentage certified
+        if revised_contract_value and revised_contract_value != 0:
+            certified_percent = (total_certified / revised_contract_value) * 100
+            context["certified_percent"] = round(float(certified_percent), 1)
+        else:
+            context["certified_percent"] = 0
+
+        # Current claim (active certificate)
+        current_claim = 0
         if active_payment_certificate:
-            active_claimed = sum_queryset(
+            current_claim = sum_queryset(
                 active_payment_certificate.actual_transactions.all(), "total_price"
             )
-        remaining_amount = (
-            self.project.get_total_contract_value - total_claimed - active_claimed
-        )
-        context["total_claimed"] = total_claimed
-        context["active_claimed"] = active_claimed
+        context["current_claim"] = current_claim
+
+        # Remaining amount
+        remaining_amount = revised_contract_value - total_certified - current_claim
         context["remaining_amount"] = remaining_amount
+
+        # Calculate remaining percentage
+        if revised_contract_value and revised_contract_value != 0:
+            remaining_percent = (remaining_amount / revised_contract_value) * 100
+            context["remaining_percent"] = round(float(remaining_percent), 1)
+        else:
+            context["remaining_percent"] = 0
 
         # Chart data: Cumulative Actuals vs Planned Values
         chart_data = self._get_chart_data()
@@ -549,6 +571,31 @@ class PaymentCertificateSubmitView(
 
     def form_valid(self, form):
         payment_certificate = form.save(commit=False)
+        project = payment_certificate.project
+        today = datetime.now().date()
+
+        # Validate approval date falls within project dates
+        if payment_certificate.status == PaymentCertificate.Status.SUBMITTED:
+            if project.start_date and today < project.start_date:
+                messages.error(
+                    self.request,
+                    f"Cannot approve certificate before project start date ({project.start_date.strftime('%d %b %Y')}).",
+                )
+                return redirect(
+                    "bill_of_quantities:payment-certificate-submit",
+                    project_pk=self.kwargs["project_pk"],
+                    pk=payment_certificate.pk,
+                )
+            if project.end_date and today > project.end_date:
+                messages.error(
+                    self.request,
+                    f"Cannot approve certificate after project end date ({project.end_date.strftime('%d %b %Y')}).",
+                )
+                return redirect(
+                    "bill_of_quantities:payment-certificate-submit",
+                    project_pk=self.kwargs["project_pk"],
+                    pk=payment_certificate.pk,
+                )
 
         # Mark all transactions as approved or not based on status
         if payment_certificate.status == PaymentCertificate.Status.SUBMITTED:

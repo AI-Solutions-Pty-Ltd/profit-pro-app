@@ -71,50 +71,103 @@
                     <p class="font-semibold text-gray-900">{{ forecast.created_at|date:"d M Y H:i" }}</p>
                 </div>
             </div>
+            <!-- Forecast Notes (if approved and has notes) -->
+            {% if forecast.status == 'APPROVED' and forecast.notes %}
+                <div class="mb-6 bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">{% heroicon_outline 'chat-bubble-left-ellipsis' class="w-5 h-5 text-indigo-600" %}</div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-indigo-800">Approval Notes</h3>
+                            <p class="mt-1 text-sm text-indigo-700 whitespace-pre-wrap">{{ forecast.notes }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
             <!-- Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-blue-50 rounded-lg p-4">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">{% heroicon_outline 'currency-dollar' %}</div>
-                        <div class="ml-4">
-                            <h3 class="text-lg font-medium text-gray-900">Original Budget</h3>
-                            <p class="text-2xl font-bold text-blue-600">R {{ original_budget|default:0|floatformat:2|intcomma }}</p>
-                        </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                {% if prior_forecast %}
+                    <div class="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Prior Forecast</p>
+                        <p class="text-xs text-gray-400">{{ prior_forecast.period|date:"M Y" }}</p>
+                        <p class="mt-1 text-xl font-bold text-purple-600">R {{ prior_forecast_total|default:0|floatformat:0|intcomma }}</p>
                     </div>
+                {% endif %}
+                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-emerald-500">
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Forecast Total</p>
+                    <p class="mt-1 text-xl font-bold text-emerald-600">R {{ total_forecast|default:0|floatformat:0|intcomma }}</p>
                 </div>
-                <div class="bg-green-50 rounded-lg p-4">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">{% heroicon_outline 'currency-dollar' %}</div>
-                        <div class="ml-4">
-                            <h3 class="text-lg font-medium text-gray-900">Forecast Total</h3>
-                            <p class="text-2xl font-bold text-green-600">R {{ total_forecast|default:0|floatformat:2|intcomma }}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-{{ difference|default:0|floatformat:0|add:'0'|yesno:'red,green' }}-50 rounded-lg p-4">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            {% if difference > 0 %}
-                                {% heroicon_outline 'arrow-trending-up' %}
-                            {% elif difference < 0 %}
-                                {% heroicon_outline 'arrow-trending-down' %}
-                            {% else %}
-                                {% heroicon_outline 'x-circle' %}
-                            {% endif %}
-                        </div>
-                        <div class="ml-4">
-                            <h3 class="text-lg font-medium text-gray-900">Difference</h3>
-                            <p class="text-2xl font-bold text-{{ difference|floatformat:0|default:'0'|add:'0'|yesno:'red,green' }}-600">
-                                {% if difference > 0 %}+{% endif %}
-                                R {{ difference|default:0|floatformat:2|intcomma }}
-                            </p>
-                        </div>
-                    </div>
+                <div class="bg-white rounded-lg shadow p-4 border-l-4 border-{% if difference > 0 %}red{% elif difference < 0 %}green{% else %}gray{% endif %}-500">
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Variance from Budget</p>
+                    <p class="mt-1 text-xl font-bold text-{% if difference > 0 %}red{% elif difference < 0 %}green{% else %}gray{% endif %}-600">
+                        {% if difference > 0 %}+{% endif %}
+                        R {{ difference|default:0|floatformat:0|intcomma }}
+                    </p>
                 </div>
             </div>
+            <!-- L1/L2 Structure Summary -->
+            {% if structure_summary %}
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Structure Summary (L1/L2)</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Structure / Bill</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Budget</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Forecast</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Variance</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for item in structure_summary %}
+                                    <!-- Structure (L1) Row -->
+                                    <tr class="bg-indigo-50">
+                                        <td class="px-6 py-3 text-sm font-semibold text-indigo-900">
+                                            <div class="flex items-center">
+                                                {% heroicon_outline "building-office" class="w-4 h-4 text-indigo-600 mr-2" %}
+                                                {{ item.structure.name }}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-3 text-sm font-medium text-gray-900 text-right">
+                                            R {{ item.budget_total|floatformat:0|intcomma }}
+                                        </td>
+                                        <td class="px-6 py-3 text-sm font-medium text-gray-900 text-right">
+                                            R {{ item.forecast_total|floatformat:0|intcomma }}
+                                        </td>
+                                        <td class="px-6 py-3 text-sm font-medium text-right {% if item.variance > 0 %}text-red-600{% elif item.variance < 0 %}text-green-600{% else %}text-gray-600{% endif %}">
+                                            {% if item.variance > 0 %}+{% endif %}
+                                            R {{ item.variance|floatformat:0|intcomma }}
+                                        </td>
+                                    </tr>
+                                    <!-- Bills (L2) Rows -->
+                                    {% for bill_item in item.bills %}
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-2 pl-12 text-sm text-gray-700">
+                                                <div class="flex items-center">
+                                                    {% heroicon_outline "document-text" class="w-4 h-4 text-gray-400 mr-2" %}
+                                                    {{ bill_item.bill.name }}
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-2 text-sm text-gray-700 text-right">R {{ bill_item.budget_total|floatformat:0|intcomma }}</td>
+                                            <td class="px-6 py-2 text-sm text-gray-700 text-right">R {{ bill_item.forecast_total|floatformat:0|intcomma }}</td>
+                                            <td class="px-6 py-2 text-sm text-right {% if bill_item.variance > 0 %}text-red-600{% elif bill_item.variance < 0 %}text-green-600{% else %}text-gray-500{% endif %}">
+                                                {% if bill_item.variance > 0 %}+{% endif %}
+                                                R {{ bill_item.variance|floatformat:0|intcomma }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
             <!-- Forecast Transactions Table -->
             <div class="mb-8">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Forecast Line Items</h2>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900">Changed Line Items</h2>
+                    <span class="text-sm text-gray-500">Showing {{ changed_count }} of {{ total_transactions }} items with changes</span>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
@@ -126,37 +179,79 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            {% for transaction in forecast_transactions %}
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        <div>
-                                            <div class="font-medium">{{ transaction.line_item.item_number }}</div>
-                                            <div class="text-gray-500">{{ transaction.line_item.description|truncatechars:80 }}</div>
-                                            {% if transaction.line_item.structure %}
-                                                <div class="text-xs text-gray-400">{{ transaction.line_item.structure.name }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        R {{ transaction.line_item.total_price|default:0|floatformat:2|intcomma }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        R {{ transaction.total_price|default:0|floatformat:2|intcomma }}
-                                    </td>
-                                    {% define transaction.line_item.total_price|sub:transaction.total_price|mul:1|default:0 as variance %}
-                                    {% if variance < 0 %}
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-red-500 font-bold">
-                                            R {{ variance|default:0|floatformat:2|intcomma }}
+                            {% for item in forecast_transactions %}
+                                {% if item.type == 'structure' %}
+                                    <!-- Structure Header Row -->
+                                    <tr class="bg-indigo-50">
+                                        <td colspan="4" class="px-6 py-3">
+                                            <div class="flex items-center">
+                                                {% heroicon_outline "building-office" class="w-5 h-5 text-indigo-600 mr-2" %}
+                                                <span class="font-semibold text-indigo-900">{{ item.name }}</span>
+                                            </div>
                                         </td>
-                                    {% else %}
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-green-500 font-bold">
-                                            R {{ variance|default:0|floatformat:2|intcomma }}
+                                    </tr>
+                                {% elif item.type == 'bill' %}
+                                    <!-- Bill Header Row -->
+                                    <tr class="bg-blue-50">
+                                        <td colspan="4" class="px-6 py-2 pl-10">
+                                            <div class="flex items-center">
+                                                {% heroicon_outline "document-text" class="w-4 h-4 text-blue-600 mr-2" %}
+                                                <span class="font-medium text-blue-900">{{ item.name }}</span>
+                                            </div>
                                         </td>
-                                    {% endif %}
-                                </tr>
+                                    </tr>
+                                {% elif item.type == 'package' %}
+                                    <!-- Package Header Row -->
+                                    <tr class="bg-gray-50">
+                                        <td colspan="4" class="px-6 py-2 pl-14">
+                                            <div class="flex items-center">
+                                                {% heroicon_outline "folder" class="w-4 h-4 text-gray-500 mr-2" %}
+                                                <span class="text-sm font-medium text-gray-700">{{ item.name }}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% elif item.type == 'transaction' %}
+                                    <!-- Transaction Row -->
+                                    <tr>
+                                        <td class="px-6 py-4 text-sm text-gray-900 pl-16">
+                                            <div>
+                                                <div class="font-medium">{{ item.transaction.line_item.item_number }}</div>
+                                                <div class="text-gray-500">{{ item.transaction.line_item.description|truncatechars:80 }}</div>
+                                                {% if item.transaction.notes %}
+                                                    <div class="mt-2 p-2 bg-indigo-50 rounded text-xs text-indigo-700 border-l-2 border-indigo-400">
+                                                        {% heroicon_mini "chat-bubble-left-ellipsis" class="w-3 h-3 inline mr-1" %}
+                                                        {{ item.transaction.notes }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            R {{ item.transaction.line_item.total_price|default:0|floatformat:2|intcomma }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            R {{ item.transaction.total_price|default:0|floatformat:2|intcomma }}
+                                        </td>
+                                        {% define item.transaction.line_item.total_price|sub:item.transaction.total_price|mul:1|default:0 as variance %}
+                                        {% if variance < 0 %}
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-500 font-bold">
+                                                R {{ variance|default:0|floatformat:2|intcomma }}
+                                            </td>
+                                        {% else %}
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-500 font-bold">
+                                                R {{ variance|default:0|floatformat:2|intcomma }}
+                                            </td>
+                                        {% endif %}
+                                    </tr>
+                                {% endif %}
                             {% empty %}
                                 <tr>
-                                    <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No forecast transactions found.</td>
+                                    <td colspan="4" class="px-6 py-8 text-center">
+                                        <div class="flex flex-col items-center">
+                                            {% heroicon_outline "check-circle" class="w-12 h-12 text-green-400" %}
+                                            <p class="mt-2 text-sm font-medium text-gray-900">No Changes from Budget</p>
+                                            <p class="text-sm text-gray-500">All line items match the original budget values.</p>
+                                        </div>
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -181,6 +276,19 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        <!-- Approval Notes -->
+                        <div class="mb-6">
+                            <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
+                                {% heroicon_outline 'chat-bubble-left-ellipsis' class="w-4 h-4 inline mr-1" %}
+                                Approval Notes (Optional)
+                            </label>
+                            <textarea name="notes"
+                                      id="notes"
+                                      rows="3"
+                                      placeholder="Add any notes or comments about this forecast approval..."
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">{{ forecast.notes }}</textarea>
+                            <p class="mt-1 text-xs text-gray-500">These notes will be saved with the approved forecast.</p>
                         </div>
                         <div class="flex items-center justify-between">
                             <a href="{% url 'bill_of_quantities:forecast-edit' project.pk forecast.pk %}"
@@ -217,6 +325,21 @@
                         </a>
                     </div>
                 {% endif %}
+            </div>
+            <!-- Footer -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6">
+                <div class="flex justify-between items-center">
+                    <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
+                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                        {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                        Back to Forecasts
+                    </a>
+                    <a href="{% url 'project:project-management' project.pk %}"
+                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                        Project Management
+                        {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+                    </a>
+                </div>
             </div>
         </div>
     </div>

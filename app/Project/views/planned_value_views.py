@@ -97,7 +97,10 @@ class PlannedValueEditView(PlannedValueMixin, TemplateView):
         month_forms = []
         for month in months:
             existing_pv = existing_values.get(month)
-            initial = {"value": existing_pv.value if existing_pv else Decimal("0.00")}
+            initial = {
+                "value": existing_pv.value if existing_pv else Decimal("0.00"),
+                "forecast_value": existing_pv.forecast_value if existing_pv else None,
+            }
             form = PlannedValueForm(
                 initial=initial,
                 prefix=f"month_{month.strftime('%Y_%m')}",
@@ -162,17 +165,20 @@ class PlannedValueEditView(PlannedValueMixin, TemplateView):
 
             if form.is_valid():
                 value = form.cleaned_data.get("value") or Decimal("0.00")
+                forecast_value = form.cleaned_data.get("forecast_value")
 
                 # Get or create the planned value
                 existing_pv = existing_values.get(month)
                 if existing_pv:
                     existing_pv.value = value
+                    existing_pv.forecast_value = forecast_value
                     existing_pv.save()
                 else:
                     PlannedValue.objects.create(
                         project=project,
                         period=month,
                         value=value,
+                        forecast_value=forecast_value,
                     )
                 saved_count += 1
             else:

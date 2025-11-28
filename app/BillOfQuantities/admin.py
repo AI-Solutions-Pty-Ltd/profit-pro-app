@@ -101,6 +101,7 @@ class ForecastAdmin(SoftDeleteAdmin):
         "total_forecast",
         "created_at",
         "deleted",
+        "notes",
     ]
     list_filter = ["deleted", "project__name", "status", "created_at"]
     search_fields = ["project__name"]
@@ -116,6 +117,7 @@ class ForecastTransactionAdmin(SoftDeleteAdmin):
         "total_price",
         "deleted",
         "forecast__period",
+        "notes",
     ]
     list_filter = [
         "forecast__project__name",

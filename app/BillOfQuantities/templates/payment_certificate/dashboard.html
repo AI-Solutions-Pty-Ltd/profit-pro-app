@@ -11,11 +11,17 @@
         <div class="px-6 py-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">
-                        {{ project.name }} | R {{ project.get_total_contract_value|default:"0"|floatformat:2|intcomma }}
-                    </h1>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
                     <p class="text-sm text-gray-600 mt-1">Payment Certificates</p>
                 </div>
+                {% if not active_certificate %}
+                    <a href="{% url 'bill_of_quantities:payment-certificate-new' project.pk %}"
+                       class="loading-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                       data-loading-text="Creating New Certificate...">
+                        {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}
+                        Create New Certificate
+                    </a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -67,22 +73,26 @@
     <!-- Summary Stats Row -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="bg-white rounded-lg shadow p-4">
-            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Contract Value</p>
-            <p class="mt-1 text-xl font-bold text-gray-900">
-                R {{ project.get_total_contract_value|default:"0"|floatformat:2|intcomma }}
-            </p>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Revised Contract</p>
+            <p class="mt-1 text-xl font-bold text-gray-900">R {{ revised_contract_value|default:"0"|floatformat:0|intcomma }}</p>
         </div>
         <div class="bg-white rounded-lg shadow p-4">
-            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Claimed</p>
-            <p class="mt-1 text-xl font-bold text-emerald-600">R {{ total_claimed|default:"0"|floatformat:2|intcomma }}</p>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Certified</p>
+            <p class="mt-1 text-xl font-bold text-emerald-600">R {{ total_certified|default:"0"|floatformat:0|intcomma }}</p>
+            {% if certified_percent %}
+                <p class="text-xs text-emerald-600">{{ certified_percent }}% of contract</p>
+            {% endif %}
         </div>
         <div class="bg-white rounded-lg shadow p-4">
-            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Active Claim</p>
-            <p class="mt-1 text-xl font-bold text-blue-600">R {{ active_claimed|default:"0"|floatformat:2|intcomma }}</p>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Current Claim</p>
+            <p class="mt-1 text-xl font-bold text-blue-600">R {{ current_claim|default:"0"|floatformat:0|intcomma }}</p>
         </div>
         <div class="bg-white rounded-lg shadow p-4">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Remaining</p>
-            <p class="mt-1 text-xl font-bold text-amber-600">R {{ remaining_amount|default:"0"|floatformat:2|intcomma }}</p>
+            <p class="mt-1 text-xl font-bold text-amber-600">R {{ remaining_amount|default:"0"|floatformat:0|intcomma }}</p>
+            {% if remaining_percent %}
+                <p class="text-xs text-amber-600">{{ remaining_percent }}% of contract</p>
+            {% endif %}
         </div>
     </div>
     <!-- Active Payment Certificate Section -->
@@ -211,6 +221,21 @@
                 <p class="mt-1 text-sm text-gray-500">There are no completed payment certificates for this project yet.</p>
             </div>
         {% endif %}
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'project:project-management' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Back to Project
+                </a>
+                <a href="{% url 'project:project-dashboard' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    Project Dashboard
+                    {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+                </a>
+            </div>
+        </div>
     </div>
 {% endblock content %}
 {% block extra_js %}

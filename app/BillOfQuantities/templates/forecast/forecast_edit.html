@@ -185,10 +185,33 @@
                                                 data-bill-name="{{ transaction.line_item.bill.name|default:'' }}"
                                                 data-package="{{ transaction.line_item.package.pk|default:'' }}"
                                                 data-package-name="{{ transaction.line_item.package.name|default:'' }}">
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <td class="px-6 py-4 text-sm text-gray-900">
                                                     <div>
                                                         <div class="font-medium">{{ transaction.line_item.item_number }}</div>
                                                         <div class="text-gray-500">{{ transaction.line_item.description|truncatechars:80 }}</div>
+                                                        <!-- Collapsible Notes -->
+                                                        <div class="mt-2">
+                                                            <button type="button"
+                                                                    onclick="toggleNotes({{ transaction.id }})"
+                                                                    class="inline-flex items-center text-xs text-indigo-600 hover:text-indigo-800">
+                                                                {% heroicon_mini "chat-bubble-left-ellipsis" class="w-3 h-3 mr-1" %}
+                                                                <span id="notes-toggle-{{ transaction.id }}">
+                                                                    {% if transaction.notes %}
+                                                                        Edit Note
+                                                                    {% else %}
+                                                                        Add Note
+                                                                    {% endif %}
+                                                                </span>
+                                                                {% if transaction.notes %}<span class="ml-1 w-2 h-2 bg-indigo-500 rounded-full"></span>{% endif %}
+                                                            </button>
+                                                            <div id="notes-container-{{ transaction.id }}" class="hidden mt-2">
+                                                                <textarea name="notes_{{ transaction.id }}"
+                                                                          id="notes_{{ transaction.id }}"
+                                                                          rows="2"
+                                                                          placeholder="Add notes for this line item..."
+                                                                          class="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500">{{ transaction.notes }}</textarea>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ transaction.line_item.unit_measurement }}</td>
@@ -294,6 +317,21 @@
                 </div>
             </div>
         {% endif %}
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Back to Forecasts
+                </a>
+                <a href="{% url 'project:project-management' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    Project Management
+                    {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+                </a>
+            </div>
+        </div>
     </div>
     <script>
     function updateTotal(transactionId) {
@@ -302,6 +340,22 @@
         const total = quantity * unitPrice;
         
         document.getElementById(`total_price_${transactionId}`).value = total.toFixed(2);
+    }
+    
+    function toggleNotes(transactionId) {
+        const container = document.getElementById(`notes-container-${transactionId}`);
+        const toggle = document.getElementById(`notes-toggle-${transactionId}`);
+        
+        if (container.classList.contains('hidden')) {
+            container.classList.remove('hidden');
+            toggle.textContent = 'Hide Note';
+            // Focus on the textarea
+            document.getElementById(`notes_${transactionId}`).focus();
+        } else {
+            container.classList.add('hidden');
+            const textarea = document.getElementById(`notes_${transactionId}`);
+            toggle.textContent = textarea.value.trim() ? 'Edit Note' : 'Add Note';
+        }
     }
     </script>
 {% endblock content %}

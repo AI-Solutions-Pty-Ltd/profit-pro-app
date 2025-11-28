@@ -10,6 +10,9 @@ class PlannedValue(BaseModel):
     )
     period = models.DateField()
     value = models.DecimalField(max_digits=10, decimal_places=2)
+    forecast_value = models.DecimalField(
+        max_digits=10, decimal_places=2, blank=True, null=True
+    )
 
     def __str__(self) -> str:
         return f"{self.project}: {self.period}"

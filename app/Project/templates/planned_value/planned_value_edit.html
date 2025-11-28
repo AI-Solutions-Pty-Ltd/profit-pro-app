@@ -98,6 +98,10 @@
                                     class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Planned Value
                                 </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Forecast Value
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -121,10 +125,25 @@
                                                    placeholder="0.00">
                                         </div>
                                     </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right">
+                                        <div class="relative rounded-md shadow-sm inline-flex w-48">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">R</span>
+                                            </div>
+                                            <input type="number"
+                                                   name="{{ month_form.form.forecast_value.html_name }}"
+                                                   id="{{ month_form.form.forecast_value.auto_id }}"
+                                                   value="{{ month_form.form.forecast_value.value|default_if_none:'' }}"
+                                                   step="0.01"
+                                                   min="0"
+                                                   class="pl-8 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm forecast-value-input text-right"
+                                                   placeholder="0.00">
+                                        </div>
+                                    </td>
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="2" class="px-6 py-8 text-center text-gray-500">
+                                    <td colspan="3" class="px-6 py-8 text-center text-gray-500">
                                         <p>No months to display. Please check project dates.</p>
                                     </td>
                                 </tr>
@@ -134,8 +153,12 @@
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">Total</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
-                                    <span id="running-total" class="text-lg font-bold text-indigo-600">R 0.00</span>
-                                    <span id="total-status" class="block text-sm mt-1"></span>
+                                    <span id="running-total-planned" class="text-lg font-bold text-indigo-600">R 0.00</span>
+                                    <span id="total-status-planned" class="block text-sm mt-1"></span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right">
+                                    <span id="running-total-forecast" class="text-lg font-bold text-amber-600">R 0.00</span>
+                                    <span id="total-status-forecast" class="block text-sm mt-1"></span>
                                 </td>
                             </tr>
                         </tfoot>
@@ -153,53 +176,88 @@
                 </div>
             </form>
         </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6 rounded-b-lg">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'project:project-management' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Back to Project
+                </a>
+                <a href="{% url 'project:project-dashboard' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    Project Dashboard
+                    {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+                </a>
+            </div>
+        </div>
     {% endif %}
 {% endblock content %}
 {% block extra_js %}
     <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const contractValue = {{ contract_value|default:0 }};
-    const inputs = document.querySelectorAll('.planned-value-input');
-    const runningTotalEl = document.getElementById('running-total');
-    const totalStatusEl = document.getElementById('total-status');
-    
-    function updateRunningTotal() {
-        let total = 0;
-        inputs.forEach(input => {
-            const val = parseFloat(input.value) || 0;
-            total += val;
+        document.addEventListener('DOMContentLoaded', function() {
+            const contractValue = {{ contract_value|default:0 }};
+            const plannedInputs = document.querySelectorAll('.planned-value-input');
+            const forecastInputs = document.querySelectorAll('.forecast-value-input');
+            const runningTotalPlannedEl = document.getElementById('running-total-planned');
+            const totalStatusPlannedEl = document.getElementById('total-status-planned');
+            const runningTotalForecastEl = document.getElementById('running-total-forecast');
+            const totalStatusForecastEl = document.getElementById('total-status-forecast');
+            
+            function formatCurrency(value) {
+                return 'R ' + value.toLocaleString('en-ZA', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+            
+            function updateStatus(total, runningEl, statusEl, baseColor) {
+                runningEl.textContent = formatCurrency(total);
+                const diff = contractValue - total;
+                if (Math.abs(diff) < 0.01) {
+                    statusEl.textContent = '✓ Matches contract value';
+                    statusEl.className = 'block text-sm text-green-600 font-medium mt-1';
+                    runningEl.className = 'text-lg font-bold text-green-600';
+                } else if (diff > 0) {
+                    statusEl.textContent = `${formatCurrency(diff)} remaining`;
+                    statusEl.className = 'block text-sm text-yellow-600 mt-1';
+                    runningEl.className = 'text-lg font-bold text-yellow-600';
+                } else {
+                    statusEl.textContent = `${formatCurrency(Math.abs(diff))} over budget`;
+                    statusEl.className = 'block text-sm text-red-600 mt-1';
+                    runningEl.className = 'text-lg font-bold text-red-600';
+                }
+            }
+            
+            function updatePlannedTotal() {
+                let total = 0;
+                plannedInputs.forEach(input => {
+                    total += parseFloat(input.value) || 0;
+                });
+                updateStatus(total, runningTotalPlannedEl, totalStatusPlannedEl, 'indigo');
+            }
+            
+            function updateForecastTotal() {
+                let total = 0;
+                forecastInputs.forEach(input => {
+                    total += parseFloat(input.value) || 0;
+                });
+                updateStatus(total, runningTotalForecastEl, totalStatusForecastEl, 'amber');
+            }
+            
+            // Add event listeners
+            plannedInputs.forEach(input => {
+                input.addEventListener('input', updatePlannedTotal);
+                input.addEventListener('change', updatePlannedTotal);
+            });
+            forecastInputs.forEach(input => {
+                input.addEventListener('input', updateForecastTotal);
+                input.addEventListener('change', updateForecastTotal);
+            });
+            
+            // Initial calculation
+            updatePlannedTotal();
+            updateForecastTotal();
         });
-        
-        runningTotalEl.textContent = 'R ' + total.toLocaleString('en-ZA', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-        
-        // Update status indicator
-        const diff = contractValue - total;
-        if (Math.abs(diff) < 0.01) {
-            totalStatusEl.textContent = '✓ Matches contract value';
-            totalStatusEl.className = 'text-sm text-green-600 font-medium';
-            runningTotalEl.className = 'text-lg font-bold text-green-600';
-        } else if (diff > 0) {
-            totalStatusEl.textContent = `R ${diff.toLocaleString('en-ZA', {minimumFractionDigits: 2})} remaining`;
-            totalStatusEl.className = 'text-sm text-yellow-600';
-            runningTotalEl.className = 'text-lg font-bold text-yellow-600';
-        } else {
-            totalStatusEl.textContent = `R ${Math.abs(diff).toLocaleString('en-ZA', {minimumFractionDigits: 2})} over budget`;
-            totalStatusEl.className = 'text-sm text-red-600';
-            runningTotalEl.className = 'text-lg font-bold text-red-600';
-        }
-    }
-    
-    // Add event listeners to all inputs
-    inputs.forEach(input => {
-        input.addEventListener('input', updateRunningTotal);
-        input.addEventListener('change', updateRunningTotal);
-    });
-    
-    // Initial calculation
-    updateRunningTotal();
-});
     </script>
 {% endblock extra_js %}
