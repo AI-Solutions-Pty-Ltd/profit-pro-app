@@ -530,9 +530,8 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
             messages.info(request, "No changes were made.")
 
         return redirect(
-            "bill_of_quantities:payment-certificate-edit",
+            "bill_of_quantities:payment-certificate-list",
             project_pk=project_pk,
-            pk=pk,
         )
 
 
@@ -540,7 +539,7 @@ class PaymentCertificateSubmitView(
     PaymentCertificateMixin, LineItemDetailMixin, UpdateView
 ):
     model = PaymentCertificate
-    fields = ["status"]
+    fields = ["status", "is_final"]
     template_name = "payment_certificate/payment_certificate_submit.html"
     context_object_name = "payment_certificate"
 
@@ -606,6 +605,15 @@ class PaymentCertificateSubmitView(
             )
             payment_certificate.approved_on = datetime.now()
             payment_certificate.approved_by = self.request.user
+
+            # If marked as final, link to project
+            if payment_certificate.is_final:
+                project.final_payment_certificate = payment_certificate
+                project.save(update_fields=["final_payment_certificate"])
+                messages.info(
+                    self.request,
+                    "This certificate has been marked as the Final Payment Certificate.",
+                )
         else:
             payment_certificate.actual_transactions.update(approved=False)
             messages.warning(
@@ -791,4 +799,52 @@ class PaymentCertificateEmailView(PaymentCertificateMixin, View):
             "bill_of_quantities:payment-certificate-detail",
             project_pk=project_pk,
             pk=pk,
+        )
+
+
+class PaymentCertificateMarkFinalView(PaymentCertificateMixin, DetailView):
+    """Mark a payment certificate as the final payment certificate."""
+
+    model = PaymentCertificate
+
+    def post(self, request, *args, **kwargs):
+        """Handle POST request to mark certificate as final."""
+        payment_certificate = self.get_object()
+        project = payment_certificate.project
+
+        # Validate the certificate is approved
+        if payment_certificate.status != PaymentCertificate.Status.APPROVED:
+            messages.error(
+                request,
+                "Only approved payment certificates can be marked as final.",
+            )
+            return redirect(
+                "bill_of_quantities:payment-certificate-dashboard",
+                project_pk=project.pk,
+            )
+
+        # Mark as final
+        payment_certificate.is_final = True
+        payment_certificate.save(update_fields=["is_final"])
+
+        # Update project
+        project.final_payment_certificate = payment_certificate
+        project.status = Project.Status.FINAL_ACCOUNT_ISSUED
+        project.save(update_fields=["final_payment_certificate", "status"])
+
+        messages.success(
+            request,
+            f"Payment Certificate #{payment_certificate.certificate_number} has been marked as the Final Payment Certificate.",
+        )
+
+        return redirect(
+            "bill_of_quantities:payment-certificate-list",
+            project_pk=project.pk,
+        )
+
+    def get(self, request, *args, **kwargs):
+        """Redirect GET requests to dashboard."""
+        return redirect(
+            "bill_of_quantities:payment-certificate-list",
+            project_pk=self.kwargs["project_pk"],
         )

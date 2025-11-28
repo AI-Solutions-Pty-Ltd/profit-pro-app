@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('BillOfQuantities', '0007_alter_forecast_unique_together'),
+        ("BillOfQuantities", "0007_alter_forecast_unique_together"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='forecast',
-            name='notes',
+            model_name="forecast",
+            name="notes",
             field=models.TextField(blank=True),
         ),
         migrations.AddField(
-            model_name='forecasttransaction',
-            name='notes',
+            model_name="forecasttransaction",
+            name="notes",
             field=models.TextField(blank=True),
         ),
     ]

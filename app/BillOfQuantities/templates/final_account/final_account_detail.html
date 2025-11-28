@@ -1,0 +1,221 @@
+{% extends "base_full.html" %}
+{% block title %}
+    Final Account - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Final Account</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
+                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        {% heroicon_outline "arrow-left" size="16" %}
+                        <span class="ml-1">Back to Certificates</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Contract Value</p>
+            <p class="mt-1 text-xl font-bold text-blue-600">R {{ project.contract_value|default:0|floatformat:2|intcomma }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-emerald-500">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Final Account Value</p>
+            <p class="mt-1 text-xl font-bold text-emerald-600">R {{ final_account_total|default:0|floatformat:2|intcomma }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Additions</p>
+            <p class="mt-1 text-xl font-bold text-green-600">R {{ total_additions|default:0|floatformat:2|intcomma }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Omissions</p>
+            <p class="mt-1 text-xl font-bold text-red-600">R {{ total_omissions|default:0|floatformat:2|intcomma }}</p>
+        </div>
+    </div>
+    <!-- Final Account Table -->
+    <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Final Account Line Items</h2>
+            <p class="text-sm text-gray-600">Detailed breakdown of contract vs final quantities and amounts</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 text-xs">
+                <thead class="bg-gray-800 text-white">
+                    <tr>
+                        <th class="px-3 py-3 text-left font-medium uppercase tracking-wider sticky left-0 bg-gray-800">Structure</th>
+                        <th class="px-3 py-3 text-left font-medium uppercase tracking-wider">Bill No.</th>
+                        <th class="px-3 py-3 text-left font-medium uppercase tracking-wider">Package Item No.</th>
+                        <th class="px-3 py-3 text-left font-medium uppercase tracking-wider">Pay Ref</th>
+                        <th class="px-3 py-3 text-left font-medium uppercase tracking-wider min-w-[200px]">Description</th>
+                        <th class="px-3 py-3 text-center font-medium uppercase tracking-wider">Unit</th>
+                        <th class="px-3 py-3 text-right font-medium uppercase tracking-wider">Contract Qty</th>
+                        <th class="px-3 py-3 text-right font-medium uppercase tracking-wider">Contract Rate</th>
+                        <th class="px-3 py-3 text-right font-medium uppercase tracking-wider">Contract Amount</th>
+                        <th class="px-3 py-3 text-right font-medium uppercase tracking-wider bg-emerald-700">Final Qty @ Completion</th>
+                        <th class="px-3 py-3 text-right font-medium uppercase tracking-wider bg-emerald-700">Final Amount @ Completion</th>
+                        <th class="px-3 py-3 text-right font-medium uppercase tracking-wider bg-green-700">Additions to Contract Qty</th>
+                        <th class="px-3 py-3 text-right font-medium uppercase tracking-wider bg-red-700">Omissions to Contract Qty</th>
+                        <th class="px-3 py-3 text-right font-medium uppercase tracking-wider bg-green-700">Additions to Contract Amount</th>
+                        <th class="px-3 py-3 text-right font-medium uppercase tracking-wider bg-red-700">Omissions to Contract Amount</th>
+                        <th class="px-3 py-3 text-right font-medium uppercase tracking-wider bg-indigo-700">% Variance</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for line in line_items %}
+                        {% ifchanged line.structure.name %}
+                            <tr class="bg-indigo-50">
+                                <td colspan="16" class="px-3 py-2 text-sm font-bold text-indigo-900">
+                                    {% heroicon_outline "building-office" class="w-4 h-4 inline mr-1" %}
+                                    {{ line.structure.name }}
+                                </td>
+                            </tr>
+                        {% endifchanged %}
+                        {% ifchanged line.structure.name line.bill.name %}
+                            <tr class="bg-blue-50">
+                                <td colspan="16"
+                                    class="px-3 py-2 text-sm font-semibold text-blue-900 pl-6">
+                                    {% heroicon_outline "document-text" class="w-4 h-4 inline mr-1" %}
+                                    {{ line.bill.name }}
+                                </td>
+                            </tr>
+                        {% endifchanged %}
+                        {% ifchanged line.structure.name line.bill.name line.package.name %}
+                            {% if line.package %}
+                                <tr class="bg-gray-50">
+                                    <td colspan="16"
+                                        class="px-3 py-2 text-sm font-medium text-gray-700 pl-10">
+                                        {% heroicon_outline "folder" class="w-4 h-4 inline mr-1" %}
+                                        {{ line.package.name }}
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endifchanged %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-3 py-2 whitespace-nowrap text-gray-500 sticky left-0 bg-white">-</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-gray-500">-</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-gray-500">-</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-gray-900">{{ line.item_number|default:"-" }}</td>
+                            <td class="px-3 py-2 text-gray-900">{{ line.description|default:"-"|truncatewords:15 }}</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-center text-gray-600">{{ line.unit_measurement|default:"-" }}</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-right text-gray-900">
+                                {{ line.budgeted_quantity|floatformat:2|intcomma }}
+                            </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-right text-gray-900">R {{ line.unit_price|floatformat:2|intcomma }}</td>
+                            <td class="px-3 py-2 whitespace-nowrap text-right text-gray-900 font-medium">
+                                R {{ line.total_price|floatformat:2|intcomma }}
+                            </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-right text-emerald-700 font-medium bg-emerald-50">
+                                {{ line.total_qty|floatformat:2|intcomma }}
+                            </td>
+                            <td class="px-3 py-2 whitespace-nowrap text-right text-emerald-700 font-medium bg-emerald-50">
+                                R {{ line.total_claimed|floatformat:2|intcomma }}
+                            </td>
+                            <!-- Additions to Contract Qty -->
+                            <td class="px-3 py-2 whitespace-nowrap text-right bg-green-50">
+                                {% if line.total_qty > line.budgeted_quantity %}
+                                    <span class="text-green-700">{{ line.qty_addition|floatformat:2|intcomma }}</span>
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <!-- Omissions to Contract Qty -->
+                            <td class="px-3 py-2 whitespace-nowrap text-right bg-red-50">
+                                {% if line.budgeted_quantity > line.total_qty %}
+                                    <span class="text-red-700">{{ line.qty_omission|floatformat:2|intcomma }}</span>
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <!-- Additions to Contract Amount -->
+                            <td class="px-3 py-2 whitespace-nowrap text-right bg-green-50">
+                                {% if line.total_claimed > line.total_price %}
+                                    <span class="text-green-700">R {{ line.amount_addition|floatformat:2|intcomma }}</span>
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <!-- Omissions to Contract Amount -->
+                            <td class="px-3 py-2 whitespace-nowrap text-right bg-red-50">
+                                {% if line.total_price > line.total_claimed %}
+                                    <span class="text-red-700">R {{ line.amount_omission|floatformat:2|intcomma }}</span>
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                            <!-- % Variance -->
+                            <td class="px-3 py-2 whitespace-nowrap text-right bg-indigo-50">
+                                {% if line.total_price and line.total_price != 0 %}
+                                    <span class="{% if line.variance_percent > 0 %}text-green-700{% elif line.variance_percent < 0 %}text-red-700{% else %}text-gray-600{% endif %}">
+                                        {% if line.variance_percent > 0 %}+{% endif %}
+                                        {{ line.variance_percent|floatformat:1 }}%
+                                    </span>
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="16" class="px-6 py-8 text-center text-gray-500">
+                                <p>No line items found for this final account.</p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="bg-gray-100 font-bold">
+                    <tr>
+                        <td colspan="8" class="px-3 py-3 text-right text-gray-900">TOTALS:</td>
+                        <td class="px-3 py-3 text-right text-gray-900">R {{ contract_total|default:0|floatformat:2|intcomma }}</td>
+                        <td class="px-3 py-3 text-right text-emerald-700 bg-emerald-100">-</td>
+                        <td class="px-3 py-3 text-right text-emerald-700 bg-emerald-100">
+                            R {{ final_account_total|default:0|floatformat:2|intcomma }}
+                        </td>
+                        <td class="px-3 py-3 text-right text-green-700 bg-green-100">
+                            {{ total_qty_additions|default:0|floatformat:2|intcomma }}
+                        </td>
+                        <td class="px-3 py-3 text-right text-red-700 bg-red-100">
+                            {{ total_qty_omissions|default:0|floatformat:2|intcomma }}
+                        </td>
+                        <td class="px-3 py-3 text-right text-green-700 bg-green-100">
+                            R {{ total_additions|default:0|floatformat:2|intcomma }}
+                        </td>
+                        <td class="px-3 py-3 text-right text-red-700 bg-red-100">R {{ total_omissions|default:0|floatformat:2|intcomma }}</td>
+                        <td class="px-3 py-3 text-right bg-indigo-100">
+                            {% if contract_total and contract_total != 0 %}
+                                <span class="{% if total_variance_percent > 0 %}text-green-700{% elif total_variance_percent < 0 %}text-red-700{% else %}text-gray-600{% endif %}">
+                                    {% if total_variance_percent > 0 %}+{% endif %}
+                                    {{ total_variance_percent|floatformat:1 }}%
+                                </span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Back to Payment Certificates
+                </a>
+                <a href="{% url 'project:project-management' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    Project Management
+                    {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

@@ -1,4 +1,4 @@
-from .models import (
+from .boq_models import (
     ActualTransaction,
     Bill,
     Forecast,

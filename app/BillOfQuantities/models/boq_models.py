@@ -20,6 +20,9 @@ class Structure(BaseModel):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, default="")
 
+    if TYPE_CHECKING:
+        line_items: QuerySet["LineItem"]
+
     class Meta:
         verbose_name = "Structure"
         verbose_name_plural = "Structures"
@@ -70,6 +73,9 @@ class Bill(BaseModel):
         Structure, on_delete=models.CASCADE, related_name="bills"
     )
     name = models.CharField(max_length=100)
+
+    if TYPE_CHECKING:
+        line_items: QuerySet["LineItem"]
 
     class Meta:
         verbose_name = "Bill"
@@ -389,6 +395,10 @@ class PaymentCertificate(BaseModel):
     notes = models.TextField(
         blank=True, default="", help_text="Additional notes or comments"
     )
+    is_final = models.BooleanField(
+        default=False,
+        help_text="Mark as final payment certificate for the project",
+    )
     approved_on = models.DateTimeField(blank=True, null=True)
     approved_by = models.ForeignKey(
         Account, on_delete=models.SET_NULL, null=True, blank=True
@@ -414,6 +424,28 @@ class PaymentCertificate(BaseModel):
 
     def __str__(self):
         return f"# {self.certificate_number}: {self.project} - {self.status}"
+
+    def save(self, *args, **kwargs):
+        """Override save to update project status when final certificate is approved."""
+        # Check if this is an existing record being updated
+        if self.pk:
+            try:
+                old_instance = PaymentCertificate.objects.get(pk=self.pk)
+                # If status changed to APPROVED and this is the final certificate
+                if (
+                    old_instance.status != self.Status.APPROVED
+                    and self.status == self.Status.APPROVED
+                    and self.is_final
+                ):
+                    # Update project status to FINAL_ACCOUNT_ISSUED
+                    self.project.status = Project.Status.FINAL_ACCOUNT_ISSUED
+                    self.project.final_payment_certificate = self
+                    self.project.save(
+                        update_fields=["status", "final_payment_certificate"]
+                    )
+            except PaymentCertificate.DoesNotExist:
+                pass
+        super().save(*args, **kwargs)
 
     @staticmethod
     def get_next_certificate_number(project: Project) -> int:

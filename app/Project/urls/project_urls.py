@@ -29,4 +29,9 @@ project_urls = [
         project_views.ProjectDeleteView.as_view(),
         name="project-delete",
     ),
+    path(
+        "<int:pk>/reset-final-account/",
+        project_views.ProjectResetFinalAccountView.as_view(),
+        name="project-reset-final-account",
+    ),
 ]

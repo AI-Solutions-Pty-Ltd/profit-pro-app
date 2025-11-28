@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0008_project_end_date_project_start_date_plannedvalue'),
+        ("Project", "0008_project_end_date_project_start_date_plannedvalue"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='plannedvalue',
-            name='forecast_value',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True),
+            model_name="plannedvalue",
+            name="forecast_value",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=10, null=True
+            ),
         ),
     ]

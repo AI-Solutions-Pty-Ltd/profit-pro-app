@@ -52,4 +52,9 @@ payment_certificate_urls = [
         payment_certificate_views.PaymentCertificateEmailView.as_view(),
         name="payment-certificate-email",
     ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/mark-final/",
+        payment_certificate_views.PaymentCertificateMarkFinalView.as_view(),
+        name="payment-certificate-mark-final",
+    ),
 ]

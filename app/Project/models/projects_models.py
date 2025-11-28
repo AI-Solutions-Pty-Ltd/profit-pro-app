@@ -124,6 +124,7 @@ class Project(BaseModel):
         SETUP = "SETUP", "Setup"
         ACTIVE = "ACTIVE", "Active"
         INACTIVE = "INACTIVE", "Inactive"
+        FINAL_ACCOUNT_ISSUED = "FINAL_ACCOUNT_ISSUED", "Final Account Issued"
 
     portfolio = models.ForeignKey(
         Portfolio, on_delete=models.SET_NULL, null=True, related_name="projects"
@@ -141,6 +142,13 @@ class Project(BaseModel):
     contract_number = models.CharField(max_length=255, blank=True)
     contract_clause = models.CharField(max_length=255, blank=True)
     vat = models.BooleanField(default=False)
+    final_payment_certificate = models.ForeignKey(
+        "BillOfQuantities.PaymentCertificate",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="final_account_project",
+    )
 
     client = models.ForeignKey(
         Client,

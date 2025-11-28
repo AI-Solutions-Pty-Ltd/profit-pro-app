@@ -484,3 +484,41 @@ class ProjectDeleteView(ProjectMixin, DeleteView):
             },
             {"title": "Delete", "url": None},
         ]
+
+
+class ProjectResetFinalAccountView(ProjectMixin, DetailView):
+    """Reset project final account status."""
+
+    model = Project
+
+    def post(self, request, *args, **kwargs):
+        """Handle POST request to reset final account."""
+        from django.shortcuts import redirect
+
+        project = self.get_object()
+
+        if project.final_payment_certificate:
+            # Unmark the payment certificate as final
+            final_cert = project.final_payment_certificate
+            final_cert.is_final = False
+            final_cert.save(update_fields=["is_final"])
+
+            # Clear the final payment certificate reference
+            project.final_payment_certificate = None
+
+        # Set project status back to ACTIVE
+        project.status = Project.Status.ACTIVE
+        project.save(update_fields=["status", "final_payment_certificate"])
+
+        messages.success(
+            request,
+            f"Project '{project.name}' has been reset to Active status.",
+        )
+
+        return redirect("project:project-management", pk=project.pk)
+
+    def get(self, request, *args, **kwargs):
+        """Redirect GET requests to project management."""
+        from django.shortcuts import redirect
+
+        return redirect("project:project-management", pk=self.kwargs["pk"])

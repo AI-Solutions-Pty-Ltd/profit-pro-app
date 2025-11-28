@@ -22,7 +22,7 @@
                     <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
                     <p class="text-sm text-gray-600 mt-1">Payment Certificate: #{{ payment_certificate.certificate_number }}</p>
                     <p class="text-sm text-gray-600 mt-1">Status: {{ payment_certificate.status }}</p>
-                    <p class="text-sm text-gray-600 mt-1">Date: {{ payment_certificate.date|date:"d M Y" }}</p>
+                    <p class="text-sm text-gray-600 mt-1">Date: {{ payment_certificate.approved_on }}</p>
                 </div>
                 <div class="flex items-center space-x-3">
                     {% if payment_certificate.status == "DRAFT" %}
@@ -42,7 +42,19 @@
                             </a>
                         {% endif %}
                     {% endif %}
-                    {% if payment_certificate.status == 'SUBMITTED' %}<p>Awaiting Final Payment Certificate Review</p>{% endif %}
+                    {% if payment_certificate.status == 'SUBMITTED' %}
+                        <span class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 rounded-md border border-amber-200">
+                            {% heroicon_outline "clock" class="w-4 h-4 mr-1" %}
+                            Awaiting Client Approval
+                        </span>
+                    {% endif %}
+                    {% if payment_certificate.is_final %}
+                        <a href="{% url 'bill_of_quantities:final-account-detail' project.pk payment_certificate.pk %}"
+                           class="inline-flex items-center px-3 py-2 border border-emerald-300 shadow-sm text-sm leading-4 font-medium rounded-md text-emerald-700 bg-emerald-50 hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                            {% heroicon_outline "document-check" class="w-4 h-4 mr-1" %}
+                            View Final Account
+                        </a>
+                    {% endif %}
                     {% if payment_certificate.status == 'APPROVED' %}
                         <form method="post"
                               action="{% url 'bill_of_quantities:payment-certificate-email' project.pk payment_certificate.pk %}">

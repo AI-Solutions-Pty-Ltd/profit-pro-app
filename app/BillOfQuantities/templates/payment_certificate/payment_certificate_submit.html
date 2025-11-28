@@ -88,8 +88,27 @@
             {% endif %}
             <form method="post">
                 {% csrf_token %}
-                <!-- Hidden input defaulted to APPROVED -->
+                <!-- Hidden input defaulted to SUBMITTED -->
                 <input type="hidden" name="status" value="SUBMITTED">
+                <!-- Final Payment Certificate Checkbox -->
+                <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            <input type="checkbox"
+                                   id="is_final"
+                                   name="is_final"
+                                   {% if payment_certificate.is_final %}checked{% endif %}
+                                   class="h-5 w-5 text-amber-600 border-gray-300 rounded focus:ring-amber-500">
+                        </div>
+                        <div class="ml-3">
+                            <label for="is_final" class="text-sm font-semibold text-amber-800">Final Payment Certificate</label>
+                            <p class="text-sm text-amber-700 mt-1">
+                                Check this box if this is the final payment certificate for the project.
+                                Once approved by the client, the project will be marked as "Final Account Issued".
+                            </p>
+                        </div>
+                    </div>
+                </div>
                 <!-- Action Buttons -->
                 <div class="flex items-center justify-start space-x-3">
                     <a id="cancel-btn"
