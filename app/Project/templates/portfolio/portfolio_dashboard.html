@@ -1,0 +1,438 @@
+{% extends "base_full.html" %}
+{% load humanize %}
+{% load static %}
+{% block content %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Projects Dashboard</h1>
+                <p class="mt-2 text-gray-600">Financial overview of Portfolio</p>
+            </div>
+            <a href="{% url 'project:project-create' %}"
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                {% heroicon_outline "plus" size="20" class="mr-2" %}
+                Create Project
+            </a>
+        </div>
+        <!-- Summary Metrics -->
+        <div class="mb-8">
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+                    <h5 class="text-lg font-semibold text-white flex items-center">
+                        {% heroicon_outline "chart-pie" size="24" class="mr-2" %}
+                        Portfolio Summary
+                    </h5>
+                    <p class="text-indigo-100 text-sm mt-1">{{ current_date|date:"F Y" }}</p>
+                </div>
+                <div class="p-6">
+                    <!-- Financial Metrics Row -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <!-- Active Projects -->
+                        <div class="bg-blue-50 rounded-lg p-4 text-center border border-blue-100">
+                            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                {% heroicon_outline "briefcase" size="20" class="text-white" %}
+                            </div>
+                            <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Active Projects</p>
+                            <p class="text-2xl font-bold text-blue-700 mt-1">{{ portfolio.active_projects.count }}</p>
+                        </div>
+                        <!-- Total Contract Value -->
+                        <div class="bg-green-50 rounded-lg p-4 text-center border border-green-100">
+                            <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                {% heroicon_outline "banknotes" size="20" class="text-white" %}
+                            </div>
+                            <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Contract Amount</p>
+                            <p class="text-xl font-bold text-green-700 mt-1">R {{ portfolio.total_contract_value|floatformat:0|intcomma }}</p>
+                        </div>
+                        <!-- Total Forecasted Value -->
+                        <div class="bg-amber-50 rounded-lg p-4 text-center border border-amber-100">
+                            <div class="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                {% heroicon_outline "calculator" size="20" class="text-white" %}
+                            </div>
+                            <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Forecasted Amount</p>
+                            <p class="text-xl font-bold text-amber-700 mt-1">R {{ portfolio.total_forecast_value|floatformat:0|intcomma }}</p>
+                        </div>
+                        <!-- Total Certified -->
+                        <div class="bg-purple-50 rounded-lg p-4 text-center border border-purple-100">
+                            <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                                {% heroicon_outline "check-badge" size="20" class="text-white" %}
+                            </div>
+                            <p class="text-xs font-medium text-purple-600 uppercase tracking-wider">Total Certified</p>
+                            <p class="text-xl font-bold text-purple-700 mt-1">R {{ portfolio.total_certified_value|floatformat:0|intcomma }}</p>
+                        </div>
+                    </div>
+                    <!-- Performance Indices Row -->
+                    <div class="border-t border-gray-200 pt-6">
+                        <h6 class="text-sm font-semibold text-gray-700 mb-4 flex items-center">
+                            {% heroicon_outline "presentation-chart-line" size="18" class="mr-2 text-gray-500" %}
+                            Performance Indices (Last 12 Months)
+                        </h6>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Cost Performance Index Chart -->
+                            <div class="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg p-4 border border-cyan-100">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div>
+                                        <p class="text-xs font-medium text-cyan-600 uppercase tracking-wider">Cost Performance Index (CPI)</p>
+                                        <p class="text-2xl font-bold text-cyan-700 mt-1">
+                                            {{ current_cpi|default:"--" }}
+                                            {% if current_cpi %}
+                                                {% if current_cpi > 1 %}
+                                                    <span class="text-sm font-medium text-green-600 ml-2">Under Budget</span>
+                                                {% elif current_cpi == 1 %}
+                                                    <span class="text-sm font-medium text-blue-600 ml-2">On Budget</span>
+                                                {% else %}
+                                                    <span class="text-sm font-medium text-red-600 ml-2">Over Budget</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center {% if current_cpi > 1 %}bg-green-100 text-green-600 {% elif current_cpi == 1 %}bg-blue-100 text-blue-600 {% elif current_cpi %}bg-red-100 text-red-600 {% else %}bg-gray-100 text-gray-400{% endif %}">
+                                        {% if current_cpi > 1 %}
+                                            {% heroicon_outline "arrow-trending-up" size="20" %}
+                                        {% elif current_cpi == 1 %}
+                                            {% heroicon_outline "minus" size="20" %}
+                                        {% elif current_cpi %}
+                                            {% heroicon_outline "arrow-trending-down" size="20" %}
+                                        {% else %}
+                                            {% heroicon_outline "question-mark-circle" size="20" %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="h-48">
+                                    <canvas id="cpiChart"></canvas>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2 text-center">
+                                    CPI > 1 = Under Budget | CPI = 1 = On Budget | CPI < 1 = Over Budget
+                                </p>
+                            </div>
+                            <!-- Schedule Performance Index Chart -->
+                            <div class="bg-gradient-to-br from-violet-50 to-purple-50 rounded-lg p-4 border border-violet-100">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div>
+                                        <p class="text-xs font-medium text-violet-600 uppercase tracking-wider">Schedule Performance Index (SPI)</p>
+                                        <p class="text-2xl font-bold text-violet-700 mt-1">
+                                            {{ current_spi|default:"--" }}
+                                            {% if current_spi %}
+                                                {% if current_spi > 1 %}
+                                                    <span class="text-sm font-medium text-green-600 ml-2">Ahead of Schedule</span>
+                                                {% elif current_spi == 1 %}
+                                                    <span class="text-sm font-medium text-blue-600 ml-2">On Schedule</span>
+                                                {% else %}
+                                                    <span class="text-sm font-medium text-red-600 ml-2">Behind Schedule</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center {% if current_spi > 1 %}bg-green-100 text-green-600 {% elif current_spi == 1 %}bg-blue-100 text-blue-600 {% elif current_spi %}bg-red-100 text-red-600 {% else %}bg-gray-100 text-gray-400{% endif %}">
+                                        {% if current_spi > 1 %}
+                                            {% heroicon_outline "clock" size="20" %}
+                                        {% elif current_spi == 1 %}
+                                            {% heroicon_outline "check-circle" size="20" %}
+                                        {% elif current_spi %}
+                                            {% heroicon_outline "exclamation-triangle" size="20" %}
+                                        {% else %}
+                                            {% heroicon_outline "question-mark-circle" size="20" %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="h-48">
+                                    <canvas id="spiChart"></canvas>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2 text-center">
+                                    SPI > 1 = Ahead | SPI = 1 = On Schedule | SPI < 1 = Behind
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Projects Table -->
+        <div class="centered-content">
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 border-b-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Project Financial Metrics</h2>
+                </div>
+                <div class="flex flex-col items-start justify-between gap-2 p-6 border-b border-gray-200">
+                    <!-- Modern Filter Form -->
+                    <form id="filterForm" method="get" class="flex flex-row items-start gap-2">
+                        <!-- Search Input with Icon -->
+                        {{ filter_form|crispy }}
+                    </form>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projectsTable" class="bg-white divide-y divide-gray-200">
+                            {% for data in dashboard_data %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            <a href="{% url 'project:project-dashboard' data.project.pk %}"
+                                               class="hover:text-indigo-600 transition-colors">{{ data.project.name|title }}</a>
+                                        </div>
+                                        <div class="text-sm text-gray-500">{{ data.project.client.name|default:"No Client" }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-500">{{ data.project.status }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex flex-col items-center space-y-2 min-w-0">
+                                            <a href="{% url 'project:project-dashboard' data.project.id %}"
+                                               class="group relative w-full flex flex-row justify-center items-center px-3 py-2 gap-2 border border-blue-500 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-600 hover:text-blue-800 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm hover:shadow-lg z-10"
+                                               title="View project dashboard and charts">
+                                                {% heroicon_outline "chart-bar" size="16" %}
+                                                <span>View Dashboard</span>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="px-6 py-12 text-center">
+                                        <div class="flex flex-col items-center">
+                                            {% heroicon_outline "folder-plus" size="48" class="text-gray-300 mb-4" %}
+                                            <p class="text-sm text-gray-500 mb-4">No projects found</p>
+                                            <a href="{% url 'project:project-create' %}"
+                                               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                {% heroicon_outline "plus" size="16" class="mr-2" %}
+                                                Create Your First Project
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div id="loading" hidden class="mt-4">
+                        <div class="flex items-center justify-center space-x-2">
+                            <div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+                            <span class="text-gray-600 font-semibold">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Legend -->
+                <div class="mt-6 p-4 border-t border-gray-200">
+                    <div class="flex items-center justify-center space-x-6 text-sm">
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+                            <span class="text-gray-600 font-semibold">Contract Amount</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
+                            <span class="text-gray-600 font-semibold">Certified Amount</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-purple-500 rounded mr-2"></div>
+                            <span class="text-gray-600 font-semibold">Forecast Amount</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterForm = document.getElementById('filterForm');
+            const searchInput = document.getElementById('id_search');
+            const activeToggle = document.getElementById('id_active_projects');
+            const projectsTable = document.getElementById('projectsTable');
+            const loading = document.getElementById('loading');
+            
+            // Auto-submit on toggle change
+            activeToggle.addEventListener('change', function() {
+                projectsTable.hidden = true;
+                loading.hidden = false;
+                activeToggle.enabled = false;
+                searchTimeout = setTimeout(function() {
+                    filterForm.submit();
+                }, 1000); // Wait 500ms after user stops typing
+            });
+            
+            // Auto-submit on search with debounce
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function() {
+                    filterForm.submit();
+                }, 500); // Wait 500ms after user stops typing
+            });
+            
+            // Submit on Enter key
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    clearTimeout(searchTimeout);
+                    filterForm.submit();
+                }
+            });
+
+            // Performance Index Charts
+            const labels = {{ performance_labels|safe }};
+            const cpiData = {{ cpi_data|safe }};
+            const spiData = {{ spi_data|safe }};
+
+            // Common chart options
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: { size: 13 },
+                        bodyFont: { size: 12 },
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed.y;
+                                if (value === null) return 'No data';
+                                return `Value: ${value.toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: { size: 10 },
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            font: { size: 10 }
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 2
+                    }
+                },
+                elements: {
+                    point: {
+                        radius: 4,
+                        hoverRadius: 6
+                    },
+                    line: {
+                        tension: 0.3
+                    }
+                }
+            };
+
+            // CPI Chart
+            const cpiCtx = document.getElementById('cpiChart').getContext('2d');
+            new Chart(cpiCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'CPI',
+                        data: cpiData,
+                        borderColor: 'rgb(6, 182, 212)',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        fill: true,
+                        borderWidth: 2,
+                        spanGaps: true
+                    }, {
+                        label: 'Target',
+                        data: Array(labels.length).fill(1),
+                        borderColor: 'rgba(156, 163, 175, 0.5)',
+                        borderDash: [5, 5],
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        fill: false
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        annotation: {
+                            annotations: {
+                                line1: {
+                                    type: 'line',
+                                    yMin: 1,
+                                    yMax: 1,
+                                    borderColor: 'rgba(156, 163, 175, 0.5)',
+                                    borderWidth: 1,
+                                    borderDash: [5, 5]
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // SPI Chart
+            const spiCtx = document.getElementById('spiChart').getContext('2d');
+            new Chart(spiCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'SPI',
+                        data: spiData,
+                        borderColor: 'rgb(139, 92, 246)',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        fill: true,
+                        borderWidth: 2,
+                        spanGaps: true
+                    }, {
+                        label: 'Target',
+                        data: Array(labels.length).fill(1),
+                        borderColor: 'rgba(156, 163, 175, 0.5)',
+                        borderDash: [5, 5],
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        fill: false
+                    }]
+                },
+                options: commonOptions
+            });
+        });
+    </script>
+{% endblock content %}
+{% block extra_css %}
+    <style>
+        #id_active_projects {  /* container */
+            appearance: none;  /* Hide default checkbox */
+            width: 44px;
+            height: 24px;
+            background: #dae7fbff;
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        #id_active_projects::before {  /* false position */
+            content: '';
+            position: absolute;
+            background-color: #d33737ff;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            top: 4px;
+            left: 5px;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        #id_active_projects:checked::before {
+            transform: translateX(19px);  /* Slide thumb to right */
+            background-color: rgb(0, 201, 80);
+        }
+    </style>
+{% endblock extra_css %}

@@ -166,11 +166,11 @@ class Project(BaseModel):
         ordering = ["-name"]
 
     def get_absolute_url(self):
-        return reverse("project:project-detail", kwargs={"pk": self.pk})
+        return reverse("project:project-management", kwargs={"pk": self.pk})
 
     @staticmethod
     def get_list_url():
-        return reverse("project:project-list")
+        return reverse("project:portfolio-list")
 
     @staticmethod
     def get_create_url():

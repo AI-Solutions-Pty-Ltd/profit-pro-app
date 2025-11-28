@@ -39,11 +39,11 @@ class SpecialItemListView(SpecialItemMixin, ListView):
 
     def get_breadcrumbs(self: "SpecialItemListView") -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
                 "title": self.get_project().name,
                 "url": reverse(
-                    "project:project-detail",
+                    "project:project-management",
                     kwargs={"pk": self.get_project().pk},
                 ),
             },
@@ -80,11 +80,11 @@ class SpecialItemCreateView(SpecialItemMixin, CreateView):
 
     def get_breadcrumbs(self: "SpecialItemCreateView") -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
                 "title": self.get_project().name,
                 "url": reverse(
-                    "project:project-detail",
+                    "project:project-management",
                     kwargs={"pk": self.get_project().pk},
                 ),
             },
@@ -152,11 +152,11 @@ class SpecialItemUpdateView(SpecialItemMixin, UpdateView):
 
     def get_breadcrumbs(self: "SpecialItemUpdateView") -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
                 "title": self.get_project().name,
                 "url": reverse(
-                    "project:project-detail",
+                    "project:project-management",
                     kwargs={"pk": self.get_project().pk},
                 ),
             },
@@ -206,11 +206,11 @@ class SpecialItemDeleteView(SpecialItemMixin, DeleteView):
 
     def get_breadcrumbs(self: "SpecialItemDeleteView") -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
                 "title": self.get_project().name,
                 "url": reverse(
-                    "project:project-detail",
+                    "project:project-management",
                     kwargs={"pk": self.get_project().pk},
                 ),
             },

@@ -8,7 +8,7 @@
         <nav class="flex mb-6" aria-label="Breadcrumb">
             <ol class="inline-flex items-center space-x-1 md:space-x-3">
                 <li class="inline-flex items-center">
-                    <a href="{% url 'project:project-detail' project.pk %}"
+                    <a href="{% url 'project:project-management' project.pk %}"
                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">
                         {% heroicon_outline name="chevron-left" size="20" %}
                         Structures
@@ -54,7 +54,7 @@
                     <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Project</dt>
                         <dd class="mt-1 text-sm text-gray-900">
-                            <a href="{% url 'project:project-detail' structure.project.pk %}"
+                            <a href="{% url 'project:project-management' structure.project.pk %}"
                                class="text-indigo-600 hover:text-indigo-900">{{ structure.project.name }}</a>
                         </dd>
                     </div>
@@ -85,7 +85,7 @@
             <!-- Footer -->
             <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
                 <div class="flex justify-between items-center">
-                    <a href="{% url 'project:project-detail' structure.project.pk %}"
+                    <a href="{% url 'project:project-management' structure.project.pk %}"
                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
                         {% heroicon_outline name="chevron-left" size="20" %}
                         Back to Structures

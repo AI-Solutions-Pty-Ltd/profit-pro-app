@@ -38,7 +38,7 @@ class ProjectAccessMixin(LoginRequiredMixin):
             messages.error(
                 request, "You do not have permission to access this project."
             )
-            return redirect("project:project-list")
+            return redirect("project:portfolio-list")
 
         return super().dispatch(request, *args, **kwargs)
 

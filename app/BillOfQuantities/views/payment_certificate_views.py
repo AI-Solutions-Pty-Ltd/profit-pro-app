@@ -91,12 +91,12 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
         return [
             {
                 "title": "Projects",
-                "url": reverse("project:project-list"),
+                "url": reverse("project:portfolio-list"),
             },
             {
                 "title": self.get_project().name,
                 "url": reverse(
-                    "project:project-detail",
+                    "project:project-management",
                     kwargs={"pk": self.get_project().pk},
                 ),
             },
@@ -224,7 +224,7 @@ class PaymentCertificateDetailView(
             {
                 "title": self.get_project().name,
                 "url": reverse(
-                    "project:project-detail",
+                    "project:project-management",
                     kwargs={"pk": self.get_project().pk},
                 ),
             },

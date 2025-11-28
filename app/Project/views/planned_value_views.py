@@ -65,10 +65,10 @@ class PlannedValueEditView(PlannedValueMixin, TemplateView):
     def get_breadcrumbs(self) -> list[dict[str, str | None]]:
         project = self.get_project()
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
                 "title": project.name,
-                "url": reverse("project:project-detail", kwargs={"pk": project.pk}),
+                "url": reverse("project:project-management", kwargs={"pk": project.pk}),
             },
             {"title": "Planned Values", "url": None},
         ]

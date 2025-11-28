@@ -66,11 +66,11 @@ class ProjectAddClientView(GetProjectMixin, CreateView):
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
-                    "project:project-detail", kwargs={"pk": self.project.pk}
+                    "project:project-management", kwargs={"pk": self.project.pk}
                 ),
             },
             {"title": f"Add Client to {self.project.name}", "url": None},
@@ -99,7 +99,7 @@ class ProjectAddClientView(GetProjectMixin, CreateView):
         messages.success(
             self.request, f"Client '{client.name}' has been added to the project."
         )
-        return redirect("project:project-detail", pk=self.project.pk)
+        return redirect("project:project-management", pk=self.project.pk)
 
 
 class ClientInviteUserView(ClientMixin, FormView):
@@ -110,11 +110,11 @@ class ClientInviteUserView(ClientMixin, FormView):
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
-                    "project:project-detail", kwargs={"pk": self.project.pk}
+                    "project:project-management", kwargs={"pk": self.project.pk}
                 ),
             },
             {"title": f"Invite User to {self.client.name}", "url": None},
@@ -243,8 +243,8 @@ class ClientInviteUserView(ClientMixin, FormView):
         # Get the project associated with this client
         project = Project.objects.filter(client=self.client).first()
         if project:
-            return redirect("project:project-detail", pk=project.pk)
-        return redirect("project:project-list")
+            return redirect("project:project-management", pk=project.pk)
+        return redirect("project:portfolio-list")
 
 
 class ClientEditView(ClientMixin, UpdateView):
@@ -256,11 +256,11 @@ class ClientEditView(ClientMixin, UpdateView):
 
     def get_breadcrumbs(self: "ClientEditView"):
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
-                    "project:project-detail", kwargs={"pk": self.project.pk}
+                    "project:project-management", kwargs={"pk": self.project.pk}
                 ),
             },
             {
@@ -278,7 +278,7 @@ class ClientEditView(ClientMixin, UpdateView):
     def get_success_url(self):
         """Redirect to the project list."""
         return reverse_lazy(
-            "project:project-detail", kwargs={"pk": self.kwargs["project_pk"]}
+            "project:project-management", kwargs={"pk": self.kwargs["project_pk"]}
         )
 
 
@@ -290,11 +290,11 @@ class ClientRemoveView(ClientMixin, DeleteView):
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
-                    "project:project-detail", kwargs={"pk": self.project.pk}
+                    "project:project-management", kwargs={"pk": self.project.pk}
                 ),
             },
             {
@@ -321,7 +321,9 @@ class ClientRemoveView(ClientMixin, DeleteView):
         return context
 
     def get_success_url(self):
-        return reverse_lazy("project:project-detail", kwargs={"pk": self.project.pk})
+        return reverse_lazy(
+            "project:project-management", kwargs={"pk": self.project.pk}
+        )
 
     def delete(self, request, *args, **kwargs):
         """Remove the client from the project (don't delete the client)."""
@@ -339,7 +341,7 @@ class ClientRemoveView(ClientMixin, DeleteView):
             )
 
         # Redirect back to project detail
-        return redirect("project:project-detail", pk=self.project.pk)
+        return redirect("project:project-management", pk=self.project.pk)
 
 
 class ClientRemoveUserView(ClientMixin, View):
@@ -347,11 +349,11 @@ class ClientRemoveUserView(ClientMixin, View):
 
     def get_breadcrumbs(self: "ClientRemoveUserView"):
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
-                    "project:project-detail", kwargs={"pk": self.project.pk}
+                    "project:project-management", kwargs={"pk": self.project.pk}
                 ),
             },
             {
@@ -384,8 +386,8 @@ class ClientRemoveUserView(ClientMixin, View):
 
         # Redirect back to project detail
         if self.project:
-            return redirect("project:project-detail", pk=self.project.pk)
-        return redirect("project:project-list")
+            return redirect("project:project-management", pk=self.project.pk)
+        return redirect("project:portfolio-list")
 
 
 class ClientResendInviteView(ClientMixin, DetailView):
@@ -404,8 +406,8 @@ class ClientResendInviteView(ClientMixin, DetailView):
                 self.request, "This client does not have an associated user to invite."
             )
             if self.project:
-                return redirect("project:project-detail", pk=self.project.pk)
-            return redirect("project:project-list")
+                return redirect("project:project-management", pk=self.project.pk)
+            return redirect("project:portfolio-list")
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -475,5 +477,5 @@ class ClientResendInviteView(ClientMixin, DetailView):
         # Redirect back to project detail
         project = Project.objects.filter(client=self.client).first()
         if project:
-            return redirect("project:project-detail", pk=project.pk)
-        return redirect("project:project-list")
+            return redirect("project:project-management", pk=project.pk)
+        return redirect("project:portfolio-list")

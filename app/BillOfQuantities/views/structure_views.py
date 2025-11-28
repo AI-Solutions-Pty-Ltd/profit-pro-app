@@ -61,7 +61,7 @@ class StructureUpdateView(UserHasGroupGenericMixin, UpdateView):
     def get_success_url(self):
         """Redirect to project's structure list."""
         project: Project = self.object.project
-        return reverse("project:project-detail", kwargs={"pk": project.pk})
+        return reverse("project:project-management", kwargs={"pk": project.pk})
 
     def get_context_data(self, **kwargs):
         """Add project to context."""
@@ -91,7 +91,9 @@ class StructureDeleteView(UserHasGroupGenericMixin, DeleteView):
 
     def get_success_url(self):
         """Redirect to project's structure list."""
-        return reverse("project:project-detail", kwargs={"pk": self.object.project.pk})
+        return reverse(
+            "project:project-management", kwargs={"pk": self.object.project.pk}
+        )
 
     def get_context_data(self, **kwargs):
         """Add project to context."""
@@ -298,6 +300,6 @@ class StructureExcelUploadView(UserHasGroupGenericMixin, FormView):
     def get_success_url(self):
         """Redirect to project's structure list."""
         return reverse(
-            "project:project-detail",
+            "project:project-management",
             kwargs={"pk": self.get_project().pk},
         )

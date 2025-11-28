@@ -41,7 +41,7 @@ class AddendumListView(AddendumMixin, ListView):
             {
                 "title": "Return to Project",
                 "url": reverse(
-                    "project:project-detail",
+                    "project:project-management",
                     kwargs={"pk": self.get_project().pk},
                 ),
             },
@@ -90,7 +90,7 @@ class AddendumCreateView(AddendumMixin, CreateView):
             {
                 "title": "Return to Project",
                 "url": reverse(
-                    "project:project-detail",
+                    "project:project-management",
                     kwargs={"pk": self.get_project().pk},
                 ),
             },
@@ -186,7 +186,7 @@ class AddendumUpdateView(AddendumMixin, UpdateView):
             {
                 "title": "Return to Project",
                 "url": reverse(
-                    "project:project-detail",
+                    "project:project-management",
                     kwargs={"pk": self.get_project().pk},
                 ),
             },
@@ -262,7 +262,7 @@ class AddendumDeleteView(AddendumMixin, DeleteView):
             {
                 "title": "Return to Project",
                 "url": reverse(
-                    "project:project-detail",
+                    "project:project-management",
                     kwargs={"pk": self.get_project().pk},
                 ),
             },

@@ -3,11 +3,17 @@ from django.urls import path
 from app.Project.views import project_views
 
 project_urls = [
-    path(
-        "dashboard/", project_views.ProjectDashboardView.as_view(), name="project-list"
-    ),
     path("create/", project_views.ProjectCreateView.as_view(), name="project-create"),
-    path("<int:pk>/", project_views.ProjectDetailView.as_view(), name="project-detail"),
+    path(
+        "<int:pk>/dashboard/",
+        project_views.ProjectDashboardView.as_view(),
+        name="project-dashboard",
+    ),
+    path(
+        "<int:pk>/",
+        project_views.ProjectManagementView.as_view(),
+        name="project-management",
+    ),
     path(
         "<int:pk>/wbs/",
         project_views.ProjectWBSDetailView.as_view(),

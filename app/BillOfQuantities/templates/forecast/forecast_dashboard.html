@@ -36,7 +36,7 @@
             <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900">12-Month Variance Trend</h2>
+                        <h2 class="text-xl font-bold text-gray-900">12-Month Variance Profile</h2>
                         <p class="text-sm text-gray-600">Forecast variance from Original Budget (zero = on budget)</p>
                     </div>
                     {% if has_chart_data %}
@@ -174,7 +174,7 @@
                                 <td id="variance-amount" class="px-6 py-4 whitespace-nowrap text-right">
                                     {% define original_budget|sub:forecast.total_forecast as variance %}
                                     <span class="text-sm {{ variance|numsign:'text-green-600,text-red-600,text-gray-600' }}">
-                                        {{ variance|numsign:'+R,-R,-' }} {{ variance|abs|floatformat:2|intcomma }}
+                                        {{ variance|numsign:'-R,+R,-' }} {{ variance|abs|floatformat:2|intcomma }}
                                     </span>
                                 </td>
                                 <td id="variance-percentage"

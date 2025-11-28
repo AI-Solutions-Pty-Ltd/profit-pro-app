@@ -94,7 +94,14 @@ class ActualTransactionAdmin(SoftDeleteAdmin):
 
 @admin.register(Forecast)
 class ForecastAdmin(SoftDeleteAdmin):
-    list_display = ["project", "status", "created_at", "deleted"]
+    list_display = [
+        "project",
+        "status",
+        "period",
+        "total_forecast",
+        "created_at",
+        "deleted",
+    ]
     list_filter = ["deleted", "project__name", "status", "created_at"]
     search_fields = ["project__name"]
 
@@ -108,6 +115,7 @@ class ForecastTransactionAdmin(SoftDeleteAdmin):
         "unit_price",
         "total_price",
         "deleted",
+        "forecast__period",
     ]
     list_filter = [
         "forecast__project__name",

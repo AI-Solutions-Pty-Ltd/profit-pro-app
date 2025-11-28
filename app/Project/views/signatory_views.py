@@ -52,11 +52,11 @@ class SignatoryListView(SignatoryMixin, ListView):
 
     def get_breadcrumbs(self: "SignatoryListView") -> list[dict[str, str | None]]:
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
-                    "project:project-detail", kwargs={"pk": self.get_project().pk}
+                    "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
             },
             {"title": f"Signatories for {self.get_project().name}", "url": None},
@@ -78,11 +78,11 @@ class SignatoryCreateView(SignatoryMixin, CreateView):
 
     def get_breadcrumbs(self: "SignatoryCreateView") -> list[dict[str, str | None]]:
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
-                    "project:project-detail", kwargs={"pk": self.get_project().pk}
+                    "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
             },
             {"title": f"Add Signatory to {self.get_project().name}", "url": None},
@@ -119,11 +119,11 @@ class SignatoryUpdateView(SignatoryMixin, UpdateView):
 
     def get_breadcrumbs(self: "SignatoryUpdateView") -> list[dict[str, str | None]]:
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
-                    "project:project-detail", kwargs={"pk": self.get_project().pk}
+                    "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
             },
             {"title": f"Update Signatory {self.get_object().name}", "url": None},
@@ -158,11 +158,11 @@ class SignatoryDeleteView(SignatoryMixin, DeleteView):
 
     def get_breadcrumbs(self: "SignatoryDeleteView") -> list[dict[str, str | None]]:
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
-                    "project:project-detail", kwargs={"pk": self.get_project().pk}
+                    "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
             },
             {"title": f"Delete Signatory {self.get_object().name}", "url": None},

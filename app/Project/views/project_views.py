@@ -1,9 +1,10 @@
 """Views for Project app."""
 
 import json
-from datetime import datetime, timedelta
-from typing import cast
+from datetime import date, datetime
 
+from dateutil.relativedelta import relativedelta
+from django.contrib import messages
 from django.db.models import QuerySet, Sum
 from django.http import Http404
 from django.urls import reverse, reverse_lazy
@@ -11,17 +12,15 @@ from django.views.generic import (
     CreateView,
     DeleteView,
     DetailView,
-    ListView,
     UpdateView,
 )
 
-from app.Account.models import Account
-from app.BillOfQuantities.models import ActualTransaction, PaymentCertificate
+from app.BillOfQuantities.models import ActualTransaction, Forecast, PaymentCertificate
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
-from app.Project.forms import FilterForm, ProjectForm
-from app.Project.models import Project
+from app.Project.forms import ProjectForm
+from app.Project.models import PlannedValue, Project
 
 
 class ProjectMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
@@ -37,196 +36,21 @@ class ProjectMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
         return project
 
 
-class ProjectDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
-    """Projects dashboard showing financial metrics for all projects."""
+class ProjectDashboardView(ProjectMixin, DetailView):
+    """Display project dashboard with graphs only."""
 
     model = Project
     template_name = "project/project_dashboard.html"
-    context_object_name = "projects"
-    permissions = ["consultant", "contractor"]
-
-    filter_form: FilterForm | None = None
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.filter_form = None
-
-    def setup(self, request, *args, **kwargs):
-        """Initialize filter form during view setup."""
-        super().setup(request, *args, **kwargs)
-        self.filter_form = FilterForm(request.GET or {})  # Ensure form is never None
-
-    def get_breadcrumbs(self):
-        return [
-            {"title": "All Projects", "url": reverse("project:project-list")},
-            {"title": "Projects Dashboard", "url": None},
-        ]
-
-    def get_queryset(self) -> QuerySet[Project]:
-        """Get filtered projects for dashboard view."""
-        # Ensure filter_form exists and is valid
-        if not self.filter_form or not self.filter_form.is_valid():
-            # Return unfiltered queryset if form is invalid
-            return Project.objects.filter(account=self.request.user).order_by(
-                "-created_at"
-            )
-
-        projects = Project.objects.filter(account=self.request.user).order_by(
-            "-created_at"
-        )
-
-        # Apply filters from form
-        search = self.filter_form.cleaned_data.get("search")
-        active_only = self.filter_form.cleaned_data.get("active_projects")
-
-        if search:
-            projects = projects.filter(name__icontains=search)
-
-        if active_only:
-            projects = projects.filter(status=Project.Status.ACTIVE)
-
-        return projects
-
-    def get_context_data(self, **kwargs):
-        """Add financial metrics to context."""
-        context = super().get_context_data(**kwargs)
-        projects = context["projects"]
-
-        # Add the already-validated form to context
-        context["filter_form"] = self.filter_form
-
-        dashboard_data = []
-        for project in projects:
-            # Get contract value
-            contract_value = project.get_total_contract_value
-
-            # Get cumulative certified to date (sum of all approved payment certificates)
-            certified_amount = (
-                ActualTransaction.objects.filter(
-                    line_item__project=project,
-                    payment_certificate__status=PaymentCertificate.Status.APPROVED,
-                ).aggregate(total=Sum("total_price"))["total"]
-                or 0
-            )
-
-            # Get latest forecast to date
-            latest_forecast = project.forecasts.order_by("-period").first()
-            forecast_amount = 0
-            if latest_forecast:
-                forecast_amount = latest_forecast.total_forecast
-
-            # Calculate percentages
-            certified_percentage = 0
-            forecast_percentage = 0
-            if contract_value > 0:
-                certified_percentage = (certified_amount / contract_value) * 100
-                forecast_percentage = (forecast_amount / contract_value) * 100
-
-            # Get CPI and SPI for this project
-            current_date = datetime.now()
-            try:
-                project_cpi = project.cost_performance_index(current_date)
-            except (ZeroDivisionError, TypeError):
-                project_cpi = None
-            try:
-                project_spi = project.schedule_performance_index(current_date)
-            except (ZeroDivisionError, TypeError):
-                project_spi = None
-
-            dashboard_data.append(
-                {
-                    "project": project,
-                    "contract_value": contract_value,
-                    "certified_amount": certified_amount,
-                    "forecast_amount": forecast_amount,
-                    "certified_percentage": certified_percentage,
-                    "forecast_percentage": forecast_percentage,
-                    "cpi": project_cpi,
-                    "spi": project_spi,
-                }
-            )
-
-        context["total_contract_value"] = sum_queryset(
-            projects, "line_items__total_price"
-        )
-        context["total_certified_amount"] = sum_queryset(
-            projects, "payment_certificates__actual_transactions__total_price"
-        )
-        context["total_forecast_amount"] = sum_queryset(
-            projects, "forecasts__forecast_transactions__total_price"
-        )
-        context["dashboard_data"] = dashboard_data
-        portfolio = cast(Account, self.request.user).portfolio
-        context["portfolio"] = portfolio
-        context["current_date"] = datetime.now()
-
-        # Generate 12 months of CPI/SPI data for charts
-        performance_data = self._get_performance_chart_data(portfolio)
-        context["performance_labels"] = json.dumps(performance_data["labels"])
-        context["cpi_data"] = json.dumps(performance_data["cpi"])
-        context["spi_data"] = json.dumps(performance_data["spi"])
-        context["current_cpi"] = performance_data["current_cpi"]
-        context["current_spi"] = performance_data["current_spi"]
-
-        return context
-
-    def _get_performance_chart_data(self, portfolio) -> dict:
-        """Generate 12 months of CPI/SPI data for portfolio."""
-        labels = []
-        cpi_values = []
-        spi_values = []
-
-        current_date = datetime.now()
-
-        # Generate data for last 12 months (oldest to newest)
-        for i in range(11, -1, -1):
-            # Calculate the date for this month
-            month_date = current_date - timedelta(days=i * 30)
-            # Normalize to first of month
-            month_date = month_date.replace(day=1)
-
-            labels.append(month_date.strftime("%b %Y"))
-
-            if portfolio:
-                try:
-                    cpi = portfolio.cost_performance_index(month_date)
-                    cpi_values.append(float(cpi) if cpi else None)
-                except (ZeroDivisionError, TypeError, Exception):
-                    cpi_values.append(None)
-
-                try:
-                    spi = portfolio.schedule_performance_index(month_date)
-                    spi_values.append(float(spi) if spi else None)
-                except (ZeroDivisionError, TypeError, Exception):
-                    spi_values.append(None)
-            else:
-                cpi_values.append(None)
-                spi_values.append(None)
-
-        return {
-            "labels": labels,
-            "cpi": cpi_values,
-            "spi": spi_values,
-            "current_cpi": cpi_values[-1] if cpi_values else None,
-            "current_spi": spi_values[-1] if spi_values else None,
-        }
-
-
-class ProjectDetailView(ProjectMixin, DetailView):
-    """Display a single project."""
-
-    model = Project
-    template_name = "project/project_detail.html"
     context_object_name = "project"
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
-            {"title": f"{self.object.name} Details", "url": None},
+            {"title": "Portfolio", "url": reverse("project:portfolio-list")},
+            {"title": f"{self.object.name} Dashboard", "url": None},
         ]
 
-    def get_context_data(self: "ProjectDetailView", **kwargs):
-        """Add structures to context."""
+    def get_context_data(self: "ProjectDashboardView", **kwargs):
+        """Add chart data to context."""
         context = super().get_context_data(**kwargs)
         line_items = self.object.line_items.all()
         # Calculate total
@@ -242,36 +66,93 @@ class ProjectDetailView(ProjectMixin, DetailView):
         context["current_spi"] = performance_data["current_spi"]
         context["current_date"] = datetime.now()
 
+        # Add financial comparison chart data (new bar chart)
+        financial_data = self._get_financial_comparison_data(self.object)
+        context["financial_labels"] = json.dumps(financial_data["labels"])
+        context["planned_values"] = json.dumps(financial_data["planned_values"])
+        context["forecast_values"] = json.dumps(financial_data["forecast_values"])
+        context["certified_values"] = json.dumps(financial_data["certified_values"])
+        context["contract_value"] = float(self.object.get_total_contract_value)
+
         return context
 
     def _get_project_performance_data(self, project: Project) -> dict:
-        """Generate 12 months of CPI/SPI data for a single project."""
+        """Generate CPI/SPI data bounded by project dates (up to 12 months)."""
         labels = []
         cpi_values = []
         spi_values = []
 
-        current_date = datetime.now()
+        today = date.today()
 
-        # Generate data for last 12 months (oldest to newest)
-        for i in range(11, -1, -1):
-            # Calculate the date for this month
-            month_date = current_date - timedelta(days=i * 30)
-            # Normalize to first of month
-            month_date = month_date.replace(day=1)
+        if not project.start_date or not project.end_date:
+            # No project dates set, return empty data
+            messages.error(self.request, "Project dates not set")
+            return {
+                "labels": [],
+                "cpi": [],
+                "spi": [],
+                "current_cpi": None,
+                "current_spi": None,
+            }
 
-            labels.append(month_date.strftime("%b %Y"))
+        # Normalize to first of month
+        project_start = project.start_date.replace(day=1)
+        project_end = project.end_date.replace(day=1)
+
+        # Determine initial chart range based on current date
+        chart_start = project_start
+        chart_end = min(project_end, today.replace(day=1))
+
+        # If chart_end is before chart_start (project hasn't started), start from project start
+        if chart_end < chart_start:
+            chart_end = chart_start
+
+        # Calculate current months coverage
+        months_diff = (
+            (chart_end.year - chart_start.year) * 12
+            + (chart_end.month - chart_start.month)
+            + 1
+        )
+
+        # Pad into future if less than 12 months, but cap at project end
+        if months_diff < 12:
+            needed_months = 12 - months_diff
+            extended_end = chart_end + relativedelta(months=needed_months)
+            chart_end = min(extended_end, project_end)
+
+        # Recalculate months after potential extension
+        months_diff = (
+            (chart_end.year - chart_start.year) * 12
+            + (chart_end.month - chart_start.month)
+            + 1
+        )
+
+        # If more than 12 months, show most recent 12
+        if months_diff > 12:
+            chart_start = chart_end - relativedelta(months=11)
+
+        # Generate data for each month in the range (oldest to newest)
+        current_month = chart_start
+        while current_month <= chart_end:
+            labels.append(current_month.strftime("%b %Y"))
+
+            # Convert to datetime for performance index methods
+            month_datetime = datetime(current_month.year, current_month.month, 1)
 
             try:
-                cpi = project.cost_performance_index(month_date)
+                cpi = project.cost_performance_index(month_datetime)
                 cpi_values.append(float(cpi) if cpi else None)
             except (ZeroDivisionError, TypeError, Exception):
                 cpi_values.append(None)
 
             try:
-                spi = project.schedule_performance_index(month_date)
+                spi = project.schedule_performance_index(month_datetime)
                 spi_values.append(float(spi) if spi else None)
             except (ZeroDivisionError, TypeError, Exception):
                 spi_values.append(None)
+
+            # Move to next month
+            current_month = current_month + relativedelta(months=1)
 
         return {
             "labels": labels,
@@ -280,6 +161,138 @@ class ProjectDetailView(ProjectMixin, DetailView):
             "current_cpi": cpi_values[-1] if cpi_values else None,
             "current_spi": spi_values[-1] if spi_values else None,
         }
+
+    def _get_financial_comparison_data(self, project: Project) -> dict:
+        """Generate monthly Planned Value, Forecast, and Cumulative Certified data.
+
+        Chart is bounded by project start_date and end_date, showing up to 12 months.
+        """
+        labels = []
+        planned_values = []
+        forecast_values = []
+        certified_values = []
+
+        # Determine date range from project dates
+        today = date.today()
+
+        if not project.start_date or not project.end_date:
+            # No project dates set, return empty data
+            return {
+                "labels": [],
+                "planned_values": [],
+                "forecast_values": [],
+                "certified_values": [],
+            }
+
+        # Normalize to first of month
+        project_start = project.start_date.replace(day=1)
+        project_end = project.end_date.replace(day=1)
+
+        # Determine initial chart range based on current date
+        chart_start = project_start
+        chart_end = min(project_end, today.replace(day=1))
+
+        # If chart_end is before chart_start (project hasn't started), start from project start
+        if chart_end < chart_start:
+            chart_end = chart_start
+
+        # Calculate current months coverage
+        months_diff = (
+            (chart_end.year - chart_start.year) * 12
+            + (chart_end.month - chart_start.month)
+            + 1
+        )
+
+        # Pad into future if less than 12 months, but cap at project end
+        if months_diff < 12:
+            needed_months = 12 - months_diff
+            extended_end = chart_end + relativedelta(months=needed_months)
+            chart_end = min(extended_end, project_end)
+
+        # Recalculate months after potential extension
+        months_diff = (
+            (chart_end.year - chart_start.year) * 12
+            + (chart_end.month - chart_start.month)
+            + 1
+        )
+
+        # If more than 12 months, show most recent 12
+        if months_diff > 12:
+            chart_start = chart_end - relativedelta(months=11)
+
+        # Generate data for each month in the range (oldest to newest)
+        current_month = chart_start
+        while current_month <= chart_end:
+            labels.append(current_month.strftime("%b %Y"))
+
+            # Get planned value for this month
+            planned_value = PlannedValue.objects.filter(
+                project=project,
+                period__year=current_month.year,
+                period__month=current_month.month,
+            ).first()
+            planned_values.append(float(planned_value.value) if planned_value else 0)
+
+            # Get forecast for this month
+            forecast = Forecast.objects.filter(
+                project=project,
+                period__year=current_month.year,
+                period__month=current_month.month,
+                status=Forecast.Status.APPROVED,
+            ).first()
+            forecast_values.append(float(forecast.total_forecast) if forecast else 0)
+
+            # Get cumulative certified up to end of this month
+            end_of_month = current_month + relativedelta(months=1)
+            cumulative_certified = ActualTransaction.objects.filter(
+                line_item__project=project,
+                payment_certificate__status=PaymentCertificate.Status.APPROVED,
+                payment_certificate__approved_on__lt=end_of_month,
+            ).aggregate(total=Sum("total_price"))["total"]
+            certified_values.append(
+                float(cumulative_certified) if cumulative_certified else 0
+            )
+
+            # Move to next month
+            current_month = current_month + relativedelta(months=1)
+
+        return {
+            "labels": labels,
+            "planned_values": planned_values,
+            "forecast_values": forecast_values,
+            "certified_values": certified_values,
+        }
+
+
+class ProjectManagementView(ProjectMixin, DetailView):
+    """Display project management page with all buttons (no graphs)."""
+
+    model = Project
+    template_name = "project/project_management.html"
+    context_object_name = "project"
+
+    def get_breadcrumbs(self):
+        return [
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
+            {
+                "title": f"{self.object.name} Dashboard",
+                "url": reverse(
+                    "project:project-dashboard", kwargs={"pk": self.object.pk}
+                ),
+            },
+            {"title": "Management", "url": None},
+        ]
+
+    def get_context_data(self: "ProjectManagementView", **kwargs):
+        """Add structures to context."""
+        context = super().get_context_data(**kwargs)
+        line_items = self.object.line_items.all()
+        # Calculate total
+        total = sum_queryset(line_items, "total_price")
+        context["line_items_total"] = total
+        context["current_date"] = datetime.now()
+
+        return context
 
 
 class ProjectWBSDetailView(ProjectMixin, DetailView):
@@ -291,12 +304,14 @@ class ProjectWBSDetailView(ProjectMixin, DetailView):
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
-                "title": "Project Details",
-                "url": reverse("project:project-detail", kwargs={"pk": self.object.pk}),
+                "title": f"{self.object.name} Dashboard",
+                "url": reverse(
+                    "project:project-dashboard", kwargs={"pk": self.object.pk}
+                ),
             },
-            {"title": f"{self.object.name} WBS", "url": None},
+            {"title": "WBS", "url": None},
         ]
 
     def get_context_data(self, **kwargs):
@@ -359,7 +374,7 @@ class ProjectCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Return to Projects", "url": reverse("project:project-list")},
+            {"title": "Return to Projects", "url": reverse("project:portfolio-list")},
         ]
 
     def form_valid(self, form):
@@ -368,10 +383,12 @@ class ProjectCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
         return super().form_valid(form)
 
     def get_success_url(self: "ProjectCreateView"):
-        """Redirect to the project detail."""
+        """Redirect to the project dashboard."""
         if self.object and self.object.pk:
-            return reverse_lazy("project:project-detail", kwargs={"pk": self.object.pk})
-        return reverse_lazy("project:project-list")
+            return reverse_lazy(
+                "project:project-dashboard", kwargs={"pk": self.object.pk}
+            )
+        return reverse_lazy("project:portfolio-list")
 
 
 class ProjectUpdateView(ProjectMixin, UpdateView):
@@ -384,17 +401,25 @@ class ProjectUpdateView(ProjectMixin, UpdateView):
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
-                "title": "Return to Project Detail",
-                "url": reverse("project:project-detail", kwargs={"pk": self.object.pk}),
+                "title": f"{self.object.name} Dashboard",
+                "url": reverse(
+                    "project:project-dashboard", kwargs={"pk": self.object.pk}
+                ),
             },
-            {"title": f"Update: {self.object.name} Project", "url": None},
+            {
+                "title": "Management",
+                "url": reverse(
+                    "project:project-management", kwargs={"pk": self.object.pk}
+                ),
+            },
+            {"title": "Update", "url": None},
         ]
 
     def get_success_url(self):
-        """Redirect to the project list."""
-        return reverse_lazy("project:project-detail", kwargs={"pk": self.object.pk})
+        """Redirect to project management."""
+        return reverse_lazy("project:project-management", kwargs={"pk": self.object.pk})
 
 
 class ProjectDeleteView(ProjectMixin, DeleteView):
@@ -402,14 +427,22 @@ class ProjectDeleteView(ProjectMixin, DeleteView):
 
     model = Project
     template_name = "project/project_confirm_delete.html"
-    success_url = reverse_lazy("project:project-list")
+    success_url = reverse_lazy("project:portfolio-list")
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Projects", "url": reverse("project:project-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
             {
-                "title": "Return to Project Detail",
-                "url": reverse("project:project-detail", kwargs={"pk": self.object.pk}),
+                "title": f"{self.object.name} Dashboard",
+                "url": reverse(
+                    "project:project-dashboard", kwargs={"pk": self.object.pk}
+                ),
             },
-            {"title": f"Delete: {self.object.name} Project", "url": None},
+            {
+                "title": "Management",
+                "url": reverse(
+                    "project:project-management", kwargs={"pk": self.object.pk}
+                ),
+            },
+            {"title": "Delete", "url": None},
         ]

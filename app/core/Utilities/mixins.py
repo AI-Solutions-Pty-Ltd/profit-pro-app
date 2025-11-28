@@ -19,8 +19,8 @@ class BreadcrumbMixin(View):
         def get_breadcrumbs(self):
             project = self.get_object()
             return [
-                {'title': 'Projects', 'url': 'project:project-list'},
-                {'title': 'Project Details', 'url': 'project:project-detail'},
+                {'title': 'Projects', 'url': 'project:portfolio-list'},
+                {'title': 'Project Details', 'url': 'project:project-management'},
                 {'title': project.name, 'url': None}
             ]
     """
