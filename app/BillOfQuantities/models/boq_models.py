@@ -156,7 +156,7 @@ class LineItem(BaseModel):
     budgeted_quantity = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True)
 
-    # for addendum line items
+    # for addendum / variations line items
     addendum = models.BooleanField(default=False)
     special_item = models.BooleanField(default=False)
 

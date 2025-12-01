@@ -5,21 +5,35 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('BillOfQuantities', '0008_forecast_notes_forecasttransaction_notes'),
-        ('Project', '0009_add_forecast_value_to_planned_value'),
+        ("BillOfQuantities", "0008_forecast_notes_forecasttransaction_notes"),
+        ("Project", "0009_add_forecast_value_to_planned_value"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='project',
-            name='final_payment_certificate',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='final_account_project', to='BillOfQuantities.paymentcertificate'),
+            model_name="project",
+            name="final_payment_certificate",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="final_account_project",
+                to="BillOfQuantities.paymentcertificate",
+            ),
         ),
         migrations.AlterField(
-            model_name='project',
-            name='status',
-            field=models.CharField(choices=[('SETUP', 'Setup'), ('ACTIVE', 'Active'), ('INACTIVE', 'Inactive'), ('FINAL_ACCOUNT_ISSUED', 'Final Account Issued')], default='SETUP', max_length=255),
+            model_name="project",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("SETUP", "Setup"),
+                    ("ACTIVE", "Active"),
+                    ("INACTIVE", "Inactive"),
+                    ("FINAL_ACCOUNT_ISSUED", "Final Account Issued"),
+                ],
+                default="SETUP",
+                max_length=255,
+            ),
         ),
     ]

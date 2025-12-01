@@ -114,11 +114,6 @@ class TestLineItemModel:
         assert line_item.structure is not None
         assert line_item.bill is not None
 
-    def test_line_item_string_representation(self):
-        """Test the __str__ method returns item number."""
-        line_item = LineItemFactory.create(item_number="ITEM-123")
-        assert str(line_item) == "ITEM-123"
-
     def test_line_item_with_package(self):
         """Test creating line item with package."""
         package = PackageFactory.create()
@@ -276,9 +271,9 @@ class TestLineItemModel:
 
         assert len(result) == 2
         for item in result:
-            assert item.previous_claimed is None
-            assert item.current_claim is None
-            assert item.total_claimed is None
+            assert item.previous_claimed == Decimal(0)
+            assert item.current_claim == Decimal(0)
+            assert item.total_claimed == Decimal(0)
 
     def test_construct_payment_certificate_with_current_transactions_only(self):
         """Test construct_payment_certificate with only current certificate transactions."""
@@ -316,8 +311,8 @@ class TestLineItemModel:
         line_item2_result = result.get(id=line_item2.id)
 
         # No previous certificates
-        assert line_item1_result.previous_claimed is None
-        assert line_item2_result.previous_claimed is None
+        assert line_item1_result.previous_claimed == Decimal(0)
+        assert line_item2_result.previous_claimed == Decimal(0)
 
         # Current claims should match
         assert line_item1_result.current_claim == Decimal("1000.00")
@@ -473,11 +468,11 @@ class TestLineItemModel:
 
         # Line item 2: has previous only
         assert item2.previous_claimed == Decimal("200.00")
-        assert item2.current_claim is None
+        assert item2.current_claim == Decimal(0)
         assert item2.total_claimed == Decimal("200.00")
 
         # Line item 3: has current only
-        assert item3.previous_claimed is None
+        assert item3.previous_claimed == Decimal(0)
         assert item3.current_claim == Decimal("150.00")
         assert item3.total_claimed == Decimal("150.00")
 

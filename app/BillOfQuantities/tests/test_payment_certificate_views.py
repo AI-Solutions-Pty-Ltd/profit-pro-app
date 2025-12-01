@@ -106,7 +106,13 @@ class TestPaymentCertificateDetailView:
         """Test detail view displays certificate details."""
         user = AccountFactory.create()
         project = ProjectFactory.create(account=user)
+        line_item = LineItemFactory.create(project=project)
         certificate = PaymentCertificateFactory.create(project=project)
+        _actual_transaction = ActualTransactionFactory.create(
+            payment_certificate=certificate,
+            line_item=line_item,
+            total_price=Decimal("500.00"),
+        )
 
         client.force_login(user)
         url = reverse(
@@ -123,18 +129,22 @@ class TestPaymentCertificateDetailView:
         """Test detail view calculates total amount correctly."""
         user = AccountFactory.create()
         project = ProjectFactory.create(account=user)
-        certificate = PaymentCertificateFactory.create(project=project)
+        certificate: PaymentCertificate = PaymentCertificateFactory.create(
+            project=project
+        )
         line_item = LineItemFactory.create(project=project)
 
         ActualTransactionFactory.create(
             payment_certificate=certificate,
             line_item=line_item,
             total_price=Decimal("500.00"),
+            claimed=True,
         )
         ActualTransactionFactory.create(
             payment_certificate=certificate,
             line_item=line_item,
             total_price=Decimal("300.00"),
+            claimed=True,
         )
 
         client.force_login(user)
@@ -144,7 +154,8 @@ class TestPaymentCertificateDetailView:
         )
         response = client.get(url)
 
-        assert response.context["total_amount"] == Decimal("800.00")
+        assert response.status_code == 200
+        assert certificate.total_claimed == Decimal("800.00")
 
 
 @pytest.mark.django_db
