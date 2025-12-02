@@ -1,7 +1,9 @@
 from . import (
     addendum_views,
     apis,
+    contract_views,
     forecast_views,
+    ledger_views,
     payment_certificate_views,
     special_item_views,
     structure_views,
@@ -10,7 +12,9 @@ from . import (
 __all__ = [
     "addendum_views",
     "apis",
+    "contract_views",
     "forecast_views",
+    "ledger_views",
     "payment_certificate_views",
     "special_item_views",
     "structure_views",

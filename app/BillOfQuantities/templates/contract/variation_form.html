@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+{% load crispy_forms_tags %}
+{% block title %}
+    {% if is_create %}
+        New
+    {% else %}
+        Edit
+    {% endif %}
+    Variation - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        {% if is_create %}
+                            New Contract Variation
+                        {% else %}
+                            Edit Variation
+                        {% endif %}
+                    </h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+                </div>
+            </div>
+        </div>
+        <!-- Form -->
+        <form method="post" enctype="multipart/form-data" class="px-6 py-6">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>{{ form.variation_number|as_crispy_field }}</div>
+                <div>{{ form.title|as_crispy_field }}</div>
+            </div>
+            <div class="mt-4">{{ form.description|as_crispy_field }}</div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+                <div>{{ form.category|as_crispy_field }}</div>
+                <div>{{ form.variation_type|as_crispy_field }}</div>
+                <div>{{ form.status|as_crispy_field }}</div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div>{{ form.variation_amount|as_crispy_field }}</div>
+                <div>{{ form.time_extension_days|as_crispy_field }}</div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+                <div>{{ form.date_identified|as_crispy_field }}</div>
+                <div>{{ form.date_submitted|as_crispy_field }}</div>
+                <div>{{ form.date_approved|as_crispy_field }}</div>
+            </div>
+            {% if not is_create and form.approved_by %}<div class="mt-4">{{ form.approved_by|as_crispy_field }}</div>{% endif %}
+            <div class="mt-4 flex flex-col">
+                {{ form.attachment|as_crispy_field }}
+                {% if not is_create and object.attachment %}
+                    <p class="text-sm text-gray-500 mt-1">
+                        Current file: <a href="{{ object.attachment.url }}"
+    class="text-indigo-600 hover:underline"
+    target="_blank">{{ object.attachment.name }}</a>
+                    </p>
+                {% endif %}
+            </div>
+            <!-- Actions -->
+            <div class="mt-6 pt-6 border-t border-gray-200 flex justify-end space-x-3">
+                <a href="{% url 'bill_of_quantities:variation-list' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_outline "check" class="w-4 h-4 mr-2" %}
+                    {% if is_create %}
+                        Create Variation
+                    {% else %}
+                        Save Changes
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock content %}

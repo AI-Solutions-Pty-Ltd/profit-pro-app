@@ -142,6 +142,88 @@ class Project(BaseModel):
     contract_number = models.CharField(max_length=255, blank=True)
     contract_clause = models.CharField(max_length=255, blank=True)
     vat = models.BooleanField(default=False)
+
+    # Contractual dates for contract management
+    contractual_start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Contractual/possession start date",
+    )
+    contractual_completion_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Original contractual completion date",
+    )
+    revised_completion_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Current revised completion date (after extensions)",
+    )
+    practical_completion_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date of practical completion",
+    )
+    defects_liability_period = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Defects liability period in months",
+    )
+    final_completion_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Final completion date (end of defects liability)",
+    )
+
+    # Contract duration
+    contract_duration_days = models.IntegerField(
+        null=True,
+        blank=True,
+        help_text="Original contract duration in calendar days",
+    )
+    approved_extension_days = models.IntegerField(
+        default=0,
+        help_text="Total approved extension of time in days",
+    )
+
+    # Retention settings
+    retention_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Retention percentage (e.g., 10.00 for 10%)",
+    )
+    retention_limit_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Retention limit as percentage of contract value",
+    )
+    retention_release_practical = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Percentage of retention released at practical completion",
+    )
+
+    # Advance payment settings
+    advance_payment_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Advance payment percentage",
+    )
+    advance_recovery_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Advance recovery percentage per certificate",
+    )
     final_payment_certificate = models.ForeignKey(
         "BillOfQuantities.PaymentCertificate",
         on_delete=models.SET_NULL,

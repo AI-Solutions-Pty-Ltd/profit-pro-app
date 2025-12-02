@@ -1,0 +1,169 @@
+{% extends "base_full.html" %}
+{% block title %}
+    Contractual Correspondences - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
+                    <p class="text-sm text-gray-600 mt-1">Contractual Correspondences Register</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'bill_of_quantities:correspondence-create' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}
+                        New Correspondence
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total</p>
+            <p class="mt-1 text-xl font-bold text-blue-600">{{ total_count }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Outgoing</p>
+            <p class="mt-1 text-xl font-bold text-green-600">{{ outgoing_count }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Incoming</p>
+            <p class="mt-1 text-xl font-bold text-purple-600">{{ incoming_count }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-amber-500">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Pending Response</p>
+            <p class="mt-1 text-xl font-bold text-amber-600">{{ pending_response_count }}</p>
+        </div>
+    </div>
+    <!-- Correspondences Table -->
+    <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Correspondences Register</h2>
+        </div>
+        {% if correspondences %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Reference
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Date
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Subject
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Type
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Direction
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Response
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for corr in correspondences %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ corr.reference_number }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ corr.date_of_correspondence|date:"d M Y" }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-900">
+                                    <div class="max-w-xs truncate">{{ corr.subject }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ corr.get_correspondence_type_display }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if corr.direction == 'OUTGOING' %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            {% heroicon_outline "arrow-up-right" class="w-3 h-3 mr-1" %}Outgoing
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            {% heroicon_outline "arrow-down-left" class="w-3 h-3 mr-1" %}Incoming
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if corr.requires_response %}
+                                        {% if corr.response_sent %}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                {% heroicon_outline "check" class="w-3 h-3 mr-1" %}Sent
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                                {% heroicon_outline "clock" class="w-3 h-3 mr-1" %}Pending
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-gray-400 text-sm">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex items-center space-x-2">
+                                        <a href="{% url 'bill_of_quantities:correspondence-detail' project.pk corr.pk %}"
+                                           class="text-indigo-600 hover:text-indigo-900"
+                                           title="View">{% heroicon_outline "eye" class="w-5 h-5" %}</a>
+                                        <a href="{% url 'bill_of_quantities:correspondence-edit' project.pk corr.pk %}"
+                                           class="text-gray-600 hover:text-gray-900"
+                                           title="Edit">{% heroicon_outline "pencil" class="w-5 h-5" %}</a>
+                                        {% if corr.attachment %}
+                                            <a href="{{ corr.attachment.url }}"
+                                               class="text-green-600 hover:text-green-900"
+                                               title="Download"
+                                               target="_blank">{% heroicon_outline "paper-clip" class="w-5 h-5" %}</a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="px-6 py-12 text-center">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+                    {% heroicon_outline "envelope" class="w-8 h-8 text-gray-400" %}
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No correspondences yet</h3>
+                <p class="text-gray-500 mb-4">Get started by logging a new correspondence.</p>
+                <a href="{% url 'bill_of_quantities:correspondence-create' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                    {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}
+                    Log First Correspondence
+                </a>
+            </div>
+        {% endif %}
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'bill_of_quantities:variation-list' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Contract Variations
+                </a>
+                <a href="{% url 'project:project-management' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    Project Management
+                    {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

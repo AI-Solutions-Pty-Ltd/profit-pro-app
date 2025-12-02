@@ -36,32 +36,37 @@
         <!-- Project Management Section -->
         <div class="px-6 py-6 border-b border-gray-200 bg-white">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <!-- WBS/BOQ Section -->
+                <!-- Contracts Management Section -->
                 <div class="group relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                     <div class="flex items-center mb-3">
                         <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
                             {% heroicon_outline "document-text" size="20" class="text-white" %}
                         </div>
                         <div>
-                            <h3 class="text-sm font-bold text-blue-900">WBS / Bill of Quantities</h3>
-                            <p class="text-xs text-blue-600">Project structure & items</p>
+                            <h3 class="text-sm font-bold text-blue-900">Contracts Management</h3>
+                            <p class="text-xs text-blue-600">BOQ, Variations & Correspondences</p>
                         </div>
                     </div>
                     <div class="space-y-2">
                         {% if project.line_items.exists %}
                             <a href="{% url 'project:project-wbs-detail' project.pk %}"
                                class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-blue-700">Main Structure</span>
+                                <span class="text-sm font-medium text-blue-700">Contract BOQ</span>
                                 {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                             <a href="{% url 'bill_of_quantities:addendum-list' project.pk %}"
                                class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-purple-700">Addendum Items</span>
+                                <span class="text-sm font-medium text-purple-700">Additional Items</span>
                                 {% heroicon_outline "arrow-right" size="16" class="text-purple-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
-                            <a href="{% url 'bill_of_quantities:special-item-list' project.pk %}"
+                            <a href="{% url 'bill_of_quantities:variation-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-teal-200 hover:bg-teal-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-teal-700">Contract Variations</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-teal-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                            <a href="{% url 'bill_of_quantities:correspondence-list' project.pk %}"
                                class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-orange-700">Special Items</span>
+                                <span class="text-sm font-medium text-orange-700">Correspondences</span>
                                 {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                         {% else %}
@@ -108,15 +113,40 @@
                         </div>
                         <div>
                             <h3 class="text-sm font-bold text-purple-900">Payment Certificates</h3>
-                            <p class="text-xs text-purple-600">Billing & payments</p>
+                            <p class="text-xs text-purple-600">Billing & ledger accounts</p>
                         </div>
                     </div>
                     <div class="space-y-2">
                         {% if project.line_items.exists %}
                             <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
                                class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-purple-700">View Certificates</span>
+                                <span class="text-sm font-medium text-purple-700">Certificates</span>
                                 {% heroicon_outline "arrow-right" size="16" class="text-purple-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                            <a href="{% url 'bill_of_quantities:advance-payment-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-blue-700">Advance Payments</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                            <a href="{% url 'bill_of_quantities:retention-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-amber-700">Retention</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                            <a href="{% url 'bill_of_quantities:materials-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-green-700">Materials on Site</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                            <a href="{% url 'bill_of_quantities:escalation-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-rose-200 hover:bg-rose-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-rose-700">Escalation</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-rose-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                            <a href="{% url 'bill_of_quantities:special-item-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-orange-700">Special Items</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                         {% else %}
                             <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
@@ -127,22 +157,22 @@
                         {% endif %}
                     </div>
                 </div>
-                <!-- Planned Values Section -->
+                <!-- Cashflow Management Section -->
                 <div class="group relative bg-gradient-to-br from-cyan-50 to-teal-50 rounded-xl p-4 border border-cyan-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                     <div class="flex items-center mb-3">
                         <div class="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center mr-3">
-                            {% heroicon_outline "calendar" size="20" class="text-white" %}
+                            {% heroicon_outline "chart-bar-square" size="20" class="text-white" %}
                         </div>
                         <div>
-                            <h3 class="text-sm font-bold text-cyan-900">Planned Values</h3>
-                            <p class="text-xs text-cyan-600">Budget benchmarks</p>
+                            <h3 class="text-sm font-bold text-cyan-900">Cashflow Management</h3>
+                            <p class="text-xs text-cyan-600">Baselines & Forecasts</p>
                         </div>
                     </div>
                     <div class="space-y-2">
                         {% if project.start_date and project.end_date %}
                             <a href="{% url 'project:planned-value-edit' project.pk %}"
                                class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-cyan-700">Manage Planned Values</span>
+                                <span class="text-sm font-medium text-cyan-700">Baseline Cashflow</span>
                                 {% heroicon_outline "arrow-right" size="16" class="text-cyan-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                             {% if project.planned_values.exists %}
