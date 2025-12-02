@@ -4,15 +4,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('BillOfQuantities', '0008_forecast_notes_forecasttransaction_notes'),
+        ("BillOfQuantities", "0008_forecast_notes_forecasttransaction_notes"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='paymentcertificate',
-            name='is_final',
-            field=models.BooleanField(default=False, help_text='Mark as final payment certificate for the project'),
+            model_name="paymentcertificate",
+            name="is_final",
+            field=models.BooleanField(
+                default=False,
+                help_text="Mark as final payment certificate for the project",
+            ),
         ),
     ]

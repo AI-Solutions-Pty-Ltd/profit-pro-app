@@ -59,11 +59,11 @@ class TestStructureModel:
     def test_structures_soft_delete(self):
         """Test soft delete functionality."""
         structure = StructureFactory.create()
-        structure_id = structure.pk
+        _structure2 = StructureFactory.create()
 
         structure.soft_delete()
 
-        assert Structure.objects.filter(id=structure_id).count() == 1
+        assert Structure.objects.all().count() == 1
 
     def test_structures_restore(self):
         """Test restore functionality after soft delete."""

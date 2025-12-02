@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% load crispy_forms_tags %}
+{% block title %}
+    {% if is_create %}
+        New
+    {% else %}
+        Edit
+    {% endif %}
+    Advance Payment - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h1 class="text-2xl font-bold text-gray-900">
+                {% if is_create %}
+                    New Advance Payment
+                {% else %}
+                    Edit Transaction
+                {% endif %}
+            </h1>
+            <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+        </div>
+        <form method="post" class="px-6 py-6">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>{{ form.transaction_type|as_crispy_field }}</div>
+                <div>{{ form.amount|as_crispy_field }}</div>
+            </div>
+            <div class="mt-4">{{ form.description|as_crispy_field }}</div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div>{{ form.date|as_crispy_field }}</div>
+                <div>{{ form.payment_certificate|as_crispy_field }}</div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div>{{ form.recovery_method|as_crispy_field }}</div>
+                <div>{{ form.recovery_percentage|as_crispy_field }}</div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div>{{ form.guarantee_reference|as_crispy_field }}</div>
+                <div>{{ form.guarantee_expiry|as_crispy_field }}</div>
+            </div>
+            <div class="mt-6 pt-6 border-t border-gray-200 flex justify-end space-x-3">
+                <a href="{% url 'bill_of_quantities:advance-payment-list' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Cancel</a>
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                    {% heroicon_outline "check" class="w-4 h-4 mr-2" %}
+                    {% if is_create %}
+                        Create
+                    {% else %}
+                        Save
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock content %}

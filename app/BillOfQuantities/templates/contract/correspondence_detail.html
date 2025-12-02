@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% load humanize %}
+{% block title %}
+    {{ correspondence.reference_number }} - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ correspondence.reference_number }}</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ correspondence.subject }}</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'bill_of_quantities:correspondence-edit' project.pk correspondence.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        {% heroicon_outline "pencil" class="w-4 h-4 mr-2" %}Edit
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="px-6 py-6">
+            <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Date</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                        {{ correspondence.date_of_correspondence|date:"d M Y" }}
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Type</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                        {{ correspondence.get_correspondence_type_display }}
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Direction</dt>
+                    <dd class="mt-1">
+                        {% if correspondence.direction == 'OUTGOING' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Outgoing</span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Incoming</span>
+                        {% endif %}
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Sender</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                        {{ correspondence.sender|default:"-" }}
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Recipient</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                        {{ correspondence.recipient|default:"-" }}
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Response Status</dt>
+                    <dd class="mt-1">
+                        {% if correspondence.requires_response %}
+                            {% if correspondence.response_sent %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Sent</span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Pending</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-sm text-gray-500">Not required</span>
+                        {% endif %}
+                    </dd>
+                </div>
+            </dl>
+            {% if correspondence.summary %}
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Summary</h3>
+                    <div class="prose prose-sm max-w-none text-gray-900">{{ correspondence.summary|linebreaks }}</div>
+                </div>
+            {% endif %}
+            {% if correspondence.attachment %}
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <a href="{{ correspondence.attachment.url }}"
+                       target="_blank"
+                       class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        {% heroicon_outline "paper-clip" class="w-4 h-4 mr-2" %}Download Attachment
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <a href="{% url 'bill_of_quantities:correspondence-list' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}Back to Correspondences
+            </a>
+        </div>
+    </div>
+{% endblock content %}

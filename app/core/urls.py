@@ -1,5 +1,7 @@
 import os
 
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
@@ -12,33 +14,37 @@ from .views import (
     RegisterView,
 )
 
-urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("features/", FeaturesView.as_view(), name="features"),
-    path("final-account/", FinalAccountView.as_view(), name="final-account"),
-    path("impact/", ImpactView.as_view(), name="impact"),
-    path("about/", AboutView.as_view(), name="about"),
-    path("", HomeView.as_view(), name="home"),
-    path("", include("app.Account.auth_urls")),
-    path("register/", RegisterView.as_view(), name="register"),
-    # app urls
-    path("account/", include("app.Account.urls", "account")),
-    path("project/", include("app.Project.urls", "project")),
-    path(
-        "bill-of-quantities/",
-        include("app.BillOfQuantities.urls", "bill_of_quantities"),
-    ),
-    path(
-        "cost/",
-        include("app.Cost.urls", "cost"),
-    ),
-    path("consultant/", include("app.Consultant.urls", "consultant")),
-    path("inventories/", include("app.Inventories.urls", "inventories")),
-    path(
-        "suppliers/",
-        include("app.Inventories.urls_suppliers", "suppliers"),
-    ),
-]
+urlpatterns = (
+    [
+        path("admin/", admin.site.urls),
+        path("features/", FeaturesView.as_view(), name="features"),
+        path("final-account/", FinalAccountView.as_view(), name="final-account"),
+        path("impact/", ImpactView.as_view(), name="impact"),
+        path("about/", AboutView.as_view(), name="about"),
+        path("", HomeView.as_view(), name="home"),
+        path("", include("app.Account.auth_urls")),
+        path("register/", RegisterView.as_view(), name="register"),
+        # app urls
+        path("account/", include("app.Account.urls", "account")),
+        path("project/", include("app.Project.urls", "project")),
+        path(
+            "bill-of-quantities/",
+            include("app.BillOfQuantities.urls", "bill_of_quantities"),
+        ),
+        path(
+            "cost/",
+            include("app.Cost.urls", "cost"),
+        ),
+        path("consultant/", include("app.Consultant.urls", "consultant")),
+        path("inventories/", include("app.Inventories.urls", "inventories")),
+        path(
+            "suppliers/",
+            include("app.Inventories.urls_suppliers", "suppliers"),
+        ),
+    ]
+    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+)
 
 if os.getenv("DJANGO_SETTINGS_MODULE") == "settings.local":
     urlpatterns += [

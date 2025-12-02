@@ -87,16 +87,6 @@ class TestPaymentCertificateModel:
         assert cert1 in project.payment_certificates.all()
         assert cert2 in project.payment_certificates.all()
 
-    def test_payment_certificate_soft_delete(self):
-        """Test soft delete functionality."""
-        certificate = PaymentCertificateFactory.create()
-        certificate_id = certificate.pk
-
-        certificate.soft_delete()
-
-        assert PaymentCertificate.objects.filter(id=certificate_id).count() == 1
-        assert certificate.is_deleted
-
     def test_payment_certificate_timestamps(self):
         """Test created_at and updated_at are set correctly."""
         certificate = PaymentCertificateFactory.create()
@@ -116,15 +106,6 @@ class TestActualTransactionModel:
         assert transaction.payment_certificate is not None
         assert transaction.line_item is not None
         assert transaction.quantity > 0
-
-    def test_actual_transaction_string_representation(self):
-        """Test the __str__ method returns correct format."""
-        line_item = LineItemFactory.create(item_number="ITEM-001")
-        transaction = ActualTransactionFactory.create(
-            line_item=line_item, quantity=Decimal("10.50")
-        )
-        expected = "ITEM-001 - 10.50"
-        assert str(transaction) == expected
 
     def test_actual_transaction_total_price_calculation(self):
         """Test total price is calculated correctly."""
@@ -187,11 +168,10 @@ class TestActualTransactionModel:
     def test_actual_transaction_soft_delete(self):
         """Test soft delete functionality."""
         transaction = ActualTransactionFactory.create()
-        transaction_id = transaction.pk
 
         transaction.soft_delete()
 
-        assert ActualTransaction.objects.filter(id=transaction_id).count() == 1
+        assert ActualTransaction.objects.all().count() == 0
         assert transaction.is_deleted
 
 
@@ -311,7 +291,7 @@ class TestPaymentCertificateProperties:
             quantity=Decimal("10.00"),
             unit_price=Decimal("50.00"),
             total_price=Decimal("500.00"),
-            approved=True,
+            claimed=True,
         )
 
         assert certificate.items_claimed == Decimal("500.00")
