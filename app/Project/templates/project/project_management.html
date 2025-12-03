@@ -172,8 +172,13 @@
                         {% if project.start_date and project.end_date %}
                             <a href="{% url 'project:planned-value-edit' project.pk %}"
                                class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-cyan-700">Baseline Cashflow</span>
+                                <span class="text-sm font-medium text-cyan-700">Planned Values</span>
                                 {% heroicon_outline "arrow-right" size="16" class="text-cyan-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                            <a href="{% url 'project:cashflow-forecast-edit' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-amber-700">Cashflow Forecast</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                             {% if project.planned_values.exists %}
                                 <div class="px-3 py-2 bg-white/70 rounded-lg border border-teal-200">

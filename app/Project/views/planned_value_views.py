@@ -56,6 +56,20 @@ class PlannedValueMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
             "period"
         )
 
+    def get_months(self) -> list[date]:
+        """Get the list of months based on project start and end dates."""
+        project = self.get_project()
+
+        if not project.start_date or not project.end_date:
+            return []
+
+        return get_months_between(project.start_date, project.end_date)
+
+    def get_planned_values_dict(self) -> dict[date, PlannedValue]:
+        """Get existing planned values as a dictionary keyed by period."""
+        planned_values = self.get_queryset()
+        return {pv.period: pv for pv in planned_values}
+
 
 class PlannedValueEditView(PlannedValueMixin, TemplateView):
     """View for editing all planned values for a project at once."""
@@ -73,20 +87,6 @@ class PlannedValueEditView(PlannedValueMixin, TemplateView):
             {"title": "Planned Values", "url": None},
         ]
 
-    def get_months(self) -> list[date]:
-        """Get the list of months based on project start and end dates."""
-        project = self.get_project()
-
-        if not project.start_date or not project.end_date:
-            return []
-
-        return get_months_between(project.start_date, project.end_date)
-
-    def get_planned_values_dict(self) -> dict[date, PlannedValue]:
-        """Get existing planned values as a dictionary keyed by period."""
-        planned_values = self.get_queryset()
-        return {pv.period: pv for pv in planned_values}
-
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         project = self.get_project()
@@ -99,7 +99,6 @@ class PlannedValueEditView(PlannedValueMixin, TemplateView):
             existing_pv = existing_values.get(month)
             initial = {
                 "value": existing_pv.value if existing_pv else Decimal("0.00"),
-                "forecast_value": existing_pv.forecast_value if existing_pv else None,
             }
             form = PlannedValueForm(
                 initial=initial,
@@ -120,11 +119,11 @@ class PlannedValueEditView(PlannedValueMixin, TemplateView):
             for mf in month_forms
         )
         contract_value = project.get_total_contract_value
+        difference = contract_value - total_planned
 
         # Warning if totals don't match
         warning_message = None
         if total_planned != contract_value and contract_value > 0:
-            difference = contract_value - total_planned
             if difference > 0:
                 warning_message = (
                     f"Planned values are R {difference:,.2f} less than contract value."
@@ -140,6 +139,7 @@ class PlannedValueEditView(PlannedValueMixin, TemplateView):
                 "month_forms": month_forms,
                 "total_planned": total_planned,
                 "contract_value": contract_value,
+                "difference": difference,
                 "warning_message": warning_message,
                 "has_dates": bool(project.start_date and project.end_date),
             }
@@ -165,20 +165,17 @@ class PlannedValueEditView(PlannedValueMixin, TemplateView):
 
             if form.is_valid():
                 value = form.cleaned_data.get("value") or Decimal("0.00")
-                forecast_value = form.cleaned_data.get("forecast_value")
 
                 # Get or create the planned value
                 existing_pv = existing_values.get(month)
                 if existing_pv:
                     existing_pv.value = value
-                    existing_pv.forecast_value = forecast_value
                     existing_pv.save()
                 else:
                     PlannedValue.objects.create(
                         project=project,
                         period=month,
                         value=value,
-                        forecast_value=forecast_value,
                     )
                 saved_count += 1
             else:
@@ -210,6 +207,148 @@ class PlannedValueEditView(PlannedValueMixin, TemplateView):
                 messages.success(
                     request,
                     f"Successfully saved {saved_count} planned values. Total matches contract value.",
+                )
+
+        return self.get(request, *args, **kwargs)
+
+
+class CashflowForecastEditView(PlannedValueMixin, TemplateView):
+    """View for editing all cashflow forecast values for a project at once."""
+
+    template_name = "planned_value/cashflow_forecast_edit.html"
+
+    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+        project = self.get_project()
+        return [
+            {"title": "Projects", "url": reverse("project:portfolio-list")},
+            {
+                "title": project.name,
+                "url": reverse("project:project-management", kwargs={"pk": project.pk}),
+            },
+            {"title": "Cashflow Forecast", "url": None},
+        ]
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        project = self.get_project()
+        months = self.get_months()
+        existing_values = self.get_planned_values_dict()
+
+        # Build form data for each month
+        month_forms = []
+        for month in months:
+            existing_pv = existing_values.get(month)
+            initial = {
+                "forecast_value": existing_pv.forecast_value if existing_pv else None,
+            }
+            form = PlannedValueForm(
+                initial=initial,
+                prefix=f"month_{month.strftime('%Y_%m')}",
+            )
+            month_forms.append(
+                {
+                    "month": month,
+                    "month_label": month.strftime("%B %Y"),
+                    "form": form,
+                    "existing_value": existing_pv,
+                }
+            )
+
+        # Calculate totals
+        total_forecast = sum(
+            (
+                mf["existing_value"].forecast_value
+                if mf["existing_value"] and mf["existing_value"].forecast_value
+                else Decimal("0")
+            )
+            for mf in month_forms
+        )
+        contract_value = project.get_total_contract_value
+        difference = contract_value - total_forecast
+
+        # Warning if totals don't match
+        warning_message = None
+        if total_forecast != contract_value and contract_value > 0:
+            if difference > 0:
+                warning_message = f"Cashflow forecast is R {difference:,.2f} less than contract value."
+            else:
+                warning_message = f"Cashflow forecast exceeds contract value by R {abs(difference):,.2f}."
+
+        context.update(
+            {
+                "project": project,
+                "month_forms": month_forms,
+                "total_forecast": total_forecast,
+                "contract_value": contract_value,
+                "difference": difference,
+                "warning_message": warning_message,
+                "has_dates": bool(project.start_date and project.end_date),
+            }
+        )
+        return context
+
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        """Handle form submission for all cashflow forecast values."""
+        project = self.get_project()
+        months = self.get_months()
+
+        if not months:
+            messages.error(request, "Please set project start and end dates first.")
+            return self.get(request, *args, **kwargs)
+
+        existing_values = self.get_planned_values_dict()
+        errors = []
+        saved_count = 0
+
+        for month in months:
+            prefix = f"month_{month.strftime('%Y_%m')}"
+            form = PlannedValueForm(request.POST, prefix=prefix)
+
+            if form.is_valid():
+                forecast_value = form.cleaned_data.get("forecast_value")
+
+                # Get or create the planned value
+                existing_pv = existing_values.get(month)
+                if existing_pv:
+                    existing_pv.forecast_value = forecast_value
+                    existing_pv.save()
+                else:
+                    PlannedValue.objects.create(
+                        project=project,
+                        period=month,
+                        value=Decimal("0.00"),
+                        forecast_value=forecast_value,
+                    )
+                saved_count += 1
+            else:
+                errors.append(f"{month.strftime('%B %Y')}: {form.errors}")
+
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+        else:
+            # Check if total matches contract value
+            total_forecast = PlannedValue.objects.filter(project=project).aggregate(
+                total=Sum("forecast_value")
+            )["total"] or Decimal("0")
+            contract_value = project.get_total_contract_value
+
+            if total_forecast != contract_value and contract_value > 0:
+                difference = contract_value - total_forecast
+                if difference > 0:
+                    messages.warning(
+                        request,
+                        f"Saved {saved_count} cashflow forecast values. Warning: Total (R {total_forecast:,.2f}) is R {difference:,.2f} less than contract value (R {contract_value:,.2f}).",
+                    )
+                else:
+                    messages.warning(
+                        request,
+                        f"Saved {saved_count} cashflow forecast values. Warning: Total (R {total_forecast:,.2f}) exceeds contract value (R {contract_value:,.2f}) by R {abs(difference):,.2f}.",
+                    )
+            else:
+                messages.success(
+                    request,
+                    f"Successfully saved {saved_count} cashflow forecast values. Total matches contract value.",
                 )
 
         return self.get(request, *args, **kwargs)

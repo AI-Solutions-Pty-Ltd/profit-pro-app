@@ -10,4 +10,9 @@ planned_value_urls = [
         planned_value_views.PlannedValueEditView.as_view(),
         name="planned-value-edit",
     ),
+    path(
+        "project/<int:project_pk>/cashflow-forecast/",
+        planned_value_views.CashflowForecastEditView.as_view(),
+        name="cashflow-forecast-edit",
+    ),
 ]
