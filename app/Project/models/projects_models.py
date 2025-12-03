@@ -248,6 +248,40 @@ class Project(BaseModel):
         related_name="projects",
     )
 
+    # Project team roles
+    contractor = models.ForeignKey(
+        Account,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contractor_projects",
+        help_text="Contractor responsible for the project",
+    )
+    quantity_surveyor = models.ForeignKey(
+        Account,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="qs_projects",
+        help_text="Quantity Surveyor for the project",
+    )
+    lead_consultant = models.ForeignKey(
+        Account,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="lead_consultant_projects",
+        help_text="Lead Consultant (e.g., Principal Agent)",
+    )
+    client_representative = models.ForeignKey(
+        Account,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="client_rep_projects",
+        help_text="Client Representative",
+    )
+
     if TYPE_CHECKING:
         payment_certificates: QuerySet[PaymentCertificate]
         line_items: QuerySet[LineItem]
