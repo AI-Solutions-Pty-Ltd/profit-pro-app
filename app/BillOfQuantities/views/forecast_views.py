@@ -716,10 +716,14 @@ class ForecastListView(ForecastMixin, ListView):
         context["current_cpi"] = project.cost_performance_index(current_date)
         context["current_spi"] = project.schedule_performance_index(current_date)
 
-        # Chart data - respect project start/end dates
+        # Chart data - prepare waterfall data
         chart_labels = []
         forecast_values = []
         contract_value = float(revised_contract_value)
+
+        # Prepare waterfall data: Original → Variations → Current Forecast
+        waterfall_data = []
+        waterfall_labels = []
 
         if project.start_date and project.end_date:
             # Normalize to first of month
@@ -782,6 +786,49 @@ class ForecastListView(ForecastMixin, ListView):
 
                 current_month = current_month + relativedelta(months=1)
 
+        # Build waterfall data structure
+        if latest_forecast_total > 0:
+            # Step 1: Original Contract Value
+            waterfall_labels.append("Original Contract")
+            waterfall_data.append(
+                {
+                    "value": float(original_budget),
+                    "color": "#3B82F6",  # Blue
+                }
+            )
+
+            # Step 2: Variations (if any)
+            variation_amount = float(revised_contract_value - original_budget)
+            if abs(variation_amount) > 0.01:
+                waterfall_labels.append("Contract Variations")
+                waterfall_data.append(
+                    {
+                        "value": variation_amount,
+                        "color": "#10B981"
+                        if variation_amount > 0
+                        else "#EF4444",  # Green for positive, red for negative
+                    }
+                )
+
+            # Step 3: Current Forecast
+            forecast_variance = float(latest_forecast_total - revised_contract_value)
+            waterfall_labels.append("Current Forecast")
+            waterfall_data.append(
+                {
+                    "value": forecast_variance,
+                    "color": "#8B5CF6",  # Purple
+                }
+            )
+
+            # Step 4: Total (Final Forecast Value)
+            waterfall_labels.append("Total Forecast")
+            waterfall_data.append(
+                {
+                    "value": float(latest_forecast_total),
+                    "color": "#F59E0B",  # Amber for total
+                }
+            )
+
         context["original_budget"] = float(original_budget)
         context["revised_contract_value"] = float(revised_contract_value)
         context["latest_forecast_total"] = float(latest_forecast_total)
@@ -789,6 +836,11 @@ class ForecastListView(ForecastMixin, ListView):
         context["forecast_values"] = json.dumps(forecast_values)
         context["contract_value"] = contract_value
         context["has_chart_data"] = any(v is not None for v in forecast_values)
+
+        # Waterfall chart data
+        context["waterfall_labels"] = json.dumps(waterfall_labels)
+        context["waterfall_data"] = json.dumps(waterfall_data)
+        context["has_waterfall_data"] = len(waterfall_data) > 0
 
         return context
 

@@ -10,7 +10,10 @@ running balances throughout the project lifecycle. They include:
 - Special Items (contract-specific)
 """
 
+from __future__ import annotations
+
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from django.db import models
 from django.db.models import DecimalField, Sum, Value
@@ -18,7 +21,9 @@ from django.db.models.functions import Coalesce
 
 from app.Account.models import Account
 from app.core.Utilities.models import BaseModel
-from app.Project.models import Project
+
+if TYPE_CHECKING:
+    from app.Project.models import Project
 
 
 class BaseLedgerItem(BaseModel):
@@ -36,7 +41,7 @@ class BaseLedgerItem(BaseModel):
         CREDIT = "CREDIT", "Credit (Subtract)"
 
     project = models.ForeignKey(
-        Project,
+        "Project.Project",
         on_delete=models.CASCADE,
         related_name="%(class)s_items",
         help_text="Project this item belongs to",

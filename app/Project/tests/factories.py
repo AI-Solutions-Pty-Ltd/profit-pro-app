@@ -2,12 +2,13 @@
 
 import factory
 from django.contrib.auth.models import Group
+from django.utils import timezone
 from factory import Faker
 from factory.django import DjangoModelFactory
 
 from app.Account.models import Account
 from app.Account.tests.factories import UserFactory
-from app.Project.models import Client, Project
+from app.Project.models import Client, Milestone, PlannedValue, Project
 
 
 class ClientFactory(DjangoModelFactory):
@@ -43,3 +44,33 @@ class ProjectFactory(DjangoModelFactory):
     name = factory.Sequence(lambda n: f"Project {n}")
     account = factory.SubFactory(UserFactory)
     client = factory.SubFactory(ClientFactory)
+
+
+class PlannedValueFactory(DjangoModelFactory):
+    """Factory for PlannedValue model."""
+
+    class Meta:
+        model = PlannedValue
+
+    project = factory.SubFactory(ProjectFactory)
+    period = factory.LazyFunction(lambda: timezone.now().date().replace(day=1))
+    value = factory.Faker("pydecimal", left_digits=7, right_digits=2, positive=True)
+    forecast_value = factory.Faker(
+        "pydecimal", left_digits=7, right_digits=2, positive=True
+    )
+
+
+class MilestoneFactory(DjangoModelFactory):
+    """Factory for Milestone model."""
+
+    class Meta:
+        model = Milestone
+
+    project = factory.SubFactory(ProjectFactory)
+    name = factory.Sequence(lambda n: f"Milestone {n}")
+    planned_date = factory.LazyFunction(lambda: timezone.now().date())
+    forecast_date = None
+    reason_for_change = ""
+    sequence = factory.Sequence(lambda n: n)
+    is_completed = False
+    actual_date = None

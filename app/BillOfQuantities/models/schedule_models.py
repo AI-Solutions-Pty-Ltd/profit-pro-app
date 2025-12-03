@@ -6,14 +6,19 @@ Provides models for:
 - Sectional Completion Dates (for contracts with multiple sections)
 """
 
+from __future__ import annotations
+
 from datetime import date
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from django.db import models
 
 from app.Account.models import Account
 from app.core.Utilities.models import BaseModel
-from app.Project.models import Project
+
+if TYPE_CHECKING:
+    from app.Project.models import Project
 
 
 class SectionalCompletionDate(BaseModel):
@@ -33,7 +38,7 @@ class SectionalCompletionDate(BaseModel):
         DELAYED = "DELAYED", "Delayed"
 
     project = models.ForeignKey(
-        Project,
+        "Project.Project",
         on_delete=models.CASCADE,
         related_name="sectional_completion_dates",
         help_text="Project this section belongs to",
@@ -197,7 +202,7 @@ class ScheduleForecast(BaseModel):
         APPROVED = "APPROVED", "Approved"
 
     project = models.ForeignKey(
-        Project,
+        "Project.Project",
         on_delete=models.CASCADE,
         related_name="schedule_forecasts",
         help_text="Project this forecast belongs to",
@@ -320,7 +325,7 @@ class ScheduleForecast(BaseModel):
         return False
 
     @classmethod
-    def get_latest_forecast(cls, project: Project) -> "ScheduleForecast | None":
+    def get_latest_forecast(cls, project: Project) -> ScheduleForecast | None:
         """Get the latest forecast for a project."""
         return cls.objects.filter(project=project).order_by("-forecast_date").first()
 

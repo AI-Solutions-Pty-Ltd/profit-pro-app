@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% load crispy_forms_tags %}
+{% block title %}
+    {{ action }} Milestone - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ action }} Milestone</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+                </div>
+                <a href="{% url 'project:time-forecast' project.pk %}"
+                   class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    {% heroicon_outline "arrow-left" size="16" %}
+                    <span class="ml-1">Back to Time Forecast</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- Form -->
+    <div class="bg-white shadow-sm rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Milestone Details</h2>
+            <p class="text-sm text-gray-600">Enter the milestone information below</p>
+        </div>
+        <form method="post" class="p-6">
+            {% csrf_token %}
+            <div class="space-y-6">
+                <!-- Milestone Name -->
+                <div>
+                    <label for="{{ form.name.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">{{ form.name.label }}</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}<p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>{% endif %}
+                </div>
+                <!-- Dates Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.planned_date.id_for_label }}"
+                               class="block text-sm font-medium text-gray-700">{{ form.planned_date.label }}</label>
+                        {{ form.planned_date }}
+                        {% if form.planned_date.help_text %}
+                            <p class="mt-1 text-xs text-gray-500">{{ form.planned_date.help_text }}</p>
+                        {% endif %}
+                        {% if form.planned_date.errors %}<p class="mt-1 text-sm text-red-600">{{ form.planned_date.errors.0 }}</p>{% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.forecast_date.id_for_label }}"
+                               class="block text-sm font-medium text-gray-700">{{ form.forecast_date.label }}</label>
+                        {{ form.forecast_date }}
+                        {% if form.forecast_date.help_text %}
+                            <p class="mt-1 text-xs text-gray-500">{{ form.forecast_date.help_text }}</p>
+                        {% endif %}
+                        {% if form.forecast_date.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.forecast_date.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <!-- Reason for Change -->
+                <div>
+                    <label for="{{ form.reason_for_change.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">{{ form.reason_for_change.label }}</label>
+                    {{ form.reason_for_change }}
+                    {% if form.reason_for_change.help_text %}
+                        <p class="mt-1 text-xs text-gray-500">{{ form.reason_for_change.help_text }}</p>
+                    {% endif %}
+                    {% if form.reason_for_change.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.reason_for_change.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- Sequence -->
+                <div class="w-1/3">
+                    <label for="{{ form.sequence.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">{{ form.sequence.label }}</label>
+                    {{ form.sequence }}
+                    {% if form.sequence.help_text %}<p class="mt-1 text-xs text-gray-500">{{ form.sequence.help_text }}</p>{% endif %}
+                    {% if form.sequence.errors %}<p class="mt-1 text-sm text-red-600">{{ form.sequence.errors.0 }}</p>{% endif %}
+                </div>
+                <!-- Completion Section -->
+                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-900 mb-4">Completion Status</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex items-center">
+                            {{ form.is_completed }}
+                            <label for="{{ form.is_completed.id_for_label }}"
+                                   class="ml-2 block text-sm text-gray-700">{{ form.is_completed.label }}</label>
+                        </div>
+                        <div>
+                            <label for="{{ form.actual_date.id_for_label }}"
+                                   class="block text-sm font-medium text-gray-700">{{ form.actual_date.label }}</label>
+                            {{ form.actual_date }}
+                            {% if form.actual_date.errors %}<p class="mt-1 text-sm text-red-600">{{ form.actual_date.errors.0 }}</p>{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Form Actions -->
+            <div class="mt-8 flex items-center justify-end space-x-3">
+                <a href="{% url 'project:time-forecast' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_outline "check" size="16" class="mr-1" %}
+                    Save Milestone
+                </button>
+            </div>
+        </form>
+    </div>
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6 rounded-lg">
+        <div class="flex justify-between items-center">
+            <a href="{% url 'project:time-forecast' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                Back to Time Forecast
+            </a>
+            <a href="{% url 'project:forecast-hub' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                Forecasts Hub
+                {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+            </a>
+        </div>
+    </div>
+{% endblock content %}

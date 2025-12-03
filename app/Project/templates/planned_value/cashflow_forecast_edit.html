@@ -3,7 +3,7 @@
 {% load heroicons %}
 {% load humanize %}
 {% block title %}
-    Planned Values - {{ project.name }}
+    Cashflow Forecast - {{ project.name }}
 {% endblock title %}
 {% block content %}
     <!-- Header -->
@@ -11,7 +11,7 @@
         <div class="px-6 py-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Planned Values</h1>
+                    <h1 class="text-2xl font-bold text-gray-900">Cashflow Forecast</h1>
                     <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
                 </div>
                 <a href="{% url 'project:project-management' project.pk %}"
@@ -30,7 +30,7 @@
                 <div class="ml-3">
                     <h3 class="text-sm font-medium text-yellow-800">Project Dates Required</h3>
                     <div class="mt-2 text-sm text-yellow-700">
-                        <p>Please set the project start date and end date before configuring planned values.</p>
+                        <p>Please set the project start date and end date before configuring cashflow forecast.</p>
                     </div>
                     <div class="mt-4">
                         <a href="{% url 'project:project-update' project.pk %}"
@@ -53,10 +53,10 @@
                     </div>
                     <div class="text-center p-4 {% if warning_message %}bg-yellow-50{% else %}bg-green-50{% endif %} rounded-lg">
                         <p class="text-sm font-medium {% if warning_message %}text-yellow-600{% else %}text-green-600{% endif %}">
-                            Total Planned
+                            Total Cashflow Forecast
                         </p>
                         <p class="text-2xl font-bold {% if warning_message %}text-yellow-900{% else %}text-green-900{% endif %}">
-                            R {{ total_planned|floatformat:2|intcomma }}
+                            R {{ total_forecast|floatformat:2|intcomma }}
                         </p>
                     </div>
                     <div class="text-center p-4 bg-gray-50 rounded-lg">
@@ -76,13 +76,13 @@
                 </div>
             </div>
         {% endif %}
-        <!-- Planned Values Form -->
+        <!-- Cashflow Forecast Form -->
         <div class="bg-white shadow-sm rounded-lg">
             <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-medium text-gray-900">Monthly Planned Values</h2>
-                <p class="text-sm text-gray-600">Enter the planned/budgeted value for each month of the project</p>
+                <h2 class="text-lg font-medium text-gray-900">Monthly Cashflow Forecast</h2>
+                <p class="text-sm text-gray-600">Enter the forecasted cashflow value for each month of the project</p>
             </div>
-            <form method="post" id="planned-values-form">
+            <form method="post" id="cashflow-forecast-form">
                 {% csrf_token %}
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -94,7 +94,7 @@
                                 </th>
                                 <th scope="col"
                                     class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Planned Value
+                                    Cashflow Forecast
                                 </th>
                             </tr>
                         </thead>
@@ -110,12 +110,12 @@
                                                 <span class="text-gray-500 sm:text-sm">R</span>
                                             </div>
                                             <input type="number"
-                                                   name="{{ month_form.form.value.html_name }}"
-                                                   id="{{ month_form.form.value.auto_id }}"
-                                                   value="{{ month_form.form.value.value|default_if_none:'' }}"
+                                                   name="{{ month_form.form.forecast_value.html_name }}"
+                                                   id="{{ month_form.form.forecast_value.auto_id }}"
+                                                   value="{{ month_form.form.forecast_value.value|default_if_none:'' }}"
                                                    step="0.01"
                                                    min="0"
-                                                   class="pl-8 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm planned-value-input text-right"
+                                                   class="pl-8 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm forecast-value-input text-right"
                                                    placeholder="0.00">
                                         </div>
                                     </td>
@@ -132,8 +132,8 @@
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">Total</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
-                                    <span id="running-total-planned" class="text-lg font-bold text-indigo-600">R 0.00</span>
-                                    <span id="total-status-planned" class="block text-sm mt-1"></span>
+                                    <span id="running-total-forecast" class="text-lg font-bold text-amber-600">R 0.00</span>
+                                    <span id="total-status-forecast" class="block text-sm mt-1"></span>
                                 </td>
                             </tr>
                         </tfoot>
@@ -145,7 +145,7 @@
                         <button type="submit"
                                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "check" size="16" %}
-                            <span class="ml-1">Save Planned Values</span>
+                            <span class="ml-1">Save Cashflow Forecast</span>
                         </button>
                     </div>
                 </div>
@@ -159,9 +159,9 @@
                     {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
                     Back to Project
                 </a>
-                <a href="{% url 'project:cashflow-forecast-edit' project.pk %}"
+                <a href="{% url 'project:planned-value-edit' project.pk %}"
                    class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                    Cashflow Forecast
+                    Planned Values
                     {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
                 </a>
             </div>
@@ -172,9 +172,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const contractValue = {{ contract_value|default:0 }};
-            const plannedInputs = document.querySelectorAll('.planned-value-input');
-            const runningTotalPlannedEl = document.getElementById('running-total-planned');
-            const totalStatusPlannedEl = document.getElementById('total-status-planned');
+            const forecastInputs = document.querySelectorAll('.forecast-value-input');
+            const runningTotalForecastEl = document.getElementById('running-total-forecast');
+            const totalStatusForecastEl = document.getElementById('total-status-forecast');
             
             function formatCurrency(value) {
                 return 'R ' + value.toLocaleString('en-ZA', {
@@ -201,22 +201,22 @@
                 }
             }
             
-            function updatePlannedTotal() {
+            function updateForecastTotal() {
                 let total = 0;
-                plannedInputs.forEach(input => {
+                forecastInputs.forEach(input => {
                     total += parseFloat(input.value) || 0;
                 });
-                updateStatus(total, runningTotalPlannedEl, totalStatusPlannedEl);
+                updateStatus(total, runningTotalForecastEl, totalStatusForecastEl);
             }
             
             // Add event listeners
-            plannedInputs.forEach(input => {
-                input.addEventListener('input', updatePlannedTotal);
-                input.addEventListener('change', updatePlannedTotal);
+            forecastInputs.forEach(input => {
+                input.addEventListener('input', updateForecastTotal);
+                input.addEventListener('change', updateForecastTotal);
             });
             
             // Initial calculation
-            updatePlannedTotal();
+            updateForecastTotal();
         });
     </script>
 {% endblock extra_js %}

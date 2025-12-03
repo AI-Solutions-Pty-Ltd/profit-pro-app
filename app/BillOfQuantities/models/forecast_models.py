@@ -6,7 +6,6 @@ from django.db.models import QuerySet
 
 from app.Account.models import Account
 from app.core.Utilities.models import BaseModel, sum_queryset
-from app.Project.models import Project
 
 if TYPE_CHECKING:
     from .structure_models import LineItem
@@ -19,8 +18,8 @@ class Forecast(BaseModel):
         DRAFT = "DRAFT", "Draft"
         APPROVED = "APPROVED", "Approved"
 
-    project: Project = models.ForeignKey(  # type: ignore
-        Project, on_delete=models.CASCADE, related_name="forecasts"
+    project = models.ForeignKey(
+        "Project.Project", on_delete=models.CASCADE, related_name="forecasts"
     )
     period = models.DateField()
     status: Status = models.CharField(  # type: ignore
@@ -50,7 +49,7 @@ class Forecast(BaseModel):
     class Meta:
         verbose_name = "Forecast"
         verbose_name_plural = "Forecasts"
-        ordering = ["period"]
+        ordering = ["-period"]
         unique_together = [["project", "period"]]
         indexes = [
             models.Index(fields=["project", "period"]),
