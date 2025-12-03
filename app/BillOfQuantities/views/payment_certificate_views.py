@@ -357,11 +357,17 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
                 )
             else:
                 # create new pmt cert, and redirect to edit page
+                project.payment_certificates.update(is_final=False)
+                project.final_payment_certificate = None
+                if project.status == Project.Status.FINAL_ACCOUNT_ISSUED:
+                    project.status = Project.Status.ACTIVE
+                project.save()
                 next_certificate_number = (
                     PaymentCertificate.get_next_certificate_number(project)
                 )
                 payment_certificate = PaymentCertificate.objects.create(
                     project=project,
+                    is_final=False,
                     certificate_number=next_certificate_number,
                 )
                 messages.success(

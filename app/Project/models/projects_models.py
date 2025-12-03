@@ -53,7 +53,9 @@ class Portfolio(BaseModel):
 
     @property
     def active_projects(self) -> QuerySet["Project"]:
-        return self.projects.filter(status=Project.Status.ACTIVE)
+        return self.projects.filter(
+            status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED]
+        )
 
     @property
     def total_contract_value(self) -> Decimal:
@@ -77,7 +79,9 @@ class Portfolio(BaseModel):
             "payment_certificates__actual_transactions__total_price",
         )
 
-    def cost_performance_index(self, date: datetime | None) -> Decimal | None:
+    def cost_performance_index(
+        self: "Portfolio", date: datetime | None
+    ) -> Decimal | None:
         """Portfolio-level CPI (average of all active projects)."""
         if not date:
             date = datetime.now()
@@ -93,12 +97,15 @@ class Portfolio(BaseModel):
                     cpi += project_cpi
                     valid_projects += 1
             except (ZeroDivisionError, TypeError):
+                print(f"Error calculating CPI for project {project.name}")
                 continue
         if valid_projects == 0:
             return None
         return round(cpi / Decimal(valid_projects), 2)
 
-    def schedule_performance_index(self, date: datetime | None) -> Decimal | None:
+    def schedule_performance_index(
+        self: "Portfolio", date: datetime | None
+    ) -> Decimal | None:
         """Portfolio-level SPI (average of all active projects)."""
         if not date:
             date = datetime.now()
@@ -277,6 +284,19 @@ class Project(BaseModel):
         return reverse(
             "bill_of_quantities:structure-upload", kwargs={"project_pk": self.pk}
         )
+
+    @property
+    def setup(self) -> bool:
+        """Is project fully setup or not"""
+        if not self.start_date:
+            return False
+        if not self.end_date:
+            return False
+        if not self.line_items:
+            return False
+        if not self.planned_values:
+            return False
+        return True
 
     @property
     def get_original_contract_value(self) -> Decimal:

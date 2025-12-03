@@ -1,10 +1,9 @@
 """Views for the unified Forecasts hub with tabs."""
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from django.db.models import Sum
 from django.http import Http404
 from django.urls import reverse
 from django.views.generic import TemplateView

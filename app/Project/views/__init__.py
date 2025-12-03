@@ -3,8 +3,11 @@ from . import (
     forecast_hub_views,
     milestone_views,
     planned_value_views,
+    portfolio_views,
     project_views,
+    report_views,
     signatory_views,
+    user_management_views,
 )
 
 __all__ = [
@@ -12,6 +15,9 @@ __all__ = [
     "forecast_hub_views",
     "milestone_views",
     "planned_value_views",
+    "portfolio_views",
     "project_views",
+    "report_views",
     "signatory_views",
+    "user_management_views",
 ]

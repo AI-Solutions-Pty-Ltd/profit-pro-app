@@ -235,36 +235,6 @@ class RegisterView(CreateView):
         return response
 
 
-class FinalAccountView(TemplateView):
-    """Final account page view."""
-
-    template_name = "core/final_account.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "page_title": f"Final Account - {settings.SITE_NAME or 'Profit Pro'}",
-            }
-        )
-        return context
-
-
-class ImpactView(TemplateView):
-    """Impact page view."""
-
-    template_name = "core/impact.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "page_title": f"Impact - {settings.SITE_NAME or 'Profit Pro'}",
-            }
-        )
-        return context
-
-
 # Custom error handlers
 def custom_404(request, exception):
     """Custom 404 error handler."""

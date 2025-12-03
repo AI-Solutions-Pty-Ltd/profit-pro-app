@@ -25,9 +25,14 @@ class ClientAdmin(SoftDeleteAdmin):
 
 @admin.register(Signatories)
 class SignatoriesAdmin(SoftDeleteAdmin):
-    list_display = ["name", "title", "email", "project", "deleted", "created_at"]
+    list_display = ["user", "sequence_number", "project", "deleted", "created_at"]
     list_filter = ["deleted", "created_at", "project"]
-    search_fields = ["name", "title", "email", "project__name"]
+    search_fields = [
+        "user__email",
+        "user__first_name",
+        "user__last_name",
+        "project__name",
+    ]
     readonly_fields = ["created_at", "updated_at"]
 
 

@@ -186,39 +186,101 @@ class ClientUserInviteForm(forms.Form):
 
 
 class SignatoryForm(forms.ModelForm):
-    """Form for creating and updating signatories."""
+    """Form for updating signatory sequence number."""
 
     class Meta:
         model = Signatories
-        fields = ["name", "title", "email"]
+        fields = ["sequence_number", "role", "user"]
         widgets = {
-            "name": forms.TextInput(
+            "sequence_number": forms.NumberInput(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Enter signatory name",
+                    "placeholder": "1",
+                    "min": "1",
                 }
             ),
-            "title": forms.TextInput(
+            "role": forms.TextInput(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Enter signatory title/position",
                 }
             ),
-            "email": forms.EmailInput(
+            "user": forms.Select(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "signatory@example.com",
                 }
             ),
         }
         labels = {
-            "name": "Full Name",
-            "title": "Title/Position",
-            "email": "Email Address",
+            "sequence_number": "Sequence Number",
+            "role": "Role",
+            "user": "User",
         }
-        help_texts = {
-            "email": "Email address where payment certificates will be sent",
-        }
+
+
+class SignatoryInviteForm(forms.Form):
+    """Form for inviting a user as a signatory."""
+
+    email = forms.EmailField(
+        label="Email Address",
+        widget=forms.EmailInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                "placeholder": "Enter email address",
+            }
+        ),
+    )
+    first_name = forms.CharField(
+        max_length=150,
+        label="First Name",
+        widget=forms.TextInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                "placeholder": "Enter first name",
+            }
+        ),
+    )
+    last_name = forms.CharField(
+        max_length=150,
+        required=False,
+        label="Last Name",
+        widget=forms.TextInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                "placeholder": "Enter last name",
+            }
+        ),
+    )
+    primary_contact = forms.CharField(
+        max_length=20,
+        label="Phone Number",
+        widget=forms.TextInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                "placeholder": "+27 XX XXX XXXX",
+            }
+        ),
+    )
+    sequence_number = forms.IntegerField(
+        min_value=1,
+        label="Sequence Number",
+        widget=forms.NumberInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                "placeholder": "1",
+                "min": "1",
+            }
+        ),
+    )
+    role = forms.CharField(
+        max_length=50,
+        label="Role",
+        widget=forms.TextInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                "placeholder": "Enter role",
+            }
+        ),
+    )
 
 
 class PlannedValueForm(forms.ModelForm):
