@@ -6,7 +6,8 @@ from django.db import models
 
 from app.Account.models import Account
 from app.core.Utilities.models import BaseModel
-from app.Project.models import Project
+
+# TYPE_CHECKING imports not needed - Project only used in string references
 
 
 class ContractVariation(BaseModel):
@@ -50,7 +51,7 @@ class ContractVariation(BaseModel):
         return f"contract_variations/{self.project.name}/{filename}"
 
     project = models.ForeignKey(
-        Project,
+        "Project.Project",
         on_delete=models.CASCADE,
         related_name="contract_variations",
         help_text="Project this variation belongs to",
@@ -207,7 +208,7 @@ class ContractualCorrespondence(BaseModel):
         return f"contract_correspondences/{self.project.name}/{filename}"
 
     project = models.ForeignKey(
-        Project,
+        "Project.Project",
         on_delete=models.CASCADE,
         related_name="contractual_correspondences",
         help_text="Project this correspondence belongs to",

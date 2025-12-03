@@ -7,11 +7,12 @@ from django.db.models import QuerySet
 from django.urls import reverse
 
 from app.Account.models import Account
+from app.BillOfQuantities.models.forecast_models import Forecast
+from app.BillOfQuantities.models.payment_certificate_models import PaymentCertificate
+from app.BillOfQuantities.models.structure_models import LineItem
 from app.core.Utilities.models import BaseModel, sum_queryset
 
 if TYPE_CHECKING:
-    from app.BillOfQuantities.models import Forecast, LineItem, PaymentCertificate
-
     from .planned_value_models import PlannedValue
     from .signatories_models import Signatories
 
@@ -306,7 +307,6 @@ class Project(BaseModel):
     @property
     def get_active_payment_certificate(self) -> Optional["PaymentCertificate"]:
         """Get the most recent active payment certificate (DRAFT, SUBMITTED, or REJECTED)."""
-        from app.BillOfQuantities.models import PaymentCertificate
 
         return (
             self.payment_certificates.filter(
@@ -338,7 +338,7 @@ class Project(BaseModel):
     # Final Reports
     ##################
 
-    def planned_value(self, date: datetime | None) -> Decimal:
+    def planned_value(self, date: datetime | None = None) -> Decimal:
         """From Cashflow Forecast included as part of the baseline/Contract WBS"""
         if not date:
             date = datetime.now()
@@ -348,29 +348,29 @@ class Project(BaseModel):
         )
         return sum_queryset(planned_values, "value")
 
-    def actual_cost(self, date: datetime | None) -> Decimal:
+    def actual_cost(self, date: datetime | None = None) -> Decimal:
         """Total certified amount from approved payment certificates for the given month."""
         if not date:
             date = datetime.now()
         payment_certificates = self.payment_certificates.filter(
             approved_on__month=date.month,
             approved_on__year=date.year,
-            status="APPROVED",
+            status=PaymentCertificate.Status.APPROVED,
         )
         return sum_queryset(payment_certificates, "actual_transactions__total_price")
 
-    def forecast_cost(self, date: datetime | None) -> Decimal:
+    def forecast_cost(self, date: datetime | None = None) -> Decimal:
         """From Forecast to Completion Cost in the Cost Report"""
         if not date:
             date = datetime.now()
         forecasts = self.forecasts.filter(
             period__month=date.month,
             period__year=date.year,
-            status="APPROVED",
+            status=Forecast.Status.APPROVED,
         )
         return sum_queryset(forecasts, "forecast_transactions__total_price")
 
-    def earned_value(self, date: datetime | None) -> Decimal | None:
+    def earned_value(self, date: datetime | None = None) -> Decimal | None:
         """Earned Value = (Actual Cost / Forecast Cost) * Budgeted Amount (Total Contract Value)"""
         if not date:
             date = datetime.now()
@@ -391,7 +391,9 @@ class Project(BaseModel):
     #     """Earned Value - Planned Value"""
     #     raise NotImplementedError
 
-    def cost_performance_index(self, date: datetime | None) -> Decimal | None:
+    def cost_performance_index(
+        self: "Project", date: datetime | None = None
+    ) -> Decimal | None:
         """Earned Value/Actual Cost
         CPI Interpretations:
             CPI < 1 Means the project has overrun the budget
@@ -406,7 +408,9 @@ class Project(BaseModel):
             return None
         return round(earned / actual, 2)
 
-    def schedule_performance_index(self, date: datetime | None) -> Decimal | None:
+    def schedule_performance_index(
+        self: "Project", date: datetime | None = None
+    ) -> Decimal | None:
         """Earned Value/Planned Value
         SPI Interpretations:
             SPI < 1 Means the project is behind schedule

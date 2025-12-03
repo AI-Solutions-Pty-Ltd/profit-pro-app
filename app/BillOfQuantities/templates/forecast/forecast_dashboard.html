@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% load humanize %}
+{% load heroicons %}
 {% block title %}
-    Forecasts - {{ project.name }}
+    Cost Forecast - {{ project.name }}
 {% endblock title %}
 {% block content %}
     <!-- Header -->
@@ -9,20 +10,20 @@
         <div class="px-6 py-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
-                    <p class="text-sm text-gray-600 mt-1">Forecast Dashboard</p>
+                    <h1 class="text-2xl font-bold text-gray-900">Cost Forecast</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }} - Monthly Cost Projections</p>
                 </div>
                 <div class="flex items-center space-x-3">
                     {% if draft_forecast %}
                         <a href="{% url 'bill_of_quantities:forecast-edit' project.pk draft_forecast.pk %}"
                            class="inline-flex items-center px-4 py-2 border border-amber-300 text-sm font-medium rounded-md text-amber-700 bg-amber-50 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
-                            {% heroicon_outline "pencil-square" class="w-4 h-4 mr-2" %}
+                            {% heroicon_outline "pencil-square" size="16" class="mr-2" %}
                             Continue Draft ({{ draft_forecast.period|date:"M Y" }})
                         </a>
                     {% else %}
                         <a href="{% url 'bill_of_quantities:forecast-create' project.pk %}"
                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}
+                            {% heroicon_outline "plus" size="16" class="mr-2" %}
                             Create Forecast
                         </a>
                     {% endif %}
@@ -30,62 +31,93 @@
             </div>
         </div>
     </div>
-    <!-- Chart Section - Featured -->
-    <div class="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 rounded-xl shadow-xl mb-6 p-1">
+    <!-- Tab Navigation -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
+                   class="border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                    {% heroicon_outline "currency-dollar" size="16" class="mr-2" %}
+                    Cost Forecast
+                </a>
+                <a href="{% url 'project:time-forecast' project.pk %}"
+                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                    {% heroicon_outline "clock" size="16" class="mr-2" %}
+                    Time Forecast
+                </a>
+                <a href="{% url 'project:cashflow-forecast-tab' project.pk %}"
+                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                    {% heroicon_outline "chart-bar-square" size="16" class="mr-2" %}
+                    Cashflow Forecast
+                </a>
+                <a href="{% url 'project:earned-value' project.pk %}"
+                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                    {% heroicon_outline "chart-pie" size="16" class="mr-2" %}
+                    Earned Value Predictions
+                </a>
+            </nav>
+        </div>
+    </div>
+    <!-- Chart Section - Waterfall -->
+    <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl shadow-xl mb-6 p-1">
         <div class="bg-white rounded-lg overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-teal-50">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900">Forecast Trend</h2>
-                        <p class="text-sm text-gray-600">Monthly forecast values vs contract baseline</p>
+                        <h2 class="text-xl font-bold text-gray-900">Contract Value Waterfall</h2>
+                        <p class="text-sm text-gray-600">Breakdown from original contract through variations to current forecast</p>
                     </div>
-                    {% if has_chart_data %}
+                    {% if has_waterfall_data %}
                         <div class="flex items-center space-x-4 text-sm">
                             <div class="flex items-center">
-                                <div class="w-8 h-0.5 bg-emerald-500 mr-2"></div>
-                                <span class="text-gray-600">Forecast</span>
+                                <div class="w-8 h-4 bg-blue-500 mr-2"></div>
+                                <span class="text-gray-600">Original</span>
                             </div>
                             <div class="flex items-center">
-                                <div class="w-8 border-t-2 border-dashed border-red-500 mr-2"></div>
-                                <span class="text-gray-600">Contract Value</span>
+                                <div class="w-8 h-4 bg-green-500 mr-2"></div>
+                                <span class="text-gray-600">Variations</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-8 h-4 bg-purple-500 mr-2"></div>
+                                <span class="text-gray-600">Forecast</span>
                             </div>
                         </div>
                     {% endif %}
                 </div>
             </div>
             <div class="p-6">
-                {% if has_chart_data %}
+                {% if has_waterfall_data %}
                     <div class="h-80">
-                        <canvas id="forecastChart"></canvas>
+                        <canvas id="waterfallChart"></canvas>
                     </div>
                 {% else %}
                     <div class="flex flex-col items-center justify-center py-12 text-center">
                         {% heroicon_outline "chart-bar" class="w-16 h-16 text-gray-300" %}
                         <h3 class="mt-4 text-lg font-medium text-gray-900">No Approved Forecasts Yet</h3>
-                        <p class="mt-2 text-sm text-gray-500 max-w-md">Create and approve forecasts to see the trend chart.</p>
+                        <p class="mt-2 text-sm text-gray-500 max-w-md">Create and approve forecasts to see the waterfall chart.</p>
                     </div>
                 {% endif %}
             </div>
         </div>
     </div>
     <!-- Summary Stats Row -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-        <div class="bg-white rounded-lg shadow p-4">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-gray-400">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Original Budget</p>
-            <p class="mt-1 text-lg font-bold text-gray-900">R {{ original_budget|floatformat:0|intcomma }}</p>
+            <p class="mt-1 text-xl font-bold text-gray-900">R {{ original_budget|floatformat:0|intcomma }}</p>
         </div>
-        <div class="bg-white rounded-lg shadow p-4">
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-indigo-500">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Revised Contract</p>
-            <p class="mt-1 text-lg font-bold text-indigo-600">R {{ revised_contract_value|floatformat:0|intcomma }}</p>
+            <p class="mt-1 text-xl font-bold text-indigo-600">R {{ revised_contract_value|floatformat:0|intcomma }}</p>
         </div>
-        <div class="bg-white rounded-lg shadow p-4">
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-emerald-500">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Latest Forecast</p>
-            <p class="mt-1 text-lg font-bold text-emerald-600">R {{ latest_forecast_total|floatformat:0|intcomma }}</p>
+            <p class="mt-1 text-xl font-bold text-emerald-600">R {{ latest_forecast_total|floatformat:0|intcomma }}</p>
         </div>
         <!-- CPI -->
-        <div class="bg-white rounded-lg shadow p-4">
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 {% if current_cpi > 1 %}border-green-500{% elif current_cpi == 1 %}border-cyan-500{% elif current_cpi %}border-red-500{% else %}border-gray-300{% endif %}">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">CPI</p>
-            <p class="mt-1 text-lg font-bold {% if current_cpi > 1 %}text-green-600{% elif current_cpi == 1 %}text-cyan-600{% elif current_cpi %}text-red-600{% else %}text-gray-500{% endif %}">
+            <p class="mt-1 text-xl font-bold {% if current_cpi > 1 %}text-green-600{% elif current_cpi == 1 %}text-cyan-600{% elif current_cpi %}text-red-600{% else %}text-gray-500{% endif %}">
                 {{ current_cpi|default:"--" }}
             </p>
             {% if current_cpi %}
@@ -101,9 +133,9 @@
             {% endif %}
         </div>
         <!-- SPI -->
-        <div class="bg-white rounded-lg shadow p-4">
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 {% if current_spi > 1 %}border-green-500{% elif current_spi == 1 %}border-violet-500{% elif current_spi %}border-red-500{% else %}border-gray-300{% endif %}">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">SPI</p>
-            <p class="mt-1 text-lg font-bold {% if current_spi > 1 %}text-green-600{% elif current_spi == 1 %}text-violet-600{% elif current_spi %}text-red-600{% else %}text-gray-500{% endif %}">
+            <p class="mt-1 text-xl font-bold {% if current_spi > 1 %}text-green-600{% elif current_spi == 1 %}text-violet-600{% elif current_spi %}text-red-600{% else %}text-gray-500{% endif %}">
                 {{ current_spi|default:"--" }}
             </p>
             {% if current_spi %}
@@ -258,20 +290,20 @@
                 </div>
             </div>
         {% endif %}
-        <!-- Footer -->
-        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6">
-            <div class="flex justify-between items-center">
-                <a href="{% url 'project:project-management' project.pk %}"
-                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
-                    Back to Project
-                </a>
-                <a href="{% url 'project:project-dashboard' project.pk %}"
-                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                    Project Dashboard
-                    {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
-                </a>
-            </div>
+    </div>
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6 rounded-lg">
+        <div class="flex justify-between items-center">
+            <a href="{% url 'project:forecast-hub' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                Back to Forecasts
+            </a>
+            <a href="{% url 'project:time-forecast' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                Time Forecast
+                {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+            </a>
         </div>
     </div>
 {% endblock content %}
@@ -279,38 +311,61 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        {% if has_chart_data %}
-        const ctx = document.getElementById('forecastChart').getContext('2d');
-        const forecastData = {{ forecast_values|safe }};
-        const chartLabels = {{ chart_labels|safe }};
-        const contractValue = {{ contract_value }};
+        {% if has_waterfall_data %}
+        const ctx = document.getElementById('waterfallChart').getContext('2d');
+        const waterfallData = {{ waterfall_data|safe }};
+        const waterfallLabels = {{ waterfall_labels|safe }};
+        
+        // Calculate cumulative values and prepare waterfall data
+        let cumulative = 0;
+        const visibleData = [];
+        const invisibleData = [];
+        const colors = [];
+        const totalValues = [];
+        
+        waterfallData.forEach((item, index) => {
+            const value = item.value;
+            const color = item.color;
+            
+            if (index === 0) {
+                // First item - starts from 0
+                visibleData.push(value);
+                invisibleData.push(0);
+                cumulative = value;
+            } else if (index === waterfallData.length - 1) {
+                // Last item (Total) - show as full bar from 0
+                visibleData.push(value);
+                invisibleData.push(0);
+                cumulative = value;
+            } else {
+                // Middle items - float at cumulative position
+                visibleData.push(value);
+                invisibleData.push(cumulative);
+                cumulative += value;
+            }
+            
+            colors.push(color);
+            totalValues.push(cumulative);
+        });
         
         new Chart(ctx, {
-            type: 'line',
+            type: 'bar',
             data: {
-                labels: chartLabels,
+                labels: waterfallLabels,
                 datasets: [
                     {
-                        label: 'Forecast',
-                        data: forecastData,
-                        borderColor: 'rgb(16, 185, 129)',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        borderWidth: 2,
-                        pointRadius: 4,
-                        pointBackgroundColor: 'rgb(16, 185, 129)',
-                        fill: true,
-                        tension: 0.3,
-                        spanGaps: true
+                        label: 'Invisible',
+                        data: invisibleData,
+                        backgroundColor: 'transparent',
+                        borderColor: 'transparent',
+                        borderWidth: 0
                     },
                     {
-                        label: 'Contract Value',
-                        data: Array(chartLabels.length).fill(contractValue),
-                        borderColor: 'rgb(239, 68, 68)',
-                        borderWidth: 2,
-                        borderDash: [5, 5],
-                        pointRadius: 0,
-                        fill: false,
-                        tension: 0
+                        label: 'Waterfall',
+                        data: visibleData,
+                        backgroundColor: colors,
+                        borderColor: colors,
+                        borderWidth: 2
                     }
                 ]
             },
@@ -332,35 +387,39 @@
                         bodyFont: { size: 12 },
                         callbacks: {
                             label: function(context) {
+                                if (context.datasetIndex === 0) return null; // Hide invisible dataset
                                 const value = context.parsed.y;
-                                if (value === null) return 'No forecast data';
-                                return `${context.dataset.label}: R ${value.toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+                                const total = totalValues[context.dataIndex];
+                                return [
+                                    `Change: R ${value.toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`,
+                                    `Total: R ${total.toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`
+                                ];
                             }
                         }
                     }
                 },
                 scales: {
                     x: {
+                        stacked: true,
                         grid: {
                             display: false
                         },
                         ticks: {
-                            font: { size: 10 },
-                            maxRotation: 45,
-                            minRotation: 45
+                            font: { size: 12 }
                         }
                     },
                     y: {
+                        stacked: true,
+                        beginAtZero: true,
                         grid: {
                             color: 'rgba(0, 0, 0, 0.05)'
                         },
                         ticks: {
-                            font: { size: 10 },
+                            font: { size: 11 },
                             callback: function(value) {
                                 return 'R ' + value.toLocaleString('en-ZA');
                             }
-                        },
-                        beginAtZero: true
+                        }
                     }
                 }
             }

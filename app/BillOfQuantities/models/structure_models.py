@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
@@ -7,9 +9,10 @@ from django.db.models.functions import Coalesce
 from django.urls import reverse
 
 from app.core.Utilities.models import BaseModel, sum_queryset
-from app.Project.models import Project
 
 if TYPE_CHECKING:
+    from app.Project.models import Project
+
     from .forecast_models import Forecast
     from .payment_certificate_models import ActualTransaction, PaymentCertificate
 
@@ -18,13 +21,13 @@ class Structure(BaseModel):
     """Structure model representing buildings/structures within a project."""
 
     project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="structures"
+        "Project.Project", on_delete=models.CASCADE, related_name="structures"
     )
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, default="")
 
     if TYPE_CHECKING:
-        line_items: QuerySet["LineItem"]
+        line_items: QuerySet[LineItem]
 
     class Meta:
         verbose_name = "Structure"
@@ -59,7 +62,7 @@ class Structure(BaseModel):
             total=Coalesce(Sum("total_price"), Value(Decimal("0.00")))
         )["total"]
 
-    def get_forecast_total(self, forecast: "Forecast") -> Decimal:
+    def get_forecast_total(self, forecast: Forecast) -> Decimal:
         """Get total forecast for all line items in this structure for a specific forecast."""
         from app.BillOfQuantities.models import ForecastTransaction
 
@@ -78,7 +81,7 @@ class Bill(BaseModel):
     name = models.CharField(max_length=100)
 
     if TYPE_CHECKING:
-        line_items: QuerySet["LineItem"]
+        line_items: QuerySet[LineItem]
 
     class Meta:
         verbose_name = "Bill"
@@ -94,7 +97,7 @@ class Bill(BaseModel):
             total=Coalesce(Sum("total_price"), Value(Decimal("0.00")))
         )["total"]
 
-    def get_forecast_total(self, forecast: "Forecast") -> Decimal:
+    def get_forecast_total(self, forecast: Forecast) -> Decimal:
         """Get total forecast for all line items in this bill for a specific forecast."""
         from app.BillOfQuantities.models import ForecastTransaction
 
@@ -120,7 +123,7 @@ class Package(BaseModel):
 
 class LineItem(BaseModel):
     project = models.ForeignKey(
-        Project,
+        "Project.Project",
         on_delete=models.CASCADE,
         related_name="line_items",
     )
@@ -164,7 +167,7 @@ class LineItem(BaseModel):
     special_item = models.BooleanField(default=False)
 
     if TYPE_CHECKING:
-        actual_transactions: QuerySet["ActualTransaction"]
+        actual_transactions: QuerySet[ActualTransaction]
 
     class Meta:
         verbose_name = "Line Item"
@@ -186,7 +189,7 @@ class LineItem(BaseModel):
 
     @staticmethod
     def construct_payment_certificate(
-        payment_certificate: "PaymentCertificate",
+        payment_certificate: PaymentCertificate,
     ):
         """
         Construct optimized queryset of line items with payment certificate data.

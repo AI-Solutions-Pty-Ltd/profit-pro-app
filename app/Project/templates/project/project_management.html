@@ -78,31 +78,47 @@
                         {% endif %}
                     </div>
                 </div>
-                <!-- Forecasts Section -->
-                <div class="group relative bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                <!-- Forecasts Section (Unified) -->
+                <div class="group relative bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                     <div class="flex items-center mb-3">
-                        <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center mr-3">
+                        <div class="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center mr-3">
                             {% heroicon_outline "chart-bar" size="20" class="text-white" %}
                         </div>
                         <div>
-                            <h3 class="text-sm font-bold text-green-900">Forecasts</h3>
-                            <p class="text-xs text-green-600">Project predictions</p>
+                            <h3 class="text-sm font-bold text-emerald-900">Forecasts</h3>
+                            <p class="text-xs text-emerald-600">Cost, Time, Cashflow & EVM</p>
                         </div>
                     </div>
                     <div class="space-y-2">
+                        <a href="{% url 'project:forecast-hub' project.pk %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-emerald-700">Forecasts Hub</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
                         {% if project.line_items.exists %}
                             <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
-                               class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-green-700">Manage Forecasts</span>
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-green-700">Cost Forecast</span>
                                 {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
-                        {% else %}
-                            <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
-                               class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-red-700">Upload BOQ first</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-red-500 transition-opacity" %}
+                        {% endif %}
+                        <a href="{% url 'project:time-forecast' project.pk %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-blue-700">Time Forecast</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
+                        {% if project.start_date and project.end_date %}
+                            <a href="{% url 'project:cashflow-forecast-tab' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-amber-700">Cashflow Forecast</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                         {% endif %}
+                        <a href="{% url 'project:earned-value' project.pk %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-violet-700">Earned Value</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-violet-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
                     </div>
                 </div>
                 <!-- Payment Certificates Section -->
@@ -153,43 +169,6 @@
                                class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
                                 <span class="text-sm font-medium text-red-700">Upload BOQ first</span>
                                 {% heroicon_outline "arrow-right" size="16" class="text-red-500 transition-opacity" %}
-                            </a>
-                        {% endif %}
-                    </div>
-                </div>
-                <!-- Cashflow Management Section -->
-                <div class="group relative bg-gradient-to-br from-cyan-50 to-teal-50 rounded-xl p-4 border border-cyan-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                    <div class="flex items-center mb-3">
-                        <div class="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center mr-3">
-                            {% heroicon_outline "chart-bar-square" size="20" class="text-white" %}
-                        </div>
-                        <div>
-                            <h3 class="text-sm font-bold text-cyan-900">Cashflow Management</h3>
-                            <p class="text-xs text-cyan-600">Baselines & Forecasts</p>
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        {% if project.start_date and project.end_date %}
-                            <a href="{% url 'project:planned-value-edit' project.pk %}"
-                               class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-cyan-700">Planned Values</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-cyan-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                            </a>
-                            <a href="{% url 'project:cashflow-forecast-edit' project.pk %}"
-                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-amber-700">Cashflow Forecast</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                            </a>
-                            {% if project.planned_values.exists %}
-                                <div class="px-3 py-2 bg-white/70 rounded-lg border border-teal-200">
-                                    <span class="text-xs font-medium text-teal-700">{{ project.planned_values.count }} months configured</span>
-                                </div>
-                            {% endif %}
-                        {% else %}
-                            <a href="{% url 'project:project-update' project.pk %}"
-                               class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-red-200 hover:bg-cyan-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-red-700">Set project dates first</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-cyan-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                         {% endif %}
                     </div>

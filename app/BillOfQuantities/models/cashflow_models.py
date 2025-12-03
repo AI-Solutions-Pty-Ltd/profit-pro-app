@@ -8,13 +8,16 @@ Provides models for:
 """
 
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from django.db import models
 from django.db.models import QuerySet
 
 from app.Account.models import Account
 from app.core.Utilities.models import BaseModel
-from app.Project.models import Project
+
+if TYPE_CHECKING:
+    from app.Project.models import Project
 
 
 class BaselineCashflow(BaseModel):
@@ -33,7 +36,7 @@ class BaselineCashflow(BaseModel):
         SUPERSEDED = "SUPERSEDED", "Superseded"
 
     project = models.ForeignKey(
-        Project,
+        "Project.Project",
         on_delete=models.CASCADE,
         related_name="baseline_cashflows",
         help_text="Project this cashflow belongs to",
@@ -101,7 +104,7 @@ class BaselineCashflow(BaseModel):
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_current_baseline(cls, project: Project) -> QuerySet["BaselineCashflow"]:
+    def get_current_baseline(cls, project: "Project") -> QuerySet["BaselineCashflow"]:
         """Get the current (latest approved) baseline for a project."""
         latest_version = (
             cls.objects.filter(project=project, status=cls.Status.APPROVED)
@@ -142,7 +145,7 @@ class RevisedBaseline(BaseModel):
         OTHER = "OTHER", "Other"
 
     project = models.ForeignKey(
-        Project,
+        "Project.Project",
         on_delete=models.CASCADE,
         related_name="revised_baselines",
         help_text="Project this revised baseline belongs to",
@@ -346,7 +349,7 @@ class CashflowForecast(BaseModel):
         APPROVED = "APPROVED", "Approved"
 
     project = models.ForeignKey(
-        Project,
+        "Project.Project",
         on_delete=models.CASCADE,
         related_name="cashflow_forecasts",
         help_text="Project this forecast belongs to",
@@ -444,7 +447,7 @@ class CashflowForecast(BaseModel):
         super().save(*args, **kwargs)
 
     @classmethod
-    def get_latest_forecast(cls, project: Project) -> QuerySet["CashflowForecast"]:
+    def get_latest_forecast(cls, project: "Project") -> QuerySet["CashflowForecast"]:
         """Get the latest forecast for a project."""
         latest_date = (
             cls.objects.filter(project=project)

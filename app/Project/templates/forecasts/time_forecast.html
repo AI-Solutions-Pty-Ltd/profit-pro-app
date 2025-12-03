@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load heroicons %}
+{% block title %}
+    Time Forecast - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Time Forecast</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }} - Milestone Tracking</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:milestone-create' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "plus" size="16" class="mr-1" %}
+                        Add Milestone
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Tab Navigation -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
+                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                    {% heroicon_outline "currency-dollar" size="16" class="mr-2" %}
+                    Cost Forecast
+                </a>
+                <a href="{% url 'project:time-forecast' project.pk %}"
+                   class="border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                    {% heroicon_outline "clock" size="16" class="mr-2" %}
+                    Time Forecast
+                </a>
+                <a href="{% url 'project:cashflow-forecast-tab' project.pk %}"
+                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                    {% heroicon_outline "chart-bar-square" size="16" class="mr-2" %}
+                    Cashflow Forecast
+                </a>
+                <a href="{% url 'project:earned-value' project.pk %}"
+                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                    {% heroicon_outline "chart-pie" size="16" class="mr-2" %}
+                    Earned Value Predictions
+                </a>
+            </nav>
+        </div>
+    </div>
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Milestones</p>
+            <p class="mt-1 text-2xl font-bold text-blue-600">{{ total_milestones }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Completed</p>
+            <p class="mt-1 text-2xl font-bold text-green-600">{{ completed_milestones }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-amber-500">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">On Schedule</p>
+            <p class="mt-1 text-2xl font-bold text-amber-600">{{ on_schedule_milestones }}</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Delayed</p>
+            <p class="mt-1 text-2xl font-bold text-red-600">{{ delayed_milestones }}</p>
+        </div>
+    </div>
+    <!-- Milestones Table -->
+    <div class="bg-white shadow-sm rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Project Milestones</h2>
+            <p class="text-sm text-gray-600">Track planned vs forecast completion dates</p>
+        </div>
+        {% if milestones %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                #
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Milestone
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Planned Date
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Forecast Date
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Variance
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Reason for Change
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for milestone in milestones %}
+                            <tr class="hover:bg-gray-50 {% if milestone.is_completed %}bg-green-50{% elif milestone.is_delayed %}bg-red-50{% endif %}">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ milestone.sequence|add:1 }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-sm font-medium text-gray-900">{{ milestone.name }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ milestone.planned_date|date:"d M Y" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm {% if milestone.is_delayed %}text-red-600 font-medium{% elif milestone.is_ahead %}text-green-600 font-medium{% else %}text-gray-600{% endif %}">
+                                    {% if milestone.forecast_date %}
+                                        {{ milestone.forecast_date|date:"d M Y" }}
+                                    {% else %}
+                                        <span class="text-gray-400">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    {% if milestone.variance_days is not None %}
+                                        {% if milestone.variance_days > 0 %}
+                                            <span class="text-red-600 font-medium">+{{ milestone.variance_days }} days</span>
+                                        {% elif milestone.variance_days < 0 %}
+                                            <span class="text-green-600 font-medium">{{ milestone.variance_days }} days</span>
+                                        {% else %}
+                                            <span class="text-gray-600">On time</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-gray-400">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if milestone.is_completed %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            {% heroicon_mini "check-circle" size="14" class="mr-1" %}
+                                            Completed
+                                        </span>
+                                    {% elif milestone.is_delayed %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            {% heroicon_mini "exclamation-circle" size="14" class="mr-1" %}
+                                            Delayed
+                                        </span>
+                                    {% elif milestone.is_ahead %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            {% heroicon_mini "arrow-trending-up" size="14" class="mr-1" %}
+                                            Ahead
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            {% heroicon_mini "clock" size="14" class="mr-1" %}
+                                            Pending
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate"
+                                    title="{{ milestone.reason_for_change }}">
+                                    {{ milestone.reason_for_change|default:"—"|truncatechars:50 }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="flex items-center justify-end space-x-2">
+                                        {% if not milestone.is_completed %}
+                                            <form method="post"
+                                                  action="{% url 'project:milestone-complete' project.pk milestone.pk %}"
+                                                  class="inline">
+                                                {% csrf_token %}
+                                                <button type="submit"
+                                                        class="text-green-600 hover:text-green-900"
+                                                        title="Mark Complete">
+                                                    {% heroicon_mini "check" size="16" %}
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                        <a href="{% url 'project:milestone-update' project.pk milestone.pk %}"
+                                           class="text-indigo-600 hover:text-indigo-900"
+                                           title="Edit">{% heroicon_mini "pencil" size="16" %}</a>
+                                        <a href="{% url 'project:milestone-delete' project.pk milestone.pk %}"
+                                           class="text-red-600 hover:text-red-900"
+                                           title="Delete">{% heroicon_mini "trash" size="16" %}</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="flex flex-col items-center py-12">
+                {% heroicon_outline "clock" class="mx-auto h-16 w-16 text-gray-300" %}
+                <h3 class="mt-4 text-lg font-medium text-gray-900">No Milestones Yet</h3>
+                <p class="mt-2 text-sm text-gray-500">Get started by adding your first project milestone.</p>
+                <div class="mt-6">
+                    <a href="{% url 'project:milestone-create' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "plus" size="16" class="mr-1" %}
+                        Add First Milestone
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6 rounded-lg">
+        <div class="flex justify-between items-center">
+            <a href="{% url 'project:forecast-hub' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                Back to Forecasts
+            </a>
+            <a href="{% url 'project:earned-value' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                Earned Value Predictions
+                {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+            </a>
+        </div>
+    </div>
+{% endblock content %}

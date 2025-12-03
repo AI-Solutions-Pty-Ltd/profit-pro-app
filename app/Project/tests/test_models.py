@@ -86,7 +86,7 @@ class TestProjectModel:
 
     def test_project_name_max_length(self):
         """Test that project name respects max_length constraint."""
-        max_length = Project._meta.get_field("name").max_length
+        max_length = Project._meta.get_field("name").max_length  # type: ignore
         assert max_length == 255
 
         # Test with name at max length

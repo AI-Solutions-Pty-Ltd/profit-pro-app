@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load heroicons %}
+{% block title %}
+    Cashflow Forecast - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Cashflow Forecast</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    {% if has_dates %}
+                        <a href="{% url 'project:cashflow-forecast-edit' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "pencil" size="16" class="mr-1" %}
+                            Edit Cashflow
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Tab Navigation -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
+                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                    {% heroicon_outline "currency-dollar" size="16" class="mr-2" %}
+                    Cost Forecast
+                </a>
+                <a href="{% url 'project:time-forecast' project.pk %}"
+                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                    {% heroicon_outline "clock" size="16" class="mr-2" %}
+                    Time Forecast
+                </a>
+                <a href="{% url 'project:cashflow-forecast-tab' project.pk %}"
+                   class="border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                    {% heroicon_outline "chart-bar-square" size="16" class="mr-2" %}
+                    Cashflow Forecast
+                </a>
+                <a href="{% url 'project:earned-value' project.pk %}"
+                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center">
+                    {% heroicon_outline "chart-pie" size="16" class="mr-2" %}
+                    Earned Value Predictions
+                </a>
+            </nav>
+        </div>
+    </div>
+    {% if not has_dates %}
+        <!-- No dates configured warning -->
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" class="h-5 w-5 text-yellow-400" %}</div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-yellow-800">Project Dates Required</h3>
+                    <div class="mt-2 text-sm text-yellow-700">
+                        <p>Please set the project start date and end date before viewing cashflow forecast.</p>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{% url 'project:project-update' project.pk %}"
+                           class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-yellow-800 bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                            {% heroicon_outline "pencil" size="16" %}
+                            <span class="ml-1">Edit Project Dates</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% elif has_chart_data %}
+        <!-- Waterfall Chart -->
+        <div class="bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 rounded-xl shadow-xl mb-6 p-1">
+            <div class="bg-white rounded-lg overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-amber-50 to-orange-50">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900">Cashflow Waterfall</h2>
+                            <p class="text-sm text-gray-600">Cumulative planned vs forecast cashflow</p>
+                        </div>
+                        <div class="flex items-center space-x-4 text-sm">
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-cyan-500 rounded mr-2"></div>
+                                <span class="text-gray-600">Planned (Cumulative)</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-4 h-4 bg-amber-500 rounded mr-2"></div>
+                                <span class="text-gray-600">Forecast (Cumulative)</span>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="w-8 border-t-2 border-dashed border-red-500 mr-2"></div>
+                                <span class="text-gray-600">Contract Value</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="h-80">
+                        <canvas id="cashflowChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Contract Value</p>
+                <p class="mt-1 text-2xl font-bold text-blue-600">R {{ contract_value|floatformat:0|intcomma }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-cyan-500">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Planned</p>
+                <p class="mt-1 text-2xl font-bold text-cyan-600">R {{ cumulative_planned|last|floatformat:0|intcomma }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-amber-500">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Forecast</p>
+                <p class="mt-1 text-2xl font-bold text-amber-600">R {{ cumulative_forecast|last|floatformat:0|intcomma }}</p>
+            </div>
+        </div>
+        <!-- Action buttons -->
+        <div class="bg-white shadow-sm rounded-lg p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900">Manage Cashflow Data</h3>
+                    <p class="text-sm text-gray-600">Edit planned values and cashflow forecast values</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:planned-value-edit' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-cyan-300 text-sm font-medium rounded-md text-cyan-700 bg-white hover:bg-cyan-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">
+                        {% heroicon_outline "pencil-square" size="16" class="mr-1" %}
+                        Edit Planned Values
+                    </a>
+                    <a href="{% url 'project:cashflow-forecast-edit' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-amber-300 text-sm font-medium rounded-md text-amber-700 bg-white hover:bg-amber-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+                        {% heroicon_outline "pencil-square" size="16" class="mr-1" %}
+                        Edit Forecast Values
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- No data message -->
+        <div class="bg-white shadow-sm rounded-lg">
+            <div class="text-center py-12">
+                {% heroicon_outline "chart-bar-square" class="mx-auto h-16 w-16 text-gray-300" %}
+                <h3 class="mt-4 text-lg font-medium text-gray-900">No Cashflow Data Yet</h3>
+                <p class="mt-2 text-sm text-gray-500">Get started by entering planned values and forecast values.</p>
+                <div class="mt-6 flex items-center justify-center space-x-3">
+                    <a href="{% url 'project:planned-value-edit' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">
+                        {% heroicon_outline "plus" size="16" class="mr-1" %}
+                        Enter Planned Values
+                    </a>
+                    <a href="{% url 'project:cashflow-forecast-edit' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500">
+                        {% heroicon_outline "plus" size="16" class="mr-1" %}
+                        Enter Forecast Values
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6 rounded-lg">
+        <div class="flex justify-between items-center">
+            <a href="{% url 'project:forecast-hub' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                Back to Forecasts
+            </a>
+            <a href="{% url 'project:earned-value' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                Earned Value Predictions
+                {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+            </a>
+        </div>
+    </div>
+{% endblock content %}
+{% block extra_js %}
+    {% if has_chart_data %}
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const ctx = document.getElementById('cashflowChart').getContext('2d');
+                const chartLabels = {{ chart_labels|safe }};
+                const cumulativePlanned = {{ cumulative_planned|safe }};
+                const cumulativeForecast = {{ cumulative_forecast|safe }};
+                const contractValue = {{ contract_value }};
+                
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [
+                            {
+                                label: 'Planned (Cumulative)',
+                                data: cumulativePlanned,
+                                borderColor: 'rgb(6, 182, 212)',
+                                backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                                borderWidth: 3,
+                                pointRadius: 4,
+                                pointBackgroundColor: 'rgb(6, 182, 212)',
+                                fill: true,
+                                tension: 0.3
+                            },
+                            {
+                                label: 'Forecast (Cumulative)',
+                                data: cumulativeForecast,
+                                borderColor: 'rgb(245, 158, 11)',
+                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                borderWidth: 3,
+                                pointRadius: 4,
+                                pointBackgroundColor: 'rgb(245, 158, 11)',
+                                fill: true,
+                                tension: 0.3
+                            },
+                            {
+                                label: 'Contract Value',
+                                data: Array(chartLabels.length).fill(contractValue),
+                                borderColor: 'rgb(239, 68, 68)',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                pointRadius: 0,
+                                fill: false,
+                                tension: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 12,
+                                titleFont: { size: 13 },
+                                bodyFont: { size: 12 },
+                                callbacks: {
+                                    label: function(context) {
+                                        const value = context.parsed.y;
+                                        if (value === null) return 'No data';
+                                        return `${context.dataset.label}: R ${value.toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    font: { size: 10 },
+                                    maxRotation: 45,
+                                    minRotation: 45
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                },
+                                ticks: {
+                                    font: { size: 10 },
+                                    callback: function(value) {
+                                        return 'R ' + value.toLocaleString('en-ZA');
+                                    }
+                                },
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            });
+        </script>
+    {% endif %}
+{% endblock extra_js %}

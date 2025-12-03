@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
@@ -7,7 +9,9 @@ from django.db.models.functions import Coalesce
 
 from app.Account.models import Account
 from app.core.Utilities.models import BaseModel, sum_queryset
-from app.Project.models import Project
+
+if TYPE_CHECKING:
+    from app.Project.models import Project
 
 
 class PaymentCertificate(BaseModel):
@@ -15,7 +19,7 @@ class PaymentCertificate(BaseModel):
 
     if TYPE_CHECKING:
         # Type hint for reverse relationship from ActualTransaction
-        actual_transactions: QuerySet["ActualTransaction"]
+        actual_transactions: QuerySet[ActualTransaction]
 
     def upload_to(self, filename):
         return f"payment_certificates/{self.project.name}/{filename}"
@@ -27,7 +31,7 @@ class PaymentCertificate(BaseModel):
         REJECTED = "REJECTED", "Rejected"
 
     project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="payment_certificates"
+        "Project.Project", on_delete=models.CASCADE, related_name="payment_certificates"
     )
     status = models.CharField(
         max_length=10, choices=Status.choices, default=Status.DRAFT
@@ -97,7 +101,7 @@ class PaymentCertificate(BaseModel):
         return total_payment_certificates + 1
 
     @property
-    def previous_certificates(self) -> QuerySet["PaymentCertificate"]:
+    def previous_certificates(self) -> QuerySet[PaymentCertificate]:
         return PaymentCertificate.all_objects.filter(
             project=self.project,
             certificate_number__lt=self.certificate_number,
