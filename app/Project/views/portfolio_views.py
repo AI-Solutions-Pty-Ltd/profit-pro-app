@@ -2,20 +2,19 @@
 
 import json
 from datetime import datetime, timedelta
-from typing import cast
 
-from django.db.models import QuerySet, Sum
+from django.db.models import QuerySet
+from django.http import JsonResponse
 from django.views.generic import (
     ListView,
 )
 
-from app.Account.models import Account
-from app.BillOfQuantities.models import ActualTransaction, PaymentCertificate
-from app.core.Utilities.mixins import BreadcrumbMixin
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import FilterForm
 from app.Project.models import Project
+from app.Project.models.projects_models import Portfolio
 
 
 class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
@@ -37,13 +36,13 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         super().setup(request, *args, **kwargs)
         self.filter_form = FilterForm(request.GET or {})  # Ensure form is never None
 
-    def get_breadcrumbs(self):
+    def get_breadcrumbs(self: "PortfolioDashboardView") -> list[BreadcrumbItem]:
         return [
             {"title": "Portfolio", "url": None},
             {"title": "Dashboard", "url": None},
         ]
 
-    def get_queryset(self) -> QuerySet[Project]:
+    def get_queryset(self: "PortfolioDashboardView") -> QuerySet[Project]:
         """Get filtered projects for dashboard view."""
         # Ensure filter_form exists and is valid
         if not self.filter_form or not self.filter_form.is_valid():
@@ -68,10 +67,10 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
 
         return projects
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self: "PortfolioDashboardView", **kwargs):
         """Add financial metrics to context."""
         context = super().get_context_data(**kwargs)
-        projects = context["projects"]
+        projects: QuerySet[Project] = context["projects"]
 
         # Add the already-validated form to context
         context["filter_form"] = self.filter_form
@@ -82,13 +81,7 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
             contract_value = project.get_total_contract_value
 
             # Get cumulative certified to date (sum of all approved payment certificates)
-            certified_amount = (
-                ActualTransaction.objects.filter(
-                    line_item__project=project,
-                    payment_certificate__status=PaymentCertificate.Status.APPROVED,
-                ).aggregate(total=Sum("total_price"))["total"]
-                or 0
-            )
+            certified_amount = project.actual_cost()
 
             # Get latest forecast to date
             latest_forecast = project.forecasts.order_by("-period").first()
@@ -137,7 +130,7 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
             projects, "forecasts__forecast_transactions__total_price"
         )
         context["dashboard_data"] = dashboard_data
-        portfolio = cast(Account, self.request.user).portfolio
+        portfolio: Portfolio = self.request.user.portfolio  # type: ignore
         context["portfolio"] = portfolio
         context["current_date"] = datetime.now()
 
@@ -151,7 +144,9 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
 
         return context
 
-    def _get_performance_chart_data(self, portfolio) -> dict:
+    def _get_performance_chart_data(
+        self: "PortfolioDashboardView", portfolio: Portfolio
+    ) -> dict:
         """Generate 12 months of CPI/SPI data for portfolio."""
         labels = []
         cpi_values = []
@@ -168,20 +163,18 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
 
             labels.append(month_date.strftime("%b %Y"))
 
-            if portfolio:
-                try:
-                    cpi = portfolio.cost_performance_index(month_date)
-                    cpi_values.append(float(cpi) if cpi else None)
-                except (ZeroDivisionError, TypeError, Exception):
-                    cpi_values.append(None)
-
-                try:
-                    spi = portfolio.schedule_performance_index(month_date)
-                    spi_values.append(float(spi) if spi else None)
-                except (ZeroDivisionError, TypeError, Exception):
-                    spi_values.append(None)
-            else:
+            try:
+                cpi = portfolio.cost_performance_index(month_date)
+                cpi_values.append(float(cpi) if cpi else None)
+            except (ZeroDivisionError, TypeError, Exception):
                 cpi_values.append(None)
+
+            try:
+                spi = portfolio.schedule_performance_index(month_date)
+                print(f"spi for {month_date}: {spi}")
+                spi_values.append(float(spi) if spi else None)
+            except (ZeroDivisionError, TypeError, Exception):
+                print("Error calculating SPI")
                 spi_values.append(None)
 
         return {
@@ -191,3 +184,56 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
             "current_cpi": cpi_values[-1] if cpi_values else None,
             "current_spi": spi_values[-1] if spi_values else None,
         }
+
+
+class ProjectListView(PortfolioDashboardView):
+    """Project list view that reuses dashboard filtering logic."""
+
+    template_name = "portfolio/project_list.html"
+
+    def get_breadcrumbs(self):
+        """Update breadcrumbs for project list page."""
+        return [
+            {"title": "Portfolio", "url": "/"},
+            {"title": "Projects", "url": None},
+        ]
+
+    def get_context_data(self, **kwargs):
+        """Simplify context data for project list view - no need for portfolio metrics."""
+        context = super().get_context_data(**kwargs)
+
+        # Remove portfolio-specific metrics that aren't needed for project list
+        # Keep only the dashboard_data which contains project information
+        portfolio_metrics_to_remove = [
+            "total_contract_value",
+            "total_certified_amount",
+            "total_forecast_amount",
+            "performance_labels",
+            "cpi_data",
+            "spi_data",
+            "current_cpi",
+            "current_spi",
+        ]
+
+        for metric in portfolio_metrics_to_remove:
+            context.pop(metric, None)
+
+        return context
+
+    def get(self, request, *args, **kwargs):
+        """Handle both regular GET and AJAX requests for filtering."""
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            # Return JSON response for AJAX requests
+            self.object_list = self.get_queryset()
+            context = self.get_context_data()
+
+            # Render just the table body
+            from django.template.loader import render_to_string
+
+            html = render_to_string(
+                "portfolio/_project_table_rows.html", context, request=request
+            )
+
+            return JsonResponse({"html": html})
+
+        return super().get(request, *args, **kwargs)

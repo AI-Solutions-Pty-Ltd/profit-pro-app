@@ -1,0 +1,38 @@
+{% for data in dashboard_data %}
+    <tr class="hover:bg-gray-50">
+        <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-gray-900">
+                <a href="{% url 'project:project-dashboard' data.project.pk %}"
+                   class="hover:text-indigo-600 transition-colors">{{ data.project.name|title }}</a>
+            </div>
+            <div class="text-sm text-gray-500">{{ data.project.client.name|default:"No Client" }}</div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-gray-500">{{ data.project.status }}</div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <div class="flex flex-col items-center space-y-2 min-w-0">
+                <a href="{% url 'project:project-dashboard' data.project.id %}"
+                   class="group relative w-full flex flex-row justify-center items-center px-3 py-2 gap-2 border border-blue-500 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-600 hover:text-blue-800 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm hover:shadow-lg z-10"
+                   title="View project dashboard and charts">
+                    {% heroicon_outline "chart-bar" size="16" %}
+                    <span>View Dashboard</span>
+                </a>
+            </div>
+        </td>
+    </tr>
+{% empty %}
+    <tr>
+        <td colspan="6" class="px-6 py-12 text-center">
+            <div class="flex flex-col items-center">
+                {% heroicon_outline "folder-plus" size="48" class="text-gray-300 mb-4" %}
+                <p class="text-sm text-gray-500 mb-4">No projects found</p>
+                <a href="{% url 'project:project-create' %}"
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_outline "plus" size="16" class="mr-2" %}
+                    Create Your First Project
+                </a>
+            </div>
+        </td>
+    </tr>
+{% endfor %}

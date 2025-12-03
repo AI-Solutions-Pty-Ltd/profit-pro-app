@@ -75,9 +75,9 @@ class FinalAccountDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailVi
 
         for line in line_items_qs:
             budgeted_qty = line.budgeted_quantity or Decimal("0")
-            total_qty = line.total_qty or Decimal("0")
+            total_qty = line.total_qty or Decimal("0")  # type: ignore
             total_price = line.total_price or Decimal("0")
-            total_claimed = line.total_claimed or Decimal("0")
+            total_claimed = line.total_claimed or Decimal("0")  # type: ignore
 
             # Calculate qty additions/omissions
             qty_addition = max(Decimal("0"), total_qty - budgeted_qty)
@@ -94,11 +94,11 @@ class FinalAccountDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailVi
                 variance_percent = Decimal("0")
 
             # Add calculated fields to line item
-            line.qty_addition = qty_addition
-            line.qty_omission = qty_omission
-            line.amount_addition = amount_addition
-            line.amount_omission = amount_omission
-            line.variance_percent = variance_percent
+            line.qty_addition = qty_addition  # type: ignore
+            line.qty_omission = qty_omission  # type: ignore
+            line.amount_addition = amount_addition  # type: ignore
+            line.amount_omission = amount_omission  # type: ignore
+            line.variance_percent = variance_percent  # type: ignore
 
             line_items.append(line)
 

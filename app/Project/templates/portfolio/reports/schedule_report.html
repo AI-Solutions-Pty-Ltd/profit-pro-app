@@ -1,0 +1,168 @@
+{% extends "base_full.html" %}
+{% load humanize %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="bg-white shadow-sm rounded-lg mb-6">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Schedule Report</h1>
+                        <p class="text-sm text-gray-600 mt-1">Project list with Planned Time, Forecast, and Actual Progress</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-sm text-gray-500">
+                            {% heroicon_outline "calendar" class="w-4 h-4 inline mr-1" %}
+                            {{ current_date|date:"F d, Y" }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Schedule Report Table -->
+        <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-slate-50">
+                <h2 class="text-lg font-semibold text-gray-900">
+                    {% heroicon_outline "clock" class="w-5 h-5 inline mr-2" %}
+                    Project Schedule Summary
+                </h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Planned Start</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Planned End</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Duration (Days)</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Days Elapsed</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">% Complete</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">SPI</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for data in report_data %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        <a href="{% url 'project:project-dashboard' data.project.pk %}"
+                                           class="hover:text-indigo-600 transition-colors">
+                                            {{ data.project.name|title }}
+                                        </a>
+                                    </div>
+                                    <div class="text-xs text-gray-500">{{ data.project.client.name|default:"No Client" }}</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-center">
+                                    {% if data.planned_start %}
+                                        <span class="text-sm text-gray-900">{{ data.planned_start|date:"d M Y" }}</span>
+                                    {% else %}
+                                        <span class="text-gray-400">--</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-center">
+                                    {% if data.planned_end %}
+                                        <span class="text-sm text-gray-900">{{ data.planned_end|date:"d M Y" }}</span>
+                                    {% else %}
+                                        <span class="text-gray-400">--</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-center">
+                                    {% if data.planned_duration %}
+                                        <span class="text-sm font-medium text-gray-900">{{ data.planned_duration }}</span>
+                                    {% else %}
+                                        <span class="text-gray-400">--</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-center">
+                                    {% if data.days_elapsed is not None %}
+                                        <span class="text-sm font-medium text-gray-900">{{ data.days_elapsed }}</span>
+                                    {% else %}
+                                        <span class="text-gray-400">--</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-center">
+                                    <div class="flex items-center justify-center">
+                                        <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                            <div class="bg-indigo-600 h-2 rounded-full"
+                                                 style="width: {{ data.percent_complete|floatformat:0 }}%"></div>
+                                        </div>
+                                        <span class="text-sm font-medium text-gray-900">{{ data.percent_complete|floatformat:1 }}%</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-center">
+                                    {% if data.spi %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if data.spi >= 1 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                            {{ data.spi|floatformat:2 }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-gray-400">--</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-center">
+                                    {% if data.spi %}
+                                        {% if data.spi >= 1 %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700">
+                                                {% heroicon_mini "check-circle" class="w-4 h-4 mr-1" %}
+                                                On Track
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-700">
+                                                {% heroicon_mini "exclamation-triangle" class="w-4 h-4 mr-1" %}
+                                                Behind
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
+                                            {% heroicon_mini "minus-circle" class="w-4 h-4 mr-1" %}
+                                            No Data
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="px-6 py-12 text-center">
+                                    <div class="flex flex-col items-center">
+                                        {% heroicon_outline "clock" class="w-16 h-16 text-gray-300 mb-4" %}
+                                        <p class="text-sm text-gray-500">No active projects found</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Legend -->
+        <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+            <div class="flex flex-wrap items-center justify-center gap-6 text-sm">
+                <div class="flex items-center">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-2">SPI ≥ 1</span>
+                    <span class="text-gray-600">On or ahead of schedule</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 mr-2">SPI < 1</span>
+                    <span class="text-gray-600">Behind schedule</span>
+                </div>
+            </div>
+        </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'project:portfolio-financial-report' %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Financial Report
+                </a>
+                <a href="{% url 'project:portfolio-list' %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    Portfolio Dashboard
+                    {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

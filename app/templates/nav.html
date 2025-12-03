@@ -10,53 +10,84 @@
                 <div class="hidden md:block">
                     <div class="ml-10 flex items-baseline space-x-4">
                         {% if user.is_authenticated %}
-                            <a href="{% url 'project:portfolio-list' %}"
-                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                                Projects
+                            <!-- 1. Home Page -->
+                            <a href="{% url 'home' %}"
+                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
+                                {% heroicon_outline "home" class="w-4 h-4 mr-1" %}
+                                Home
                             </a>
-                            <!-- Dashboard Dropdown -->
+                            <!-- 2. Portfolio Dashboard -->
+                            <a href="{% url 'project:portfolio-list' %}"
+                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
+                                {% heroicon_outline "chart-pie" class="w-4 h-4 mr-1" %}
+                                Portfolio Dashboard
+                            </a>
+                            <!-- 3. Portfolio Reports Dropdown -->
                             <div class="relative group">
                                 <button class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center"
-                                        onclick="toggleDropdown('dashboard-dropdown')">
-                                    Dashboard
-                                    {% heroicon_outline "chevron-down" class="w-3 h-3 ml-2" %}
+                                        onclick="toggleDropdown('reports-dropdown')">
+                                    {% heroicon_outline "document-chart-bar" class="w-4 h-4 mr-1" %}
+                                    Portfolio Reports
+                                    {% heroicon_outline "chevron-down" class="w-3 h-3 ml-1" %}
                                 </button>
-                                <div id="dashboard-dropdown"
+                                <div id="reports-dropdown"
                                      class="hidden absolute left-0 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 group-hover:block">
                                     <div class="py-1">
-                                        <a href="{% url 'account:dashboard' %}"
+                                        <a href="{% url 'project:portfolio-financial-report' %}"
                                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors flex items-center">
-                                            {% heroicon_outline "chart-bar" class="w-3 h-3 mr-2" %}Dashboard Overview
+                                            {% heroicon_outline "currency-dollar" class="w-4 h-4 mr-2" %}
+                                            Financial Report
                                         </a>
-                                        <a href="{% url 'account:cost_performance' %}"
+                                        <a href="{% url 'project:portfolio-schedule-report' %}"
                                            class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors flex items-center">
-                                            {% heroicon_outline "currency-dollar" class="w-3 h-3 mr-2" %}Cost Performance
+                                            {% heroicon_outline "clock" class="w-4 h-4 mr-2" %}
+                                            Schedule Report
                                         </a>
-                                        <a href="{% url 'account:schedule_performance' %}"
-                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors flex items-center">
-                                            {% heroicon_outline "clock" class="w-3 h-3 mr-2" %}Schedule Performance
+                                        <div class="border-t border-gray-100 my-1"></div>
+                                        <span class="block px-4 py-1 text-xs text-gray-400 uppercase tracking-wider">Coming Soon</span>
+                                        <a href="#"
+                                           class="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed flex items-center">
+                                            {% heroicon_outline "exclamation-triangle" class="w-4 h-4 mr-2" %}
+                                            Impact Report
                                         </a>
-                                        <a href="{% url 'account:compliance' %}"
-                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors flex items-center">
-                                            {% heroicon_outline "check-circle" class="w-3 h-3 mr-2" %}Contractual Compliance
+                                        <a href="#"
+                                           class="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed flex items-center">
+                                            {% heroicon_outline "shield-check" class="w-4 h-4 mr-2" %}
+                                            Compliance Report
                                         </a>
                                     </div>
                                 </div>
                             </div>
-                            <a href="{% url 'final-account' %}"
-                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                                Final Account
+                            <!-- 4. Project List -->
+                            <a href="{% url 'project:portfolio-project-list' %}"
+                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
+                                {% heroicon_outline "folder-open" class="w-4 h-4 mr-1" %}
+                                Project List
                             </a>
-                            <a href="{% url 'impact' %}"
-                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                                Impact
-                            </a>
-                        {% endif %}
-                        {% if user|useringroup:"consultant" %}
-                            <a href="{% url 'consultant:client-list' %}"
-                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                                Clients
-                            </a>
+                            <!-- 5. User Management Dropdown -->
+                            <div class="relative group">
+                                <button class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center"
+                                        onclick="toggleDropdown('user-management-dropdown')">
+                                    {% heroicon_outline "users" class="w-4 h-4 mr-1" %}
+                                    User Management
+                                    {% heroicon_outline "chevron-down" class="w-3 h-3 ml-1" %}
+                                </button>
+                                <div id="user-management-dropdown"
+                                     class="hidden absolute left-0 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 group-hover:block">
+                                    <div class="py-1">
+                                        <a href="{% url 'project:client-register' %}"
+                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors flex items-center">
+                                            {% heroicon_outline "building-office" class="w-4 h-4 mr-2" %}
+                                            Clients Register
+                                        </a>
+                                        <a href="{% url 'project:signatory-register' %}"
+                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors flex items-center">
+                                            {% heroicon_outline "user-group" class="w-4 h-4 mr-2" %}
+                                            Signatories Register
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
                         {% endif %}
                     </div>
                 </div>

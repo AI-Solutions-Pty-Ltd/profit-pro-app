@@ -16,6 +16,7 @@ from django.views.generic import (
 )
 
 from app.BillOfQuantities.models import ActualTransaction, Forecast, PaymentCertificate
+from app.core.Utilities.dates import get_end_of_month
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
@@ -52,8 +53,8 @@ class ProjectDashboardView(ProjectMixin, DetailView):
     def get_context_data(self: "ProjectDashboardView", **kwargs):
         """Add chart data to context."""
         context = super().get_context_data(**kwargs)
-        project = self.object
-        current_date = datetime.now()
+        project = self.get_object()
+        current_date = get_end_of_month(datetime.now())
 
         # Contract values
         original_contract_value = project.get_original_contract_value
@@ -113,92 +114,6 @@ class ProjectDashboardView(ProjectMixin, DetailView):
         context["contract_value"] = float(revised_contract_value)
 
         return context
-
-    def _get_project_performance_data(self, project: Project) -> dict:
-        """Generate CPI/SPI data bounded by project dates (up to 12 months)."""
-        labels = []
-        cpi_values = []
-        spi_values = []
-
-        today = date.today()
-
-        if not project.start_date or not project.end_date:
-            # No project dates set, return empty data
-            messages.error(self.request, "Project dates not set")
-            return {
-                "labels": [],
-                "cpi": [],
-                "spi": [],
-                "current_cpi": None,
-                "current_spi": None,
-            }
-
-        # Normalize to first of month
-        project_start = project.start_date.replace(day=1)
-        project_end = project.end_date.replace(day=1)
-
-        # Determine initial chart range based on current date
-        chart_start = project_start
-        chart_end = min(project_end, today.replace(day=1))
-
-        # If chart_end is before chart_start (project hasn't started), start from project start
-        if chart_end < chart_start:
-            chart_end = chart_start
-
-        # Calculate current months coverage
-        months_diff = (
-            (chart_end.year - chart_start.year) * 12
-            + (chart_end.month - chart_start.month)
-            + 1
-        )
-
-        # Pad into future if less than 12 months, but cap at project end
-        if months_diff < 12:
-            needed_months = 12 - months_diff
-            extended_end = chart_end + relativedelta(months=needed_months)
-            chart_end = min(extended_end, project_end)
-
-        # Recalculate months after potential extension
-        months_diff = (
-            (chart_end.year - chart_start.year) * 12
-            + (chart_end.month - chart_start.month)
-            + 1
-        )
-
-        # If more than 12 months, show most recent 12
-        if months_diff > 12:
-            chart_start = chart_end - relativedelta(months=11)
-
-        # Generate data for each month in the range (oldest to newest)
-        current_month = chart_start
-        while current_month <= chart_end:
-            labels.append(current_month.strftime("%b %Y"))
-
-            # Convert to datetime for performance index methods
-            month_datetime = datetime(current_month.year, current_month.month, 1)
-
-            try:
-                cpi = project.cost_performance_index(month_datetime)
-                cpi_values.append(float(cpi) if cpi else None)
-            except (ZeroDivisionError, TypeError, Exception):
-                cpi_values.append(None)
-
-            try:
-                spi = project.schedule_performance_index(month_datetime)
-                spi_values.append(float(spi) if spi else None)
-            except (ZeroDivisionError, TypeError, Exception):
-                spi_values.append(None)
-
-            # Move to next month
-            current_month = current_month + relativedelta(months=1)
-
-        return {
-            "labels": labels,
-            "cpi": cpi_values,
-            "spi": spi_values,
-            "current_cpi": cpi_values[-1] if cpi_values else None,
-            "current_spi": spi_values[-1] if spi_values else None,
-        }
 
     def _get_financial_comparison_data(self, project: Project) -> dict:
         """Generate monthly Planned Value, Forecast, and Cumulative Certified data.

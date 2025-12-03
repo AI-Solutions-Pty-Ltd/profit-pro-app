@@ -29,12 +29,13 @@ class PaymentCertificate(BaseModel):
         SUBMITTED = "SUBMITTED", "Submitted"
         APPROVED = "APPROVED", "Approved"
         REJECTED = "REJECTED", "Rejected"
+        SIGNATORIES_APPROVED = "SIGNATORIES_APPROVED", "Signatories Approved"
 
     project = models.ForeignKey(
         "Project.Project", on_delete=models.CASCADE, related_name="payment_certificates"
     )
     status = models.CharField(
-        max_length=10, choices=Status.choices, default=Status.DRAFT
+        max_length=20, choices=Status.choices, default=Status.DRAFT
     )
 
     certificate_number = models.IntegerField()
@@ -339,3 +340,30 @@ class ActualTransaction(BaseModel):
             self.payment_certificate.abridged_pdf = None
         self.payment_certificate.save()
         super().save(*args, **kwargs)
+
+
+class Signatory(BaseModel):
+    payment_certificate = models.ForeignKey(
+        PaymentCertificate,
+        on_delete=models.CASCADE,
+        related_name="signatories",
+    )
+    signatory = models.ForeignKey(
+        "Project.Signatories",
+        on_delete=models.CASCADE,
+        related_name="signatories",
+    )
+    approved = models.BooleanField(default=False)
+    comments = models.TextField(blank=True, default="")
+
+    class Meta:
+        verbose_name = "Signatory"
+        verbose_name_plural = "Signatories"
+        ordering = ["payment_certificate"]
+        indexes = [
+            models.Index(fields=["payment_certificate", "signatory"]),
+            models.Index(fields=["signatory", "approved"]),
+        ]
+
+    def __str__(self):
+        return f"{self.signatory} - {self.payment_certificate}"

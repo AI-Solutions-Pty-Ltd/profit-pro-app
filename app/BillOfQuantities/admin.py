@@ -71,7 +71,14 @@ class LineItemAdmin(SoftDeleteAdmin):
 
 @admin.register(PaymentCertificate)
 class PaymentCertificateAdmin(SoftDeleteAdmin):
-    list_display = ["certificate_number", "project", "status", "deleted", "approved_on"]
+    list_display = [
+        "certificate_number",
+        "project",
+        "status",
+        "is_final",
+        "deleted",
+        "approved_on",
+    ]
     list_filter = ["deleted", "status", "created_at", "project"]
     search_fields = ["certificate_number", "project__name"]
 

@@ -10,11 +10,12 @@ from django.urls import reverse
 
 from app.core.Utilities.models import BaseModel, sum_queryset
 
+from .payment_certificate_models import ActualTransaction, PaymentCertificate
+
 if TYPE_CHECKING:
     from app.Project.models import Project
 
     from .forecast_models import Forecast
-    from .payment_certificate_models import ActualTransaction, PaymentCertificate
 
 
 class Structure(BaseModel):

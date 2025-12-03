@@ -1,0 +1,179 @@
+{% extends "base_full.html" %}
+{% load humanize %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="bg-white shadow-sm rounded-lg mb-6">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Financial Report</h1>
+                        <p class="text-sm text-gray-600 mt-1">Project list with Budget, Forecast, Variances, Certified Payments, CPI & SPI</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-sm text-gray-500">
+                            {% heroicon_outline "calendar" class="w-4 h-4 inline mr-1" %}
+                            {{ current_date|date:"F d, Y" }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Budget</p>
+                <p class="mt-1 text-xl font-bold text-blue-600">R {{ totals.budget|floatformat:0|intcomma }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-amber-500">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Forecast</p>
+                <p class="mt-1 text-xl font-bold text-amber-600">R {{ totals.forecast|floatformat:0|intcomma }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-{% if totals.variance >= 0 %}green{% else %}red{% endif %}-500">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Variance</p>
+                <p class="mt-1 text-xl font-bold text-{% if totals.variance >= 0 %}green{% else %}red{% endif %}-600">
+                    R {{ totals.variance|floatformat:0|intcomma }}
+                    <span class="text-sm">({{ totals.variance_percentage|floatformat:1 }}%)</span>
+                </p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Certified</p>
+                <p class="mt-1 text-xl font-bold text-purple-600">R {{ totals.certified|floatformat:0|intcomma }}</p>
+            </div>
+        </div>
+        <!-- Financial Report Table -->
+        <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-slate-50">
+                <h2 class="text-lg font-semibold text-gray-900">
+                    {% heroicon_outline "table-cells" class="w-5 h-5 inline mr-2" %}
+                    Project Financial Summary
+                </h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Budget</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Forecast</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Variance</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Variance %</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Certified</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">CPI</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">SPI</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for data in report_data %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-4 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        <a href="{% url 'project:project-dashboard' data.project.pk %}"
+                                           class="hover:text-indigo-600 transition-colors">
+                                            {{ data.project.name|title }}
+                                        </a>
+                                    </div>
+                                    <div class="text-xs text-gray-500">{{ data.project.status }}</div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right">
+                                    <span class="text-sm font-medium text-gray-900">R {{ data.budget|floatformat:0|intcomma }}</span>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right">
+                                    <span class="text-sm font-medium text-gray-900">R {{ data.forecast|floatformat:0|intcomma }}</span>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right">
+                                    <span class="text-sm font-medium {% if data.variance >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                        R {{ data.variance|floatformat:0|intcomma }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right">
+                                    <span class="text-sm font-medium {% if data.variance_percentage >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                        {{ data.variance_percentage|floatformat:1 }}%
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-right">
+                                    <span class="text-sm font-medium text-purple-600">R {{ data.certified|floatformat:0|intcomma }}</span>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-center">
+                                    {% if data.cpi %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if data.cpi >= 1 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                            {{ data.cpi|floatformat:2 }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-gray-400">--</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-center">
+                                    {% if data.spi %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if data.spi >= 1 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                            {{ data.spi|floatformat:2 }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-gray-400">--</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="px-6 py-12 text-center">
+                                    <div class="flex flex-col items-center">
+                                        {% heroicon_outline "document-chart-bar" class="w-16 h-16 text-gray-300 mb-4" %}
+                                        <p class="text-sm text-gray-500">No active projects found</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    {% if report_data %}
+                        <tfoot class="bg-gray-100 border-t-2 border-gray-300">
+                            <tr>
+                                <td class="px-4 py-3 text-sm font-bold text-gray-900">TOTALS</td>
+                                <td class="px-4 py-3 text-right text-sm font-bold text-gray-900">R {{ totals.budget|floatformat:0|intcomma }}</td>
+                                <td class="px-4 py-3 text-right text-sm font-bold text-gray-900">R {{ totals.forecast|floatformat:0|intcomma }}</td>
+                                <td class="px-4 py-3 text-right text-sm font-bold {% if totals.variance >= 0 %}text-green-700{% else %}text-red-700{% endif %}">
+                                    R {{ totals.variance|floatformat:0|intcomma }}
+                                </td>
+                                <td class="px-4 py-3 text-right text-sm font-bold {% if totals.variance_percentage >= 0 %}text-green-700{% else %}text-red-700{% endif %}">
+                                    {{ totals.variance_percentage|floatformat:1 }}%
+                                </td>
+                                <td class="px-4 py-3 text-right text-sm font-bold text-purple-700">R {{ totals.certified|floatformat:0|intcomma }}</td>
+                                <td class="px-4 py-3 text-center text-sm font-bold text-gray-500">--</td>
+                                <td class="px-4 py-3 text-center text-sm font-bold text-gray-500">--</td>
+                            </tr>
+                        </tfoot>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+        <!-- Legend -->
+        <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+            <div class="flex flex-wrap items-center justify-center gap-6 text-sm">
+                <div class="flex items-center">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-2">CPI/SPI ≥ 1</span>
+                    <span class="text-gray-600">On or under budget/schedule</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 mr-2">CPI/SPI < 1</span>
+                    <span class="text-gray-600">Over budget/behind schedule</span>
+                </div>
+            </div>
+        </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'project:portfolio-list' %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Back to Portfolio Dashboard
+                </a>
+                <a href="{% url 'project:portfolio-schedule-report' %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    Schedule Report
+                    {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

@@ -8,9 +8,7 @@ from django.urls import include, path
 from .views import (
     AboutView,
     FeaturesView,
-    FinalAccountView,
     HomeView,
-    ImpactView,
     RegisterView,
 )
 
@@ -18,8 +16,6 @@ urlpatterns = (
     [
         path("admin/", admin.site.urls),
         path("features/", FeaturesView.as_view(), name="features"),
-        path("final-account/", FinalAccountView.as_view(), name="final-account"),
-        path("impact/", ImpactView.as_view(), name="impact"),
         path("about/", AboutView.as_view(), name="about"),
         path("", HomeView.as_view(), name="home"),
         path("", include("app.Account.auth_urls")),

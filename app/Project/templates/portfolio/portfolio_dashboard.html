@@ -29,13 +29,18 @@
                     <!-- Financial Metrics Row -->
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                         <!-- Active Projects -->
-                        <div class="bg-blue-50 rounded-lg p-4 text-center border border-blue-100">
-                            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <a href="{% url 'project:portfolio-project-list' %}"
+                           class="bg-blue-50 rounded-lg p-4 text-center border border-blue-100 hover:bg-blue-100 hover:border-blue-200 hover:shadow-lg transition-all duration-200 cursor-pointer group">
+                            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-blue-600 transition-colors">
                                 {% heroicon_outline "briefcase" size="20" class="text-white" %}
                             </div>
                             <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Active Projects</p>
                             <p class="text-2xl font-bold text-blue-700 mt-1">{{ portfolio.active_projects.count }}</p>
-                        </div>
+                            <p class="text-xs text-blue-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {% heroicon_outline "arrow-right" size="16" class="inline mr-1" %}
+                                View All Projects
+                            </p>
+                        </a>
                         <!-- Total Contract Value -->
                         <div class="bg-green-50 rounded-lg p-4 text-center border border-green-100">
                             <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -147,131 +152,21 @@
                 </div>
             </div>
         </div>
-        <!-- Projects Table -->
-        <div class="centered-content">
-            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 border-b-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">Project Financial Metrics</h2>
-                </div>
-                <div class="flex flex-col items-start justify-between gap-2 p-6 border-b border-gray-200">
-                    <!-- Modern Filter Form -->
-                    <form id="filterForm" method="get" class="flex flex-row items-start gap-2">
-                        <!-- Search Input with Icon -->
-                        {{ filter_form|crispy }}
-                    </form>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="projectsTable" class="bg-white divide-y divide-gray-200">
-                            {% for data in dashboard_data %}
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">
-                                            <a href="{% url 'project:project-dashboard' data.project.pk %}"
-                                               class="hover:text-indigo-600 transition-colors">{{ data.project.name|title }}</a>
-                                        </div>
-                                        <div class="text-sm text-gray-500">{{ data.project.client.name|default:"No Client" }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-500">{{ data.project.status }}</div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div class="flex flex-col items-center space-y-2 min-w-0">
-                                            <a href="{% url 'project:project-dashboard' data.project.id %}"
-                                               class="group relative w-full flex flex-row justify-center items-center px-3 py-2 gap-2 border border-blue-500 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-600 hover:text-blue-800 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm hover:shadow-lg z-10"
-                                               title="View project dashboard and charts">
-                                                {% heroicon_outline "chart-bar" size="16" %}
-                                                <span>View Dashboard</span>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% empty %}
-                                <tr>
-                                    <td colspan="6" class="px-6 py-12 text-center">
-                                        <div class="flex flex-col items-center">
-                                            {% heroicon_outline "folder-plus" size="48" class="text-gray-300 mb-4" %}
-                                            <p class="text-sm text-gray-500 mb-4">No projects found</p>
-                                            <a href="{% url 'project:project-create' %}"
-                                               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                                {% heroicon_outline "plus" size="16" class="mr-2" %}
-                                                Create Your First Project
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    <div id="loading" hidden class="mt-4">
-                        <div class="flex items-center justify-center space-x-2">
-                            <div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>
-                            <span class="text-gray-600 font-semibold">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-                <!-- Legend -->
-                <div class="mt-6 p-4 border-t border-gray-200">
-                    <div class="flex items-center justify-center space-x-6 text-sm">
-                        <div class="flex items-center">
-                            <div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>
-                            <span class="text-gray-600 font-semibold">Contract Amount</span>
-                        </div>
-                        <div class="flex items-center">
-                            <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
-                            <span class="text-gray-600 font-semibold">Certified Amount</span>
-                        </div>
-                        <div class="flex items-center">
-                            <div class="w-4 h-4 bg-purple-500 rounded mr-2"></div>
-                            <span class="text-gray-600 font-semibold">Forecast Amount</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    </div>
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-8">
+        <div class="flex justify-end items-center max-w-7xl mx-auto">
+            <a href="{% url 'project:portfolio-project-list' %}"
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                {% heroicon_outline "list-bullet" size="16" class="mr-2" %}
+                View All Projects
+                {% heroicon_outline "arrow-right" class="w-4 h-4 ml-2" %}
+            </a>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const filterForm = document.getElementById('filterForm');
-            const searchInput = document.getElementById('id_search');
-            const activeToggle = document.getElementById('id_active_projects');
-            const projectsTable = document.getElementById('projectsTable');
-            const loading = document.getElementById('loading');
-            
-            // Auto-submit on toggle change
-            activeToggle.addEventListener('change', function() {
-                projectsTable.hidden = true;
-                loading.hidden = false;
-                activeToggle.enabled = false;
-                searchTimeout = setTimeout(function() {
-                    filterForm.submit();
-                }, 1000); // Wait 500ms after user stops typing
-            });
-            
-            // Auto-submit on search with debounce
-            let searchTimeout;
-            searchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(function() {
-                    filterForm.submit();
-                }, 500); // Wait 500ms after user stops typing
-            });
-            
-            // Submit on Enter key
-            searchInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    clearTimeout(searchTimeout);
-                    filterForm.submit();
-                }
-            });
 
             // Performance Index Charts
             const labels = {{ performance_labels|safe }};
