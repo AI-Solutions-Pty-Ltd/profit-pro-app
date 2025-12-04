@@ -331,13 +331,16 @@ class Project(BaseModel):
             return None
         return (actual / forecast) * budget
 
-    # def cost_variance(self, date) -> Decimal:
-    #     """Earned Value - Actual Cost"""
-    #     raise NotImplementedError
+    def cost_variance(self, date) -> Decimal:
+        """Earned Value - Actual Cost"""
+        if not date:
+            date = datetime.now()
+        return self.earned_value(date) or Decimal("0.00") - self.actual_cost(date)
 
-    # def schedule_variance(self, date) -> Decimal:
-    #     """Earned Value - Planned Value"""
-    #     raise NotImplementedError
+    def schedule_variance(self, date) -> Decimal:
+        if not date:
+            date = datetime.now()
+        return self.earned_value(date) or Decimal("0.00") - self.planned_value(date)
 
     def cost_performance_index(
         self: "Project", date: datetime | None = None
@@ -372,3 +375,41 @@ class Project(BaseModel):
         if not earned or not planned or planned == 0:
             return None
         return round(earned / planned, 2)
+
+    def estimate_at_completion(self, date: datetime | None = None) -> Decimal | None:
+        """Estimate at Completion (EAC): Original budget / cpi"""
+        if not date:
+            date = datetime.now()
+
+        original_budget = self.get_total_contract_value
+        cpi = self.cost_performance_index(date)
+        if not cpi or cpi == 0:
+            return None
+        return original_budget / cpi
+
+    def estimate_to_complete(self, date: datetime | None = None) -> Decimal | None:
+        """Estimate to Complete (ETC): EAC - AC"""
+        if not date:
+            date = datetime.now()
+
+        eac = self.estimate_at_completion(date)
+        ac = self.actual_cost(date)
+        if not eac or not ac:
+            return None
+        return eac - ac
+
+    def to_complete_project_index(self, date: datetime | None = None) -> Decimal | None:
+        """To Complete Project Index (TCPI)
+
+        Formula:
+            (Total Revised Budget - Actual Cost) / (EAC - Actual Cost)
+        """
+        if not date:
+            date = datetime.now()
+
+        total_revised_budget = self.get_total_contract_value
+        actual_cost = self.actual_cost(date)
+        eac = self.estimate_at_completion(date)
+        if not total_revised_budget or not actual_cost or not eac:
+            return None
+        return (total_revised_budget - actual_cost) / (eac - actual_cost)
