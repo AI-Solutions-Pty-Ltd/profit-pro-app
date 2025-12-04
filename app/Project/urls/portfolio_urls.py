@@ -24,6 +24,11 @@ portfolio_urls = [
         report_views.ScheduleReportView.as_view(),
         name="portfolio-schedule-report",
     ),
+    path(
+        "portfolio/reports/cashflow/",
+        report_views.CashflowReportView.as_view(),
+        name="portfolio-cashflow-report",
+    ),
     # User Management - Registers
     path(
         "register/clients/",

@@ -333,6 +333,7 @@ class ProjectCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
     def form_valid(self, form):
         """Set the account to the current user before saving."""
         form.instance.account = self.request.user
+        form.instance.portfolio = self.request.user.portfolio  # type: ignore
         return super().form_valid(form)
 
     def get_success_url(self: "ProjectCreateView"):
@@ -369,6 +370,11 @@ class ProjectUpdateView(ProjectMixin, UpdateView):
             },
             {"title": "Update", "url": None},
         ]
+
+    def form_valid(self, form):
+        """Set the portfolio to the current user's portfolio before saving."""
+        form.instance.portfolio = self.request.user.portfolio  # type: ignore
+        return super().form_valid(form)
 
     def get_success_url(self):
         """Redirect to project management."""

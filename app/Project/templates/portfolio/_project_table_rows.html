@@ -1,3 +1,4 @@
+{% load heroicons %}
 {% for data in dashboard_data %}
     <tr class="hover:bg-gray-50">
         <td class="px-6 py-4 whitespace-nowrap">
@@ -5,25 +6,34 @@
                 <a href="{% url 'project:project-dashboard' data.project.pk %}"
                    class="hover:text-indigo-600 transition-colors">{{ data.project.name|title }}</a>
             </div>
-            <div class="text-sm text-gray-500">{{ data.project.client.name|default:"No Client" }}</div>
+            <div class="text-xs text-gray-500">{{ data.project.client.name|default:"No Client" }}</div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-gray-500">{{ data.project.status }}</div>
+            {% if data.project.category %}
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    {{ data.project.category.name }}
+                </span>
+            {% else %}
+                <span class="text-sm text-gray-400">--</span>
+            {% endif %}
         </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-            <div class="flex flex-col items-center space-y-2 min-w-0">
-                <a href="{% url 'project:project-dashboard' data.project.id %}"
-                   class="group relative w-full flex flex-row justify-center items-center px-3 py-2 gap-2 border border-blue-500 rounded-lg text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-600 hover:text-blue-800 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm hover:shadow-lg z-10"
-                   title="View project dashboard and charts">
-                    {% heroicon_outline "chart-bar" size="16" %}
-                    <span>View Dashboard</span>
-                </a>
-            </div>
+        <td class="px-6 py-4 whitespace-nowrap">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if data.project.status == 'ACTIVE' %}bg-green-100 text-green-800 {% elif data.project.status == 'SETUP' %}bg-yellow-100 text-yellow-800 {% elif data.project.status == 'FINAL_ACCOUNT_ISSUED' %}bg-blue-100 text-blue-800 {% else %}bg-gray-100 text-gray-800{% endif %}">
+                {{ data.project.get_status_display }}
+            </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <a href="{% url 'project:project-management' data.project.id %}"
+               class="inline-flex items-center px-3 py-1.5 border border-indigo-300 rounded-md text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+               title="Manage project">
+                {% heroicon_outline "cog-6-tooth" size="16" class="mr-1" %}
+                Manage
+            </a>
         </td>
     </tr>
 {% empty %}
     <tr>
-        <td colspan="6" class="px-6 py-12 text-center">
+        <td colspan="4" class="px-6 py-12 text-center">
             <div class="flex flex-col items-center">
                 {% heroicon_outline "folder-plus" size="48" class="text-gray-300 mb-4" %}
                 <p class="text-sm text-gray-500 mb-4">No projects found</p>

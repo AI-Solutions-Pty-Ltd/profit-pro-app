@@ -3,13 +3,30 @@
 from django import forms
 
 from app.Account.models import Account
-from app.Project.models import Client, Milestone, PlannedValue, Project, Signatories
+from app.Project.models import (
+    Client,
+    Milestone,
+    PlannedValue,
+    Project,
+    ProjectCategory,
+    Signatories,
+)
 
 
 class FilterForm(forms.Form):
     """Form for filtering projects."""
 
     search = forms.CharField(required=False)
+    category = forms.ModelChoiceField(
+        queryset=ProjectCategory.objects.all(),
+        required=False,
+        empty_label="All Categories",
+    )
+    status = forms.ChoiceField(
+        choices=[("ALL", "All Statuses")] + list(Project.Status.choices),
+        required=False,
+        initial="ALL",
+    )
     active_projects = forms.BooleanField(required=False)
 
     def __init__(self, *args, **kwargs):
@@ -17,10 +34,47 @@ class FilterForm(forms.Form):
         self.fields["active_projects"].label = "Active Projects"
         self.fields["search"].widget = forms.TextInput(
             attrs={
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                "class": "block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors",
                 "placeholder": "Search projects...",
             }
         )
+        self.fields["category"].widget = forms.Select(
+            attrs={
+                "class": "block w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors",
+            }
+        )
+        self.fields["status"].widget = forms.Select(
+            attrs={
+                "class": "block w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors",
+            }
+        )
+
+
+class ProjectCategoryForm(forms.ModelForm):
+    """Form for creating and updating project categories."""
+
+    class Meta:
+        model = ProjectCategory
+        fields = ["name", "description"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter category name (e.g., Education, Health)",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Optional description of this category",
+                    "rows": 3,
+                }
+            ),
+        }
+        labels = {
+            "name": "Category Name",
+            "description": "Description (Optional)",
+        }
 
 
 class ProjectForm(forms.ModelForm):
@@ -31,6 +85,7 @@ class ProjectForm(forms.ModelForm):
         fields = [
             "name",
             "description",
+            "category",
             "start_date",
             "end_date",
             "contract_number",
@@ -79,6 +134,11 @@ class ProjectForm(forms.ModelForm):
                     "rows": 3,
                 }
             ),
+            "category": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
             "contractor": forms.Select(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
@@ -117,6 +177,7 @@ class ProjectForm(forms.ModelForm):
             "quantity_surveyor": "Select the Quantity Surveyor for the project",
             "lead_consultant": "Select the Lead Consultant (e.g., Principal Agent)",
             "client_representative": "Select the Client Representative",
+            "category": "Select the project category",
         }
 
     def __init__(self, *args, **kwargs):

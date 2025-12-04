@@ -8,7 +8,23 @@ from factory.django import DjangoModelFactory
 
 from app.Account.models import Account
 from app.Account.tests.factories import UserFactory
-from app.Project.models import Client, Milestone, PlannedValue, Project
+from app.Project.models import (
+    Client,
+    Milestone,
+    PlannedValue,
+    Project,
+    ProjectCategory,
+)
+
+
+class ProjectCategoryFactory(DjangoModelFactory):
+    """Factory for ProjectCategory model."""
+
+    class Meta:
+        model = ProjectCategory
+
+    name = factory.Sequence(lambda n: f"Category {n}")
+    description = Faker("text")
 
 
 class ClientFactory(DjangoModelFactory):
@@ -44,6 +60,7 @@ class ProjectFactory(DjangoModelFactory):
     name = factory.Sequence(lambda n: f"Project {n}")
     account = factory.SubFactory(UserFactory)
     client = factory.SubFactory(ClientFactory)
+    category = factory.SubFactory(ProjectCategoryFactory)
 
 
 class PlannedValueFactory(DjangoModelFactory):

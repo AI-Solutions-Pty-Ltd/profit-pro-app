@@ -13,8 +13,7 @@ from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import FilterForm
-from app.Project.models import Project
-from app.Project.models.projects_models import Portfolio
+from app.Project.models import Portfolio, Project
 
 
 class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
@@ -58,11 +57,19 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         # Apply filters from form
         search = self.filter_form.cleaned_data.get("search")
         active_only = self.filter_form.cleaned_data.get("active_projects")
+        category = self.filter_form.cleaned_data.get("category")
+        status = self.filter_form.cleaned_data.get("status")
 
         if search:
             projects = projects.filter(name__icontains=search)
 
-        if active_only:
+        if category:
+            projects = projects.filter(category=category)
+
+        if status and status != "ALL":
+            projects = projects.filter(status=status)
+        elif active_only:
+            # Legacy support for active_only toggle
             projects = projects.filter(status=Project.Status.ACTIVE)
 
         return projects
@@ -71,6 +78,7 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         """Add financial metrics to context."""
         context = super().get_context_data(**kwargs)
         projects: QuerySet[Project] = context["projects"]
+        current_date = datetime.now()
 
         # Add the already-validated form to context
         context["filter_form"] = self.filter_form
@@ -97,7 +105,6 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
                 forecast_percentage = (forecast_amount / contract_value) * 100
 
             # Get CPI and SPI for this project
-            current_date = datetime.now()
             try:
                 project_cpi = project.cost_performance_index(current_date)
             except (ZeroDivisionError, TypeError):
@@ -130,29 +137,204 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
             projects, "forecasts__forecast_transactions__total_price"
         )
         context["dashboard_data"] = dashboard_data
-        portfolio: Portfolio = self.request.user.portfolio  # type: ignore
+        portfolio: Portfolio | None = self.request.user.portfolio  # type: ignore
         context["portfolio"] = portfolio
-        context["current_date"] = datetime.now()
+        context["current_date"] = current_date
 
-        # Generate 12 months of CPI/SPI data for charts
-        performance_data = self._get_performance_chart_data(portfolio)
+        # Get category filter for portfolio-level calculations
+        category_filter = (
+            self.filter_form.cleaned_data.get("category")
+            if self.filter_form and self.filter_form.is_valid()
+            else None
+        )
+
+        # If no portfolio, return early with default values
+        if not portfolio:
+            context["active_projects_count"] = 0
+            context["urgent_projects"] = []
+            context["urgent_projects_count"] = 0
+            context["urgent_projects_percentage"] = 0
+            context["attention_projects"] = []
+            context["attention_projects_count"] = 0
+            context["attention_projects_percentage"] = 0
+            context["original_budget"] = 0
+            context["approved_variations"] = 0
+            context["approved_variations_percentage"] = 0
+            context["total_certified"] = 0
+            context["total_certified_percentage"] = 0
+            context["forecast_at_completion"] = None
+            context["cost_variance_at_completion"] = None
+            context["cost_variance_at_completion_percentage"] = 0
+            context["total_earned_value"] = None
+            context["total_cost_variance"] = None
+            context["total_schedule_variance"] = None
+            context["total_eac"] = None
+            context["performance_labels"] = "[]"
+            context["cpi_data"] = "[]"
+            context["spi_data"] = "[]"
+            context["current_cpi"] = None
+            context["current_spi"] = None
+            context["cashflow_labels"] = "[]"
+            context["planned_data"] = "[]"
+            context["actual_data"] = "[]"
+            context["forecast_data"] = "[]"
+            context["budget_data"] = "[]"
+            return context
+
+        # ==========================================
+        # Group 1 - Project Stats
+        # ==========================================
+        active_count = portfolio.get_active_projects(category_filter).count()
+        urgent_projects = portfolio.projects_requiring_urgent_intervention(
+            current_date, category_filter
+        )
+        attention_projects = portfolio.projects_requiring_attention(
+            current_date, category_filter
+        )
+
+        context["active_projects_count"] = active_count
+        context["urgent_projects"] = urgent_projects
+        context["urgent_projects_count"] = len(urgent_projects)
+        context["urgent_projects_percentage"] = (
+            (len(urgent_projects) / active_count * 100) if active_count > 0 else 0
+        )
+        context["attention_projects"] = attention_projects
+        context["attention_projects_count"] = len(attention_projects)
+        context["attention_projects_percentage"] = (
+            (len(attention_projects) / active_count * 100) if active_count > 0 else 0
+        )
+
+        # ==========================================
+        # Group 2 - Budgets and Payments
+        # ==========================================
+        original_budget = portfolio.get_total_original_budget(category_filter)
+        approved_variations = portfolio.get_total_approved_variations(category_filter)
+        total_certified = portfolio.get_total_certified_value(category_filter)
+
+        context["original_budget"] = original_budget
+        context["approved_variations"] = approved_variations
+        context["approved_variations_percentage"] = (
+            (approved_variations / original_budget * 100) if original_budget > 0 else 0
+        )
+        context["total_certified"] = total_certified
+        context["total_certified_percentage"] = (
+            (total_certified / original_budget * 100) if original_budget > 0 else 0
+        )
+
+        # ==========================================
+        # Cost Forecasts
+        # ==========================================
+        forecast_at_completion = portfolio.forecast_cost_at_completion(
+            current_date, category_filter
+        )
+        cost_variance_at_completion = portfolio.cost_variance_at_completion(
+            current_date, category_filter
+        )
+
+        context["forecast_at_completion"] = forecast_at_completion
+        context["cost_variance_at_completion"] = cost_variance_at_completion
+        context["cost_variance_at_completion_percentage"] = (
+            (cost_variance_at_completion / original_budget * 100)
+            if original_budget > 0 and cost_variance_at_completion
+            else 0
+        )
+
+        # ==========================================
+        # Earned Value Management (EVM)
+        # ==========================================
+        context["total_earned_value"] = portfolio.total_earned_value(
+            current_date, category_filter
+        )
+        context["total_cost_variance"] = portfolio.total_cost_variance(
+            current_date, category_filter
+        )
+        context["total_schedule_variance"] = portfolio.total_schedule_variance(
+            current_date, category_filter
+        )
+        context["total_eac"] = portfolio.total_estimate_at_completion(
+            current_date, category_filter
+        )
+
+        # Generate 6 months of CPI/SPI data for charts
+        performance_data = self._get_performance_chart_data(
+            portfolio, months=6, category=category_filter
+        )
         context["performance_labels"] = json.dumps(performance_data["labels"])
         context["cpi_data"] = json.dumps(performance_data["cpi"])
         context["spi_data"] = json.dumps(performance_data["spi"])
         context["current_cpi"] = performance_data["current_cpi"]
         context["current_spi"] = performance_data["current_spi"]
 
+        # Generate 12 months of Planned vs Actual vs Forecast vs Budget data
+        cashflow_data = self._get_cashflow_chart_data(
+            portfolio, category=category_filter
+        )
+        context["cashflow_labels"] = json.dumps(cashflow_data["labels"])
+        context["planned_data"] = json.dumps(cashflow_data["planned"])
+        context["actual_data"] = json.dumps(cashflow_data["actual"])
+        context["forecast_data"] = json.dumps(cashflow_data["forecast"])
+        context["budget_data"] = json.dumps(cashflow_data["budget"])
+
         return context
 
     def _get_performance_chart_data(
-        self: "PortfolioDashboardView", portfolio: Portfolio
+        self: "PortfolioDashboardView",
+        portfolio: Portfolio,
+        months: int = 12,
+        category=None,
     ) -> dict:
-        """Generate 12 months of CPI/SPI data for portfolio."""
+        """Generate N months of CPI/SPI data for portfolio."""
         labels = []
         cpi_values = []
         spi_values = []
 
         current_date = datetime.now()
+
+        # Generate data for last N months (oldest to newest)
+        for i in range(months - 1, -1, -1):
+            # Calculate the date for this month
+            month_date = current_date - timedelta(days=i * 30)
+            # Normalize to first of month
+            month_date = month_date.replace(day=1)
+
+            labels.append(month_date.strftime("%b %Y"))
+
+            try:
+                cpi = portfolio.cost_performance_index(month_date, category)
+                cpi_values.append(float(cpi) if cpi else None)
+            except (ZeroDivisionError, TypeError, Exception):
+                cpi_values.append(None)
+
+            try:
+                spi = portfolio.schedule_performance_index(month_date, category)
+                spi_values.append(float(spi) if spi else None)
+            except (ZeroDivisionError, TypeError, Exception):
+                spi_values.append(None)
+
+        return {
+            "labels": labels,
+            "cpi": cpi_values,
+            "spi": spi_values,
+            "current_cpi": cpi_values[-1] if cpi_values else None,
+            "current_spi": spi_values[-1] if spi_values else None,
+        }
+
+    def _get_cashflow_chart_data(
+        self: "PortfolioDashboardView", portfolio: Portfolio, category=None
+    ) -> dict:
+        """Generate 12 months of Planned vs Actual vs Forecast vs Budget data."""
+        from decimal import Decimal
+
+        labels = []
+        planned_values = []
+        actual_values = []
+        forecast_values = []
+        budget_values = []
+
+        current_date = datetime.now()
+        # Monthly budget = total budget / 12 (simplified distribution)
+        total_budget = portfolio.get_total_original_budget(category)
+        monthly_budget = float(total_budget / 12) if total_budget else 0
 
         # Generate data for last 12 months (oldest to newest)
         for i in range(11, -1, -1):
@@ -162,27 +344,45 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
             month_date = month_date.replace(day=1)
 
             labels.append(month_date.strftime("%b %Y"))
+            budget_values.append(monthly_budget)
 
-            try:
-                cpi = portfolio.cost_performance_index(month_date)
-                cpi_values.append(float(cpi) if cpi else None)
-            except (ZeroDivisionError, TypeError, Exception):
-                cpi_values.append(None)
+            # Aggregate planned, actual, and forecast for all projects
+            planned_total = Decimal("0.00")
+            actual_total = Decimal("0.00")
+            forecast_total = Decimal("0.00")
 
-            try:
-                spi = portfolio.schedule_performance_index(month_date)
-                print(f"spi for {month_date}: {spi}")
-                spi_values.append(float(spi) if spi else None)
-            except (ZeroDivisionError, TypeError, Exception):
-                print("Error calculating SPI")
-                spi_values.append(None)
+            for project in portfolio.get_active_projects(category):
+                try:
+                    pv = project.planned_value(month_date)
+                    if pv:
+                        planned_total += pv
+                except (ZeroDivisionError, TypeError, Exception):
+                    pass
+
+                try:
+                    ac = project.actual_cost(month_date)
+                    if ac:
+                        actual_total += ac
+                except (ZeroDivisionError, TypeError, Exception):
+                    pass
+
+                try:
+                    fc = project.forecast_cost(month_date)
+                    if fc:
+                        forecast_total += fc
+                except (ZeroDivisionError, TypeError, Exception):
+                    pass
+
+            planned_values.append(float(planned_total))
+            actual_values.append(float(actual_total))
+            forecast_values.append(float(forecast_total))
 
         return {
             "labels": labels,
-            "cpi": cpi_values,
-            "spi": spi_values,
-            "current_cpi": cpi_values[-1] if cpi_values else None,
-            "current_spi": spi_values[-1] if spi_values else None,
+            "planned": planned_values,
+            "actual": actual_values,
+            "forecast": forecast_values,
+            "budget": budget_values,
         }
 
 
