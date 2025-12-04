@@ -4,13 +4,28 @@ from django.contrib import admin
 
 from app.core.Utilities.admin import SoftDeleteAdmin
 
-from .models import Client, PlannedValue, Portfolio, Project, Signatories
+from .models import (
+    Client,
+    PlannedValue,
+    Portfolio,
+    Project,
+    ProjectCategory,
+    Signatories,
+)
+
+
+@admin.register(ProjectCategory)
+class ProjectCategoryAdmin(SoftDeleteAdmin):
+    list_display = ["name", "description", "deleted", "created_at"]
+    list_filter = ["deleted", "created_at"]
+    search_fields = ["name", "description"]
+    readonly_fields = ["created_at", "updated_at"]
 
 
 @admin.register(Project)
 class ProjectAdmin(SoftDeleteAdmin):
-    list_display = ["name", "account", "status", "deleted", "created_at"]
-    list_filter = ["deleted", "created_at", "vat"]
+    list_display = ["name", "account", "status", "category", "deleted", "created_at"]
+    list_filter = ["deleted", "created_at", "vat", "category", "status"]
     search_fields = ["name", "description", "account__email"]
     readonly_fields = ["created_at", "updated_at"]
 

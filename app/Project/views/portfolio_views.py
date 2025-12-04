@@ -57,11 +57,19 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         # Apply filters from form
         search = self.filter_form.cleaned_data.get("search")
         active_only = self.filter_form.cleaned_data.get("active_projects")
+        category = self.filter_form.cleaned_data.get("category")
+        status = self.filter_form.cleaned_data.get("status")
 
         if search:
             projects = projects.filter(name__icontains=search)
 
-        if active_only:
+        if category:
+            projects = projects.filter(category=category)
+
+        if status and status != "ALL":
+            projects = projects.filter(status=status)
+        elif active_only:
+            # Legacy support for active_only toggle
             projects = projects.filter(status=Project.Status.ACTIVE)
 
         return projects
