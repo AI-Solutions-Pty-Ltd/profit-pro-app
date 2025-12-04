@@ -4,11 +4,14 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
+from dateutil.relativedelta import relativedelta
 from django.db.models import QuerySet, Sum
 from django.urls import reverse
 from django.views.generic import ListView
 
-from app.BillOfQuantities.models import Forecast
+from app.BillOfQuantities.models import CashflowForecast, Forecast, PaymentCertificate
+from app.Project.models.planned_value_models import PlannedValue
+from app.core.Utilities.dates import get_end_of_month
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.models import Portfolio, Project
@@ -216,3 +219,141 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         context["portfolio"]: Portfolio = self.request.user.portfolio  # type: ignore
 
         return context
+
+
+class CashflowReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
+    """Cashflow Report - Current Month Actuals and Next 3 Months Forecast."""
+
+    model = Project
+    template_name = "portfolio/reports/cashflow_report.html"
+    context_object_name = "projects"
+    permissions = ["consultant", "contractor"]
+
+    def get_breadcrumbs(self: "CashflowReportView") -> list[BreadcrumbItem]:
+        """Return breadcrumbs for cashflow report."""
+        return [
+            BreadcrumbItem(
+                title="Portfolio",
+                url=reverse("project:portfolio-list"),
+            ),
+            BreadcrumbItem(
+                title="Reports",
+                url=None,
+            ),
+            BreadcrumbItem(
+                title="Cashflow Report",
+                url=None,
+            ),
+        ]
+
+    def get_queryset(self: "CashflowReportView") -> QuerySet[Project]:
+        """Get active projects for the user's portfolio."""
+        return Project.objects.filter(
+            account=self.request.user,
+            status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
+        ).order_by("name")
+
+    def get_context_data(self: "CashflowReportView", **kwargs: Any) -> dict[str, Any]:
+        """Add cashflow metrics to context."""
+        context = super().get_context_data(**kwargs)
+        projects: QuerySet[Project] = context["projects"]
+        current_date = datetime.now()
+
+        # Calculate current month and next 3 months
+        current_month = get_end_of_month(current_date)
+        month_1 = current_month + relativedelta(months=1)
+        month_2 = current_month + relativedelta(months=2)
+        month_3 = current_month + relativedelta(months=3)
+
+        report_data = []
+        totals = {
+            "current_cashflow": Decimal("0.00"),
+            "month_1_forecast": Decimal("0.00"),
+            "month_2_forecast": Decimal("0.00"),
+            "month_3_forecast": Decimal("0.00"),
+            "total_forecast": Decimal("0.00"),
+        }
+
+        for project in projects:
+            # Current Cashflow (from current month approved payment certificates)
+            if project.start_date and project.start_date > current_month.date():
+                current_cashflow = "Not Started"
+            elif project.end_date and project.end_date < current_month.date():
+                current_cashflow = "Project Ended"
+            else:
+                current_month_certs = project.payment_certificates.filter(
+                    status=PaymentCertificate.Status.APPROVED,
+                    approved_on__year=current_month.year,
+                    approved_on__month=current_month.month,
+                )
+                current_cashflow = Decimal("0.00")
+                for cert in current_month_certs:
+                    current_cashflow += cert.current_claim_total or Decimal("0.00")
+
+            total_3_month_forecast = Decimal("0.00")
+            # Get latest cashflow forecast for next 3 months
+            # Month 1
+            if project.start_date and project.start_date > month_1.date():
+                month_1_forecast = "Not Started"
+            elif project.end_date and project.end_date < month_1.date():
+                month_1_forecast = "Project Ended"
+            else:
+                month_1_forecast = self._get_forecast_for_period(project, month_1)
+                totals["month_1_forecast"] += month_1_forecast
+            # Month 2
+            if project.start_date and project.start_date > month_2.date():
+                month_2_forecast = "Not Started"
+            elif project.end_date and project.end_date < month_2.date():
+                month_2_forecast = "Project Ended"
+            else:
+                month_2_forecast = self._get_forecast_for_period(project, month_2)
+                totals["month_2_forecast"] += month_2_forecast
+            # Month 3
+            if project.start_date and project.start_date > month_3.date():
+                month_3_forecast = "Not Started"
+            elif project.end_date and project.end_date < month_3.date():
+                month_3_forecast = "Project Ended"
+            else:
+                month_3_forecast = self._get_forecast_for_period(project, month_3)
+                totals["month_3_forecast"] += month_3_forecast
+
+            report_data.append(
+                {
+                    "project": project,
+                    "current_cashflow": current_cashflow,
+                    "month_1_forecast": month_1_forecast,
+                    "month_2_forecast": month_2_forecast,
+                    "month_3_forecast": month_3_forecast,
+                    "total_forecast": total_3_month_forecast,
+                }
+            )
+
+            # Accumulate totals
+            if isinstance(current_cashflow, Decimal):
+                totals["current_cashflow"] += current_cashflow
+            totals["total_forecast"] += total_3_month_forecast
+
+        context["report_data"] = report_data
+        context["totals"] = totals
+        context["current_date"] = current_date
+        context["current_month"] = current_month
+        context["month_1"] = month_1
+        context["month_2"] = month_2
+        context["month_3"] = month_3
+        context["portfolio"]: Portfolio = self.request.user.portfolio  # type: ignore
+
+        return context
+
+    def _get_forecast_for_period(
+        self: "CashflowReportView", project: Project, period: datetime
+    ) -> Decimal:
+        """Get forecast value for a specific period from CashflowForecast."""
+        forecast = PlannedValue.objects.filter(
+            project=project,
+            period__year=period.year,
+            period__month=period.month,
+        ).first()
+
+        if forecast:
+            return forecast.forecast_value or Decimal("0.00")
+        return Decimal("0.00")
