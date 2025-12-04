@@ -13,8 +13,7 @@ from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import FilterForm
-from app.Project.models import Project
-from app.Project.models.projects_models import Portfolio
+from app.Project.models import Portfolio, Project
 
 
 class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):

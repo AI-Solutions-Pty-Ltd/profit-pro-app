@@ -11,120 +11,11 @@ from app.BillOfQuantities.models.forecast_models import Forecast
 from app.BillOfQuantities.models.payment_certificate_models import PaymentCertificate
 from app.BillOfQuantities.models.structure_models import LineItem
 from app.core.Utilities.models import BaseModel, sum_queryset
+from app.Project.models.client_models import Client
 
 if TYPE_CHECKING:
     from .planned_value_models import PlannedValue
     from .signatories_models import Signatories
-
-
-class Client(BaseModel):
-    name = models.CharField(max_length=255)
-    user = models.ForeignKey(
-        Account, on_delete=models.SET_NULL, null=True, blank=True, related_name="client"
-    )
-    consultant = models.ForeignKey(
-        Account,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="consultant",
-    )
-    description = models.TextField()
-    if TYPE_CHECKING:
-        projects: QuerySet["Project"]
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = "Client"
-        verbose_name_plural = "Clients"
-        ordering = ["-created_at"]
-
-
-class Portfolio(BaseModel):
-    users = models.ManyToManyField(Account, null=True, related_name="portfolios")
-
-    def __str__(self) -> str:
-        return super().__str__()
-
-    if TYPE_CHECKING:
-        projects: QuerySet["Project"]
-
-    @property
-    def active_projects(self) -> QuerySet["Project"]:
-        return self.projects.filter(
-            status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED]
-        )
-
-    @property
-    def total_contract_value(self) -> Decimal:
-        return sum_queryset(self.active_projects, "line_items__total_price")
-
-    @property
-    def total_forecast_value(self) -> Decimal:
-        total_forecast_value = Decimal(0)
-        for project in self.active_projects:
-            last_forecast: Forecast | None = project.forecasts.order_by(
-                "-period"
-            ).last()
-            if last_forecast:
-                total_forecast_value += last_forecast.total_forecast
-        return total_forecast_value
-
-    @property
-    def total_certified_value(self) -> Decimal:
-        return sum_queryset(
-            self.active_projects,
-            "payment_certificates__actual_transactions__total_price",
-        )
-
-    def cost_performance_index(
-        self: "Portfolio", date: datetime | None
-    ) -> Decimal | None:
-        """Portfolio-level CPI (average of all active projects)."""
-        if not date:
-            date = datetime.now()
-        active_count = self.active_projects.count()
-        if active_count == 0:
-            return None
-        cpi = Decimal(0)
-        valid_projects = 0
-        for project in self.active_projects:
-            try:
-                project_cpi = project.cost_performance_index(date)
-                if project_cpi:
-                    cpi += project_cpi
-                    valid_projects += 1
-            except (ZeroDivisionError, TypeError):
-                print(f"Error calculating CPI for project {project.name}")
-                continue
-        if valid_projects == 0:
-            return None
-        return round(cpi / Decimal(valid_projects), 2)
-
-    def schedule_performance_index(
-        self: "Portfolio", date: datetime | None
-    ) -> Decimal | None:
-        """Portfolio-level SPI (average of all active projects)."""
-        if not date:
-            date = datetime.now()
-        active_count = self.active_projects.count()
-        if active_count == 0:
-            return None
-        spi = Decimal(0)
-        valid_projects = 0
-        for project in self.active_projects:
-            try:
-                project_spi = project.schedule_performance_index(date)
-                if project_spi:
-                    spi += project_spi
-                    valid_projects += 1
-            except (ZeroDivisionError, TypeError):
-                continue
-        if valid_projects == 0:
-            return None
-        return round(spi / Decimal(valid_projects), 2)
 
 
 class Project(BaseModel):
@@ -135,7 +26,10 @@ class Project(BaseModel):
         FINAL_ACCOUNT_ISSUED = "FINAL_ACCOUNT_ISSUED", "Final Account Issued"
 
     portfolio = models.ForeignKey(
-        Portfolio, on_delete=models.SET_NULL, null=True, related_name="projects"
+        "Project.Portfolio",
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="projects",
     )
     account = models.ForeignKey(
         Account, on_delete=models.CASCADE, related_name="projects"

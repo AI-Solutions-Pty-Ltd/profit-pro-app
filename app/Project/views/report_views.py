@@ -11,8 +11,7 @@ from django.views.generic import ListView
 from app.BillOfQuantities.models import Forecast
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
-from app.Project.models import Project
-from app.Project.models.projects_models import Portfolio
+from app.Project.models import Portfolio, Project
 
 
 class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
