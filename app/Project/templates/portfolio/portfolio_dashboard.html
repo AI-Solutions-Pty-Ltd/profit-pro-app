@@ -6,8 +6,8 @@
         <!-- Header -->
         <div class="mb-8 flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">Projects Dashboard</h1>
-                <p class="mt-2 text-gray-600">Financial overview of Portfolio</p>
+                <h1 class="text-3xl font-bold text-gray-900">Portfolio Dashboard</h1>
+                <p class="mt-2 text-gray-600">Financial overview as of {{ current_date|date:"F d, Y" }}</p>
             </div>
             <a href="{% url 'project:project-create' %}"
                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -15,138 +15,304 @@
                 Create Project
             </a>
         </div>
-        <!-- Summary Metrics -->
-        <div class="mb-8">
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
-                    <h5 class="text-lg font-semibold text-white flex items-center">
-                        {% heroicon_outline "chart-pie" size="24" class="mr-2" %}
-                        Portfolio Summary
-                    </h5>
-                    <p class="text-indigo-100 text-sm mt-1">{{ current_date|date:"F Y" }}</p>
-                </div>
-                <div class="p-6">
-                    <!-- Financial Metrics Row -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                        <!-- Active Projects -->
-                        <a href="{% url 'project:portfolio-project-list' %}"
-                           class="bg-blue-50 rounded-lg p-4 text-center border border-blue-100 hover:bg-blue-100 hover:border-blue-200 hover:shadow-lg transition-all duration-200 cursor-pointer group">
-                            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-blue-600 transition-colors">
-                                {% heroicon_outline "briefcase" size="20" class="text-white" %}
-                            </div>
-                            <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Active Projects</p>
-                            <p class="text-2xl font-bold text-blue-700 mt-1">{{ portfolio.active_projects.count }}</p>
-                            <p class="text-xs text-blue-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                {% heroicon_outline "arrow-right" size="16" class="inline mr-1" %}
-                                View All Projects
+        <!-- ==========================================
+             Group 1 - Project Stats
+             ========================================== -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3">
+                <h5 class="text-md font-semibold text-white flex items-center">
+                    {% heroicon_outline "briefcase" size="20" class="mr-2" %}
+                    Project Stats
+                </h5>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Active Projects -->
+                    <a href="{% url 'project:portfolio-project-list' %}"
+                       class="bg-blue-50 rounded-lg p-4 text-center border border-blue-100 hover:bg-blue-100 hover:shadow-lg transition-all duration-200 cursor-pointer group">
+                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-blue-600 transition-colors">
+                            {% heroicon_outline "folder-open" size="24" class="text-white" %}
+                        </div>
+                        <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Active Projects</p>
+                        <p class="text-3xl font-bold text-blue-700 mt-1">{{ active_projects_count }}</p>
+                    </a>
+                    <!-- Urgent Intervention -->
+                    <div class="bg-red-50 rounded-lg p-4 text-center border border-red-100">
+                        <div class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                            {% heroicon_outline "exclamation-triangle" size="24" class="text-white" %}
+                        </div>
+                        <p class="text-xs font-medium text-red-600 uppercase tracking-wider">Urgent Intervention</p>
+                        <p class="text-3xl font-bold text-red-700 mt-1">{{ urgent_projects_count }}</p>
+                        <p class="text-sm text-red-500 mt-1">({{ urgent_projects_percentage|floatformat:0 }}%)</p>
+                        {% if urgent_projects %}
+                            <p class="text-xs text-red-400 mt-2">
+                                CPI or SPI < 0.9
                             </p>
-                        </a>
-                        <!-- Total Contract Value -->
-                        <div class="bg-green-50 rounded-lg p-4 text-center border border-green-100">
-                            <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                                {% heroicon_outline "banknotes" size="20" class="text-white" %}
-                            </div>
-                            <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Contract Amount</p>
-                            <p class="text-xl font-bold text-green-700 mt-1">R {{ portfolio.total_contract_value|floatformat:0|intcomma }}</p>
+                        {% endif %}
+                    </div>
+                    <!-- Requiring Attention -->
+                    <div class="bg-amber-50 rounded-lg p-4 text-center border border-amber-100">
+                        <div class="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                            {% heroicon_outline "eye" size="24" class="text-white" %}
                         </div>
-                        <!-- Total Forecasted Value -->
-                        <div class="bg-amber-50 rounded-lg p-4 text-center border border-amber-100">
-                            <div class="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                                {% heroicon_outline "calculator" size="20" class="text-white" %}
-                            </div>
-                            <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Forecasted Amount</p>
-                            <p class="text-xl font-bold text-amber-700 mt-1">R {{ portfolio.total_forecast_value|floatformat:0|intcomma }}</p>
+                        <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Requiring Attention</p>
+                        <p class="text-3xl font-bold text-amber-700 mt-1">{{ attention_projects_count }}</p>
+                        <p class="text-sm text-amber-500 mt-1">({{ attention_projects_percentage|floatformat:0 }}%)</p>
+                        {% if attention_projects %}
+                            <p class="text-xs text-amber-400 mt-2">
+                                CPI or SPI < 1.0
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ==========================================
+             Group 2 - Budgets and Payments
+             ========================================== -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
+            <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-3">
+                <h5 class="text-md font-semibold text-white flex items-center">
+                    {% heroicon_outline "banknotes" size="20" class="mr-2" %}
+                    Budgets & Payments
+                </h5>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Original Budget -->
+                    <div class="bg-green-50 rounded-lg p-4 text-center border border-green-100">
+                        <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                            {% heroicon_outline "document-text" size="24" class="text-white" %}
                         </div>
-                        <!-- Total Certified -->
-                        <div class="bg-purple-50 rounded-lg p-4 text-center border border-purple-100">
-                            <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                                {% heroicon_outline "check-badge" size="20" class="text-white" %}
+                        <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Original Budget</p>
+                        <p class="text-2xl font-bold text-green-700 mt-1">R {{ original_budget|floatformat:0|intcomma }}</p>
+                    </div>
+                    <!-- Approved Variations -->
+                    <div class="bg-cyan-50 rounded-lg p-4 text-center border border-cyan-100">
+                        <div class="w-12 h-12 bg-cyan-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                            {% heroicon_outline "plus-circle" size="24" class="text-white" %}
+                        </div>
+                        <p class="text-xs font-medium text-cyan-600 uppercase tracking-wider">Approved Variations</p>
+                        <p class="text-2xl font-bold text-cyan-700 mt-1">R {{ approved_variations|floatformat:0|intcomma }}</p>
+                        <p class="text-sm text-cyan-500 mt-1">({{ approved_variations_percentage|floatformat:1 }}%)</p>
+                    </div>
+                    <!-- Total Certified -->
+                    <div class="bg-purple-50 rounded-lg p-4 text-center border border-purple-100">
+                        <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                            {% heroicon_outline "check-badge" size="24" class="text-white" %}
+                        </div>
+                        <p class="text-xs font-medium text-purple-600 uppercase tracking-wider">Total Certified to Date</p>
+                        <p class="text-2xl font-bold text-purple-700 mt-1">R {{ total_certified|floatformat:0|intcomma }}</p>
+                        <p class="text-sm text-purple-500 mt-1">({{ total_certified_percentage|floatformat:1 }}%)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ==========================================
+             Cost Forecasts
+             ========================================== -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
+            <div class="bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-3">
+                <h5 class="text-md font-semibold text-white flex items-center">
+                    {% heroicon_outline "calculator" size="20" class="mr-2" %}
+                    Cost Forecasts
+                </h5>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Forecast Cost at Completion -->
+                    <div class="bg-amber-50 rounded-lg p-4 text-center border border-amber-100">
+                        <div class="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                            {% heroicon_outline "chart-bar" size="24" class="text-white" %}
+                        </div>
+                        <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Forecast Cost at Completion (EAC)</p>
+                        <p class="text-2xl font-bold text-amber-700 mt-1">
+                            {% if forecast_at_completion %}
+                                R {{ forecast_at_completion|floatformat:0|intcomma }}
+                            {% else %}
+                                --
+                            {% endif %}
+                        </p>
+                    </div>
+                    <!-- Cost Variance at Completion -->
+                    <div class="bg-{% if cost_variance_at_completion and cost_variance_at_completion >= 0 %}green{% else %}red{% endif %}-50 rounded-lg p-4 text-center border border-{% if cost_variance_at_completion and cost_variance_at_completion >= 0 %}green{% else %}red{% endif %}-100">
+                        <div class="w-12 h-12 bg-{% if cost_variance_at_completion and cost_variance_at_completion >= 0 %}green{% else %}red{% endif %}-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                            {% heroicon_outline "arrow-trending-up" size="24" class="text-white" %}
+                        </div>
+                        <p class="text-xs font-medium text-{% if cost_variance_at_completion and cost_variance_at_completion >= 0 %}green{% else %}red{% endif %}-600 uppercase tracking-wider">
+                            Cost Variance at Completion
+                        </p>
+                        <p class="text-2xl font-bold text-{% if cost_variance_at_completion and cost_variance_at_completion >= 0 %}green{% else %}red{% endif %}-700 mt-1">
+                            {% if cost_variance_at_completion %}
+                                R {{ cost_variance_at_completion|floatformat:0|intcomma }}
+                            {% else %}
+                                --
+                            {% endif %}
+                        </p>
+                        <p class="text-sm text-{% if cost_variance_at_completion and cost_variance_at_completion >= 0 %}green{% else %}red{% endif %}-500 mt-1">
+                            ({{ cost_variance_at_completion_percentage|floatformat:1 }}%)
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ==========================================
+             Earned Value Management (EVM)
+             ========================================== -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
+            <div class="bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-3">
+                <h5 class="text-md font-semibold text-white flex items-center">
+                    {% heroicon_outline "presentation-chart-line" size="20" class="mr-2" %}
+                    Earned Value Management
+                </h5>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <!-- Earned Value -->
+                    <div class="bg-violet-50 rounded-lg p-3 text-center border border-violet-100">
+                        <p class="text-xs font-medium text-violet-600 uppercase tracking-wider">Earned Value</p>
+                        <p class="text-lg font-bold text-violet-700 mt-1">
+                            {% if total_earned_value %}
+                                R {{ total_earned_value|floatformat:0|intcomma }}
+                            {% else %}
+                                --
+                            {% endif %}
+                        </p>
+                    </div>
+                    <!-- Cost Variance -->
+                    <div class="bg-{% if total_cost_variance and total_cost_variance >= 0 %}green{% else %}red{% endif %}-50 rounded-lg p-3 text-center border border-{% if total_cost_variance and total_cost_variance >= 0 %}green{% else %}red{% endif %}-100">
+                        <p class="text-xs font-medium text-{% if total_cost_variance and total_cost_variance >= 0 %}green{% else %}red{% endif %}-600 uppercase tracking-wider">
+                            Cost Variance
+                        </p>
+                        <p class="text-lg font-bold text-{% if total_cost_variance and total_cost_variance >= 0 %}green{% else %}red{% endif %}-700 mt-1">
+                            {% if total_cost_variance %}
+                                R {{ total_cost_variance|floatformat:0|intcomma }}
+                            {% else %}
+                                --
+                            {% endif %}
+                        </p>
+                    </div>
+                    <!-- CPI -->
+                    <div class="bg-{% if current_cpi and current_cpi >= 1 %}green{% elif current_cpi %}red{% else %}gray{% endif %}-50 rounded-lg p-3 text-center border border-{% if current_cpi and current_cpi >= 1 %}green{% elif current_cpi %}red{% else %}gray{% endif %}-100">
+                        <p class="text-xs font-medium text-{% if current_cpi and current_cpi >= 1 %}green{% elif current_cpi %}red{% else %}gray{% endif %}-600 uppercase tracking-wider">
+                            CPI
+                        </p>
+                        <p class="text-lg font-bold text-{% if current_cpi and current_cpi >= 1 %}green{% elif current_cpi %}red{% else %}gray{% endif %}-700 mt-1">
+                            {{ current_cpi|default:"--" }}
+                        </p>
+                    </div>
+                    <!-- EAC -->
+                    <div class="bg-amber-50 rounded-lg p-3 text-center border border-amber-100">
+                        <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">EAC</p>
+                        <p class="text-lg font-bold text-amber-700 mt-1">
+                            {% if total_eac %}
+                                R {{ total_eac|floatformat:0|intcomma }}
+                            {% else %}
+                                --
+                            {% endif %}
+                        </p>
+                    </div>
+                    <!-- Schedule Variance -->
+                    <div class="bg-{% if total_schedule_variance and total_schedule_variance >= 0 %}green{% else %}red{% endif %}-50 rounded-lg p-3 text-center border border-{% if total_schedule_variance and total_schedule_variance >= 0 %}green{% else %}red{% endif %}-100">
+                        <p class="text-xs font-medium text-{% if total_schedule_variance and total_schedule_variance >= 0 %}green{% else %}red{% endif %}-600 uppercase tracking-wider">
+                            Schedule Variance
+                        </p>
+                        <p class="text-lg font-bold text-{% if total_schedule_variance and total_schedule_variance >= 0 %}green{% else %}red{% endif %}-700 mt-1">
+                            {% if total_schedule_variance %}
+                                R {{ total_schedule_variance|floatformat:0|intcomma }}
+                            {% else %}
+                                --
+                            {% endif %}
+                        </p>
+                    </div>
+                    <!-- SPI -->
+                    <div class="bg-{% if current_spi and current_spi >= 1 %}green{% elif current_spi %}red{% else %}gray{% endif %}-50 rounded-lg p-3 text-center border border-{% if current_spi and current_spi >= 1 %}green{% elif current_spi %}red{% else %}gray{% endif %}-100">
+                        <p class="text-xs font-medium text-{% if current_spi and current_spi >= 1 %}green{% elif current_spi %}red{% else %}gray{% endif %}-600 uppercase tracking-wider">
+                            SPI
+                        </p>
+                        <p class="text-lg font-bold text-{% if current_spi and current_spi >= 1 %}green{% elif current_spi %}red{% else %}gray{% endif %}-700 mt-1">
+                            {{ current_spi|default:"--" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- ==========================================
+             Graphs Section
+             ========================================== -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
+            <div class="bg-gradient-to-r from-gray-700 to-gray-900 px-6 py-3">
+                <h5 class="text-md font-semibold text-white flex items-center">
+                    {% heroicon_outline "chart-bar" size="20" class="mr-2" %}
+                    Performance Graphs
+                </h5>
+            </div>
+            <div class="p-6">
+                <!-- CPI & SPI Trend Charts (6 Months) -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- CPI Trend -->
+                    <div class="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg p-4 border border-cyan-100">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <p class="text-sm font-medium text-cyan-600 uppercase tracking-wider">CPI Trend (6 Months)</p>
+                                <p class="text-2xl font-bold text-cyan-700 mt-1">
+                                    {{ current_cpi|default:"--" }}
+                                    {% if current_cpi %}
+                                        {% if current_cpi >= 1 %}
+                                            <span class="text-sm font-medium text-green-600 ml-2">Under Budget</span>
+                                        {% else %}
+                                            <span class="text-sm font-medium text-red-600 ml-2">Over Budget</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </p>
                             </div>
-                            <p class="text-xs font-medium text-purple-600 uppercase tracking-wider">Total Certified</p>
-                            <p class="text-xl font-bold text-purple-700 mt-1">R {{ portfolio.total_certified_value|floatformat:0|intcomma }}</p>
+                        </div>
+                        <div class="h-48">
+                            <canvas id="cpiChart"></canvas>
                         </div>
                     </div>
-                    <!-- Performance Indices Row -->
-                    <div class="border-t border-gray-200 pt-6">
-                        <h6 class="text-sm font-semibold text-gray-700 mb-4 flex items-center">
-                            {% heroicon_outline "presentation-chart-line" size="18" class="mr-2 text-gray-500" %}
-                            Performance Indices (Last 12 Months)
-                        </h6>
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <!-- Cost Performance Index Chart -->
-                            <div class="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg p-4 border border-cyan-100">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div>
-                                        <p class="text-xs font-medium text-cyan-600 uppercase tracking-wider">Cost Performance Index (CPI)</p>
-                                        <p class="text-2xl font-bold text-cyan-700 mt-1">
-                                            {{ current_cpi|default:"--" }}
-                                            {% if current_cpi %}
-                                                {% if current_cpi > 1 %}
-                                                    <span class="text-sm font-medium text-green-600 ml-2">Under Budget</span>
-                                                {% elif current_cpi == 1 %}
-                                                    <span class="text-sm font-medium text-blue-600 ml-2">On Budget</span>
-                                                {% else %}
-                                                    <span class="text-sm font-medium text-red-600 ml-2">Over Budget</span>
-                                                {% endif %}
-                                            {% endif %}
-                                        </p>
-                                    </div>
-                                    <div class="w-10 h-10 rounded-full flex items-center justify-center {% if current_cpi > 1 %}bg-green-100 text-green-600 {% elif current_cpi == 1 %}bg-blue-100 text-blue-600 {% elif current_cpi %}bg-red-100 text-red-600 {% else %}bg-gray-100 text-gray-400{% endif %}">
-                                        {% if current_cpi > 1 %}
-                                            {% heroicon_outline "arrow-trending-up" size="20" %}
-                                        {% elif current_cpi == 1 %}
-                                            {% heroicon_outline "minus" size="20" %}
-                                        {% elif current_cpi %}
-                                            {% heroicon_outline "arrow-trending-down" size="20" %}
+                    <!-- SPI Trend -->
+                    <div class="bg-gradient-to-br from-violet-50 to-purple-50 rounded-lg p-4 border border-violet-100">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <p class="text-sm font-medium text-violet-600 uppercase tracking-wider">SPI Trend (6 Months)</p>
+                                <p class="text-2xl font-bold text-violet-700 mt-1">
+                                    {{ current_spi|default:"--" }}
+                                    {% if current_spi %}
+                                        {% if current_spi >= 1 %}
+                                            <span class="text-sm font-medium text-green-600 ml-2">Ahead/On Schedule</span>
                                         {% else %}
-                                            {% heroicon_outline "question-mark-circle" size="20" %}
+                                            <span class="text-sm font-medium text-red-600 ml-2">Behind Schedule</span>
                                         {% endif %}
-                                    </div>
-                                </div>
-                                <div class="h-48">
-                                    <canvas id="cpiChart"></canvas>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-2 text-center">
-                                    CPI > 1 = Under Budget | CPI = 1 = On Budget | CPI < 1 = Over Budget
+                                    {% endif %}
                                 </p>
                             </div>
-                            <!-- Schedule Performance Index Chart -->
-                            <div class="bg-gradient-to-br from-violet-50 to-purple-50 rounded-lg p-4 border border-violet-100">
-                                <div class="flex items-center justify-between mb-3">
-                                    <div>
-                                        <p class="text-xs font-medium text-violet-600 uppercase tracking-wider">Schedule Performance Index (SPI)</p>
-                                        <p class="text-2xl font-bold text-violet-700 mt-1">
-                                            {{ current_spi|default:"--" }}
-                                            {% if current_spi %}
-                                                {% if current_spi > 1 %}
-                                                    <span class="text-sm font-medium text-green-600 ml-2">Ahead of Schedule</span>
-                                                {% elif current_spi == 1 %}
-                                                    <span class="text-sm font-medium text-blue-600 ml-2">On Schedule</span>
-                                                {% else %}
-                                                    <span class="text-sm font-medium text-red-600 ml-2">Behind Schedule</span>
-                                                {% endif %}
-                                            {% endif %}
-                                        </p>
-                                    </div>
-                                    <div class="w-10 h-10 rounded-full flex items-center justify-center {% if current_spi > 1 %}bg-green-100 text-green-600 {% elif current_spi == 1 %}bg-blue-100 text-blue-600 {% elif current_spi %}bg-red-100 text-red-600 {% else %}bg-gray-100 text-gray-400{% endif %}">
-                                        {% if current_spi > 1 %}
-                                            {% heroicon_outline "clock" size="20" %}
-                                        {% elif current_spi == 1 %}
-                                            {% heroicon_outline "check-circle" size="20" %}
-                                        {% elif current_spi %}
-                                            {% heroicon_outline "exclamation-triangle" size="20" %}
-                                        {% else %}
-                                            {% heroicon_outline "question-mark-circle" size="20" %}
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <div class="h-48">
-                                    <canvas id="spiChart"></canvas>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-2 text-center">
-                                    SPI > 1 = Ahead | SPI = 1 = On Schedule | SPI < 1 = Behind
-                                </p>
-                            </div>
+                        </div>
+                        <div class="h-48">
+                            <canvas id="spiChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <!-- Planned vs Actual vs Forecast vs Budget (12 Months) -->
+                <div class="bg-gradient-to-br from-gray-50 to-slate-50 rounded-lg p-4 border border-gray-200">
+                    <p class="text-sm font-medium text-gray-700 uppercase tracking-wider mb-3">
+                        Planned vs Actual vs Forecast vs Budget (12 Months)
+                    </p>
+                    <div class="h-72">
+                        <canvas id="cashflowChart"></canvas>
+                    </div>
+                    <div class="flex flex-wrap justify-center gap-4 mt-4 text-xs">
+                        <div class="flex items-center">
+                            <span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span> Planned
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span> Actual
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-3 h-3 rounded-full bg-amber-500 mr-2"></span> Forecast
+                        </div>
+                        <div class="flex items-center">
+                            <span class="w-3 h-3 rounded-full bg-gray-400 mr-2"></span> Budget
                         </div>
                     </div>
                 </div>
@@ -154,8 +320,9 @@
         </div>
     </div>
     <!-- Footer -->
-    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-8">
-        <div class="flex justify-end items-center max-w-7xl mx-auto">
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-4">
+        <div class="flex justify-between items-center max-w-7xl mx-auto">
+            <span class="text-sm text-gray-500">Portfolio Dashboard</span>
             <a href="{% url 'project:portfolio-project-list' %}"
                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                 {% heroicon_outline "list-bullet" size="16" class="mr-2" %}
@@ -168,12 +335,19 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
 
-            // Performance Index Charts
+            // Performance Index Charts (6 months)
             const labels = {{ performance_labels|safe }};
             const cpiData = {{ cpi_data|safe }};
             const spiData = {{ spi_data|safe }};
 
-            // Common chart options
+            // Cashflow Chart Data (12 months)
+            const cashflowLabels = {{ cashflow_labels|safe }};
+            const plannedData = {{ planned_data|safe }};
+            const actualData = {{ actual_data|safe }};
+            const forecastData = {{ forecast_data|safe }};
+            const budgetData = {{ budget_data|safe }};
+
+            // Common chart options for performance indices
             const commonOptions = {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -197,34 +371,19 @@
                 },
                 scales: {
                     x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: { size: 10 },
-                            maxRotation: 45,
-                            minRotation: 45
-                        }
+                        grid: { display: false },
+                        ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
                     },
                     y: {
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        },
-                        ticks: {
-                            font: { size: 10 }
-                        },
+                        grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                        ticks: { font: { size: 10 } },
                         suggestedMin: 0,
                         suggestedMax: 2
                     }
                 },
                 elements: {
-                    point: {
-                        radius: 4,
-                        hoverRadius: 6
-                    },
-                    line: {
-                        tension: 0.3
-                    }
+                    point: { radius: 4, hoverRadius: 6 },
+                    line: { tension: 0.3 }
                 }
             };
 
@@ -252,24 +411,7 @@
                         fill: false
                     }]
                 },
-                options: {
-                    ...commonOptions,
-                    plugins: {
-                        ...commonOptions.plugins,
-                        annotation: {
-                            annotations: {
-                                line1: {
-                                    type: 'line',
-                                    yMin: 1,
-                                    yMax: 1,
-                                    borderColor: 'rgba(156, 163, 175, 0.5)',
-                                    borderWidth: 1,
-                                    borderDash: [5, 5]
-                                }
-                            }
-                        }
-                    }
-                }
+                options: commonOptions
             });
 
             // SPI Chart
@@ -297,6 +439,88 @@
                     }]
                 },
                 options: commonOptions
+            });
+
+            // Cashflow Chart (Planned vs Actual vs Forecast vs Budget)
+            const cashflowCtx = document.getElementById('cashflowChart').getContext('2d');
+            new Chart(cashflowCtx, {
+                type: 'line',
+                data: {
+                    labels: cashflowLabels,
+                    datasets: [{
+                        label: 'Planned',
+                        data: plannedData,
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: false,
+                        borderWidth: 2,
+                        spanGaps: true
+                    }, {
+                        label: 'Actual',
+                        data: actualData,
+                        borderColor: 'rgb(34, 197, 94)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        fill: false,
+                        borderWidth: 2,
+                        spanGaps: true
+                    }, {
+                        label: 'Forecast',
+                        data: forecastData,
+                        borderColor: 'rgb(245, 158, 11)',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        fill: false,
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        spanGaps: true
+                    }, {
+                        label: 'Budget',
+                        data: budgetData,
+                        borderColor: 'rgb(156, 163, 175)',
+                        backgroundColor: 'rgba(156, 163, 175, 0.1)',
+                        fill: false,
+                        borderWidth: 1,
+                        borderDash: [3, 3],
+                        spanGaps: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed.y;
+                                    if (value === null) return 'No data';
+                                    return `${context.dataset.label}: R ${value.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 45 }
+                        },
+                        y: {
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                            ticks: {
+                                font: { size: 10 },
+                                callback: function(value) {
+                                    return 'R ' + value.toLocaleString();
+                                }
+                            },
+                            beginAtZero: true
+                        }
+                    },
+                    elements: {
+                        point: { radius: 3, hoverRadius: 5 },
+                        line: { tension: 0.3 }
+                    }
+                }
             });
         });
     </script>
