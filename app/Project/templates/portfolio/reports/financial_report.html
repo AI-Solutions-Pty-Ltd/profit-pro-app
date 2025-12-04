@@ -13,11 +13,11 @@
                         <h1 class="text-2xl font-bold text-gray-900">Financial Report</h1>
                         <p class="text-sm text-gray-600 mt-1">Project list with Budget, Forecast, Variances, Certified Payments, CPI & SPI</p>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 flex-wrap">
                         <!-- Category Filter -->
-                        <form method="get" class="flex items-center gap-2">
+                        <form method="get" class="flex items-center gap-2 flex-wrap">
                             <label for="id_category"
-                                   class="text-sm font-medium text-gray-600 whitespace-nowrap">Filter by:</label>
+                                   class="text-sm font-medium text-gray-600 whitespace-nowrap">Category:</label>
                             <select name="category"
                                     id="id_category"
                                     onchange="this.form.submit()"
@@ -30,10 +30,37 @@
                                     </option>
                                 {% endfor %}
                             </select>
-                            {% if filter_form.category.value %}
+                            <!-- Sort Filter -->
+                            <label for="id_sort"
+                                   class="text-sm font-medium text-gray-600 whitespace-nowrap ml-2">Sort:</label>
+                            <select name="sort"
+                                    id="id_sort"
+                                    onchange="this.form.submit()"
+                                    class="block w-44 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                                <option value="">By Name</option>
+                                <option value="variance_asc"
+                                        {% if current_sort == "variance_asc" %}selected{% endif %}>
+                                    Variance (Worst First)
+                                </option>
+                                <option value="variance_desc"
+                                        {% if current_sort == "variance_desc" %}selected{% endif %}>
+                                    Variance (Best First)
+                                </option>
+                                <option value="cpi_asc" {% if current_sort == "cpi_asc" %}selected{% endif %}>CPI (Lowest First)</option>
+                                <option value="cpi_desc"
+                                        {% if current_sort == "cpi_desc" %}selected{% endif %}>
+                                    CPI (Highest First)
+                                </option>
+                                <option value="spi_asc" {% if current_sort == "spi_asc" %}selected{% endif %}>SPI (Lowest First)</option>
+                                <option value="spi_desc"
+                                        {% if current_sort == "spi_desc" %}selected{% endif %}>
+                                    SPI (Highest First)
+                                </option>
+                            </select>
+                            {% if filter_form.category.value or current_sort %}
                                 <a href="{% url 'project:portfolio-financial-report' %}"
                                    class="inline-flex items-center px-2 py-2 text-gray-500 hover:text-gray-700 transition-colors"
-                                   title="Clear filter">{% heroicon_outline "x-mark" size="18" %}</a>
+                                   title="Clear filters">{% heroicon_outline "x-mark" size="18" %}</a>
                             {% endif %}
                         </form>
                         <span class="text-sm text-gray-500">
@@ -47,7 +74,7 @@
         <!-- Summary Cards -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
-                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Budget</p>
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Revised Budget</p>
                 <p class="mt-1 text-xl font-bold text-blue-600">R {{ totals.budget|floatformat:0|intcomma }}</p>
             </div>
             <div class="bg-white rounded-lg shadow p-4 border-l-4 border-amber-500">
@@ -63,7 +90,10 @@
             </div>
             <div class="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Certified</p>
-                <p class="mt-1 text-xl font-bold text-purple-600">R {{ totals.certified|floatformat:0|intcomma }}</p>
+                <p class="mt-1 text-xl font-bold text-purple-600">
+                    R {{ totals.certified|floatformat:0|intcomma }}
+                    <span class="text-sm">({{ totals.certified_percentage|floatformat:1 }}%)</span>
+                </p>
             </div>
         </div>
         <!-- Financial Report Table -->
@@ -86,6 +116,7 @@
                             <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Certified</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">CPI</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">SPI</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -117,7 +148,10 @@
                                     </span>
                                 </td>
                                 <td class="px-4 py-4 whitespace-nowrap text-right">
-                                    <span class="text-sm font-medium text-purple-600">R {{ data.certified|floatformat:0|intcomma }}</span>
+                                    <div>
+                                        <span class="text-sm font-medium text-purple-600">R {{ data.certified|floatformat:0|intcomma }}</span>
+                                        <span class="text-xs text-gray-500 block">({{ data.certified_percentage|floatformat:1 }}%)</span>
+                                    </div>
                                 </td>
                                 <td class="px-4 py-4 whitespace-nowrap text-center">
                                     {% if data.cpi %}
@@ -137,10 +171,18 @@
                                         <span class="text-gray-400">--</span>
                                     {% endif %}
                                 </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-center">
+                                    <a href="{% url 'project:project-management' data.project.pk %}"
+                                       class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                                       title="Edit Project">
+                                        {% heroicon_mini "pencil-square" class="w-4 h-4 mr-1" %}
+                                        Edit
+                                    </a>
+                                </td>
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="8" class="px-6 py-12 text-center">
+                                <td colspan="9" class="px-6 py-12 text-center">
                                     <div class="flex flex-col items-center">
                                         {% heroicon_outline "document-chart-bar" class="w-16 h-16 text-gray-300 mb-4" %}
                                         <p class="text-sm text-gray-500">No active projects found</p>
@@ -161,9 +203,13 @@
                                 <td class="px-4 py-3 text-right text-sm font-bold {% if totals.variance_percentage >= 0 %}text-green-700{% else %}text-red-700{% endif %}">
                                     {{ totals.variance_percentage|floatformat:1 }}%
                                 </td>
-                                <td class="px-4 py-3 text-right text-sm font-bold text-purple-700">R {{ totals.certified|floatformat:0|intcomma }}</td>
+                                <td class="px-4 py-3 text-right text-sm font-bold text-purple-700">
+                                    R {{ totals.certified|floatformat:0|intcomma }}
+                                    <span class="text-xs font-normal text-gray-500 block">({{ totals.certified_percentage|floatformat:1 }}%)</span>
+                                </td>
                                 <td class="px-4 py-3 text-center text-sm font-bold text-gray-500">--</td>
                                 <td class="px-4 py-3 text-center text-sm font-bold text-gray-500">--</td>
+                                <td class="px-4 py-3"></td>
                             </tr>
                         </tfoot>
                     {% endif %}

@@ -9,13 +9,13 @@ from django.db.models import QuerySet, Sum
 from django.urls import reverse
 from django.views.generic import ListView
 
-from app.BillOfQuantities.models import CashflowForecast, Forecast, PaymentCertificate
-from app.Project.forms import FilterForm
-from app.Project.models.planned_value_models import PlannedValue
+from app.BillOfQuantities.models import Forecast, PaymentCertificate
 from app.core.Utilities.dates import get_end_of_month
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.Project.forms import FilterForm
 from app.Project.models import Portfolio, Project
+from app.Project.models.planned_value_models import PlannedValue
 
 
 class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
@@ -55,7 +55,7 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         projects = Project.objects.filter(
             account=self.request.user,
             status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
-        ).order_by("name")
+        )
 
         # Apply category filter if selected
         if self.filter_form and self.filter_form.is_valid():
@@ -112,6 +112,11 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
             except (ZeroDivisionError, TypeError):
                 spi = None
 
+            # Calculate certified percentage (certified / budget)
+            certified_percentage = (
+                (certified / budget * 100) if budget else Decimal("0.00")
+            )
+
             report_data.append(
                 {
                     "project": project,
@@ -122,6 +127,7 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
                     if budget
                     else Decimal("0.00"),
                     "certified": certified,
+                    "certified_percentage": certified_percentage,
                     "cpi": cpi,
                     "spi": spi,
                 }
@@ -140,11 +146,55 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
             else Decimal("0.00")
         )
 
+        # Calculate total certified percentage
+        totals["certified_percentage"] = (
+            (totals["certified"] / totals["budget"] * 100)
+            if totals["budget"]
+            else Decimal("0.00")
+        )
+
+        # Get sort parameter from request
+        sort_by = self.request.GET.get("sort", "")
+        if sort_by == "variance_asc":
+            # Sort by variance ascending (worst variance first)
+            report_data.sort(
+                key=lambda x: x["variance"] or Decimal("0"),
+            )
+        elif sort_by == "variance_desc":
+            # Sort by variance descending (best variance first)
+            report_data.sort(
+                key=lambda x: -(x["variance"] or Decimal("0")),
+            )
+        elif sort_by == "cpi_asc":
+            # Sort by CPI ascending (worst CPI first)
+            report_data.sort(
+                key=lambda x: (x["cpi"] is None, x["cpi"] or Decimal("0")),
+            )
+        elif sort_by == "cpi_desc":
+            # Sort by CPI descending (best CPI first)
+            report_data.sort(
+                key=lambda x: (x["cpi"] is None, -(x["cpi"] or Decimal("0"))),
+            )
+        elif sort_by == "spi_asc":
+            # Sort by SPI ascending (worst SPI first)
+            report_data.sort(
+                key=lambda x: (x["spi"] is None, x["spi"] or Decimal("0")),
+            )
+        elif sort_by == "spi_desc":
+            # Sort by SPI descending (best SPI first)
+            report_data.sort(
+                key=lambda x: (x["spi"] is None, -(x["spi"] or Decimal("0"))),
+            )
+        else:
+            # Default sort by project name
+            report_data.sort(key=lambda x: x["project"].name.lower())
+
         context["report_data"] = report_data
         context["totals"] = totals
         context["current_date"] = current_date
         context["portfolio"]: Portfolio = self.request.user.portfolio  # type: ignore
         context["filter_form"] = self.filter_form
+        context["current_sort"] = sort_by
 
         return context
 
@@ -186,7 +236,7 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         projects = Project.objects.filter(
             account=self.request.user,
             status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
-        ).order_by("name")
+        )
 
         # Apply category filter if selected
         if self.filter_form and self.filter_form.is_valid():
@@ -212,20 +262,37 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
             if planned_start and planned_end:
                 planned_duration = (planned_end - planned_start).days
 
-            # Forecast end date (from time forecast if available)
-            forecast_end = project.end_date  # Default to planned end
-
-            # Actual progress (days elapsed)
-            days_elapsed = None
-            if planned_start:
-                days_elapsed = (current_date.date() - planned_start).days
-                if days_elapsed < 0:
-                    days_elapsed = 0
-
             # Percentage complete (based on certified vs budget)
             budget = project.get_original_contract_value or Decimal("0.00")
             certified = project.actual_cost() or Decimal("0.00")
-            percent_complete = (certified / budget * 100) if budget else Decimal("0.00")
+            percent_work_complete = (
+                (certified / budget * 100) if budget else Decimal("0.00")
+            )
+
+            # Forecast Completion date
+            # Calculate based on % complete and elapsed time
+            forecast_completion = None
+            if planned_start and planned_duration and percent_work_complete > 0:
+                # Estimate remaining duration based on progress
+                days_elapsed = (current_date.date() - planned_start).days
+                if days_elapsed > 0 and percent_work_complete > 0:
+                    # Estimated total duration = days_elapsed / (percent_complete / 100)
+                    estimated_total_days = int(
+                        days_elapsed / (float(percent_work_complete) / 100)
+                    )
+                    forecast_completion = planned_start + relativedelta(
+                        days=estimated_total_days
+                    )
+                else:
+                    forecast_completion = planned_end
+            elif planned_end:
+                forecast_completion = planned_end
+
+            # Variance (days) = Planned End - Forecast Completion
+            # Negative means behind schedule, Positive means ahead
+            variance_days = None
+            if planned_end and forecast_completion:
+                variance_days = (planned_end - forecast_completion).days
 
             # SPI
             try:
@@ -233,23 +300,65 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
             except (ZeroDivisionError, TypeError):
                 spi = None
 
+            # Schedule Variance (Value) = EV - PV
+            # EV (Earned Value) = Budget * % Complete
+            # PV (Planned Value) = Budget * Planned % Complete at this date
+            schedule_variance_value = None
+            earned_value = budget * (percent_work_complete / 100) if budget else None
+
+            if planned_start and planned_end and planned_duration and budget:
+                days_elapsed = (current_date.date() - planned_start).days
+                if days_elapsed >= 0:
+                    # Planned % complete based on time elapsed
+                    planned_percent = min(
+                        Decimal(days_elapsed) / Decimal(planned_duration) * 100,
+                        Decimal("100"),
+                    )
+                    planned_value = budget * (planned_percent / 100)
+                    if earned_value is not None:
+                        schedule_variance_value = earned_value - planned_value
+
             report_data.append(
                 {
                     "project": project,
                     "planned_start": planned_start,
                     "planned_end": planned_end,
                     "planned_duration": planned_duration,
-                    "forecast_end": forecast_end,
-                    "days_elapsed": days_elapsed,
-                    "percent_complete": percent_complete,
+                    "forecast_completion": forecast_completion,
+                    "variance_days": variance_days,
+                    "percent_work_complete": percent_work_complete,
                     "spi": spi,
+                    "schedule_variance_value": schedule_variance_value,
                 }
             )
+
+        # Get sort parameter from request
+        sort_by = self.request.GET.get("sort", "")
+        if sort_by == "variance_asc":
+            # Sort by schedule variance ascending (most behind first)
+            report_data.sort(
+                key=lambda x: (
+                    x["schedule_variance_value"] is None,
+                    x["schedule_variance_value"] or Decimal("0"),
+                )
+            )
+        elif sort_by == "variance_desc":
+            # Sort by schedule variance descending (most ahead first)
+            report_data.sort(
+                key=lambda x: (
+                    x["schedule_variance_value"] is None,
+                    -(x["schedule_variance_value"] or Decimal("0")),
+                )
+            )
+        else:
+            # Default sort by project name
+            report_data.sort(key=lambda x: x["project"].name.lower())
 
         context["report_data"] = report_data
         context["current_date"] = current_date
         context["portfolio"]: Portfolio = self.request.user.portfolio  # type: ignore
         context["filter_form"] = self.filter_form
+        context["current_sort"] = sort_by
 
         return context
 
