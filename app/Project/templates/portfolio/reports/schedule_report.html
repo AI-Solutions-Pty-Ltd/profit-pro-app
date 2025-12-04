@@ -13,11 +13,11 @@
                         <h1 class="text-2xl font-bold text-gray-900">Schedule Report</h1>
                         <p class="text-sm text-gray-600 mt-1">Project list with Planned Time, Forecast, and Actual Progress</p>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 flex-wrap">
                         <!-- Category Filter -->
                         <form method="get" class="flex items-center gap-2">
                             <label for="id_category"
-                                   class="text-sm font-medium text-gray-600 whitespace-nowrap">Filter by:</label>
+                                   class="text-sm font-medium text-gray-600 whitespace-nowrap">Category:</label>
                             <select name="category"
                                     id="id_category"
                                     onchange="this.form.submit()"
@@ -30,10 +30,27 @@
                                     </option>
                                 {% endfor %}
                             </select>
-                            {% if filter_form.category.value %}
+                            <!-- Sort by Schedule Variance -->
+                            <label for="id_sort"
+                                   class="text-sm font-medium text-gray-600 whitespace-nowrap ml-2">Sort:</label>
+                            <select name="sort"
+                                    id="id_sort"
+                                    onchange="this.form.submit()"
+                                    class="block w-48 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                                <option value="">By Name</option>
+                                <option value="variance_asc"
+                                        {% if current_sort == "variance_asc" %}selected{% endif %}>
+                                    Schedule Variance (Most Behind)
+                                </option>
+                                <option value="variance_desc"
+                                        {% if current_sort == "variance_desc" %}selected{% endif %}>
+                                    Schedule Variance (Most Ahead)
+                                </option>
+                            </select>
+                            {% if filter_form.category.value or current_sort %}
                                 <a href="{% url 'project:portfolio-schedule-report' %}"
                                    class="inline-flex items-center px-2 py-2 text-gray-500 hover:text-gray-700 transition-colors"
-                                   title="Clear filter">{% heroicon_outline "x-mark" size="18" %}</a>
+                                   title="Clear filters">{% heroicon_outline "x-mark" size="18" %}</a>
                             {% endif %}
                         </form>
                         <span class="text-sm text-gray-500">
@@ -60,8 +77,10 @@
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Planned Start</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Planned End</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Duration (Days)</th>
-                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Days Elapsed</th>
-                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">% Complete</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Forecast Completion</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Variance (Days)</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">% Work Completed</th>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule Variance</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">SPI</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         </tr>
@@ -100,8 +119,18 @@
                                     {% endif %}
                                 </td>
                                 <td class="px-4 py-4 whitespace-nowrap text-center">
-                                    {% if data.days_elapsed is not None %}
-                                        <span class="text-sm font-medium text-gray-900">{{ data.days_elapsed }}</span>
+                                    {% if data.forecast_completion %}
+                                        <span class="text-sm text-gray-900">{{ data.forecast_completion|date:"d M Y" }}</span>
+                                    {% else %}
+                                        <span class="text-gray-400">--</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-center">
+                                    {% if data.variance_days is not None %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if data.variance_days >= 0 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                            {% if data.variance_days > 0 %}+{% endif %}
+                                            {{ data.variance_days }}
+                                        </span>
                                     {% else %}
                                         <span class="text-gray-400">--</span>
                                     {% endif %}
@@ -110,10 +139,21 @@
                                     <div class="flex items-center justify-center">
                                         <div class="w-16 bg-gray-200 rounded-full h-2 mr-2">
                                             <div class="bg-indigo-600 h-2 rounded-full"
-                                                 style="width: {{ data.percent_complete|floatformat:0 }}%"></div>
+                                                 style="width: {% if data.percent_work_complete > 100 %}100{% else %}{{ data.percent_work_complete|floatformat:0 }}{% endif %}%">
+                                            </div>
                                         </div>
-                                        <span class="text-sm font-medium text-gray-900">{{ data.percent_complete|floatformat:1 }}%</span>
+                                        <span class="text-sm font-medium text-gray-900">{{ data.percent_work_complete|floatformat:1 }}%</span>
                                     </div>
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-center">
+                                    {% if data.schedule_variance_value is not None %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if data.schedule_variance_value >= 0 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                            {% if data.schedule_variance_value >= 0 %}+{% endif %}
+                                            R{{ data.schedule_variance_value|floatformat:0|intcomma }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-gray-400">--</span>
+                                    {% endif %}
                                 </td>
                                 <td class="px-4 py-4 whitespace-nowrap text-center">
                                     {% if data.spi %}
@@ -147,7 +187,7 @@
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="8" class="px-6 py-12 text-center">
+                                <td colspan="10" class="px-6 py-12 text-center">
                                     <div class="flex flex-col items-center">
                                         {% heroicon_outline "clock" class="w-16 h-16 text-gray-300 mb-4" %}
                                         <p class="text-sm text-gray-500">No active projects found</p>
@@ -161,7 +201,7 @@
         </div>
         <!-- Legend -->
         <div class="mt-4 p-4 bg-gray-50 rounded-lg">
-            <div class="flex flex-wrap items-center justify-center gap-6 text-sm">
+            <div class="flex flex-wrap items-center justify-center gap-6 text-sm mb-3">
                 <div class="flex items-center">
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-2">SPI ≥ 1</span>
                     <span class="text-gray-600">On or ahead of schedule</span>
@@ -170,6 +210,14 @@
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 mr-2">SPI < 1</span>
                     <span class="text-gray-600">Behind schedule</span>
                 </div>
+            </div>
+            <!-- Variance Note -->
+            <div class="border-t border-gray-200 pt-3 mt-3">
+                <p class="text-xs text-gray-500 text-center">
+                    {% heroicon_outline "information-circle" class="w-4 h-4 inline mr-1" %}
+                    <strong>Note:</strong> A negative variance (days or value) indicates the project is behind schedule and may require intervention.
+                    Use the "Sort by Schedule Variance (Most Behind)" filter to prioritize projects requiring urgent attention.
+                </p>
             </div>
         </div>
         <!-- Footer -->
