@@ -2,17 +2,40 @@
 {% load humanize %}
 {% load static %}
 {% load crispy_forms_tags %}
+{% load heroicons %}
 {% block content %}
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
         <div class="bg-white shadow-sm rounded-lg mb-6">
             <div class="px-6 py-4">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <h1 class="text-2xl font-bold text-gray-900">Cashflow Report</h1>
                         <p class="text-sm text-gray-600 mt-1">Current month actuals and next 3 months forecast</p>
                     </div>
-                    <div class="flex items-center space-x-3">
+                    <div class="flex items-center gap-3">
+                        <!-- Category Filter -->
+                        <form method="get" class="flex items-center gap-2">
+                            <label for="id_category"
+                                   class="text-sm font-medium text-gray-600 whitespace-nowrap">Filter by:</label>
+                            <select name="category"
+                                    id="id_category"
+                                    onchange="this.form.submit()"
+                                    class="block w-40 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                                <option value="">All Categories</option>
+                                {% for category in filter_form.category.field.queryset %}
+                                    <option value="{{ category.pk }}"
+                                            {% if filter_form.category.value|stringformat:"s" == category.pk|stringformat:"s" %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if filter_form.category.value %}
+                                <a href="{% url 'project:portfolio-cashflow-report' %}"
+                                   class="inline-flex items-center px-2 py-2 text-gray-500 hover:text-gray-700 transition-colors"
+                                   title="Clear filter">{% heroicon_outline "x-mark" size="18" %}</a>
+                            {% endif %}
+                        </form>
                         <span class="text-sm text-gray-500">
                             {% heroicon_outline "calendar" class="w-4 h-4 inline mr-1" %}
                             {{ current_date|date:"F d, Y" }}

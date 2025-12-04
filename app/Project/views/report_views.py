@@ -10,6 +10,7 @@ from django.urls import reverse
 from django.views.generic import ListView
 
 from app.BillOfQuantities.models import CashflowForecast, Forecast, PaymentCertificate
+from app.Project.forms import FilterForm
 from app.Project.models.planned_value_models import PlannedValue
 from app.core.Utilities.dates import get_end_of_month
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
@@ -24,6 +25,13 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     template_name = "portfolio/reports/financial_report.html"
     context_object_name = "projects"
     permissions = ["consultant", "contractor"]
+
+    filter_form: FilterForm | None = None
+
+    def setup(self, request, *args, **kwargs):
+        """Initialize filter form during view setup."""
+        super().setup(request, *args, **kwargs)
+        self.filter_form = FilterForm(request.GET or {})
 
     def get_breadcrumbs(self: "FinancialReportView") -> list[BreadcrumbItem]:
         """Return breadcrumbs for financial report."""
@@ -43,11 +51,19 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         ]
 
     def get_queryset(self: "FinancialReportView") -> QuerySet[Project]:
-        """Get active projects for the user's portfolio."""
-        return Project.objects.filter(
+        """Get active projects for the user's portfolio with optional category filter."""
+        projects = Project.objects.filter(
             account=self.request.user,
             status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
         ).order_by("name")
+
+        # Apply category filter if selected
+        if self.filter_form and self.filter_form.is_valid():
+            category = self.filter_form.cleaned_data.get("category")
+            if category:
+                projects = projects.filter(category=category)
+
+        return projects
 
     def get_context_data(self: "FinancialReportView", **kwargs: Any) -> dict[str, Any]:
         """Add financial metrics to context."""
@@ -128,6 +144,7 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         context["totals"] = totals
         context["current_date"] = current_date
         context["portfolio"]: Portfolio = self.request.user.portfolio  # type: ignore
+        context["filter_form"] = self.filter_form
 
         return context
 
@@ -139,6 +156,13 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     template_name = "portfolio/reports/schedule_report.html"
     context_object_name = "projects"
     permissions = ["consultant", "contractor"]
+
+    filter_form: FilterForm | None = None
+
+    def setup(self, request, *args, **kwargs):
+        """Initialize filter form during view setup."""
+        super().setup(request, *args, **kwargs)
+        self.filter_form = FilterForm(request.GET or {})
 
     def get_breadcrumbs(self: "ScheduleReportView") -> list[BreadcrumbItem]:
         """Return breadcrumbs for schedule report."""
@@ -158,11 +182,19 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         ]
 
     def get_queryset(self: "ScheduleReportView") -> QuerySet[Project]:
-        """Get active projects for the user's portfolio."""
-        return Project.objects.filter(
+        """Get active projects for the user's portfolio with optional category filter."""
+        projects = Project.objects.filter(
             account=self.request.user,
             status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
         ).order_by("name")
+
+        # Apply category filter if selected
+        if self.filter_form and self.filter_form.is_valid():
+            category = self.filter_form.cleaned_data.get("category")
+            if category:
+                projects = projects.filter(category=category)
+
+        return projects
 
     def get_context_data(self: "ScheduleReportView", **kwargs: Any) -> dict[str, Any]:
         """Add schedule metrics to context."""
@@ -217,6 +249,7 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         context["report_data"] = report_data
         context["current_date"] = current_date
         context["portfolio"]: Portfolio = self.request.user.portfolio  # type: ignore
+        context["filter_form"] = self.filter_form
 
         return context
 
@@ -228,6 +261,13 @@ class CashflowReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     template_name = "portfolio/reports/cashflow_report.html"
     context_object_name = "projects"
     permissions = ["consultant", "contractor"]
+
+    filter_form: FilterForm | None = None
+
+    def setup(self, request, *args, **kwargs):
+        """Initialize filter form during view setup."""
+        super().setup(request, *args, **kwargs)
+        self.filter_form = FilterForm(request.GET or {})
 
     def get_breadcrumbs(self: "CashflowReportView") -> list[BreadcrumbItem]:
         """Return breadcrumbs for cashflow report."""
@@ -247,11 +287,19 @@ class CashflowReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         ]
 
     def get_queryset(self: "CashflowReportView") -> QuerySet[Project]:
-        """Get active projects for the user's portfolio."""
-        return Project.objects.filter(
+        """Get active projects for the user's portfolio with optional category filter."""
+        projects = Project.objects.filter(
             account=self.request.user,
             status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
         ).order_by("name")
+
+        # Apply category filter if selected
+        if self.filter_form and self.filter_form.is_valid():
+            category = self.filter_form.cleaned_data.get("category")
+            if category:
+                projects = projects.filter(category=category)
+
+        return projects
 
     def get_context_data(self: "CashflowReportView", **kwargs: Any) -> dict[str, Any]:
         """Add cashflow metrics to context."""
@@ -341,6 +389,7 @@ class CashflowReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         context["month_2"] = month_2
         context["month_3"] = month_3
         context["portfolio"]: Portfolio = self.request.user.portfolio  # type: ignore
+        context["filter_form"] = self.filter_form
 
         return context
 

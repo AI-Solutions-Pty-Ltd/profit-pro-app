@@ -137,16 +137,60 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
             projects, "forecasts__forecast_transactions__total_price"
         )
         context["dashboard_data"] = dashboard_data
-        portfolio: Portfolio = self.request.user.portfolio  # type: ignore
+        portfolio: Portfolio | None = self.request.user.portfolio  # type: ignore
         context["portfolio"] = portfolio
         context["current_date"] = current_date
+
+        # Get category filter for portfolio-level calculations
+        category_filter = (
+            self.filter_form.cleaned_data.get("category")
+            if self.filter_form and self.filter_form.is_valid()
+            else None
+        )
+
+        # If no portfolio, return early with default values
+        if not portfolio:
+            context["active_projects_count"] = 0
+            context["urgent_projects"] = []
+            context["urgent_projects_count"] = 0
+            context["urgent_projects_percentage"] = 0
+            context["attention_projects"] = []
+            context["attention_projects_count"] = 0
+            context["attention_projects_percentage"] = 0
+            context["original_budget"] = 0
+            context["approved_variations"] = 0
+            context["approved_variations_percentage"] = 0
+            context["total_certified"] = 0
+            context["total_certified_percentage"] = 0
+            context["forecast_at_completion"] = None
+            context["cost_variance_at_completion"] = None
+            context["cost_variance_at_completion_percentage"] = 0
+            context["total_earned_value"] = None
+            context["total_cost_variance"] = None
+            context["total_schedule_variance"] = None
+            context["total_eac"] = None
+            context["performance_labels"] = "[]"
+            context["cpi_data"] = "[]"
+            context["spi_data"] = "[]"
+            context["current_cpi"] = None
+            context["current_spi"] = None
+            context["cashflow_labels"] = "[]"
+            context["planned_data"] = "[]"
+            context["actual_data"] = "[]"
+            context["forecast_data"] = "[]"
+            context["budget_data"] = "[]"
+            return context
 
         # ==========================================
         # Group 1 - Project Stats
         # ==========================================
-        active_count = portfolio.active_projects.count()
-        urgent_projects = portfolio.projects_requiring_urgent_intervention(current_date)
-        attention_projects = portfolio.projects_requiring_attention(current_date)
+        active_count = portfolio.get_active_projects(category_filter).count()
+        urgent_projects = portfolio.projects_requiring_urgent_intervention(
+            current_date, category_filter
+        )
+        attention_projects = portfolio.projects_requiring_attention(
+            current_date, category_filter
+        )
 
         context["active_projects_count"] = active_count
         context["urgent_projects"] = urgent_projects
@@ -163,9 +207,9 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         # ==========================================
         # Group 2 - Budgets and Payments
         # ==========================================
-        original_budget = portfolio.total_original_budget
-        approved_variations = portfolio.total_approved_variations
-        total_certified = portfolio.total_certified_value
+        original_budget = portfolio.get_total_original_budget(category_filter)
+        approved_variations = portfolio.get_total_approved_variations(category_filter)
+        total_certified = portfolio.get_total_certified_value(category_filter)
 
         context["original_budget"] = original_budget
         context["approved_variations"] = approved_variations
@@ -180,9 +224,11 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         # ==========================================
         # Cost Forecasts
         # ==========================================
-        forecast_at_completion = portfolio.forecast_cost_at_completion(current_date)
+        forecast_at_completion = portfolio.forecast_cost_at_completion(
+            current_date, category_filter
+        )
         cost_variance_at_completion = portfolio.cost_variance_at_completion(
-            current_date
+            current_date, category_filter
         )
 
         context["forecast_at_completion"] = forecast_at_completion
@@ -196,15 +242,23 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         # ==========================================
         # Earned Value Management (EVM)
         # ==========================================
-        context["total_earned_value"] = portfolio.total_earned_value(current_date)
-        context["total_cost_variance"] = portfolio.total_cost_variance(current_date)
-        context["total_schedule_variance"] = portfolio.total_schedule_variance(
-            current_date
+        context["total_earned_value"] = portfolio.total_earned_value(
+            current_date, category_filter
         )
-        context["total_eac"] = portfolio.total_estimate_at_completion(current_date)
+        context["total_cost_variance"] = portfolio.total_cost_variance(
+            current_date, category_filter
+        )
+        context["total_schedule_variance"] = portfolio.total_schedule_variance(
+            current_date, category_filter
+        )
+        context["total_eac"] = portfolio.total_estimate_at_completion(
+            current_date, category_filter
+        )
 
         # Generate 6 months of CPI/SPI data for charts
-        performance_data = self._get_performance_chart_data(portfolio, months=6)
+        performance_data = self._get_performance_chart_data(
+            portfolio, months=6, category=category_filter
+        )
         context["performance_labels"] = json.dumps(performance_data["labels"])
         context["cpi_data"] = json.dumps(performance_data["cpi"])
         context["spi_data"] = json.dumps(performance_data["spi"])
@@ -212,7 +266,9 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         context["current_spi"] = performance_data["current_spi"]
 
         # Generate 12 months of Planned vs Actual vs Forecast vs Budget data
-        cashflow_data = self._get_cashflow_chart_data(portfolio)
+        cashflow_data = self._get_cashflow_chart_data(
+            portfolio, category=category_filter
+        )
         context["cashflow_labels"] = json.dumps(cashflow_data["labels"])
         context["planned_data"] = json.dumps(cashflow_data["planned"])
         context["actual_data"] = json.dumps(cashflow_data["actual"])
@@ -222,7 +278,10 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         return context
 
     def _get_performance_chart_data(
-        self: "PortfolioDashboardView", portfolio: Portfolio, months: int = 12
+        self: "PortfolioDashboardView",
+        portfolio: Portfolio,
+        months: int = 12,
+        category=None,
     ) -> dict:
         """Generate N months of CPI/SPI data for portfolio."""
         labels = []
@@ -241,13 +300,13 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
             labels.append(month_date.strftime("%b %Y"))
 
             try:
-                cpi = portfolio.cost_performance_index(month_date)
+                cpi = portfolio.cost_performance_index(month_date, category)
                 cpi_values.append(float(cpi) if cpi else None)
             except (ZeroDivisionError, TypeError, Exception):
                 cpi_values.append(None)
 
             try:
-                spi = portfolio.schedule_performance_index(month_date)
+                spi = portfolio.schedule_performance_index(month_date, category)
                 spi_values.append(float(spi) if spi else None)
             except (ZeroDivisionError, TypeError, Exception):
                 spi_values.append(None)
@@ -261,7 +320,7 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         }
 
     def _get_cashflow_chart_data(
-        self: "PortfolioDashboardView", portfolio: Portfolio
+        self: "PortfolioDashboardView", portfolio: Portfolio, category=None
     ) -> dict:
         """Generate 12 months of Planned vs Actual vs Forecast vs Budget data."""
         from decimal import Decimal
@@ -274,7 +333,8 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
 
         current_date = datetime.now()
         # Monthly budget = total budget / 12 (simplified distribution)
-        monthly_budget = float(portfolio.total_original_budget / 12)
+        total_budget = portfolio.get_total_original_budget(category)
+        monthly_budget = float(total_budget / 12) if total_budget else 0
 
         # Generate data for last 12 months (oldest to newest)
         for i in range(11, -1, -1):
@@ -291,7 +351,7 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
             actual_total = Decimal("0.00")
             forecast_total = Decimal("0.00")
 
-            for project in portfolio.active_projects:
+            for project in portfolio.get_active_projects(category):
                 try:
                     pv = project.planned_value(month_date)
                     if pv:
