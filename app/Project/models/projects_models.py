@@ -11,6 +11,7 @@ from app.BillOfQuantities.models.forecast_models import Forecast
 from app.BillOfQuantities.models.payment_certificate_models import PaymentCertificate
 from app.BillOfQuantities.models.structure_models import LineItem
 from app.core.Utilities.models import BaseModel, sum_queryset
+from app.Project.models.category_models import ProjectCategory
 from app.Project.models.client_models import Client
 
 if TYPE_CHECKING:
@@ -140,6 +141,14 @@ class Project(BaseModel):
         null=True,
         blank=True,
         related_name="projects",
+    )
+    category = models.ForeignKey(
+        ProjectCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="projects",
+        help_text="Project category (e.g., Education, Health, Roads)",
     )
 
     # Project team roles

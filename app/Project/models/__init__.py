@@ -1,3 +1,4 @@
+from .category_models import ProjectCategory
 from .milestone_models import Milestone
 from .planned_value_models import PlannedValue
 from .portfolio_models import Portfolio
@@ -7,8 +8,9 @@ from .signatories_models import Signatories
 __all__ = [
     "Client",
     "Milestone",
+    "PlannedValue",
     "Portfolio",
     "Project",
+    "ProjectCategory",
     "Signatories",
-    "PlannedValue",
 ]
