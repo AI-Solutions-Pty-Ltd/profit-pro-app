@@ -2,7 +2,7 @@
 {% load static %}
 {% load humanize %}
 {% block title %}
-    Approve Payment Certificate - {{ project.name }}
+    Submit Payment Certificate - {{ project.name }}
 {% endblock title %}
 {% block content %}
     <!-- Header -->
@@ -11,7 +11,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
-                    <p class="text-sm text-gray-600 mt-1">Approve Payment Certificate: #{{ payment_certificate.certificate_number }}</p>
+                    <p class="text-sm text-gray-600 mt-1">Submit Payment Certificate: #{{ payment_certificate.certificate_number }}</p>
                     <p class="text-sm text-gray-600 mt-1">
                         Current Status: <span class="font-semibold">{{ payment_certificate.get_status_display }}</span>
                     </p>
@@ -51,7 +51,7 @@
     <div class="bg-white shadow-sm rounded-lg mb-6 px-6 py-4 ">
         <div class="border-b border-gray-200 mb-4">
             <h2 class="text-lg font-bold text-gray-900">Transactions</h2>
-            <p class="text-sm text-gray-600 mb-2">Review the transactions before approving</p>
+            <p class="text-sm text-gray-600 mb-2">Review the transactions before submitting</p>
         </div>
         <div id="contract-line-items" class="mb-6 border-b border-gray-200">
             <h2 class="text-lg font-bold text-gray-900 mb-2">Contract Line Items</h2>
@@ -69,13 +69,13 @@
             {% include "payment_certificate/tables/special_items.html" with special_line_items=special_line_items special_line_items_total=payment_certificate.special_items_current_claim_total %}
         </div>
     </div>
-    <!-- Approval Form -->
+    <!-- Submit Form -->
     <div class="bg-white shadow-sm rounded-lg flex flex-col items-center justify-center">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-bold text-gray-900 text-center">Approve Payment Certificate</h2>
+            <h2 class="text-lg font-bold text-gray-900 text-center">Payment Certificate</h2>
             <p class="text-sm text-gray-600 text-center">
-                Review the transactions above and click the button below to approve this payment certificate.
-                All transactions will be marked as approved.
+                Review the transactions above and click the button below to submit this payment certificate.
+                All transactions will be marked as Submitted.
             </p>
         </div>
         <div class="px-6 py-6 ">
@@ -92,7 +92,7 @@
                 <input type="hidden" name="status" value="SUBMITTED">
                 <!-- Final Payment Certificate Checkbox -->
                 <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                    <div class="flex items-start">
+                    <div class="centered-content-horizontal">
                         <div class="flex items-center h-5">
                             <input type="checkbox"
                                    id="is_final"
@@ -115,17 +115,17 @@
                        href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk payment_certificate.pk %}"
                        class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                        data-loading-text="Canceling..."
-                       data-disable-elements="#approve-btn">
+                       data-disable-elements="#submit-btn">
                         {% heroicon_outline "x-mark" class="w-5 h-5" %}
                         Cancel
                     </a>
-                    <button id="approve-btn"
+                    <button id="submit-btn"
                             type="submit"
                             class="loading-btn inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                            data-loading-text="Approving..."
+                            data-loading-text="Submitting..."
                             data-disable-elements="#cancel-btn">
                         {% heroicon_outline "check-circle" class="w-5 h-5" %}
-                        Approve Payment Certificate
+                        Submit Payment Certificate
                     </button>
                 </div>
             </form>
