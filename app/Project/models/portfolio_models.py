@@ -55,7 +55,7 @@ class Portfolio(BaseModel):
     def projects_requiring_urgent_intervention(
         self, date: datetime | None = None, category: "ProjectCategory | None" = None
     ) -> list[Project]:
-        """Projects with CPI < 0.9 or SPI < 0.9 (critical threshold)."""
+        """Projects with CPI < 0.96 AND SPI < 0.96 (critical threshold)."""
         if not date:
             date = datetime.now()
         urgent = []
@@ -63,7 +63,8 @@ class Portfolio(BaseModel):
             try:
                 cpi = project.cost_performance_index(date)
                 spi = project.schedule_performance_index(date)
-                if (cpi and cpi < Decimal("0.9")) or (spi and spi < Decimal("0.9")):
+                # Both CPI and SPI must be below 0.96 for urgent intervention
+                if (cpi and cpi < Decimal("0.96")) and (spi and spi < Decimal("0.96")):
                     urgent.append(project)
             except (ZeroDivisionError, TypeError):
                 continue
@@ -72,7 +73,7 @@ class Portfolio(BaseModel):
     def projects_requiring_attention(
         self, date: datetime | None = None, category: "ProjectCategory | None" = None
     ) -> list[Project]:
-        """Projects with CPI < 1.0 or SPI < 1.0 (but not urgent)."""
+        """Projects with CPI or SPI >= 0.96 but < 1.0 (not urgent)."""
         if not date:
             date = datetime.now()
         attention = []
@@ -85,7 +86,10 @@ class Portfolio(BaseModel):
             try:
                 cpi = project.cost_performance_index(date)
                 spi = project.schedule_performance_index(date)
-                if (cpi and cpi < Decimal("1.0")) or (spi and spi < Decimal("1.0")):
+                # CPI or SPI is >= 0.96 but < 1.0
+                cpi_needs_attention = cpi and Decimal("0.96") <= cpi < Decimal("1.0")
+                spi_needs_attention = spi and Decimal("0.96") <= spi < Decimal("1.0")
+                if cpi_needs_attention or spi_needs_attention:
                     attention.append(project)
             except (ZeroDivisionError, TypeError):
                 continue
@@ -177,16 +181,22 @@ class Portfolio(BaseModel):
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
     ) -> Decimal | None:
-        """Sum of EAC (Estimate at Completion) for all active projects."""
+        """Sum of latest cost forecasts for all active projects."""
         if not date:
             date = datetime.now()
         total = Decimal("0.00")
         valid_count = 0
         for project in self.get_active_projects(category):
             try:
-                eac = project.estimate_at_completion(date)
-                if eac:
-                    total += eac
+                # Use latest approved forecast instead of EAC
+                latest_forecast = (
+                    project.forecasts.filter(status=Forecast.Status.APPROVED)
+                    .order_by("-period")
+                    .first()
+                )
+                if latest_forecast:
+                    forecast_total = latest_forecast.total_forecast or Decimal("0.00")
+                    total += forecast_total
                     valid_count += 1
             except (ZeroDivisionError, TypeError):
                 continue

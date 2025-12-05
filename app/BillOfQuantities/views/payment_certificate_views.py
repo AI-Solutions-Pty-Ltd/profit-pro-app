@@ -91,7 +91,7 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
         return [
             {
                 "title": "Projects",
-                "url": reverse("project:portfolio-list"),
+                "url": reverse("project:portfolio-dashboard"),
             },
             {
                 "title": self.get_project().name,

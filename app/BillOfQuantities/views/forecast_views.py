@@ -664,7 +664,9 @@ class ForecastListView(ForecastMixin, ListView):
     def get_breadcrumbs(self: "ForecastListView") -> list[BreadcrumbItem]:
         project = self.get_project()
         return [
-            BreadcrumbItem(title="Projects", url=reverse("project:portfolio-list")),
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
             BreadcrumbItem(
                 title=project.name,
                 url=reverse("project:project-management", kwargs={"pk": project.pk}),

@@ -66,7 +66,7 @@ class ProjectAddClientView(GetProjectMixin, CreateView):
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
@@ -110,7 +110,7 @@ class ClientInviteUserView(ClientMixin, FormView):
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
@@ -244,7 +244,7 @@ class ClientInviteUserView(ClientMixin, FormView):
         project = Project.objects.filter(client=self.client).first()
         if project:
             return redirect("project:project-management", pk=project.pk)
-        return redirect("project:portfolio-list")
+        return redirect("project:portfolio-dashboard")
 
 
 class ClientEditView(ClientMixin, UpdateView):
@@ -256,7 +256,7 @@ class ClientEditView(ClientMixin, UpdateView):
 
     def get_breadcrumbs(self: "ClientEditView"):
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
@@ -290,7 +290,7 @@ class ClientRemoveView(ClientMixin, DeleteView):
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
@@ -349,7 +349,7 @@ class ClientRemoveUserView(ClientMixin, View):
 
     def get_breadcrumbs(self: "ClientRemoveUserView"):
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
@@ -387,7 +387,7 @@ class ClientRemoveUserView(ClientMixin, View):
         # Redirect back to project detail
         if self.project:
             return redirect("project:project-management", pk=self.project.pk)
-        return redirect("project:portfolio-list")
+        return redirect("project:portfolio-dashboard")
 
 
 class ClientResendInviteView(ClientMixin, DetailView):
@@ -407,7 +407,7 @@ class ClientResendInviteView(ClientMixin, DetailView):
             )
             if self.project:
                 return redirect("project:project-management", pk=self.project.pk)
-            return redirect("project:portfolio-list")
+            return redirect("project:portfolio-dashboard")
 
         return super().dispatch(request, *args, **kwargs)
 
@@ -478,4 +478,4 @@ class ClientResendInviteView(ClientMixin, DetailView):
         project = Project.objects.filter(client=self.client).first()
         if project:
             return redirect("project:project-management", pk=project.pk)
-        return redirect("project:portfolio-list")
+        return redirect("project:portfolio-dashboard")

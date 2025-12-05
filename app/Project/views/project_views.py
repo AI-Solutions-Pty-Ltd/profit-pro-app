@@ -46,7 +46,7 @@ class ProjectDashboardView(ProjectMixin, DetailView):
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Portfolio", "url": reverse("project:portfolio-list")},
+            {"title": "Portfolio", "url": reverse("project:portfolio-dashboard")},
             {"title": f"{self.object.name} Dashboard", "url": None},
         ]
 
@@ -226,7 +226,7 @@ class ProjectManagementView(ProjectMixin, DetailView):
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": f"{self.object.name} Dashboard",
                 "url": reverse(
@@ -257,7 +257,7 @@ class ProjectWBSDetailView(ProjectMixin, DetailView):
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": f"{self.object.name} Dashboard",
                 "url": reverse(
@@ -327,7 +327,10 @@ class ProjectCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Return to Projects", "url": reverse("project:portfolio-list")},
+            {
+                "title": "Return to Projects",
+                "url": reverse("project:portfolio-dashboard"),
+            },
         ]
 
     def form_valid(self, form):
@@ -342,7 +345,7 @@ class ProjectCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
             return reverse_lazy(
                 "project:project-dashboard", kwargs={"pk": self.object.pk}
             )
-        return reverse_lazy("project:portfolio-list")
+        return reverse_lazy("project:portfolio-dashboard")
 
 
 class ProjectUpdateView(ProjectMixin, UpdateView):
@@ -355,7 +358,7 @@ class ProjectUpdateView(ProjectMixin, UpdateView):
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": f"{self.object.name} Dashboard",
                 "url": reverse(
@@ -386,11 +389,11 @@ class ProjectDeleteView(ProjectMixin, DeleteView):
 
     model = Project
     template_name = "project/project_confirm_delete.html"
-    success_url = reverse_lazy("project:portfolio-list")
+    success_url = reverse_lazy("project:portfolio-dashboard")
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": f"{self.object.name} Dashboard",
                 "url": reverse(

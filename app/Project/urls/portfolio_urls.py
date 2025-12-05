@@ -4,9 +4,9 @@ from app.Project.views import portfolio_views, report_views, user_management_vie
 
 portfolio_urls = [
     path(
-        "portfolio/",
+        "portfolio/dashboard/",
         portfolio_views.PortfolioDashboardView.as_view(),
-        name="portfolio-list",
+        name="portfolio-dashboard",
     ),
     path(
         "portfolio/project-list/",
@@ -28,6 +28,11 @@ portfolio_urls = [
         "portfolio/reports/cashflow/",
         report_views.CashflowReportView.as_view(),
         name="portfolio-cashflow-report",
+    ),
+    path(
+        "portfolio/reports/trend/",
+        report_views.TrendReportView.as_view(),
+        name="portfolio-trend-report",
     ),
     # User Management - Registers
     path(

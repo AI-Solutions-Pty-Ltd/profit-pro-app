@@ -1,13 +1,14 @@
 """Views for Portfolio Reports."""
 
-from datetime import datetime
+import json
+from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
 from dateutil.relativedelta import relativedelta
 from django.db.models import QuerySet, Sum
 from django.urls import reverse
-from django.views.generic import ListView
+from django.views.generic import ListView, TemplateView
 
 from app.BillOfQuantities.models import Forecast, PaymentCertificate
 from app.core.Utilities.dates import get_end_of_month
@@ -38,7 +39,7 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         return [
             BreadcrumbItem(
                 title="Portfolio",
-                url=reverse("project:portfolio-list"),
+                url=reverse("project:portfolio-dashboard"),
             ),
             BreadcrumbItem(
                 title="Reports",
@@ -232,7 +233,7 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         return [
             BreadcrumbItem(
                 title="Portfolio",
-                url=reverse("project:portfolio-list"),
+                url=reverse("project:portfolio-dashboard"),
             ),
             BreadcrumbItem(
                 title="Reports",
@@ -396,7 +397,7 @@ class CashflowReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         return [
             BreadcrumbItem(
                 title="Portfolio",
-                url=reverse("project:portfolio-list"),
+                url=reverse("project:portfolio-dashboard"),
             ),
             BreadcrumbItem(
                 title="Reports",
@@ -528,3 +529,135 @@ class CashflowReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         if forecast:
             return forecast.forecast_value or Decimal("0.00")
         return Decimal("0.00")
+
+
+class TrendReportView(UserHasGroupGenericMixin, BreadcrumbMixin, TemplateView):
+    """Trend Analysis Report - 12 Month Planned vs Actual vs Forecast vs Budget."""
+
+    template_name = "portfolio/reports/trend_report.html"
+    permissions = ["consultant", "contractor"]
+
+    filter_form: FilterForm | None = None
+
+    def setup(self, request, *args, **kwargs):
+        """Initialize filter form during view setup."""
+        super().setup(request, *args, **kwargs)
+        self.filter_form = FilterForm(request.GET or {})
+
+    def get_breadcrumbs(self: "TrendReportView") -> list[BreadcrumbItem]:
+        """Return breadcrumbs for trend report."""
+        return [
+            BreadcrumbItem(
+                title="Portfolio",
+                url=reverse("project:portfolio-dashboard"),
+            ),
+            BreadcrumbItem(
+                title="Reports",
+                url=None,
+            ),
+            BreadcrumbItem(
+                title="Trend Analysis",
+                url=None,
+            ),
+        ]
+
+    def get_context_data(self: "TrendReportView", **kwargs: Any) -> dict[str, Any]:
+        """Add trend analysis data to context."""
+        context = super().get_context_data(**kwargs)
+        current_date = datetime.now()
+
+        portfolio: Portfolio | None = self.request.user.portfolio  # type: ignore
+        context["portfolio"] = portfolio
+        context["current_date"] = current_date
+        context["filter_form"] = self.filter_form
+
+        if not portfolio:
+            context["cashflow_labels"] = "[]"
+            context["planned_data"] = "[]"
+            context["actual_data"] = "[]"
+            context["forecast_data"] = "[]"
+            context["budget_data"] = "[]"
+            return context
+
+        # Get category filter
+        category_filter = (
+            self.filter_form.cleaned_data.get("category")
+            if self.filter_form and self.filter_form.is_valid()
+            else None
+        )
+
+        # Generate 12 months of Planned vs Actual vs Forecast vs Budget data
+        cashflow_data = self._get_cashflow_chart_data(
+            portfolio, category=category_filter
+        )
+        context["cashflow_labels"] = json.dumps(cashflow_data["labels"])
+        context["planned_data"] = json.dumps(cashflow_data["planned"])
+        context["actual_data"] = json.dumps(cashflow_data["actual"])
+        context["forecast_data"] = json.dumps(cashflow_data["forecast"])
+        context["budget_data"] = json.dumps(cashflow_data["budget"])
+
+        return context
+
+    def _get_cashflow_chart_data(
+        self: "TrendReportView", portfolio: Portfolio, category=None
+    ) -> dict:
+        """Generate 12 months of Planned vs Actual vs Forecast vs Budget data."""
+        labels = []
+        planned_values = []
+        actual_values = []
+        forecast_values = []
+        budget_values = []
+
+        current_date = datetime.now()
+        # Monthly budget = total budget / 12 (simplified distribution)
+        total_budget = portfolio.get_total_original_budget(category)
+        monthly_budget = float(total_budget / 12) if total_budget else 0
+
+        # Generate data for last 12 months (oldest to newest)
+        for i in range(11, -1, -1):
+            # Calculate the date for this month
+            month_date = current_date - timedelta(days=i * 30)
+            # Normalize to first of month
+            month_date = month_date.replace(day=1)
+
+            labels.append(month_date.strftime("%b %Y"))
+            budget_values.append(monthly_budget)
+
+            # Aggregate planned, actual, and forecast for all projects
+            planned_total = Decimal("0.00")
+            actual_total = Decimal("0.00")
+            forecast_total = Decimal("0.00")
+
+            for project in portfolio.get_active_projects(category):
+                try:
+                    pv = project.planned_value(month_date)
+                    if pv:
+                        planned_total += pv
+                except (ZeroDivisionError, TypeError, Exception):
+                    pass
+
+                try:
+                    ac = project.actual_cost(month_date)
+                    if ac:
+                        actual_total += ac
+                except (ZeroDivisionError, TypeError, Exception):
+                    pass
+
+                try:
+                    fc = project.forecast_cost(month_date)
+                    if fc:
+                        forecast_total += fc
+                except (ZeroDivisionError, TypeError, Exception):
+                    pass
+
+            planned_values.append(float(planned_total))
+            actual_values.append(float(actual_total))
+            forecast_values.append(float(forecast_total))
+
+        return {
+            "labels": labels,
+            "planned": planned_values,
+            "actual": actual_values,
+            "forecast": forecast_values,
+            "budget": budget_values,
+        }
