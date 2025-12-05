@@ -114,165 +114,169 @@
                                 {% endif %}
                             </div>
                             <div>
-                                <h3 class="text-sm font-medium text-blue-900">
-                                    Certificate #{{ active_certificate.certificate_number }} | R {{ active_certificate.current_claim_total|default:"0"|floatformat:2|intcomma }}
-                                </h3>
+                                <a id="view-details-btn"
+                                   href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk active_certificate.pk %}"
+                                   class="loading-btn inline-flex items-center"
+                                   data-loading-text="Loading Details..."
+                                   data-disable-elements="#edit-certificate-btn">
+                                    <h3 class="text-sm font-medium text-blue-900 left-content link">
+                                        Certificate #{{ active_certificate.certificate_number }}: R {{ active_certificate.current_claim_total|default:"0"|floatformat:2|intcomma }}
+                                        |
+                                        View
+                                    </h3>
+                                </a>
                                 <p class="text-sm text-blue-700 mt-1">
-                                    Status: <span class="font-medium">{{ active_certificate.get_status_display }}</span>
-                                </p>
-                                <p class="text-xs text-blue-600 mt-1">Created: {{ active_certificate.created_at|date:"M d, Y" }}</p>
-                                {% if active_certificate.notes %}
-                                    <p class="text-xs text-blue-600 mt-1">Notes: {{ active_certificate.notes }}</p>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <a id="view-details-btn"
-                               href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk active_certificate.pk %}"
-                               class="loading-btn inline-flex items-center px-3 py-2 border border-blue-300 text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                               data-loading-text="Loading Details..."
-                               data-disable-elements="#edit-certificate-btn">
-                                {% heroicon_outline "eye" class="w-4 h-4" %}
-                                View Details
-                            </a>
-                            {% if active_certificate.status == 'DRAFT' %}
-                                <a id="edit-certificate-btn"
-                                   href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk active_certificate.pk %}"
-                                   class="loading-btn inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                   data-loading-text="Loading Edit Form..."
-                                   data-disable-elements="#view-details-btn">
-                                    {% heroicon_outline "pencil" class="w-4 h-4" %}
-                                    Edit
-                                </a>
-                                <a id="submit-certificate-btn"
-                                   href="{% url 'bill_of_quantities:payment-certificate-submit' project.pk active_certificate.pk %}"
-                                   class="loading-btn inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-success"
-                                   data-loading-text="Loading Submit Form..."
-                                   data-disable-elements="#view-details-btn">
-                                    {% heroicon_outline "check-circle" class="w-4 h-4" %}
-                                    Approve
-                                </a>
+                                    Status: <span class="font-medium">{{ active_certificate.get_status_display }}
+                                    {% if active_certificate.status == "SUBMITTED" %}
+                                        <span class="text-xs font-semibold">| Awaiting client / consultant approval</span>
+                                    {% endif %}
+                                </span>
+                            </p>
+                            <p class="text-xs text-blue-600 mt-1">Created: {{ active_certificate.created_at|date:"M d, Y" }}</p>
+                            {% if active_certificate.notes %}
+                                <p class="text-xs text-blue-600 mt-1">Notes: {{ active_certificate.notes }}</p>
                             {% endif %}
                         </div>
                     </div>
-                {% else %}
-                    <div class="text-center py-8 flex items-center justify-center flex-col">
-                        {% heroicon_outline "document-text" class="w-12 h-12 text-gray-400" %}
-                        <h3 class="mt-2 text-sm font-medium text-gray-900">No Active Certificate</h3>
-                        <p class="mt-1 text-sm text-gray-500">There are no active payment certificates for this project.</p>
-                        <div class="mt-4">
-                            <a href="{% url 'bill_of_quantities:payment-certificate-new' project.pk %}"
-                               class="loading-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                               data-loading-text="Creating New Certificate...">
-                                {% heroicon_outline "plus" class="w-4 h-4" %}
-                                Create New Certificate
+                    <div class="flex items-center space-x-3">
+                        {% if active_certificate.status == 'DRAFT' %}
+                            <a id="edit-certificate-btn"
+                               href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk active_certificate.pk %}"
+                               class="loading-btn inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                               data-loading-text="Loading Edit Form..."
+                               data-disable-elements="#view-details-btn">
+                                {% heroicon_outline "pencil" class="w-4 h-4" %}
+                                Edit
                             </a>
-                        </div>
+                            <a id="submit-certificate-btn"
+                               href="{% url 'bill_of_quantities:payment-certificate-submit' project.pk active_certificate.pk %}"
+                               class="loading-btn inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-success"
+                               data-loading-text="Loading Submit Form..."
+                               data-disable-elements="#view-details-btn">
+                                {% heroicon_outline "check-circle" class="w-4 h-4" %}
+                                Submit
+                            </a>
+                        {% endif %}
                     </div>
-                {% endif %}
-            </div>
-        </div>
-    {% endif %}
-    {% if project.final_payment_certificate %}
-        <div class="bg-white rounded-lg shadow p-4 mb-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h3 class="text-lg font-semibold">Final Payment Certificate</h3>
-                    <p class="text-sm text-gray-500">View and manage final payment certificate details</p>
                 </div>
-                <a href="{% url 'bill_of_quantities:final-account-detail' project.pk project.final_payment_certificate.pk %}"
-                   class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    View
-                </a>
-            </div>
-        </div>
-    {% endif %}
-    <!-- Completed Payment Certificates Section -->
-    <div class="bg-white shadow-sm rounded-lg">
-        {% if completed_payment_certificates %}
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-medium text-gray-900">
-                    Completed Payment Certificates ({{ completed_payment_certificates.count }})
-                </h2>
-                <p class="text-sm text-gray-600">Approved and rejected certificates with claimed amounts</p>
-            </div>
-            <div class="px-6 py-4">
-                <div class="space-y-4">
-                    {% for cert in completed_payment_certificates %}
-                        <div class="flex items-center justify-between p-4 border {% if forloop.first and not active_certificate and not project.final_payment_certificate and cert.status == 'APPROVED' %}border-emerald-300 bg-emerald-50{% else %}border-gray-200{% endif %} rounded-lg hover:bg-gray-50">
-                            <div class="flex items-center space-x-4">
-                                <div class="flex-shrink-0">
-                                    {% if cert.status == 'APPROVED' %}
-                                        {% heroicon_outline "check-circle" class="w-8 h-8 text-green-500" %}
-                                    {% elif cert.status == 'REJECTED' %}
-                                        {% heroicon_outline "x-circle" class="w-8 h-8 text-red-500" %}
-                                    {% endif %}
-                                </div>
-                                <div>
-                                    <h3 class="text-sm font-medium text-gray-900">Certificate #{{ cert.certificate_number }}</h3>
-                                    <p class="text-sm text-gray-600">
-                                        Status: <span class="font-medium">{{ cert.get_status_display }}</span>
-                                    </p>
-                                    <p class="text-xs text-gray-500">{{ cert.approved_on|date:"M d, Y" }}</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-4">
-                                <div class="text-right">
-                                    <p class="text-xs text-gray-500">Cumulative Total</p>
-                                    <p class="text-sm font-medium text-gray-900">R {{ cert.progressive_to_date|default:0|floatformat:2|intcomma }}</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-xs text-gray-500">Progressive To Date</p>
-                                    <p class="text-sm font-medium text-gray-900">R {{ cert.progressive_previous|default:0|floatformat:2|intcomma }}</p>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-xs text-gray-500">Claim Total</p>
-                                    <p class="text-sm font-medium text-gray-900">R {{ cert.current_claim_total|default:0|floatformat:2|intcomma }}</p>
-                                </div>
-                                <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk cert.pk %}"
-                                   class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                    {% heroicon_outline "eye" class="w-4 h-4" %}
-                                </a>
-                                {% if forloop.first and not active_certificate and not project.final_payment_certificate and cert.status == 'APPROVED' %}
-                                    <form method="post"
-                                          action="{% url 'bill_of_quantities:payment-certificate-mark-final' project.pk cert.pk %}"
-                                          onsubmit="return confirm('Are you sure you want to mark this as the Final Payment Certificate? This will update the project status.');">
-                                        {% csrf_token %}
-                                        <button type="submit"
-                                                class="inline-flex items-center px-3 py-2 border border-emerald-300 text-sm leading-4 font-medium rounded-md text-emerald-700 bg-emerald-100 hover:bg-emerald-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                                            {% heroicon_outline "document-check" class="w-4 h-4 mr-1" %}
-                                            Mark as Final
-                                        </button>
-                                    </form>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
+            {% else %}
+                <div class="text-center py-8 flex items-center justify-center flex-col">
+                    {% heroicon_outline "document-text" class="w-12 h-12 text-gray-400" %}
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No Active Certificate</h3>
+                    <p class="mt-1 text-sm text-gray-500">There are no active payment certificates for this project.</p>
+                    <div class="mt-4">
+                        <a href="{% url 'bill_of_quantities:payment-certificate-new' project.pk %}"
+                           class="loading-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                           data-loading-text="Creating New Certificate...">
+                            {% heroicon_outline "plus" class="w-4 h-4" %}
+                            Create New Certificate
+                        </a>
+                    </div>
                 </div>
-            </div>
-        {% else %}
-            <div class="flex flex-col items-center justify-center text-center py-8 px-4">
-                {% heroicon_outline "clipboard-document-check" class="w-12 h-12 text-gray-400" %}
-                <h3 class="mt-2 text-sm font-medium text-gray-900">No Completed Certificates</h3>
-                <p class="mt-1 text-sm text-gray-500">There are no completed payment certificates for this project yet.</p>
-            </div>
-        {% endif %}
-        <!-- Footer -->
-        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6">
-            <div class="flex justify-between items-center">
-                <a href="{% url 'project:project-management' project.pk %}"
-                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
-                    Back to Project
-                </a>
-                <a href="{% url 'project:project-dashboard' project.pk %}"
-                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                    Project Dashboard
-                    {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
-                </a>
-            </div>
+            {% endif %}
         </div>
     </div>
+{% endif %}
+{% if project.final_payment_certificate %}
+    <div class="bg-white rounded-lg shadow p-4 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold">Final Payment Certificate</h3>
+                <p class="text-sm text-gray-500">View and manage final payment certificate details</p>
+            </div>
+            <a href="{% url 'bill_of_quantities:final-account-detail' project.pk project.final_payment_certificate.pk %}"
+               class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                View
+            </a>
+        </div>
+    </div>
+{% endif %}
+<!-- Completed Payment Certificates Section -->
+<div class="bg-white shadow-sm rounded-lg">
+    {% if completed_payment_certificates %}
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">
+                Completed Payment Certificates ({{ completed_payment_certificates.count }})
+            </h2>
+            <p class="text-sm text-gray-600">Approved and rejected certificates with claimed amounts</p>
+        </div>
+        <div class="px-6 py-4">
+            <div class="space-y-4">
+                {% for cert in completed_payment_certificates %}
+                    <div class="flex items-center justify-between p-4 border {% if forloop.first and not active_certificate and not project.final_payment_certificate and cert.status == 'APPROVED' %}border-emerald-300 bg-emerald-50{% else %}border-gray-200{% endif %} rounded-lg hover:bg-gray-50">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-shrink-0">
+                                {% if cert.status == 'APPROVED' %}
+                                    {% heroicon_outline "check-circle" class="w-8 h-8 text-green-500" %}
+                                {% elif cert.status == 'REJECTED' %}
+                                    {% heroicon_outline "x-circle" class="w-8 h-8 text-red-500" %}
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-900">Certificate #{{ cert.certificate_number }}</h3>
+                                <p class="text-sm text-gray-600">
+                                    Status: <span class="font-medium">{{ cert.get_status_display }}</span>
+                                </p>
+                                <p class="text-xs text-gray-500">{{ cert.approved_on|date:"M d, Y" }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="text-right">
+                                <p class="text-xs text-gray-500">Cumulative Total</p>
+                                <p class="text-sm font-medium text-gray-900">R {{ cert.progressive_to_date|default:0|floatformat:2|intcomma }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-500">Progressive To Date</p>
+                                <p class="text-sm font-medium text-gray-900">R {{ cert.progressive_previous|default:0|floatformat:2|intcomma }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-500">Claim Total</p>
+                                <p class="text-sm font-medium text-gray-900">R {{ cert.current_claim_total|default:0|floatformat:2|intcomma }}</p>
+                            </div>
+                            <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk cert.pk %}"
+                               class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                {% heroicon_outline "eye" class="w-4 h-4" %}
+                            </a>
+                            {% if forloop.first and not active_certificate and not project.final_payment_certificate and cert.status == 'APPROVED' %}
+                                <form method="post"
+                                      action="{% url 'bill_of_quantities:payment-certificate-mark-final' project.pk cert.pk %}"
+                                      onsubmit="return confirm('Are you sure you want to mark this as the Final Payment Certificate? This will update the project status.');">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="inline-flex items-center px-3 py-2 border border-emerald-300 text-sm leading-4 font-medium rounded-md text-emerald-700 bg-emerald-100 hover:bg-emerald-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                                        {% heroicon_outline "document-check" class="w-4 h-4 mr-1" %}
+                                        Mark as Final
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <div class="flex flex-col items-center justify-center text-center py-8 px-4">
+            {% heroicon_outline "clipboard-document-check" class="w-12 h-12 text-gray-400" %}
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No Completed Certificates</h3>
+            <p class="mt-1 text-sm text-gray-500">There are no completed payment certificates for this project yet.</p>
+        </div>
+    {% endif %}
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6">
+        <div class="flex justify-between items-center">
+            <a href="{% url 'project:project-management' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                Back to Project
+            </a>
+            <a href="{% url 'project:project-dashboard' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                Project Dashboard
+                {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+            </a>
+        </div>
+    </div>
+</div>
 {% endblock content %}
 {% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

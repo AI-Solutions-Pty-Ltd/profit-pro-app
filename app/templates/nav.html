@@ -17,17 +17,17 @@
                                 Home
                             </a>
                             <!-- 2. Portfolio Dashboard -->
-                            <a href="{% url 'project:portfolio-list' %}"
+                            <a href="{% url 'project:portfolio-trend-report' %}"
                                class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
                                 {% heroicon_outline "chart-pie" class="w-4 h-4 mr-1" %}
-                                Portfolio Dashboard
+                                Portfolio
                             </a>
                             <!-- 3. Portfolio Reports Dropdown -->
                             <div class="relative group">
                                 <button class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center"
                                         onclick="toggleDropdown('reports-dropdown')">
                                     {% heroicon_outline "document-chart-bar" class="w-4 h-4 mr-1" %}
-                                    Portfolio Reports
+                                    Reports
                                     {% heroicon_outline "chevron-down" class="w-3 h-3 ml-1" %}
                                 </button>
                                 <div id="reports-dropdown"

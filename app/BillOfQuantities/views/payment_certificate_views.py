@@ -87,11 +87,11 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
 
     def get_breadcrumbs(
         self: "PaymentCertificateListView",
-    ) -> list[dict[str, str | None]]:
+    ) -> list[BreadcrumbItem]:
         return [
             {
                 "title": "Projects",
-                "url": reverse("project:portfolio-list"),
+                "url": reverse("project:portfolio-dashboard"),
             },
             {
                 "title": self.get_project().name,
@@ -241,7 +241,7 @@ class PaymentCertificateDetailView(
 
     def get_breadcrumbs(
         self: "PaymentCertificateDetailView",
-    ) -> list[dict[str, str | None]]:
+    ) -> list[BreadcrumbItem]:
         return [
             {
                 "title": self.get_project().name,

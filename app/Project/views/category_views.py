@@ -21,7 +21,7 @@ class ProjectCategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListVie
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Portfolio", "url": reverse("project:portfolio-list")},
+            {"title": "Portfolio", "url": reverse("project:portfolio-dashboard")},
             {"title": "Project Categories", "url": None},
         ]
 
@@ -47,7 +47,7 @@ class ProjectCategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, Creat
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Portfolio", "url": reverse("project:portfolio-list")},
+            {"title": "Portfolio", "url": reverse("project:portfolio-dashboard")},
             {"title": "Project Categories", "url": reverse("project:category-list")},
             {"title": "Add Category", "url": None},
         ]
@@ -88,7 +88,7 @@ class ProjectCategoryDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, Delet
 
     def get_breadcrumbs(self):
         return [
-            {"title": "Portfolio", "url": reverse("project:portfolio-list")},
+            {"title": "Portfolio", "url": reverse("project:portfolio-dashboard")},
             {"title": "Project Categories", "url": reverse("project:category-list")},
             {"title": "Delete Category", "url": None},
         ]

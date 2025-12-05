@@ -24,7 +24,7 @@ class HomeView(TemplateView):
             request.user.is_authenticated
             and request.user.groups.filter(name="consultant").exists()  # type: ignore[attr-defined]
         ):
-            return redirect("project:portfolio-list")
+            return redirect("project:portfolio-dashboard")
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

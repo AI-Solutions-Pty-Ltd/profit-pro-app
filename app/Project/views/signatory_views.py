@@ -60,7 +60,7 @@ class SignatoryListView(SignatoryMixin, ListView):
 
     def get_breadcrumbs(self: "SignatoryListView") -> list[dict[str, str | None]]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
@@ -85,7 +85,7 @@ class SignatoryInviteView(SignatoryMixin, FormView):
 
     def get_breadcrumbs(self: "SignatoryInviteView") -> list[dict[str, str | None]]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
@@ -240,7 +240,7 @@ class SignatoryUpdateView(SignatoryMixin, UpdateView):
     def get_breadcrumbs(self: "SignatoryUpdateView") -> list[dict[str, str | None]]:
         signatory = self.get_object()
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(
@@ -281,7 +281,7 @@ class SignatoryDeleteView(SignatoryMixin, DeleteView):
     def get_breadcrumbs(self: "SignatoryDeleteView") -> list[dict[str, str | None]]:
         signatory = self.get_object()
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-list")},
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": "Return to Project Detail",
                 "url": reverse(

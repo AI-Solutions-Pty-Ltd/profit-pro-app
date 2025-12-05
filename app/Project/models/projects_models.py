@@ -205,7 +205,7 @@ class Project(BaseModel):
 
     @staticmethod
     def get_list_url():
-        return reverse("project:portfolio-list")
+        return reverse("project:portfolio-dashboard")
 
     @staticmethod
     def get_create_url():

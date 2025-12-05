@@ -25,7 +25,7 @@ class ClientRegisterView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         return [
             BreadcrumbItem(
                 title="Portfolio",
-                url=reverse("project:portfolio-list"),
+                url=reverse("project:portfolio-dashboard"),
             ),
             BreadcrumbItem(
                 title="User Management",
@@ -84,7 +84,7 @@ class SignatoriesRegisterView(UserHasGroupGenericMixin, BreadcrumbMixin, ListVie
         return [
             BreadcrumbItem(
                 title="Portfolio",
-                url=reverse("project:portfolio-list"),
+                url=reverse("project:portfolio-dashboard"),
             ),
             BreadcrumbItem(
                 title="User Management",
@@ -145,7 +145,7 @@ class ClientDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailView):
         return [
             BreadcrumbItem(
                 title="Portfolio",
-                url=reverse("project:portfolio-list"),
+                url=reverse("project:portfolio-dashboard"),
             ),
             BreadcrumbItem(
                 title="Clients Register",
