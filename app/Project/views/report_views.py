@@ -77,6 +77,7 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
             "forecast": Decimal("0.00"),
             "variance": Decimal("0.00"),
             "certified": Decimal("0.00"),
+            "cost_variance": Decimal("0.00"),
         }
 
         for project in projects:
@@ -95,11 +96,21 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
                     total=Sum("total_price")
                 )["total"] or Decimal("0.00")
 
-            # Variance
-            variance = forecast_total - budget
+            # Variance (Budget - Forecast: negative = over budget = bad)
+            variance = budget - forecast_total
 
-            # Certified (Actual cost to date)
-            certified = project.actual_cost() or Decimal("0.00")
+            # Certified (Total certified amount to date - all approved payment certificates)
+            certified = project.payment_certificates.filter(
+                status=PaymentCertificate.Status.APPROVED
+            ).aggregate(total=Sum("actual_transactions__total_price"))[
+                "total"
+            ] or Decimal("0.00")
+
+            # Cost Variance (Earned Value - Actual Cost)
+            try:
+                cost_variance = project.cost_variance(current_date) or Decimal("0.00")
+            except (ZeroDivisionError, TypeError):
+                cost_variance = Decimal("0.00")
 
             # CPI & SPI
             try:
@@ -128,6 +139,7 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
                     else Decimal("0.00"),
                     "certified": certified,
                     "certified_percentage": certified_percentage,
+                    "cost_variance": cost_variance,
                     "cpi": cpi,
                     "spi": spi,
                 }
@@ -138,6 +150,7 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
             totals["forecast"] += forecast_total
             totals["variance"] += variance
             totals["certified"] += certified
+            totals["cost_variance"] += cost_variance
 
         # Calculate total variance percentage
         totals["variance_percentage"] = (
