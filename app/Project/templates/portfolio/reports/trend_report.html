@@ -90,6 +90,14 @@
                        title="Clear filters">{% heroicon_outline "x-mark" size="18" %}</a>
                 {% endif %}
             </form>
+            {% if filter_form.projects.value %}
+                <a href="{% url 'project:project-management' filter_form.projects.value %}"
+                   class="inline-flex items-center px-3 py-2 border border-indigo-300 text-sm font-medium rounded-md text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+                   title="Go to Project Management">
+                    {% heroicon_outline "cog-6-tooth" size="16" class="mr-1" %}
+                    Manage Project
+                </a>
+            {% endif %}
         </div>
     </div>
     <!-- Trend Chart -->

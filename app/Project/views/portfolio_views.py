@@ -33,7 +33,7 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        self.filter_form = FilterForm(request.GET or {})  # Ensure form is never None
+        self.filter_form = FilterForm(request.GET or {}, user=request.user)
 
     def get_breadcrumbs(self: "PortfolioDashboardView") -> list[BreadcrumbItem]:
         return [
@@ -65,6 +65,14 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
 
         if category:
             projects = projects.filter(category=category)
+
+        selected_project = self.filter_form.cleaned_data.get("projects")
+        if selected_project:
+            projects = projects.filter(pk=selected_project.pk)
+
+        consultant = self.filter_form.cleaned_data.get("consultant")
+        if consultant:
+            projects = projects.filter(lead_consultant=consultant)
 
         if status and status != "ALL":
             projects = projects.filter(status=status)
