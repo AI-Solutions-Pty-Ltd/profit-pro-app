@@ -27,7 +27,7 @@ class SupplierCreateForm(forms.ModelForm):
     class Meta:
         model = Supplier
 
-        fields = "__all__"
+        fields = "__all__"  # noqa
 
 
 class InvoiceTransactionCreateForm(forms.ModelForm):

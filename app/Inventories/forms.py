@@ -26,7 +26,7 @@ class WarehouseForm(forms.ModelForm):
 
     class Meta:
         model = Warehouse
-        fields = "__all__"
+        fields = "__all__"  # noqa
 
 
 class CompositionFilterForm(forms.Form):
@@ -46,7 +46,7 @@ class CompositionFilterForm(forms.Form):
 class DeliveryFilterForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["inventory"].queryset = Inventory.objects.filter(
+        self.fields["inventory"].queryset = Inventory.objects.filter(  # type: ignore
             active=True
         ).order_by("description")
 
@@ -78,22 +78,22 @@ class AddOrderLineForm(forms.ModelForm):
         self.fields["price_excl"].widget.attrs["onchange"] = "findTotal(1);"
         self.fields["price_incl"].required = True
         self.fields["price_incl"].widget.attrs["onchange"] = "findTotal(2);"
-        self.fields["vat"].empty_label = None
+        self.fields["vat"].empty_label = None  # type: ignore
         self.fields["vat"].widget.attrs["onchange"] = "findTotal(0);"
         self.fields["qty_ordered"].initial = 1
         self.fields["qty_ordered"].widget.attrs["onchange"] = "findTotal(0);"
-        self.fields["inventory"].queryset = (
+        self.fields["inventory"].queryset = (  # type: ignore
             Inventory.objects.filter(active=True)
             .order_by("description")
             .select_related("type")
         )
-        self.fields["inventory"].label_from_instance = (
+        self.fields["inventory"].label_from_instance = (  # type: ignore
             lambda obj: f"{obj.description}: {obj.type.description}"
         )
 
     class Meta:
         model = OrderComposition
-        exclude = ("qty_delivered", "qty_returned")
+        exclude = ("qty_delivered", "qty_returned")  # noqa
 
 
 AddOrderLineFormSet = modelformset_factory(
@@ -120,7 +120,7 @@ class DeliverOrderForm(forms.ModelForm):
     class Meta:
         model = OrderComposition
 
-        exclude = (
+        exclude = (  # noqa
             "inventory",
             "warehouse",
             "vat",
@@ -140,7 +140,7 @@ class CreateOrderForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["date"].initial = datetime.now()
         self.fields["supplier"].required = True
-        self.fields["supplier"].queryset = Supplier.objects.filter(
+        self.fields["supplier"].queryset = Supplier.objects.filter(  # type: ignore
             active=True
         ).order_by("description")
         self.fields["date"].required = True
@@ -151,7 +151,7 @@ class CreateOrderForm(forms.ModelForm):
         widgets = {
             "date": DateInput(),
         }
-        exclude = ("note", "status", "order", "quote")
+        exclude = ("note", "status", "order", "quote")  # noqa
 
 
 class DeliveryNoteUploadForm(forms.ModelForm):
@@ -208,7 +208,7 @@ class InventoryCreateForm(forms.ModelForm):
     class Meta:
         model = Inventory
 
-        fields = "__all__"
+        fields = "__all__"  # noqa
 
 
 class InventoryMovementForm(forms.ModelForm):
@@ -217,7 +217,7 @@ class InventoryMovementForm(forms.ModelForm):
 
         self.fields["date"].required = True
         self.fields["inventory"].required = True
-        self.fields["inventory"].queryset = (
+        self.fields["inventory"].queryset = (  # type: ignore
             Inventory.objects.filter(active=True)
             .order_by("description")
             .select_related("type")
@@ -225,10 +225,10 @@ class InventoryMovementForm(forms.ModelForm):
         self.fields["warehouse"].required = True
         self.fields["to_warehouse"].required = False
         self.fields["type"].required = True
-        self.fields["type"].choices = InventoryTransaction.Type.choices
+        self.fields["type"].choices = InventoryTransaction.Type.choices  # type: ignore
         self.fields["qty"].required = True
         self.fields["date"].initial = datetime.now()
-        self.fields["inventory"].label_from_instance = (
+        self.fields["inventory"].label_from_instance = (  # type: ignore
             lambda obj: f"{obj.description}: {obj.type.description}"
         )
 
@@ -290,12 +290,12 @@ class InventoryTxEditForm(forms.ModelForm):
         self.fields["price_incl"].required = True
 
         self.fields["date"].initial = datetime.now()
-        self.fields["inventory"].queryset = (
+        self.fields["inventory"].queryset = (  # type: ignore
             Inventory.objects.filter(active=True)
             .order_by("description")
             .select_related("type")
         )
-        self.fields["inventory"].label_from_instance = (
+        self.fields["inventory"].label_from_instance = (  # type: ignore
             lambda obj: f"{obj.description}: {obj.type.description}"
         )
 

@@ -106,7 +106,7 @@
             </div>
         </div>
         <!-- Summary Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Contract Value</p>
                 <p class="mt-1 text-2xl font-bold text-blue-600">R {{ contract_value|floatformat:0|intcomma }}</p>
@@ -118,6 +118,19 @@
             <div class="bg-white rounded-lg shadow p-4 border-l-4 border-amber-500">
                 <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Forecast</p>
                 <p class="mt-1 text-2xl font-bold text-amber-600">R {{ cumulative_forecast|last|floatformat:0|intcomma }}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4 border-l-4 {% if total_work_completed == 100 %}border-green-500{% elif total_work_completed > 100 %}border-red-500{% else %}border-purple-500{% endif %}">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">% Work Completed</p>
+                <p class="mt-1 text-2xl font-bold {% if total_work_completed == 100 %}text-green-600{% elif total_work_completed > 100 %}text-red-600{% else %}text-purple-600{% endif %}">
+                    {{ total_work_completed|floatformat:2 }}%
+                </p>
+                {% if total_work_completed == 100 %}
+                    <p class="text-xs text-green-600 mt-1">✓ Complete</p>
+                {% elif total_work_completed > 100 %}
+                    <p class="text-xs text-red-600 mt-1">Over 100%</p>
+                {% else %}
+                    <p class="text-xs text-gray-500 mt-1">{{ work_completed_remaining|floatformat:2 }}% remaining</p>
+                {% endif %}
             </div>
         </div>
         <!-- Action buttons -->

@@ -10,16 +10,16 @@ class UserHasGroupGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
     permissions = []
 
     def test_func(self):
-        if self.request.user.is_superuser:
+        if self.request.user.is_superuser:  # type: ignore
             return True
         if not self.permissions:
             raise ValueError("Permissions must be specified.")
-        return self.request.user.groups.filter(name__in=self.permissions).exists()
+        return self.request.user.groups.filter(name__in=self.permissions).exists()  # type: ignore
 
     def handle_no_permission(self):
         """Redirect to home with error message if user lacks permission."""
         messages.error(
-            self.request,
+            self.request,  # type: ignore
             f"Page restricted to {', '.join(self.permissions)}.",
         )
         return redirect("home")

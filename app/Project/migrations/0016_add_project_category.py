@@ -5,31 +5,70 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0015_project_client_representative_project_contractor_and_more'),
+        ("Project", "0015_project_client_representative_project_contractor_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ProjectCategory',
+            name="ProjectCategory",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last modified')),
-                ('deleted', models.BooleanField(default=False, help_text='Soft delete flag')),
-                ('name', models.CharField(help_text='Category name (e.g., Education, Health, Roads)', max_length=100, unique=True)),
-                ('description', models.TextField(blank=True, help_text='Optional description of the category')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last modified"
+                    ),
+                ),
+                (
+                    "deleted",
+                    models.BooleanField(default=False, help_text="Soft delete flag"),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        help_text="Category name (e.g., Education, Health, Roads)",
+                        max_length=100,
+                        unique=True,
+                    ),
+                ),
+                (
+                    "description",
+                    models.TextField(
+                        blank=True, help_text="Optional description of the category"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Project Category',
-                'verbose_name_plural': 'Project Categories',
-                'ordering': ['name'],
+                "verbose_name": "Project Category",
+                "verbose_name_plural": "Project Categories",
+                "ordering": ["name"],
             },
         ),
         migrations.AddField(
-            model_name='project',
-            name='category',
-            field=models.ForeignKey(blank=True, help_text='Project category (e.g., Education, Health, Roads)', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='projects', to='Project.projectcategory'),
+            model_name="project",
+            name="category",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Project category (e.g., Education, Health, Roads)",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="projects",
+                to="Project.projectcategory",
+            ),
         ),
     ]

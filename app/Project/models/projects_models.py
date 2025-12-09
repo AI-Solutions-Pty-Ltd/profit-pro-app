@@ -200,6 +200,10 @@ class Project(BaseModel):
         verbose_name_plural = "Projects"
         ordering = ["-name"]
 
+    ##################
+    # URLS
+    ##################
+
     def get_absolute_url(self):
         return reverse("project:project-management", kwargs={"pk": self.pk})
 
@@ -261,6 +265,10 @@ class Project(BaseModel):
     def get_total_contract_value(self) -> Decimal:
         return sum_queryset(self.line_items.all(), "total_price")
 
+    ##################
+    # Payment Certificates
+    ##################
+
     @property
     def get_active_payment_certificate(self) -> Optional["PaymentCertificate"]:
         """Get the most recent active payment certificate (DRAFT, SUBMITTED, or REJECTED)."""
@@ -289,6 +297,40 @@ class Project(BaseModel):
             self.line_items.filter(special_item=True)
             .select_related("structure", "bill", "package")
             .prefetch_related("actual_transactions")
+        )
+
+    @property
+    def total_certified_to_date(self) -> Decimal:
+        return sum_queryset(
+            self.payment_certificates.filter(status=PaymentCertificate.Status.APPROVED),
+            "actual_transactions__total_price",
+        )
+
+    @property
+    def total_certified_to_date_percentage(self) -> Decimal:
+        return Decimal(
+            round(self.get_total_contract_value / self.total_certified_to_date * 100, 2)
+        )
+
+    ##################
+    # Forecasts
+    ##################
+    @property
+    def get_latest_forecast(self) -> Forecast | None:
+        return self.forecasts.filter(status=Forecast.Status.APPROVED).first()
+
+    @property
+    def forecast_variance_percent(self: "Project") -> Decimal | None:
+        revised_contract_value = self.get_total_contract_value
+        latest_forecast = self.get_latest_forecast
+        if not revised_contract_value or not latest_forecast:
+            return None
+        return Decimal(
+            round(
+                (latest_forecast.total_forecast - revised_contract_value)
+                / revised_contract_value,
+                2,
+            )
         )
 
     ##################

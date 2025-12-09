@@ -13,7 +13,7 @@ from django.views.generic import TemplateView
 
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
-from app.Project.forms import PlannedValueForm
+from app.Project.forms import CashflowForecastForm, PlannedValueForm
 from app.Project.models import PlannedValue, Project
 
 
@@ -240,8 +240,11 @@ class CashflowForecastEditView(PlannedValueMixin, TemplateView):
             existing_pv = existing_values.get(month)
             initial = {
                 "forecast_value": existing_pv.forecast_value if existing_pv else None,
+                "work_completed_percent": existing_pv.work_completed_percent
+                if existing_pv
+                else None,
             }
-            form = PlannedValueForm(
+            form = CashflowForecastForm(
                 initial=initial,
                 prefix=f"month_{month.strftime('%Y_%m')}",
             )
@@ -302,15 +305,17 @@ class CashflowForecastEditView(PlannedValueMixin, TemplateView):
 
         for month in months:
             prefix = f"month_{month.strftime('%Y_%m')}"
-            form = PlannedValueForm(request.POST, prefix=prefix)
+            form = CashflowForecastForm(request.POST, prefix=prefix)
 
             if form.is_valid():
                 forecast_value = form.cleaned_data.get("forecast_value")
+                work_completed_percent = form.cleaned_data.get("work_completed_percent")
 
                 # Get or create the planned value
                 existing_pv = existing_values.get(month)
                 if existing_pv:
                     existing_pv.forecast_value = forecast_value
+                    existing_pv.work_completed_percent = work_completed_percent
                     existing_pv.save()
                 else:
                     PlannedValue.objects.create(
@@ -318,6 +323,7 @@ class CashflowForecastEditView(PlannedValueMixin, TemplateView):
                         period=month,
                         value=Decimal("0.00"),
                         forecast_value=forecast_value,
+                        work_completed_percent=work_completed_percent,
                     )
                 saved_count += 1
             else:

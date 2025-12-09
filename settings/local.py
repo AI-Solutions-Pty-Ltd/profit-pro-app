@@ -9,7 +9,7 @@ SECRET_KEY = "django-insecure-l^sjb(j9w-3fe0+!qiu!j7c&bu!vrv=m@#1e6zwuwfqbm35v!i
 ALLOWED_HOSTS: list[str] = ["*"]
 
 DB_TYPE = os.getenv("DB_TYPE", "sqlite")
-DB = os.getenv("DB")
+DB = os.getenv("DB", "")
 
 if DB_TYPE == "sqlite":
     DATABASES = {

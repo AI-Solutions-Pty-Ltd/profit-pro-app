@@ -430,6 +430,37 @@ class PlannedValueForm(forms.ModelForm):
         }
 
 
+class CashflowForecastForm(forms.ModelForm):
+    """Form for editing cashflow forecast values and work completed percentage."""
+
+    class Meta:
+        model = PlannedValue
+        fields = ["forecast_value", "work_completed_percent"]
+        widgets = {
+            "forecast_value": forms.NumberInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "0.00",
+                    "step": "0.01",
+                    "min": "0",
+                }
+            ),
+            "work_completed_percent": forms.NumberInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "0.00",
+                    "step": "0.01",
+                    "min": "0",
+                    "max": "100",
+                }
+            ),
+        }
+        labels = {
+            "forecast_value": "Cashflow Forecast",
+            "work_completed_percent": "% Work Completed",
+        }
+
+
 class MilestoneForm(forms.ModelForm):
     """Form for creating and updating milestones."""
 

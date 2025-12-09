@@ -96,6 +96,10 @@
                                     class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Cashflow Forecast
                                 </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    % Work Completed
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -119,10 +123,23 @@
                                                    placeholder="0.00">
                                         </div>
                                     </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right">
+                                        <div class="relative rounded-md shadow-sm inline-flex w-32">
+                                            <input type="number"
+                                                   name="{{ month_form.form.work_completed_percent.html_name }}"
+                                                   id="{{ month_form.form.work_completed_percent.auto_id }}"
+                                                   value="{{ month_form.form.work_completed_percent.value|default_if_none:'' }}"
+                                                   step="0.01"
+                                                   min="0"
+                                                   max="100"
+                                                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-right work-completed-input"
+                                                   placeholder="0.00">
+                                        </div>
+                                    </td>
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="2" class="px-6 py-8 text-center text-gray-500">
+                                    <td colspan="3" class="px-6 py-8 text-center text-gray-500">
                                         <p>No months to display. Please check project dates.</p>
                                     </td>
                                 </tr>
@@ -134,6 +151,10 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
                                     <span id="running-total-forecast" class="text-lg font-bold text-amber-600">R 0.00</span>
                                     <span id="total-status-forecast" class="block text-sm mt-1"></span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right">
+                                    <span id="running-total-percent" class="text-lg font-bold text-amber-600">0.00%</span>
+                                    <span id="total-status-percent" class="block text-sm mt-1"></span>
                                 </td>
                             </tr>
                         </tfoot>
@@ -173,8 +194,11 @@
         document.addEventListener('DOMContentLoaded', function() {
             const contractValue = {{ contract_value|default:0 }};
             const forecastInputs = document.querySelectorAll('.forecast-value-input');
+            const workCompletedInputs = document.querySelectorAll('.work-completed-input');
             const runningTotalForecastEl = document.getElementById('running-total-forecast');
             const totalStatusForecastEl = document.getElementById('total-status-forecast');
+            const runningTotalPercentEl = document.getElementById('running-total-percent');
+            const totalStatusPercentEl = document.getElementById('total-status-percent');
             
             function formatCurrency(value) {
                 return 'R ' + value.toLocaleString('en-ZA', {
@@ -183,7 +207,11 @@
                 });
             }
             
-            function updateStatus(total, runningEl, statusEl) {
+            function formatPercent(value) {
+                return value.toFixed(2) + '%';
+            }
+            
+            function updateForecastStatus(total, runningEl, statusEl) {
                 runningEl.textContent = formatCurrency(total);
                 const diff = contractValue - total;
                 if (Math.abs(diff) < 0.01) {
@@ -201,22 +229,55 @@
                 }
             }
             
+            function updatePercentStatus(total, runningEl, statusEl) {
+                runningEl.textContent = formatPercent(total);
+                const diff = 100 - total;
+                if (Math.abs(diff) < 0.01) {
+                    statusEl.textContent = '✓ Complete (100%)';
+                    statusEl.className = 'block text-sm text-green-600 font-medium mt-1';
+                    runningEl.className = 'text-lg font-bold text-green-600';
+                } else if (diff > 0) {
+                    statusEl.textContent = `${formatPercent(diff)} remaining`;
+                    statusEl.className = 'block text-sm text-yellow-600 mt-1';
+                    runningEl.className = 'text-lg font-bold text-yellow-600';
+                } else {
+                    statusEl.textContent = `${formatPercent(Math.abs(diff))} over 100%`;
+                    statusEl.className = 'block text-sm text-red-600 mt-1';
+                    runningEl.className = 'text-lg font-bold text-red-600';
+                }
+            }
+            
             function updateForecastTotal() {
                 let total = 0;
                 forecastInputs.forEach(input => {
                     total += parseFloat(input.value) || 0;
                 });
-                updateStatus(total, runningTotalForecastEl, totalStatusForecastEl);
+                updateForecastStatus(total, runningTotalForecastEl, totalStatusForecastEl);
             }
             
-            // Add event listeners
+            function updatePercentTotal() {
+                let total = 0;
+                workCompletedInputs.forEach(input => {
+                    total += parseFloat(input.value) || 0;
+                });
+                updatePercentStatus(total, runningTotalPercentEl, totalStatusPercentEl);
+            }
+            
+            // Add event listeners for forecast inputs
             forecastInputs.forEach(input => {
                 input.addEventListener('input', updateForecastTotal);
                 input.addEventListener('change', updateForecastTotal);
             });
             
+            // Add event listeners for work completed inputs
+            workCompletedInputs.forEach(input => {
+                input.addEventListener('input', updatePercentTotal);
+                input.addEventListener('change', updatePercentTotal);
+            });
+            
             // Initial calculation
             updateForecastTotal();
+            updatePercentTotal();
         });
     </script>
 {% endblock extra_js %}
