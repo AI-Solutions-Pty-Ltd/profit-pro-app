@@ -42,14 +42,14 @@
             <p class="mt-2 text-gray-600">Financial overview as of {{ current_date|date:"F d, Y" }}</p>
         </div>
         <div class="flex items-center gap-3">
-            <!-- Category Filter -->
+            <!-- Filters -->
             <form id="categoryFilterForm" method="get" class="flex items-center gap-2">
                 <label for="id_category"
                        class="text-sm font-medium text-gray-600 whitespace-nowrap">Filter by:</label>
                 <select name="category"
                         id="id_category"
                         onchange="this.form.submit()"
-                        class="block w-44 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                        class="block w-40 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
                     <option value="">All Categories</option>
                     {% for category in filter_form.category.field.queryset %}
                         <option value="{{ category.pk }}"
@@ -58,12 +58,46 @@
                         </option>
                     {% endfor %}
                 </select>
-                {% if filter_form.category.value %}
+                <!-- Project Filter -->
+                <select name="projects"
+                        id="id_projects"
+                        onchange="this.form.submit()"
+                        class="block w-40 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                    <option value="">All Projects</option>
+                    {% for project in filter_form.projects.field.queryset %}
+                        <option value="{{ project.pk }}"
+                                {% if filter_form.projects.value|stringformat:"s" == project.pk|stringformat:"s" %}selected{% endif %}>
+                            {{ project.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <!-- Consultant Filter -->
+                <select name="consultant"
+                        id="id_consultant"
+                        onchange="this.form.submit()"
+                        class="block w-40 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                    <option value="">All Consultants</option>
+                    {% for consultant in filter_form.consultant.field.queryset %}
+                        <option value="{{ consultant.pk }}"
+                                {% if filter_form.consultant.value|stringformat:"s" == consultant.pk|stringformat:"s" %}selected{% endif %}>
+                            {{ consultant.get_full_name|default:consultant.email }}
+                        </option>
+                    {% endfor %}
+                </select>
+                {% if filter_form.category.value or filter_form.projects.value or filter_form.consultant.value %}
                     <a href="{% url 'project:portfolio-dashboard' %}"
                        class="inline-flex items-center px-2 py-2 text-gray-500 hover:text-gray-700 transition-colors"
                        title="Clear filter">{% heroicon_outline "x-mark" size="18" %}</a>
                 {% endif %}
             </form>
+            {% if filter_form.projects.value %}
+                <a href="{% url 'project:project-management' filter_form.projects.value %}"
+                   class="inline-flex items-center px-3 py-2 border border-indigo-300 text-sm font-medium rounded-md text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+                   title="Go to Project Management">
+                    {% heroicon_outline "cog-6-tooth" size="16" class="mr-1" %}
+                    Manage Project
+                </a>
+            {% endif %}
             <a href="{% url 'project:project-create' %}"
                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 {% heroicon_outline "plus" size="20" class="mr-2" %}
