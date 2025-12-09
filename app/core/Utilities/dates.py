@@ -1,53 +1,42 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from dateutil.relativedelta import relativedelta
 
 
-def diff_month(d1: datetime, d2: datetime) -> int:
+def _to_datetime(d: datetime | date) -> datetime:
+    """Convert date to datetime if needed."""
+    if isinstance(d, datetime):
+        return d
+    # It's a date, convert to datetime
+    return datetime.combine(d, datetime.min.time())
+
+
+def diff_month(d1: datetime | date, d2: datetime | date) -> int:
+    d1 = _to_datetime(d1)
+    d2 = _to_datetime(d2)
     if d2 > d1:
         raise ValueError("d2 must be less than d1")
     return (d1.year - d2.year) * 12 + d1.month - d2.month
 
 
-def get_beginning_of_month(date: datetime | None = None) -> datetime:
+def get_beginning_of_month(dt: datetime | date | None = None) -> datetime:
     """Get the start of the month for any given date / current date."""
-    if not date:
-        date = datetime.now()
-
-    # Convert date to datetime if needed
-    if hasattr(date, "date"):
-        # This is already a datetime
-        pass
-    else:
-        # This is a date, convert to datetime
-        date = datetime.combine(date, datetime.min.time())
-
-    return date.replace(day=1)
+    normalized = _to_datetime(dt) if dt else datetime.now()
+    return normalized.replace(day=1)
 
 
-def get_end_of_month(date: datetime | None = None) -> datetime:
+def get_end_of_month(dt: datetime | date | None = None) -> datetime:
     """
     Get the last day of the month for any given date / current date.
 
     Args:
-        date: Any datetime within the month
+        dt: Any datetime or date within the month
 
     Returns:
         datetime: The last day of that month at 23:59:59
     """
-    # Force to first day of the month
-    if not date:
-        date = datetime.now()
-
-    # Convert date to datetime if needed
-    if hasattr(date, "date"):
-        # This is already a datetime
-        pass
-    else:
-        # This is a date, convert to datetime
-        date = datetime.combine(date, datetime.min.time())
-
-    first_day = date.replace(day=1)
+    normalized = _to_datetime(dt) if dt else datetime.now()
+    first_day = normalized.replace(day=1)
 
     # Add 32 days (guarantees we're in next month)
     next_month = first_day + timedelta(days=32)
@@ -61,20 +50,22 @@ def get_end_of_month(date: datetime | None = None) -> datetime:
     return last_day.replace(second=59)
 
 
-def get_month_range(start, end) -> list[datetime]:
-    if start > end:
+def get_month_range(start: datetime | date, end: datetime | date) -> list[datetime]:
+    start_dt = _to_datetime(start)
+    end_dt = _to_datetime(end)
+    if start_dt > end_dt:
         raise ValueError("start must be less than end")
     months = []
-    for i in range(diff_month(end, start) + 1):
-        months.append(start + relativedelta(months=i))
+    for i in range(diff_month(end_dt, start_dt) + 1):
+        months.append(start_dt + relativedelta(months=i))
     return months[::-1]
 
 
 def get_previous_n_months(
     n: int = 12,
-    starting_date: datetime | None = None,
-    start_cap: datetime | None = None,
-    end_cap: datetime | None = None,
+    starting_date: datetime | date | None = None,
+    start_cap: datetime | date | None = None,
+    end_cap: datetime | date | None = None,
 ) -> list[datetime]:
     """Returns required months from current date to n months ago.
     If start_cap or end_cap are provided, they are used to filter the months.
@@ -83,7 +74,11 @@ def get_previous_n_months(
         return []
 
     # normalize current date and start / end caps
-    current_date = starting_date if starting_date else get_end_of_month(datetime.now())
+    current_date = (
+        _to_datetime(starting_date)
+        if starting_date
+        else get_end_of_month(datetime.now())
+    )
     start_cap = get_beginning_of_month(start_cap) if start_cap else None
     end_cap = get_end_of_month(end_cap) if end_cap else None
 
