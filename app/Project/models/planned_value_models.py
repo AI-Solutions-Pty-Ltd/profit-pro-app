@@ -13,6 +13,13 @@ class PlannedValue(BaseModel):
     forecast_value = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True
     )
+    work_completed_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Percentage of work completed for this month (used in earned value calculation)",
+    )
 
     def __str__(self) -> str:
         return f"{self.project}: {self.period}"

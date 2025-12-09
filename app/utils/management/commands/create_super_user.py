@@ -21,7 +21,7 @@ class Command(BaseCommand):
             )
             return
 
-        User.objects.create_superuser(
+        User.objects.create_superuser(  # type: ignore
             email=email,
             password=password,
         )

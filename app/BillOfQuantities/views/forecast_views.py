@@ -788,48 +788,31 @@ class ForecastListView(ForecastMixin, ListView):
 
                 current_month = current_month + relativedelta(months=1)
 
-        # Build waterfall data structure
-        if latest_forecast_total > 0:
-            # Step 1: Original Contract Value
-            waterfall_labels.append("Original Contract")
-            waterfall_data.append(
-                {
-                    "value": float(original_budget),
-                    "color": "#3B82F6",  # Blue
-                }
-            )
-
-            # Step 2: Variations (if any)
-            variation_amount = float(revised_contract_value - original_budget)
-            if abs(variation_amount) > 0.01:
-                waterfall_labels.append("Contract Variations")
+        # Build waterfall data structure using monthly forecast values
+        # Use month-by-month data for waterfall chart
+        colors = [
+            "#3B82F6",  # Blue
+            "#10B981",  # Green
+            "#8B5CF6",  # Purple
+            "#F59E0B",  # Amber
+            "#EC4899",  # Pink
+            "#06B6D4",  # Cyan
+            "#84CC16",  # Lime
+            "#F97316",  # Orange
+            "#6366F1",  # Indigo
+            "#14B8A6",  # Teal
+            "#A855F7",  # Violet
+            "#EF4444",  # Red
+        ]
+        for i, (label, value) in enumerate(zip(chart_labels, forecast_values)):
+            if value is not None:
+                waterfall_labels.append(label)
                 waterfall_data.append(
                     {
-                        "value": variation_amount,
-                        "color": "#10B981"
-                        if variation_amount > 0
-                        else "#EF4444",  # Green for positive, red for negative
+                        "value": value,
+                        "color": colors[i % len(colors)],
                     }
                 )
-
-            # Step 3: Current Forecast
-            forecast_variance = float(latest_forecast_total - revised_contract_value)
-            waterfall_labels.append("Current Forecast")
-            waterfall_data.append(
-                {
-                    "value": forecast_variance,
-                    "color": "#8B5CF6",  # Purple
-                }
-            )
-
-            # Step 4: Total (Final Forecast Value)
-            waterfall_labels.append("Total Forecast")
-            waterfall_data.append(
-                {
-                    "value": float(latest_forecast_total),
-                    "color": "#F59E0B",  # Amber for total
-                }
-            )
 
         context["original_budget"] = float(original_budget)
         context["revised_contract_value"] = float(revised_contract_value)

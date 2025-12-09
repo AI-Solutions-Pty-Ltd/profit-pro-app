@@ -74,6 +74,14 @@
                                                 {% heroicon_outline "eye" size="14" %}
                                                 <span class="ml-1">View</span>
                                             </a>
+                                            {% if cert.status == 'SUBMITTED' %}
+                                                <!-- Approve Button for SUBMITTED certificates -->
+                                                <a href="{% url 'consultant:payment-certificate-approve' project.pk cert.pk %}"
+                                                   class="inline-flex items-center px-3 py-1.5 border border-green-300 text-xs font-medium rounded text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                                    {% heroicon_outline "clipboard-document-check" size="14" %}
+                                                    <span class="ml-1">Review & Approve</span>
+                                                </a>
+                                            {% endif %}
                                             <!-- Edit Date Button -->
                                             <a href="{% url 'consultant:payment-certificate-edit-date' project.pk cert.pk %}"
                                                class="inline-flex items-center px-3 py-1.5 border border-indigo-300 text-xs font-medium rounded text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">

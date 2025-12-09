@@ -1,7 +1,7 @@
 """Views for Project app."""
 
 import json
-from datetime import date, datetime
+from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
@@ -16,7 +16,7 @@ from django.views.generic import (
 )
 
 from app.BillOfQuantities.models import ActualTransaction, Forecast, PaymentCertificate
-from app.core.Utilities.dates import get_end_of_month
+from app.core.Utilities.dates import get_end_of_month, get_previous_n_months
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
@@ -63,42 +63,17 @@ class ProjectDashboardView(ProjectMixin, DetailView):
         context["revised_contract_value"] = revised_contract_value
 
         # Latest forecast value and variance
-        latest_forecast = (
-            Forecast.objects.filter(project=project, status=Forecast.Status.APPROVED)
-            .order_by("-period")
-            .first()
-        )
-        if latest_forecast:
-            latest_forecast_value = latest_forecast.total_forecast
-            context["latest_forecast_value"] = latest_forecast_value
-            if revised_contract_value and revised_contract_value != 0:
-                variance = (
-                    (latest_forecast_value - revised_contract_value)
-                    / revised_contract_value
-                ) * 100
-                context["forecast_variance_percent"] = round(variance, 1)
-            else:
-                context["forecast_variance_percent"] = None
+        if project.get_latest_forecast:
+            context["latest_forecast_value"] = project.get_latest_forecast
+            context["forecast_variance_percent"] = project.forecast_variance_percent
         else:
             context["latest_forecast_value"] = None
             context["forecast_variance_percent"] = None
 
         # Certified to date - sum all approved payment certificate transactions
-        certified_to_date = (
-            ActualTransaction.objects.filter(
-                line_item__project=project,
-                payment_certificate__status=PaymentCertificate.Status.APPROVED,
-            ).aggregate(total=Sum("total_price"))["total"]
-            or 0
-        )
+        certified_to_date = project.total_certified_to_date
         context["certified_to_date"] = certified_to_date
-        if revised_contract_value and revised_contract_value != 0:
-            certified_percent = (
-                float(certified_to_date) / float(revised_contract_value)
-            ) * 100
-            context["certified_percent"] = round(certified_percent, 1)
-        else:
-            context["certified_percent"] = None
+        context["certified_percent"] = project.total_certified_to_date_percentage
 
         # Latest CPI and SPI
         context["current_cpi"] = project.cost_performance_index(current_date)
@@ -125,9 +100,6 @@ class ProjectDashboardView(ProjectMixin, DetailView):
         forecast_values = []
         certified_values = []
 
-        # Determine date range from project dates
-        today = date.today()
-
         if not project.start_date or not project.end_date:
             # No project dates set, return empty data
             return {
@@ -141,41 +113,10 @@ class ProjectDashboardView(ProjectMixin, DetailView):
         project_start = project.start_date.replace(day=1)
         project_end = project.end_date.replace(day=1)
 
-        # Determine initial chart range based on current date
-        chart_start = project_start
-        chart_end = min(project_end, today.replace(day=1))
-
-        # If chart_end is before chart_start (project hasn't started), start from project start
-        if chart_end < chart_start:
-            chart_end = chart_start
-
-        # Calculate current months coverage
-        months_diff = (
-            (chart_end.year - chart_start.year) * 12
-            + (chart_end.month - chart_start.month)
-            + 1
-        )
-
-        # Pad into future if less than 12 months, but cap at project end
-        if months_diff < 12:
-            needed_months = 12 - months_diff
-            extended_end = chart_end + relativedelta(months=needed_months)
-            chart_end = min(extended_end, project_end)
-
-        # Recalculate months after potential extension
-        months_diff = (
-            (chart_end.year - chart_start.year) * 12
-            + (chart_end.month - chart_start.month)
-            + 1
-        )
-
-        # If more than 12 months, show most recent 12
-        if months_diff > 12:
-            chart_start = chart_end - relativedelta(months=11)
-
         # Generate data for each month in the range (oldest to newest)
-        current_month = chart_start
-        while current_month <= chart_end:
+        for current_month in get_previous_n_months(
+            starting_date=project_start, end_cap=project_end
+        ):
             labels.append(current_month.strftime("%b %Y"))
 
             # Get planned value for this month
@@ -205,9 +146,6 @@ class ProjectDashboardView(ProjectMixin, DetailView):
             certified_values.append(
                 float(cumulative_certified) if cumulative_certified else 0
             )
-
-            # Move to next month
-            current_month = current_month + relativedelta(months=1)
 
         return {
             "labels": labels,

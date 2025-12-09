@@ -64,22 +64,14 @@
             <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900">Contract Value Waterfall</h2>
-                        <p class="text-sm text-gray-600">Breakdown from original contract through variations to current forecast</p>
+                        <h2 class="text-xl font-bold text-gray-900">Monthly Forecast Waterfall</h2>
+                        <p class="text-sm text-gray-600">Approved cost forecasts by month</p>
                     </div>
                     {% if has_waterfall_data %}
                         <div class="flex items-center space-x-4 text-sm">
                             <div class="flex items-center">
-                                <div class="w-8 h-4 bg-blue-500 mr-2"></div>
-                                <span class="text-gray-600">Original</span>
-                            </div>
-                            <div class="flex items-center">
-                                <div class="w-8 h-4 bg-green-500 mr-2"></div>
-                                <span class="text-gray-600">Variations</span>
-                            </div>
-                            <div class="flex items-center">
-                                <div class="w-8 h-4 bg-purple-500 mr-2"></div>
-                                <span class="text-gray-600">Forecast</span>
+                                <div class="w-8 border-t-2 border-dashed border-indigo-500 mr-2"></div>
+                                <span class="text-gray-600">Contract Value</span>
                             </div>
                         </div>
                     {% endif %}

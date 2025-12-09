@@ -32,7 +32,7 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        self.filter_form = FilterForm(request.GET or {})
+        self.filter_form = FilterForm(request.GET or {}, user=request.user)
 
     def get_breadcrumbs(self: "FinancialReportView") -> list[BreadcrumbItem]:
         """Return breadcrumbs for financial report."""
@@ -58,11 +58,17 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
             status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
         )
 
-        # Apply category filter if selected
+        # Apply filters if valid
         if self.filter_form and self.filter_form.is_valid():
             category = self.filter_form.cleaned_data.get("category")
             if category:
                 projects = projects.filter(category=category)
+            selected_project = self.filter_form.cleaned_data.get("projects")
+            if selected_project:
+                projects = projects.filter(pk=selected_project.pk)
+            consultant = self.filter_form.cleaned_data.get("consultant")
+            if consultant:
+                projects = projects.filter(lead_consultant=consultant)
 
         return projects
 
@@ -226,7 +232,7 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        self.filter_form = FilterForm(request.GET or {})
+        self.filter_form = FilterForm(request.GET or {}, user=request.user)
 
     def get_breadcrumbs(self: "ScheduleReportView") -> list[BreadcrumbItem]:
         """Return breadcrumbs for schedule report."""
@@ -252,11 +258,17 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
             status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
         )
 
-        # Apply category filter if selected
+        # Apply filters if valid
         if self.filter_form and self.filter_form.is_valid():
             category = self.filter_form.cleaned_data.get("category")
             if category:
                 projects = projects.filter(category=category)
+            selected_project = self.filter_form.cleaned_data.get("projects")
+            if selected_project:
+                projects = projects.filter(pk=selected_project.pk)
+            consultant = self.filter_form.cleaned_data.get("consultant")
+            if consultant:
+                projects = projects.filter(lead_consultant=consultant)
 
         return projects
 
@@ -390,7 +402,7 @@ class CashflowReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        self.filter_form = FilterForm(request.GET or {})
+        self.filter_form = FilterForm(request.GET or {}, user=request.user)
 
     def get_breadcrumbs(self: "CashflowReportView") -> list[BreadcrumbItem]:
         """Return breadcrumbs for cashflow report."""
@@ -416,11 +428,17 @@ class CashflowReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
             status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
         ).order_by("name")
 
-        # Apply category filter if selected
+        # Apply filters if valid
         if self.filter_form and self.filter_form.is_valid():
             category = self.filter_form.cleaned_data.get("category")
             if category:
                 projects = projects.filter(category=category)
+            selected_project = self.filter_form.cleaned_data.get("projects")
+            if selected_project:
+                projects = projects.filter(pk=selected_project.pk)
+            consultant = self.filter_form.cleaned_data.get("consultant")
+            if consultant:
+                projects = projects.filter(lead_consultant=consultant)
 
         return projects
 
@@ -542,7 +560,7 @@ class TrendReportView(UserHasGroupGenericMixin, BreadcrumbMixin, TemplateView):
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        self.filter_form = FilterForm(request.GET or {})
+        self.filter_form = FilterForm(request.GET or {}, user=request.user)
 
     def get_breadcrumbs(self: "TrendReportView") -> list[BreadcrumbItem]:
         """Return breadcrumbs for trend report."""
@@ -579,16 +597,21 @@ class TrendReportView(UserHasGroupGenericMixin, BreadcrumbMixin, TemplateView):
             context["budget_data"] = "[]"
             return context
 
-        # Get category filter
-        category_filter = (
-            self.filter_form.cleaned_data.get("category")
-            if self.filter_form and self.filter_form.is_valid()
-            else None
-        )
+        # Get filters
+        category_filter = None
+        project_filter = None
+        consultant_filter = None
+        if self.filter_form and self.filter_form.is_valid():
+            category_filter = self.filter_form.cleaned_data.get("category")
+            project_filter = self.filter_form.cleaned_data.get("projects")
+            consultant_filter = self.filter_form.cleaned_data.get("consultant")
 
         # Generate 12 months of Planned vs Actual vs Forecast vs Budget data
         cashflow_data = self._get_cashflow_chart_data(
-            portfolio, category=category_filter
+            portfolio,
+            category=category_filter,
+            selected_project=project_filter,
+            consultant=consultant_filter,
         )
         context["cashflow_labels"] = json.dumps(cashflow_data["labels"])
         context["planned_data"] = json.dumps(cashflow_data["planned"])
@@ -599,7 +622,11 @@ class TrendReportView(UserHasGroupGenericMixin, BreadcrumbMixin, TemplateView):
         return context
 
     def _get_cashflow_chart_data(
-        self: "TrendReportView", portfolio: Portfolio, category=None
+        self: "TrendReportView",
+        portfolio: Portfolio,
+        category=None,
+        selected_project=None,
+        consultant=None,
     ) -> dict:
         """Generate 12 months of Planned vs Actual vs Forecast vs Budget data."""
         labels = []
@@ -609,8 +636,17 @@ class TrendReportView(UserHasGroupGenericMixin, BreadcrumbMixin, TemplateView):
         budget_values = []
 
         current_date = datetime.now()
+        # Get projects to include
+        projects = list(portfolio.get_active_projects(category))
+        if selected_project:
+            projects = [p for p in projects if p.pk == selected_project.pk]
+        if consultant:
+            projects = [p for p in projects if p.lead_consultant == consultant]
+
         # Monthly budget = total budget / 12 (simplified distribution)
-        total_budget = portfolio.get_total_original_budget(category)
+        total_budget = sum(
+            p.get_original_contract_value or Decimal("0") for p in projects
+        )
         monthly_budget = float(total_budget / 12) if total_budget else 0
 
         # Generate data for last 12 months (oldest to newest)
@@ -628,7 +664,7 @@ class TrendReportView(UserHasGroupGenericMixin, BreadcrumbMixin, TemplateView):
             actual_total = Decimal("0.00")
             forecast_total = Decimal("0.00")
 
-            for project in portfolio.get_active_projects(category):
+            for project in projects:
                 try:
                     pv = project.planned_value(month_date)
                     if pv:

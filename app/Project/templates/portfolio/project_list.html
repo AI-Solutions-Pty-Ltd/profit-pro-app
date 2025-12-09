@@ -145,12 +145,28 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <a href="{% url 'project:project-management' data.project.id %}"
-                                   class="inline-flex items-center px-3 py-1.5 border border-indigo-300 rounded-md text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors"
-                                   title="Manage project">
-                                    {% heroicon_outline "cog-6-tooth" size="16" class="mr-1" %}
-                                    Manage
-                                </a>
+                                <div class="relative inline-block text-left group">
+                                    <button type="button"
+                                            class="inline-flex items-center px-3 py-1.5 border border-indigo-300 rounded-md text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">
+                                        {% heroicon_outline "arrow-top-right-on-square" size="16" class="mr-1" %}
+                                        Go To
+                                        {% heroicon_outline "chevron-down" size="12" class="ml-1" %}
+                                    </button>
+                                    <div class="hidden group-hover:block absolute right-0 z-10 mt-1 w-40 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5">
+                                        <div class="py-1">
+                                            <a href="{% url 'project:project-dashboard' data.project.id %}"
+                                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                                                {% heroicon_outline "chart-bar" size="16" class="mr-2 inline" %}
+                                                Dashboard
+                                            </a>
+                                            <a href="{% url 'project:project-management' data.project.id %}"
+                                               class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
+                                                {% heroicon_outline "cog-6-tooth" size="16" class="mr-2 inline" %}
+                                                Manage
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     {% empty %}
