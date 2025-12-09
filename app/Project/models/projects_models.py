@@ -308,6 +308,8 @@ class Project(BaseModel):
 
     @property
     def total_certified_to_date_percentage(self) -> Decimal:
+        if not self.total_certified_to_date:
+            return Decimal(0)
         return Decimal(
             round(self.get_total_contract_value / self.total_certified_to_date * 100, 2)
         )
