@@ -153,8 +153,10 @@ class CashflowForecastView(ForecastHubMixin, TemplateView):
         forecast_data = []
         cumulative_planned = []
         cumulative_forecast = []
+        cumulative_work_completed = []
         running_planned = Decimal("0")
         running_forecast = Decimal("0")
+        running_work_completed = Decimal("0")
 
         total_work_completed = Decimal("0")
         for pv in planned_values:
@@ -164,9 +166,11 @@ class CashflowForecastView(ForecastHubMixin, TemplateView):
 
             running_planned += pv.value or Decimal("0")
             running_forecast += pv.forecast_value or Decimal("0")
+            running_work_completed += pv.work_completed_percent or Decimal("0")
             total_work_completed += pv.work_completed_percent or Decimal("0")
             cumulative_planned.append(float(running_planned))
             cumulative_forecast.append(float(running_forecast))
+            cumulative_work_completed.append(float(running_work_completed))
 
         contract_value = float(project.get_total_contract_value)
 
@@ -180,6 +184,7 @@ class CashflowForecastView(ForecastHubMixin, TemplateView):
                 "forecast_data": forecast_data,
                 "cumulative_planned": cumulative_planned,
                 "cumulative_forecast": cumulative_forecast,
+                "cumulative_work_completed": cumulative_work_completed,
                 "contract_value": contract_value,
                 "total_work_completed": total_work_completed,
                 "work_completed_remaining": Decimal("100") - total_work_completed,

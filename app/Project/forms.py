@@ -28,8 +28,17 @@ class FilterForm(forms.Form):
         initial="ALL",
     )
     active_projects = forms.BooleanField(required=False)
+    projects = forms.ModelChoiceField(
+        queryset=Project.objects.none(),
+        required=False,
+    )
+    consultant = forms.ModelChoiceField(
+        queryset=Account.objects.none(),
+        required=False,
+        empty_label="All Consultants",
+    )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["active_projects"].label = "Active Projects"
         self.fields["search"].widget = forms.TextInput(
@@ -48,6 +57,22 @@ class FilterForm(forms.Form):
                 "class": "block w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors",
             }
         )
+        # Set projects and consultant querysets based on user
+        if user:
+            user_projects = Project.objects.filter(
+                account=user,
+                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
+            )
+            self.fields["projects"].queryset = user_projects.order_by("name")
+            # Get unique lead consultants from user's projects
+            consultant_ids = (
+                user_projects.exclude(lead_consultant__isnull=True)
+                .values_list("lead_consultant", flat=True)
+                .distinct()
+            )
+            self.fields["consultant"].queryset = Account.objects.filter(
+                pk__in=consultant_ids
+            ).order_by("first_name", "last_name")
 
 
 class ProjectCategoryForm(forms.ModelForm):

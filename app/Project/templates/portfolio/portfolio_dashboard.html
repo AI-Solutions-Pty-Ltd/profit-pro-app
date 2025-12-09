@@ -283,10 +283,10 @@
                         {% endif %}
                     </p>
                 </a>
-                <!-- EAC -->
+                <!-- EAC - Estimate at Completion -->
                 <a href="{% url 'project:portfolio-financial-report' %}"
                    class="bg-amber-50 rounded-lg p-2 text-center border border-amber-100 hover:bg-amber-100 hover:shadow-md transition-all duration-200 cursor-pointer">
-                    <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">EAC</p>
+                    <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Estimate at Completion</p>
                     <p class="text-sm font-bold text-amber-700">
                         {% if total_eac %}
                             R {{ total_eac|floatformat:0|intcomma }}

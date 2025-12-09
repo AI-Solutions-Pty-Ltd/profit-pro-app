@@ -92,6 +92,10 @@
                                 <span class="text-gray-600">Forecast (Cumulative)</span>
                             </div>
                             <div class="flex items-center">
+                                <div class="w-4 h-4 bg-emerald-500 rounded mr-2"></div>
+                                <span class="text-gray-600">% Complete</span>
+                            </div>
+                            <div class="flex items-center">
                                 <div class="w-8 border-t-2 border-dashed border-red-500 mr-2"></div>
                                 <span class="text-gray-600">Contract Value</span>
                             </div>
@@ -201,6 +205,7 @@
                 const chartLabels = {{ chart_labels|safe }};
                 const cumulativePlanned = {{ cumulative_planned|safe }};
                 const cumulativeForecast = {{ cumulative_forecast|safe }};
+                const cumulativeWorkCompleted = {{ cumulative_work_completed|safe }};
                 const contractValue = {{ contract_value }};
                 
                 new Chart(ctx, {
@@ -217,7 +222,8 @@
                                 pointRadius: 4,
                                 pointBackgroundColor: 'rgb(6, 182, 212)',
                                 fill: true,
-                                tension: 0.3
+                                tension: 0.3,
+                                yAxisID: 'y'
                             },
                             {
                                 label: 'Forecast (Cumulative)',
@@ -228,7 +234,20 @@
                                 pointRadius: 4,
                                 pointBackgroundColor: 'rgb(245, 158, 11)',
                                 fill: true,
-                                tension: 0.3
+                                tension: 0.3,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: '% Complete',
+                                data: cumulativeWorkCompleted,
+                                borderColor: 'rgb(16, 185, 129)',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                borderWidth: 3,
+                                pointRadius: 4,
+                                pointBackgroundColor: 'rgb(16, 185, 129)',
+                                fill: false,
+                                tension: 0.3,
+                                yAxisID: 'y1'
                             },
                             {
                                 label: 'Contract Value',
@@ -238,7 +257,8 @@
                                 borderDash: [5, 5],
                                 pointRadius: 0,
                                 fill: false,
-                                tension: 0
+                                tension: 0,
+                                yAxisID: 'y'
                             }
                         ]
                     },
@@ -262,6 +282,9 @@
                                     label: function(context) {
                                         const value = context.parsed.y;
                                         if (value === null) return 'No data';
+                                        if (context.dataset.label === '% Complete') {
+                                            return `${context.dataset.label}: ${value.toFixed(1)}%`;
+                                        }
                                         return `${context.dataset.label}: R ${value.toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
                                     }
                                 }
@@ -279,6 +302,9 @@
                                 }
                             },
                             y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
                                 grid: {
                                     color: 'rgba(0, 0, 0, 0.05)'
                                 },
@@ -289,6 +315,22 @@
                                     }
                                 },
                                 beginAtZero: true
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                min: 0,
+                                max: 100,
+                                grid: {
+                                    drawOnChartArea: false
+                                },
+                                ticks: {
+                                    font: { size: 10 },
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
                             }
                         }
                     }
