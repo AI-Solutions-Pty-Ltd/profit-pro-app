@@ -15,6 +15,7 @@ from app.Project.models import (
     Project,
     ProjectCategory,
     ProjectDocument,
+    Risk,
 )
 
 
@@ -106,3 +107,24 @@ class ProjectDocumentFactory(DjangoModelFactory):
     file = factory.django.FileField(filename="test_document.pdf")
     uploaded_by = factory.SubFactory(UserFactory)
     notes = ""
+
+
+class RiskFactory(DjangoModelFactory):
+    """Factory for Risk model."""
+
+    class Meta:
+        model = Risk
+
+    project = factory.SubFactory(ProjectFactory)
+    risk_name = factory.Sequence(lambda n: f"Risk {n}")
+    description = Faker("paragraph")
+    time_impact_start = factory.LazyFunction(lambda: timezone.now().date())
+    time_impact_end = factory.LazyFunction(
+        lambda: timezone.now().date() + __import__("datetime").timedelta(days=30)
+    )
+    cost_impact = Faker("pydecimal", left_digits=6, right_digits=2, positive=True)
+    probability = Faker(
+        "pydecimal", left_digits=2, right_digits=2, min_value=0, max_value=100
+    )
+    is_active = True
+    created_by = factory.SubFactory(UserFactory)

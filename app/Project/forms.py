@@ -10,6 +10,7 @@ from app.Project.models import (
     Project,
     ProjectCategory,
     ProjectDocument,
+    Risk,
     Signatories,
 )
 
@@ -632,3 +633,101 @@ class ProjectDocumentForm(forms.ModelForm):
         help_texts = {
             "file": "Accepted formats: PDF, Word, Excel, Images, ZIP",
         }
+
+
+class RiskForm(forms.ModelForm):
+    """Form for creating and updating project risks."""
+
+    class Meta:
+        model = Risk
+        fields = [
+            "risk_name",
+            "description",
+            "time_impact_start",
+            "time_impact_end",
+            "cost_impact",
+            "probability",
+            "is_active",
+        ]
+        widgets = {
+            "risk_name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter risk name",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Describe the risk in detail",
+                    "rows": 3,
+                }
+            ),
+            "time_impact_start": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                },
+                format="%Y-%m-%d",
+            ),
+            "time_impact_end": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                },
+                format="%Y-%m-%d",
+            ),
+            "cost_impact": forms.NumberInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "0.00",
+                    "step": "0.01",
+                }
+            ),
+            "probability": forms.NumberInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "0-100",
+                    "min": "0",
+                    "max": "100",
+                    "step": "0.01",
+                }
+            ),
+            "is_active": forms.CheckboxInput(
+                attrs={
+                    "class": "h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500",
+                }
+            ),
+        }
+        labels = {
+            "risk_name": "Risk Name",
+            "description": "Risk Description",
+            "time_impact_start": "Time Impact Start Date",
+            "time_impact_end": "Time Impact End Date",
+            "cost_impact": "Cost Impact",
+            "probability": "Probability (%)",
+            "is_active": "Active",
+        }
+        help_texts = {
+            "time_impact_start": "Start date of potential time impact period",
+            "time_impact_end": "End date of potential time impact period",
+            "cost_impact": "Potential cost impact in currency",
+            "probability": "Probability of risk occurring (0-100%)",
+            "is_active": "Uncheck to mark risk as resolved",
+        }
+
+    def clean(self):
+        """Validate risk dates."""
+        cleaned_data = super().clean() or {}
+        start_date = cleaned_data.get("time_impact_start")
+        end_date = cleaned_data.get("time_impact_end")
+
+        # Validate date range
+        if start_date and end_date:
+            if end_date < start_date:
+                self.add_error(
+                    "time_impact_end",
+                    "End date must be after or equal to start date.",
+                )
+
+        return cleaned_data
