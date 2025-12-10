@@ -76,6 +76,23 @@
                                 {% heroicon_outline "arrow-right" size="16" class="text-red-500 transition-opacity" %}
                             </a>
                         {% endif %}
+                        <!-- Contractual Requirements Section -->
+                        <span class="text-xs text-blue-600 pt-2 border-t border-blue-200 mt-2">Contractual Requirements</span>
+                        <a href="{% url 'project:document-list' project.pk 'CONTRACT_DOCUMENTS' %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-cyan-700">Contract Documents</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-cyan-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
+                        <a href="{% url 'project:document-list' project.pk 'STAGE_GATE_APPROVAL' %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-sky-200 hover:bg-sky-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-sky-700">Stage Gate Approvals</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-sky-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
+                        <a href="{% url 'project:document-list' project.pk 'OTHER' %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-gray-700">Other Documents</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-gray-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
                     </div>
                 </div>
                 <!-- Forecasts Section (Unified) -->

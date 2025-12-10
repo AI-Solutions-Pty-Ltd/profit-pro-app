@@ -58,7 +58,7 @@ def get_month_range(start: datetime | date, end: datetime | date) -> list[dateti
     months = []
     for i in range(diff_month(end_dt, start_dt) + 1):
         months.append(start_dt + relativedelta(months=i))
-    return months[::-1]
+    return months
 
 
 def get_previous_n_months(

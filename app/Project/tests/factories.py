@@ -14,6 +14,7 @@ from app.Project.models import (
     PlannedValue,
     Project,
     ProjectCategory,
+    ProjectDocument,
 )
 
 
@@ -91,3 +92,17 @@ class MilestoneFactory(DjangoModelFactory):
     sequence = factory.Sequence(lambda n: n)
     is_completed = False
     actual_date = None
+
+
+class ProjectDocumentFactory(DjangoModelFactory):
+    """Factory for ProjectDocument model."""
+
+    class Meta:
+        model = ProjectDocument
+
+    project = factory.SubFactory(ProjectFactory)
+    category = ProjectDocument.Category.CONTRACT_DOCUMENTS
+    title = factory.Sequence(lambda n: f"Document {n}")
+    file = factory.django.FileField(filename="test_document.pdf")
+    uploaded_by = factory.SubFactory(UserFactory)
+    notes = ""

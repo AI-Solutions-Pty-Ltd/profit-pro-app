@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}
+    Upload Document - {{ category_display }} - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <!-- Form Card -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+            <h1 class="text-2xl font-bold text-gray-900">Upload Document</h1>
+            <p class="mt-1 text-sm text-gray-600">Add a new document to {{ category_display }} for {{ project.name }}.</p>
+        </div>
+        <!-- Form -->
+        <form method="post" enctype="multipart/form-data" class="px-6 py-6">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <!-- Form Actions -->
+            <div class="mt-6 flex items-center justify-end space-x-3">
+                <a id="cancel-btn"
+                   href="{% url 'project:document-list' project.pk category %}"
+                   class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                   data-loading-text="Canceling..."
+                   data-disable-elements="#upload-btn">
+                    {% heroicon_outline "chevron-left" size="20" %}
+                    Cancel
+                </a>
+                <button id="upload-btn"
+                        type="submit"
+                        class="loading-btn inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                        data-loading-text="Uploading..."
+                        data-disable-elements="#cancel-btn">
+                    {% heroicon_outline "arrow-up-tray" size="20" %}
+                    Upload Document
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock content %}
