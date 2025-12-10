@@ -106,6 +106,14 @@ class DocumentCreateView(DocumentMixin, CreateView):
             {"title": "Upload Document", "url": None},
         ]
 
+    def get_initial(self):
+        """Set initial category value from URL."""
+        initial = super().get_initial()
+        category = self.get_category()
+        if category != "OTHER":
+            initial["category"] = category
+        return initial
+
     def get_context_data(self, **kwargs):
         """Add project and category to context."""
         context = super().get_context_data(**kwargs)
