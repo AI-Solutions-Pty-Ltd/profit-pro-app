@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}
+    {{ category_display }} - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ category_display }}</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:project-management' project.pk %}"
+                       class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900">
+                        {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
+                        Back
+                    </a>
+                    <a href="{% url 'project:document-upload' project.pk category %}"
+                       class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded">
+                        {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1" %}
+                        Upload
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Info Banner -->
+    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 rounded-r-lg">
+        <div class="flex">
+            <div class="flex-shrink-0">{% heroicon_outline "information-circle" class="h-5 w-5 text-blue-400" %}</div>
+            <div class="ml-3">
+                <p class="text-sm text-blue-700">
+                    {% if category == 'CONTRACT_DOCUMENTS' %}
+                        Upload signed contracts and appointment letters for contractors and consultants for records and audit purposes.
+                    {% elif category == 'STAGE_GATE_APPROVAL' %}
+                        Upload pre-contract approval documents required for audit purposes.
+                    {% elif category == 'OTHER' %}
+                        Upload documents from any category. Choose the appropriate category when uploading your file.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    <!-- Documents List -->
+    <div class="bg-white shadow-sm rounded-lg">
+        {% if documents %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uploaded By</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Uploaded</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for document in documents %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                            {% heroicon_outline "document-text" class="h-6 w-6 text-indigo-600" %}
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">{{ document.title }}</div>
+                                            <div class="text-sm text-gray-500">{{ document.filename }}</div>
+                                            {% if document.notes %}<div class="text-xs text-gray-400 mt-1">{{ document.notes|truncatewords:15 }}</div>{% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if document.uploaded_by %}
+                                        {{ document.uploaded_by.get_full_name|default:document.uploaded_by.email }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ document.created_at|date:"M d, Y" }}
+                                    <br>
+                                    <span class="text-xs text-gray-400">{{ document.created_at|time:"g:i A" }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="{{ document.file.url }}"
+                                       target="_blank"
+                                       class="text-indigo-600 hover:text-indigo-900 mr-4">
+                                        {% heroicon_outline "arrow-down-tray" class="w-5 h-5 inline" %}
+                                        Download
+                                    </a>
+                                    <a href="{% url 'project:document-delete' project.pk category document.pk %}"
+                                       class="text-red-600 hover:text-red-900">
+                                        {% heroicon_outline "trash" class="w-5 h-5 inline" %}
+                                        Delete
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="flex flex-col items-center justify-center py-12 px-4">
+                {% heroicon_outline "document-text" class="h-12 w-12 text-gray-400" %}
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No documents</h3>
+                <p class="mt-1 text-sm text-gray-500">Get started by uploading a document.</p>
+                <div class="mt-6">
+                    <a href="{% url 'project:document-upload' project.pk category %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "arrow-up-tray" class="w-5 h-5 mr-2" %}
+                        Upload Document
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <!-- Footer Navigation -->
+    <div class="bg-white shadow-sm rounded-lg mt-4">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <a href="{% url 'project:project-management' project.pk %}"
+                   class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900">
+                    {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
+                    Back
+                </a>
+                <a href="{% url 'project:document-upload' project.pk category %}"
+                   class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded">
+                    {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1" %}
+                    Upload Document
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

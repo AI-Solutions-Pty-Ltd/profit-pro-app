@@ -1,4 +1,5 @@
 from .category_models import ProjectCategory
+from .document_models import ProjectDocument
 from .milestone_models import Milestone
 from .planned_value_models import PlannedValue
 from .portfolio_models import Portfolio
@@ -12,5 +13,6 @@ __all__ = [
     "Portfolio",
     "Project",
     "ProjectCategory",
+    "ProjectDocument",
     "Signatories",
 ]
