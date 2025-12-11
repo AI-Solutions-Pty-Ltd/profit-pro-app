@@ -329,22 +329,8 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
                 spi = None
 
             # Schedule Variance (Value) = EV - PV
-            # EV (Earned Value) = Budget * % Complete
-            # PV (Planned Value) = Budget * Planned % Complete at this date
-            schedule_variance_value = None
-            earned_value = budget * (percent_work_complete / 100) if budget else None
-
-            if planned_start and planned_end and planned_duration and budget:
-                days_elapsed = (current_date.date() - planned_start).days
-                if days_elapsed >= 0:
-                    # Planned % complete based on time elapsed
-                    planned_percent = min(
-                        Decimal(days_elapsed) / Decimal(planned_duration) * 100,
-                        Decimal("100"),
-                    )
-                    planned_value = budget * (planned_percent / 100)
-                    if earned_value is not None:
-                        schedule_variance_value = earned_value - planned_value
+            # Use model methods as source of truth
+            schedule_variance_value = project.get_schedule_variance(current_date)
 
             report_data.append(
                 {
