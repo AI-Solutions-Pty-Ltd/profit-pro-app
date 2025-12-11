@@ -4,7 +4,10 @@ from django import forms
 
 from app.Account.models import Account
 from app.Project.models import (
+    AdministrativeCompliance,
     Client,
+    ContractualCompliance,
+    FinalAccountCompliance,
     Milestone,
     PlannedValue,
     Project,
@@ -731,3 +734,289 @@ class RiskForm(forms.ModelForm):
                 )
 
         return cleaned_data
+
+
+class ContractualComplianceForm(forms.ModelForm):
+    """Form for creating and updating contractual compliance items."""
+
+    class Meta:
+        model = ContractualCompliance
+        fields = [
+            "obligation_description",
+            "contract_reference",
+            "responsible_party",
+            "due_date",
+            "frequency",
+            "expiry_date",
+            "status",
+            "notes",
+        ]
+        widgets = {
+            "obligation_description": forms.Textarea(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Describe the contractual obligation",
+                    "rows": 3,
+                }
+            ),
+            "contract_reference": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "e.g., Clause 5.2.1",
+                }
+            ),
+            "responsible_party": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "due_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                },
+                format="%Y-%m-%d",
+            ),
+            "frequency": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "expiry_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                },
+                format="%Y-%m-%d",
+            ),
+            "status": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "notes": forms.Textarea(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Additional notes",
+                    "rows": 3,
+                }
+            ),
+        }
+        labels = {
+            "obligation_description": "Obligation Description",
+            "contract_reference": "Contract Reference",
+            "responsible_party": "Responsible Party",
+            "due_date": "Due Date",
+            "frequency": "Frequency",
+            "expiry_date": "Expiry Date",
+            "status": "Status",
+            "notes": "Notes",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["responsible_party"].queryset = Account.objects.filter(
+            groups__name__in=["contractor", "consultant"]
+        ).distinct()
+        self.fields["responsible_party"].required = False
+
+
+class AdministrativeComplianceForm(forms.ModelForm):
+    """Form for creating and updating administrative compliance items."""
+
+    class Meta:
+        model = AdministrativeCompliance
+        fields = [
+            "item_type",
+            "reference_number",
+            "description",
+            "responsible_party",
+            "submission_due_date",
+            "submission_date",
+            "approval_due_date",
+            "approval_date",
+            "status",
+            "notes",
+        ]
+        widgets = {
+            "item_type": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "reference_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "e.g., CERT-001",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Describe the item",
+                    "rows": 3,
+                }
+            ),
+            "responsible_party": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "submission_due_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                },
+                format="%Y-%m-%d",
+            ),
+            "submission_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                },
+                format="%Y-%m-%d",
+            ),
+            "approval_due_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                },
+                format="%Y-%m-%d",
+            ),
+            "approval_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                },
+                format="%Y-%m-%d",
+            ),
+            "status": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "notes": forms.Textarea(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Additional notes",
+                    "rows": 3,
+                }
+            ),
+        }
+        labels = {
+            "item_type": "Item Type",
+            "reference_number": "Reference Number",
+            "description": "Description",
+            "responsible_party": "Responsible Party",
+            "submission_due_date": "Submission Due Date",
+            "submission_date": "Actual Submission Date",
+            "approval_due_date": "Approval Due Date",
+            "approval_date": "Actual Approval Date",
+            "status": "Status",
+            "notes": "Notes",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["responsible_party"].queryset = Account.objects.filter(
+            groups__name__in=["contractor", "consultant", "client"]
+        ).distinct()
+        self.fields["responsible_party"].required = False
+
+
+class FinalAccountComplianceForm(forms.ModelForm):
+    """Form for creating and updating final account compliance items."""
+
+    class Meta:
+        model = FinalAccountCompliance
+        fields = [
+            "document_type",
+            "description",
+            "responsible_party",
+            "test_date",
+            "submission_date",
+            "approval_date",
+            "status",
+            "file",
+            "notes",
+        ]
+        widgets = {
+            "document_type": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Describe the document",
+                    "rows": 3,
+                }
+            ),
+            "responsible_party": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "test_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                },
+                format="%Y-%m-%d",
+            ),
+            "submission_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                },
+                format="%Y-%m-%d",
+            ),
+            "approval_date": forms.DateInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "type": "date",
+                },
+                format="%Y-%m-%d",
+            ),
+            "status": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "file": forms.FileInput(
+                attrs={
+                    "class": "mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100",
+                    "accept": ".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip",
+                }
+            ),
+            "notes": forms.Textarea(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Additional notes",
+                    "rows": 3,
+                }
+            ),
+        }
+        labels = {
+            "document_type": "Document Type",
+            "description": "Description",
+            "responsible_party": "Responsible Party",
+            "test_date": "Test/Inspection Date",
+            "submission_date": "Submission Date",
+            "approval_date": "Approval Date",
+            "status": "Status",
+            "file": "Attachment",
+            "notes": "Notes",
+        }
+        help_texts = {
+            "file": "Accepted formats: PDF, Word, Excel, Images, ZIP",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["responsible_party"].queryset = Account.objects.filter(
+            groups__name__in=["contractor", "consultant"]
+        ).distinct()
+        self.fields["responsible_party"].required = False
+        self.fields["file"].required = False

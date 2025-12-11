@@ -10,6 +10,7 @@ from .models import (
     Portfolio,
     Project,
     ProjectCategory,
+    ProjectDocument,
     Signatories,
 )
 
@@ -50,6 +51,12 @@ class SignatoriesAdmin(SoftDeleteAdmin):
     ]
     readonly_fields = ["created_at", "updated_at"]
 
+@admin.register(ProjectDocument)
+class ProjectDocumentAdmin(SoftDeleteAdmin):
+    list_display = ["title", "project", "category", "uploaded_by", "deleted", "created_at"]
+    list_filter = ["deleted", "created_at", "category", "project"]
+    search_fields = ["title", "notes", "project__name"]
+    readonly_fields = ["created_at", "updated_at"]
 
 @admin.register(Portfolio)
 class PortfolioAdmin(SoftDeleteAdmin):

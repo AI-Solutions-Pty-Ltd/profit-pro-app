@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}
+    Delete Contractual Compliance Item - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Delete Contractual Compliance Item</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Confirmation -->
+    <div class="bg-white shadow-sm rounded-lg">
+        <div class="p-6">
+            <div class="flex items-center mb-4">
+                <div class="flex-shrink-0 h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
+                    {% heroicon_outline "exclamation-triangle" class="h-6 w-6 text-red-600" %}
+                </div>
+                <div class="ml-4">
+                    <h3 class="text-lg font-medium text-gray-900">Are you sure?</h3>
+                    <p class="text-sm text-gray-500">This action cannot be undone.</p>
+                </div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <p class="text-sm text-gray-700">
+                    <strong>Obligation:</strong> {{ object.obligation_description }}
+                </p>
+                {% if object.contract_reference %}
+                    <p class="text-sm text-gray-500 mt-1">
+                        <strong>Reference:</strong> {{ object.contract_reference }}
+                    </p>
+                {% endif %}
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="flex justify-end space-x-3">
+                    <a href="{% url 'project:contractual-compliance-list' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+                        {% heroicon_outline "trash" class="w-4 h-4 mr-2" %}
+                        Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock content %}

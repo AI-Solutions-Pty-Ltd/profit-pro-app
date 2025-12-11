@@ -9,7 +9,10 @@ from factory.django import DjangoModelFactory
 from app.Account.models import Account
 from app.Account.tests.factories import UserFactory
 from app.Project.models import (
+    AdministrativeCompliance,
     Client,
+    ContractualCompliance,
+    FinalAccountCompliance,
     Milestone,
     PlannedValue,
     Project,
@@ -127,4 +130,67 @@ class RiskFactory(DjangoModelFactory):
         "pydecimal", left_digits=2, right_digits=2, min_value=0, max_value=100
     )
     is_active = True
+    created_by = factory.SubFactory(UserFactory)
+
+
+class ContractualComplianceFactory(DjangoModelFactory):
+    """Factory for ContractualCompliance model."""
+
+    class Meta:
+        model = ContractualCompliance
+
+    project = factory.SubFactory(ProjectFactory)
+    responsible_party = factory.SubFactory(UserFactory)
+    obligation_description = factory.Sequence(lambda n: f"Contractual Obligation {n}")
+    contract_reference = factory.Sequence(lambda n: f"Clause {n}.1")
+    due_date = factory.LazyFunction(
+        lambda: timezone.now().date() + __import__("datetime").timedelta(days=30)
+    )
+    frequency = ContractualCompliance.Frequency.MONTHLY
+    expiry_date = None
+    status = ContractualCompliance.Status.PENDING
+    notes = ""
+    created_by = factory.SubFactory(UserFactory)
+
+
+class AdministrativeComplianceFactory(DjangoModelFactory):
+    """Factory for AdministrativeCompliance model."""
+
+    class Meta:
+        model = AdministrativeCompliance
+
+    project = factory.SubFactory(ProjectFactory)
+    item_type = AdministrativeCompliance.ItemType.CERTIFICATE
+    reference_number = factory.Sequence(lambda n: f"REF-{n:04d}")
+    description = factory.Sequence(lambda n: f"Administrative Item {n}")
+    responsible_party = factory.SubFactory(UserFactory)
+    submission_due_date = factory.LazyFunction(
+        lambda: timezone.now().date() + __import__("datetime").timedelta(days=14)
+    )
+    submission_date = None
+    approval_due_date = factory.LazyFunction(
+        lambda: timezone.now().date() + __import__("datetime").timedelta(days=21)
+    )
+    approval_date = None
+    status = AdministrativeCompliance.Status.DRAFT
+    notes = ""
+    created_by = factory.SubFactory(UserFactory)
+
+
+class FinalAccountComplianceFactory(DjangoModelFactory):
+    """Factory for FinalAccountCompliance model."""
+
+    class Meta:
+        model = FinalAccountCompliance
+
+    project = factory.SubFactory(ProjectFactory)
+    document_type = FinalAccountCompliance.DocumentType.TEST_CERTIFICATE
+    description = factory.Sequence(lambda n: f"Final Account Document {n}")
+    responsible_party = factory.SubFactory(UserFactory)
+    test_date = None
+    submission_date = None
+    approval_date = None
+    status = FinalAccountCompliance.Status.REQUIRED
+    file = None
+    notes = ""
     created_by = factory.SubFactory(UserFactory)
