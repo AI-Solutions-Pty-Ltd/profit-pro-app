@@ -234,6 +234,19 @@ class CashflowForecastEditView(PlannedValueMixin, TemplateView):
         months = self.get_months()
         existing_values = self.get_planned_values_dict()
 
+        # Check if project is past end date (contract extension needed)
+        project_past_end_date = False
+        months_past_end = 0
+        today = date.today()
+        if project.end_date and today > project.end_date:
+            project_past_end_date = True
+            # Calculate how many months past end date
+            end_month = project.end_date.replace(day=1)
+            current_month = today.replace(day=1)
+            months_past_end = (current_month.year - end_month.year) * 12 + (
+                current_month.month - end_month.month
+            )
+
         # Build form data for each month
         month_forms = []
         for month in months:
@@ -286,6 +299,8 @@ class CashflowForecastEditView(PlannedValueMixin, TemplateView):
                 "difference": difference,
                 "warning_message": warning_message,
                 "has_dates": bool(project.start_date and project.end_date),
+                "project_past_end_date": project_past_end_date,
+                "months_past_end": months_past_end,
             }
         )
         return context
@@ -358,3 +373,82 @@ class CashflowForecastEditView(PlannedValueMixin, TemplateView):
                 )
 
         return self.get(request, *args, **kwargs)
+
+
+class ExtendCashflowForecastView(PlannedValueMixin, TemplateView):
+    """View to extend the cashflow forecast by adding more months."""
+
+    template_name = "planned_value/cashflow_forecast_edit.html"
+
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        """Handle extending the cashflow forecast."""
+        project = self.get_project()
+        extend_months = request.POST.get("extend_months", 1)
+
+        try:
+            extend_months = int(extend_months)
+            if extend_months < 1:
+                extend_months = 1
+            elif extend_months > 24:
+                extend_months = 24
+        except (ValueError, TypeError):
+            extend_months = 1
+
+        if not project.end_date:
+            messages.error(request, "Project end date is not set.")
+            return HttpResponse(
+                status=302,
+                headers={
+                    "Location": reverse(
+                        "project:cashflow-forecast-edit",
+                        kwargs={"project_pk": project.pk},
+                    )
+                },
+            )
+
+        # Store old end date for calculating new months
+        old_end_date = project.end_date
+
+        # Calculate new end date
+        new_end_date = project.end_date + relativedelta(months=extend_months)
+
+        # Update project end date
+        project.end_date = new_end_date
+        project.save(update_fields=["end_date"])
+
+        # Create PlannedValue entries for the new months
+        new_months = get_months_between(
+            old_end_date.replace(day=1) + relativedelta(months=1),
+            new_end_date,
+        )
+
+        created_count = 0
+        for month in new_months:
+            _, created = PlannedValue.objects.get_or_create(
+                project=project,
+                period=month,
+                defaults={
+                    "value": Decimal("0.00"),
+                    "forecast_value": None,
+                    "work_completed_percent": None,
+                },
+            )
+            if created:
+                created_count += 1
+
+        messages.success(
+            request,
+            f"Extended cashflow forecast by {extend_months} month(s). "
+            f"New project end date: {new_end_date.strftime('%B %Y')}. "
+            f"Created {created_count} new forecast period(s).",
+        )
+
+        return HttpResponse(
+            status=302,
+            headers={
+                "Location": reverse(
+                    "project:cashflow-forecast-edit",
+                    kwargs={"project_pk": project.pk},
+                )
+            },
+        )

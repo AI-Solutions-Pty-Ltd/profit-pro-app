@@ -1,7 +1,8 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Optional
 
+from dateutil.relativedelta import relativedelta
 from django.db import models
 from django.db.models import QuerySet
 from django.urls import reverse
@@ -17,6 +18,19 @@ from app.Project.models.client_models import Client
 if TYPE_CHECKING:
     from .planned_value_models import PlannedValue
     from .signatories_models import Signatories
+
+
+def get_months_between(start_date: date, end_date: date) -> list[date]:
+    """Generate a list of month start dates between start_date and end_date."""
+    months = []
+    current = start_date.replace(day=1)
+    end = end_date.replace(day=1)
+
+    while current <= end:
+        months.append(current)
+        current += relativedelta(months=1)
+
+    return months
 
 
 class Project(BaseModel):
@@ -199,6 +213,73 @@ class Project(BaseModel):
         verbose_name = "Project"
         verbose_name_plural = "Projects"
         ordering = ["-name"]
+
+    def save(self, *args, **kwargs) -> None:
+        """Override save to manage PlannedValue instances when dates change."""
+        # Import here to avoid circular import
+        from app.Project.models.planned_value_models import PlannedValue
+
+        # Check if this is an existing instance
+        dates_changed = False
+        old_start_date = None
+        old_end_date = None
+
+        if self.pk:
+            try:
+                old_instance = Project.objects.get(pk=self.pk)
+                old_start_date = old_instance.start_date
+                old_end_date = old_instance.end_date
+                dates_changed = (
+                    old_start_date != self.start_date or old_end_date != self.end_date
+                )
+            except Project.DoesNotExist:
+                pass
+
+        # Save the project first
+        super().save(*args, **kwargs)
+
+        # Only manage PlannedValue instances if dates changed and we have valid dates
+        if dates_changed and self.start_date and self.end_date:
+            self._sync_planned_values(PlannedValue)
+
+    def _sync_planned_values(self, planned_value_model) -> None:
+        """Sync PlannedValue instances with the project's date range.
+
+        - Soft delete instances outside the new date range
+        - Restore soft-deleted instances inside the range or create new ones
+        """
+        # Get the valid months for the new date range
+        valid_months = set(get_months_between(self.start_date, self.end_date))
+
+        # Get all PlannedValue instances (including soft-deleted) for this project
+        all_planned_values = planned_value_model.all_objects.filter(project=self)
+
+        for pv in all_planned_values:
+            period_normalized = pv.period.replace(day=1)
+            if period_normalized in valid_months:
+                # Period is within range - restore if soft-deleted
+                if pv.is_deleted:
+                    pv.restore()
+            else:
+                # Period is outside range - soft delete if not already deleted
+                if not pv.is_deleted:
+                    pv.soft_delete()
+
+        # Create new PlannedValue instances for months that don't exist yet
+        existing_periods = {
+            pv.period.replace(day=1)
+            for pv in planned_value_model.all_objects.filter(project=self)
+        }
+
+        for month in valid_months:
+            if month not in existing_periods:
+                planned_value_model.objects.create(
+                    project=self,
+                    period=month,
+                    value=Decimal("0.00"),
+                    forecast_value=None,
+                    work_completed_percent=None,
+                )
 
     ##################
     # URLS
