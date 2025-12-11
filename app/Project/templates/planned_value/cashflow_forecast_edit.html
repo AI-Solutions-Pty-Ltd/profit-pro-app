@@ -43,6 +43,52 @@
             </div>
         </div>
     {% else %}
+        {% if project_past_end_date %}
+            <!-- Contract Extension Warning -->
+            <div class="bg-orange-50 border-l-4 border-orange-400 p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">{% heroicon_outline "clock" class="h-5 w-5 text-orange-400" %}</div>
+                    <div class="ml-3 flex-1">
+                        <h3 class="text-sm font-medium text-orange-800">Project End Date Has Passed</h3>
+                        <div class="mt-2 text-sm text-orange-700">
+                            <p>
+                                The project end date ({{ project.end_date|date:"F Y" }}) has passed.
+                                {% if months_past_end > 0 %}
+                                    You are currently {{ months_past_end }} month{{ months_past_end|pluralize }} past the original end date.
+                                {% endif %}
+                            </p>
+                            <p class="mt-1">To accommodate contract extensions, you can extend the cashflow forecast by adding more months.</p>
+                        </div>
+                        <div class="mt-4">
+                            <form method="post"
+                                  action="{% url 'project:cashflow-forecast-extend' project.pk %}"
+                                  class="flex items-center space-x-3">
+                                {% csrf_token %}
+                                <label for="extend_months" class="text-sm font-medium text-orange-800">Extend by:</label>
+                                <select name="extend_months"
+                                        id="extend_months"
+                                        class="rounded-md border-orange-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm">
+                                    {% for i in "123456789"|make_list %}
+                                        <option value="{{ i }}"
+                                                {% if months_past_end and i == months_past_end|stringformat:"s" %}selected{% endif %}>
+                                            {{ i }} month{{ i|pluralize }}
+                                        </option>
+                                    {% endfor %}
+                                    <option value="12">12 months</option>
+                                    <option value="18">18 months</option>
+                                    <option value="24">24 months</option>
+                                </select>
+                                <button type="submit"
+                                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                                    {% heroicon_outline "plus-circle" size="16" %}
+                                    <span class="ml-1">Extend Forecast</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
         <!-- Summary Stats -->
         <div class="bg-white shadow-sm rounded-lg mb-6">
             <div class="px-6 py-4">

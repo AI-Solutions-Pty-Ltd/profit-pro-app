@@ -15,4 +15,9 @@ planned_value_urls = [
         planned_value_views.CashflowForecastEditView.as_view(),
         name="cashflow-forecast-edit",
     ),
+    path(
+        "project/<int:project_pk>/cashflow-forecast/extend/",
+        planned_value_views.ExtendCashflowForecastView.as_view(),
+        name="cashflow-forecast-extend",
+    ),
 ]
