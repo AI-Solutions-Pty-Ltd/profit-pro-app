@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_full.html" %}
 {% block title %}
     {{ project.name }} Dashboard - {{ block.super }}
 {% endblock title %}
@@ -30,7 +30,9 @@
                         {% heroicon_outline "document-text" size="20" class="text-white" %}
                     </div>
                     <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Original Contract</p>
-                    <p class="text-lg font-bold text-blue-700 mt-1">R {{ original_contract_value|floatformat:0|intcomma }}</p>
+                    <p class="text-base font-bold text-blue-700 mt-1 text-wrap leading-tight">
+                        R&nbsp;{{ original_contract_value|floatformat:0|intcomma }}
+                    </p>
                 </div>
                 <!-- Revised Contract Value -->
                 <div class="bg-indigo-50 rounded-lg p-4 text-center border border-indigo-100">
@@ -38,7 +40,9 @@
                         {% heroicon_outline "banknotes" size="20" class="text-white" %}
                     </div>
                     <p class="text-xs font-medium text-indigo-600 uppercase tracking-wider">Revised Contract</p>
-                    <p class="text-lg font-bold text-indigo-700 mt-1">R {{ revised_contract_value|floatformat:0|intcomma }}</p>
+                    <p class="text-base font-bold text-indigo-700 mt-1 text-wrap leading-tight">
+                        R&nbsp;{{ revised_contract_value|floatformat:0|intcomma }}
+                    </p>
                 </div>
                 <!-- Latest Forecast -->
                 <div class="bg-amber-50 rounded-lg p-4 text-center border border-amber-100">
@@ -47,13 +51,15 @@
                     </div>
                     <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Latest Forecast</p>
                     {% if latest_forecast_value %}
-                        <p class="text-lg font-bold text-amber-700 mt-1">R {{ latest_forecast_value|floatformat:0|intcomma }}</p>
+                        <p class="text-base font-bold text-amber-700 mt-1 text-wrap leading-tight">
+                            R&nbsp;{{ latest_forecast_value|floatformat:0|intcomma }}
+                        </p>
                         <p class="text-xs {% if forecast_variance_percent > 0 %}text-red-600{% elif forecast_variance_percent < 0 %}text-green-600{% else %}text-gray-500{% endif %}">
                             {% if forecast_variance_percent > 0 %}+{% endif %}
                             {{ forecast_variance_percent }}% variance
                         </p>
                     {% else %}
-                        <p class="text-lg font-bold text-amber-700 mt-1">--</p>
+                        <p class="text-base font-bold text-amber-700 mt-1">--</p>
                     {% endif %}
                 </div>
                 <!-- Certified to Date -->
@@ -62,7 +68,9 @@
                         {% heroicon_outline "check-badge" size="20" class="text-white" %}
                     </div>
                     <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Certified to Date</p>
-                    <p class="text-lg font-bold text-green-700 mt-1">R {{ certified_to_date|floatformat:0|intcomma }}</p>
+                    <p class="text-base font-bold text-green-700 mt-1 text-wrap leading-tight">
+                        R&nbsp;{{ certified_to_date|floatformat:0|intcomma }}
+                    </p>
                     {% if certified_percent is not None %}
                         <p class="text-xs text-green-600">{{ certified_percent }}% of contract</p>
                     {% endif %}
@@ -73,7 +81,7 @@
                         {% heroicon_outline "currency-dollar" size="20" class="text-white" %}
                     </div>
                     <p class="text-xs font-medium text-cyan-600 uppercase tracking-wider">CPI</p>
-                    <p class="text-lg font-bold {% if current_cpi > 1 %}text-green-700{% elif current_cpi == 1 %}text-cyan-700{% elif current_cpi %}text-red-700{% else %}text-gray-500{% endif %} mt-1">
+                    <p class="text-base font-bold {% if current_cpi > 1 %}text-green-700{% elif current_cpi == 1 %}text-cyan-700{% elif current_cpi %}text-red-700{% else %}text-gray-500{% endif %} mt-1 text-wrap leading-tight">
                         {{ current_cpi|default:"--" }}
                     </p>
                     {% if current_cpi %}
@@ -94,7 +102,7 @@
                         {% heroicon_outline "clock" size="20" class="text-white" %}
                     </div>
                     <p class="text-xs font-medium text-violet-600 uppercase tracking-wider">SPI</p>
-                    <p class="text-lg font-bold {% if current_spi > 1 %}text-green-700{% elif current_spi == 1 %}text-violet-700{% elif current_spi %}text-red-700{% else %}text-gray-500{% endif %} mt-1">
+                    <p class="text-base font-bold {% if current_spi > 1 %}text-green-700{% elif current_spi == 1 %}text-violet-700{% elif current_spi %}text-red-700{% else %}text-gray-500{% endif %} mt-1 text-wrap leading-tight">
                         {{ current_spi|default:"--" }}
                     </p>
                     {% if current_spi %}

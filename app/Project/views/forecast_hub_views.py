@@ -225,9 +225,9 @@ class EarnedValueView(ForecastHubMixin, TemplateView):
         if selected_date_str:
             try:
                 selected_date = datetime.strptime(selected_date_str, "%Y-%m-%d").date()
-                # Don't allow future dates
-                if selected_date > datetime.now().date():
-                    selected_date = datetime.now().date()
+                # # Don't allow future dates
+                # if selected_date > datetime.now().date():
+                #     selected_date = datetime.now().date()
             except ValueError:
                 selected_date = datetime.now().date()
         else:
@@ -262,14 +262,13 @@ class EarnedValueView(ForecastHubMixin, TemplateView):
             approved_on__lte=current_month.date(),
         ).order_by("-approved_on")
 
-        actual_cost = project.get_actual_cost(date=current_month)
-
         # Get planned value (cumulative)
         planned_values = project.planned_values.filter(period__lte=current_month.date())
 
         planned_value = sum_queryset(planned_values, "value")
 
         # Calculate actual % completion
+        actual_cost = project.get_actual_cost(date=current_month)
         actual_percent = project.get_actual_cost_percentage(current_month)
 
         # Calculate Earned Value

@@ -433,8 +433,7 @@ class Project(BaseModel):
         if not date:
             date = datetime.now()
         planned_values = self.planned_values.filter(
-            period__month=date.month,
-            period__year=date.year,
+            period__lte=date,
         )
         return sum_queryset(planned_values, "value")
 
@@ -447,12 +446,11 @@ class Project(BaseModel):
         """Total certified amount from approved payment certificates for the given month."""
         if not date:
             date = datetime.now()
-        payment_certificates = self.payment_certificates.filter(
-            approved_on__month=date.month,
-            approved_on__year=date.year,
+        approved_certificates = self.payment_certificates.filter(
+            approved_on__lte=date,
             status=PaymentCertificate.Status.APPROVED,
         )
-        return sum_queryset(payment_certificates, "actual_transactions__total_price")
+        return sum_queryset(approved_certificates, "actual_transactions__total_price")
 
     @property
     def actual_cost(self: "Project") -> Decimal:
@@ -462,6 +460,10 @@ class Project(BaseModel):
     def get_actual_cost_percentage(
         self: "Project", date: datetime | None = None
     ) -> Decimal:
+        """Percentage of the total contract value that has been certified
+
+        Formula: (AC / TCV) * 100
+        """
         if not date:
             date = datetime.now()
         return round(self.get_actual_cost(date) / self.total_contract_value * 100, 2)
@@ -475,12 +477,11 @@ class Project(BaseModel):
         """From Forecast to Completion Cost in the Cost Report"""
         if not date:
             date = datetime.now()
-        forecasts = self.forecasts.filter(
-            period__month=date.month,
-            period__year=date.year,
+        forecast = self.forecasts.filter(
+            period__lte=date,
             status=Forecast.Status.APPROVED,
-        )
-        return sum_queryset(forecasts, "forecast_transactions__total_price")
+        ).first()
+        return forecast.total_forecast if forecast else Decimal("0")
 
     @property
     def forecast_cost(self: "Project") -> Decimal:
@@ -490,17 +491,16 @@ class Project(BaseModel):
     def get_earned_value(
         self: "Project", date: datetime | None = None
     ) -> Decimal | None:
-        """Earned Value = (Actual Cost / Forecast Cost) * Budgeted Amount (Total Contract Value)"""
+        """Earned Value
+        Formula:
+            Original Budget * Actual Cost Percentage"""
         if not date:
             date = datetime.now()
-        actual = self.get_actual_cost(date)
-        forecast = self.get_forecast_cost(date)
-        if not forecast or forecast == 0:
+        original_contract_value = self.original_contract_value
+        actual_cost_percentage = self.get_actual_cost_percentage(date)
+        if not original_contract_value or not actual_cost_percentage:
             return None
-        budget = self.total_contract_value
-        if not budget or budget == 0:
-            return None
-        return (actual / forecast) * budget
+        return original_contract_value * (actual_cost_percentage / 100)
 
     @property
     def earned_value(self: "Project") -> Decimal | None:
@@ -593,7 +593,10 @@ class Project(BaseModel):
     def get_estimate_to_complete(
         self: "Project", date: datetime | None = None
     ) -> Decimal | None:
-        """Estimate to Complete (ETC): EAC - AC"""
+        """Estimate to Complete (ETC):
+
+        Formula:
+            EAC - AC"""
         if not date:
             date = datetime.now()
 
@@ -611,10 +614,10 @@ class Project(BaseModel):
     def get_to_complete_project_index(
         self: "Project", date: datetime | None = None
     ) -> Decimal | None:
-        """To Complete Project Index (TCPI)
+        """To Complete Project Index (TCPI):
 
         Formula:
-            (Total Revised Budget - Actual Cost) / (EAC - Actual Cost)
+            (Total Revised Budget - Actual Cost) / (Estimate To Complete - Actual Cost)
         """
         if not date:
             date = datetime.now()

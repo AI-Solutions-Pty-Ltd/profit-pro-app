@@ -103,7 +103,7 @@ class PaymentCertificate(BaseModel):
 
     @property
     def previous_certificates(self) -> QuerySet[PaymentCertificate]:
-        return PaymentCertificate.all_objects.filter(
+        return PaymentCertificate.objects.filter(
             project=self.project,
             certificate_number__lt=self.certificate_number,
             status=PaymentCertificate.Status.APPROVED,
@@ -268,7 +268,10 @@ class PaymentCertificate(BaseModel):
     def progressive_previous(self) -> Decimal:
         """Calculate total of all previously approved certificates."""
         previous_certificates = self.previous_certificates
-        return sum_queryset(previous_certificates, "actual_transactions__total_price")
+        actual_transactions = ActualTransaction.objects.filter(
+            payment_certificate__in=previous_certificates
+        )
+        return sum_queryset(actual_transactions, "total_price")
 
     @property
     def current_claim_total(self) -> Decimal:
