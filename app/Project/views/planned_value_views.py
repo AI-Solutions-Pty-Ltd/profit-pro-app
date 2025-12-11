@@ -118,7 +118,7 @@ class PlannedValueEditView(PlannedValueMixin, TemplateView):
             (mf["existing_value"].value if mf["existing_value"] else Decimal("0"))
             for mf in month_forms
         )
-        contract_value = project.get_total_contract_value
+        contract_value = project.total_contract_value
         difference = contract_value - total_planned
 
         # Warning if totals don't match
@@ -189,7 +189,7 @@ class PlannedValueEditView(PlannedValueMixin, TemplateView):
             total_planned = PlannedValue.objects.filter(project=project).aggregate(
                 total=Sum("value")
             )["total"] or Decimal("0")
-            contract_value = project.get_total_contract_value
+            contract_value = project.total_contract_value
 
             if total_planned != contract_value and contract_value > 0:
                 difference = contract_value - total_planned
@@ -279,7 +279,7 @@ class CashflowForecastEditView(PlannedValueMixin, TemplateView):
             )
             for mf in month_forms
         )
-        contract_value = project.get_total_contract_value
+        contract_value = project.total_contract_value
         difference = contract_value - total_forecast
 
         # Warning if totals don't match
@@ -352,7 +352,7 @@ class CashflowForecastEditView(PlannedValueMixin, TemplateView):
             total_forecast = PlannedValue.objects.filter(project=project).aggregate(
                 total=Sum("forecast_value")
             )["total"] or Decimal("0")
-            contract_value = project.get_total_contract_value
+            contract_value = project.total_contract_value
 
             if total_forecast != contract_value and contract_value > 0:
                 difference = contract_value - total_forecast

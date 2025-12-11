@@ -57,14 +57,14 @@ class ProjectDashboardView(ProjectMixin, DetailView):
         current_date = get_end_of_month(datetime.now())
 
         # Contract values
-        original_contract_value = project.get_original_contract_value
-        revised_contract_value = project.get_total_contract_value
+        original_contract_value = project.original_contract_value
+        revised_contract_value = project.total_contract_value
         context["original_contract_value"] = original_contract_value
         context["revised_contract_value"] = revised_contract_value
 
         # Latest forecast value and variance
-        if project.get_latest_forecast:
-            context["latest_forecast_value"] = project.get_latest_forecast
+        if project.latest_forecast:
+            context["latest_forecast_value"] = project.latest_forecast
             context["forecast_variance_percent"] = project.forecast_variance_percent
         else:
             context["latest_forecast_value"] = None
@@ -76,8 +76,8 @@ class ProjectDashboardView(ProjectMixin, DetailView):
         context["certified_percent"] = project.total_certified_to_date_percentage
 
         # Latest CPI and SPI
-        context["current_cpi"] = project.cost_performance_index(current_date)
-        context["current_spi"] = project.schedule_performance_index(current_date)
+        context["current_cpi"] = project.get_cost_performance_index(current_date)
+        context["current_spi"] = project.get_schedule_performance_index(current_date)
         context["current_date"] = current_date
 
         # Add financial comparison chart data

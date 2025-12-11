@@ -61,8 +61,8 @@ class Portfolio(BaseModel):
         urgent = []
         for project in self.get_active_projects(category):
             try:
-                cpi = project.cost_performance_index(date)
-                spi = project.schedule_performance_index(date)
+                cpi = project.get_cost_performance_index(date)
+                spi = project.get_schedule_performance_index(date)
                 # Both CPI and SPI must be below 0.96 for urgent intervention
                 if (cpi and cpi < Decimal("0.96")) and (spi and spi < Decimal("0.96")):
                     urgent.append(project)
@@ -89,8 +89,8 @@ class Portfolio(BaseModel):
             if project.pk in urgent_ids:
                 continue
             try:
-                cpi = project.cost_performance_index(date)
-                spi = project.schedule_performance_index(date)
+                cpi = project.get_cost_performance_index(date)
+                spi = project.get_schedule_performance_index(date)
                 # CPI or SPI is >= 0.96 but < 1.0
                 cpi_needs_attention = cpi and Decimal("0.96") <= cpi < Decimal("1.0")
                 spi_needs_attention = spi and Decimal("0.96") <= spi < Decimal("1.0")
@@ -114,7 +114,7 @@ class Portfolio(BaseModel):
         """Sum of original contract values with optional category filter."""
         total = Decimal("0.00")
         for project in self.get_active_projects(category):
-            total += project.get_original_contract_value or Decimal("0.00")
+            total += project.original_contract_value or Decimal("0.00")
         return total
 
     @property
@@ -248,7 +248,7 @@ class Portfolio(BaseModel):
         valid_count = 0
         for project in self.get_active_projects(category):
             try:
-                ev = project.earned_value(date)
+                ev = project.get_earned_value(date)
                 if ev:
                     total += ev
                     valid_count += 1
@@ -272,7 +272,7 @@ class Portfolio(BaseModel):
         valid_count = 0
         for project in self.get_active_projects(category):
             try:
-                cv = project.cost_variance(date)
+                cv = project.get_cost_variance(date)
                 if cv:
                     total += cv
                     valid_count += 1
@@ -296,7 +296,7 @@ class Portfolio(BaseModel):
         valid_count = 0
         for project in self.get_active_projects(category):
             try:
-                sv = project.schedule_variance(date)
+                sv = project.get_schedule_variance(date)
                 if sv:
                     total += sv
                     valid_count += 1
@@ -335,7 +335,7 @@ class Portfolio(BaseModel):
         valid_projects = 0
         for project in active_projects:
             try:
-                project_cpi = project.cost_performance_index(date)
+                project_cpi = project.get_cost_performance_index(date)
                 if project_cpi:
                     cpi += project_cpi
                     valid_projects += 1
@@ -365,7 +365,7 @@ class Portfolio(BaseModel):
         valid_projects = 0
         for project in active_projects:
             try:
-                project_spi = project.schedule_performance_index(date)
+                project_spi = project.get_schedule_performance_index(date)
                 if project_spi:
                     spi += project_spi
                     valid_projects += 1

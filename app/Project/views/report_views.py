@@ -89,7 +89,7 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
 
         for project in projects:
             # Budget (Original Contract Value)
-            budget = project.get_original_contract_value or Decimal("0.00")
+            budget = project.original_contract_value or Decimal("0.00")
 
             # Forecast (Latest approved forecast total)
             latest_forecast = (
@@ -115,18 +115,20 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
 
             # Cost Variance (Earned Value - Actual Cost)
             try:
-                cost_variance = project.cost_variance(current_date) or Decimal("0.00")
+                cost_variance = project.get_cost_variance(current_date) or Decimal(
+                    "0.00"
+                )
             except (ZeroDivisionError, TypeError):
                 cost_variance = Decimal("0.00")
 
             # CPI & SPI
             try:
-                cpi = project.cost_performance_index(current_date)
+                cpi = project.get_cost_performance_index(current_date)
             except (ZeroDivisionError, TypeError):
                 cpi = None
 
             try:
-                spi = project.schedule_performance_index(current_date)
+                spi = project.get_schedule_performance_index(current_date)
             except (ZeroDivisionError, TypeError):
                 spi = None
 
@@ -289,8 +291,8 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
                 planned_duration = (planned_end - planned_start).days
 
             # Percentage complete (based on certified vs budget)
-            budget = project.get_original_contract_value or Decimal("0.00")
-            certified = project.actual_cost() or Decimal("0.00")
+            budget = project.original_contract_value or Decimal("0.00")
+            certified = project.get_actual_cost() or Decimal("0.00")
             percent_work_complete = (
                 (certified / budget * 100) if budget else Decimal("0.00")
             )
@@ -322,7 +324,7 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
 
             # SPI
             try:
-                spi = project.schedule_performance_index(current_date)
+                spi = project.get_schedule_performance_index(current_date)
             except (ZeroDivisionError, TypeError):
                 spi = None
 
@@ -644,9 +646,7 @@ class TrendReportView(UserHasGroupGenericMixin, BreadcrumbMixin, TemplateView):
             projects = [p for p in projects if p.lead_consultant == consultant]
 
         # Monthly budget = total budget / 12 (simplified distribution)
-        total_budget = sum(
-            p.get_original_contract_value or Decimal("0") for p in projects
-        )
+        total_budget = sum(p.original_contract_value or Decimal("0") for p in projects)
         monthly_budget = float(total_budget / 12) if total_budget else 0
 
         # Generate data for last 12 months (oldest to newest)
@@ -666,21 +666,21 @@ class TrendReportView(UserHasGroupGenericMixin, BreadcrumbMixin, TemplateView):
 
             for project in projects:
                 try:
-                    pv = project.planned_value(month_date)
+                    pv = project.get_planned_value(month_date)
                     if pv:
                         planned_total += pv
                 except (ZeroDivisionError, TypeError, Exception):
                     pass
 
                 try:
-                    ac = project.actual_cost(month_date)
+                    ac = project.get_actual_cost(month_date)
                     if ac:
                         actual_total += ac
                 except (ZeroDivisionError, TypeError, Exception):
                     pass
 
                 try:
-                    fc = project.forecast_cost(month_date)
+                    fc = project.get_forecast_cost(month_date)
                     if fc:
                         forecast_total += fc
                 except (ZeroDivisionError, TypeError, Exception):

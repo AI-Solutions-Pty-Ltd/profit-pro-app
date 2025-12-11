@@ -690,10 +690,10 @@ class ForecastListView(ForecastMixin, ListView):
         current_date = datetime.now()
 
         # Get original budget total (excl addendums)
-        original_budget = project.get_original_contract_value
+        original_budget = project.original_contract_value
 
         # Get revised contract value (total including addendums)
-        revised_contract_value = project.get_total_contract_value
+        revised_contract_value = project.total_contract_value
 
         # Get draft forecast if any
         draft_forecast = Forecast.objects.filter(
@@ -715,8 +715,8 @@ class ForecastListView(ForecastMixin, ListView):
             )["total"] or Decimal("0.00")
 
         # CPI and SPI
-        context["current_cpi"] = project.cost_performance_index(current_date)
-        context["current_spi"] = project.schedule_performance_index(current_date)
+        context["current_cpi"] = project.get_cost_performance_index(current_date)
+        context["current_spi"] = project.get_schedule_performance_index(current_date)
 
         # Chart data - prepare waterfall data
         chart_labels = []

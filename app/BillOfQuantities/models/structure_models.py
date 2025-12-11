@@ -318,7 +318,7 @@ class LineItem(BaseModel):
         # historically qty claimed, excluding current pmt cert
         project: Project = self.project
         active_payment_certificate: PaymentCertificate | None = (
-            project.get_active_payment_certificate
+            project.active_payment_certificate
         )
 
         actual_transactions = self.actual_transactions.filter(claimed=True)
@@ -339,7 +339,7 @@ class LineItem(BaseModel):
         # historically claim value, excluding current pmt cert
         project: Project = self.project
         active_payment_certificate: PaymentCertificate | None = (
-            project.get_active_payment_certificate
+            project.active_payment_certificate
         )
         if active_payment_certificate:
             previous_actual_transactions = self.actual_transactions.filter(
@@ -359,7 +359,7 @@ class LineItem(BaseModel):
     @property
     def current_transaction(self):
         project: Project = self.project
-        active_certificate = project.get_active_payment_certificate
+        active_certificate = project.active_payment_certificate
         if active_certificate:
             try:
                 return active_certificate.actual_transactions.get(
