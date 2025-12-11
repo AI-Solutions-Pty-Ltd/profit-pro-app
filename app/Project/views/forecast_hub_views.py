@@ -172,7 +172,7 @@ class CashflowForecastView(ForecastHubMixin, TemplateView):
             cumulative_forecast.append(float(running_forecast))
             cumulative_work_completed.append(float(running_work_completed))
 
-        contract_value = float(project.get_total_contract_value)
+        contract_value = float(project.total_contract_value)
 
         context.update(
             {
@@ -238,8 +238,8 @@ class EarnedValueView(ForecastHubMixin, TemplateView):
         )
 
         # Get EVM data from project methods
-        original_budget = project.get_original_contract_value
-        revised_budget = project.get_total_contract_value
+        original_budget = project.original_contract_value
+        revised_budget = project.total_contract_value
 
         # Get cumulative actual cost (total certified to date)
 
@@ -262,7 +262,7 @@ class EarnedValueView(ForecastHubMixin, TemplateView):
             approved_on__lte=current_month.date(),
         ).order_by("-approved_on")
 
-        actual_cost = project.actual_cost(date=current_month)
+        actual_cost = project.get_actual_cost(date=current_month)
 
         # Get planned value (cumulative)
         planned_values = project.planned_values.filter(period__lte=current_month.date())
@@ -270,33 +270,25 @@ class EarnedValueView(ForecastHubMixin, TemplateView):
         planned_value = sum_queryset(planned_values, "value")
 
         # Calculate actual % completion
-        actual_percent = Decimal(0)
-        if revised_budget > 0:
-            actual_percent = round((actual_cost / revised_budget) * 100, 2)
+        actual_percent = project.get_actual_cost_percentage(current_month)
 
         # Calculate Earned Value
-        earned_value = Decimal(
-            (original_budget * actual_percent / 100) if actual_percent > 0 else 0
-        )
+        earned_value = project.get_earned_value(current_month)
 
         # Calculate variances
-        cost_variance = earned_value - actual_cost
-        schedule_variance = earned_value - planned_value
+        cost_variance = project.get_cost_variance(current_month)
+        schedule_variance = project.get_schedule_variance(current_month)
 
         # Calculate performance indices
-        cpi = project.cost_performance_index(date=current_month)
-        spi = project.schedule_performance_index(date=current_month)
+        cpi = project.get_cost_performance_index(date=current_month)
+        spi = project.get_schedule_performance_index(date=current_month)
 
         # Calculate estimates
-        eac = (
-            round(original_budget / cpi, 2) if cpi and cpi > Decimal(0) else None
-        )  # Estimate at Completion
-        etc = round(eac - actual_cost, 2) if eac else None  # Estimate to Complete
+        eac = project.get_estimate_at_completion(current_month)
+        etc = project.get_estimate_to_complete(current_month)
 
         # TCPI - To Complete Performance Index
-        tcpi = None
-        if eac and eac != actual_cost:
-            tcpi = round((original_budget - earned_value) / (eac - actual_cost), 2)
+        tcpi = project.get_to_complete_project_index(current_month)
 
         # CPI interpretation
         cpi_interpretation = ""

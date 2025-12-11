@@ -321,29 +321,29 @@ class Project(BaseModel):
         return True
 
     @property
-    def get_original_contract_value(self) -> Decimal:
+    def original_contract_value(self) -> Decimal:
         all_line_items = self.line_items.all()
         original_line_items = all_line_items.filter(addendum=False, special_item=False)
         return sum_queryset(original_line_items, "total_price")
 
     @property
-    def get_addendum_contract_value(self) -> Decimal:
+    def addendum_contract_value(self) -> Decimal:
         all_line_items = self.line_items.all()
         addendum_line_items = all_line_items.filter(addendum=True)
         return sum_queryset(addendum_line_items, "total_price")
 
     @property
     def contract_addendum_value(self) -> Decimal:
-        return self.get_addendum_contract_value + self.get_special_contract_value
+        return self.addendum_contract_value + self.special_contract_value
 
     @property
-    def get_special_contract_value(self) -> Decimal:
+    def special_contract_value(self) -> Decimal:
         all_line_items = self.line_items.all()
         special_line_items = all_line_items.filter(special_item=True)
         return sum_queryset(special_line_items, "total_price")
 
     @property
-    def get_total_contract_value(self) -> Decimal:
+    def total_contract_value(self) -> Decimal:
         return sum_queryset(self.line_items.all(), "total_price")
 
     ##################
@@ -351,7 +351,7 @@ class Project(BaseModel):
     ##################
 
     @property
-    def get_active_payment_certificate(self) -> Optional["PaymentCertificate"]:
+    def active_payment_certificate(self) -> Optional["PaymentCertificate"]:
         """Get the most recent active payment certificate (DRAFT, SUBMITTED, or REJECTED)."""
 
         return (
@@ -392,20 +392,20 @@ class Project(BaseModel):
         if not self.total_certified_to_date:
             return Decimal(0)
         return Decimal(
-            round(self.get_total_contract_value / self.total_certified_to_date * 100, 2)
+            round(self.total_contract_value / self.total_certified_to_date * 100, 2)
         )
 
     ##################
     # Forecasts
     ##################
     @property
-    def get_latest_forecast(self) -> Forecast | None:
+    def latest_forecast(self) -> Forecast | None:
         return self.forecasts.filter(status=Forecast.Status.APPROVED).first()
 
     @property
     def forecast_variance_percent(self: "Project") -> Decimal | None:
-        revised_contract_value = self.get_total_contract_value
-        latest_forecast = self.get_latest_forecast
+        revised_contract_value = self.total_contract_value
+        latest_forecast = self.latest_forecast
         if not revised_contract_value or not latest_forecast:
             return None
         return Decimal(
@@ -420,7 +420,7 @@ class Project(BaseModel):
     # Final Reports
     ##################
 
-    def planned_value(self, date: datetime | None = None) -> Decimal:
+    def get_planned_value(self, date: datetime | None = None) -> Decimal:
         """From Cashflow Forecast included as part of the baseline/Contract WBS"""
         if not date:
             date = datetime.now()
@@ -430,7 +430,7 @@ class Project(BaseModel):
         )
         return sum_queryset(planned_values, "value")
 
-    def actual_cost(self, date: datetime | None = None) -> Decimal:
+    def get_actual_cost(self, date: datetime | None = None) -> Decimal:
         """Total certified amount from approved payment certificates for the given month."""
         if not date:
             date = datetime.now()
@@ -441,7 +441,10 @@ class Project(BaseModel):
         )
         return sum_queryset(payment_certificates, "actual_transactions__total_price")
 
-    def forecast_cost(self, date: datetime | None = None) -> Decimal:
+    def get_actual_cost_percentage(self, date: datetime | None) -> Decimal:
+        return round(self.get_actual_cost(date) / self.total_contract_value * 100, 2)
+
+    def get_forecast_cost(self, date: datetime | None = None) -> Decimal:
         """From Forecast to Completion Cost in the Cost Report"""
         if not date:
             date = datetime.now()
@@ -452,31 +455,45 @@ class Project(BaseModel):
         )
         return sum_queryset(forecasts, "forecast_transactions__total_price")
 
-    def earned_value(self, date: datetime | None = None) -> Decimal | None:
+    def get_earned_value(
+        self: "Project", date: datetime | None = None
+    ) -> Decimal | None:
         """Earned Value = (Actual Cost / Forecast Cost) * Budgeted Amount (Total Contract Value)"""
         if not date:
             date = datetime.now()
-        actual = self.actual_cost(date)
-        forecast = self.forecast_cost(date)
+        actual = self.get_actual_cost(date)
+        forecast = self.get_forecast_cost(date)
         if not forecast or forecast == 0:
             return None
-        budget = self.get_total_contract_value
+        budget = self.total_contract_value
         if not budget or budget == 0:
             return None
         return (actual / forecast) * budget
 
-    def cost_variance(self, date) -> Decimal:
+    @property
+    def earned_value(self: "Project") -> Decimal | None:
+        return self.get_earned_value()
+
+    def get_cost_variance(self: "Project", date: datetime | None = None) -> Decimal:
         """Earned Value - Actual Cost"""
         if not date:
             date = datetime.now()
-        return self.earned_value(date) or Decimal("0.00") - self.actual_cost(date)
+        return (self.get_earned_value(date) or Decimal("0.00")) - self.get_actual_cost(
+            date
+        )
 
-    def schedule_variance(self, date) -> Decimal:
+    @property
+    def cost_variance(self: "Project") -> Decimal:
+        return self.get_cost_variance()
+
+    def get_schedule_variance(self: "Project", date: datetime | None = None) -> Decimal:
         if not date:
             date = datetime.now()
-        return self.earned_value(date) or Decimal("0.00") - self.planned_value(date)
+        return (
+            self.get_earned_value(date) or Decimal("0.00")
+        ) - self.get_planned_value(date)
 
-    def cost_performance_index(
+    def get_cost_performance_index(
         self: "Project", date: datetime | None = None
     ) -> Decimal | None:
         """Earned Value/Actual Cost
@@ -487,13 +504,13 @@ class Project(BaseModel):
         """
         if not date:
             date = datetime.now()
-        earned = self.earned_value(date)
-        actual = self.actual_cost(date)
+        earned = self.get_earned_value(date)
+        actual = self.get_actual_cost(date)
         if not earned or not actual or actual == 0:
             return None
         return round(earned / actual, 2)
 
-    def schedule_performance_index(
+    def get_schedule_performance_index(
         self: "Project", date: datetime | None = None
     ) -> Decimal | None:
         """Earned Value/Planned Value
@@ -504,35 +521,41 @@ class Project(BaseModel):
         """
         if not date:
             date = datetime.now()
-        earned = self.earned_value(date)
-        planned = self.planned_value(date)
+        earned = self.get_earned_value(date)
+        planned = self.get_planned_value(date)
         if not earned or not planned or planned == 0:
             return None
         return round(earned / planned, 2)
 
-    def estimate_at_completion(self, date: datetime | None = None) -> Decimal | None:
+    def get_estimate_at_completion(
+        self: "Project", date: datetime | None = None
+    ) -> Decimal | None:
         """Estimate at Completion (EAC): Original budget / cpi"""
         if not date:
             date = datetime.now()
 
-        original_budget = self.get_total_contract_value
-        cpi = self.cost_performance_index(date)
+        original_budget = self.total_contract_value
+        cpi = self.get_cost_performance_index(date)
         if not cpi or cpi == 0:
             return None
         return original_budget / cpi
 
-    def estimate_to_complete(self, date: datetime | None = None) -> Decimal | None:
+    def get_estimate_to_complete(
+        self: "Project", date: datetime | None = None
+    ) -> Decimal | None:
         """Estimate to Complete (ETC): EAC - AC"""
         if not date:
             date = datetime.now()
 
-        eac = self.estimate_at_completion(date)
-        ac = self.actual_cost(date)
+        eac = self.get_estimate_at_completion(date)
+        ac = self.get_actual_cost(date)
         if not eac or not ac:
             return None
         return eac - ac
 
-    def to_complete_project_index(self, date: datetime | None = None) -> Decimal | None:
+    def get_to_complete_project_index(
+        self: "Project", date: datetime | None = None
+    ) -> Decimal | None:
         """To Complete Project Index (TCPI)
 
         Formula:
@@ -541,9 +564,9 @@ class Project(BaseModel):
         if not date:
             date = datetime.now()
 
-        total_revised_budget = self.get_total_contract_value
-        actual_cost = self.actual_cost(date)
-        eac = self.estimate_at_completion(date)
+        total_revised_budget = self.total_contract_value
+        actual_cost = self.get_actual_cost(date)
+        eac = self.get_estimate_at_completion(date)
         if not total_revised_budget or not actual_cost or not eac:
             return None
-        return (total_revised_budget - actual_cost) / (eac - actual_cost)
+        return round((total_revised_budget - actual_cost) / (eac - actual_cost), 2)

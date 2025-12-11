@@ -2,6 +2,7 @@
 
 import json
 from datetime import datetime, timedelta
+from typing import cast
 
 from django.db.models import QuerySet
 from django.http import JsonResponse
@@ -9,6 +10,7 @@ from django.views.generic import (
     ListView,
 )
 
+from app.Account.models import Account
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
@@ -85,8 +87,7 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
     def get_context_data(self: "PortfolioDashboardView", **kwargs):
         """Add financial metrics to context."""
         context = super().get_context_data(**kwargs)
-        user = self.request.user  # type: ignore
-        portfolio: Portfolio
+        user: Account = self.request.user  # type: ignore
         projects: QuerySet[Project] = context["projects"]
         current_date = datetime.now()
 
@@ -96,10 +97,10 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         dashboard_data = []
         for project in projects:
             # Get contract value
-            contract_value = project.get_total_contract_value
+            contract_value = project.total_contract_value
 
             # Get cumulative certified to date (sum of all approved payment certificates)
-            certified_amount = project.actual_cost()
+            certified_amount = project.get_actual_cost()
 
             # Get latest forecast to date
             latest_forecast = project.forecasts.order_by("-period").first()
@@ -116,11 +117,11 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
 
             # Get CPI and SPI for this project
             try:
-                project_cpi = project.cost_performance_index(current_date)
+                project_cpi = project.get_cost_performance_index(current_date)
             except (ZeroDivisionError, TypeError):
                 project_cpi = None
             try:
-                project_spi = project.schedule_performance_index(current_date)
+                project_spi = project.get_schedule_performance_index(current_date)
             except (ZeroDivisionError, TypeError):
                 project_spi = None
 
@@ -149,11 +150,11 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         context["dashboard_data"] = dashboard_data
         # If no portfolio, return early with default values
         if not user.portfolio:  # type: ignore
-            portfolio = Portfolio.objects.create()  #
-            portfolio.users.add(user)  # type: ignore
-            projects.update(portfolio=portfolio)
-        else:
-            portfolio = user.portfolio  # type: ignore
+            new_portfolio: Portfolio = Portfolio.objects.create()  #
+            new_portfolio.users.add(user)  # type: ignore
+            projects.update(portfolio=new_portfolio)
+        user.refresh_from_db()
+        portfolio: Portfolio = cast(Portfolio, user.portfolio)
         context["portfolio"] = portfolio
         context["current_date"] = current_date
 
@@ -336,21 +337,21 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
 
             for project in portfolio.get_active_projects(category):
                 try:
-                    pv = project.planned_value(month_date)
+                    pv = project.get_planned_value(month_date)
                     if pv:
                         planned_total += pv
                 except (ZeroDivisionError, TypeError, Exception):
                     pass
 
                 try:
-                    ac = project.actual_cost(month_date)
+                    ac = project.get_actual_cost(month_date)
                     if ac:
                         actual_total += ac
                 except (ZeroDivisionError, TypeError, Exception):
                     pass
 
                 try:
-                    fc = project.forecast_cost(month_date)
+                    fc = project.get_forecast_cost(month_date)
                     if fc:
                         forecast_total += fc
                 except (ZeroDivisionError, TypeError, Exception):

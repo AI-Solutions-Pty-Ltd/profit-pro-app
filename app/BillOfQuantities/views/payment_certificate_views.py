@@ -112,7 +112,7 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
 
         # Active payment certificate (DRAFT or SUBMITTED)
         active_payment_certificate: PaymentCertificate | None = (
-            self.get_project().get_active_payment_certificate
+            self.get_project().active_payment_certificate
         )
         print(f"get_active_payment_certificate returned: {active_payment_certificate}")
         context["active_certificate"] = active_payment_certificate
@@ -127,7 +127,7 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
         context["completed_payment_certificates"] = completed_certificates
 
         # Contract values
-        revised_contract_value = self.project.get_total_contract_value
+        revised_contract_value = self.project.total_contract_value
         context["revised_contract_value"] = revised_contract_value
 
         # Total certified (from approved certificates)
