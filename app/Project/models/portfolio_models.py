@@ -30,14 +30,14 @@ class Portfolio(BaseModel):
     # ==========================================
 
     @property
-    def active_projects(self) -> QuerySet[Project]:
+    def active_projects(self: "Portfolio") -> QuerySet[Project]:
         """Get all active projects in the portfolio."""
         return self.projects.filter(
             status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED]
         )
 
     def get_active_projects(
-        self, category: "ProjectCategory | None" = None
+        self: "Portfolio", category: "ProjectCategory | None" = None
     ) -> QuerySet[Project]:
         """Get active projects with optional category filter.
 
@@ -52,8 +52,11 @@ class Portfolio(BaseModel):
             projects = projects.filter(category=category)
         return projects
 
+    # projects_requiring_urgent_intervention
     def get_projects_requiring_urgent_intervention(
-        self, date: datetime | None = None, category: "ProjectCategory | None" = None
+        self: "Portfolio",
+        date: datetime | None = None,
+        category: "ProjectCategory | None" = None,
     ) -> list[Project]:
         """Projects with CPI < 0.96 AND SPI < 0.96 (critical threshold)."""
         if not date:
@@ -71,11 +74,14 @@ class Portfolio(BaseModel):
         return urgent
 
     @property
-    def projects_requiring_urgent_intervention(self):
-        return self.projects_requiring_urgent_intervention()
+    def projects_requiring_urgent_intervention(self: "Portfolio") -> list[Project]:
+        return self.get_projects_requiring_urgent_intervention()
 
+    # projects_requiring_attention
     def get_projects_requiring_attention(
-        self, date: datetime | None = None, category: "ProjectCategory | None" = None
+        self: "Portfolio",
+        date: datetime | None = None,
+        category: "ProjectCategory | None" = None,
     ) -> list[Project]:
         """Projects with CPI or SPI >= 0.96 but < 1.0 (not urgent)."""
         if not date:
@@ -101,74 +107,99 @@ class Portfolio(BaseModel):
         return attention
 
     @property
-    def projects_requiring_attention(self):
+    def projects_requiring_attention(self: "Portfolio") -> list[Project]:
         return self.get_projects_requiring_attention()
 
     # ==========================================
     # Group 2 - Budgets and Payments
     # ==========================================
 
+    # total_original_budget
     def get_total_original_budget(
-        self, category: "ProjectCategory | None" = None
+        self: "Portfolio", category: "ProjectCategory | None" = None
     ) -> Decimal:
         """Sum of original contract values with optional category filter."""
-        total = Decimal("0.00")
-        for project in self.get_active_projects(category):
-            total += project.original_contract_value or Decimal("0.00")
-        return total
+        projects = self.get_active_projects(category)
+        if category:
+            projects = projects.filter(category=category)
+
+        # Filter at the LineItem level to ensure we only sum original items
+        from app.BillOfQuantities.models.structure_models import LineItem
+
+        line_items = LineItem.objects.filter(
+            project__in=projects,
+            addendum=False,
+            special_item=False,
+        )
+        return sum_queryset(line_items, "total_price")
 
     @property
-    def total_original_budget(self) -> Decimal:
-        """Sum of original contract values (excluding addendums/variations)."""
+    def total_original_budget(self: "Portfolio") -> Decimal:
+        """Sum of original contract values (excluding addendum/variations)."""
         return self.get_total_original_budget()
 
+    # total_approved_variations
     def get_total_approved_variations(
-        self, category: Optional["ProjectCategory"] = None
+        self: "Portfolio", category: Optional["ProjectCategory"] = None
     ) -> Decimal:
         """Sum of approved variations with optional category filter."""
-        total = Decimal("0.00")
-        for project in self.get_active_projects(category):
-            total += project.contract_addendum_value or Decimal("0.00")
-        return total
+        projects = self.get_active_projects(category)
+        if category:
+            projects = projects.filter(category=category)
+
+        # Filter at the LineItem level to ensure we only sum addendum items
+        from app.BillOfQuantities.models.structure_models import LineItem
+
+        line_items = LineItem.objects.filter(
+            project__in=projects,
+            addendum=True,
+            special_item=False,
+        )
+        return sum_queryset(line_items, "total_price")
 
     @property
-    def total_approved_variations(self) -> Decimal:
+    def total_approved_variations(self: "Portfolio") -> Decimal:
         """Sum of approved variations (addendum + special items)."""
         return self.get_total_approved_variations()
 
+    # total_contract_value
     def get_total_contract_value(
-        self, category: Optional["ProjectCategory"] = None
+        self: "Portfolio", category: Optional["ProjectCategory"] = None
     ) -> Decimal:
         """Total contract value with optional category filter."""
-        return sum_queryset(
-            self.get_active_projects(category), "line_items__total_price"
+        projects = self.get_active_projects(category)
+        if category:
+            projects = projects.filter(category=category)
+
+        # Filter at the LineItem level to ensure we only sum non-special items
+        from app.BillOfQuantities.models.structure_models import LineItem
+
+        line_items = LineItem.objects.filter(
+            project__in=projects,
+            special_item=False,
         )
+        return sum_queryset(line_items, "total_price")
 
     @property
-    def total_contract_value(self) -> Decimal:
+    def total_contract_value(self: "Portfolio") -> Decimal:
         """Total contract value including variations."""
-        return sum_queryset(self.active_projects, "line_items__total_price")
+        return self.get_total_contract_value()
 
+    # total_forecast_value
     def get_total_forecast_value(
-        self, category: "ProjectCategory | None" = None
+        self: "Portfolio", category: "ProjectCategory | None" = None
     ) -> Decimal:
         """Sum of latest forecast values with optional category filter."""
-        total_forecast_value = Decimal(0)
-        for project in self.get_active_projects(category):
-            last_forecast: Forecast | None = project.forecasts.order_by(
-                "-period"
-            ).last()
-            if last_forecast:
-                total_forecast_value += last_forecast.total_forecast
-        return total_forecast_value
+        return sum_queryset(self.get_active_projects(category), "forecasts")
 
     @property
-    def total_forecast_value(self) -> Decimal:
+    def total_forecast_value(self: "Portfolio") -> Decimal:
         """Sum of latest forecast values for all active projects."""
         return self.get_total_forecast_value()
 
+    # total_certified_value
     def get_total_certified_value(
-        self, category: "ProjectCategory | None" = None
+        self: "Portfolio", category: "ProjectCategory | None" = None
     ) -> Decimal:
         """Total certified amount with optional category filter."""
         return sum_queryset(
@@ -177,7 +208,7 @@ class Portfolio(BaseModel):
         )
 
     @property
-    def total_certified_value(self) -> Decimal:
+    def total_certified_value(self: "Portfolio") -> Decimal:
         """Total certified amount to date."""
         return self.get_total_certified_value()
 
@@ -185,8 +216,9 @@ class Portfolio(BaseModel):
     # Cost Forecasts
     # ==========================================
 
+    # forecast_cost_at_completion
     def get_forecast_cost_at_completion(
-        self,
+        self: "Portfolio",
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
     ) -> Decimal | None:
@@ -212,11 +244,12 @@ class Portfolio(BaseModel):
         return total if valid_count > 0 else None
 
     @property
-    def forecast_cost_at_completion(self) -> Decimal | None:
+    def forecast_cost_at_completion(self: "Portfolio") -> Decimal | None:
         return self.get_forecast_cost_at_completion()
 
+    # cost_variance_at_completion
     def get_cost_variance_at_completion(
-        self,
+        self: "Portfolio",
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
     ) -> Decimal | None:
@@ -229,15 +262,16 @@ class Portfolio(BaseModel):
         return self.get_total_original_budget(category) - eac
 
     @property
-    def cost_variance_at_completion(self) -> Decimal | None:
+    def cost_variance_at_completion(self: "Portfolio") -> Decimal | None:
         return self.get_cost_variance_at_completion()
 
     # ==========================================
     # Earned Value Management (EVM)
     # ==========================================
 
+    # total_earned_value
     def get_total_earned_value(
-        self,
+        self: "Portfolio",
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
     ) -> Decimal | None:
@@ -257,11 +291,12 @@ class Portfolio(BaseModel):
         return total if valid_count > 0 else None
 
     @property
-    def total_earned_value(self) -> Decimal | None:
+    def total_earned_value(self: "Portfolio") -> Decimal | None:
         return self.get_total_earned_value()
 
+    # total_cost_variance
     def get_total_cost_variance(
-        self,
+        self: "Portfolio",
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
     ) -> Decimal | None:
@@ -281,11 +316,12 @@ class Portfolio(BaseModel):
         return total if valid_count > 0 else None
 
     @property
-    def total_cost_variance(self) -> Decimal | None:
+    def total_cost_variance(self: "Portfolio") -> Decimal | None:
         return self.get_total_cost_variance()
 
+    # total_schedule_variance
     def get_total_schedule_variance(
-        self,
+        self: "Portfolio",
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
     ) -> Decimal | None:
@@ -305,11 +341,12 @@ class Portfolio(BaseModel):
         return total if valid_count > 0 else None
 
     @property
-    def total_schedule_variance(self) -> Decimal | None:
+    def total_schedule_variance(self: "Portfolio") -> Decimal | None:
         return self.get_total_schedule_variance()
 
+    # total_estimate_at_completion
     def get_total_estimate_at_completion(
-        self,
+        self: "Portfolio",
         date: datetime | None = None,
         category: "ProjectCategory | None" = None,
     ) -> Decimal | None:
@@ -317,9 +354,10 @@ class Portfolio(BaseModel):
         return self.get_forecast_cost_at_completion(date, category)
 
     @property
-    def total_estimate_at_completion(self) -> Decimal | None:
+    def total_estimate_at_completion(self: "Portfolio") -> Decimal | None:
         return self.get_total_estimate_at_completion()
 
+    # cost_performance_index
     def get_cost_performance_index(
         self: "Portfolio",
         date: datetime | None = None,
@@ -347,9 +385,10 @@ class Portfolio(BaseModel):
         return round(cpi / Decimal(valid_projects), 2)
 
     @property
-    def cost_performance_index(self) -> Decimal | None:
+    def cost_performance_index(self: "Portfolio") -> Decimal | None:
         return self.get_cost_performance_index()
 
+    # schedule_performance_index
     def get_schedule_performance_index(
         self: "Portfolio",
         date: datetime | None = None,
@@ -376,5 +415,5 @@ class Portfolio(BaseModel):
         return round(spi / Decimal(valid_projects), 2)
 
     @property
-    def schedule_performance_index(self) -> Decimal | None:
+    def schedule_performance_index(self: "Portfolio") -> Decimal | None:
         return self.get_schedule_performance_index()
