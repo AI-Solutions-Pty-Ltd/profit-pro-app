@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% block title %}
+    {% if object %}
+        Edit
+    {% else %}
+        Add
+    {% endif %}
+    Final Account Compliance - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        {% if object %}
+                            Edit
+                        {% else %}
+                            Add
+                        {% endif %}
+                        Final Account Compliance Item
+                    </h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+                </div>
+                <a href="{% url 'project:final-account-compliance-list' project.pk %}"
+                   class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900">
+                    {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
+                    Back
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- Form -->
+    <div class="bg-white shadow-sm rounded-lg">
+        <form method="post" enctype="multipart/form-data" class="p-6">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
+                <a href="{% url 'project:final-account-compliance-list' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                    {% heroicon_outline "check" class="w-4 h-4 mr-2" %}
+                    {% if object %}
+                        Update
+                    {% else %}
+                        Create
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock content %}

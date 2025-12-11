@@ -211,10 +211,11 @@
                             <span class="text-sm font-medium text-gray-700">Impact</span>
                             {% heroicon_outline "clock" size="16" class="text-gray-400" %}
                         </div>
-                        <div class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-gray-200 opacity-75">
-                            <span class="text-sm font-medium text-gray-700">Compliance</span>
-                            {% heroicon_outline "clock" size="16" class="text-gray-400" %}
-                        </div>
+                        <a href="{% url 'project:compliance-dashboard' project.pk %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-indigo-700">Compliance</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-indigo-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
                         <span class="text-xs text-indigo-600 py-0.5 rounded">For Contractors</span>
                         <div class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-indigo-200 opacity-75">
                             <div class="flex items-center">

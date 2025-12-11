@@ -2,6 +2,7 @@
 
 from app.Project.urls.category_urls import category_urls
 from app.Project.urls.client_urls import client_urls
+from app.Project.urls.compliance_urls import urlpatterns as compliance_urls
 from app.Project.urls.document_urls import document_urls
 from app.Project.urls.forecast_hub_urls import forecast_hub_urls
 from app.Project.urls.planned_value_urls import planned_value_urls
@@ -17,6 +18,7 @@ urlpatterns = (
     project_urls
     + category_urls
     + client_urls
+    + compliance_urls
     + document_urls
     + risk_urls
     + signatory_urls

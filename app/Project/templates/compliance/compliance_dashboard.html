@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}
+    Compliance Management - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Compliance Management</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:project-management' project.pk %}"
+                       class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900">
+                        {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
+                        Back to Project
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Info Banner -->
+    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 rounded-r-lg">
+        <div class="flex">
+            <div class="flex-shrink-0">{% heroicon_outline "information-circle" class="h-5 w-5 text-blue-400" %}</div>
+            <div class="ml-3">
+                <p class="text-sm text-blue-700">
+                    Track contractor, consultant and client performance against contractual obligations.
+                    Use the tabs below to manage different types of compliance items.
+                </p>
+            </div>
+        </div>
+    </div>
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <!-- Contractual Compliance Card -->
+        <a href="{% url 'project:contractual-compliance-list' project.pk %}"
+           class="bg-white shadow-sm rounded-lg p-6 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex-shrink-0 h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    {% heroicon_outline "document-check" class="h-6 w-6 text-indigo-600" %}
+                </div>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    {{ contractual_pending }} pending
+                </span>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">Contractual Compliance</h3>
+            <p class="text-sm text-gray-500 mt-1">{{ contractual_count }} items</p>
+            <p class="text-xs text-gray-400 mt-2">Register of contractual obligations per contractor/consultant</p>
+        </a>
+        <!-- Administrative Compliance Card -->
+        <a href="{% url 'project:administrative-compliance-list' project.pk %}"
+           class="bg-white shadow-sm rounded-lg p-6 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex-shrink-0 h-12 w-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                    {% heroicon_outline "clipboard-document-list" class="h-6 w-6 text-amber-600" %}
+                </div>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                    {{ administrative_pending }} pending
+                </span>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">Administrative Compliance</h3>
+            <p class="text-sm text-gray-500 mt-1">{{ administrative_count }} items</p>
+            <p class="text-xs text-gray-400 mt-2">Track submission and approval timelines</p>
+        </a>
+        <!-- Final Account Compliance Card -->
+        <a href="{% url 'project:final-account-compliance-list' project.pk %}"
+           class="bg-white shadow-sm rounded-lg p-6 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex-shrink-0 h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    {% heroicon_outline "folder-open" class="h-6 w-6 text-green-600" %}
+                </div>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    {{ final_account_pending }} pending
+                </span>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900">Final Account Compliance</h3>
+            <p class="text-sm text-gray-500 mt-1">{{ final_account_count }} items</p>
+            <p class="text-xs text-gray-400 mt-2">Handover documentation register</p>
+        </a>
+    </div>
+    <!-- Quick Actions -->
+    <div class="bg-white shadow-sm rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Quick Actions</h2>
+        </div>
+        <div class="px-6 py-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a href="{% url 'project:contractual-compliance-create' project.pk %}"
+                   class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}
+                    Add Contractual Item
+                </a>
+                <a href="{% url 'project:administrative-compliance-create' project.pk %}"
+                   class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}
+                    Add Administrative Item
+                </a>
+                <a href="{% url 'project:final-account-compliance-create' project.pk %}"
+                   class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}
+                    Add Final Account Item
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

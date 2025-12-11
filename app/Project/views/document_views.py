@@ -1,5 +1,6 @@
 """Views for managing Project Documents."""
 
+from typing import Any, Dict
 from django import forms
 from django.contrib import messages
 from django.db.models import QuerySet
@@ -8,7 +9,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView
 
-from app.core.Utilities.mixins import BreadcrumbMixin
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import ProjectDocumentForm
 from app.Project.models import Project, ProjectDocument
@@ -32,21 +33,29 @@ class DocumentMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
     def get_category(self) -> str:
         """Get the document category from URL kwargs."""
         category = self.kwargs.get("category", "")
-        if category not in dict(ProjectDocument.Category.choices):
+        if category and category not in dict(ProjectDocument.Category.choices):
             raise Http404("Invalid document category.")
         return category
 
-    def get_category_display(self) -> str:
+    def get_category_display(self) -> Any:
         """Get the human-readable category name."""
         return dict(ProjectDocument.Category.choices).get(self.get_category(), "")
 
     def get_queryset(self) -> QuerySet[ProjectDocument]:
         """Filter documents by project and category."""
         project = self.get_project()
-        return ProjectDocument.objects.filter(
+        category = self.get_category()
+        documents = ProjectDocument.objects.filter(
             project=project,
-            category=self.get_category(),
         ).order_by("-created_at")
+        if category and category == "OTHER":
+            documents = documents.exclude(
+                category__in=[
+                    ProjectDocument.Category.CONTRACT_DOCUMENTS,
+                    ProjectDocument.Category.STAGE_GATE_APPROVAL,
+                ],
+            )
+        return documents
 
 
 class DocumentListView(DocumentMixin, ListView):
@@ -56,7 +65,7 @@ class DocumentListView(DocumentMixin, ListView):
     template_name = "document/document_list.html"
     context_object_name = "documents"
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
             {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
@@ -84,7 +93,7 @@ class DocumentCreateView(DocumentMixin, CreateView):
     form_class = ProjectDocumentForm
     template_name = "document/document_form.html"
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
             {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
@@ -123,6 +132,17 @@ class DocumentCreateView(DocumentMixin, CreateView):
         # Hide category field in form if not in "OTHER" section
         if self.get_category() != "OTHER":
             context["form"].fields["category"].widget = forms.HiddenInput()
+        else:
+            # In OTHER view, exclude CONTRACT_DOCUMENTS and STAGE_GATE_APPROVAL
+            excluded_categories = [
+                ProjectDocument.Category.CONTRACT_DOCUMENTS,
+                ProjectDocument.Category.STAGE_GATE_APPROVAL,
+            ]
+            context["form"].fields["category"].choices = [
+                (value, label)
+                for value, label in ProjectDocument.Category.choices
+                if value not in excluded_categories
+            ]
         return context
 
     def form_valid(self, form):
@@ -155,7 +175,7 @@ class DocumentDeleteView(DocumentMixin, DeleteView):
     model = ProjectDocument
     template_name = "document/document_confirm_delete.html"
 
-    def get_object(self) -> ProjectDocument:
+    def get_object(self: "DocumentDeleteView") -> ProjectDocument:
         """Get document and verify project ownership."""
         document = get_object_or_404(
             ProjectDocument,
@@ -167,7 +187,7 @@ class DocumentDeleteView(DocumentMixin, DeleteView):
             raise Http404("You do not have permission to delete this document.")
         return document
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         document = self.get_object()
         return [
             {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
@@ -197,7 +217,7 @@ class DocumentDeleteView(DocumentMixin, DeleteView):
         context["category_display"] = self.get_category_display()
         return context
 
-    def form_valid(self, form):
+    def form_valid(self: "DocumentDeleteView", form):
         """Soft delete the document."""
         document = self.get_object()
         document.soft_delete()
