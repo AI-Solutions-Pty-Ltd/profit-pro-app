@@ -88,7 +88,7 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         """Add financial metrics to context."""
         context = super().get_context_data(**kwargs)
         user: Account = self.request.user  # type: ignore
-        projects: QuerySet[Project] = context["projects"]
+        projects: QuerySet[Project] = cast(QuerySet[Project], context["projects"])
         current_date = datetime.now()
 
         # Add the already-validated form to context
@@ -375,7 +375,7 @@ class ProjectListView(PortfolioDashboardView):
 
     template_name = "portfolio/project_list.html"
 
-    def get_breadcrumbs(self):
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         """Update breadcrumbs for project list page."""
         return [
             {"title": "Portfolio", "url": "/"},
@@ -404,7 +404,7 @@ class ProjectListView(PortfolioDashboardView):
 
         return context
 
-    def get(self, request, *args, **kwargs):
+    def get(self: "ProjectListView", request, *args, **kwargs):
         """Handle both regular GET and AJAX requests for filtering."""
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             # Return JSON response for AJAX requests

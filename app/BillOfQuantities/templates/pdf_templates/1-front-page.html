@@ -72,20 +72,20 @@
                 <tbody>
                     <tr>
                         <td>Original Contract Value</td>
-                        <td class="text-right">R {{ project.get_original_contract_value|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ project.original_contract_value|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
                         <td>Total Contract Amendments To Date</td>
-                        <td class="text-right">R {{ project.get_addendum_contract_value|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ project.addendum_contract_value|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
                         <td>Sub Total</td>
-                        <td class="text-right">R {{ project.get_total_contract_value|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ project.addendum_contract_value|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
                         <td>
                             {% if project.vat %}
-                                {% define project.get_total_contract_value|mul:0.15 as vat_value %}
+                                {% define project.total_contract_value|mul:0.15 as vat_value %}
                                 VAT 15%
                             {% else %}
                                 {% define 0 as vat_value %}
@@ -96,7 +96,7 @@
                     </tr>
                     <tr class="total-row">
                         <td>Total Contract Value</td>
-                        <td class="text-right">R {{ project.get_total_contract_value|add:vat_value|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ project.total_contract_value|add:vat_value|floatformat:2|intcomma }}</td>
                     </tr>
                 </tbody>
             </table>

@@ -114,7 +114,7 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
         active_payment_certificate: PaymentCertificate | None = (
             self.get_project().active_payment_certificate
         )
-        print(f"get_active_payment_certificate returned: {active_payment_certificate}")
+        print(f"active_payment_certificate returned: {active_payment_certificate}")
         context["active_certificate"] = active_payment_certificate
 
         # Completed payment certificates (APPROVED or REJECTED)

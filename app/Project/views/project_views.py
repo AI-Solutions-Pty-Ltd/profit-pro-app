@@ -137,7 +137,7 @@ class ProjectDashboardView(ProjectMixin, DetailView):
             forecast_values.append(float(forecast.total_forecast) if forecast else 0)
 
             # Get cumulative certified up to end of this month
-            end_of_month = current_month + relativedelta(months=1)
+            end_of_month = get_end_of_month(current_month)
             cumulative_certified = ActualTransaction.objects.filter(
                 line_item__project=project,
                 payment_certificate__status=PaymentCertificate.Status.APPROVED,
