@@ -16,6 +16,7 @@ from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import FilterForm
 from app.Project.models import Portfolio, Project
+from app.Project.models.compliance_models import ContractualCompliance
 
 
 class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
@@ -187,6 +188,30 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         context["attention_projects_percentage"] = (
             (len(attention_projects) / active_count * 100) if active_count > 0 else 0
         )
+
+        # ==========================================
+        # Compliance Stats
+        # ==========================================
+        active_projects = portfolio.get_active_projects(category_filter)
+        total_compliance_items = ContractualCompliance.objects.filter(
+            project__in=active_projects
+        ).count()
+        completed_compliance_items = ContractualCompliance.objects.filter(
+            project__in=active_projects,
+            status=ContractualCompliance.Status.COMPLETED,
+        ).count()
+        overdue_compliance_items = ContractualCompliance.objects.filter(
+            project__in=active_projects,
+            status=ContractualCompliance.Status.OVERDUE,
+        ).count()
+
+        context["compliance_percentage"] = (
+            round((completed_compliance_items / total_compliance_items * 100), 1)
+            if total_compliance_items > 0
+            else 0
+        )
+        context["urgent_compliance_count"] = overdue_compliance_items
+        context["total_compliance_items"] = total_compliance_items
 
         # ==========================================
         # Group 2 - Budgets and Payments

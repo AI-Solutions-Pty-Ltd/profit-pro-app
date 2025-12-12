@@ -157,8 +157,18 @@
                     <div class="space-y-2">
                         {% if project.line_items.exists %}
                             <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
-                               class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-purple-700">Certificates</span>
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors group/btn relative">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-medium text-purple-700">Certificates</span>
+                                    <div class="centered-content">
+                                        {% if project.active_payment_certificate %}
+                                            <span class="centered-content px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 border border-green-300">
+                                                <span>#{{ project.active_payment_certificate.certificate_number }}</span>
+                                                <span>Active</span>
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
                                 {% heroicon_outline "arrow-right" size="16" class="text-purple-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                             <a href="{% url 'bill_of_quantities:advance-payment-list' project.pk %}"
