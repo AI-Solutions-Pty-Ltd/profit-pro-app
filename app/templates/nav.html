@@ -28,16 +28,21 @@
                                 <div id="portfolio-dropdown"
                                      class="invisible opacity-0 group-hover:visible group-hover:opacity-100 absolute left-0 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 transition-all duration-150">
                                     <div class="py-1">
-                                        <span class="block px-4 py-1 text-xs text-gray-400 uppercase tracking-wider">Coming Soon</span>
-                                        <a href="#"
-                                           class="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed flex items-center">
-                                            {% heroicon_outline "exclamation-triangle" class="w-4 h-4 mr-2" %}
-                                            Impact Report
-                                        </a>
-                                        <a href="#"
-                                           class="block px-4 py-2 text-sm text-gray-400 cursor-not-allowed flex items-center">
+                                        <span class="block px-4 py-1 text-xs text-gray-400 uppercase tracking-wider">Portfolio Reports</span>
+                                        <a href="{% url 'project:compliance-report' %}"
+                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors flex items-center">
                                             {% heroicon_outline "shield-check" class="w-4 h-4 mr-2" %}
                                             Compliance Report
+                                        </a>
+                                        <a href="{% url 'project:impact-report' %}"
+                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors flex items-center">
+                                            {% heroicon_outline "chart-bar" class="w-4 h-4 mr-2" %}
+                                            Impact Report
+                                        </a>
+                                        <a href="{% url 'project:risk-report' %}"
+                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors flex items-center">
+                                            {% heroicon_outline "exclamation-triangle" class="w-4 h-4 mr-2" %}
+                                            Risk Report
                                         </a>
                                     </div>
                                 </div>

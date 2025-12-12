@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load humanize heroicons %}
+{% block title %}
+    Risk Report - Portfolio
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Risk Report</h1>
+                    <p class="text-sm text-gray-600 mt-1">Time Impact & Cost Impact by project with risk category breakdown</p>
+                </div>
+                <a href="{% url 'project:portfolio-dashboard' %}"
+                   class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    {% heroicon_outline "arrow-left" size="16" class="mr-1" %}
+                    Back to Dashboard
+                </a>
+            </div>
+        </div>
+        <!-- Filters -->
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <form method="get" class="flex items-center gap-4">
+                <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Risk Category</label>
+                    <select name="category"
+                            id="category"
+                            onchange="this.form.submit()"
+                            class="block w-48 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="">All Categories</option>
+                        {% for value, label in category_choices %}
+                            <option value="{{ value }}"
+                                    {% if category_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if category_filter %}
+                    <div class="mt-6">
+                        <a href="{% url 'project:risk-report' %}"
+                           class="text-sm text-indigo-600 hover:text-indigo-800">Clear Filter</a>
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+        <!-- Summary Cards -->
+        <div class="px-6 py-4 grid grid-cols-1 md:grid-cols-5 gap-4 bg-white border-b border-gray-200">
+            <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                <p class="text-sm font-medium text-red-700">Active Risks</p>
+                <p class="text-2xl font-bold text-red-900">{{ summary.total_risks }}</p>
+            </div>
+            <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                <p class="text-sm font-medium text-amber-700">Total Cost Impact</p>
+                <p class="text-2xl font-bold text-amber-900">R&nbsp;{{ summary.total_cost_impact|floatformat:0|intcomma }}</p>
+            </div>
+            <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                <p class="text-sm font-medium text-orange-700">Est. Cost Impact</p>
+                <p class="text-2xl font-bold text-orange-900">R&nbsp;{{ summary.estimated_cost_impact|floatformat:0|intcomma }}</p>
+            </div>
+            <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <p class="text-sm font-medium text-blue-700">Total Time Impact</p>
+                <p class="text-2xl font-bold text-blue-900">{{ summary.total_time_days }} days</p>
+            </div>
+            <div class="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+                <p class="text-sm font-medium text-indigo-700">Est. Time Impact</p>
+                <p class="text-2xl font-bold text-indigo-900">{{ summary.estimated_time_days }} days</p>
+            </div>
+        </div>
+        <!-- Report Table -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Active Risks</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            colspan="2">Cost Impact</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            colspan="2">Time Impact</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category Breakdown</th>
+                    </tr>
+                    <tr class="bg-gray-100">
+                        <th class="px-4 py-2"></th>
+                        <th class="px-3 py-2"></th>
+                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-500">Total</th>
+                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-500">Estimated</th>
+                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-500">Days</th>
+                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-500">Est. Days</th>
+                        <th class="px-3 py-2"></th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for row in report_data %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <a href="{% url 'project:project-dashboard' row.project.pk %}"
+                                   class="text-sm font-medium text-indigo-600 hover:text-indigo-900">
+                                    {{ row.project.name }}
+                                </a>
+                            </td>
+                            <td class="px-3 py-3 text-center">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold {% if row.risk_count > 5 %}bg-red-100 text-red-800{% elif row.risk_count > 0 %}bg-amber-100 text-amber-800{% else %}bg-green-100 text-green-800{% endif %}">
+                                    {{ row.risk_count }}
+                                </span>
+                            </td>
+                            <td class="px-3 py-3 text-center text-sm text-gray-900">R&nbsp;{{ row.total_cost_impact|floatformat:0|intcomma }}</td>
+                            <td class="px-3 py-3 text-center text-sm text-orange-700 font-medium">
+                                R&nbsp;{{ row.estimated_cost_impact|floatformat:0|intcomma }}
+                            </td>
+                            <td class="px-3 py-3 text-center text-sm text-gray-900">{{ row.total_time_days }}</td>
+                            <td class="px-3 py-3 text-center text-sm text-indigo-700 font-medium">{{ row.estimated_time_days }}</td>
+                            <td class="px-3 py-3">
+                                <div class="flex flex-wrap gap-1">
+                                    {% for cat in row.category_breakdown %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {% if cat.category == 'CONSULTANT' %}bg-blue-100 text-blue-800 {% elif cat.category == 'CLIENT' %}bg-purple-100 text-purple-800 {% elif cat.category == 'CONTRACTOR' %}bg-amber-100 text-amber-800 {% elif cat.category == 'COMMUNITY' %}bg-green-100 text-green-800 {% elif cat.category == 'LABOUR' %}bg-red-100 text-red-800 {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                            {{ cat.category }}: {{ cat.count }}
+                                        </span>
+                                    {% empty %}
+                                        <span class="text-gray-400 text-xs">No risks</span>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">No active projects found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock content %}

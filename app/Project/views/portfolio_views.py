@@ -283,6 +283,7 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         context["actual_data"] = json.dumps(cashflow_data["actual"])
         context["forecast_data"] = json.dumps(cashflow_data["forecast"])
         context["budget_data"] = json.dumps(cashflow_data["budget"])
+        context["cashflow_table_data"] = cashflow_data["table_data"]
 
         return context
 
@@ -339,11 +340,16 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         actual_values = []
         forecast_values = []
         budget_values = []
+        table_data = []
 
         current_date = datetime.now()
         # Monthly budget = total budget / 12 (simplified distribution)
         total_budget = portfolio.get_total_original_budget(category)
         monthly_budget = float(total_budget / 12) if total_budget else 0
+
+        # Running cumulative totals
+        cumulative_planned = Decimal("0.00")
+        cumulative_forecast = Decimal("0.00")
 
         # Generate data for last 12 months (oldest to newest)
         for i in range(11, -1, -1):
@@ -386,12 +392,41 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
             actual_values.append(float(actual_total))
             forecast_values.append(float(forecast_total))
 
+            # Update cumulative values
+            cumulative_planned += planned_total
+            cumulative_forecast += forecast_total
+
+            # Calculate variance and percentages
+            variance = cumulative_planned - cumulative_forecast
+            variance_pct = (
+                float((variance / cumulative_planned) * 100)
+                if cumulative_planned > 0
+                else 0
+            )
+            work_completed_pct = (
+                float((cumulative_forecast / total_budget) * 100)
+                if total_budget > 0
+                else 0
+            )
+
+            table_data.append(
+                {
+                    "month": month_date.strftime("%b %Y"),
+                    "cumulative_planned": float(cumulative_planned),
+                    "cumulative_forecast": float(cumulative_forecast),
+                    "variance": float(variance),
+                    "variance_pct": round(variance_pct, 1),
+                    "work_completed_pct": round(work_completed_pct, 1),
+                }
+            )
+
         return {
             "labels": labels,
             "planned": planned_values,
             "actual": actual_values,
             "forecast": forecast_values,
             "budget": budget_values,
+            "table_data": table_data,
         }
 
 

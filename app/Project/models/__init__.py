@@ -5,6 +5,7 @@ from .compliance_models import (
     FinalAccountCompliance,
 )
 from .document_models import ProjectDocument
+from .impact_models import ProjectImpact
 from .milestone_models import Milestone
 from .planned_value_models import PlannedValue
 from .portfolio_models import Portfolio
@@ -23,6 +24,7 @@ __all__ = [
     "Project",
     "ProjectCategory",
     "ProjectDocument",
+    "ProjectImpact",
     "Risk",
     "Signatories",
 ]

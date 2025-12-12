@@ -136,7 +136,7 @@
                     <p class="text-xs text-orange-600">({{ attention_projects_percentage|floatformat:0 }}%)</p>
                 </a>
                 <!-- Compliance % -->
-                <a href="#"
+                <a href="{% url 'project:compliance-report' %}"
                    class="bg-emerald-50 rounded-lg p-3 text-center border border-emerald-100 hover:bg-emerald-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
                     <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-emerald-600 transition-colors">
                         {% heroicon_outline "shield-check" size="16" class="text-white" %}
@@ -146,7 +146,7 @@
                     <p class="text-xs text-emerald-500">{{ total_compliance_items }} items</p>
                 </a>
                 <!-- Urgent Compliance Matters -->
-                <a href="#"
+                <a href="{% url 'project:compliance-report' %}?party=overdue"
                    class="bg-rose-50 rounded-lg p-3 text-center border border-rose-100 hover:bg-rose-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
                     <div class="w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-rose-600 transition-colors">
                         {% heroicon_outline "shield-exclamation" size="16" class="text-white" %}
@@ -155,15 +155,16 @@
                     <p class="text-xl font-bold text-rose-700 mt-1">{{ urgent_compliance_count }}</p>
                     <p class="text-xs text-rose-500">overdue items</p>
                 </a>
-                <!-- Impacts (Coming Soon) -->
-                <div class="bg-gray-50 rounded-lg p-3 text-center border border-gray-200 opacity-60">
-                    <div class="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                <!-- Impacts -->
+                <a href="{% url 'project:impact-report' %}"
+                   class="bg-indigo-50 rounded-lg p-3 text-center border border-indigo-100 hover:bg-indigo-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-indigo-600 transition-colors">
                         {% heroicon_outline "bolt" size="16" class="text-white" %}
                     </div>
-                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Impacts</p>
-                    <p class="text-sm font-bold text-gray-400 mt-1">Coming Soon</p>
-                    <p class="text-xs text-gray-400">Jobs & Local Spent</p>
-                </div>
+                    <p class="text-xs font-medium text-indigo-600 uppercase tracking-wider">Impacts</p>
+                    <p class="text-xl font-bold text-indigo-700 mt-1">{{ impact_total_jobs|default:0 }}</p>
+                    <p class="text-xs text-indigo-500">Jobs Created</p>
+                </a>
             </div>
         </div>
     </div>
@@ -455,6 +456,7 @@
                 },
                 options: commonOptions
             });
+
         });
     </script>
 {% endblock content %}
