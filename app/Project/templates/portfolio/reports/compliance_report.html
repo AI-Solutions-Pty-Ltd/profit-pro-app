@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% load humanize heroicons %}
+{% block title %}
+    Compliance Report - Portfolio
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Compliance Report</h1>
+                    <p class="text-sm text-gray-600 mt-1">Contractual, Administrative & Final Account compliance by project</p>
+                </div>
+                <a href="{% url 'project:portfolio-dashboard' %}"
+                   class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    {% heroicon_outline "arrow-left" size="16" class="mr-1" %}
+                    Back to Dashboard
+                </a>
+            </div>
+        </div>
+        <!-- Filters -->
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <form method="get" class="flex items-center gap-4">
+                <div>
+                    <label for="party" class="block text-sm font-medium text-gray-700 mb-1">Filter by Party</label>
+                    <select name="party"
+                            id="party"
+                            onchange="this.form.submit()"
+                            class="block w-48 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="">All Parties</option>
+                        <option value="contractor"
+                                {% if party_filter == 'contractor' %}selected{% endif %}>Contractor</option>
+                        <option value="consultant"
+                                {% if party_filter == 'consultant' %}selected{% endif %}>Consultant</option>
+                    </select>
+                </div>
+                {% if party_filter %}
+                    <div class="mt-6">
+                        <a href="{% url 'project:compliance-report' %}"
+                           class="text-sm text-indigo-600 hover:text-indigo-800">Clear Filter</a>
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+        <!-- Summary Cards -->
+        <div class="px-6 py-4 grid grid-cols-1 md:grid-cols-4 gap-4 bg-white border-b border-gray-200">
+            <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <p class="text-sm font-medium text-blue-700">Contractual Compliance</p>
+                <p class="text-2xl font-bold text-blue-900">{{ summary.contractual_pct }}%</p>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                <p class="text-sm font-medium text-purple-700">Administrative Compliance</p>
+                <p class="text-2xl font-bold text-purple-900">{{ summary.admin_pct }}%</p>
+            </div>
+            <div class="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
+                <p class="text-sm font-medium text-emerald-700">Final Account Compliance</p>
+                <p class="text-2xl font-bold text-emerald-900">{{ summary.final_pct }}%</p>
+            </div>
+            <div class="bg-red-50 rounded-lg p-4 border border-red-200">
+                <p class="text-sm font-medium text-red-700">Total Overdue Items</p>
+                <p class="text-2xl font-bold text-red-900">{{ summary.total_overdue }}</p>
+            </div>
+        </div>
+        <!-- Report Table -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            colspan="3">Contractual</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            colspan="3">Administrative</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            colspan="2">Final Account</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Overall</th>
+                    </tr>
+                    <tr class="bg-gray-100">
+                        <th class="px-4 py-2"></th>
+                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-500">Done</th>
+                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-500">Overdue</th>
+                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-500">%</th>
+                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-500">Done</th>
+                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-500">Overdue</th>
+                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-500">%</th>
+                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-500">Done</th>
+                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-500">%</th>
+                        <th class="px-3 py-2 text-center text-xs font-medium text-gray-500">%</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for row in report_data %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <a href="{% url 'project:project-dashboard' row.project.pk %}"
+                                   class="text-sm font-medium text-indigo-600 hover:text-indigo-900">
+                                    {{ row.project.name }}
+                                </a>
+                            </td>
+                            <td class="px-3 py-3 text-center text-sm text-gray-900">
+                                {{ row.contractual.completed }}/{{ row.contractual.total }}
+                            </td>
+                            <td class="px-3 py-3 text-center text-sm {% if row.contractual.overdue > 0 %}text-red-600 font-medium{% else %}text-gray-500{% endif %}">
+                                {{ row.contractual.overdue }}
+                            </td>
+                            <td class="px-3 py-3 text-center">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {% if row.contractual.percentage >= 80 %}bg-green-100 text-green-800{% elif row.contractual.percentage >= 50 %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ row.contractual.percentage }}%
+                                </span>
+                            </td>
+                            <td class="px-3 py-3 text-center text-sm text-gray-900">
+                                {{ row.administrative.completed }}/{{ row.administrative.total }}
+                            </td>
+                            <td class="px-3 py-3 text-center text-sm {% if row.administrative.overdue > 0 %}text-red-600 font-medium{% else %}text-gray-500{% endif %}">
+                                {{ row.administrative.overdue }}
+                            </td>
+                            <td class="px-3 py-3 text-center">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {% if row.administrative.percentage >= 80 %}bg-green-100 text-green-800{% elif row.administrative.percentage >= 50 %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ row.administrative.percentage }}%
+                                </span>
+                            </td>
+                            <td class="px-3 py-3 text-center text-sm text-gray-900">
+                                {{ row.final_account.completed }}/{{ row.final_account.total }}
+                            </td>
+                            <td class="px-3 py-3 text-center">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {% if row.final_account.percentage >= 80 %}bg-green-100 text-green-800{% elif row.final_account.percentage >= 50 %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ row.final_account.percentage }}%
+                                </span>
+                            </td>
+                            <td class="px-3 py-3 text-center">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold {% if row.overall_percentage >= 80 %}bg-green-100 text-green-800{% elif row.overall_percentage >= 50 %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ row.overall_percentage }}%
+                                </span>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="10" class="px-4 py-8 text-center text-gray-500">No active projects found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock content %}

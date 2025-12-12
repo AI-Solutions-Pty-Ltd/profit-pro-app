@@ -159,6 +159,7 @@ class CashflowForecastView(ForecastHubMixin, TemplateView):
         running_work_completed = Decimal("0")
 
         total_work_completed = Decimal("0")
+        table_data = []
         for pv in planned_values:
             chart_labels.append(pv.period.strftime("%b %Y"))
             planned_data.append(float(pv.value or 0))
@@ -171,6 +172,22 @@ class CashflowForecastView(ForecastHubMixin, TemplateView):
             cumulative_planned.append(float(running_planned))
             cumulative_forecast.append(float(running_forecast))
             cumulative_work_completed.append(float(running_work_completed))
+
+            # Calculate variance and percentages for table
+            variance = running_planned - running_forecast
+            variance_pct = (
+                float((variance / running_planned) * 100) if running_planned > 0 else 0
+            )
+            table_data.append(
+                {
+                    "month": pv.period.strftime("%b %Y"),
+                    "cumulative_planned": float(running_planned),
+                    "cumulative_forecast": float(running_forecast),
+                    "variance": float(variance),
+                    "variance_pct": round(variance_pct, 1),
+                    "work_completed_pct": round(float(running_work_completed), 1),
+                }
+            )
 
         contract_value = float(project.total_contract_value)
 
@@ -189,6 +206,7 @@ class CashflowForecastView(ForecastHubMixin, TemplateView):
                 "total_work_completed": total_work_completed,
                 "work_completed_remaining": Decimal("100") - total_work_completed,
                 "has_chart_data": bool(planned_values.exists()),
+                "cashflow_table_data": table_data,
             }
         )
         return context

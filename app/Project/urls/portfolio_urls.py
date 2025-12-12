@@ -1,6 +1,11 @@
 from django.urls import path
 
-from app.Project.views import portfolio_views, report_views, user_management_views
+from app.Project.views import (
+    portfolio_views,
+    report_views,
+    report_views_portfolio,
+    user_management_views,
+)
 
 portfolio_urls = [
     path(
@@ -33,6 +38,22 @@ portfolio_urls = [
         "portfolio/reports/trend/",
         report_views.TrendReportView.as_view(),
         name="portfolio-trend-report",
+    ),
+    # New Portfolio Reports
+    path(
+        "portfolio/reports/compliance/",
+        report_views_portfolio.ComplianceReportView.as_view(),
+        name="compliance-report",
+    ),
+    path(
+        "portfolio/reports/impact/",
+        report_views_portfolio.ImpactReportView.as_view(),
+        name="impact-report",
+    ),
+    path(
+        "portfolio/reports/risk/",
+        report_views_portfolio.RiskReportView.as_view(),
+        name="risk-report",
     ),
     # User Management - Registers
     path(

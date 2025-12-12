@@ -18,6 +18,16 @@ class Risk(BaseModel):
     to calculate estimated risk exposure.
     """
 
+    class RiskCategory(models.TextChoices):
+        """Categories identifying the source of the risk."""
+
+        CONSULTANT = "CONSULTANT", "Consultant"
+        CLIENT = "CLIENT", "Client"
+        CONTRACTOR = "CONTRACTOR", "Contractor"
+        COMMUNITY = "COMMUNITY", "Community"
+        LABOUR = "LABOUR", "Labour"
+        OTHER = "OTHER", "Other"
+
     project = models.ForeignKey(
         "Project.Project",
         on_delete=models.CASCADE,
@@ -34,6 +44,12 @@ class Risk(BaseModel):
     )
     description = models.TextField(
         help_text="Detailed description of the risk",
+    )
+    category = models.CharField(
+        max_length=20,
+        choices=RiskCategory.choices,
+        default=RiskCategory.OTHER,
+        help_text="Category identifying the source of the risk",
     )
     # Time Impact
     time_impact_start = models.DateField(
