@@ -335,7 +335,32 @@
         <div id="special-items"
              class="bg-white shadow-md rounded-lg overflow-hidden mb-4">
             <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Special Items</h2>
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900">Special Items</h2>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-500 mr-2">Quick Add:</span>
+                        <a href="{% url 'bill_of_quantities:advance-payment-list' project.pk %}?certificate={{ payment_certificate.pk }}"
+                           class="inline-flex items-center px-3 py-1.5 border border-blue-300 text-xs font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
+                            {% heroicon_outline "banknotes" size="14" class="mr-1" %}
+                            Advance Payment
+                        </a>
+                        <a href="{% url 'bill_of_quantities:retention-list' project.pk %}?certificate={{ payment_certificate.pk }}"
+                           class="inline-flex items-center px-3 py-1.5 border border-amber-300 text-xs font-medium rounded-md text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors">
+                            {% heroicon_outline "lock-closed" size="14" class="mr-1" %}
+                            Retention
+                        </a>
+                        <a href="{% url 'bill_of_quantities:materials-list' project.pk %}?certificate={{ payment_certificate.pk }}"
+                           class="inline-flex items-center px-3 py-1.5 border border-emerald-300 text-xs font-medium rounded-md text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
+                            {% heroicon_outline "cube" size="14" class="mr-1" %}
+                            Materials on Site
+                        </a>
+                        <a href="{% url 'bill_of_quantities:escalation-list' project.pk %}?certificate={{ payment_certificate.pk }}"
+                           class="inline-flex items-center px-3 py-1.5 border border-purple-300 text-xs font-medium rounded-md text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors">
+                            {% heroicon_outline "arrow-trending-up" size="14" class="mr-1" %}
+                            Escalation
+                        </a>
+                    </div>
+                </div>
             </div>
             <div class="px-6 py-4">
                 <table class="w-auto border-collapse">

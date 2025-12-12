@@ -174,6 +174,61 @@ class ContractVariation(BaseModel):
     def __str__(self) -> str:
         return f"{self.variation_number}: {self.title}"
 
+    def save(self, *args, **kwargs) -> None:
+        """Override save to auto-generate variation number and handle status changes."""
+        from datetime import date
+
+        # Auto-generate variation number if not set
+        if not self.variation_number:
+            last_variation = (
+                ContractVariation.objects.filter(project=self.project)
+                .order_by("-created_at")
+                .first()
+            )
+            if last_variation and last_variation.variation_number:
+                # Extract number from last variation (e.g., "VAR-001" -> 1)
+                try:
+                    last_num = int(last_variation.variation_number.split("-")[-1])
+                    self.variation_number = f"VAR-{last_num + 1:03d}"
+                except (ValueError, IndexError):
+                    self.variation_number = "VAR-001"
+            else:
+                self.variation_number = "VAR-001"
+
+        # Auto-set date_submitted when status changes to SUBMITTED
+        if self.status == self.Status.SUBMITTED and not self.date_submitted:
+            self.date_submitted = date.today()
+
+        # Auto-set date_approved when status changes to APPROVED
+        if self.status == self.Status.APPROVED and not self.date_approved:
+            self.date_approved = date.today()
+
+        super().save(*args, **kwargs)
+
+        # Update project dates/amounts when approved
+        if self.status == self.Status.APPROVED:
+            self._apply_variation_to_project()
+
+    def _apply_variation_to_project(self) -> None:
+        """Apply approved variation to project dates and amounts."""
+        from dateutil.relativedelta import relativedelta
+
+        project = self.project
+
+        # Apply time extension to project completion date
+        if self.variation_type in [self.VariationType.TIME, self.VariationType.BOTH]:
+            if self.time_extension_days and project.revised_completion_date:
+                project.approved_extension_days = (
+                    project.approved_extension_days or 0
+                ) + self.time_extension_days
+                project.revised_completion_date = (
+                    project.revised_completion_date
+                    + relativedelta(days=self.time_extension_days)
+                )
+                project.save(
+                    update_fields=["approved_extension_days", "revised_completion_date"]
+                )
+
 
 class ContractualCorrespondence(BaseModel):
     """

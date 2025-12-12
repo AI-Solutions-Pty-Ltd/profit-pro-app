@@ -31,7 +31,6 @@
         <form method="post" enctype="multipart/form-data" class="px-6 py-6">
             {% csrf_token %}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>{{ form.variation_number|as_crispy_field }}</div>
                 <div>{{ form.title|as_crispy_field }}</div>
             </div>
             <div class="mt-4">{{ form.description|as_crispy_field }}</div>
@@ -46,8 +45,6 @@
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
                 <div>{{ form.date_identified|as_crispy_field }}</div>
-                <div>{{ form.date_submitted|as_crispy_field }}</div>
-                <div>{{ form.date_approved|as_crispy_field }}</div>
             </div>
             {% if not is_create and form.approved_by %}<div class="mt-4">{{ form.approved_by|as_crispy_field }}</div>{% endif %}
             <div class="mt-4 flex flex-col">
