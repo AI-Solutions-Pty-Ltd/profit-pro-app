@@ -81,10 +81,13 @@ class BaseModel(models.Model):
 
 def sum_queryset(queryset, field: str) -> Decimal:
     """Helper function to sum total price of queryset"""
-    return queryset.aggregate(
+    value = queryset.aggregate(
         sum=Coalesce(
             Sum(field),
             Value(0),
             output_field=DecimalField(),
         )
     )["sum"]
+    if not value:
+        return Decimal(0)
+    return value

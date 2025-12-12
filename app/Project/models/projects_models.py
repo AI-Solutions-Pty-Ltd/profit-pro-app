@@ -466,6 +466,9 @@ class Project(BaseModel):
         """
         if not date:
             date = datetime.now()
+
+        if not self.total_contract_value:
+            return Decimal(0)
         return round(self.get_actual_cost(date) / self.total_contract_value * 100, 2)
 
     @property

@@ -58,17 +58,14 @@
                         </option>
                     {% endfor %}
                 </select>
-                <!-- Project Filter -->
-                <select name="projects"
-                        id="id_projects"
-                        onchange="this.form.submit()"
+                <!-- Go to Project -->
+                <select name="go_to_project"
+                        id="id_go_to_project"
+                        onchange="if(this.value) window.location.href='{% url 'project:project-dashboard' 0 %}'.replace('0', this.value);"
                         class="block w-40 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
-                    <option value="">All Projects</option>
+                    <option value="">Go to Project</option>
                     {% for project in filter_form.projects.field.queryset %}
-                        <option value="{{ project.pk }}"
-                                {% if filter_form.projects.value|stringformat:"s" == project.pk|stringformat:"s" %}selected{% endif %}>
-                            {{ project.name }}
-                        </option>
+                        <option value="{{ project.pk }}">{{ project.name }}</option>
                     {% endfor %}
                 </select>
                 <!-- Consultant Filter -->
@@ -84,20 +81,12 @@
                         </option>
                     {% endfor %}
                 </select>
-                {% if filter_form.category.value or filter_form.projects.value or filter_form.consultant.value %}
+                {% if filter_form.category.value or filter_form.consultant.value %}
                     <a href="{% url 'project:portfolio-dashboard' %}"
                        class="inline-flex items-center px-2 py-2 text-gray-500 hover:text-gray-700 transition-colors"
                        title="Clear filter">{% heroicon_outline "x-mark" size="18" %}</a>
                 {% endif %}
             </form>
-            {% if filter_form.projects.value %}
-                <a href="{% url 'project:project-management' filter_form.projects.value %}"
-                   class="inline-flex items-center px-3 py-2 border border-indigo-300 text-sm font-medium rounded-md text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors"
-                   title="Go to Project Management">
-                    {% heroicon_outline "cog-6-tooth" size="16" class="mr-1" %}
-                    Manage Project
-                </a>
-            {% endif %}
             <a href="{% url 'project:project-create' %}"
                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 {% heroicon_outline "plus" size="20" class="mr-2" %}
@@ -116,7 +105,7 @@
             </h5>
         </div>
         <div class="p-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 <!-- Active Projects -->
                 <a href="{% url 'project:portfolio-project-list' %}"
                    class="bg-blue-50 rounded-lg p-3 text-center border border-blue-100 hover:bg-blue-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
@@ -135,23 +124,46 @@
                     <p class="text-xs font-medium text-red-600 uppercase tracking-wider">Urgent Intervention</p>
                     <p class="text-xl font-bold text-red-700 mt-1">{{ urgent_projects_count }}</p>
                     <p class="text-xs text-red-500">({{ urgent_projects_percentage|floatformat:0 }}%)</p>
-                    <p class="text-xs text-red-400 mt-1">
-                        CPI & SPI < 0.96
-                    </p>
                 </a>
                 <!-- Requiring Attention -->
                 <a href="{% url 'project:portfolio-financial-report' %}?sort=cpi_asc"
-                   class="bg-amber-50 rounded-lg p-3 text-center border border-amber-100 hover:bg-amber-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <div class="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-amber-600 transition-colors">
+                   class="bg-orange-50 rounded-lg p-3 text-center border border-orange-200 hover:bg-orange-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-orange-600 transition-colors">
                         {% heroicon_outline "eye" size="16" class="text-white" %}
                     </div>
-                    <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Requiring Attention</p>
-                    <p class="text-xl font-bold text-amber-700 mt-1">{{ attention_projects_count }}</p>
-                    <p class="text-xs text-amber-500">({{ attention_projects_percentage|floatformat:0 }}%)</p>
-                    <p class="text-xs text-amber-400 mt-1">
-                        0.96 ≤ CPI or SPI < 1.0
-                    </p>
+                    <p class="text-xs font-medium text-orange-700 uppercase tracking-wider">Requiring Attention</p>
+                    <p class="text-xl font-bold text-orange-800 mt-1">{{ attention_projects_count }}</p>
+                    <p class="text-xs text-orange-600">({{ attention_projects_percentage|floatformat:0 }}%)</p>
                 </a>
+                <!-- Compliance % -->
+                <a href="#"
+                   class="bg-emerald-50 rounded-lg p-3 text-center border border-emerald-100 hover:bg-emerald-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-emerald-600 transition-colors">
+                        {% heroicon_outline "shield-check" size="16" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-emerald-600 uppercase tracking-wider">Compliance %</p>
+                    <p class="text-xl font-bold text-emerald-700 mt-1">{{ compliance_percentage|floatformat:1 }}%</p>
+                    <p class="text-xs text-emerald-500">{{ total_compliance_items }} items</p>
+                </a>
+                <!-- Urgent Compliance Matters -->
+                <a href="#"
+                   class="bg-rose-50 rounded-lg p-3 text-center border border-rose-100 hover:bg-rose-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <div class="w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-rose-600 transition-colors">
+                        {% heroicon_outline "shield-exclamation" size="16" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-rose-600 uppercase tracking-wider">Urgent Compliance</p>
+                    <p class="text-xl font-bold text-rose-700 mt-1">{{ urgent_compliance_count }}</p>
+                    <p class="text-xs text-rose-500">overdue items</p>
+                </a>
+                <!-- Impacts (Coming Soon) -->
+                <div class="bg-gray-50 rounded-lg p-3 text-center border border-gray-200 opacity-60">
+                    <div class="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center mx-auto mb-2">
+                        {% heroicon_outline "bolt" size="16" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Impacts</p>
+                    <p class="text-sm font-bold text-gray-400 mt-1">Coming Soon</p>
+                    <p class="text-xs text-gray-400">Jobs & Local Spent</p>
+                </div>
             </div>
         </div>
     </div>

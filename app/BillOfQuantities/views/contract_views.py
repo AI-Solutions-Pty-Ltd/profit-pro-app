@@ -87,14 +87,13 @@ class ContractVariationCreateView(UserHasGroupGenericMixin, CreateView):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self.fields["date_identified"].widget = styled_date_input
-            self.fields["date_submitted"].widget = styled_date_input
-            self.fields["date_approved"].widget = styled_date_input
             self.fields["attachment"].widget = styled_attachment_input
+            # Status choices limited for create - starts as Draft
+            self.fields["status"].initial = ContractVariation.Status.DRAFT
 
         class Meta:
             model = ContractVariation
             fields = [
-                "variation_number",
                 "title",
                 "description",
                 "category",
@@ -103,8 +102,6 @@ class ContractVariationCreateView(UserHasGroupGenericMixin, CreateView):
                 "variation_amount",
                 "time_extension_days",
                 "date_identified",
-                "date_submitted",
-                "date_approved",
                 "attachment",
             ]
 
@@ -149,23 +146,30 @@ class ContractVariationCreateView(UserHasGroupGenericMixin, CreateView):
 class ContractVariationUpdateView(UserHasGroupGenericMixin, UpdateView):
     """Update an existing contract variation."""
 
+    class UpdateForm(forms.ModelForm):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.fields["date_identified"].widget = styled_date_input
+            self.fields["attachment"].widget = styled_attachment_input
+
+        class Meta:
+            model = ContractVariation
+            fields = [
+                "title",
+                "description",
+                "category",
+                "variation_type",
+                "status",
+                "variation_amount",
+                "time_extension_days",
+                "date_identified",
+                "attachment",
+                "notes",
+            ]
+
     model = ContractVariation
     template_name = "contract/variation_form.html"
-    fields = [
-        "variation_number",
-        "title",
-        "description",
-        "category",
-        "variation_type",
-        "status",
-        "variation_amount",
-        "time_extension_days",
-        "date_identified",
-        "date_submitted",
-        "date_approved",
-        "approved_by",
-        "attachment",
-    ]
+    form_class = UpdateForm
     permissions = ["contractor"]
 
     def get_project(self):
