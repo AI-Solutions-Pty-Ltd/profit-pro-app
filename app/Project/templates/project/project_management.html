@@ -25,6 +25,11 @@
                         {% heroicon_outline "pencil" size="16" %}
                         <span class="ml-1">Edit</span>
                     </a>
+                    <a href="{% url 'project:project-users' project.pk %}"
+                       class="inline-flex items-center px-3 py-1.5 border border-purple-300 rounded-md shadow-sm text-sm font-medium text-purple-700 bg-white hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">
+                        {% heroicon_outline "users" size="16" %}
+                        <span class="ml-1">Users</span>
+                    </a>
                     <a href="{% url 'project:project-delete' project.pk %}"
                        class="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
                         {% heroicon_outline "trash" size="16" %}
@@ -339,7 +344,7 @@
                 <div class="sm:col-span-1">
                     <dt class="text-sm font-medium text-gray-500">Owner</dt>
                     <dd class="mt-1 text-sm text-gray-900">
-                        {{ project.account.email }}
+                        {{ project.client.name|default_if_none:"N/A" }}
                     </dd>
                 </div>
                 <div class="sm:col-span-1">

@@ -25,7 +25,7 @@ class FinalAccountDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailVi
             self.project = get_object_or_404(
                 Project,
                 pk=self.kwargs[self.project_slug],
-                account=self.request.user,
+                users=self.request.user,
             )
         return self.project
 
@@ -37,7 +37,7 @@ class FinalAccountDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailVi
                 pk=self.kwargs[self.pk],
                 project=self.get_project(),
                 is_final=True,
-                project__account=self.request.user,
+                project__users=self.request.user,
             )
         return self.payment_certificate
 

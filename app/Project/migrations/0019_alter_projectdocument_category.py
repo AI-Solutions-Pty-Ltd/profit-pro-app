@@ -4,15 +4,29 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0018_projectdocument'),
+        ("Project", "0018_projectdocument"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='projectdocument',
-            name='category',
-            field=models.CharField(choices=[('CONTRACT_DOCUMENTS', 'Contract Documents & Appointment Letters'), ('STAGE_GATE_APPROVAL', 'Stage Gate Approval Documentation'), ('TECHNICAL_SPECIFICATIONS', 'Technical Specifications'), ('FINANCIAL_DOCUMENTS', 'Financial Documents'), ('MEETING_MINUTES', 'Meeting Minutes'), ('GENERAL_CORRESPONDENCE', 'General Correspondence'), ('REPORTS', 'Reports'), ('PERMITS_APPROVALS', 'Permits & Approvals'), ('PHOTOS_IMAGES', 'Photos & Images'), ('OTHER', 'Other')], help_text='Category of the document', max_length=30),
+            model_name="projectdocument",
+            name="category",
+            field=models.CharField(
+                choices=[
+                    ("CONTRACT_DOCUMENTS", "Contract Documents & Appointment Letters"),
+                    ("STAGE_GATE_APPROVAL", "Stage Gate Approval Documentation"),
+                    ("TECHNICAL_SPECIFICATIONS", "Technical Specifications"),
+                    ("FINANCIAL_DOCUMENTS", "Financial Documents"),
+                    ("MEETING_MINUTES", "Meeting Minutes"),
+                    ("GENERAL_CORRESPONDENCE", "General Correspondence"),
+                    ("REPORTS", "Reports"),
+                    ("PERMITS_APPROVALS", "Permits & Approvals"),
+                    ("PHOTOS_IMAGES", "Photos & Images"),
+                    ("OTHER", "Other"),
+                ],
+                help_text="Category of the document",
+                max_length=30,
+            ),
         ),
     ]

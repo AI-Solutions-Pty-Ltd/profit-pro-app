@@ -26,7 +26,7 @@ class RiskMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
             self.project = get_object_or_404(
                 Project,
                 pk=self.kwargs["project_pk"],
-                account=self.request.user,
+                users=self.request.user,
             )
         return self.project
 
@@ -171,7 +171,7 @@ class RiskUpdateView(RiskMixin, UpdateView):
             Risk,
             pk=self.kwargs["pk"],
             project__pk=self.kwargs["project_pk"],
-            project__account=self.request.user,
+            project__users=self.request.user,
         )
 
     def get_breadcrumbs(self) -> list[dict[str, str | None]]:
@@ -234,7 +234,7 @@ class RiskDeleteView(RiskMixin, DeleteView):
             Risk,
             pk=self.kwargs["pk"],
             project__pk=self.kwargs["project_pk"],
-            project__account=self.request.user,
+            project__users=self.request.user,
         )
 
     def get_breadcrumbs(self) -> list[dict[str, str | None]]:

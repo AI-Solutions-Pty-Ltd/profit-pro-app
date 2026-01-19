@@ -25,7 +25,7 @@ class ProjectCategoryAdmin(SoftDeleteAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(SoftDeleteAdmin):
-    list_display = ["name", "account", "status", "category", "deleted", "created_at"]
+    list_display = ["name", "client", "status", "category", "deleted", "created_at"]
     list_filter = ["deleted", "created_at", "vat", "category", "status"]
     search_fields = ["name", "description", "account__email"]
     readonly_fields = ["created_at", "updated_at"]
@@ -51,12 +51,21 @@ class SignatoriesAdmin(SoftDeleteAdmin):
     ]
     readonly_fields = ["created_at", "updated_at"]
 
+
 @admin.register(ProjectDocument)
 class ProjectDocumentAdmin(SoftDeleteAdmin):
-    list_display = ["title", "project", "category", "uploaded_by", "deleted", "created_at"]
+    list_display = [
+        "title",
+        "project",
+        "category",
+        "uploaded_by",
+        "deleted",
+        "created_at",
+    ]
     list_filter = ["deleted", "created_at", "category", "project"]
     search_fields = ["title", "notes", "project__name"]
     readonly_fields = ["created_at", "updated_at"]
+
 
 @admin.register(Portfolio)
 class PortfolioAdmin(SoftDeleteAdmin):

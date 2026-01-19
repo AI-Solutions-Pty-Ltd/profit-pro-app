@@ -142,9 +142,9 @@
             <p>
                 Best regards,
                 <br>
-                <strong>{{ payment_certificate.project.account.get_full_name|default:payment_certificate.project.account.email }}</strong>
+                <strong>{{ request.user.get_full_name|default:request.user.email }}</strong>
                 <br>
-                {{ payment_certificate.project.account.email }}
+                {{ request.user.email }}
             </p>
         </div>
         <div class="footer">

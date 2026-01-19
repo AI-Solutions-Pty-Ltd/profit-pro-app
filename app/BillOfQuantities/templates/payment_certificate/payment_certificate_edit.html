@@ -47,7 +47,7 @@
                 <div class="sm:col-span-1">
                     <dt class="text-sm font-medium text-gray-500">Owner</dt>
                     <dd class="mt-1 text-sm text-gray-900">
-                        {{ project.account.email }}
+                        {{ project.client.name|default_if_none:"N/A" }}
                     </dd>
                 </div>
                 <div class="sm:col-span-1">

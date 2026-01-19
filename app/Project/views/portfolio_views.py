@@ -49,11 +49,11 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         # Ensure filter_form exists and is valid
         if not self.filter_form or not self.filter_form.is_valid():
             # Return unfiltered queryset if form is invalid
-            return Project.objects.filter(account=self.request.user).order_by(
+            return Project.objects.filter(users=self.request.user).order_by(
                 "-created_at"
             )
 
-        projects = Project.objects.filter(account=self.request.user).order_by(
+        projects = Project.objects.filter(users=self.request.user).order_by(
             "-created_at"
         )
 

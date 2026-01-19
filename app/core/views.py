@@ -202,11 +202,29 @@ class RegisterView(CreateView):
 
     class RegisterForm(BaseUserCreationForm):
         username = None
-        email = forms.EmailField()
+        email = forms.EmailField(
+            widget=forms.EmailInput(attrs={"placeholder": "Enter your email address"})
+        )
+        first_name = forms.CharField(
+            max_length=150,
+            required=True,
+            widget=forms.TextInput(attrs={"placeholder": "Enter your first name"}),
+        )
+        last_name = forms.CharField(
+            max_length=150,
+            required=True,
+            widget=forms.TextInput(attrs={"placeholder": "Enter your last name"}),
+        )
+        password1 = forms.CharField(
+            widget=forms.PasswordInput(attrs={"placeholder": "Create a password"})
+        )
+        password2 = forms.CharField(
+            widget=forms.PasswordInput(attrs={"placeholder": "Confirm your password"})
+        )
 
         class Meta:
             model = User
-            fields = ["email", "password1", "password2"]
+            fields = ["email", "first_name", "last_name", "password1", "password2"]
 
         def clean_email(self):
             email = self.cleaned_data["email"]

@@ -527,7 +527,7 @@ class TestPaymentCertificateWorkflow:
             project=project, status=PaymentCertificate.Status.DRAFT
         )
 
-        client.force_login(project.account)
+        client.force_login(project.users.first())
 
         # Step 1: Add transactions
         edit_url = reverse(

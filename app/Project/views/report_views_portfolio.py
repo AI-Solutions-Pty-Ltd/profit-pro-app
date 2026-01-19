@@ -39,7 +39,7 @@ class PortfolioReportMixin(UserHasGroupGenericMixin, BreadcrumbMixin, TemplateVi
         """Get active projects for the current user."""
         return list(
             Project.objects.filter(
-                account=self.request.user,
+                users=self.request.user,
                 status=Project.Status.ACTIVE,
             ).order_by("name")
         )

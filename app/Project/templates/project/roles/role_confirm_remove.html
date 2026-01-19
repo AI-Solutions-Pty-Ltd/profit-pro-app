@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% block title %}
+    Remove {{ role_name }} - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="bg-white shadow-sm rounded-lg mb-6">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Remove {{ role_name }}</h1>
+                        <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Confirmation Card -->
+        <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
+                <h2 class="text-lg font-semibold text-red-900">
+                    {% heroicon_outline "exclamation-triangle" class="w-5 h-5 inline mr-2" %}
+                    Confirm Removal
+                </h2>
+            </div>
+            <div class="px-6 py-6">
+                <div class="flex items-center mb-6">
+                    <div class="flex-shrink-0 h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
+                        {% heroicon_outline "user" class="w-6 h-6 text-red-600" %}
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-lg text-gray-900">
+                            Are you sure you want to remove <strong>{{ role_user.first_name }} {{ role_user.last_name }}</strong> as a {{ role_name|lower }} from this project?
+                        </p>
+                        <p class="text-sm text-gray-500 mt-1">{{ role_user.email }}</p>
+                    </div>
+                </div>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" class="h-5 w-5 text-yellow-400" %}</div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-yellow-800">Warning</h3>
+                            <div class="mt-2 text-sm text-yellow-700">
+                                <p>
+                                    Removing this user will revoke their access to project-specific functions and permissions associated with this role.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <form method="post" class="flex justify-end space-x-3">
+                    {% csrf_token %}
+                    <a href="{% url 'project:'|add:url_name|add:'-remove' project_pk=project.pk user_pk=role_user.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        {% heroicon_outline "x-mark" size="20" class="mr-2" %}
+                        Cancel
+                    </a>
+                    <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700">
+                        {% heroicon_outline "trash" size="20" class="mr-2" %}
+                        Remove {{ role_name }}
+                    </button>
+                </form>
+            </div>
+        </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'project:'|add:url_name project_pk=project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Back to {{ role_name_plural }}
+                </a>
+                <a href="{% url 'project:project-users' pk=project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    Project Users
+                    {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

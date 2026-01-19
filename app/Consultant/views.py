@@ -132,7 +132,7 @@ class PaymentCertificateFinalApprovalView(
             html_body = render_to_string("consultant/email_approval.html", context)
 
             django_email_service(
-                to=project.account.email,
+                to=[user.email for user in project.users.all()],
                 subject=subject,
                 html_body=html_body,
                 plain_body="",
@@ -156,7 +156,7 @@ class PaymentCertificateFinalApprovalView(
             html_body = render_to_string("consultant/email_rejection.html", context)
 
             django_email_service(
-                to=project.account.email,
+                to=[user.email for user in project.users.all()],
                 subject=subject,
                 html_body=html_body,
                 plain_body="",

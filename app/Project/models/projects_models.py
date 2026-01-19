@@ -46,8 +46,10 @@ class Project(BaseModel):
         null=True,
         related_name="projects",
     )
-    account = models.ForeignKey(
-        Account, on_delete=models.CASCADE, related_name="projects"
+    users = models.ManyToManyField(
+        Account,
+        related_name="projects",
+        help_text="Users who have access to this project",
     )
     name = models.CharField(max_length=255)
     description = models.TextField()
@@ -165,38 +167,30 @@ class Project(BaseModel):
         help_text="Project category (e.g., Education, Health, Roads)",
     )
 
-    # Project team roles
-    contractor = models.ForeignKey(
+    # Project team roles - all as ManyToMany for multiple users per role
+    contractors = models.ManyToManyField(
         Account,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         related_name="contractor_projects",
-        help_text="Contractor responsible for the project",
+        help_text="Contractors responsible for the project",
     )
-    quantity_surveyor = models.ForeignKey(
+    quantity_surveyors = models.ManyToManyField(
         Account,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         related_name="qs_projects",
-        help_text="Quantity Surveyor for the project",
+        help_text="Quantity Surveyors for the project",
     )
-    lead_consultant = models.ForeignKey(
+    lead_consultants = models.ManyToManyField(
         Account,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         related_name="lead_consultant_projects",
-        help_text="Lead Consultant (e.g., Principal Agent)",
+        help_text="Lead Consultants (e.g., Principal Agents)",
     )
-    client_representative = models.ForeignKey(
+    client_representatives = models.ManyToManyField(
         Account,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         related_name="client_rep_projects",
-        help_text="Client Representative",
+        help_text="Client Representatives",
     )
 
     if TYPE_CHECKING:
@@ -205,6 +199,7 @@ class Project(BaseModel):
         forecasts: QuerySet[Forecast]
         signatories: QuerySet["Signatories"]
         planned_values: QuerySet["PlannedValue"]
+        users: models.ManyToManyField[Account, Account]
 
     def __str__(self):
         return self.name
@@ -401,6 +396,11 @@ class Project(BaseModel):
         return Decimal(
             round(self.total_contract_value / self.total_certified_to_date * 100, 2)
         )
+
+    @property
+    def project_manager(self: "Project") -> Optional["Account"]:
+        """Get the first lead consultant as the project manager."""
+        return self.lead_consultants.first()
 
     ##################
     # Forecasts

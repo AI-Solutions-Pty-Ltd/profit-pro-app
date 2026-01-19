@@ -68,7 +68,7 @@
             <h1 class="m-0">Payment Certificate Approved ✓</h1>
         </div>
         <div class="content">
-            <p>Dear {{ project.account.get_full_name }},</p>
+            <p>Dear {{ project.client.name|default_if_none:"N/A" }},</p>
             <p>We are pleased to inform you that your payment certificate has been approved.</p>
             <div class="info-box">
                 <div class="info-row">

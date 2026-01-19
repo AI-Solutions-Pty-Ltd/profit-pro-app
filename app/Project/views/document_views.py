@@ -1,6 +1,7 @@
 """Views for managing Project Documents."""
 
-from typing import Any, Dict
+from typing import Any
+
 from django import forms
 from django.contrib import messages
 from django.db.models import QuerySet
@@ -26,7 +27,7 @@ class DocumentMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
             self.project = get_object_or_404(
                 Project,
                 pk=self.kwargs["project_pk"],
-                account=self.request.user,
+                users=self.request.user,
             )
         return self.project
 
@@ -183,7 +184,7 @@ class DocumentDeleteView(DocumentMixin, DeleteView):
             project__pk=self.kwargs["project_pk"],
             category=self.get_category(),
         )
-        if document.project.account != self.request.user:
+        if self.request.user not in document.project.users:
             raise Http404("You do not have permission to delete this document.")
         return document
 

@@ -42,7 +42,7 @@ class ComplianceMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
             self.project = get_object_or_404(
                 Project,
                 pk=self.kwargs["project_pk"],
-                account=self.request.user,
+                users=self.request.user,
             )
         return self.project
 

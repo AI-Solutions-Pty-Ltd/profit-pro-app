@@ -62,10 +62,17 @@ class ProjectFactory(DjangoModelFactory):
         model = Project
 
     description = Faker("text")
-    name = factory.Sequence(lambda n: f"Project {n}")
-    account = factory.SubFactory(UserFactory)
-    client = factory.SubFactory(ClientFactory)
-    category = factory.SubFactory(ProjectCategoryFactory)
+    name = factory.Sequence(lambda n: f"Project {n}")  # type: ignore
+    account = factory.SubFactory(UserFactory)  # type: ignore
+    client = factory.SubFactory(ClientFactory)  # type: ignore
+    category = factory.SubFactory(ProjectCategoryFactory)  # type: ignore
+
+    @factory.post_generation  # type: ignore
+    def users(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            return
+
+        self.users.add(**extracted)  # type: ignore
 
 
 class PlannedValueFactory(DjangoModelFactory):

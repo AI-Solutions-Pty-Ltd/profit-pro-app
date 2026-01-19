@@ -24,7 +24,7 @@ class AddendumMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
             self.project = get_object_or_404(
                 Project,
                 pk=self.kwargs[self.project_slug],
-                account=self.request.user,
+                users=self.request.user,
             )
         return self.project
 
