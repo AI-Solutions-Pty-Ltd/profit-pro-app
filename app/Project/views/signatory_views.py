@@ -32,7 +32,7 @@ class SignatoryMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
             self.project = get_object_or_404(
                 Project,
                 pk=self.kwargs["project_pk"],
-                account=self.request.user,
+                users=self.request.user,
             )
         return self.project
 
@@ -40,13 +40,13 @@ class SignatoryMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
         """Filter signatories by project."""
         project = self.get_project()
         return Signatories.objects.filter(
-            project=project, project__account=self.request.user
+            project=project, project__users=self.request.user
         ).order_by("sequence_number")
 
     def get_object(self: "SignatoryMixin") -> Signatories:
         """Get signatory and verify project ownership."""
         signatory: Signatories = super().get_object()  # type: ignore
-        if signatory.project.account != self.request.user:
+        if self.request.user not in signatory.project.users.all():
             raise Http404("You do not have permission to view this signatory.")
         return signatory
 
@@ -81,7 +81,7 @@ class SignatoryInviteView(SignatoryMixin, FormView):
     """Invite a user as a signatory for a project."""
 
     form_class = SignatoryInviteForm
-    template_name = "signatory/signatory_invite.html"
+    template_name = "signatory/signatory_form.html"
 
     def get_breadcrumbs(self: "SignatoryInviteView") -> list[dict[str, str | None]]:
         return [

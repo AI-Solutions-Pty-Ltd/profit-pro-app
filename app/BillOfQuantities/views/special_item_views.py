@@ -25,7 +25,7 @@ class SpecialItemMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
             self.project = get_object_or_404(
                 Project,
                 pk=self.kwargs[self.project_slug],
-                account=self.request.user,
+                users=self.request.user,
             )
         return self.project
 
@@ -77,6 +77,13 @@ class SpecialItemCreateView(SpecialItemMixin, CreateView):
     fields = [
         "description",
     ]
+
+    def get_form(self, form_class=None):
+        """Override form to make description required."""
+        form = super().get_form(form_class)
+        # Make description field required
+        form.fields["description"].required = True
+        return form
 
     def get_breadcrumbs(self: "SpecialItemCreateView") -> list[BreadcrumbItem]:
         return [
@@ -149,6 +156,13 @@ class SpecialItemUpdateView(SpecialItemMixin, UpdateView):
     fields = [
         "description",
     ]
+
+    def get_form(self, form_class=None):
+        """Override form to make description required."""
+        form = super().get_form(form_class)
+        # Make description field required
+        form.fields["description"].required = True
+        return form
 
     def get_breadcrumbs(self: "SpecialItemUpdateView") -> list[BreadcrumbItem]:
         return [

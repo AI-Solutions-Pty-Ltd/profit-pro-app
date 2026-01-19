@@ -32,7 +32,7 @@ class GetProjectMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
         return get_object_or_404(
             Project,
             pk=slug,
-            account=self.request.user,
+            users=self.request.user,
         )
 
 

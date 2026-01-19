@@ -3,7 +3,6 @@
 import json
 from datetime import datetime
 
-from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.db.models import QuerySet, Sum
 from django.http import Http404
@@ -28,11 +27,11 @@ class ProjectMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
     permissions = ["contractor"]
 
     def get_queryset(self: "ProjectMixin") -> QuerySet[Project]:
-        return Project.objects.filter(account=self.request.user).order_by("-created_at")
+        return Project.objects.filter(users=self.request.user).order_by("-created_at")
 
     def get_object(self: "ProjectMixin") -> Project:
         project = super().get_object()  # type: ignore
-        if project.account != self.request.user:
+        if self.request.user not in project.users.all():
             raise Http404("You do not have permission to view this project.")
         return project
 
@@ -272,10 +271,11 @@ class ProjectCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
         ]
 
     def form_valid(self, form):
-        """Set the account to the current user before saving."""
-        form.instance.account = self.request.user
+        """Set the portfolio and add current user to the project."""
         form.instance.portfolio = self.request.user.portfolio  # type: ignore
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        self.object.users.add(self.request.user)  # type: ignore
+        return response
 
     def get_success_url(self: "ProjectCreateView"):
         """Redirect to the project dashboard."""

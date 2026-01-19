@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% block title %}
+    Add Roles - {{ user_obj.get_full_name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="bg-white shadow-sm rounded-lg mb-6">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Add Roles</h1>
+                        <p class="text-sm text-gray-600 mt-1">{{ user_obj.get_full_name }}</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <a href="{% url 'account:user-detail' user_pk=user_obj.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            {% heroicon_outline "x-mark" size="20" class="mr-2" %}
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Current Roles -->
+        <div class="bg-white shadow-sm rounded-lg mb-6">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h2 class="text-lg font-semibold text-gray-900">
+                    {% heroicon_outline "shield-check" class="w-5 h-5 inline mr-2" %}
+                    Current Roles
+                </h2>
+            </div>
+            <div class="px-6 py-4">
+                {% if user_obj.groups.all %}
+                    <div class="flex flex-wrap gap-2">
+                        {% for group in user_obj.groups.all %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+                                {{ group.name }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-sm text-gray-500">No roles currently assigned</p>
+                {% endif %}
+            </div>
+        </div>
+        <!-- Add Roles Form -->
+        <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                <h2 class="text-lg font-semibold text-gray-900">
+                    {% heroicon_outline "plus-circle" class="w-5 h-5 inline mr-2" %}
+                    Available Roles
+                </h2>
+            </div>
+            {% if available_groups %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="px-6 py-4">
+                        <div class="space-y-3">
+                            {% for group in available_groups %}
+                                <label class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox"
+                                           name="groups"
+                                           value="{{ group.pk }}"
+                                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                    <div class="ml-3">
+                                        <span class="text-sm font-medium text-gray-900">{{ group.name }}</span>
+                                        {% if group.name == 'Admin' %}
+                                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                                High Privileges
+                                            </span>
+                                        {% elif group.name == 'Manager' %}
+                                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                Management
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <div class="text-sm text-gray-700">
+                                <span id="selectedCount">0</span> roles selected
+                            </div>
+                            <button type="submit"
+                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    id="addButton"
+                                    disabled>
+                                {% heroicon_outline "plus" size="20" class="mr-2" %}
+                                Add Selected Roles
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            {% else %}
+                <div class="px-6 py-12 text-center">
+                    <div class="text-gray-500">
+                        {% heroicon_outline "shield-check" class="w-12 h-12 mx-auto text-gray-300 mb-3" %}
+                        <p class="text-sm">All available roles are already assigned</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'account:user-detail' user_pk=user_obj.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Back to User Details
+                </a>
+                <a href="{% url 'project:portfolio-dashboard' %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    Dashboard
+                    {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+                </a>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('input[name="groups"]');
+            const selectedCount = document.getElementById('selectedCount');
+            const addButton = document.getElementById('addButton');
+
+            function updateSelectedCount() {
+                const checked = document.querySelectorAll('input[name="groups"]:checked');
+                selectedCount.textContent = checked.length;
+                addButton.disabled = checked.length === 0;
+            }
+
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateSelectedCount);
+            });
+
+            updateSelectedCount();
+        });
+    </script>
+{% endblock content %}

@@ -33,7 +33,7 @@ class StructureDetailView(UserHasGroupGenericMixin, DetailView):
     def get_queryset(self):
         """Filter structures by the current project."""
         return Structure.objects.filter(
-            project__account=self.request.user
+            project__users=self.request.user
         ).select_related("project")
 
     def get_context_data(self, **kwargs):
@@ -79,7 +79,7 @@ class StructureDeleteView(UserHasGroupGenericMixin, DeleteView):
 
     def get_queryset(self):
         """Filter structures by the current project."""
-        return Structure.objects.filter(project__account=self.request.user)
+        return Structure.objects.filter(project__users=self.request.user)
 
     def form_valid(self, form):
         """Add success message."""
@@ -114,7 +114,7 @@ class StructureExcelUploadView(UserHasGroupGenericMixin, FormView):
         project = get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
         return project
 

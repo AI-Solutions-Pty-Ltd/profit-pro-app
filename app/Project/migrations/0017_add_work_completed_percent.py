@@ -4,15 +4,20 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0016_add_project_category'),
+        ("Project", "0016_add_project_category"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='plannedvalue',
-            name='work_completed_percent',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Percentage of work completed for this month (used in earned value calculation)', max_digits=5, null=True),
+            model_name="plannedvalue",
+            name="work_completed_percent",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Percentage of work completed for this month (used in earned value calculation)",
+                max_digits=5,
+                null=True,
+            ),
         ),
     ]

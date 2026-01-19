@@ -35,7 +35,7 @@ class ContractVariationListView(UserHasGroupGenericMixin, ListView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -115,7 +115,7 @@ class ContractVariationCreateView(UserHasGroupGenericMixin, CreateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def form_valid(self, form):
@@ -177,7 +177,7 @@ class ContractVariationUpdateView(UserHasGroupGenericMixin, UpdateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -223,7 +223,7 @@ class ContractVariationDetailView(UserHasGroupGenericMixin, DetailView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -252,7 +252,7 @@ class ContractVariationDeleteView(UserHasGroupGenericMixin, DeleteView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -304,7 +304,7 @@ class CorrespondenceListView(UserHasGroupGenericMixin, ListView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -373,7 +373,7 @@ class CorrespondenceCreateView(UserHasGroupGenericMixin, CreateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def form_valid(self, form):
@@ -440,7 +440,7 @@ class CorrespondenceUpdateView(UserHasGroupGenericMixin, UpdateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -486,7 +486,7 @@ class CorrespondenceDetailView(UserHasGroupGenericMixin, DetailView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -515,7 +515,7 @@ class CorrespondenceDeleteView(UserHasGroupGenericMixin, DeleteView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):

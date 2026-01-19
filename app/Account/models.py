@@ -1,3 +1,5 @@
+"""Account models."""
+
 from typing import TYPE_CHECKING, Any, Optional
 
 from django.contrib.auth.base_user import BaseUserManager
@@ -22,8 +24,8 @@ class UserManager(BaseUserManager):
     ):
         if not email:
             raise ValueError("Users require an email field")
-        email: str = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
+        normalized_email = self.normalize_email(email)
+        user = self.model(email=normalized_email, **extra_fields)
         user.set_password(password)  # type: ignore
         user.save(using=self._db)
         return user
@@ -96,6 +98,9 @@ class Account(AbstractUser, BaseModel):
     first_name = models.CharField(
         _("first name"), max_length=150, blank=False
     )  # override first_name field from AbstractUser to make it required
+    last_name = models.CharField(
+        _("last name"), max_length=150, blank=False
+    )  # override last_name field from AbstractUser to make it required
 
     type = models.CharField(
         max_length=50,
@@ -130,6 +135,10 @@ class Account(AbstractUser, BaseModel):
     if TYPE_CHECKING:
         projects: QuerySet[Project]
         portfolios: QuerySet[Portfolio]
+        contractor_projects: QuerySet[Project]
+        qs_projects: QuerySet[Project]
+        lead_consultant_projects: QuerySet[Project]
+        client_rep_projects: QuerySet[Project]
 
     def __str__(self):
         return self.email

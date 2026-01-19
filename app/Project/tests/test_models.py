@@ -18,7 +18,7 @@ class TestProjectModel:
         project = ProjectFactory.create(name="New Project")
         assert project.id is not None
         assert project.name == "New Project"
-        assert project.account is not None
+        assert project.users.exists()
         assert project.created_at is not None
         assert project.updated_at is not None
         assert project.deleted is False
@@ -43,15 +43,15 @@ class TestProjectModel:
     def test_project_account_relationship(self):
         """Test the relationship between project and account."""
         account = AccountFactory.create()
-        project = ProjectFactory.create(account=account)
-        assert project.account == account
+        project = ProjectFactory.create(users=(account,))
+        assert project.users.first() == account
 
         assert project in account.projects.all()
 
     def test_project_cascade_delete(self):
         """Test that projects are deleted when account is deleted."""
         account = AccountFactory.create()
-        project = ProjectFactory.create(account=account, name="Test Project")
+        project = ProjectFactory.create(users=(account,), name="Test Project")
         project_id = project.id
 
         account.delete()

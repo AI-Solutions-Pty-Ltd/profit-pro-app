@@ -42,7 +42,7 @@ class AdvancePaymentListView(UserHasGroupGenericMixin, ListView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -82,9 +82,18 @@ class AdvancePaymentCreateView(UserHasGroupGenericMixin, CreateView):
 
     class CreateForm(forms.ModelForm):
         def __init__(self, *args, **kwargs):
+            self.project = kwargs.pop("project", None)
             super().__init__(*args, **kwargs)
             self.fields["date"].widget = styled_date_input
             self.fields["guarantee_expiry"].widget = styled_date_input
+
+            # Filter payment certificates to current project
+            if self.project:
+                self.fields[
+                    "payment_certificate"
+                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
+                    "-created_at"
+                )
 
         class Meta:
             model = AdvancePayment
@@ -110,8 +119,14 @@ class AdvancePaymentCreateView(UserHasGroupGenericMixin, CreateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
+
+    def get_form_kwargs(self):
+        """Pass project to form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
 
     def form_valid(self, form):
         """Set project and captured_by before saving."""
@@ -142,9 +157,18 @@ class AdvancePaymentUpdateView(UserHasGroupGenericMixin, UpdateView):
 
     class UpdateForm(forms.ModelForm):
         def __init__(self, *args, **kwargs):
+            self.project = kwargs.pop("project", None)
             super().__init__(*args, **kwargs)
             self.fields["date"].widget = styled_date_input
             self.fields["guarantee_expiry"].widget = styled_date_input
+
+            # Filter payment certificates to current project
+            if self.project:
+                self.fields[  # type: ignore[attr-defined]
+                    "payment_certificate"
+                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
+                    "-created_at"
+                )
 
         class Meta:
             model = AdvancePayment
@@ -170,8 +194,14 @@ class AdvancePaymentUpdateView(UserHasGroupGenericMixin, UpdateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
+
+    def get_form_kwargs(self):
+        """Pass project to form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
 
     def get_queryset(self):
         """Filter by project."""
@@ -214,7 +244,7 @@ class AdvancePaymentDeleteView(UserHasGroupGenericMixin, DeleteView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -265,7 +295,7 @@ class RetentionListView(UserHasGroupGenericMixin, ListView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -305,8 +335,17 @@ class RetentionCreateView(UserHasGroupGenericMixin, CreateView):
 
     class CreateForm(forms.ModelForm):
         def __init__(self, *args, **kwargs):
+            self.project = kwargs.pop("project", None)
             super().__init__(*args, **kwargs)
             self.fields["date"].widget = styled_date_input
+
+            # Filter payment certificates to current project
+            if self.project:
+                self.fields[
+                    "payment_certificate"
+                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
+                    "-created_at"
+                )
 
         class Meta:
             model = Retention
@@ -330,8 +369,14 @@ class RetentionCreateView(UserHasGroupGenericMixin, CreateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
+
+    def get_form_kwargs(self):
+        """Pass project to form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
 
     def form_valid(self, form):
         """Set project and captured_by before saving."""
@@ -360,8 +405,17 @@ class RetentionUpdateView(UserHasGroupGenericMixin, UpdateView):
 
     class UpdateForm(forms.ModelForm):
         def __init__(self, *args, **kwargs):
+            self.project = kwargs.pop("project", None)
             super().__init__(*args, **kwargs)
             self.fields["date"].widget = styled_date_input
+
+            # Filter payment certificates to current project
+            if self.project:
+                self.fields[  # type: ignore[attr-defined]
+                    "payment_certificate"
+                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
+                    "-created_at"
+                )
 
         class Meta:
             model = Retention
@@ -385,8 +439,14 @@ class RetentionUpdateView(UserHasGroupGenericMixin, UpdateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
+
+    def get_form_kwargs(self):
+        """Pass project to form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
 
     def get_queryset(self):
         """Filter by project."""
@@ -427,7 +487,7 @@ class RetentionDeleteView(UserHasGroupGenericMixin, DeleteView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -476,7 +536,7 @@ class MaterialsOnSiteListView(UserHasGroupGenericMixin, ListView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -512,8 +572,17 @@ class MaterialsOnSiteCreateView(UserHasGroupGenericMixin, CreateView):
 
     class CreateForm(forms.ModelForm):
         def __init__(self, *args, **kwargs):
+            self.project = kwargs.pop("project", None)
             super().__init__(*args, **kwargs)
             self.fields["date"].widget = styled_date_input
+
+            # Filter payment certificates to current project
+            if self.project:
+                self.fields[  # type: ignore[attr-defined]
+                    "payment_certificate"
+                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
+                    "-created_at"
+                )
 
         class Meta:
             model = MaterialsOnSite
@@ -542,8 +611,14 @@ class MaterialsOnSiteCreateView(UserHasGroupGenericMixin, CreateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
+
+    def get_form_kwargs(self):
+        """Pass project to form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
 
     def form_valid(self, form):
         """Set project and captured_by before saving."""
@@ -574,8 +649,17 @@ class MaterialsOnSiteUpdateView(UserHasGroupGenericMixin, UpdateView):
 
     class UpdateForm(forms.ModelForm):
         def __init__(self, *args, **kwargs):
+            self.project = kwargs.pop("project", None)
             super().__init__(*args, **kwargs)
             self.fields["date"].widget = styled_date_input
+
+            # Filter payment certificates to current project
+            if self.project:
+                self.fields[
+                    "payment_certificate"
+                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
+                    "-created_at"
+                )
 
         class Meta:
             model = MaterialsOnSite
@@ -604,8 +688,14 @@ class MaterialsOnSiteUpdateView(UserHasGroupGenericMixin, UpdateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
+
+    def get_form_kwargs(self):
+        """Pass project to form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
 
     def get_queryset(self):
         """Filter by project."""
@@ -648,7 +738,7 @@ class MaterialsOnSiteDeleteView(UserHasGroupGenericMixin, DeleteView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -699,7 +789,7 @@ class EscalationListView(UserHasGroupGenericMixin, ListView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -735,10 +825,19 @@ class EscalationCreateView(UserHasGroupGenericMixin, CreateView):
 
     class CreateForm(forms.ModelForm):
         def __init__(self, *args, **kwargs):
+            self.project = kwargs.pop("project", None)
             super().__init__(*args, **kwargs)
             self.fields["date"].widget = styled_date_input
             self.fields["base_date"].widget = styled_date_input
             self.fields["current_date"].widget = styled_date_input
+
+            # Filter payment certificates to current project
+            if self.project:
+                self.fields[  # type: ignore[attr-defined]
+                    "payment_certificate"
+                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
+                    "-created_at"
+                )
 
         class Meta:
             model = Escalation
@@ -767,8 +866,14 @@ class EscalationCreateView(UserHasGroupGenericMixin, CreateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
+
+    def get_form_kwargs(self):
+        """Pass project to form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
 
     def form_valid(self, form):
         """Set project and captured_by before saving."""
@@ -797,10 +902,19 @@ class EscalationUpdateView(UserHasGroupGenericMixin, UpdateView):
 
     class UpdateForm(forms.ModelForm):
         def __init__(self, *args, **kwargs):
+            self.project = kwargs.pop("project", None)
             super().__init__(*args, **kwargs)
             self.fields["date"].widget = styled_date_input
             self.fields["base_date"].widget = styled_date_input
             self.fields["current_date"].widget = styled_date_input
+
+            # Filter payment certificates to current project
+            if self.project:
+                self.fields[  # type: ignore[attr-defined]
+                    "payment_certificate"
+                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
+                    "-created_at"
+                )
 
         class Meta:
             model = Escalation
@@ -829,8 +943,14 @@ class EscalationUpdateView(UserHasGroupGenericMixin, UpdateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
+
+    def get_form_kwargs(self):
+        """Pass project to form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
 
     def get_queryset(self):
         """Filter by project."""
@@ -871,7 +991,7 @@ class EscalationDeleteView(UserHasGroupGenericMixin, DeleteView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -920,7 +1040,7 @@ class SpecialItemTransactionListView(UserHasGroupGenericMixin, ListView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            account=self.request.user,
+            users=self.request.user,
         )
 
     def get_queryset(self):

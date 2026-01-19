@@ -17,7 +17,7 @@ class GetBillsByStructureView(UserHasGroupGenericMixin, View):
     def get(self, request, project_pk):
         """Return bills for a given structure."""
         # Verify user has access to this project
-        project = get_object_or_404(Project, pk=project_pk, account=request.user)
+        project = get_object_or_404(Project, pk=project_pk, users=request.user)
 
         # Verify user is in contractor group
         if not request.user.groups.filter(name="contractor").exists():
@@ -41,7 +41,7 @@ class GetPackagesByBillView(UserHasGroupGenericMixin, View):
     def get(self, request, project_pk):
         """Return packages for a given bill."""
         # Verify user has access to this project
-        project = get_object_or_404(Project, pk=project_pk, account=request.user)
+        project = get_object_or_404(Project, pk=project_pk, users=request.user)
 
         # Verify user is in contractor group
         if not request.user.groups.filter(name="contractor").exists():

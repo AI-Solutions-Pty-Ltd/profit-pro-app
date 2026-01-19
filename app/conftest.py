@@ -63,7 +63,5 @@ def town():
 @pytest.fixture()
 def project(user):
     """Create a test project."""
-    return ProjectFactory(
-        account=user,
-        name="Test Project",
-    )
+    project = ProjectFactory.create(name="Test Project", users=(user,))
+    return project

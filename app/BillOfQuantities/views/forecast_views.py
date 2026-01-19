@@ -38,7 +38,7 @@ class ForecastMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
             self.project = get_object_or_404(
                 Project,
                 pk=self.kwargs[self.project_slug],
-                account=self.request.user,
+                users=self.request.user,
             )
         return self.project
 
@@ -804,7 +804,7 @@ class ForecastListView(ForecastMixin, ListView):
             "#A855F7",  # Violet
             "#EF4444",  # Red
         ]
-        for i, (label, value) in enumerate(zip(chart_labels, forecast_values)):
+        for i, (label, value) in enumerate(zip(chart_labels, forecast_values, strict=False)):
             if value is not None:
                 waterfall_labels.append(label)
                 waterfall_data.append(

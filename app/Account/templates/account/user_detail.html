@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% block title %}
+    {{ user_obj.get_full_name }} - User Details - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="bg-white shadow-sm rounded-lg mb-6">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-16 w-16 bg-indigo-100 rounded-full flex items-center justify-center">
+                            {% heroicon_outline "user" class="w-8 h-8 text-indigo-600" %}
+                        </div>
+                        <div class="ml-4">
+                            <h1 class="text-2xl font-bold text-gray-900">{{ user_obj.get_full_name }}</h1>
+                            <p class="text-sm text-gray-600">{{ user_obj.email }}</p>
+                            <div class="mt-1 flex items-center space-x-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if user_obj.type == 'Consultant' %}bg-blue-100 text-blue-800 {% elif user_obj.type == 'Contractor' %}bg-green-100 text-green-800 {% elif user_obj.type == 'Client' %}bg-purple-100 text-purple-800 {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ user_obj.get_type_display }}
+                                </span>
+                                {% if user_obj.is_staff %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        Staff
+                                    </span>
+                                {% endif %}
+                                {% if user_obj.is_superuser %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        Superuser
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% if request.user.is_superuser %}
+                        <div class="flex items-center space-x-3">
+                            <a href="{% url 'account:user-group-add' user_pk=user_obj.pk %}"
+                               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                                {% heroicon_outline "user-group" size="20" class="mr-2" %}
+                                Manage Roles
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Personal Details -->
+            <div class="lg:col-span-1">
+                <div class="bg-white shadow-sm rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-slate-50">
+                        <h2 class="text-lg font-semibold text-gray-900">
+                            {% heroicon_outline "identification" class="w-5 h-5 inline mr-2" %}
+                            Personal Details
+                        </h2>
+                    </div>
+                    <div class="px-6 py-4">
+                        <dl class="space-y-4">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">First Name</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    {{ user_obj.first_name|default:"-" }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Last Name</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    {{ user_obj.last_name|default:"-" }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Email</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    {{ user_obj.email }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Phone</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    {{ user_obj.primary_contact|default:"-" }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Date Joined</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    {{ user_obj.date_joined|date:"d M Y" }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Last Login</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    {% if user_obj.last_login %}
+                                        {{ user_obj.last_login|date:"d M Y H:i" }}
+                                    {% else %}
+                                        Never
+                                    {% endif %}
+                                </dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+                <!-- User Groups/Roles -->
+                <div class="bg-white shadow-sm rounded-lg mt-6">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-semibold text-gray-900">
+                                {% heroicon_outline "shield-check" class="w-5 h-5 inline mr-2" %}
+                                User Roles
+                            </h2>
+                            {% if request.user.is_superuser %}
+                                <a href="{% url 'account:user-group-add' user_pk=user_obj.pk %}"
+                                   class="text-indigo-600 hover:text-indigo-500 text-sm font-medium">Edit</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="px-6 py-4">
+                        {% if user_groups %}
+                            <div class="space-y-2">
+                                {% for group in user_groups %}
+                                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                        <span class="text-sm font-medium text-gray-900">{{ group.name }}</span>
+                                        {% if request.user.is_superuser %}
+                                            <a href="{% url 'account:user-group-remove' user_pk=user_obj.pk group_pk=group.pk %}"
+                                               class="text-red-600 hover:text-red-700 text-xs">Remove</a>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-sm text-gray-500">No roles assigned</p>
+                            {% if request.user.is_superuser %}
+                                <a href="{% url 'account:user-group-add' user_pk=user_obj.pk %}"
+                                   class="mt-2 inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500">
+                                    {% heroicon_outline "plus" size="16" class="mr-1" %}
+                                    Add Role
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <!-- Project Assignments -->
+            <div class="lg:col-span-2">
+                <!-- Projects -->
+                <div class="bg-white shadow-sm rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                        <h2 class="text-lg font-semibold text-gray-900">
+                            {% heroicon_outline "folder" class="w-5 h-5 inline mr-2" %}
+                            Recent Projects
+                        </h2>
+                    </div>
+                    <div class="px-6 py-4">
+                        {% if projects %}
+                            <div class="space-y-3">
+                                {% for project in projects %}
+                                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                        <div>
+                                            <a href="{% url 'project:project-management' pk=project.pk %}"
+                                               class="text-sm font-medium text-gray-900 hover:text-indigo-600">
+                                                {{ project.name }}
+                                            </a>
+                                            <p class="text-xs text-gray-500 mt-1">
+                                                {% if project.start_date and project.end_date %}
+                                                    {{ project.start_date|date:"M Y" }} - {{ project.end_date|date:"M Y" }}
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                        <span class="text-xs text-gray-500">{{ project.get_status_display }}</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if projects.count >= 10 %}
+                                <div class="mt-4 text-center">
+                                    <a href="#" class="text-sm text-indigo-600 hover:text-indigo-500">View all projects →</a>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-sm text-gray-500">No projects assigned</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <!-- Role-Specific Projects -->
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Lead Consultant Projects -->
+                    <div class="bg-white shadow-sm rounded-lg">
+                        <div class="px-4 py-3 border-b border-gray-200 bg-blue-50">
+                            <h3 class="text-sm font-semibold text-gray-900">
+                                {% heroicon_outline "briefcase" class="w-4 h-4 inline mr-1" %}
+                                Lead Consultant
+                            </h3>
+                        </div>
+                        <div class="px-4 py-3">
+                            {% if lead_consultant_projects %}
+                                <div class="space-y-2">
+                                    {% for project in lead_consultant_projects|slice:":5" %}
+                                        <a href="{% url 'project:project-management' pk=project.pk %}"
+                                           class="block text-xs text-gray-700 hover:text-indigo-600">
+                                            {{ project.name }}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-xs text-gray-500">None</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Contractor Projects -->
+                    <div class="bg-white shadow-sm rounded-lg">
+                        <div class="px-4 py-3 border-b border-gray-200 bg-green-50">
+                            <h3 class="text-sm font-semibold text-gray-900">
+                                {% heroicon_outline "building-library" class="w-4 h-4 inline mr-1" %}
+                                Contractor
+                            </h3>
+                        </div>
+                        <div class="px-4 py-3">
+                            {% if contractor_projects %}
+                                <div class="space-y-2">
+                                    {% for project in contractor_projects|slice:":5" %}
+                                        <a href="{% url 'project:project-management' pk=project.pk %}"
+                                           class="block text-xs text-gray-700 hover:text-indigo-600">
+                                            {{ project.name }}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-xs text-gray-500">None</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Quantity Surveyor Projects -->
+                    <div class="bg-white shadow-sm rounded-lg">
+                        <div class="px-4 py-3 border-b border-gray-200 bg-orange-50">
+                            <h3 class="text-sm font-semibold text-gray-900">
+                                {% heroicon_outline "calculator" class="w-4 h-4 inline mr-1" %}
+                                Quantity Surveyor
+                            </h3>
+                        </div>
+                        <div class="px-4 py-3">
+                            {% if qs_projects %}
+                                <div class="space-y-2">
+                                    {% for project in qs_projects|slice:":5" %}
+                                        <a href="{% url 'project:project-management' pk=project.pk %}"
+                                           class="block text-xs text-gray-700 hover:text-indigo-600">
+                                            {{ project.name }}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-xs text-gray-500">None</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Client Representative Projects -->
+                    <div class="bg-white shadow-sm rounded-lg">
+                        <div class="px-4 py-3 border-b border-gray-200 bg-purple-50">
+                            <h3 class="text-sm font-semibold text-gray-900">
+                                {% heroicon_outline "building-office" class="w-4 h-4 inline mr-1" %}
+                                Client Representative
+                            </h3>
+                        </div>
+                        <div class="px-4 py-3">
+                            {% if client_rep_projects %}
+                                <div class="space-y-2">
+                                    {% for project in client_rep_projects|slice:":5" %}
+                                        <a href="{% url 'project:project-management' pk=project.pk %}"
+                                           class="block text-xs text-gray-700 hover:text-indigo-600">
+                                            {{ project.name }}
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-xs text-gray-500">None</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'project:portfolio-dashboard' %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Back to Dashboard
+                </a>
+                {% if request.user.is_superuser %}
+                    <a href="{% url 'account:user-edit' user_pk=request.user.pk %}"
+                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                        Edit User
+                        {% heroicon_outline "pencil" class="w-4 h-4 ml-1" %}
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock content %}

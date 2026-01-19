@@ -65,17 +65,17 @@ class FilterForm(forms.Form):
         # Set projects and consultant querysets based on user
         if user:
             user_projects = Project.objects.filter(
-                account=user,
+                users=user,
                 status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
             )
-            self.fields["projects"].queryset = user_projects.order_by("name")
+            self.fields["projects"].queryset = user_projects.order_by("name")  # type: ignore
             # Get unique lead consultants from user's projects
             consultant_ids = (
-                user_projects.exclude(lead_consultant__isnull=True)
-                .values_list("lead_consultant", flat=True)
+                user_projects.filter(lead_consultants__isnull=False)
+                .values_list("lead_consultants", flat=True)
                 .distinct()
             )
-            self.fields["consultant"].queryset = Account.objects.filter(
+            self.fields["consultant"].queryset = Account.objects.filter(  # type: ignore
                 pk__in=consultant_ids
             ).order_by("first_name", "last_name")
 
@@ -121,10 +121,6 @@ class ProjectForm(forms.ModelForm):
             "contract_number",
             "contract_clause",
             "status",
-            "contractor",
-            "quantity_surveyor",
-            "lead_consultant",
-            "client_representative",
         ]
         widgets = {
             "name": forms.TextInput(
@@ -169,26 +165,6 @@ class ProjectForm(forms.ModelForm):
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
             ),
-            "contractor": forms.Select(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
-            ),
-            "quantity_surveyor": forms.Select(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
-            ),
-            "lead_consultant": forms.Select(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
-            ),
-            "client_representative": forms.Select(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
-            ),
         }
         labels = {
             "name": "Project Name",
@@ -197,40 +173,10 @@ class ProjectForm(forms.ModelForm):
             "end_date": "End Date",
             "contract_number": "Payment Certificate Contract Number",
             "contract_clause": "Payment Certificate Contract Clause",
-            "contractor": "Contractor",
-            "quantity_surveyor": "Quantity Surveyor",
-            "lead_consultant": "Lead Consultant",
-            "client_representative": "Client Representative",
         }
         help_texts = {
-            "contractor": "Select the contractor responsible for the project",
-            "quantity_surveyor": "Select the Quantity Surveyor for the project",
-            "lead_consultant": "Select the Lead Consultant (e.g., Principal Agent)",
-            "client_representative": "Select the Client Representative",
             "category": "Select the project category",
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Make team role fields optional
-        self.fields["contractor"].required = False
-        self.fields["quantity_surveyor"].required = False
-        self.fields["lead_consultant"].required = False
-        self.fields["client_representative"].required = False
-
-        # Filter querysets by user groups
-        self.fields["contractor"].queryset = Account.objects.filter(  # type: ignore
-            groups__name="contractor"
-        ).distinct()
-        self.fields["quantity_surveyor"].queryset = Account.objects.filter(  # type: ignore
-            groups__name__in=["consultant", "contractor"]
-        ).distinct()
-        self.fields["lead_consultant"].queryset = Account.objects.filter(  # type: ignore
-            groups__name="consultant"
-        ).distinct()
-        self.fields["client_representative"].queryset = Account.objects.filter(  # type: ignore
-            groups__name="client"
-        ).distinct()
 
     def clean(self):
         """Validate that end_date is after start_date."""

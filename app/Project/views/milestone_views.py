@@ -29,7 +29,7 @@ class MilestoneMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
 
         project_pk = self.kwargs.get("project_pk")
         try:
-            self.project = Project.objects.get(pk=project_pk, account=self.request.user)
+            self.project = Project.objects.get(pk=project_pk, users=self.request.user)
             return self.project
         except Project.DoesNotExist as err:
             raise Http404(

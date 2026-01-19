@@ -20,21 +20,21 @@ class ProjectAccessMixin(LoginRequiredMixin):
     bill = None
     project = None
 
-    def get_bill(self):
+    def get_bill(self) -> Bill:
         if not hasattr(self, "bill") or not self.bill:
             self.bill = get_object_or_404(Bill, pk=self.kwargs.get("bill_pk"))
         return self.bill
 
-    def get_project(self):
+    def get_project(self) -> Project:
         if not hasattr(self, "project") or not self.project:
             self.project = get_object_or_404(Project, pk=self.kwargs.get("project_pk"))
         return self.project
 
-    def dispatch(self, request, *args, **kwargs):
-        self.project = self.get_project()
+    def dispatch(self: "ProjectAccessMixin", request, *args, **kwargs):
+        self.project: Project = self.get_project()
 
         # Check if user is linked to the project
-        if self.project.account != request.user:
+        if request.user not in self.project.users.all():
             messages.error(
                 request, "You do not have permission to access this project."
             )
@@ -131,7 +131,7 @@ class BillCostDetailView(ProjectAccessMixin, ListView):
 
         return queryset
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self: "BillCostDetailView", **kwargs):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         context["structure"] = self.get_bill().structure

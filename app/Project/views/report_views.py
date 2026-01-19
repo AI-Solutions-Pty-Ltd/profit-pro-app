@@ -54,7 +54,7 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     def get_queryset(self: "FinancialReportView") -> QuerySet[Project]:
         """Get active projects for the user's portfolio with optional category filter."""
         projects = Project.objects.filter(
-            account=self.request.user,
+            users=self.request.user,
             status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
         )
 
@@ -256,7 +256,7 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     def get_queryset(self: "ScheduleReportView") -> QuerySet[Project]:
         """Get active projects for the user's portfolio with optional category filter."""
         projects = Project.objects.filter(
-            account=self.request.user,
+            users=self.request.user,
             status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
         )
 
@@ -412,7 +412,7 @@ class CashflowReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     def get_queryset(self: "CashflowReportView") -> QuerySet[Project]:
         """Get active projects for the user's portfolio with optional category filter."""
         projects = Project.objects.filter(
-            account=self.request.user,
+            users=self.request.user,
             status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
         ).order_by("name")
 
