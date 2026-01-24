@@ -22,14 +22,15 @@ from app.BillOfQuantities.models import (
     Structure,
 )
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.models import Project
+from app.Project.models.project_roles import Role
 
 
-class ForecastMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
+class ForecastMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
     """Mixin for forecast views."""
 
-    permissions = ["contractor"]
+    roles = [Role.COST_FORECASTS, Role.ADMIN, Role.USER]
     project_slug = "project_pk"
 
     def get_project(self: Any) -> Project:
@@ -804,7 +805,9 @@ class ForecastListView(ForecastMixin, ListView):
             "#A855F7",  # Violet
             "#EF4444",  # Red
         ]
-        for i, (label, value) in enumerate(zip(chart_labels, forecast_values, strict=False)):
+        for i, (label, value) in enumerate(
+            zip(chart_labels, forecast_values, strict=False)
+        ):
             if value is not None:
                 waterfall_labels.append(label)
                 waterfall_data.append(

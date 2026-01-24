@@ -4,8 +4,8 @@ import json
 from datetime import datetime, timedelta
 from typing import cast
 
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import QuerySet
-from django.http import JsonResponse
 from django.views.generic import (
     ListView,
 )
@@ -13,19 +13,17 @@ from django.views.generic import (
 from app.Account.models import Account
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import FilterForm
 from app.Project.models import Portfolio, Project
 from app.Project.models.compliance_models import ContractualCompliance
 
 
-class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
+class PortfolioDashboardView(LoginRequiredMixin, BreadcrumbMixin, ListView):
     """Projects dashboard showing financial metrics for Portfolio."""
 
     model = Project
     template_name = "portfolio/portfolio_dashboard.html"
     context_object_name = "projects"
-    permissions = ["consultant", "contractor"]
 
     filter_form: FilterForm | None = None
 
@@ -47,15 +45,10 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
     def get_queryset(self: "PortfolioDashboardView") -> QuerySet[Project]:
         """Get filtered projects for dashboard view."""
         # Ensure filter_form exists and is valid
+        projects = self.request.user.get_projects.order_by("-created_at")
         if not self.filter_form or not self.filter_form.is_valid():
             # Return unfiltered queryset if form is invalid
-            return Project.objects.filter(users=self.request.user).order_by(
-                "-created_at"
-            )
-
-        projects = Project.objects.filter(users=self.request.user).order_by(
-            "-created_at"
-        )
+            return projects
 
         # Apply filters from form
         search = self.filter_form.cleaned_data.get("search")
@@ -169,7 +162,8 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         # ==========================================
         # Group 1 - Project Stats
         # ==========================================
-        active_count = portfolio.get_active_projects(category_filter).count()
+        active_projects = portfolio.get_active_projects(category_filter)
+        active_count = active_projects.count()
         urgent_projects = portfolio.get_projects_requiring_urgent_intervention(
             current_date, category_filter
         )
@@ -192,7 +186,6 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
         # ==========================================
         # Compliance Stats
         # ==========================================
-        active_projects = portfolio.get_active_projects(category_filter)
         total_compliance_items = ContractualCompliance.objects.filter(
             project__in=active_projects
         ).count()
@@ -428,56 +421,3 @@ class PortfolioDashboardView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView
             "budget": budget_values,
             "table_data": table_data,
         }
-
-
-class ProjectListView(PortfolioDashboardView):
-    """Project list view that reuses dashboard filtering logic."""
-
-    template_name = "portfolio/project_list.html"
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        """Update breadcrumbs for project list page."""
-        return [
-            {"title": "Portfolio", "url": "/"},
-            {"title": "Projects", "url": None},
-        ]
-
-    def get_context_data(self, **kwargs):
-        """Simplify context data for project list view - no need for portfolio metrics."""
-        context = super().get_context_data(**kwargs)
-
-        # Remove portfolio-specific metrics that aren't needed for project list
-        # Keep only the dashboard_data which contains project information
-        portfolio_metrics_to_remove = [
-            "total_contract_value",
-            "total_certified_amount",
-            "total_forecast_amount",
-            "performance_labels",
-            "cpi_data",
-            "spi_data",
-            "current_cpi",
-            "current_spi",
-        ]
-
-        for metric in portfolio_metrics_to_remove:
-            context.pop(metric, None)
-
-        return context
-
-    def get(self: "ProjectListView", request, *args, **kwargs):
-        """Handle both regular GET and AJAX requests for filtering."""
-        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            # Return JSON response for AJAX requests
-            self.object_list = self.get_queryset()
-            context = self.get_context_data()
-
-            # Render just the table body
-            from django.template.loader import render_to_string
-
-            html = render_to_string(
-                "portfolio/_project_table_rows.html", context, request=request
-            )
-
-            return JsonResponse({"html": html})
-
-        return super().get(request, *args, **kwargs)

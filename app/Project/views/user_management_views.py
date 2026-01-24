@@ -4,16 +4,18 @@ from typing import Any
 
 from django.contrib import messages
 from django.db.models import Count, QuerySet
-from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.http import Http404, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.generic import DeleteView, DetailView, ListView
-from django.shortcuts import redirect
 
 from app.Account.models import Account
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
-from app.Project.models import Client, Portfolio, Project, Signatories
+from app.core.Utilities.permissions import (
+    UserHasGroupGenericMixin,
+    UserHasProjectRoleGenericMixin,
+)
+from app.Project.models import Client, Project, ProjectRole, Role, Signatories
 
 
 class ClientRegisterView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
@@ -205,165 +207,12 @@ class ClientDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailView):
 
 
 # =============================================================================
-# Portfolio User Management Views
-# =============================================================================
-
-
-class PortfolioUserListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
-    """List all users in the current user's portfolio."""
-
-    model = Account
-    template_name = "portfolio/registers/portfolio_users.html"
-    context_object_name = "portfolio_users"
-    permissions = ["consultant", "contractor"]
-
-    def get_portfolio(self) -> Portfolio:
-        """Get or create the user's portfolio."""
-        user = self.request.user
-        if not user.portfolio:  # type: ignore[attr-defined]
-            portfolio = Portfolio.objects.create()
-            portfolio.users.add(user)  # type: ignore[arg-type]
-            user.refresh_from_db()  # type: ignore[attr-defined]
-        return user.portfolio  # type: ignore[attr-defined]
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        return [
-            BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(title="User Management", url=None),
-            BreadcrumbItem(title="Portfolio Users", url=None),
-        ]
-
-    def get_queryset(self) -> QuerySet[Account]:
-        """Get all users in the portfolio."""
-        portfolio = self.get_portfolio()
-        return portfolio.users.all().order_by("first_name", "last_name")
-
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        context["portfolio"] = self.get_portfolio()
-        context["total_users"] = context["portfolio_users"].count()
-        return context
-
-
-class PortfolioUserAddView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
-    """Add a user to the portfolio by searching existing users."""
-
-    model = Account
-    template_name = "portfolio/registers/portfolio_user_add.html"
-    context_object_name = "available_users"
-    permissions = ["consultant", "contractor"]
-
-    def get_portfolio(self) -> Portfolio:
-        """Get or create the user's portfolio."""
-        user = self.request.user
-        if not user.portfolio:  # type: ignore[attr-defined]
-            portfolio = Portfolio.objects.create()
-            portfolio.users.add(user)  # type: ignore[arg-type]
-            user.refresh_from_db()  # type: ignore[attr-defined]
-        return user.portfolio  # type: ignore[attr-defined]
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        return [
-            BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title="Portfolio Users", url=reverse("project:portfolio-users")
-            ),
-            BreadcrumbItem(title="Add User", url=None),
-        ]
-
-    def get_queryset(self) -> QuerySet[Account]:
-        """Get users not already in the portfolio."""
-        portfolio = self.get_portfolio()
-        existing_users = portfolio.users.all()
-        queryset = Account.objects.exclude(pk__in=existing_users).order_by(
-            "first_name", "last_name"
-        )
-
-        # Filter by search query if provided
-        search = self.request.GET.get("search", "")
-        if search:
-            queryset = (
-                queryset.filter(email__icontains=search)
-                | queryset.filter(first_name__icontains=search)
-                | queryset.filter(last_name__icontains=search)
-            )
-
-        return queryset[:50]  # Limit results
-
-    def post(self, request, *args, **kwargs):
-        """Handle adding a user to the portfolio."""
-        user_pk = request.POST.get("user_pk")
-        if user_pk:
-            user_to_add = get_object_or_404(Account, pk=user_pk)
-            portfolio = self.get_portfolio()
-            portfolio.users.add(user_to_add)
-            messages.success(
-                request, f"User '{user_to_add.email}' added to portfolio successfully."
-            )
-        return HttpResponseRedirect(reverse("project:portfolio-users"))
-
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        context["search"] = self.request.GET.get("search", "")
-        return context
-
-
-class PortfolioUserRemoveView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView):
-    """Remove a user from the portfolio."""
-
-    model = Account
-    template_name = "portfolio/registers/portfolio_user_confirm_remove.html"
-    context_object_name = "user_to_remove"
-    permissions = ["consultant", "contractor"]
-
-    def get_portfolio(self) -> Portfolio:
-        """Get the user's portfolio."""
-        return self.request.user.portfolio  # type: ignore[attr-defined]
-
-    def get_object(self) -> Account:
-        """Get the user to remove."""
-        return get_object_or_404(Account, pk=self.kwargs["user_pk"])
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        user = self.get_object()
-        return [
-            BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title="Portfolio Users", url=reverse("project:portfolio-users")
-            ),
-            BreadcrumbItem(title=f"Remove {user.email}", url=None),
-        ]
-
-    def post(self, request, *args, **kwargs):
-        """Remove user from portfolio (don't delete the user)."""
-        user_to_remove = self.get_object()
-        portfolio = self.get_portfolio()
-
-        # Prevent removing yourself
-        if user_to_remove == request.user:
-            messages.error(request, "You cannot remove yourself from the portfolio.")
-            return HttpResponseRedirect(reverse("project:portfolio-users"))
-
-        portfolio.users.remove(user_to_remove)
-        messages.success(
-            request, f"User '{user_to_remove.email}' removed from portfolio."
-        )
-        return HttpResponseRedirect(reverse("project:portfolio-users"))
-
-
-# =============================================================================
-# Project User Management Views
+# Project User/Role Management Views
 # =============================================================================
 
 
 class ProjectUserListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
-    """List all users assigned to a project."""
+    """List all users and their roles assigned to a project."""
 
     model = Account
     template_name = "portfolio/registers/project_users.html"
@@ -384,23 +233,40 @@ class ProjectUserListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
                 title=project.name,
                 url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
-            BreadcrumbItem(title="Project Users", url=None),
+            BreadcrumbItem(title="Project Users & Roles", url=None),
         ]
 
     def get_queryset(self) -> QuerySet[Account]:
-        """Get all users assigned to this project."""
+        """Get all unique users with roles in this project."""
         project = self.get_project()
-        return project.users.all().order_by("first_name", "last_name")
+        # Get all users who have at least one role in this project
+        users_with_roles = (
+            Account.objects.filter(project_roles__project=project)
+            .distinct()
+            .order_by("first_name", "last_name")
+        )
+        return users_with_roles
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
+        project = self.get_project()
+        context["project"] = project
+        context["available_roles"] = Role.choices
+
+        # Get roles for each user
+        user_roles = {}
+        for user in context["project_users"]:
+            user_roles[user.pk] = project.project_roles.filter(user=user).values_list(
+                "role", flat=True
+            )
+
+        context["user_roles"] = user_roles
         context["total_users"] = context["project_users"].count()
         return context
 
 
 class ProjectUserDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailView):
-    """View details of a user in the context of a project."""
+    """View and edit a user's roles in the context of a project."""
 
     model = Account
     template_name = "portfolio/registers/project_user_detail.html"
@@ -412,24 +278,8 @@ class ProjectUserDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailVie
         return get_object_or_404(Project, pk=self.kwargs["pk"], users=self.request.user)
 
     def get_object(self, queryset: QuerySet[Account] | None = None) -> Account:
-        """Get the user and verify they're part of the project."""
-        project = self.get_project()
-        user = get_object_or_404(Account, pk=self.kwargs["user_pk"])
-        if user not in project.users.all():
-            messages.error(self.request, "User is not assigned to this project.")
-            # This will be handled in the get method
-        return user
-
-    def get(self, request, *args, **kwargs):
-        """Override get to handle redirect if user not in project."""
-        self.object = self.get_object()
-        project = self.get_project()
-        if self.object not in project.users.all():
-            return HttpResponseRedirect(
-                reverse("project:project-users", kwargs={"pk": project.pk})
-            )
-        context = self.get_context_data(object=self.object)
-        return self.render_to_response(context)
+        """Get the user."""
+        return get_object_or_404(Account, pk=self.kwargs["user_pk"])
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
@@ -443,7 +293,7 @@ class ProjectUserDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailVie
                 url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
-                title="Project Users",
+                title="Project Users & Roles",
                 url=reverse("project:project-users", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
@@ -452,23 +302,65 @@ class ProjectUserDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailVie
             ),
         ]
 
+    def post(self, request, *args, **kwargs):
+        """Handle updating user roles."""
+        project = self.get_project()
+        user = self.get_object()
+        selected_roles = request.POST.getlist("roles")
+
+        # Get current roles for this user
+        current_roles = set(
+            project.project_roles.filter(user=user).values_list("role", flat=True)
+        )
+        new_roles = set(selected_roles)
+
+        # Roles to add
+        for role_value in new_roles - current_roles:
+            ProjectRole.objects.create(project=project, role=role_value, user=user)
+
+        # Roles to remove
+        for role_value in current_roles - new_roles:
+            project.project_roles.filter(role=role_value, user=user).delete()
+
+        messages.success(request, f"Roles updated for {user.email}.")
+        return HttpResponseRedirect(
+            reverse(
+                "project:project-user-detail",
+                kwargs={"pk": project.pk, "user_pk": user.pk},
+            )
+        )
+
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
+        project = self.get_project()
+        user = self.get_object()
+        context["project"] = project
+        # Get all available roles
+        context["available_roles"] = Role.choices
+        # Get role values this user has in this project
+        context["user_role_values"] = list(
+            project.project_roles.filter(user=user).values_list("role", flat=True)
+        )
         return context
 
 
-class ProjectUserAddView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
-    """Add a user to a project."""
+class ProjectUserAddView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
+    """Add a user to a project with a specific role."""
 
     model = Account
     template_name = "portfolio/registers/project_user_add.html"
     context_object_name = "available_users"
-    permissions = ["consultant", "contractor"]
+    roles = [Role.ADMIN]
+    project_slug = "pk"
 
     def get_project(self) -> Project:
         """Get the project and verify access."""
-        return get_object_or_404(Project, pk=self.kwargs["pk"], users=self.request.user)
+        user: Account = self.request.user  # type: ignore
+        project = Project.objects.get(pk=self.kwargs["pk"])
+        if not project.users.filter(pk=user.pk).exists():
+            messages.error(self.request, "User does not have access to this project")
+            raise Http404("User does not have access to this project")
+        return project
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
@@ -481,19 +373,15 @@ class ProjectUserAddView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
                 url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
-                title="Project Users",
+                title="Project Users & Roles",
                 url=reverse("project:project-users", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(title="Add User", url=None),
         ]
 
     def get_queryset(self) -> QuerySet[Account]:
-        """Get users not already assigned to this project."""
-        project = self.get_project()
-        existing_users = project.users.all()
-        queryset = Account.objects.exclude(pk__in=existing_users).order_by(
-            "first_name", "last_name"
-        )
+        """Get all users (can add same user with different roles)."""
+        queryset = Account.objects.all().order_by("first_name", "last_name")
 
         # Filter by search query if provided
         search = self.request.GET.get("search", "")
@@ -507,29 +395,51 @@ class ProjectUserAddView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         return queryset[:50]  # Limit results
 
     def post(self: "ProjectUserAddView", request, *args, **kwargs):
-        """Handle adding a user to the project."""
+        """Handle adding a user to the project - redirects to detail page for role assignment."""
         user_pk = request.POST.get("user_pk")
+
         if user_pk:
             user_to_add = get_object_or_404(Account, pk=user_pk)
             project = self.get_project()
-            project.users.add(user_to_add)
-            messages.success(
-                request,
-                f"User '{user_to_add.email}' added to project '{project.name}'.",
+
+            # Check if user already in project
+            if user_to_add in project.users.all():
+                messages.info(
+                    request,
+                    f"'{user_to_add.email}' is already in this project. Manage their roles below.",
+                )
+            else:
+                # Add to project.users M2M for access
+                project.users.add(user_to_add)
+                messages.success(
+                    request,
+                    f"'{user_to_add.email}' added to project. Assign roles below.",
+                )
+
+            # Redirect to detail page for role management
+            return HttpResponseRedirect(
+                reverse(
+                    "project:project-user-detail",
+                    kwargs={"pk": project.pk, "user_pk": user_to_add.pk},
+                )
             )
+        else:
+            messages.error(request, "Please select a user.")
+
         return HttpResponseRedirect(
-            reverse("project:project-users", kwargs={"pk": self.get_project().pk})
+            reverse("project:project-user-add", kwargs={"pk": self.get_project().pk})
         )
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         context["search"] = self.request.GET.get("search", "")
+        context["available_roles"] = Role.choices
         return context
 
 
 class ProjectUserRemoveView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView):
-    """Remove a user from a project."""
+    """Remove a user from a project role."""
 
     model = Account
     template_name = "portfolio/registers/project_user_confirm_remove.html"
@@ -538,7 +448,7 @@ class ProjectUserRemoveView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteVie
 
     def dispatch(self: "ProjectUserRemoveView", request, *args, **kwargs):
         """Dispatch the request."""
-        if request.user.pk == self.get_object().pk:
+        if request.user.pk == self.kwargs.get("user_pk"):
             messages.error(request, "You cannot remove yourself from this project.")
             return redirect("project:project-users", pk=self.get_project().pk)
         return super().dispatch(request, *args, **kwargs)
@@ -563,29 +473,49 @@ class ProjectUserRemoveView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteVie
                 url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
-                title="Project Users",
+                title="Project Users & Roles",
                 url=reverse("project:project-users", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(title=f"Remove {user.email}", url=None),
         ]
 
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        project = self.get_project()
+        user = self.get_object()
+        context["project"] = project
+        # Get all roles this user has in this project
+        context["user_roles"] = project.project_roles.filter(user=user)
+        return context
+
     def post(self, request, *args, **kwargs):
-        """Remove user from project (don't delete the user)."""
+        """Remove user from project roles."""
         user_to_remove = self.get_object()
         project = self.get_project()
 
-        # Check if this is the last user - prevent removing the last user
-        if project.users.count() <= 1:
-            messages.error(request, "Cannot remove the last user from a project.")
-            return HttpResponseRedirect(
-                reverse("project:project-users", kwargs={"pk": project.pk})
+        # Get the role to remove (if specified) or remove from all roles
+        role_to_remove = request.POST.get("role")
+
+        if role_to_remove:
+            # Remove from specific role
+            project.project_roles.filter(
+                role=role_to_remove, user=user_to_remove
+            ).delete()
+            messages.success(
+                request,
+                f"Removed '{role_to_remove}' role from '{user_to_remove.email}'.",
+            )
+        else:
+            # Remove from all roles
+            project.project_roles.filter(user=user_to_remove).delete()
+
+            # Also remove from project.users M2M
+            project.users.remove(user_to_remove)
+            messages.success(
+                request,
+                f"User '{user_to_remove.email}' removed from project '{project.name}'.",
             )
 
-        project.users.remove(user_to_remove)
-        messages.success(
-            request,
-            f"User '{user_to_remove.email}' removed from project '{project.name}'.",
-        )
         return HttpResponseRedirect(
             reverse("project:project-users", kwargs={"pk": project.pk})
         )

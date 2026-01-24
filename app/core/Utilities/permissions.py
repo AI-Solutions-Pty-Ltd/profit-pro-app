@@ -3,6 +3,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import HttpResponse
 from django.shortcuts import redirect
 
+from app.Account.models import Account
+from app.Project.models.project_roles import Role
+from app.Project.models.projects_models import Project
+
 
 class UserHasGroupGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Generic mixin for user group permissions."""
@@ -21,6 +25,49 @@ class UserHasGroupGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
         messages.error(
             self.request,  # type: ignore
             f"Page restricted to {', '.join(self.permissions)}.",
+        )
+        return redirect("home")
+
+
+class UserHasProjectRoleGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Generic mixin for user project role permissions."""
+
+    roles: list[Role] = []
+    project_slug: str | None = None
+
+    def get_project(self) -> Project:
+        kwargs = self.kwargs  # type: ignore
+        if not kwargs[self.project_slug]:
+            raise ValueError("Project slug must be specified.")
+        if not Project.objects.filter(pk=kwargs[self.project_slug]).exists():
+            raise ValueError("Project does not exist.")
+        return Project.objects.get(pk=kwargs[self.project_slug])  # type: ignore
+
+    def get_user(self) -> Account:
+        request = self.request  # type: ignore
+        if not request.user:
+            raise ValueError("User does not exist.")
+        user = request.user
+        if not user.is_authenticated:
+            raise ValueError("User is not authenticated.")
+        return user
+
+    def test_func(self: "UserHasProjectRoleGenericMixin") -> bool:
+        project = self.get_project()
+        user = self.get_user()
+        if user.is_superuser:
+            return True
+        if not self.roles:
+            raise ValueError("Role must be specified.")
+        if not self.project_slug:
+            raise ValueError("Project slug must be specified.")
+        return user.has_project_role(project, self.roles)
+
+    def handle_no_permission(self):
+        """Redirect to home with error message if user lacks permission."""
+        messages.error(
+            self.request,  # type: ignore
+            f"Page restricted to {self.roles}.",
         )
         return redirect("home")
 

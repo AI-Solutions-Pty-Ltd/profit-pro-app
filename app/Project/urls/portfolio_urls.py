@@ -14,11 +14,6 @@ portfolio_urls = [
         portfolio_views.PortfolioDashboardView.as_view(),
         name="portfolio-dashboard",
     ),
-    path(
-        "portfolio/project-list/",
-        portfolio_views.ProjectListView.as_view(),
-        name="portfolio-project-list",
-    ),
     # Portfolio Reports
     path(
         "portfolio/reports/financial/",
@@ -71,22 +66,6 @@ portfolio_urls = [
         "register/signatories/",
         user_management_views.SignatoriesRegisterView.as_view(),
         name="signatory-register",
-    ),
-    # Portfolio User Management
-    path(
-        "portfolio/users/",
-        user_management_views.PortfolioUserListView.as_view(),
-        name="portfolio-users",
-    ),
-    path(
-        "portfolio/users/add/",
-        user_management_views.PortfolioUserAddView.as_view(),
-        name="portfolio-user-add",
-    ),
-    path(
-        "portfolio/users/<int:user_pk>/remove/",
-        user_management_views.PortfolioUserRemoveView.as_view(),
-        name="portfolio-user-remove",
     ),
     # Project User Management
     path(

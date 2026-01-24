@@ -1,8 +1,6 @@
-{% extends "base.html" %}
-{% load heroicons %}
-{% block title %}
-    {{ role_name_plural }} - {{ project.name }} - {{ block.super }}
-{% endblock title %}
+{% extends "base_full.html" %}
+{% load humanize %}
+{% load static %}
 {% block content %}
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Header -->
@@ -10,27 +8,25 @@
             <div class="px-6 py-4">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-900">{{ role_name_plural }}</h1>
-                        <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+                        <h1 class="text-2xl font-bold text-gray-900">{{ role_name }}</h1>
+                        <p class="text-sm text-gray-600 mt-1">Manage {{ role_name|lower }} for {{ project.name }}</p>
                     </div>
                     <div class="flex items-center space-x-3">
-                        <a href="{{ add_url }}"
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+                            {% heroicon_outline "users" class="w-4 h-4 mr-1" %}
+                            {{ total_users }} User{{ total_users|pluralize }}
+                        </span>
+                        <a href="{% url 'project:project-'|add:role_value|lower|add:'-add' project_pk=project.pk %}"
                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {% heroicon_outline "plus" size="20" class="mr-2" %}
+                            {% heroicon_outline "user-plus" class="w-4 h-4 mr-2" %}
                             Add {{ role_name }}
                         </a>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Role Users List -->
+        <!-- Users Table -->
         <div class="bg-white shadow-sm rounded-lg overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-slate-50">
-                <h2 class="text-lg font-semibold text-gray-900">
-                    {% heroicon_outline "user-group" class="w-5 h-5 inline mr-2" %}
-                    Project {{ role_name_plural }}
-                </h2>
-            </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -60,37 +56,41 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">{{ user.primary_contact|default:"-" }}</div>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm text-gray-900">
+                                        {% if user.primary_contact %}
+                                            <div class="flex items-center">
+                                                {% heroicon_outline "phone" class="w-4 h-4 mr-1 text-gray-400" %}
+                                                {{ user.primary_contact }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if user.type == 'Consultant' %}bg-blue-100 text-blue-800 {% elif user.type == 'Contractor' %}bg-green-100 text-green-800 {% elif user.type == 'Client' %}bg-purple-100 text-purple-800 {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                        {{ user.get_type_display }}
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if user.type == 'Contractor' %}bg-blue-100 text-blue-800 {% elif user.type == 'Client' %}bg-green-100 text-green-800 {% elif user.type == 'Consultant' %}bg-purple-100 text-purple-800 {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ user.type|default:"User" }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    {% if user != request.user %}
-                                        <a href="{% url 'project:'|add:url_name|add:'-remove' project_pk=project.pk user_pk=user.pk %}"
-                                           class="text-red-600 hover:text-red-900 inline-flex items-center">
-                                            {% heroicon_outline "trash" size="16" class="mr-1" %}
-                                            Remove
+                                    {% if request.user.pk != user.pk %}
+                                        <a href="{% url 'project:project-user-remove' pk=project.pk user_pk=user.pk %}"
+                                           class="inline-flex items-center text-red-600 hover:text-red-900 transition-colors"
+                                           title="Remove User">
+                                            {% heroicon_outline "user-minus" class="w-5 h-5 mr-1" %}
+                                            <span class="text-sm">Remove</span>
                                         </a>
                                     {% else %}
-                                        <span class="text-gray-400">Cannot remove yourself</span>
+                                        <span class="text-gray-400 text-sm">Cannot remove yourself</span>
                                     {% endif %}
                                 </td>
                             </tr>
                         {% empty %}
                             <tr>
                                 <td colspan="4" class="px-6 py-12 text-center">
-                                    <div class="text-gray-500">
-                                        {% heroicon_outline "user-group" class="w-12 h-12 mx-auto text-gray-300 mb-3" %}
-                                        <p class="text-sm">No {{ role_name|lower }}s assigned to this project</p>
-                                        <a href="{{ add_url }}"
-                                           class="mt-2 inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500">
-                                            {% heroicon_outline "plus" size="16" class="mr-1" %}
-                                            Add your first {{ role_name|lower }}
-                                        </a>
+                                    <div class="flex flex-col items-center">
+                                        {% heroicon_outline "users" class="w-16 h-16 text-gray-300 mb-4" %}
+                                        <h3 class="text-lg font-medium text-gray-900 mb-2">No {{ role_name }} Found</h3>
+                                        <p class="text-sm text-gray-500 mb-4">Add {{ role_name|lower }} to this project.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -106,11 +106,6 @@
                    class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
                     {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
                     Back to Project Users
-                </a>
-                <a href="{% url 'project:project-management' pk=project.pk %}"
-                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                    Project Management
-                    {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
                 </a>
             </div>
         </div>

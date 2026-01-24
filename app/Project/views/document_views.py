@@ -11,15 +11,32 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.forms import ProjectDocumentForm
 from app.Project.models import Project, ProjectDocument
+from app.Project.models.project_roles import Role
 
 
-class DocumentMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
+class DocumentMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
     """Mixin for document views."""
 
-    permissions = ["contractor"]
+    def get_roles(self):
+        """Get required roles based on document category."""
+        category = self.get_category()
+        role_map = {
+            "CONTRACT_DOCUMENTS": [Role.CONTRACT_DOCUMENTS, Role.ADMIN, Role.USER],
+            "STAGE_GATE_APPROVAL": [Role.STAGE_GATE_APPROVALS, Role.ADMIN, Role.USER],
+            "OTHER": [Role.OTHER_DOCUMENTS, Role.ADMIN, Role.USER],
+        }
+        return role_map.get(category, [Role.ADMIN, Role.USER])
+
+    @property
+    def roles(self):
+        return self.get_roles()
+
+    @property
+    def project_slug(self):
+        return "project_pk"
 
     def get_project(self) -> Project:
         """Get the project for the current view."""
@@ -225,7 +242,7 @@ class DocumentDeleteView(DocumentMixin, DeleteView):
         messages.success(
             self.request, f"Document '{document.title}' has been deleted successfully."
         )
-        return redirect(self.get_success_url())
+        return redirect(str(self.get_success_url()))
 
     def get_success_url(self):
         """Redirect to the document list."""

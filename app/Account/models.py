@@ -14,6 +14,7 @@ from app.core.Utilities.models import BaseModel
 
 if TYPE_CHECKING:
     from app.Project.models import Portfolio, Project
+    from app.Project.models.project_roles import ProjectRole, Role
 
 
 class UserManager(BaseUserManager):
@@ -139,6 +140,7 @@ class Account(AbstractUser, BaseModel):
         qs_projects: QuerySet[Project]
         lead_consultant_projects: QuerySet[Project]
         client_rep_projects: QuerySet[Project]
+        project_roles: QuerySet[ProjectRole]
 
     def __str__(self):
         return self.email
@@ -146,3 +148,50 @@ class Account(AbstractUser, BaseModel):
     @property
     def portfolio(self) -> Optional["Portfolio"]:
         return self.portfolios.first()
+
+    def has_project_role(
+        self: "Account", project: "Project", roles: list["Role"]
+    ) -> bool:
+        """
+        Permission check if user has a specific role in a project.
+
+        Args:
+            project: The project to check
+            role: The role to check (from Role choices)
+
+        Returns:
+            True if user has the role, False otherwise
+        """
+        from app.Project.models.project_roles import Role
+
+        if self.is_superuser:
+            return True
+
+        user_project_roles = project.project_roles.filter(user=self)
+        if user_project_roles.filter(role__in=[Role.ADMIN, *roles]).exists():
+            return True
+        return False
+
+    @property
+    def get_projects(self: "Account") -> QuerySet["Project"]:
+        if self.is_superuser:
+            # Import here to avoid circular import
+            from app.Project.models import Project
+
+            return Project.objects.all()
+        project_roles = self.project_roles.all()
+        # Get projects through project_roles relationship
+        projects = []
+        for pr in project_roles:
+            projects.append(pr.project)
+        # Return unique projects
+        project_ids = [p.id for p in projects]
+        if project_ids:
+            # Import here to avoid circular import
+            from app.Project.models import Project
+
+            return Project.objects.filter(id__in=project_ids).distinct()
+        # Return empty queryset if no projects
+        from app.Project.models import Project
+
+        return Project.objects.none()
