@@ -1,4 +1,7 @@
 from django import template
+from django.db.models import QuerySet
+
+from app.Project.models.project_roles import ProjectRole, Role
 
 register = template.Library()
 
@@ -28,9 +31,31 @@ def varadd(val1, val2):
 
 
 @register.filter(name="useringroup")
-def user_in_group(user, group_name):
+def user_in_group(user, group_names):
     """Check if a user is in a group."""
-    return user.groups.filter(name=group_name).exists()
+    group_names = group_names.split(",")
+    return user.groups.filter(name__in=group_names).exists()
+
+
+@register.filter(name="projectroles")
+def project_roles(user, project) -> QuerySet[ProjectRole]:
+    """Get all roles that the user has for the given project."""
+
+    if user.is_superuser:
+        return ProjectRole.objects.all()
+
+    # Get all project roles for this user in the project
+    return project.project_roles.filter(user=user)
+
+
+@register.filter(name="userhasrole")
+def user_has_role(roles, roles_to_check):
+    """Check if any of the given roles are in the list of roles."""
+    if roles.filter(role=Role.ADMIN).exists():
+        return True
+    # If roles_to_check is a string, check single role
+    roles_to_check = roles_to_check.split(",")
+    return any(role in roles for role in roles_to_check)
 
 
 @register.filter(name="ifinlist")
@@ -77,3 +102,15 @@ def numsign(value, arg=None):
         return bits[1]
     else:
         return bits[2]
+
+
+@register.filter
+def get(obj, key):
+    """Get a value from a dictionary by key."""
+    return obj.get(key)
+
+
+@register.filter
+def lookup(dictionary, key):
+    """Lookup a key in a dictionary, useful for template context."""
+    return dictionary.get(key, [])

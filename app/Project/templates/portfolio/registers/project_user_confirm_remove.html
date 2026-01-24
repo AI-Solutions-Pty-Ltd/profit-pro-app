@@ -17,7 +17,7 @@
                     This will revoke their access to this project. The user account will not be deleted.
                 </p>
                 <div class="flex items-center justify-end space-x-4">
-                    <a href="{% url 'project:portfolio-users' %}"
+                    <a href="{% url 'project:project-users' pk=project.pk %}"
                        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Cancel
                     </a>

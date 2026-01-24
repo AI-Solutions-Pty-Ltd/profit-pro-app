@@ -4,28 +4,30 @@ import json
 from datetime import datetime
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import QuerySet, Sum
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
     CreateView,
     DeleteView,
     DetailView,
+    ListView,
     UpdateView,
 )
 
 from app.BillOfQuantities.models import ActualTransaction, Forecast, PaymentCertificate
 from app.core.Utilities.dates import get_end_of_month, get_previous_n_months
-from app.core.Utilities.mixins import BreadcrumbMixin
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
-from app.Project.forms import ProjectForm
-from app.Project.models import PlannedValue, Project
+from app.core.Utilities.permissions import (
+    UserHasProjectRoleGenericMixin,
+)
+from app.Project.forms import FilterForm, ProjectForm
+from app.Project.models import PlannedValue, Project, ProjectRole, Role
 
 
-class ProjectMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
-    permissions = ["contractor"]
-
+class ProjectMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
     def get_queryset(self: "ProjectMixin") -> QuerySet[Project]:
         return Project.objects.filter(users=self.request.user).order_by("-created_at")
 
@@ -36,12 +38,94 @@ class ProjectMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
         return project
 
 
+class ProjectListView(LoginRequiredMixin, BreadcrumbMixin, ListView):
+    """Project list view that reuses dashboard filtering logic."""
+
+    template_name = "project/project_list.html"
+    filter_form: FilterForm | None = None
+    context_object_name = "projects"
+
+    def setup(self, request, *args, **kwargs):
+        """Initialize filter form during view setup."""
+        super().setup(request, *args, **kwargs)
+        self.filter_form = FilterForm(request.GET or {}, user=request.user)
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        """Update breadcrumbs for project list page."""
+        return [
+            {"title": "Portfolio", "url": "/"},
+            {"title": "Projects", "url": None},
+        ]
+
+    def get_queryset(self: "ProjectListView") -> QuerySet[Project]:
+        """Get filtered projects for dashboard view."""
+        # Ensure filter_form exists and is valid
+        projects = self.request.user.get_projects.order_by("-created_at")
+        if not self.filter_form or not self.filter_form.is_valid():
+            # Return unfiltered queryset if form is invalid
+            return projects
+
+        # Apply filters from form
+        search = self.filter_form.cleaned_data.get("search")
+        active_only = self.filter_form.cleaned_data.get("active_projects")
+        category = self.filter_form.cleaned_data.get("category")
+        status = self.filter_form.cleaned_data.get("status")
+
+        if search:
+            projects = projects.filter(name__icontains=search)
+
+        if category:
+            projects = projects.filter(category=category)
+
+        selected_project = self.filter_form.cleaned_data.get("projects")
+        if selected_project:
+            projects = projects.filter(pk=selected_project.pk)
+
+        consultant = self.filter_form.cleaned_data.get("consultant")
+        if consultant:
+            projects = projects.filter(lead_consultant=consultant)
+
+        if status and status != "ALL":
+            projects = projects.filter(status=status)
+        elif active_only:
+            # Legacy support for active_only toggle
+            projects = projects.filter(status=Project.Status.ACTIVE)
+
+        return projects
+
+    def get_context_data(self: "ProjectListView", **kwargs):
+        """Add financial metrics to context."""
+        context = super().get_context_data(**kwargs)
+        context["filter_form"] = self.filter_form
+        return context
+
+    def get(self: "ProjectListView", request, *args, **kwargs):
+        """Handle both regular GET and AJAX requests for filtering."""
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            # Return JSON response for AJAX requests
+            self.object_list = self.get_queryset()
+            context = self.get_context_data()
+
+            # Render just the table body
+            from django.template.loader import render_to_string
+
+            html = render_to_string(
+                "portfolio/_project_table_rows.html", context, request=request
+            )
+
+            return JsonResponse({"html": html})
+
+        return super().get(request, *args, **kwargs)
+
+
 class ProjectDashboardView(ProjectMixin, DetailView):
     """Display project dashboard with graphs only."""
 
     model = Project
     template_name = "project/project_dashboard.html"
     context_object_name = "project"
+    roles = [Role.ADMIN]
+    project_slug = "pk"
 
     def get_breadcrumbs(self):
         return [
@@ -160,6 +244,8 @@ class ProjectManagementView(ProjectMixin, DetailView):
     model = Project
     template_name = "project/project_management.html"
     context_object_name = "project"
+    roles = [Role.USER]
+    project_slug = "pk"
 
     def get_breadcrumbs(self):
         return [
@@ -191,6 +277,8 @@ class ProjectWBSDetailView(ProjectMixin, DetailView):
     model = Project
     template_name = "project/project_detail_wbs.html"
     context_object_name = "project"
+    roles = [Role.CONTRACT_BOQ, Role.ADMIN, Role.USER]
+    project_slug = "pk"
 
     def get_breadcrumbs(self):
         return [
@@ -254,7 +342,7 @@ class ProjectWBSDetailView(ProjectMixin, DetailView):
         return context
 
 
-class ProjectCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
+class ProjectCreateView(LoginRequiredMixin, BreadcrumbMixin, CreateView):
     """Create a new project."""
 
     model = Project
@@ -275,6 +363,9 @@ class ProjectCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
         form.instance.portfolio = self.request.user.portfolio  # type: ignore
         response = super().form_valid(form)
         self.object.users.add(self.request.user)  # type: ignore
+        ProjectRole.objects.create(
+            project=self.object, user=self.request.user, role=Role.ADMIN
+        )
         return response
 
     def get_success_url(self: "ProjectCreateView"):
@@ -292,7 +383,8 @@ class ProjectUpdateView(ProjectMixin, UpdateView):
     model = Project
     form_class = ProjectForm
     template_name = "project/project_form.html"
-    permissions = ["contractor"]
+    roles = [Role.ADMIN]
+    project_slug = "pk"
 
     def get_breadcrumbs(self):
         return [
@@ -328,6 +420,8 @@ class ProjectDeleteView(ProjectMixin, DeleteView):
     model = Project
     template_name = "project/project_confirm_delete.html"
     success_url = reverse_lazy("project:portfolio-dashboard")
+    roles = [Role.ADMIN]
+    project_slug = "pk"
 
     def get_breadcrumbs(self):
         return [
@@ -352,6 +446,8 @@ class ProjectResetFinalAccountView(ProjectMixin, DetailView):
     """Reset project final account status."""
 
     model = Project
+    roles = [Role.ADMIN]
+    project_slug = "pk"
 
     def post(self, request, *args, **kwargs):
         """Handle POST request to reset final account."""

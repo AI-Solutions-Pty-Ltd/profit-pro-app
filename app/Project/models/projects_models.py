@@ -7,7 +7,6 @@ from django.db import models
 from django.db.models import QuerySet
 from django.urls import reverse
 
-from app.Account.models import Account
 from app.BillOfQuantities.models.forecast_models import Forecast
 from app.BillOfQuantities.models.payment_certificate_models import PaymentCertificate
 from app.BillOfQuantities.models.structure_models import LineItem
@@ -16,7 +15,10 @@ from app.Project.models.category_models import ProjectCategory
 from app.Project.models.client_models import Client
 
 if TYPE_CHECKING:
+    from app.Account.models import Account
+
     from .planned_value_models import PlannedValue
+    from .project_roles import ProjectRole
     from .signatories_models import Signatories
 
 
@@ -47,7 +49,7 @@ class Project(BaseModel):
         related_name="projects",
     )
     users = models.ManyToManyField(
-        Account,
+        "Account.Account",
         related_name="projects",
         help_text="Users who have access to this project",
     )
@@ -169,25 +171,25 @@ class Project(BaseModel):
 
     # Project team roles - all as ManyToMany for multiple users per role
     contractors = models.ManyToManyField(
-        Account,
+        "Account.Account",
         blank=True,
         related_name="contractor_projects",
         help_text="Contractors responsible for the project",
     )
     quantity_surveyors = models.ManyToManyField(
-        Account,
+        "Account.Account",
         blank=True,
         related_name="qs_projects",
         help_text="Quantity Surveyors for the project",
     )
     lead_consultants = models.ManyToManyField(
-        Account,
+        "Account.Account",
         blank=True,
         related_name="lead_consultant_projects",
         help_text="Lead Consultants (e.g., Principal Agents)",
     )
     client_representatives = models.ManyToManyField(
-        Account,
+        "Account.Account",
         blank=True,
         related_name="client_rep_projects",
         help_text="Client Representatives",
@@ -199,7 +201,8 @@ class Project(BaseModel):
         forecasts: QuerySet[Forecast]
         signatories: QuerySet["Signatories"]
         planned_values: QuerySet["PlannedValue"]
-        users: models.ManyToManyField[Account, Account]
+        users: models.ManyToManyField["Account", "Account"]
+        project_roles: QuerySet["ProjectRole"]
 
     def __str__(self):
         return self.name

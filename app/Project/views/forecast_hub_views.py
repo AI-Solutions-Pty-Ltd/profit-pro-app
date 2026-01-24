@@ -12,15 +12,20 @@ from app.BillOfQuantities.models.forecast_models import Forecast
 from app.core.Utilities.dates import get_end_of_month
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.models import Milestone, PlannedValue, Project
+from app.Project.models.project_roles import Role
 
 
-class ForecastHubMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
+class ForecastHubMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
     """Mixin for Forecast Hub views."""
 
-    permissions = ["contractor"]
+    roles = [Role.FORECAST_HUB, Role.ADMIN, Role.USER]
     project: Project
+
+    @property
+    def project_slug(self):
+        return "project_pk"
 
     def get_project(self) -> Project:
         """Get the project for this view."""

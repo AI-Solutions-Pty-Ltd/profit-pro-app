@@ -18,17 +18,21 @@ from app.BillOfQuantities.models import (
 )
 from app.core.Utilities.forms import styled_attachment_input, styled_date_input
 from app.core.Utilities.models import sum_queryset
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.core.Utilities.permissions import (
+    UserHasGroupGenericMixin,
+    UserHasProjectRoleGenericMixin,
+)
 from app.Project.models import Project
+from app.Project.models.project_roles import Role
 
 
-class ContractVariationListView(UserHasGroupGenericMixin, ListView):
+class ContractVariationListView(UserHasProjectRoleGenericMixin, ListView):
     """List all contract variations for a project."""
 
     model = ContractVariation
     template_name = "contract/variation_list.html"
     context_object_name = "variations"
-    permissions = ["contractor"]
+    roles = [Role.CONTRACT_VARIATIONS, Role.ADMIN, Role.USER]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -291,13 +295,13 @@ class ContractVariationDeleteView(UserHasGroupGenericMixin, DeleteView):
 # =============================================================================
 
 
-class CorrespondenceListView(UserHasGroupGenericMixin, ListView):
+class CorrespondenceListView(UserHasProjectRoleGenericMixin, ListView):
     """List all correspondences for a project."""
 
     model = ContractualCorrespondence
     template_name = "contract/correspondence_list.html"
     context_object_name = "correspondences"
-    permissions = ["contractor"]
+    roles = [Role.CORRESPONDENCE, Role.ADMIN, Role.USER]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""

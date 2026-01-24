@@ -16,12 +16,15 @@ from app.BillOfQuantities.tasks import (
 )
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.core.Utilities.permissions import (
+    UserHasProjectRoleGenericMixin,
+)
 from app.Project.models import PlannedValue, Project
+from app.Project.models.project_roles import Role
 
 
-class PaymentCertificateMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
-    permissions = ["contractor"]
+class PaymentCertificateMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+    roles = [Role.PAYMENT_CERTIFICATES, Role.ADMIN, Role.USER]
     project_slug = "project_pk"
 
     def dispatch(self, request, *args, **kwargs):

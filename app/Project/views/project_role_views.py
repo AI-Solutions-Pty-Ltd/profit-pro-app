@@ -1,325 +1,378 @@
-"""Views for managing project roles (contractors, quantity surveyors, lead consultants, client representatives)."""
+"""Views for managing project roles - Contractors, QS, Lead Consultants, Client Reps."""
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.contrib.auth.models import AnonymousUser
-from django.db.models import QuerySet
-from django.shortcuts import get_object_or_404
-from django.urls import reverse_lazy
-from django.views.generic import DeleteView, ListView
 from django.contrib import messages
-from django.shortcuts import redirect
+from django.db.models import QuerySet
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
+from django.urls import reverse
+from django.views.generic import DeleteView, ListView
 
 from app.Account.models import Account
-from app.Project.models import Project
-
-User = get_user_model()
-
-if TYPE_CHECKING:
-    from django.http import HttpRequest
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
+from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.Project.models import Project, ProjectRole, Role
 
 
-class ProjectRoleMixin(LoginRequiredMixin, UserPassesTestMixin):
-    """Mixin to ensure user has access to project."""
-
-    request: "HttpRequest"
-    kwargs: dict[str, Any]
-
-    def test_func(self) -> bool:
-        user = self.request.user
-        if isinstance(user, AnonymousUser):
-            return False
-
-        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
-
-        # Check if user is in project users or is superuser
-        # Type ignore because AbstractBaseUser doesn't have is_superuser at type level
-        if hasattr(user, "is_superuser") and user.is_superuser:  # type: ignore[attr-defined]
-            return True
-
-        # Check if user is in the many-to-many relationship
-        project_users: QuerySet[Account] = project.users.all()
-        # Type ignore because "in" operator checking is complex for Django users
-        return user in project_users  # type: ignore[operator]
-
-    def get_project(self) -> Project:
-        """Get the project object."""
-        return get_object_or_404(Project, pk=self.kwargs["project_pk"])
-
-
-class ProjectRoleListView(ProjectRoleMixin, ListView):
-    """Base view for listing users in a specific role."""
+class BaseRoleListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
+    """Base view for listing users with a specific role in a project."""
 
     model = Account
     template_name = "project/roles/role_list.html"
     context_object_name = "role_users"
-    paginate_by = 50
+    permissions = ["consultant", "contractor"]
+    role: str = ""
+    role_display_name: str = ""
+    add_url_name: str = ""
+    list_url_name: str = ""
 
-    # These will be defined in subclasses
-    role_field: str
-    role_name: str
-    role_name_plural: str
-    url_name: str
+    def get_project(self) -> Project:
+        """Get the project and verify access."""
+        return get_object_or_404(
+            Project, pk=self.kwargs["project_pk"], users=self.request.user
+        )
 
-    def get_queryset(self):
-        """Get users for the specific role."""
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
-        role_field = self.role_field
-        return getattr(project, role_field).all()
+        return [
+            BreadcrumbItem(
+                title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(
+                title="Project Users",
+                url=reverse("project:project-users", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(title=self.role_display_name, url=None),
+        ]
 
-    def get_context_data(self, **kwargs):
-        """Add project and role information to context."""
+    def get_queryset(self) -> QuerySet[Account]:
+        """Get all users with this role in the project."""
+        project = self.get_project()
+        project_role = project.project_roles.filter(role=self.role).first()
+        if project_role:
+            return project_role.users.all().order_by("first_name", "last_name")
+        return Account.objects.none()
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
-        context["role_name"] = self.role_name
-        context["role_name_plural"] = self.role_name_plural
-        context["add_url"] = reverse_lazy(
-            f"project:{self.url_name}-add", kwargs={"project_pk": self.get_project().pk}
-        )
+        context["role_name"] = self.role_display_name
+        context["role_value"] = self.role
+        context["total_users"] = context["role_users"].count()
         return context
 
 
-class ProjectRoleAddView(ProjectRoleMixin, ListView):
-    """Base view for adding users to a specific role."""
+class BaseRoleAddView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
+    """Base view for adding users to a specific role in a project."""
 
     model = Account
     template_name = "project/roles/role_add.html"
     context_object_name = "available_users"
-    paginate_by = 50
+    permissions = ["consultant", "contractor"]
+    role: str = ""
+    role_display_name: str = ""
+    add_url_name: str = ""
+    list_url_name: str = ""
 
-    # These will be defined in subclasses
-    role_field: str
-    role_name: str
-    role_name_plural: str
-    url_name: str
-
-    def get_queryset(self):
-        """Get users not already in the role."""
-        project = self.get_project()
-        role_field = self.role_field
-        current_users = getattr(project, role_field).all()
-        return Account.objects.exclude(id__in=current_users).order_by(
-            "first_name", "last_name"
+    def get_project(self) -> Project:
+        """Get the project and verify access."""
+        return get_object_or_404(
+            Project, pk=self.kwargs["project_pk"], users=self.request.user
         )
 
-    def get_context_data(self, **kwargs):
-        """Add project and role information to context."""
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        return [
+            BreadcrumbItem(
+                title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(
+                title="Project Users",
+                url=reverse("project:project-users", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(title=f"Add {self.role_display_name}", url=None),
+        ]
+
+    def get_queryset(self) -> QuerySet[Account]:
+        """Get users not already in this role."""
+        project = self.get_project()
+        project_role = project.project_roles.filter(role=self.role).first()
+
+        if project_role:
+            existing_users = project_role.users.all()
+            queryset = Account.objects.exclude(pk__in=existing_users)
+        else:
+            queryset = Account.objects.all()
+
+        queryset = queryset.order_by("first_name", "last_name")
+
+        # Filter by search query if provided
+        search = self.request.GET.get("search", "")
+        if search:
+            queryset = (
+                queryset.filter(email__icontains=search)
+                | queryset.filter(first_name__icontains=search)
+                | queryset.filter(last_name__icontains=search)
+            )
+
+        return queryset[:50]
+
+    def post(self, request, *args, **kwargs):
+        """Handle adding a user to this role."""
+        user_pk = request.POST.get("user_pk")
+        if user_pk:
+            user_to_add = get_object_or_404(Account, pk=user_pk)
+            project = self.get_project()
+
+            # Get or create the ProjectRole
+            project_role, created = ProjectRole.objects.get_or_create(
+                project=project,
+                role=self.role,
+            )
+
+            # Add user to this role
+            project_role.users.add(user_to_add)
+            # Also add to project.users M2M for access
+            project.users.add(user_to_add)
+
+            messages.success(
+                request,
+                f"Added '{user_to_add.email}' as {self.role_display_name}.",
+            )
+        return HttpResponseRedirect(self.get_success_url())
+
+    def get_success_url(self):
+        raise NotImplementedError("Subclasses must implement get_success_url")
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
-        context["role_name"] = self.role_name
-        context["role_name_plural"] = self.role_name_plural
-        context["list_url"] = reverse_lazy(
-            f"project:{self.url_name}", kwargs={"project_pk": self.get_project().pk}
-        )
+        context["role_name"] = self.role_display_name
+        context["search"] = self.request.GET.get("search", "")
         return context
 
 
-class ProjectRoleRemoveView(ProjectRoleMixin, DeleteView):
-    """Base view for removing a user from a specific role."""
+class BaseRoleRemoveView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView):
+    """Base view for removing users from a specific role in a project."""
 
     model = Account
     template_name = "project/roles/role_confirm_remove.html"
-    context_object_name = "role_user"
+    context_object_name = "user_to_remove"
+    permissions = ["consultant", "contractor"]
+    role: str = ""
+    role_display_name: str = ""
+    add_url_name: str = ""
+    list_url_name: str = ""
 
-    # These will be defined in subclasses
-    role_field: str
-    role_name: str
-    url_name: str
+    def get_project(self) -> Project:
+        """Get the project and verify access."""
+        return get_object_or_404(
+            Project, pk=self.kwargs["project_pk"], users=self.request.user
+        )
 
-    def dispatch(self: "ProjectRoleRemoveView", request, *args, **kwargs):
-        """Dispatch the request."""
-        if request.user.pk == self.kwargs["user_pk"]:
-            messages.error(request, "You cannot remove yourself from this role.")
-            return redirect("project:project-users", project_pk=self.get_project().pk)
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_object(self):
-        """Get the user to be removed."""
+    def get_object(self) -> Account:
+        """Get the user to remove."""
         return get_object_or_404(Account, pk=self.kwargs["user_pk"])
 
-    def get_context_data(self, **kwargs):
-        """Add project and role information to context."""
-        context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
-        context["role_name"] = self.role_name
-        return context
-
-    def delete(self, request, *args, **kwargs):
-        """Remove user from the role."""
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
         user = self.get_object()
-        role_field = self.role_field
-        getattr(project, role_field).remove(user)
-        return super().delete(request, *args, **kwargs)
+        return [
+            BreadcrumbItem(
+                title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(
+                title="Project Users",
+                url=reverse("project:project-users", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(title=f"Remove {user.email}", url=None),
+        ]
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        context["role_name"] = self.role_display_name
+        return context
+
+    def post(self, request, *args, **kwargs):
+        """Remove user from this role."""
+        user_to_remove = self.get_object()
+        project = self.get_project()
+
+        project_role = project.project_roles.filter(role=self.role).first()
+        if project_role:
+            project_role.users.remove(user_to_remove)
+            messages.success(
+                request,
+                f"Removed '{user_to_remove.email}' from {self.role_display_name}.",
+            )
+
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
-        """Redirect to role list after removal."""
-        return reverse_lazy(
-            f"project:{self.url_name}", kwargs={"project_pk": self.get_project().pk}
+        raise NotImplementedError("Subclasses must implement get_success_url")
+
+
+# =============================================================================
+# Contractor Views
+# =============================================================================
+
+
+class ContractorListView(BaseRoleListView):
+    """List contractors for a project."""
+
+    role = Role.CONTRACT_BOQ
+    role_display_name = "Contractors"
+
+
+class ContractorAddView(BaseRoleAddView):
+    """Add a contractor to a project."""
+
+    role = Role.CONTRACT_BOQ
+    role_display_name = "Contractor"
+
+    def get_success_url(self):
+        return reverse(
+            "project:project-contractors",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
         )
 
 
-# Concrete views for each role
-class ContractorListView(ProjectRoleListView):
-    """List all contractors for the project."""
+class ContractorRemoveView(BaseRoleRemoveView):
+    """Remove a contractor from a project."""
 
-    role_field = "contractors"
-    role_name = "Contractor"
-    role_name_plural = "Contractors"
-    url_name = "project-contractors"
-
-
-class ContractorAddView(ProjectRoleAddView):
-    """Add contractors to the project."""
-
-    role_field = "contractors"
-    role_name = "Contractor"
-    role_name_plural = "Contractors"
-    url_name = "project-contractors"
-
-    def post(self, request, *args, **kwargs):
-        """Add selected users to contractors."""
-        project = self.get_project()
-        user_ids = request.POST.getlist("users")
-        users = Account.objects.filter(id__in=user_ids)
-        project.contractors.add(*users)
-        return self.get_success_url()
+    role = Role.CONTRACT_BOQ
+    role_display_name = "Contractor"
 
     def get_success_url(self):
-        """Redirect to contractor list after adding."""
-        return reverse_lazy(
-            "project:project-contractors", kwargs={"project_pk": self.get_project().pk}
+        return reverse(
+            "project:project-contractors",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
         )
 
 
-class ContractorRemoveView(ProjectRoleRemoveView):
-    """Remove a contractor from the project."""
-
-    role_field = "contractors"
-    role_name = "Contractor"
-    url_name = "project-contractors"
+# =============================================================================
+# Quantity Surveyor Views
+# =============================================================================
 
 
-class QuantitySurveyorListView(ProjectRoleListView):
-    """List all quantity surveyors for the project."""
+class QuantitySurveyorListView(BaseRoleListView):
+    """List quantity surveyors for a project."""
 
-    role_field = "quantity_surveyors"
-    role_name = "Quantity Surveyor"
-    role_name_plural = "Quantity Surveyors"
-    url_name = "project-quantity-surveyors"
+    role = Role.COST_FORECASTS
+    role_display_name = "Quantity Surveyors"
 
 
-class QuantitySurveyorAddView(ProjectRoleAddView):
-    """Add quantity surveyors to the project."""
+class QuantitySurveyorAddView(BaseRoleAddView):
+    """Add a quantity surveyor to a project."""
 
-    role_field = "quantity_surveyors"
-    role_name = "Quantity Surveyor"
-    role_name_plural = "Quantity Surveyors"
-    url_name = "project-quantity-surveyors"
-
-    def post(self, request, *args, **kwargs):
-        """Add selected users to quantity surveyors."""
-        project = self.get_project()
-        user_ids = request.POST.getlist("users")
-        users = Account.objects.filter(id__in=user_ids)
-        project.quantity_surveyors.add(*users)
-        return self.get_success_url()
+    role = Role.COST_FORECASTS
+    role_display_name = "Quantity Surveyor"
 
     def get_success_url(self):
-        """Redirect to quantity surveyor list after adding."""
-        return reverse_lazy(
+        return reverse(
             "project:project-quantity-surveyors",
-            kwargs={"project_pk": self.get_project().pk},
+            kwargs={"project_pk": self.kwargs["project_pk"]},
         )
 
 
-class QuantitySurveyorRemoveView(ProjectRoleRemoveView):
-    """Remove a quantity surveyor from the project."""
+class QuantitySurveyorRemoveView(BaseRoleRemoveView):
+    """Remove a quantity surveyor from a project."""
 
-    role_field = "quantity_surveyors"
-    role_name = "Quantity Surveyor"
-    url_name = "project-quantity-surveyors"
-
-
-class LeadConsultantListView(ProjectRoleListView):
-    """List all lead consultants for the project."""
-
-    role_field = "lead_consultants"
-    role_name = "Lead Consultant"
-    role_name_plural = "Lead Consultants"
-    url_name = "project-lead-consultants"
-
-
-class LeadConsultantAddView(ProjectRoleAddView):
-    """Add lead consultants to the project."""
-
-    role_field = "lead_consultants"
-    role_name = "Lead Consultant"
-    role_name_plural = "Lead Consultants"
-    url_name = "project-lead-consultants"
-
-    def post(self, request, *args, **kwargs):
-        """Add selected users to lead consultants."""
-        project = self.get_project()
-        user_ids = request.POST.getlist("users")
-        users = Account.objects.filter(id__in=user_ids)
-        project.lead_consultants.add(*users)
-        return self.get_success_url()
+    role = Role.COST_FORECASTS
+    role_display_name = "Quantity Surveyor"
 
     def get_success_url(self):
-        """Redirect to lead consultant list after adding."""
-        return reverse_lazy(
+        return reverse(
+            "project:project-quantity-surveyors",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+
+# =============================================================================
+# Lead Consultant Views
+# =============================================================================
+
+
+class LeadConsultantListView(BaseRoleListView):
+    """List lead consultants for a project."""
+
+    role = Role.PORTFOLIO_MANAGER
+    role_display_name = "Lead Consultants"
+
+
+class LeadConsultantAddView(BaseRoleAddView):
+    """Add a lead consultant to a project."""
+
+    role = Role.PORTFOLIO_MANAGER
+    role_display_name = "Lead Consultant"
+
+    def get_success_url(self):
+        return reverse(
             "project:project-lead-consultants",
-            kwargs={"project_pk": self.get_project().pk},
+            kwargs={"project_pk": self.kwargs["project_pk"]},
         )
 
 
-class LeadConsultantRemoveView(ProjectRoleRemoveView):
-    """Remove a lead consultant from the project."""
+class LeadConsultantRemoveView(BaseRoleRemoveView):
+    """Remove a lead consultant from a project."""
 
-    role_field = "lead_consultants"
-    role_name = "Lead Consultant"
-    url_name = "project-lead-consultants"
-
-
-class ClientRepresentativeListView(ProjectRoleListView):
-    """List all client representatives for the project."""
-
-    role_field = "client_representatives"
-    role_name = "Client Representative"
-    role_name_plural = "Client Representatives"
-    url_name = "project-client-representatives"
-
-
-class ClientRepresentativeAddView(ProjectRoleAddView):
-    """Add client representatives to the project."""
-
-    role_field = "client_representatives"
-    role_name = "Client Representative"
-    role_name_plural = "Client Representatives"
-    url_name = "project-client-representatives"
-
-    def post(self, request, *args, **kwargs):
-        """Add selected users to client representatives."""
-        project = self.get_project()
-        user_ids = request.POST.getlist("users")
-        users = Account.objects.filter(id__in=user_ids)
-        project.client_representatives.add(*users)
-        return self.get_success_url()
+    role = Role.PORTFOLIO_MANAGER
+    role_display_name = "Lead Consultant"
 
     def get_success_url(self):
-        """Redirect to client representative list after adding."""
-        return reverse_lazy(
-            "project:project-client-representatives",
-            kwargs={"project_pk": self.get_project().pk},
+        return reverse(
+            "project:project-lead-consultants",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
         )
 
 
-class ClientRepresentativeRemoveView(ProjectRoleRemoveView):
-    """Remove a client representative from the project."""
+# =============================================================================
+# Client Representative Views
+# =============================================================================
 
-    role_field = "client_representatives"
-    role_name = "Client Representative"
-    url_name = "project-client-representatives"
+
+class ClientRepresentativeListView(BaseRoleListView):
+    """List client representatives for a project."""
+
+    role = Role.PORTFOLIO_USER
+    role_display_name = "Client Representatives"
+
+
+class ClientRepresentativeAddView(BaseRoleAddView):
+    """Add a client representative to a project."""
+
+    role = Role.PORTFOLIO_USER
+    role_display_name = "Client Representative"
+
+    def get_success_url(self):
+        return reverse(
+            "project:project-client-representatives",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+
+class ClientRepresentativeRemoveView(BaseRoleRemoveView):
+    """Remove a client representative from a project."""
+
+    role = Role.PORTFOLIO_USER
+    role_display_name = "Client Representative"
+
+    def get_success_url(self):
+        return reverse(
+            "project:project-client-representatives",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )

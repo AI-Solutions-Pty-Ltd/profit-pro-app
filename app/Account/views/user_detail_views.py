@@ -116,7 +116,8 @@ class UserGroupAddView(UserGroupMixin, FormView):
     def get_success_url(self):
         """Redirect to user detail page."""
         return reverse_lazy(
-            "project:portfolio-users",
+            "account:user-detail",
+            kwargs={"user_pk": self.kwargs["user_pk"]},
         )
 
 
