@@ -16,7 +16,7 @@
 
 ## Project Structure
 
-- Django application with Python 3.11+
+- Django application with Python 3.13+
 - Testing: pytest, pytest-django, factory_boy
 - Linting: ruff (88 char line length)
 - Type checking: ty
