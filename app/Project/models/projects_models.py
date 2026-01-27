@@ -10,6 +10,7 @@ from django.urls import reverse
 from app.BillOfQuantities.models.forecast_models import Forecast
 from app.BillOfQuantities.models.payment_certificate_models import PaymentCertificate
 from app.BillOfQuantities.models.structure_models import LineItem
+from app.core.Utilities.image_resize import ImageResize
 from app.core.Utilities.models import BaseModel, sum_queryset
 from app.Project.models.category_models import ProjectCategory
 from app.Project.models.client_models import Client
@@ -42,6 +43,12 @@ class Project(BaseModel):
         INACTIVE = "INACTIVE", "Inactive"
         FINAL_ACCOUNT_ISSUED = "FINAL_ACCOUNT_ISSUED", "Final Account Issued"
 
+    class PaymentTerms(models.TextChoices):
+        CURRENT = "CURRENT", "Current"
+        DAYS_30 = "30_DAYS", "30 Days"
+        DAYS_60 = "60_DAYS", "60 Days"
+        DAYS_90 = "90_DAYS", "90 Days"
+
     portfolio = models.ForeignKey(
         "Project.Portfolio",
         on_delete=models.SET_NULL,
@@ -55,6 +62,12 @@ class Project(BaseModel):
     )
     name = models.CharField(max_length=255)
     description = models.TextField()
+    logo = models.ImageField(
+        upload_to="project_logos/",
+        null=True,
+        blank=True,
+        help_text="Project logo for invoices and documents",
+    )
     status = models.CharField(
         max_length=255, choices=Status.choices, default=Status.SETUP
     )
@@ -169,6 +182,34 @@ class Project(BaseModel):
         help_text="Project category (e.g., Education, Health, Roads)",
     )
 
+    # Banking Details
+    bank_name = models.CharField(
+        max_length=255, blank=True, help_text="Bank name for payments"
+    )
+    bank_account_name = models.CharField(
+        max_length=255, blank=True, help_text="Account holder name"
+    )
+    bank_account_number = models.CharField(
+        max_length=50, blank=True, help_text="Bank account number"
+    )
+    bank_branch_code = models.CharField(
+        max_length=20, blank=True, help_text="Bank branch code"
+    )
+    bank_swift_code = models.CharField(
+        max_length=20, blank=True, help_text="SWIFT/BIC code for international payments"
+    )
+    vat_number = models.CharField(
+        max_length=50, blank=True, help_text="VAT/Tax registration number"
+    )
+
+    # Payment Terms
+    payment_terms = models.CharField(
+        max_length=20,
+        choices=PaymentTerms.choices,
+        default=PaymentTerms.DAYS_30,
+        help_text="Payment terms for invoices",
+    )
+
     # Project team roles - all as ManyToMany for multiple users per role
     contractors = models.ManyToManyField(
         "Account.Account",
@@ -213,9 +254,16 @@ class Project(BaseModel):
         ordering = ["-name"]
 
     def save(self, *args, **kwargs) -> None:
-        """Override save to manage PlannedValue instances when dates change."""
+        """Override save to manage PlannedValue instances when dates change and resize logo."""
         # Import here to avoid circular import
         from app.Project.models.planned_value_models import PlannedValue
+
+        # Handle logo resizing
+        logo = self.logo
+        if logo and hasattr(logo, "file"):
+            image_resizer = ImageResize()
+            resized_logo = image_resizer.resize_image(logo)
+            self.logo = resized_logo
 
         # Check if this is an existing instance
         dates_changed = False
@@ -638,3 +686,22 @@ class Project(BaseModel):
     @property
     def to_complete_project_index(self: "Project") -> Decimal | None:
         return self.get_to_complete_project_index()
+
+    def is_certificate_outstanding(self, certificate_date: date) -> bool:
+        """Check if a certificate is outstanding based on payment terms."""
+        if not certificate_date:
+            return False
+
+        today = date.today()
+        days_difference = (today - certificate_date).days
+
+        if self.payment_terms == self.PaymentTerms.CURRENT:
+            return days_difference > 0
+        elif self.payment_terms == self.PaymentTerms.DAYS_30:
+            return days_difference > 30
+        elif self.payment_terms == self.PaymentTerms.DAYS_60:
+            return days_difference > 60
+        elif self.payment_terms == self.PaymentTerms.DAYS_90:
+            return days_difference > 90
+
+        return False

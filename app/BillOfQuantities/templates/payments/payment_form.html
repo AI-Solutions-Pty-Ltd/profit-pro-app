@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}
+    {{ title }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+            <h1 class="text-2xl font-bold text-gray-900">{{ title }}</h1>
+            <p class="mt-1 text-sm text-gray-600">
+                {% if title == "Add Payment" %}
+                    Add a new payment received for this certificate.
+                {% else %}
+                    Update the payment details below.
+                {% endif %}
+            </p>
+        </div>
+        <!-- Form -->
+        <form method="post" class="px-6 py-6">
+            {% csrf_token %}
+            <!-- Display non-field errors -->
+            {% if form.non_field_errors %}
+                <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                    {% for error in form.non_field_errors %}<p class="text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+            {% endif %}
+            <!-- Form Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label for="{{ form.date.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.date.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.date }}
+                    {% if form.date.help_text %}<p class="mt-1 text-xs text-gray-500">{{ form.date.help_text }}</p>{% endif %}
+                    {% if form.date.errors %}<p class="mt-1 text-sm text-red-600">{{ form.date.errors }}</p>{% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.amount.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.amount.label }} <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 sm:text-sm">R</span>
+                        </span>
+                        {{ form.amount }}
+                    </div>
+                    {% if form.amount.help_text %}<p class="mt-1 text-xs text-gray-500">{{ form.amount.help_text }}</p>{% endif %}
+                    {% if form.amount.errors %}<p class="mt-1 text-sm text-red-600">{{ form.amount.errors }}</p>{% endif %}
+                </div>
+            </div>
+            <!-- Form Actions -->
+            <div class="mt-6 flex items-center justify-end space-x-3">
+                <a href="{% url 'bill_of_quantities:payment-certificate-payment-statement' project.pk payment_certificate.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    {% heroicon_outline "x-mark" class="w-4 h-4 mr-1" %}
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    {% if title == "Add Payment" %}
+                        {% heroicon_outline "check" class="w-4 h-4 mr-1" %}
+                        Add Payment
+                    {% else %}
+                        {% heroicon_outline "pencil" class="w-4 h-4 mr-1" %}
+                        Update Payment
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock content %}

@@ -12,9 +12,11 @@
 
 5. **Soft Delete**: Use `soft_delete()` method instead of `delete()` where appropriate. Use `restore()` to undelete. Check `is_deleted` property.
 
+6. Permissions: Use `UserHasProjectRoleGenericMixin` for permission checking. Use `Account.has_project_role()` method for permission checking with superuser bypass and Role.ADMIN support or django groups for generic permission checking.
+
 ## Project Structure
 
-- Django application with Python 3.11+
+- Django application with Python 3.13+
 - Testing: pytest, pytest-django, factory_boy
 - Linting: ruff (88 char line length)
 - Type checking: ty
@@ -24,6 +26,7 @@
 ## Code Style
 
 ### Imports (Order Matters)
+
 ```python
 # 1. Standard library
 import os
@@ -39,12 +42,14 @@ from app.core.Utilities.models import BaseModel
 ```
 
 ### Naming
+
 - Classes: `PascalCase` (AccountFactory, ProjectModel)
 - Functions/methods: `snake_case` (create_user, soft_delete)
 - Constants: `UPPER_SNAKE_CASE` (MAX_LENGTH)
-- Private: prefix with `_` (_create, _validate)
+- Private: prefix with `_` (\_create, \_validate)
 
 ### Docstrings
+
 Use Google-style docstrings for all classes and functions.
 
 ## Django Model Pattern
@@ -54,12 +59,12 @@ from app.core.Utilities.models import BaseModel
 
 class MyModel(BaseModel):
     """Model description."""
-    
+
     name = models.CharField(max_length=255, help_text="Model name")
-    
+
     def __str__(self):
         return self.name
-    
+
     class Meta:
         verbose_name = "My Model"
         verbose_name_plural = "My Models"
@@ -69,6 +74,7 @@ class MyModel(BaseModel):
 ## Testing Pattern (CRITICAL)
 
 ### Directory Structure
+
 ```
 app/<AppName>/
 ├── factories.py          # Factory definitions
@@ -80,6 +86,7 @@ app/<AppName>/
 ```
 
 ### Test Class Pattern
+
 ```python
 """Tests for <Feature> models."""
 
@@ -91,7 +98,7 @@ from app.Project.factories import ProjectFactory
 
 class TestProjectModel:
     """Test cases for Project model."""
-    
+
     def test_project_creation(self):
         """Test creating a project with valid data."""
         project = ProjectFactory(name="Test Project")
@@ -100,6 +107,7 @@ class TestProjectModel:
 ```
 
 ### Factory Pattern
+
 ```python
 """Factories for <App> models."""
 
@@ -111,10 +119,10 @@ from app.Project.models import Project
 
 class ProjectFactory(DjangoModelFactory):
     """Factory for Project model."""
-    
+
     class Meta:
         model = Project
-    
+
     account = factory.SubFactory(AccountFactory)
     name = factory.Sequence(lambda n: f"Project {n}")
 ```
@@ -243,6 +251,7 @@ requirements/
 ## AI Assistant Instructions
 
 ### When Writing Tests
+
 1. ALWAYS import and use factories from `app/<app_name>/factories.py`
 2. NEVER use `Model.objects.create()` or `Model.objects.create_user()`
 3. Structure: import factories → create test class → write test methods
@@ -250,6 +259,7 @@ requirements/
 5. Use descriptive test names that explain what is tested
 
 ### When Creating Models
+
 1. ALWAYS inherit from `BaseModel`
 2. ALWAYS add `__str__` method
 3. ALWAYS add Meta class with verbose_name and verbose_name_plural
@@ -258,12 +268,14 @@ requirements/
 6. Create tests using the factory
 
 ### When Running Commands
+
 1. ALWAYS check if `.venv` directory exists first
 2. ALWAYS use `.venv\Scripts\python.exe` prefix
 3. NEVER run commands without .venv
 4. Verify current directory is project root
 
 ### When Modifying Code
+
 1. Check existing patterns in similar files first
 2. Follow established project structure
 3. Use factories for any test data
@@ -271,6 +283,7 @@ requirements/
 5. Write docstrings for new functions/classes
 
 ### Code Generation Priorities
+
 1. Correctness (follows Django best practices)
 2. Consistency (matches existing codebase patterns)
 3. Testability (uses factories, easy to test)

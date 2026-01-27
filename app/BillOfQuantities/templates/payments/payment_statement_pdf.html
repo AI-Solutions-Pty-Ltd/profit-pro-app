@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Payment Statement - {{ payment_certificate.certificate_number }}</title>
+        <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+        
+        .logo {
+            max-height: 80px;
+            max-width: 200px;
+        }
+        
+        .statement-details {
+            text-align: right;
+        }
+        
+        .statement-details h1 {
+            font-size: 24px;
+            margin: 0;
+            color: #333;
+        }
+        
+        .statement-details p {
+            margin: 5px 0;
+        }
+        
+        .company-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        
+        .company-details div {
+            width: 48%;
+        }
+        
+        .company-details h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .certificate-amount {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .certificate-amount h3 {
+            margin: 0;
+            font-size: 14px;
+        }
+        
+        .certificate-amount p {
+            margin: 0;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .grid > div {
+            flex: 1;
+        }
+        .grid p {
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th {
+            background-color: #f5f5f5;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+            border: 1px solid #ddd;
+        }
+        td {
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .debit {
+            background-color: #f0f8ff;
+        }
+        .credit {
+            background-color: #f0fff0;
+        }
+        .totals {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        .summary {
+            background-color: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+        }
+        .summary-grid {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+        .summary-grid > div {
+            flex: 1;
+        }
+        .summary-grid p {
+            margin: 5px 0;
+        }
+        .summary-grid .amount {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .outstanding {
+            color: #dc2626;
+            font-weight: bold;
+        }
+        .notes {
+            margin-top: 30px;
+        }
+        .notes ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .notes li {
+            margin: 5px 0;
+        }
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #666;
+            font-size: 11px;
+        }
+        </style>
+    </head>
+    <body>
+        <!-- Header -->
+        <div class="header">
+            <div>
+                {% if project.logo %}
+                    <img src="{{ project.logo.url }}"
+                         alt="{{ project.name }} Logo"
+                         class="logo"
+                         width="200"
+                         height="80">
+                {% endif %}
+            </div>
+            <div class="statement-details">
+                <h1>PAYMENT STATEMENT</h1>
+                <p>
+                    <strong>Statement Date:</strong> {% now "d F Y" %}
+                </p>
+                <p>
+                    <strong>Certificate #:</strong> {{ payment_certificate.certificate_number }}
+                </p>
+                <p>
+                    <strong>Period:</strong> {{ payment_certificate.period_start|date:"d F Y" }} to {{ payment_certificate.period_end|date:"d F Y" }}
+                </p>
+            </div>
+        </div>
+        <!-- Client and Statement Details -->
+        <div class="info-section">
+            <div class="grid">
+                <div>
+                    <h3>CLIENT DETAILS</h3>
+                    <p>
+                        <strong>
+                            {% if project.client %}
+                                {{ project.client.company_name|default:project.client.user.get_full_name|default:"Client Name" }}
+                            {% else %}
+                                Client Name
+                            {% endif %}
+                        </strong>
+                    </p>
+                    <p>
+                        {% if project.client %}
+                            {{ project.client.address|default:"Client Address" }}
+                        {% else %}
+                            Client Address
+                        {% endif %}
+                    </p>
+                    <p>
+                        {% if project.client %}
+                            {{ project.client.phone|default:"Client Phone" }}
+                        {% else %}
+                            Client Phone
+                        {% endif %}
+                    </p>
+                    <p>
+                        {% if project.client and project.client.user %}
+                            {{ project.client.user.email|default:"client@example.com" }}
+                        {% else %}
+                            client@example.com
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <h3>STATEMENT DETAILS</h3>
+                    <p>
+                        <strong>Contract No:</strong> {{ project.contract_number|default:"N/A" }}
+                    </p>
+                    <p>
+                        <strong>Status:</strong> {{ payment_certificate.get_status_display }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <!-- Transactions Table -->
+        <div class="info-section">
+            <h3>TRANSACTIONS</h3>
+            {% if statement_entries %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Ref</th>
+                            <th class="text-right">Debit</th>
+                            <th class="text-right">Credit</th>
+                            <th class="text-right">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in statement_entries %}
+                            <tr class="{% if entry.type == 'debit' %}debit{% else %}credit{% endif %}">
+                                <td>{{ entry.date|date:"d M Y" }}</td>
+                                <td>{{ entry.description }}</td>
+                                <td>{{ entry.reference }}</td>
+                                <td class="text-right">
+                                    {% if entry.debit %}R {{ entry.debit|floatformat:2|intcomma }}{% endif %}
+                                </td>
+                                <td class="text-right">
+                                    {% if entry.credit %}R {{ entry.credit|floatformat:2|intcomma }}{% endif %}
+                                </td>
+                                <td class="text-right">R {{ entry.balance|floatformat:2|intcomma }}</td>
+                            </tr>
+                        {% endfor %}
+                        <tr class="totals">
+                            <td colspan="3">TOTALS:</td>
+                            <td class="text-right">R {{ total_debits|floatformat:2|intcomma }}</td>
+                            <td class="text-right">R {{ total_credits|floatformat:2|intcomma }}</td>
+                            <td class="text-right">
+                                {% if final_balance > 0 %}
+                                    R {{ final_balance|floatformat:2|intcomma }}
+                                {% elif final_balance < 0 %}
+                                    CR R {{ final_balance|abs|floatformat:2|intcomma }}
+                                {% else %}
+                                    R 0.00
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No transactions found.</p>
+            {% endif %}
+        </div>
+        <!-- Summary -->
+        <div class="summary">
+            <div class="summary-grid">
+                <div>
+                    <p>Total Debits</p>
+                    <p class="amount" style="color: #0066cc;">R {{ total_debits|floatformat:2|intcomma }}</p>
+                </div>
+                <div>
+                    <p>Total Credits</p>
+                    <p class="amount" style="color: #009900;">R {{ total_credits|floatformat:2|intcomma }}</p>
+                </div>
+                <div>
+                    <p>Balance Due</p>
+                    <p class="amount"
+                       style="{% if final_balance > 0 %}color: #0066cc;
+                              {% elif final_balance < 0 %}color: #009900;
+                              {% else %}color: #333;
+                              {% endif %}">
+                        {% if final_balance > 0 %}
+                            R {{ final_balance|floatformat:2|intcomma }}
+                        {% elif final_balance < 0 %}
+                            CR R {{ final_balance|abs|floatformat:2|intcomma }}
+                        {% else %}
+                            R 0.00
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <!-- Banking Details -->
+        <div class="info-section">
+            <h3>BANKING DETAILS</h3>
+            <div class="grid">
+                <div>
+                    <p>
+                        <strong>Bank:</strong> {{ project.bank_name|default:"Please provide banking details" }}
+                    </p>
+                    <p>
+                        <strong>Account Name:</strong> {{ project.bank_account_name|default:"Please provide account name" }}
+                    </p>
+                    <p>
+                        <strong>Account Number:</strong> {{ project.bank_account_number|default:"Please provide account number" }}
+                    </p>
+                </div>
+                <div>
+                    <p>
+                        <strong>Branch Code:</strong> {{ project.bank_branch_code|default:"Please provide branch code" }}
+                    </p>
+                    <p>
+                        <strong>SWIFT Code:</strong> {{ project.bank_swift_code|default:"Please provide SWIFT code" }}
+                    </p>
+                    <p>
+                        <strong>VAT Number:</strong> {{ project.vat_number|default:"Please provide VAT number" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <!-- Notes -->
+        <div class="notes">
+            <h3>NOTES:</h3>
+            <ul>
+                <li>Please quote certificate number {{ payment_certificate.certificate_number }} when making payment.</li>
+                <li>Payment is due {{ project.get_payment_terms_display|default:"30 days" }} of certificate date.</li>
+                <li>This statement shows all transactions up to certificate #{{ payment_certificate.certificate_number }}.</li>
+                {% if is_outstanding %}<li class="outstanding">This certificate is OUTSTANDING - payment is overdue!</li>{% endif %}
+            </ul>
+        </div>
+        <!-- Footer -->
+        <div class="footer">
+            <p>This is a computer-generated statement and serves as official record of all payments.</p>
+            <p>Page 1 of 1</p>
+        </div>
+    </body>
+</html>

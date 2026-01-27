@@ -3,7 +3,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.db.models import Sum
-from django.http import FileResponse, JsonResponse
+from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import DetailView, ListView, UpdateView, View
@@ -857,3 +857,37 @@ class PaymentCertificateMarkFinalView(PaymentCertificateMixin, DetailView):
             "bill_of_quantities:payment-certificate-list",
             project_pk=self.kwargs["project_pk"],
         )
+
+
+class PaymentCertificateInvoiceView(PaymentCertificateMixin, DetailView):
+    """Generate and display/download invoice for a payment certificate."""
+
+    model = PaymentCertificate
+    template_name = "payments/invoice.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context
+
+    def render_to_response(self, context, **response_kwargs):
+        """Check if PDF download is requested."""
+        if self.request.GET.get("format") == "pdf":
+            # Generate PDF using the template
+            from app.core.Utilities.generate_pdf import generate_pdf
+            from django.template.loader import render_to_string
+
+            # Render template to string
+            html_content = render_to_string(self.template_name or "", context)
+
+            # Generate PDF using the existing utility
+            pdf_file = generate_pdf(html_content)
+
+            # Return PDF response
+            response = HttpResponse(pdf_file, content_type="application/pdf")
+            response["Content-Disposition"] = (
+                f'attachment; filename="invoice_{context["payment_certificate"].certificate_number}.pdf"'
+            )
+            return response
+
+        return super().render_to_response(context, **response_kwargs)
