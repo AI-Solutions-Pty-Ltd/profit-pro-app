@@ -1,5 +1,6 @@
-from app.core.Utilities.models import BaseModel
 from django.db import models
+
+from app.core.Utilities.models import BaseModel
 
 
 class PaymentCertificatePayment(BaseModel):

@@ -4,45 +4,68 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0030_project_logo'),
+        ("Project", "0030_project_logo"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='project',
-            name='bank_account_name',
-            field=models.CharField(blank=True, help_text='Account holder name', max_length=255),
+            model_name="project",
+            name="bank_account_name",
+            field=models.CharField(
+                blank=True, help_text="Account holder name", max_length=255
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='bank_account_number',
-            field=models.CharField(blank=True, help_text='Bank account number', max_length=50),
+            model_name="project",
+            name="bank_account_number",
+            field=models.CharField(
+                blank=True, help_text="Bank account number", max_length=50
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='bank_branch_code',
-            field=models.CharField(blank=True, help_text='Bank branch code', max_length=20),
+            model_name="project",
+            name="bank_branch_code",
+            field=models.CharField(
+                blank=True, help_text="Bank branch code", max_length=20
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='bank_name',
-            field=models.CharField(blank=True, help_text='Bank name for payments', max_length=255),
+            model_name="project",
+            name="bank_name",
+            field=models.CharField(
+                blank=True, help_text="Bank name for payments", max_length=255
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='bank_swift_code',
-            field=models.CharField(blank=True, help_text='SWIFT/BIC code for international payments', max_length=20),
+            model_name="project",
+            name="bank_swift_code",
+            field=models.CharField(
+                blank=True,
+                help_text="SWIFT/BIC code for international payments",
+                max_length=20,
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='payment_terms',
-            field=models.CharField(choices=[('CURRENT', 'Current'), ('30_DAYS', '30 Days'), ('60_DAYS', '60 Days'), ('90_DAYS', '90 Days')], default='30_DAYS', help_text='Payment terms for invoices', max_length=20),
+            model_name="project",
+            name="payment_terms",
+            field=models.CharField(
+                choices=[
+                    ("CURRENT", "Current"),
+                    ("30_DAYS", "30 Days"),
+                    ("60_DAYS", "60 Days"),
+                    ("90_DAYS", "90 Days"),
+                ],
+                default="30_DAYS",
+                help_text="Payment terms for invoices",
+                max_length=20,
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='vat_number',
-            field=models.CharField(blank=True, help_text='VAT/Tax registration number', max_length=50),
+            model_name="project",
+            name="vat_number",
+            field=models.CharField(
+                blank=True, help_text="VAT/Tax registration number", max_length=50
+            ),
         ),
     ]

@@ -1,9 +1,8 @@
 """Forms for Project app."""
 
-from django import forms
-
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Layout
+from django import forms
 
 from app.Account.models import Account
 from app.Project.models import (
