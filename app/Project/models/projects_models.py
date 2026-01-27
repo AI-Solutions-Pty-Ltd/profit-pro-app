@@ -687,10 +687,14 @@ class Project(BaseModel):
     def to_complete_project_index(self: "Project") -> Decimal | None:
         return self.get_to_complete_project_index()
 
-    def is_certificate_outstanding(self, certificate_date: date) -> bool:
+    def is_certificate_outstanding(self, certificate_date: date | datetime) -> bool:
         """Check if a certificate is outstanding based on payment terms."""
         if not certificate_date:
             return False
+
+        # Convert datetime to date if necessary
+        if isinstance(certificate_date, datetime):
+            certificate_date = certificate_date.date()
 
         today = date.today()
         days_difference = (today - certificate_date).days
