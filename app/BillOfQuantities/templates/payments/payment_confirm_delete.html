@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}
+    Delete Payment - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+            <h1 class="text-2xl font-bold text-gray-900">Delete Payment</h1>
+            <p class="mt-1 text-sm text-gray-600">Confirm deletion of this payment record.</p>
+        </div>
+        <!-- Content -->
+        <div class="px-6 py-6">
+            <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        {% heroicon_outline "exclamation-triangle" class="h-5 w-5 text-yellow-400" %}
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-yellow-800">You are about to delete this payment:</h3>
+                        <div class="mt-2 text-sm text-yellow-700">
+                            <p><strong>Date:</strong> {{ object.date|date:"d F Y" }}</p>
+                            <p><strong>Amount:</strong> R {{ object.amount|floatformat:2|intcomma }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-sm text-gray-600 mb-6">
+                This action cannot be undone. The payment will be permanently removed from the system.
+            </p>
+            <form method="post">
+                {% csrf_token %}
+                <div class="flex items-center justify-end space-x-3">
+                    <a href="{% url 'bill_of_quantities:payment-certificate-payment-statement' project.pk payment_certificate.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        {% heroicon_outline "x-mark" class="w-4 h-4 mr-1" %}
+                        Cancel
+                    </a>
+                    <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                        {% heroicon_outline "trash" class="w-4 h-4 mr-1" %}
+                        Delete Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock content %}

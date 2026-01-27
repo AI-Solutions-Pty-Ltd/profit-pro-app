@@ -26,3 +26,7 @@ heroicons[django]
 # excel uploads
 pandas
 openpyxl
+
+# image tools
+Pillow
+python-magic

@@ -14,14 +14,24 @@
                     <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
                     <p class="text-sm text-gray-600 mt-1">Payment Certificates</p>
                 </div>
-                {% if not active_certificate %}
-                    <a href="{% url 'bill_of_quantities:payment-certificate-new' project.pk %}"
-                       class="loading-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                       data-loading-text="Creating New Certificate...">
-                        {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}
-                        Create New Certificate
-                    </a>
-                {% endif %}
+                <div class="flex items-center space-x-3">
+                    {% if completed_payment_certificates %}
+                        <a href="{% url 'bill_of_quantities:payment-certificate-payment-statement' project.pk completed_payment_certificates.0.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                           title="View Payment Statement">
+                            {% heroicon_outline "document-text" class="w-4 h-4 mr-2" %}
+                            Payment Statement
+                        </a>
+                    {% endif %}
+                    {% if not active_certificate %}
+                        <a href="{% url 'bill_of_quantities:payment-certificate-new' project.pk %}"
+                           class="loading-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                           data-loading-text="Creating New Certificate...">
+                            {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}
+                            Create New Certificate
+                        </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
@@ -124,6 +134,12 @@
                                         |
                                         View
                                     </h3>
+                                </a>
+                                <a href="{% url 'bill_of_quantities:payment-certificate-invoice' project.pk active_certificate.pk %}"
+                                   class="inline-flex items-center text-sm text-blue-700 hover:text-blue-900 mt-1"
+                                   title="View Invoice">
+                                    {% heroicon_outline "document" class="w-4 h-4 mr-1" %}
+                                    Invoice
                                 </a>
                                 <p class="text-sm text-blue-700 mt-1">
                                     Status: <span class="font-medium">{{ active_certificate.get_status_display }}
@@ -246,9 +262,11 @@
                         </div>
                         <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-lg flex items-center justify-end space-x-2">
                             <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk cert.pk %}"
-                               class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                {% heroicon_outline "eye" class="w-4 h-4" %}
-                            </a>
+                               class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                               title="View Certificate Details">{% heroicon_outline "eye" class="w-4 h-4" %}</a>
+                            <a href="{% url 'bill_of_quantities:payment-certificate-invoice' project.pk cert.pk %}"
+                               class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                               title="View Invoice">{% heroicon_outline "document" class="w-4 h-4" %}</a>
                             {% if forloop.first and not active_certificate and not project.final_payment_certificate and cert.status == 'APPROVED' %}
                                 <form method="post"
                                       action="{% url 'bill_of_quantities:payment-certificate-mark-final' project.pk cert.pk %}"

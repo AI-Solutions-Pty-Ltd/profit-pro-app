@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Invoice - {{ payment_certificate.certificate_number }}</title>
+        <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+        
+        .logo {
+            max-height: 80px;
+            max-width: 200px;
+        }
+        
+        .invoice-details {
+            text-align: right;
+        }
+        
+        .invoice-details h1 {
+            font-size: 24px;
+            margin: 0;
+            color: #333;
+        }
+        
+        .invoice-details p {
+            margin: 5px 0;
+        }
+        
+        .company-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        
+        .company-details div {
+            width: 48%;
+        }
+        
+        .company-details h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .items-table th,
+        .items-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        .items-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+        
+        .items-table .amount {
+            text-align: right;
+        }
+        
+        .totals {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 30px;
+        }
+        
+        .totals table {
+            width: 300px;
+            border-collapse: collapse;
+        }
+        
+        .totals td {
+            padding: 5px 10px;
+        }
+        
+        .totals .total-row {
+            font-weight: bold;
+            border-top: 2px solid #333;
+        }
+        
+        .totals .amount {
+            text-align: right;
+        }
+        
+        .notes {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        
+        .notes h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+            color: #666;
+            font-size: 11px;
+        }
+        
+        .certified-statement {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .certified-statement p {
+            margin: 5px 0;
+            font-style: italic;
+        }
+        
+        .signatures {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 50px;
+        }
+        
+        .signature-box {
+            text-align: center;
+            width: 200px;
+        }
+        
+        .signature-line {
+            border-bottom: 1px solid #333;
+            margin-bottom: 5px;
+            height: 50px;
+        }
+        
+        .signature-title {
+            font-size: 11px;
+            color: #666;
+        }
+        </style>
+    </head>
+    <body>
+        <!-- Header -->
+        <div class="header">
+            <div>
+                {% if project.logo %}
+                    <img src="{{ project.logo.url }}"
+                         alt="{{ project.name }} Logo"
+                         class="logo"
+                         width="200"
+                         height="80">
+                {% endif %}
+            </div>
+            <div class="invoice-details">
+                <h1>INVOICE</h1>
+                <p>
+                    <strong>Invoice No:</strong> INV-{{ payment_certificate.certificate_number }}
+                </p>
+                <p>
+                    <strong>Date:</strong> {% now "d F Y" %}
+                </p>
+                <p>
+                    <strong>Due Date:</strong> {% now "d F Y" %}
+                </p>
+            </div>
+        </div>
+        <!-- Company Details -->
+        <div class="company-details">
+            <div>
+                <h3>FROM:</h3>
+                <p>
+                    <strong>Your Company Name</strong>
+                </p>
+                <p>123 Business Street</p>
+                <p>City, Province, Postal Code</p>
+                <p>Tel: +27 12 345 6789</p>
+                <p>Email: accounts@yourcompany.co.za</p>
+                <p>VAT No: 1234567890</p>
+            </div>
+            <div>
+                <h3>TO:</h3>
+                <p>
+                    <strong>{{ project.client.name }}</strong>
+                </p>
+                {% if project.client.user %}
+                    <p>Attn: {{ project.client.user.get_full_name|default:project.client.user.email }}</p>
+                {% endif %}
+                <p>{{ project.client.description|default:"Client Address" }}</p>
+                <p>Tel: {{ project.client.user.primary_contact|default:"N/A" }}</p>
+                <p>Email: {{ project.client.user.email|default:"N/A" }}</p>
+            </div>
+        </div>
+        <!-- Project Details -->
+        <div style="margin-bottom: 30px;">
+            <h3>PROJECT DETAILS</h3>
+            <p>
+                <strong>Project:</strong> {{ project.name }}
+            </p>
+            <p>
+                <strong>Contract Number:</strong> {{ project.contract_number|default:"N/A" }}
+            </p>
+            <p>
+                <strong>Payment Certificate:</strong> #{{ payment_certificate.certificate_number }}
+            </p>
+            <p>
+                <strong>Period:</strong> {{ payment_certificate.period_start|date:"d F Y" }} to {{ payment_certificate.period_end|date:"d F Y" }}
+            </p>
+        </div>
+        <!-- Items Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th style="width: 15%">Reference</th>
+                    <th style="width: 15%" class="amount">Quantity</th>
+                    <th style="width: 15%" class="amount">Unit Price</th>
+                    <th style="width: 15%" class="amount">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in payment_certificate.line_items.all %}
+                    <tr>
+                        <td>{{ item.description }}</td>
+                        <td>{{ item.bill_item.code }}</td>
+                        <td class="amount">{{ item.quantity|floatformat:2 }}</td>
+                        <td class="amount">R {{ item.unit_rate|floatformat:2 }}</td>
+                        <td class="amount">R {{ item.amount|floatformat:2 }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <!-- Totals -->
+        <div class="totals">
+            <table>
+                <tr>
+                    <td>Subtotal:</td>
+                    <td class="amount">R {{ payment_certificate.subtotal|floatformat:2 }}</td>
+                </tr>
+                {% if payment_certificate.vat_amount %}
+                    <tr>
+                        <td>VAT ({{ payment_certificate.vat_percentage|default:15 }}%):</td>
+                        <td class="amount">R {{ payment_certificate.vat_amount|floatformat:2 }}</td>
+                    </tr>
+                {% endif %}
+                {% if payment_certificate.retention_amount %}
+                    <tr>
+                        <td>Retention ({{ project.retention_percentage|default:0 }}%):</td>
+                        <td class="amount">-R {{ payment_certificate.retention_amount|floatformat:2 }}</td>
+                    </tr>
+                {% endif %}
+                {% if payment_certificate.previous_certified %}
+                    <tr>
+                        <td>Previous Certified:</td>
+                        <td class="amount">-R {{ payment_certificate.previous_certified|floatformat:2 }}</td>
+                    </tr>
+                {% endif %}
+                <tr class="total-row">
+                    <td>
+                        <strong>TOTAL DUE:</strong>
+                    </td>
+                    <td class="amount">
+                        <strong>R {{ payment_certificate.total_amount|floatformat:2 }}</strong>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <!-- Certified Statement -->
+        <div class="certified-statement">
+            <p>
+                <strong>CERTIFIED THAT:</strong> The work described above has been completed to the required standard and in accordance with the contract documents.
+            </p>
+            <p>
+                This certificate represents the value of work completed and materials on site as at {{ payment_certificate.period_end|date:"d F Y" }}.
+            </p>
+        </div>
+        <!-- Signatures -->
+        <div class="signatures">
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <div class="signature-title">Contractor</div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <div class="signature-title">Quantity Surveyor</div>
+            </div>
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <div class="signature-title">Client Representative</div>
+            </div>
+        </div>
+        <!-- Notes -->
+        <div class="notes">
+            <h3>NOTES:</h3>
+            <p>1. Payment is due within 30 days of invoice date.</p>
+            <p>2. Please quote invoice number when making payment.</p>
+            <p>3. Banking details:</p>
+            <p style="margin-left: 20px;">
+                Bank: ABC Bank
+                <br>
+                Account Name: Your Company Name
+                <br>
+                Account Number: 1234567890
+                <br>
+                Branch Code: 12345
+            </p>
+        </div>
+        <!-- Footer -->
+        <div class="footer">
+            <p>This is a computer-generated invoice and requires no signature.</p>
+            <p>Page 1 of 1</p>
+        </div>
+    </body>
+</html>

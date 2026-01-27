@@ -1,0 +1,256 @@
+{% extends "base_full.html" %}
+{% load static %}
+{% load heroicons %}
+{% load humanize %}
+{% block title %}
+    Payment Statement - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="centered-content">
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <!-- Header -->
+            <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">PAYMENT STATEMENT</h1>
+                        <p class="mt-1 text-sm text-gray-600">
+                            Statement for {{ project.name }} - Certificate #{{ payment_certificate.certificate_number }}
+                        </p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                            {% heroicon_outline "arrow-left" size="20" %}
+                            Back to Certificates
+                        </a>
+                        <a href="?format=pdf"
+                           class="inline-flex items-center px-4 py-2 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                            {% heroicon_outline "document-arrow-down" size="20" class="mr-1" %}
+                            Download PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <!-- Statement Details -->
+            <div class="px-6 py-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 mb-3">CLIENT DETAILS</h3>
+                        <div class="space-y-1 text-sm text-gray-600">
+                            <p>
+                                <strong>
+                                    {% if project.client %}
+                                        {% if project.client.company_name %}
+                                            {{ project.client.company_name }}
+                                        {% else %}
+                                            {% if project.client.user %}
+                                                {{ project.client.user.get_full_name }}
+                                            {% else %}
+                                                Client Name
+                                            {% endif %}
+                                        {% endif %}
+                                    {% else %}
+                                        Client Name
+                                    {% endif %}
+                                </strong>
+                            </p>
+                            <p>
+                                {% if project.client %}
+                                    {{ project.client.address|default:"Client Address" }}
+                                {% else %}
+                                    Client Address
+                                {% endif %}
+                            </p>
+                            <p>
+                                {% if project.client %}
+                                    {{ project.client.phone|default:"Client Phone" }}
+                                {% else %}
+                                    Client Phone
+                                {% endif %}
+                            </p>
+                            <p>
+                                {% if project.client and project.client.user %}
+                                    {{ project.client.user.email|default:"client@example.com" }}
+                                {% else %}
+                                    client@example.com
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-900 mb-3">STATEMENT DETAILS</h3>
+                        <div class="space-y-1 text-sm text-gray-600">
+                            <p>
+                                <strong>Statement Date:</strong> {% now "d F Y" %}
+                            </p>
+                            <p>
+                                <strong>Period:</strong> {{ payment_certificate.period_start|date:"d F Y" }} to {{ payment_certificate.period_end|date:"d F Y" }}
+                            </p>
+                            <p>
+                                <strong>Contract No:</strong> {{ project.contract_number|default:"N/A" }}
+                            </p>
+                            <p>
+                                <strong>Status:</strong> {{ payment_certificate.get_status_display }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Statement Table -->
+            <div class="px-6 py-6">
+                <h3 class="text-sm font-semibold text-gray-900 mb-4">TRANSACTIONS</h3>
+                {% if statement_entries %}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Debit</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Credit</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for entry in statement_entries %}
+                                    <tr class="{% if entry.type == 'debit' %}bg-blue-50{% else %}bg-green-50{% endif %}">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ entry.date|date:"d M Y" }}</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">{{ entry.description }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
+                                            {% if entry.debit %}R {{ entry.debit|floatformat:2|intcomma }}{% endif %}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 text-right font-medium">
+                                            {% if entry.credit %}R {{ entry.credit|floatformat:2|intcomma }}{% endif %}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-semibold">
+                                            R {{ entry.balance|floatformat:2|intcomma }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            {% if entry.type == 'credit' %}
+                                                {% for payment in payments %}
+                                                    {% if payment.date == entry.date and payment.amount == entry.credit %}
+                                                        <div class="flex justify-center space-x-2">
+                                                            <a href="{% url 'bill_of_quantities:update-payment-certificate-payment' project.pk payment_certificate.pk payment.pk %}"
+                                                               class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 hover:text-indigo-700 transition-colors"
+                                                               title="Edit Payment">
+                                                                {% heroicon_outline "pencil" class="w-4 h-4" %}
+                                                            </a>
+                                                            <a href="{% url 'bill_of_quantities:delete-payment-certificate-payment' project.pk payment_certificate.pk payment.pk %}"
+                                                               class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-colors"
+                                                               title="Delete Payment"
+                                                               onclick="return confirm('Are you sure you want to delete this payment?')">
+                                                                {% heroicon_outline "trash" class="w-4 h-4" %}
+                                                            </a>
+                                                        </div>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                <!-- Totals Row -->
+                                <tr class="bg-gray-100 font-semibold">
+                                    <td colspan="3" class="px-6 py-4 text-sm text-gray-900">TOTALS:</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                                        R {{ total_debits|floatformat:2|intcomma }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 text-right">
+                                        R {{ total_credits|floatformat:2|intcomma }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                                        {% if final_balance > 0 %}
+                                            <span class="text-blue-600">R {{ final_balance|floatformat:2|intcomma }}</span>
+                                        {% elif final_balance < 0 %}
+                                            <span class="text-green-600">CR R {{ final_balance|abs|floatformat:2|intcomma }}</span>
+                                        {% else %}
+                                            <span>R 0.00</span>
+                                        {% endif %}
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-sm text-gray-500">No transactions found.</p>
+                {% endif %}
+            </div>
+            <!-- Summary -->
+            <div class="px-6 py-6 bg-gray-50 border-t border-gray-200">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Debits</p>
+                        <p class="mt-1 text-2xl font-bold text-blue-600">R {{ total_debits|floatformat:2|intcomma }}</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Credits</p>
+                        <p class="mt-1 text-2xl font-bold text-green-600">R {{ total_credits|floatformat:2|intcomma }}</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Balance Due</p>
+                        <p class="mt-1 text-2xl font-bold {% if final_balance > 0 %}text-blue-600{% elif final_balance < 0 %}text-green-600{% else %}text-gray-600{% endif %}">
+                            {% if final_balance > 0 %}
+                                R {{ final_balance|floatformat:2|intcomma }}
+                            {% elif final_balance < 0 %}
+                                CR R {{ final_balance|abs|floatformat:2|intcomma }}
+                            {% else %}
+                                R 0.00
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <!-- Banking Details -->
+            <div class="px-6 py-6 border-t border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">BANKING DETAILS</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                    <div>
+                        <p>
+                            <strong>Bank:</strong> {{ project.bank_name|default:"Please provide banking details" }}
+                        </p>
+                        <p>
+                            <strong>Account Name:</strong> {{ project.bank_account_name|default:"Please provide account name" }}
+                        </p>
+                        <p>
+                            <strong>Account Number:</strong> {{ project.bank_account_number|default:"Please provide account number" }}
+                        </p>
+                    </div>
+                    <div>
+                        <p>
+                            <strong>Branch Code:</strong> {{ project.bank_branch_code|default:"Please provide branch code" }}
+                        </p>
+                        <p>
+                            <strong>SWIFT Code:</strong> {{ project.bank_swift_code|default:"Please provide SWIFT code" }}
+                        </p>
+                        <p>
+                            <strong>VAT Number:</strong> {{ project.vat_number|default:"Please provide VAT number" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <!-- Notes -->
+            <div class="px-6 py-6 border-t border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">NOTES:</h3>
+                <ul class="text-sm text-gray-600 space-y-1">
+                    <li>• Please quote certificate number {{ payment_certificate.certificate_number }} when making payment.</li>
+                    <li>• Payment is due {{ project.get_payment_terms_display|default:"30 days" }} of certificate date.</li>
+                    <li>• This statement shows all transactions up to certificate #{{ payment_certificate.certificate_number }}.</li>
+                    {% if is_outstanding %}
+                        <li class="text-red-600 font-medium">• This certificate is OUTSTANDING - payment is overdue!</li>
+                    {% endif %}
+                </ul>
+            </div>
+            <!-- Add Payment Button -->
+            <div class="px-6 py-6 border-t border-gray-200">
+                <div class="flex justify-end">
+                    <a href="{% url 'bill_of_quantities:create-payment-certificate-payment' project.pk payment_certificate.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "plus" class="w-4 h-4 mr-1" %}
+                        Add Payment
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

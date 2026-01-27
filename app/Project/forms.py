@@ -2,6 +2,9 @@
 
 from django import forms
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Fieldset, Layout
+
 from app.Account.models import Account
 from app.Project.models import (
     AdministrativeCompliance,
@@ -110,17 +113,44 @@ class ProjectCategoryForm(forms.ModelForm):
 class ProjectForm(forms.ModelForm):
     """Form for creating and updating projects."""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.disable_csrf = True
+        self.helper.layout = Layout(
+            Fieldset(
+                "Project Information",
+                "name",
+                "description",
+                "category",
+                "start_date",
+                "end_date",
+                "contract_number",
+                "contract_clause",
+                "status",
+            )
+        )
+
     class Meta:
         model = Project
         fields = [
             "name",
             "description",
+            "logo",
             "category",
             "start_date",
             "end_date",
             "contract_number",
             "contract_clause",
             "status",
+            "bank_name",
+            "bank_account_name",
+            "bank_account_number",
+            "bank_branch_code",
+            "bank_swift_code",
+            "vat_number",
+            "payment_terms",
         ]
         widgets = {
             "name": forms.TextInput(
@@ -160,7 +190,54 @@ class ProjectForm(forms.ModelForm):
                     "rows": 3,
                 }
             ),
+            "logo": forms.FileInput(
+                attrs={
+                    "class": "mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100",
+                    "accept": ".jpg,.jpeg,.png,.gif,.svg",
+                }
+            ),
             "category": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "bank_name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter bank name",
+                }
+            ),
+            "bank_account_name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter account holder name",
+                }
+            ),
+            "bank_account_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter account number",
+                }
+            ),
+            "bank_branch_code": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter branch code",
+                }
+            ),
+            "bank_swift_code": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter SWIFT/BIC code",
+                }
+            ),
+            "vat_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter VAT/Tax number",
+                }
+            ),
+            "payment_terms": forms.Select(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
@@ -169,12 +246,21 @@ class ProjectForm(forms.ModelForm):
         labels = {
             "name": "Project Name",
             "description": "Description",
+            "logo": "Project Logo",
             "start_date": "Start Date",
             "end_date": "End Date",
             "contract_number": "Payment Certificate Contract Number",
             "contract_clause": "Payment Certificate Contract Clause",
+            "bank_name": "Bank Name",
+            "bank_account_name": "Account Name",
+            "bank_account_number": "Account Number",
+            "bank_branch_code": "Branch Code",
+            "bank_swift_code": "SWIFT Code",
+            "vat_number": "VAT/Tax Number",
+            "payment_terms": "Payment Terms",
         }
         help_texts = {
+            "logo": "Upload a logo for invoices and documents (JPG, PNG, GIF, SVG). Recommended size: 900x600px",
             "category": "Select the project category",
         }
 
