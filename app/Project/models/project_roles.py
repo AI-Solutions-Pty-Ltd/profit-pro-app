@@ -15,6 +15,11 @@ class Role(models.TextChoices):
     ADMIN = "Admin", "Admin"
     # User has most rights, but not all
     USER = "User", "User"
+
+    # client roles
+    CLIENT = "Client", "Client"
+    CONSULTANT = "Consultant", "Consultant"
+
     # Portfolio Manager view project dashboard and data
     PORTFOLIO_MANAGER = "Portfolio Manager", "Portfolio Manager"
     # Portfolio User view project dashboard and data - TODO not sure if needed

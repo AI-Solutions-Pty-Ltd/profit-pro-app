@@ -22,7 +22,7 @@ from app.Account.models import Account
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import ClientForm, ClientUserInviteForm
-from app.Project.models import Client, Project
+from app.Project.models import Client, Project, ProjectRole, Role
 
 
 class GetProjectMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
@@ -162,6 +162,11 @@ class ClientInviteUserView(ClientMixin, FormView):
         # Associate user with client
         self.client.user = user
         self.client.save()
+
+        # get_or_create project role:
+        ProjectRole.objects.get_or_create(
+            project=self.project, users=user, role=Role.CLIENT
+        )
 
         # Send email
         if settings.USE_EMAIL:

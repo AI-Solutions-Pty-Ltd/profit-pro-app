@@ -99,7 +99,6 @@ class PaymentCertificateFactory(DjangoModelFactory):
         model = PaymentCertificate
 
     project = factory.SubFactory(ProjectFactory)
-    certificate_number = factory.Sequence(lambda n: n + 1)
     status = PaymentCertificate.Status.DRAFT
 
 

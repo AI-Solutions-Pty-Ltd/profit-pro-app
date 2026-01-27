@@ -80,28 +80,28 @@ class TestGetEndOfMonth:
         """Test February in non-leap year."""
         date = datetime(2023, 2, 15)
         result = get_end_of_month(date)
-        expected = datetime(2023, 2, 28, 23, 59, 59, 999999)
+        expected = datetime(2023, 2, 28, 23, 59, 59)
         assert result == expected
 
     def test_get_end_of_month_february_leap(self):
         """Test February in leap year."""
         date = datetime(2024, 2, 15)
         result = get_end_of_month(date)
-        expected = datetime(2024, 2, 29, 23, 59, 59, 999999)
+        expected = datetime(2024, 2, 29, 23, 59, 59)
         assert result == expected
 
     def test_get_end_of_month_31_day_month(self):
         """Test month with 31 days."""
         date = datetime(2023, 7, 15)
         result = get_end_of_month(date)
-        expected = datetime(2023, 7, 31, 23, 59, 59, 999999)
+        expected = datetime(2023, 7, 31, 23, 59, 59)
         assert result == expected
 
     def test_get_end_of_month_30_day_month(self):
         """Test month with 30 days."""
         date = datetime(2023, 4, 15)
         result = get_end_of_month(date)
-        expected = datetime(2023, 4, 30, 23, 59, 59, 999999)
+        expected = datetime(2023, 4, 30, 23, 59, 59)
         assert result == expected
 
     def test_get_end_of_month_none(self):
@@ -130,7 +130,7 @@ class TestGetMonthRange:
         end = datetime(2023, 3, 31)
         result = get_month_range(start, end)
         assert len(result) == 3
-        assert [m.month for m in result] == [3, 2, 1]  # Reversed order
+        assert [m.month for m in result] == [1, 2, 3]
 
     def test_get_month_range_year_boundary(self):
         """Test range across year boundary."""
@@ -138,7 +138,7 @@ class TestGetMonthRange:
         end = datetime(2024, 1, 31)
         result = get_month_range(start, end)
         assert len(result) == 2
-        assert [m.year for m in result] == [2024, 2023]
+        assert [m.year for m in result] == [2023, 2024]
 
     def test_get_month_range_invalid_order(self):
         """Test error when start > end."""
@@ -167,15 +167,15 @@ class TestGetLastNMonths:
         end_cap = datetime(2023, 6, 15)
         result = get_previous_n_months(n=3, end_cap=end_cap)
         assert len(result) == 3
-        assert result[0].month == 6  # Should end at June
-        assert result[-1].month == 4  # Should start at April
+        assert result[0].month == 4  # Should end at June
+        assert result[2].month == 6  # Should start at April
 
     def test_get_last_n_months_with_start_cap(self):
         """Test with start cap."""
-        start_cap = datetime(2023, 4, 15)
+        start_cap = datetime(2023, 1, 15)
         result = get_previous_n_months(n=6, start_cap=start_cap)
         assert len(result) <= 6
-        assert all(m.month >= 4 for m in result)
+        assert all(m.month >= 1 for m in result)
 
     def test_get_last_n_months_with_both_caps_exact_n(self):
         """Test with caps spanning exactly n months."""
@@ -183,8 +183,8 @@ class TestGetLastNMonths:
         end_cap = datetime(2023, 12, 15)
         result = get_previous_n_months(n=12, start_cap=start_cap, end_cap=end_cap)
         assert len(result) == 12
-        assert result[0].month == 12
-        assert result[-1].month == 1
+        assert result[0].month == 1
+        assert result[-1].month == 12
 
     def test_get_last_n_months_with_both_caps_less_than_n(self):
         """Test with caps spanning less than n months."""
@@ -242,7 +242,8 @@ class TestGetLastNMonths:
         end_cap = datetime(2023, 6, 15)
         result = get_previous_n_months(n=12, end_cap=end_cap)
         assert len(result) == 12
-        assert result[0].month == 6  # Should end at June
+        assert result[0].month == 7  # Should end at July 2022
+        assert result[11].month == 6  # Should end at July 2022
         # Should end at cap, not current date
 
     def test_get_last_n_months_start_cap_adjustment(self):

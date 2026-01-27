@@ -1,7 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import HttpResponse
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 
 from app.Account.models import Account
 from app.Project.models.project_roles import Role
@@ -29,8 +29,24 @@ class UserHasGroupGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
         return redirect("home")
 
 
-class UserHasProjectRoleGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
+class UserHasProjectRoleGenericMixin(UserPassesTestMixin, LoginRequiredMixin):
     """Generic mixin for user project role permissions."""
+
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to ensure LoginRequiredMixin runs first."""
+        # First check authentication (LoginRequiredMixin)
+        if not request.user.is_authenticated:
+            # Use LoginRequiredMixin's redirect to login behavior
+            from django.contrib.auth.views import redirect_to_login
+
+            return redirect_to_login(
+                request.get_full_path(),
+                self.get_login_url(),
+                self.get_redirect_field_name(),
+            )
+        # Then run the normal dispatch which will call test_func
+        dispatch = super().dispatch(request, *args, **kwargs)
+        return dispatch
 
     roles: list[Role] = []
     project_slug: str | None = None
@@ -39,13 +55,11 @@ class UserHasProjectRoleGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
         kwargs = self.kwargs  # type: ignore
         if not kwargs[self.project_slug]:
             raise ValueError("Project slug must be specified.")
-        if not Project.objects.filter(pk=kwargs[self.project_slug]).exists():
-            raise ValueError("Project does not exist.")
-        return Project.objects.get(pk=kwargs[self.project_slug])
+        return get_object_or_404(Project, pk=kwargs[self.project_slug])
 
     def get_user(self) -> Account:
         request = self.request  # type: ignore
-        if not request.user:
+        if not request or not request.user:
             raise ValueError("User does not exist.")
         user = request.user
         if not user.is_authenticated:

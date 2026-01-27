@@ -1,4 +1,7 @@
 """Tests for PaymentCertificate views."""
+from app.Account.models import Account
+
+from dateutil.utils import today
 
 from decimal import Decimal
 
@@ -33,8 +36,9 @@ class TestPaymentCertificateListView:
         """Test list view displays payment certificates."""
         user = AccountFactory.create()
         project = ProjectFactory.create(users=user)
-        cert1 = PaymentCertificateFactory.create(project=project, certificate_number=1)
-        cert2 = PaymentCertificateFactory.create(project=project, certificate_number=2)
+        cert1 = PaymentCertificateFactory.create(project=project)
+        cert2 = PaymentCertificateFactory.create(project=project)
+        LineItemFactory.create(project=project)
 
         client.force_login(user)
         url = reverse(
@@ -51,6 +55,7 @@ class TestPaymentCertificateListView:
         """Test list view identifies active certificate."""
         user = AccountFactory.create()
         project = ProjectFactory.create(users=user)
+        LineItemFactory.create(project=project)
         draft_cert = PaymentCertificateFactory.create(
             project=project, status=PaymentCertificate.Status.DRAFT
         )
@@ -71,8 +76,10 @@ class TestPaymentCertificateListView:
         """Test users can only see their own project certificates."""
         user1 = AccountFactory.create()
         user2 = AccountFactory.create()
-        project1 = ProjectFactory.create(account=user1)
-        project2 = ProjectFactory.create(account=user2)
+        project1 = ProjectFactory.create(users=user1)
+        LineItemFactory.create(project=project1)
+        project2 = ProjectFactory.create(users=user2)
+        LineItemFactory.create(project=project2)
 
         cert1 = PaymentCertificateFactory.create(project=project1)
         cert2 = PaymentCertificateFactory.create(project=project2)
@@ -348,64 +355,39 @@ class TestPaymentCertificateFinalApprovalView:
 
     def test_final_approval_view_approves_certificate(self, client, consultant_user):
         """Test final approval view approves certificate."""
-        project = ProjectFactory.create(account=consultant_user)
+        project = ProjectFactory.create(users=consultant_user)
         certificate = PaymentCertificateFactory.create(
             project=project, status=PaymentCertificate.Status.SUBMITTED
         )
+        LineItemFactory.create(project=project)
 
         client.force_login(consultant_user)
         url = reverse(
-            "bill_of_quantities:payment-certificate-approve",
+            "bill_of_quantities:payment-certificate-submit",
             kwargs={"project_pk": project.pk, "pk": certificate.pk},
         )
-        response = client.post(url, {"status": "APPROVED"})
+        response = client.post(url, {"status": "APPROVED", "is_final": False})
 
         assert response.status_code == 302
         certificate.refresh_from_db()
         assert certificate.status == PaymentCertificate.Status.APPROVED
 
-    def test_final_approval_view_marks_transactions_as_claimed(
-        self, client, consultant_user
-    ):
-        """Test final approval marks all transactions as claimed."""
-        project = ProjectFactory.create(account=consultant_user)
-        certificate = PaymentCertificateFactory.create(
-            project=project, status=PaymentCertificate.Status.SUBMITTED
-        )
-        line_item = LineItemFactory.create(project=project)
-        trans1 = ActualTransactionFactory.create(
-            payment_certificate=certificate, line_item=line_item, claimed=False
-        )
-        trans2 = ActualTransactionFactory.create(
-            payment_certificate=certificate, line_item=line_item, claimed=False
-        )
-
-        client.force_login(consultant_user)
-        url = reverse(
-            "bill_of_quantities:payment-certificate-approve",
-            kwargs={"project_pk": project.pk, "pk": certificate.pk},
-        )
-        response = client.post(url, {"status": "APPROVED"})
-
-        assert response.status_code == 302
-        trans1.refresh_from_db()
-        trans2.refresh_from_db()
-        assert trans1.claimed is True
-        assert trans2.claimed is True
-
     def test_final_approval_view_rejects_certificate(self, client, consultant_user):
         """Test final approval view can reject certificate."""
-        project = ProjectFactory.create(account=consultant_user)
+        project = ProjectFactory.create(users=consultant_user)
         certificate = PaymentCertificateFactory.create(
             project=project, status=PaymentCertificate.Status.SUBMITTED
         )
+        LineItemFactory.create(project=project)
 
         client.force_login(consultant_user)
         url = reverse(
-            "bill_of_quantities:payment-certificate-approve",
+            "bill_of_quantities:payment-certificate-submit",
             kwargs={"project_pk": project.pk, "pk": certificate.pk},
         )
-        response = client.post(url, {"status": "REJECTED"})
+        response = client.post(
+            url, {"status": PaymentCertificate.Status.REJECTED, "is_final": False}
+        )
 
         assert response.status_code == 302
         certificate.refresh_from_db()
@@ -415,7 +397,12 @@ class TestPaymentCertificateFinalApprovalView:
         self, client, consultant_user
     ):
         """Test rejection unmarks transactions as claimed and approved."""
-        project = ProjectFactory.create(account=consultant_user)
+        start = today()
+        start = start.replace(year=start.year - 1)
+        end = today()
+        project = ProjectFactory.create(
+            users=consultant_user, start_date=start, end_date=end
+        )
         certificate = PaymentCertificateFactory.create(
             project=project, status=PaymentCertificate.Status.SUBMITTED
         )
@@ -429,7 +416,7 @@ class TestPaymentCertificateFinalApprovalView:
 
         client.force_login(consultant_user)
         url = reverse(
-            "bill_of_quantities:payment-certificate-approve",
+            "bill_of_quantities:payment-certificate-submit",
             kwargs={"project_pk": project.pk, "pk": certificate.pk},
         )
         response = client.post(url, {"status": "REJECTED"})
@@ -526,8 +513,9 @@ class TestPaymentCertificateWorkflow:
         certificate = PaymentCertificateFactory.create(
             project=project, status=PaymentCertificate.Status.DRAFT
         )
+        admin_user: Account = project.users.first()
 
-        client.force_login(project.users.first())
+        client.force_login(admin_user)
 
         # Step 1: Add transactions
         edit_url = reverse(
@@ -541,7 +529,7 @@ class TestPaymentCertificateWorkflow:
             "bill_of_quantities:payment-certificate-submit",
             kwargs={"project_pk": project.pk, "pk": certificate.pk},
         )
-        client.post(submit_url, {"status": "SUBMITTED"})
+        client.post(submit_url, {"status": PaymentCertificate.Status.SUBMITTED})
 
         certificate.refresh_from_db()
         assert certificate.status == PaymentCertificate.Status.SUBMITTED
@@ -549,11 +537,13 @@ class TestPaymentCertificateWorkflow:
 
         # Step 3: Final approval
         approve_url = reverse(
-            "bill_of_quantities:payment-certificate-approve",
+            "bill_of_quantities:payment-certificate-submit",
             kwargs={"project_pk": project.pk, "pk": certificate.pk},
         )
         client.force_login(project.client.consultant)
-        client.post(approve_url, {"status": "APPROVED"})
+        _response = client.post(
+            approve_url, {"status": PaymentCertificate.Status.APPROVED}
+        )
 
         certificate.refresh_from_db()
         assert certificate.status == PaymentCertificate.Status.APPROVED

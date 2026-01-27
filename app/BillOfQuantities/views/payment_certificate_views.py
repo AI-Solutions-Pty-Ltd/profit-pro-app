@@ -6,7 +6,7 @@ from django.db.models import Sum
 from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.generic import DetailView, ListView, UpdateView, View
+from django.views.generic import DetailView, ListView, TemplateView, UpdateView, View
 
 from app.BillOfQuantities.models import ActualTransaction, LineItem, PaymentCertificate
 from app.BillOfQuantities.tasks import (
@@ -36,15 +36,6 @@ class PaymentCertificateMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
                 "bill_of_quantities:structure-upload", project_pk=project.pk
             )
         return super().dispatch(request, *args, **kwargs)
-
-    def get_project(self) -> Project:
-        if not hasattr(self, "project"):
-            self.project = get_object_or_404(
-                Project,
-                pk=self.kwargs[self.project_slug],
-                users=self.request.user,
-            )
-        return self.project
 
     def get_queryset(self: "PaymentCertificateMixin"):
         if not hasattr(self, "queryset") or not self.queryset:
@@ -111,13 +102,13 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
 
     def get_context_data(self: "PaymentCertificateListView", **kwargs):
         context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
+        project = self.get_project()
+        context["project"] = project
 
         # Active payment certificate (DRAFT or SUBMITTED)
         active_payment_certificate: PaymentCertificate | None = (
             self.get_project().active_payment_certificate
         )
-        print(f"active_payment_certificate returned: {active_payment_certificate}")
         context["active_certificate"] = active_payment_certificate
 
         # Completed payment certificates (APPROVED or REJECTED)
@@ -130,7 +121,7 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
         context["completed_payment_certificates"] = completed_certificates
 
         # Contract values
-        revised_contract_value = self.project.total_contract_value
+        revised_contract_value = project.total_contract_value
         context["revised_contract_value"] = revised_contract_value
 
         # Total certified (from approved certificates)
@@ -267,12 +258,28 @@ class PaymentCertificateDetailView(
         ]
 
     def dispatch(self, request, *args, **kwargs):
+        dispatch = super().dispatch(request, *args, **kwargs)
+        if dispatch.status_code > 299:
+            return dispatch
         generate_pdf_async(self.get_object().id, "abridged")
-        return super().dispatch(request, *args, **kwargs)
+        return dispatch
 
 
-class PaymentCertificateEditView(PaymentCertificateMixin, View):
-    template_name = "payment_certificate/payment_certificate_edit.html"
+class PaymentCertificateEditView(PaymentCertificateMixin, TemplateView):
+    template_name: str = "payment_certificate/payment_certificate_edit.html"
+    roles = [
+        Role.PAYMENT_CERTIFICATES,
+        Role.ADMIN,
+        Role.USER,
+        Role.CLIENT,
+        Role.CONSULTANT,
+    ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Ensure template_name is always a string
+        if not self.template_name:
+            self.template_name = "payment_certificate/payment_certificate_edit.html"
 
     def get_breadcrumbs(
         self: "PaymentCertificateEditView", **kwargs
@@ -301,8 +308,10 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
             },
         ]
 
-    def get(self: "PaymentCertificateEditView", request, pk=None, project_pk=None):
+    def get(self: "PaymentCertificateEditView", request, *args, **kwargs):
         project: Project = self.get_project()
+        pk = kwargs.get("pk")
+        project_pk = kwargs.get("project_pk")
 
         from app.BillOfQuantities.models import Bill, Package, Structure
 
@@ -431,10 +440,10 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
             "packages": packages,
             "breadcrumbs": self.get_breadcrumbs(),
         }
-        return render(request, self.template_name, context)
+        return render(request, str(self.template_name), context)
 
     def post(self, request, pk=None, project_pk=None):
-        project = get_object_or_404(Project, pk=project_pk, users=request.user)
+        project = self.get_project()
         if not project.line_items:
             messages.error(request, "Project has no WBS loaded, please upload!")
             return redirect(
@@ -452,6 +461,10 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
         for key, value in request.POST.items():
             line_item_pk = ""
             actual_transaction_pk = ""
+            delete = False
+            if value == "":
+                delete = True
+                value = 0
             try:
                 value = Decimal(value)
             except (ValueError, TypeError, InvalidOperation):
@@ -502,7 +515,10 @@ class PaymentCertificateEditView(PaymentCertificateMixin, View):
                     )
                 except ActualTransaction.DoesNotExist:
                     continue
-
+                if delete:
+                    actual_transaction.delete()
+                    transactions_updated += 1
+                    continue
                 line_item = actual_transaction.line_item
                 if not line_item.special_item:
                     # normal item / addendum - update quantity
@@ -583,7 +599,7 @@ class PaymentCertificateSubmitView(
         today = datetime.now().date()
 
         # Validate approval date falls within project dates
-        if payment_certificate.status == PaymentCertificate.Status.SUBMITTED:
+        if self.get_object().status == PaymentCertificate.Status.SUBMITTED:
             if project.start_date and today < project.start_date:
                 messages.error(
                     self.request,
@@ -607,7 +623,7 @@ class PaymentCertificateSubmitView(
 
         # Mark all transactions as approved or not based on status
         if payment_certificate.status == PaymentCertificate.Status.SUBMITTED:
-            payment_certificate.actual_transactions.update(approved=True)
+            payment_certificate.actual_transactions.update(approved=True, claimed=False)
             messages.success(
                 self.request,
                 f"Payment Certificate #{payment_certificate.certificate_number} has been submitted!",
@@ -623,6 +639,20 @@ class PaymentCertificateSubmitView(
                     self.request,
                     "This certificate has been marked as the Final Payment Certificate.",
                 )
+        elif payment_certificate.status == PaymentCertificate.Status.APPROVED:
+            payment_certificate.actual_transactions.update(approved=True, claimed=True)
+            messages.success(
+                self.request,
+                f"Payment Certificate #{payment_certificate.certificate_number} has been approved!",
+            )
+        elif payment_certificate.status == PaymentCertificate.Status.REJECTED:
+            payment_certificate.actual_transactions.update(
+                approved=False, claimed=False
+            )
+            messages.success(
+                self.request,
+                f"Payment Certificate #{payment_certificate.certificate_number} has been rejected!",
+            )
         else:
             payment_certificate.actual_transactions.update(approved=False)
             messages.warning(
@@ -879,7 +909,7 @@ class PaymentCertificateInvoiceView(PaymentCertificateMixin, DetailView):
             from app.core.Utilities.generate_pdf import generate_pdf
 
             # Render template to string
-            html_content = render_to_string(self.template_name or "", context)
+            html_content = render_to_string(str(self.template_name), context)
 
             # Generate PDF using the existing utility
             pdf_file = generate_pdf(html_content)

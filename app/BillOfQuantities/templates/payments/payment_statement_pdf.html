@@ -11,36 +11,28 @@
         <style>
     @page {
         size: A4;
-        margin: 2cm;
+        margin: 1.5cm;
     }
     
     body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        font-size: 12px;
-        line-height: 1.5;
-        color: #2c3e50;
+        font-family: Arial, sans-serif;
+        font-size: 9px;
+        line-height: 1.3;
+        color: #000;
         background: #fff;
         margin: 0;
         padding: 0;
     }
     
     .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 40px;
-        padding-bottom: 20px;
-        border-bottom: 3px solid #3498db;
-        background: linear-gradient(to right, #f8f9fa, #ffffff);
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #000;
     }
     
     .logo {
-        max-height: 80px;
-        max-width: 200px;
-        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        max-height: 60px;
+        max-width: 150px;
     }
     
     .statement-details {
@@ -48,61 +40,51 @@
     }
     
     .statement-details h1 {
-        font-size: 36px;
-        margin: 0;
-        color: #2c3e50;
-        font-weight: 700;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        font-size: 20px;
+        margin: 0 0 10px 0;
+        color: #000;
+        font-weight: bold;
     }
     
     .statement-details p {
-        margin: 8px 0;
-        font-size: 14px;
-        color: #5a6c7d;
+        margin: 4px 0;
+        font-size: 10px;
+        color: #333;
     }
     
     .statement-details strong {
-        color: #2c3e50;
+        color: #000;
     }
         
     .company-details {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 30px;
-        gap: 40px;
+        margin-bottom: 20px;
     }
     
     .company-details div {
-        flex: 1;
-        padding: 20px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        border-left: 4px solid #3498db;
+        margin-bottom: 10px;
     }
     
     .company-details h3 {
-        margin: 0 0 15px 0;
-        font-size: 16px;
-        color: #3498db;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        margin: 0 0 8px 0;
+        font-size: 12px;
+        color: #000;
+        font-weight: bold;
     }
     
     .company-details p {
-        margin: 6px 0;
-        color: #5a6c7d;
+        margin: 3px 0;
+        font-size: 9px;
+        color: #333;
     }
     
     .company-details strong {
-        color: #2c3e50;
+        color: #000;
     }
         
     .certificate-amount {
         background-color: #f5f5f5;
-        padding: 15px;
-        border-radius: 5px;
-        margin-bottom: 20px;
+        padding: 10px;
+        margin-bottom: 15px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -110,12 +92,12 @@
     
     .certificate-amount h3 {
         margin: 0;
-        font-size: 14px;
+        font-size: 12px;
     }
     
     .certificate-amount p {
         margin: 0;
-        font-size: 20px;
+        font-size: 14px;
         font-weight: bold;
     }
     
@@ -133,55 +115,43 @@
     .statement-table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 30px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border-radius: 8px;
-        overflow: hidden;
+        margin-bottom: 20px;
+        font-size: 9px;
     }
     
     .statement-table th {
-        background: linear-gradient(135deg, #3498db, #2980b9);
-        color: white;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 12px;
-        letter-spacing: 0.5px;
-        padding: 15px 12px;
+        background-color: #f5f5f5;
+        color: #000;
+        font-weight: bold;
+        font-size: 9px;
+        padding: 8px 5px;
         text-align: left;
+        border-bottom: 2px solid #000;
     }
     
     .statement-table td {
-        padding: 12px;
-        border-bottom: 1px solid #ecf0f1;
+        padding: 6px 5px;
+        border-bottom: 1px solid #ddd;
         vertical-align: top;
-    }
-    
-    .statement-table tbody tr:nth-child(even) {
-        background-color: #f8f9fa;
-    }
-    
-    .statement-table tbody tr:hover {
-        background-color: #e3f2fd;
-        transition: background-color 0.3s ease;
     }
     
     .statement-table .amount {
         text-align: right;
-        font-family: 'Courier New', monospace;
-        font-weight: 600;
+        font-family: Arial, sans-serif;
+        font-weight: bold;
     }
     
     .statement-table .debit {
-        color: #e74c3c;
+        color: #000;
     }
     
     .statement-table .credit {
-        color: #27ae60;
+        color: #000;
     }
     
     .statement-table .balance {
-        font-weight: 700;
-        color: #2c3e50;
+        font-weight: bold;
+        color: #000;
     }
     .text-right {
         text-align: right;
@@ -190,22 +160,20 @@
         text-align: center;
     }
     .debit {
-        background-color: #f0f8ff;
+        background-color: #f9f9f9;
     }
     .credit {
-        background-color: #f0fff0;
+        background-color: #f9f9f9;
     }
     .totals {
         background-color: #f5f5f5;
         font-weight: bold;
     }
     .summary {
-        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-        padding: 25px;
-        margin: 20px 0;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        background-color: #f5f5f5;
+        padding: 15px;
+        margin: 15px 0;
+        border: 1px solid #ddd;
     }
     
     .summary-grid {
@@ -219,93 +187,89 @@
     }
     
     .summary-grid p {
-        margin: 5px 0;
-        color: #5a6c7d;
-        font-size: 14px;
+        margin: 3px 0;
+        color: #333;
+        font-size: 9px;
     }
     
     .summary-grid .amount {
-        font-size: 24px;
-        font-weight: 700;
-        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        font-weight: bold;
+        font-family: Arial, sans-serif;
     }
     
     .info-section {
-        margin-bottom: 30px;
-        padding: 20px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        border-left: 4px solid #3498db;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
     }
     
     .info-section h3 {
-        margin: 0 0 15px 0;
-        font-size: 16px;
-        color: #3498db;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        margin: 0 0 10px 0;
+        font-size: 11px;
+        color: #000;
+        font-weight: bold;
     }
     
     .info-section p {
-        margin: 6px 0;
-        color: #5a6c7d;
+        margin: 3px 0;
+        color: #333;
+        font-size: 9px;
     }
     
     .info-section strong {
-        color: #2c3e50;
+        color: #000;
     }
     
     .grid {
         display: flex;
-        gap: 40px;
+        gap: 20px;
     }
     
     .grid > div {
         flex: 1;
     }
     .outstanding {
-        color: #dc2626;
+        color: #000;
         font-weight: bold;
     }
     .notes {
-        margin-top: 40px;
-        padding: 25px;
-        background: linear-gradient(to right, #fffbf0, #fff);
-        border: 1px solid #f39c12;
-        border-radius: 8px;
+        margin-top: 30px;
+        padding: 15px;
+        background: #f9f9f9;
+        border: 1px solid #ddd;
     }
     
     .notes h3 {
-        margin: 0 0 15px 0;
-        font-size: 16px;
-        color: #f39c12;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+        margin: 0 0 10px 0;
+        font-size: 11px;
+        color: #000;
+        font-weight: bold;
     }
     
     .notes ul {
-        margin: 10px 0;
+        margin: 8px 0;
         padding-left: 20px;
     }
     
     .notes li {
-        margin: 8px 0;
-        color: #5a6c7d;
+        margin: 5px 0;
+        color: #333;
+        font-size: 9px;
     }
     
     .outstanding {
-        color: #dc2626;
-        font-weight: 700;
+        color: #000;
+        font-weight: bold;
     }
     .footer {
-        margin-top: 50px;
-        padding-top: 20px;
-        border-top: 2px solid #ecf0f1;
+        margin-top: 30px;
+        padding-top: 15px;
+        border-top: 1px solid #ddd;
         text-align: center;
-        color: #95a5a6;
-        font-size: 11px;
+        color: #666;
+        font-size: 9px;
     }
     
     .watermark {
@@ -313,45 +277,44 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%) rotate(-45deg);
-        font-size: 120px;
-        color: rgba(52, 152, 219, 0.05);
-        font-weight: 700;
+        font-size: 80px;
+        color: rgba(0, 0, 0, 0.05);
+        font-weight: bold;
         z-index: -1;
         pointer-events: none;
     }
     
     .status-badge {
         display: inline-block;
-        padding: 4px 12px;
-        background: #3498db;
+        padding: 2px 8px;
+        background: #000;
         color: white;
-        font-size: 11px;
-        font-weight: 600;
+        font-size: 9px;
+        font-weight: bold;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        border-radius: 20px;
-        margin-left: 10px;
+        border-radius: 3px;
+        margin-left: 8px;
     }
     
     .highlight {
-        background: linear-gradient(120deg, #a8e063 0%, #56ab2f 100%);
-        color: white;
-        padding: 20px;
-        border-radius: 8px;
-        margin: 20px 0;
+        background-color: #f5f5f5;
+        color: #000;
+        padding: 15px;
+        border: 1px solid #ddd;
+        margin: 15px 0;
         text-align: center;
     }
     
     .highlight p {
         margin: 0;
-        font-size: 16px;
-        font-weight: 600;
+        font-size: 10px;
+        font-weight: bold;
     }
     
     .company-name-fallback {
-        font-size: 24px;
-        font-weight: 700;
-        color: #3498db;
+        font-size: 16px;
+        font-weight: bold;
+        color: #000;
     }
     
     .debit-amount {
@@ -369,21 +332,23 @@
     .balance-negative {
         color: #009900;
     }
-            background-color: #f0f8ff;
-        }
-        .credit {
-            background-color: #f0fff0;
-        }
-        .totals {
-            background-color: #f5f5f5;
-            font-weight: bold;
-        }
-        .summary {
-            background-color: #f5f5f5;
-            padding: 20px;
-            margin: 20px 0;
-            border: 1px solid #ddd;
-        }
+    
+    .debit {
+        background-color: #f0f8ff;
+    }
+    .credit {
+        background-color: #f0fff0;
+    }
+    .totals {
+        background-color: #f5f5f5;
+        font-weight: bold;
+    }
+    .summary {
+        background-color: #f5f5f5;
+        padding: 20px;
+        margin: 20px 0;
+        border: 1px solid #ddd;
+    }
         .summary-grid {
             display: flex;
             justify-content: space-around;
@@ -421,37 +386,106 @@
             color: #666;
             font-size: 11px;
         }
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+        }
+        .header-table td {
+            padding: 8px 0;
+            vertical-align: top;
+            font-size: 9px;
+        }
+        .client-details {
+            width: 40%;
+        }
+        .project-details {
+            width: 40%;
+            text-align: center;
+        }
+        .statement-date {
+            width: 20%;
+            text-align: right;
+            font-weight: bold;
+        }
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 9px;
+        }
+        .summary-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .summary-table .text-right {
+            text-align: right;
+        }
+        .summary-table .balance-row {
+            border-top: 2px solid #000;
+        }
+        .banking-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 9px;
+        }
+        .banking-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .banking-table td:first-child {
+            width: 30%;
+            font-weight: bold;
+        }
+        .banking-table tr:first-child td {
+            font-weight: bold;
+            background-color: #f5f5f5;
+            border-bottom: 2px solid #000;
+        }
         </style>
     </head>
     <body>
         <div class="watermark">STATEMENT</div>
         <!-- Header -->
-        <div class="header">
-            <div>
-                {% if project.logo %}
-                    <img src="{{ project.logo.url }}"
-                         alt="{{ project.name }} Logo"
-                         class="logo"
-                         width="200"
-                         height="80">
-                {% else %}
-                    <div class="company-name-fallback">{{ project.name }}</div>
-                {% endif %}
-            </div>
-            <div class="statement-details">
-                <h1>PAYMENT STATEMENT</h1>
-                <p>
-                    <strong>Statement Date:</strong> {% now "d F Y" %}
-                </p>
-                <p>
-                    <strong>Certificate #:</strong> {{ payment_certificate.certificate_number }}
-                    <span class="status-badge">{{ payment_certificate.get_status_display }}</span>
-                </p>
-                <p>
-                    <strong>Period:</strong> {{ payment_certificate.period_start|date:"d F Y" }} to {{ payment_certificate.period_end|date:"d F Y" }}
-                </p>
-            </div>
-        </div>
+        <table class="header-table">
+            <tr>
+                <td class="client-details">
+                    {% if project.client %}
+                        {% if project.client.company_name %}
+                            <strong>{{ project.client.company_name }}</strong>
+                            <br>
+                            {{ project.client.address|default:"" }}
+                            <br>
+                            {{ project.client.phone|default:"" }}
+                        {% elif project.client.user %}
+                            <strong>{{ project.client.user.get_full_name|default:"Client Name" }}</strong>
+                            <br>
+                            {{ project.client.address|default:"" }}
+                            <br>
+                            {{ project.client.phone|default:"" }}
+                        {% else %}
+                            Client Name
+                        {% endif %}
+                    {% else %}
+                        Client Name
+                        <br>
+                        Client Address
+                        <br>
+                        Client Phone
+                    {% endif %}
+                </td>
+                <td class="project-details">
+                    <strong>{{ project.name }}</strong>
+                    <br>
+                    Payment Statement
+                    <br>
+                    Certificate #{{ payment_certificate.certificate_number }}
+                </td>
+                <td class="statement-date">{% now "d F Y" %}</td>
+            </tr>
+        </table>
         <!-- Highlight Box -->
         <div class="highlight">
             <p>
@@ -465,117 +499,38 @@
                 {% endif %}
             </p>
         </div>
-        <!-- Client and Statement Details -->
-        <div class="info-section">
-            <div class="grid">
-                <div>
-                    <h3>CLIENT DETAILS</h3>
-                    <p>
-                        <strong>
-                            {% if project.client %}
-                                {{ project.client.company_name|default:project.client.user.get_full_name|default:"Client Name" }}
-                            {% else %}
-                                Client Name
-                            {% endif %}
-                        </strong>
-                    </p>
-                    <p>
-                        {% if project.client %}
-                            {{ project.client.address|default:"Client Address" }}
-                        {% else %}
-                            Client Address
-                        {% endif %}
-                    </p>
-                    <p>
-                        {% if project.client %}
-                            {{ project.client.phone|default:"Client Phone" }}
-                        {% else %}
-                            Client Phone
-                        {% endif %}
-                    </p>
-                    <p>
-                        {% if project.client and project.client.user %}
-                            {{ project.client.user.email|default:"client@example.com" }}
-                        {% else %}
-                            client@example.com
-                        {% endif %}
-                    </p>
-                </div>
-                <div>
-                    <h3>STATEMENT DETAILS</h3>
-                    <p>
-                        <strong>Contract No:</strong> {{ project.contract_number|default:"N/A" }}
-                    </p>
-                    <p>
-                        <strong>Status:</strong> {{ payment_certificate.get_status_display }}
-                    </p>
-                </div>
-            </div>
-        </div>
         <!-- Transactions Table -->
-        <div class="info-section">
-            <h3>TRANSACTIONS</h3>
-            {% if statement_entries %}
-                <table class="statement-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Description</th>
-                            <th>Ref</th>
-                            <th class="text-right">Debit</th>
-                            <th class="text-right">Credit</th>
-                            <th class="text-right">Balance</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for entry in statement_entries %}
-                            <tr class="{% if entry.type == 'debit' %}debit{% else %}credit{% endif %}">
-                                <td>{{ entry.date|date:"d M Y" }}</td>
-                                <td>{{ entry.description }}</td>
-                                <td>{{ entry.reference }}</td>
-                                <td class="text-right">
-                                    {% if entry.debit %}R {{ entry.debit|floatformat:2|intcomma }}{% endif %}
-                                </td>
-                                <td class="text-right">
-                                    {% if entry.credit %}R {{ entry.credit|floatformat:2|intcomma }}{% endif %}
-                                </td>
-                                <td class="text-right">R {{ entry.balance|floatformat:2|intcomma }}</td>
-                            </tr>
-                        {% endfor %}
-                        <tr class="totals">
-                            <td colspan="3">TOTALS:</td>
-                            <td class="text-right">R {{ total_debits|floatformat:2|intcomma }}</td>
-                            <td class="text-right">R {{ total_credits|floatformat:2|intcomma }}</td>
-                            <td class="text-right">
-                                {% if final_balance > 0 %}
-                                    R {{ final_balance|floatformat:2|intcomma }}
-                                {% elif final_balance < 0 %}
-                                    CR R {{ final_balance|abs|floatformat:2|intcomma }}
-                                {% else %}
-                                    R 0.00
-                                {% endif %}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            {% else %}
-                <p>No transactions found.</p>
-            {% endif %}
-        </div>
-        <!-- Summary -->
-        <div class="summary">
-            <div class="summary-grid">
-                <div>
-                    <p>Total Debits</p>
-                    <p class="amount debit-amount">R {{ total_debits|floatformat:2|intcomma }}</p>
-                </div>
-                <div>
-                    <p>Total Credits</p>
-                    <p class="amount credit-amount">R {{ total_credits|floatformat:2|intcomma }}</p>
-                </div>
-                <div>
-                    <p>Balance Due</p>
-                    <p class="amount {% if final_balance > 0 %}balance-positive{% elif final_balance < 0 %}balance-negative{% endif %}">
+        <table class="statement-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Ref</th>
+                    <th class="text-right">Debit</th>
+                    <th class="text-right">Credit</th>
+                    <th class="text-right">Balance</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in statement_entries %}
+                    <tr class="{% if entry.type == 'debit' %}debit{% else %}credit{% endif %}">
+                        <td>{{ entry.date|date:"d M Y" }}</td>
+                        <td>{{ entry.description }}</td>
+                        <td>{{ entry.reference }}</td>
+                        <td class="text-right">
+                            {% if entry.debit %}R {{ entry.debit|floatformat:2|intcomma }}{% endif %}
+                        </td>
+                        <td class="text-right">
+                            {% if entry.credit %}R {{ entry.credit|floatformat:2|intcomma }}{% endif %}
+                        </td>
+                        <td class="text-right">R {{ entry.balance|floatformat:2|intcomma }}</td>
+                    </tr>
+                {% endfor %}
+                <tr class="totals">
+                    <td colspan="3">TOTALS:</td>
+                    <td class="text-right">R {{ total_debits|floatformat:2|intcomma }}</td>
+                    <td class="text-right">R {{ total_credits|floatformat:2|intcomma }}</td>
+                    <td class="text-right">
                         {% if final_balance > 0 %}
                             R {{ final_balance|floatformat:2|intcomma }}
                         {% elif final_balance < 0 %}
@@ -583,38 +538,65 @@
                         {% else %}
                             R 0.00
                         {% endif %}
-                    </p>
-                </div>
-            </div>
-        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <!-- Summary -->
+        <table class="summary-table">
+            <tr>
+                <td>Payment Terms</td>
+                <td>{{ project.get_payment_terms_display|default:"30 Days" }}</td>
+            </tr>
+            <tr>
+                <td>Total Debits</td>
+                <td class="text-right">R {{ total_debits|floatformat:2|intcomma }}</td>
+            </tr>
+            <tr>
+                <td>Total Credits</td>
+                <td class="text-right">R {{ total_credits|floatformat:2|intcomma }}</td>
+            </tr>
+            <tr class="balance-row">
+                <td>
+                    <strong>Balance Due</strong>
+                </td>
+                <td class="text-right">
+                    <strong>
+                        {% if final_balance > 0 %}
+                            R {{ final_balance|floatformat:2|intcomma }}
+                        {% elif final_balance < 0 %}
+                            CR R {{ final_balance|abs|floatformat:2|intcomma }}
+                        {% else %}
+                            R 0.00
+                        {% endif %}
+                    </strong>
+                </td>
+            </tr>
+        </table>
         <!-- Banking Details -->
-        <div class="info-section">
-            <h3>BANKING DETAILS</h3>
-            <div class="grid">
-                <div>
-                    <p>
-                        <strong>Bank:</strong> {{ project.bank_name|default:"Please provide banking details" }}
-                    </p>
-                    <p>
-                        <strong>Account Name:</strong> {{ project.bank_account_name|default:"Please provide account name" }}
-                    </p>
-                    <p>
-                        <strong>Account Number:</strong> {{ project.bank_account_number|default:"Please provide account number" }}
-                    </p>
-                </div>
-                <div>
-                    <p>
-                        <strong>Branch Code:</strong> {{ project.bank_branch_code|default:"Please provide branch code" }}
-                    </p>
-                    <p>
-                        <strong>SWIFT Code:</strong> {{ project.bank_swift_code|default:"Please provide SWIFT code" }}
-                    </p>
-                    <p>
-                        <strong>VAT Number:</strong> {{ project.vat_number|default:"Please provide VAT number" }}
-                    </p>
-                </div>
-            </div>
-        </div>
+        <table class="banking-table">
+            <tr>
+                <td colspan="2">
+                    <strong>BANKING DETAILS</strong>
+                </td>
+            </tr>
+            <tr>
+                <td>Bank</td>
+                <td>{{ project.bank_name|default:"Please provide banking details" }}</td>
+            </tr>
+            <tr>
+                <td>Account Name</td>
+                <td>{{ project.bank_account_name|default:"Please provide account name" }}</td>
+            </tr>
+            <tr>
+                <td>Account Number</td>
+                <td>{{ project.bank_account_number|default:"Please provide account number" }}</td>
+            </tr>
+            <tr>
+                <td>Branch Code</td>
+                <td>{{ project.bank_branch_code|default:"Please provide branch code" }}</td>
+            </tr>
+        </table>
         <!-- Notes -->
         <div class="notes">
             <h3>NOTES:</h3>

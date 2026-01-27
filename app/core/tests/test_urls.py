@@ -14,10 +14,6 @@ class TestUrls:
         response = client.get(reverse("features"))
         assert response.status_code == 200
 
-    def test_pricing(self, client):
-        response = client.get(reverse("pricing"))
-        assert response.status_code == 200
-
     def test_register(self, client):
         response = client.get(reverse("register"))
         assert response.status_code == 200
@@ -27,6 +23,8 @@ class TestUrls:
             reverse("register"),
             {
                 "email": "test@test.com",
+                "first_name": "test",
+                "last_name": "test",
                 "password1": "NewPassword123",
                 "password2": "NewPassword123",
             },

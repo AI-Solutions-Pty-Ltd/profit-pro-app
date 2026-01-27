@@ -56,9 +56,9 @@ class TestPaymentCertificateModel:
     def test_get_next_certificate_number_with_existing(self):
         """Test getting next certificate number with existing certificates."""
         project = ProjectFactory.create()
-        PaymentCertificateFactory.create(project=project, certificate_number=1)
-        PaymentCertificateFactory.create(project=project, certificate_number=2)
-        PaymentCertificateFactory.create(project=project, certificate_number=3)
+        PaymentCertificateFactory.create(project=project)
+        PaymentCertificateFactory.create(project=project)
+        PaymentCertificateFactory.create(project=project)
 
         next_number = PaymentCertificate.get_next_certificate_number(project)
         assert next_number == 4
@@ -66,16 +66,18 @@ class TestPaymentCertificateModel:
     def test_payment_certificate_ordering(self):
         """Test payment certificates are ordered by created_at descending."""
         project = ProjectFactory.create()
-        cert1 = PaymentCertificateFactory.create(project=project, certificate_number=1)
-        cert2 = PaymentCertificateFactory.create(project=project, certificate_number=2)
-        cert3 = PaymentCertificateFactory.create(project=project, certificate_number=3)
+        cert1 = PaymentCertificateFactory.create(project=project)
+        cert2 = PaymentCertificateFactory.create(project=project)
+        cert3 = PaymentCertificateFactory.create(project=project)
 
         certificates = PaymentCertificate.objects.filter(project=project)
         # Most recent first
-        cert_list = list(certificates)
-        assert cert_list[0] == cert1
-        assert cert_list[1] == cert2
-        assert cert_list[2] == cert3
+        assert certificates[0].certificate_number == 3
+        assert certificates[1].certificate_number == 2
+        assert certificates[2].certificate_number == 1
+        assert certificates[0] == cert3
+        assert certificates[1] == cert2
+        assert certificates[2] == cert1
 
     def test_payment_certificate_project_relationship(self):
         """Test the relationship between PaymentCertificate and Project."""

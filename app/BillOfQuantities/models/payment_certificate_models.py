@@ -38,7 +38,7 @@ class PaymentCertificate(BaseModel):
         max_length=20, choices=Status.choices, default=Status.DRAFT
     )
 
-    certificate_number = models.IntegerField()
+    certificate_number = models.IntegerField(default=1)
     notes = models.TextField(
         blank=True, default="", help_text="Additional notes or comments"
     )
@@ -62,7 +62,7 @@ class PaymentCertificate(BaseModel):
     class Meta:
         verbose_name = "Payment Certificate"
         verbose_name_plural = "Payment Certificates"
-        ordering = ["-created_at"]
+        ordering = ["-certificate_number"]
         indexes = [
             models.Index(fields=["certificate_number", "status"]),
             models.Index(fields=["project", "certificate_number"]),
@@ -92,6 +92,9 @@ class PaymentCertificate(BaseModel):
                     )
             except PaymentCertificate.DoesNotExist:
                 pass
+
+        self.certificate_number = self.get_next_certificate_number(self.project)
+
         super().save(*args, **kwargs)
 
     @staticmethod

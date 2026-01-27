@@ -25,7 +25,7 @@ class TestSpecialItemListView:
     def test_special_item_list_view_displays_special_items(self, client):
         """Test that the special item list view displays special items."""
         account = AccountFactory.create()
-        project = ProjectFactory.create(account=account)
+        project = ProjectFactory.create(users=account)
 
         # Create special items
         special_item_1 = LineItemFactory.create(
@@ -82,7 +82,7 @@ class TestSpecialItemCreateView:
     def test_special_item_create_view_creates_special_item(self, client):
         """Test that the special item create view creates a special item."""
         account = AccountFactory.create()
-        project = ProjectFactory.create(account=account)
+        project = ProjectFactory.create(users=account)
 
         # Create some existing line items to test row_index calculation
         LineItemFactory.create(project=project, row_index=0)
@@ -124,7 +124,7 @@ class TestSpecialItemCreateView:
     def test_special_item_create_sets_row_index_correctly(self, client):
         """Test that row_index starts where normal line items end."""
         account = AccountFactory.create()
-        project = ProjectFactory.create(account=account)
+        project = ProjectFactory.create(users=account)
 
         # Create existing line items using the factory
         LineItemFactory.create(project=project, row_index=0)
@@ -168,7 +168,7 @@ class TestSpecialItemUpdateView:
     def test_special_item_update_view_updates_special_item(self, client):
         """Test that the special item update view updates a special item."""
         account = AccountFactory.create()
-        project = ProjectFactory.create(account=account)
+        project = ProjectFactory.create(users=account)
         special_item = LineItemFactory.create(
             project=project,
             special_item=True,
@@ -234,7 +234,7 @@ class TestSpecialItemDeleteView:
     def test_special_item_delete_view_soft_deletes_special_item(self, client):
         """Test that the special item delete view soft deletes a special item."""
         account = AccountFactory.create()
-        project = ProjectFactory.create(account=account)
+        project = ProjectFactory.create(users=account)
         special_item = LineItemFactory.create(
             project=project,
             special_item=True,

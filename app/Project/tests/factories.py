@@ -1,9 +1,12 @@
 """Factories for Project models."""
 
+import random
+from datetime import timedelta
+
 import factory
 from django.contrib.auth.models import Group
 from django.utils import timezone
-from factory.declarations import LazyFunction, Sequence, SubFactory
+from factory.declarations import LazyAttribute, LazyFunction, Sequence, SubFactory
 from factory.django import DjangoModelFactory
 from factory.faker import Faker
 from factory.helpers import post_generation
@@ -20,10 +23,9 @@ from app.Project.models import (
     Project,
     ProjectCategory,
     ProjectDocument,
-    ProjectRole,
     Risk,
 )
-from app.Project.models.project_roles import Role
+from app.Project.models.project_roles import ProjectRole, Role
 
 
 class ProjectCategoryFactory(DjangoModelFactory):
@@ -70,6 +72,10 @@ class ProjectFactory(DjangoModelFactory):
     name = Sequence(lambda n: f"Project {n}")
     client = SubFactory(ClientFactory)
     category = SubFactory(ProjectCategoryFactory)
+    start_date = Faker("date_between", start_date="-2y", end_date="today")
+    end_date = LazyAttribute(
+        lambda o: o.start_date + timedelta(days=random.randint(30, 365))
+    )
 
     @post_generation
     def users(self, create, extracted, **kwargs):
@@ -103,6 +109,30 @@ class ProjectFactory(DjangoModelFactory):
             # Create admin project role for each user
             ProjectRole.objects.get_or_create(
                 project=instance, user=user, role=Role.ADMIN
+            )
+
+    @post_generation
+    def create_client_roles(self, create, extracted, **kwargs):
+        """Create project roles for client users."""
+        if not create:
+            return
+
+        # Get the project instance
+        if hasattr(self, "instance"):
+            instance: Project = self.instance  # type: ignore[attr-defined]
+        else:
+            instance: Project = Project.objects.latest("created_at")
+
+        # Create roles for client user
+        if instance.client and instance.client.user:
+            ProjectRole.objects.get_or_create(
+                project=instance, user=instance.client.user, role=Role.CLIENT
+            )
+
+        # Create roles for consultant user
+        if instance.client and instance.client.consultant:
+            ProjectRole.objects.get_or_create(
+                project=instance, user=instance.client.consultant, role=Role.CONSULTANT
             )
 
 

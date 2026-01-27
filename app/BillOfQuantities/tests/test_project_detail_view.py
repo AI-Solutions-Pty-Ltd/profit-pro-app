@@ -18,7 +18,7 @@ class TestProjectPaymentCertificateDetailView:
 
     @pytest.fixture
     def project(self, user):
-        return ProjectFactory(account=user)
+        return ProjectFactory(users=user)
 
     @pytest.fixture
     def certificate(self, project):
@@ -92,7 +92,7 @@ class TestProjectPaymentCertificateDetailView:
     def test_user_can_only_see_own_projects(self, client, user):
         """Test user can only see their own projects."""
         other_user = AccountFactory.create()
-        other_project = ProjectFactory.create(account=other_user)
+        other_project = ProjectFactory.create(users=other_user)
 
         client.force_login(user)
         url = reverse(
