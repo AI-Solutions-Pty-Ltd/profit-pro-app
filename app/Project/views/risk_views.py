@@ -9,7 +9,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
-from app.core.Utilities.mixins import BreadcrumbMixin
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import RiskForm
 from app.Project.models import Project, Risk
@@ -43,16 +43,18 @@ class RiskListView(RiskMixin, ListView):
     template_name = "risk/risk_list.html"
     context_object_name = "risks"
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {"title": "Risk Management", "url": None},
+            ),
+            BreadcrumbItem(title="Risk Management", url=None),
         ]
 
     def get_queryset(self) -> QuerySet[Risk]:
@@ -115,23 +117,25 @@ class RiskCreateView(RiskMixin, CreateView):
     form_class = RiskForm
     template_name = "risk/risk_form.html"
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {
-                "title": "Risk Management",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Risk Management",
+                url=reverse(
                     "project:risk-list",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {"title": "Add Risk", "url": None},
+            ),
+            BreadcrumbItem(title="Add Risk", url=None),
         ]
 
     def get_context_data(self, **kwargs):
@@ -165,8 +169,9 @@ class RiskUpdateView(RiskMixin, UpdateView):
     form_class = RiskForm
     template_name = "risk/risk_form.html"
 
-    def get_object(self) -> Risk:
+    def get_object(self, queryset=None) -> Risk:
         """Get risk and verify project ownership."""
+        self.get_queryset() if not queryset else None
         return get_object_or_404(
             Risk,
             pk=self.kwargs["pk"],
@@ -174,24 +179,26 @@ class RiskUpdateView(RiskMixin, UpdateView):
             project__users=self.request.user,
         )
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         risk = self.get_object()
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {
-                "title": "Risk Management",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Risk Management",
+                url=reverse(
                     "project:risk-list",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {"title": f"Edit: {risk.risk_name}", "url": None},
+            ),
+            BreadcrumbItem(title=f"Edit: {risk.risk_name}", url=None),
         ]
 
     def get_context_data(self, **kwargs):
@@ -228,8 +235,9 @@ class RiskDeleteView(RiskMixin, DeleteView):
     model = Risk
     template_name = "risk/risk_confirm_delete.html"
 
-    def get_object(self) -> Risk:
+    def get_object(self, queryset=None) -> Risk:
         """Get risk and verify project ownership."""
+        self.get_queryset() if not queryset else None
         return get_object_or_404(
             Risk,
             pk=self.kwargs["pk"],
@@ -237,24 +245,26 @@ class RiskDeleteView(RiskMixin, DeleteView):
             project__users=self.request.user,
         )
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         risk = self.get_object()
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {
-                "title": "Risk Management",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Risk Management",
+                url=reverse(
                     "project:risk-list",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {"title": f"Delete: {risk.risk_name}", "url": None},
+            ),
+            BreadcrumbItem(title=f"Delete: {risk.risk_name}", url=None),
         ]
 
     def get_context_data(self, **kwargs):
@@ -277,8 +287,10 @@ class RiskDeleteView(RiskMixin, DeleteView):
         from django.shortcuts import redirect
 
         return redirect(
-            reverse_lazy(
-                "project:risk-list",
-                kwargs={"project_pk": self.kwargs["project_pk"]},
+            str(
+                reverse_lazy(
+                    "project:risk-list",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
             )
         )

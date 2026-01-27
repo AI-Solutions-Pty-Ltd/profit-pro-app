@@ -16,7 +16,7 @@ from django.views.generic import (
     UpdateView,
 )
 
-from app.core.Utilities.mixins import BreadcrumbMixin
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import (
     AdministrativeComplianceForm,
@@ -63,16 +63,18 @@ class ComplianceDashboardView(ComplianceMixin, TemplateView):
 
     template_name = "compliance/compliance_dashboard.html"
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {"title": "Compliance Management", "url": None},
+            ),
+            BreadcrumbItem(title="Compliance Management", url=None),
         ]
 
     def get_context_data(self, **kwargs):
@@ -152,23 +154,25 @@ class ContractualComplianceListView(ComplianceMixin, ListView):
             project=self.get_project()
         ).order_by("due_date", "-created_at")
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {
-                "title": "Compliance Management",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Compliance Management",
+                url=reverse(
                     "project:compliance-dashboard",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {"title": "Contractual Compliance", "url": None},
+            ),
+            BreadcrumbItem(title="Contractual Compliance", url=None),
         ]
 
 
@@ -179,30 +183,32 @@ class ContractualComplianceCreateView(ComplianceMixin, CreateView):
     form_class = ContractualComplianceForm
     template_name = "compliance/contractual/form.html"
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {
-                "title": "Compliance Management",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Compliance Management",
+                url=reverse(
                     "project:compliance-dashboard",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {
-                "title": "Contractual Compliance",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Contractual Compliance",
+                url=reverse(
                     "project:contractual-compliance-list",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {"title": "Add New", "url": None},
+            ),
+            BreadcrumbItem(title="Add New", url=None),
         ]
 
     def form_valid(self, form):
@@ -225,37 +231,41 @@ class ContractualComplianceUpdateView(ComplianceMixin, UpdateView):
     form_class = ContractualComplianceForm
     template_name = "compliance/contractual/form.html"
 
-    def get_object(self) -> ContractualCompliance:
+    def get_object(self, queryset=None) -> ContractualCompliance:
+        if not queryset:
+            self.get_queryset()
         return get_object_or_404(
             ContractualCompliance,
             pk=self.kwargs["pk"],
             project__pk=self.kwargs["project_pk"],
         )
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {
-                "title": "Compliance Management",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Compliance Management",
+                url=reverse(
                     "project:compliance-dashboard",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {
-                "title": "Contractual Compliance",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Contractual Compliance",
+                url=reverse(
                     "project:contractual-compliance-list",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {"title": "Edit", "url": None},
+            ),
+            BreadcrumbItem(title="Edit", url=None),
         ]
 
     def form_valid(self, form):
@@ -275,37 +285,40 @@ class ContractualComplianceDeleteView(ComplianceMixin, DeleteView):
     model = ContractualCompliance
     template_name = "compliance/contractual/confirm_delete.html"
 
-    def get_object(self) -> ContractualCompliance:
+    def get_object(self, queryset=None) -> ContractualCompliance:
+        self.get_queryset() if not queryset else None
         return get_object_or_404(
             ContractualCompliance,
             pk=self.kwargs["pk"],
             project__pk=self.kwargs["project_pk"],
         )
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {
-                "title": "Contractual Compliance",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Contractual Compliance",
+                url=reverse(
                     "project:contractual-compliance-list",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {"title": "Delete", "url": None},
+            ),
+            BreadcrumbItem(title="Delete", url=None),
         ]
 
     def form_valid(self, form):
         obj = self.get_object()
         obj.soft_delete()
         messages.success(self.request, "Contractual compliance item deleted.")
-        return redirect(self.get_success_url())
+        return redirect(str(self.get_success_url()))
 
     def get_success_url(self):
         return reverse_lazy(
@@ -331,23 +344,25 @@ class AdministrativeComplianceListView(ComplianceMixin, ListView):
             project=self.get_project()
         ).order_by("submission_due_date", "-created_at")
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {
-                "title": "Compliance Management",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Compliance Management",
+                url=reverse(
                     "project:compliance-dashboard",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {"title": "Administrative Compliance", "url": None},
+            ),
+            BreadcrumbItem(title="Administrative Compliance", url=None),
         ]
 
 
@@ -358,30 +373,32 @@ class AdministrativeComplianceCreateView(ComplianceMixin, CreateView):
     form_class = AdministrativeComplianceForm
     template_name = "compliance/administrative/form.html"
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {
-                "title": "Compliance Management",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Compliance Management",
+                url=reverse(
                     "project:compliance-dashboard",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {
-                "title": "Administrative Compliance",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Administrative Compliance",
+                url=reverse(
                     "project:administrative-compliance-list",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {"title": "Add New", "url": None},
+            ),
+            BreadcrumbItem(title="Add New", url=None),
         ]
 
     def form_valid(self, form):
@@ -404,37 +421,41 @@ class AdministrativeComplianceUpdateView(ComplianceMixin, UpdateView):
     form_class = AdministrativeComplianceForm
     template_name = "compliance/administrative/form.html"
 
-    def get_object(self) -> AdministrativeCompliance:
+    def get_object(self, queryset=None) -> AdministrativeCompliance:
+        if not queryset:
+            self.get_queryset()
         return get_object_or_404(
             AdministrativeCompliance,
             pk=self.kwargs["pk"],
             project__pk=self.kwargs["project_pk"],
         )
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {
-                "title": "Compliance Management",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Compliance Management",
+                url=reverse(
                     "project:compliance-dashboard",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {
-                "title": "Administrative Compliance",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Administrative Compliance",
+                url=reverse(
                     "project:administrative-compliance-list",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {"title": "Edit", "url": None},
+            ),
+            BreadcrumbItem(title="Edit", url=None),
         ]
 
     def form_valid(self, form):
@@ -454,37 +475,41 @@ class AdministrativeComplianceDeleteView(ComplianceMixin, DeleteView):
     model = AdministrativeCompliance
     template_name = "compliance/administrative/confirm_delete.html"
 
-    def get_object(self) -> AdministrativeCompliance:
+    def get_object(self, queryset=None) -> AdministrativeCompliance:
+        if not queryset:
+            self.get_queryset()
         return get_object_or_404(
             AdministrativeCompliance,
             pk=self.kwargs["pk"],
             project__pk=self.kwargs["project_pk"],
         )
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {
-                "title": "Administrative Compliance",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Administrative Compliance",
+                url=reverse(
                     "project:administrative-compliance-list",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {"title": "Delete", "url": None},
+            ),
+            BreadcrumbItem(title="Delete", url=None),
         ]
 
     def form_valid(self, form):
         obj = self.get_object()
         obj.soft_delete()
         messages.success(self.request, "Administrative compliance item deleted.")
-        return redirect(self.get_success_url())
+        return redirect(str(self.get_success_url()))
 
     def get_success_url(self):
         return reverse_lazy(
@@ -510,23 +535,25 @@ class FinalAccountComplianceListView(ComplianceMixin, ListView):
             project=self.get_project()
         ).order_by("document_type", "-created_at")
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {
-                "title": "Compliance Management",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Compliance Management",
+                url=reverse(
                     "project:compliance-dashboard",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {"title": "Final Account Compliance", "url": None},
+            ),
+            BreadcrumbItem(title="Final Account Compliance", url=None),
         ]
 
 
@@ -537,30 +564,32 @@ class FinalAccountComplianceCreateView(ComplianceMixin, CreateView):
     form_class = FinalAccountComplianceForm
     template_name = "compliance/final_account/form.html"
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {
-                "title": "Compliance Management",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Compliance Management",
+                url=reverse(
                     "project:compliance-dashboard",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {
-                "title": "Final Account Compliance",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Final Account Compliance",
+                url=reverse(
                     "project:final-account-compliance-list",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {"title": "Add New", "url": None},
+            ),
+            BreadcrumbItem(title="Add New", url=None),
         ]
 
     def form_valid(self, form):
@@ -583,37 +612,41 @@ class FinalAccountComplianceUpdateView(ComplianceMixin, UpdateView):
     form_class = FinalAccountComplianceForm
     template_name = "compliance/final_account/form.html"
 
-    def get_object(self) -> FinalAccountCompliance:
+    def get_object(self, queryset=None) -> FinalAccountCompliance:
+        if not queryset:
+            self.get_queryset()
         return get_object_or_404(
             FinalAccountCompliance,
             pk=self.kwargs["pk"],
             project__pk=self.kwargs["project_pk"],
         )
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {
-                "title": "Compliance Management",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Compliance Management",
+                url=reverse(
                     "project:compliance-dashboard",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {
-                "title": "Final Account Compliance",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Final Account Compliance",
+                url=reverse(
                     "project:final-account-compliance-list",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {"title": "Edit", "url": None},
+            ),
+            BreadcrumbItem(title="Edit", url=None),
         ]
 
     def form_valid(self, form):
@@ -633,37 +666,40 @@ class FinalAccountComplianceDeleteView(ComplianceMixin, DeleteView):
     model = FinalAccountCompliance
     template_name = "compliance/final_account/confirm_delete.html"
 
-    def get_object(self) -> FinalAccountCompliance:
+    def get_object(self, queryset=None) -> FinalAccountCompliance:
+        self.get_queryset() if not queryset else None
         return get_object_or_404(
             FinalAccountCompliance,
             pk=self.kwargs["pk"],
             project__pk=self.kwargs["project_pk"],
         )
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": self.get_project().name,
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {
-                "title": "Final Account Compliance",
-                "url": reverse(
+            ),
+            BreadcrumbItem(
+                title="Final Account Compliance",
+                url=reverse(
                     "project:final-account-compliance-list",
                     kwargs={"project_pk": self.get_project().pk},
                 ),
-            },
-            {"title": "Delete", "url": None},
+            ),
+            BreadcrumbItem(title="Delete", url=None),
         ]
 
     def form_valid(self, form):
         obj = self.get_object()
         obj.soft_delete()
         messages.success(self.request, "Final account compliance item deleted.")
-        return redirect(self.get_success_url())
+        return redirect(str(self.get_success_url()))
 
     def get_success_url(self):
         return reverse_lazy(

@@ -1,8 +1,13 @@
+from typing import TYPE_CHECKING
+
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from app.core.Utilities.models import BaseModel
+
+if TYPE_CHECKING:
+    from app.Account.models import Account
 
 
 class Role(models.TextChoices):
@@ -78,6 +83,9 @@ class ProjectRole(BaseModel):
         null=True,
         blank=True,
     )
+
+    if TYPE_CHECKING:
+        users: models.QuerySet["Account"]
 
     class Meta:
         verbose_name = _("Project Role")

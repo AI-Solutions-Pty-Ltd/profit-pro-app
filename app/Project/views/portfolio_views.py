@@ -45,7 +45,8 @@ class PortfolioDashboardView(LoginRequiredMixin, BreadcrumbMixin, ListView):
     def get_queryset(self: "PortfolioDashboardView") -> QuerySet[Project]:
         """Get filtered projects for dashboard view."""
         # Ensure filter_form exists and is valid
-        projects = self.request.user.get_projects.order_by("-created_at")
+        user: Account = self.request.user  # type: ignore
+        projects = user.get_projects.order_by("-created_at")
         if not self.filter_form or not self.filter_form.is_valid():
             # Return unfiltered queryset if form is invalid
             return projects
@@ -143,9 +144,9 @@ class PortfolioDashboardView(LoginRequiredMixin, BreadcrumbMixin, ListView):
         )
         context["dashboard_data"] = dashboard_data
         # If no portfolio, return early with default values
-        if not user.portfolio:  # type: ignore
+        if not user.portfolio:
             new_portfolio: Portfolio = Portfolio.objects.create()  #
-            new_portfolio.users.add(user)  # type: ignore
+            new_portfolio.users.add(user)
             projects.update(portfolio=new_portfolio)
         user.refresh_from_db()
         portfolio: Portfolio = cast(Portfolio, user.portfolio)

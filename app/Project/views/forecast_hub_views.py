@@ -10,7 +10,7 @@ from django.views.generic import TemplateView
 
 from app.BillOfQuantities.models.forecast_models import Forecast
 from app.core.Utilities.dates import get_end_of_month
-from app.core.Utilities.mixins import BreadcrumbMixin
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.models import Milestone, PlannedValue, Project
@@ -41,7 +41,7 @@ class ForecastHubMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
                 "Project not found or you don't have permission to access it."
             ) from err
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
         return [
             {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
@@ -79,7 +79,7 @@ class TimeForecastView(ForecastHubMixin, TemplateView):
 
     template_name = "forecasts/time_forecast.html"
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
         return [
             {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
@@ -128,7 +128,7 @@ class CashflowForecastView(ForecastHubMixin, TemplateView):
 
     template_name = "forecasts/cashflow_forecast.html"
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
         return [
             {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
@@ -222,7 +222,7 @@ class EarnedValueView(ForecastHubMixin, TemplateView):
 
     template_name = "forecasts/earned_value.html"
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
         return [
             {"title": "Projects", "url": reverse("project:portfolio-dashboard")},

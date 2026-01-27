@@ -3,8 +3,10 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="description" content="Invoice for payment certificate {{ payment_certificate.certificate_number }}">
-        <meta name="keywords" content="invoice, payment certificate, {{ project.name }}, {{ payment_certificate.certificate_number }}">
+        <meta name="description"
+              content="Invoice for payment certificate {{ payment_certificate.certificate_number }}">
+        <meta name="keywords"
+              content="invoice, payment certificate, {{ project.name }}, {{ payment_certificate.certificate_number }}">
         <title>Invoice - {{ payment_certificate.certificate_number }}</title>
         <style>
         @page {
@@ -371,7 +373,6 @@
     </head>
     <body>
         <div class="watermark">INVOICE</div>
-        
         <!-- Header -->
         <div class="header">
             <div>
@@ -399,7 +400,6 @@
                 </p>
             </div>
         </div>
-        
         <!-- Company Details -->
         <div class="company-details">
             <div>
@@ -416,7 +416,13 @@
             <div>
                 <h3>TO:</h3>
                 <p>
-                    <strong>{% if project.client.company_name %}{{ project.client.company_name }}{% else %}{{ project.client.name }}{% endif %}</strong>
+                    <strong>
+                        {% if project.client.company_name %}
+                            {{ project.client.company_name }}
+                        {% else %}
+                            {{ project.client.name }}
+                        {% endif %}
+                    </strong>
                 </p>
                 {% if project.client.user %}
                     <p>Attn: {{ project.client.user.get_full_name|default:project.client.user.email }}</p>
@@ -426,7 +432,6 @@
                 <p>Email: {{ project.client.user.email|default:"N/A" }}</p>
             </div>
         </div>
-        
         <!-- Project Details -->
         <div class="project-details">
             <h3>PROJECT DETAILS</h3>
@@ -443,12 +448,12 @@
                 <strong>Period:</strong> {{ payment_certificate.period_start|date:"d F Y" }} to {{ payment_certificate.period_end|date:"d F Y" }}
             </p>
         </div>
-        
         <!-- Highlight Box -->
         <div class="highlight">
-            <p>Payment Terms: {{ project.get_payment_terms_display|default:"30 Days" }} | Total Due: R {{ payment_certificate.total_amount|floatformat:2 }}</p>
+            <p>
+                Payment Terms: {{ project.get_payment_terms_display|default:"30 Days" }} | Total Due: R {{ payment_certificate.total_amount|floatformat:2 }}
+            </p>
         </div>
-        
         <!-- Items Table -->
         <table class="items-table">
             <thead>
@@ -472,7 +477,6 @@
                 {% endfor %}
             </tbody>
         </table>
-        
         <!-- Totals -->
         <div class="totals">
             <table>
@@ -508,7 +512,6 @@
                 </tr>
             </table>
         </div>
-        
         <!-- Certified Statement -->
         <div class="certified-statement">
             <p>
@@ -518,7 +521,6 @@
                 This certificate represents the value of work completed and materials on site as at {{ payment_certificate.period_end|date:"d F Y" }}.
             </p>
         </div>
-        
         <!-- Signatures -->
         <div class="signatures">
             <div class="signature-box">
@@ -534,7 +536,6 @@
                 <div class="signature-title">Client Representative</div>
             </div>
         </div>
-        
         <!-- Notes -->
         <div class="notes">
             <h3>NOTES:</h3>
@@ -542,14 +543,25 @@
             <p>2. Please quote invoice number INV-{{ payment_certificate.certificate_number }} when making payment.</p>
             <p>3. Banking details:</p>
             <div class="bank-details">
-                <p><strong>Bank:</strong> {{ project.bank_name|default:"ABC Bank" }}</p>
-                <p><strong>Account Name:</strong> {{ project.bank_account_name|default:"Your Company Name" }}</p>
-                <p><strong>Account Number:</strong> {{ project.bank_account_number|default:"1234567890" }}</p>
-                <p><strong>Branch Code:</strong> {{ project.bank_branch_code|default:"12345" }}</p>
-                {% if project.bank_swift_code %}<p><strong>SWIFT:</strong> {{ project.bank_swift_code }}</p>{% endif %}
+                <p>
+                    <strong>Bank:</strong> {{ project.bank_name|default:"ABC Bank" }}
+                </p>
+                <p>
+                    <strong>Account Name:</strong> {{ project.bank_account_name|default:"Your Company Name" }}
+                </p>
+                <p>
+                    <strong>Account Number:</strong> {{ project.bank_account_number|default:"1234567890" }}
+                </p>
+                <p>
+                    <strong>Branch Code:</strong> {{ project.bank_branch_code|default:"12345" }}
+                </p>
+                {% if project.bank_swift_code %}
+                    <p>
+                        <strong>SWIFT:</strong> {{ project.bank_swift_code }}
+                    </p>
+                {% endif %}
             </div>
         </div>
-        
         <!-- Footer -->
         <div class="footer">
             <p>This is a computer-generated invoice and requires no signature.</p>

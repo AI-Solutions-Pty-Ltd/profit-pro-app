@@ -84,7 +84,7 @@
     {
       "label": "checks",
       "type": "shell",
-      "command": "${command:python.interpreterPath} -m ruff format . && ${command:python.interpreterPath} -m ruff check . --fix && ${command:python.interpreterPath} -m ty check . && ${command:python.interpreterPath} -m djlint --reformat . && ${command:python.interpreterPath}djlint --lint .",
+      "command": "${command:python.interpreterPath} -m ruff format . && ${command:python.interpreterPath} -m ruff check . --fix && ${command:python.interpreterPath} -m ty check . && ${command:python.interpreterPath} -m djlint --reformat . && ${command:python.interpreterPath} -m djlint --lint .",
       "problemMatcher": []
     },
     {

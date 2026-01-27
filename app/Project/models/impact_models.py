@@ -163,7 +163,7 @@ class ProjectImpact(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.project.name} - {self.get_locality_display()} Impact"
+        return f"{self.project.name} - {self.get_locality_display()} Impact"  # type: ignore
 
     @property
     def total_jobs(self) -> int:

@@ -1,5 +1,7 @@
 """Forms for Structure app."""
 
+from typing import Any
+
 from django import forms
 
 from app.BillOfQuantities.models import (
@@ -95,11 +97,13 @@ class LineItemExcelUploadForm(forms.ModelForm):
             raise forms.ValidationError("Bill is required.")
         return self.cleaned_data["bill"]
 
-    def clean(self):
+    def clean(self) -> dict[str, Any] | None:
         cleaned_data = super().clean()
+        if not cleaned_data:
+            return cleaned_data
         unit_measurement = cleaned_data.get("unit_measurement")
-        budgeted_quantity = cleaned_data.get("budgeted_quantity")
-        if unit_measurement == "%" and budgeted_quantity > 100:
+        budgeted_quantity = cleaned_data.get("budgeted_quantity", 0)
+        if unit_measurement == "%" and budgeted_quantity and budgeted_quantity > 100:
             raise forms.ValidationError(
                 {
                     "unit_measurement": "Percentage unit measurement must be less than or equal to 100.",
@@ -108,7 +112,7 @@ class LineItemExcelUploadForm(forms.ModelForm):
             )
         return cleaned_data
 
-    def save(self, row_index=None, commit=True):
+    def save(self, row_index=None, commit=True):  # type: ignore
         line_item = super().save(commit=False)
         project = self.cleaned_data["project"]
         structure, _ = Structure.objects.get_or_create(
@@ -168,7 +172,7 @@ class PaymentCertificateFinalApprovalForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Only allow APPROVED or REJECTED status choices
-        self.fields["status"].choices = [
+        self.fields["status"].choices = [  # type: ignore
             (PaymentCertificate.Status.APPROVED, "Approve Certificate"),
             (PaymentCertificate.Status.REJECTED, "Reject Certificate"),
         ]

@@ -15,7 +15,7 @@ from django.utils.http import urlsafe_base64_encode
 from django.views.generic import DeleteView, DetailView, FormView, ListView, UpdateView
 
 from app.Account.models import Account
-from app.core.Utilities.mixins import BreadcrumbMixin
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import SignatoryForm, SignatoryInviteForm
 from app.Project.models import Project, Signatories
@@ -58,16 +58,18 @@ class SignatoryListView(SignatoryMixin, ListView):
     template_name = "signatory/signatory_list.html"
     context_object_name = "signatories"
 
-    def get_breadcrumbs(self: "SignatoryListView") -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": "Return to Project Detail",
-                "url": reverse(
-                    "project:project-management", kwargs={"pk": self.get_project().pk}
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
+                    "project:project-detail", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {"title": f"Signatories for {self.get_project().name}", "url": None},
+            ),
+            BreadcrumbItem(title="Signatories", url=None),
         ]
 
     def get_context_data(self: "SignatoryListView", **kwargs):
@@ -83,16 +85,20 @@ class SignatoryInviteView(SignatoryMixin, FormView):
     form_class = SignatoryInviteForm
     template_name = "signatory/signatory_form.html"
 
-    def get_breadcrumbs(self: "SignatoryInviteView") -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": "Return to Project Detail",
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title="Return to Project Detail",
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {"title": f"Add Signatory to {self.get_project().name}", "url": None},
+            ),
+            BreadcrumbItem(
+                title=f"Add Signatory to {self.get_project().name}", url=None
+            ),
         ]
 
     def get_context_data(self: "SignatoryInviteView", **kwargs):
@@ -121,7 +127,7 @@ class SignatoryInviteView(SignatoryMixin, FormView):
             user_exists = True
         except Account.DoesNotExist:
             # Create user account with type CLIENT and unusable password
-            user = Account.objects.create_user(  # type: ignore
+            user = Account.objects.create_user(
                 email=email,
                 first_name=form.cleaned_data["first_name"],
                 last_name=form.cleaned_data.get("last_name", ""),
@@ -237,17 +243,19 @@ class SignatoryUpdateView(SignatoryMixin, UpdateView):
     form_class = SignatoryForm
     template_name = "signatory/signatory_form.html"
 
-    def get_breadcrumbs(self: "SignatoryUpdateView") -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         signatory = self.get_object()
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": "Return to Project Detail",
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title="Return to Project Detail",
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {"title": f"Update Signatory {signatory}", "url": None},
+            ),
+            BreadcrumbItem(title=f"Update Signatory {signatory}", url=None),
         ]
 
     def get_context_data(self, **kwargs):
@@ -278,17 +286,19 @@ class SignatoryDeleteView(SignatoryMixin, DeleteView):
     model = Signatories
     template_name = "signatory/signatory_confirm_delete.html"
 
-    def get_breadcrumbs(self: "SignatoryDeleteView") -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         signatory = self.get_object()
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": "Return to Project Detail",
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title="Return to Project Detail",
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
-            },
-            {"title": f"Delete Signatory {signatory}", "url": None},
+            ),
+            BreadcrumbItem(title=f"Delete Signatory {signatory}", url=None),
         ]
 
     def get_context_data(self, **kwargs):
@@ -304,7 +314,7 @@ class SignatoryDeleteView(SignatoryMixin, DeleteView):
         messages.success(
             self.request, f"Signatory '{signatory}' has been deleted successfully."
         )
-        return redirect(self.get_success_url())  # type: ignore
+        return redirect(str(self.get_success_url()))
 
     def get_success_url(self):
         """Redirect to the signatory list."""

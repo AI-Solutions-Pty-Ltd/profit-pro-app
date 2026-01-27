@@ -11,7 +11,7 @@ from django.http import Http404, HttpRequest, HttpResponse
 from django.urls import reverse
 from django.views.generic import TemplateView
 
-from app.core.Utilities.mixins import BreadcrumbMixin
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import CashflowForecastForm, PlannedValueForm
 from app.Project.models import PlannedValue, Project
@@ -76,7 +76,7 @@ class PlannedValueEditView(PlannedValueMixin, TemplateView):
 
     template_name = "planned_value/planned_value_edit.html"
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
         return [
             {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
@@ -217,7 +217,7 @@ class CashflowForecastEditView(PlannedValueMixin, TemplateView):
 
     template_name = "planned_value/cashflow_forecast_edit.html"
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
         return [
             {"title": "Projects", "url": reverse("project:portfolio-dashboard")},

@@ -27,7 +27,7 @@ class UserManager(BaseUserManager):
             raise ValueError("Users require an email field")
         normalized_email = self.normalize_email(email)
         user = self.model(email=normalized_email, **extra_fields)
-        user.set_password(password)  # type: ignore
+        user.set_password(password)
         user.save(using=self._db)
         return user
 
@@ -94,7 +94,7 @@ class Account(AbstractUser, BaseModel):
         SMS = "SMS", "SMS"
         BOTH = "Both", "Both"
 
-    username = None  # type: ignore # override username field from AbstractUser, we are not using username as unique field, but email override email field from AbstractUser to make it required
+    username = None  # override username field from AbstractUser, we are not using username as unique field, but email override email field from AbstractUser to make it required
     email = models.EmailField(_("email address"), unique=True)
     first_name = models.CharField(
         _("first name"), max_length=150, blank=False
@@ -128,7 +128,7 @@ class Account(AbstractUser, BaseModel):
         max_length=20, choices=NotificationType.choices, default=NotificationType.EMAIL
     )
 
-    objects = UserManager()  # type: ignore
+    objects: UserManager = UserManager()
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

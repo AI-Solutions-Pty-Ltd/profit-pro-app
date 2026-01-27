@@ -846,7 +846,7 @@ class ContractualComplianceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["responsible_party"].queryset = Account.objects.filter(
+        self.fields["responsible_party"].queryset = Account.objects.filter(  # type: ignore
             groups__name__in=["contractor", "consultant"]
         ).distinct()
         self.fields["responsible_party"].required = False
@@ -949,7 +949,7 @@ class AdministrativeComplianceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["responsible_party"].queryset = Account.objects.filter(
+        self.fields["responsible_party"].queryset = Account.objects.filter(  # type: ignore
             groups__name__in=["contractor", "consultant", "client"]
         ).distinct()
         self.fields["responsible_party"].required = False
@@ -1046,7 +1046,7 @@ class FinalAccountComplianceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["responsible_party"].queryset = Account.objects.filter(
+        self.fields["responsible_party"].queryset = Account.objects.filter(  # type: ignore
             groups__name__in=["contractor", "consultant"]
         ).distinct()
         self.fields["responsible_party"].required = False

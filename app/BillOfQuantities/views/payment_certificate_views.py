@@ -41,17 +41,17 @@ class PaymentCertificateMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
         if not hasattr(self, "project"):
             self.project = get_object_or_404(
                 Project,
-                pk=self.kwargs[self.project_slug],  # type: ignore
-                users=self.request.user,  # type: ignore
+                pk=self.kwargs[self.project_slug],
+                users=self.request.user,
             )
         return self.project
 
-    def get_queryset(self):
+    def get_queryset(self: "PaymentCertificateMixin"):
         if not hasattr(self, "queryset") or not self.queryset:
             self.queryset = (
                 PaymentCertificate.objects.filter(
                     project=self.get_project(),
-                    project__users=self.request.user,  # type: ignore
+                    project__users=self.request.user,
                 )
                 .select_related("project")
                 .prefetch_related(
@@ -110,8 +110,8 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
         ]
 
     def get_context_data(self: "PaymentCertificateListView", **kwargs):
-        context = super().get_context_data(**kwargs)  # type: ignore
-        context["project"] = self.get_project()  # type: ignore
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
 
         # Active payment certificate (DRAFT or SUBMITTED)
         active_payment_certificate: PaymentCertificate | None = (

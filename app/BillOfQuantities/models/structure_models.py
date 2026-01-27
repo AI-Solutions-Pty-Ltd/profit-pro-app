@@ -13,6 +13,7 @@ from app.core.Utilities.models import BaseModel, sum_queryset
 from .payment_certificate_models import ActualTransaction, PaymentCertificate
 
 if TYPE_CHECKING:
+    from app.Cost.models import Cost
     from app.Project.models import Project
 
     from .forecast_models import Forecast
@@ -29,6 +30,7 @@ class Structure(BaseModel):
 
     if TYPE_CHECKING:
         line_items: QuerySet[LineItem]
+        bills: QuerySet[Bill]
 
     class Meta:
         verbose_name = "Structure"
@@ -83,6 +85,7 @@ class Bill(BaseModel):
 
     if TYPE_CHECKING:
         line_items: QuerySet[LineItem]
+        costs: QuerySet[Cost]
 
     class Meta:
         verbose_name = "Bill"

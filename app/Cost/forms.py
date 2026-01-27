@@ -93,7 +93,7 @@ class CostForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
 
-class BaseCostFormSet(formset_factory(CostForm, extra=1, can_delete=True)):
+class BaseCostFormSet(formset_factory(CostForm, extra=1, can_delete=True)):  # type: ignore
     def __init__(self, *args, **kwargs):
         self.bill = kwargs.pop("bill", None)
         super().__init__(*args, **kwargs)

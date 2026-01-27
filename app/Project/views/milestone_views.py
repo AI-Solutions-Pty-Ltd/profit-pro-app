@@ -8,7 +8,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import CreateView, DeleteView, UpdateView
 
-from app.core.Utilities.mixins import BreadcrumbMixin
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import MilestoneForm
 from app.Project.models import Milestone, Project
@@ -41,7 +41,7 @@ class MilestoneMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
             "project:time-forecast", kwargs={"project_pk": self.get_project().pk}
         )
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
         return [
             {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
@@ -69,9 +69,9 @@ class MilestoneCreateView(MilestoneMixin, CreateView):
 
     template_name = "forecasts/milestone_form.html"
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         breadcrumbs = super().get_breadcrumbs()
-        breadcrumbs.append({"title": "Add Milestone", "url": None})
+        breadcrumbs.append(BreadcrumbItem(title="Add Milestone", url=None))
         return breadcrumbs
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -96,7 +96,8 @@ class MilestoneUpdateView(MilestoneMixin, UpdateView):
 
     template_name = "forecasts/milestone_form.html"
 
-    def get_object(self) -> Milestone:
+    def get_object(self, queryset=None) -> Milestone:
+        self.get_queryset() if not queryset else None
         project = self.get_project()
         milestone_pk = self.kwargs.get("pk")
         try:
@@ -104,9 +105,11 @@ class MilestoneUpdateView(MilestoneMixin, UpdateView):
         except Milestone.DoesNotExist as err:
             raise Http404("Milestone not found.") from err
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         breadcrumbs = super().get_breadcrumbs()
-        breadcrumbs.append({"title": f"Edit: {self.get_object().name}", "url": None})
+        breadcrumbs.append(
+            BreadcrumbItem(title=f"Edit: {self.get_object().name}", url=None)
+        )
         return breadcrumbs
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -130,7 +133,9 @@ class MilestoneDeleteView(MilestoneMixin, DeleteView):
 
     template_name = "forecasts/milestone_confirm_delete.html"
 
-    def get_object(self) -> Milestone:
+    def get_object(self, queryset=None) -> Milestone:
+        if not queryset:
+            self.get_queryset()
         project = self.get_project()
         milestone_pk = self.kwargs.get("pk")
         try:
@@ -138,9 +143,11 @@ class MilestoneDeleteView(MilestoneMixin, DeleteView):
         except Milestone.DoesNotExist as err:
             raise Http404("Milestone not found.") from err
 
-    def get_breadcrumbs(self) -> list[dict[str, str | None]]:
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         breadcrumbs = super().get_breadcrumbs()
-        breadcrumbs.append({"title": f"Delete: {self.get_object().name}", "url": None})
+        breadcrumbs.append(
+            BreadcrumbItem(title=f"Delete: {self.get_object().name}", url=None)
+        )
         return breadcrumbs
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -158,7 +165,9 @@ class MilestoneCompleteView(MilestoneMixin, UpdateView):
 
     http_method_names = ["post"]
 
-    def get_object(self) -> Milestone:
+    def get_object(self, queryset=None) -> Milestone:
+        if not queryset:
+            self.get_queryset()
         project = self.get_project()
         milestone_pk = self.kwargs.get("pk")
         try:

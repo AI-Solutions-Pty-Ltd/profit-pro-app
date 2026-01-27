@@ -110,7 +110,7 @@ class ContractualCompliance(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.obligation_description[:50]} - {self.get_status_display()}"
+        return f"{self.obligation_description[:50]} - {self.get_status_display()}"  # type: ignore
 
     @property
     def is_overdue(self) -> bool:
@@ -233,7 +233,7 @@ class AdministrativeCompliance(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.get_item_type_display()}: {self.description[:50]}"
+        return f"{self.get_item_type_display()}: {self.description[:50]}"  # type: ignore
 
     @property
     def is_submission_overdue(self) -> bool:
@@ -288,7 +288,7 @@ class FinalAccountCompliance(BaseModel):
 
     def upload_to(self, filename: str) -> str:
         """Generate upload path for final account documents."""
-        return f"final_account_documents/{self.project_id}/{filename}"
+        return f"final_account_documents/{self.project.pk}/{filename}"
 
     project = models.ForeignKey(
         "Project.Project",
@@ -364,7 +364,7 @@ class FinalAccountCompliance(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.get_document_type_display()}: {self.description[:50]}"
+        return f"{self.get_document_type_display()}: {self.description[:50]}"  # type: ignore[attr-defined]
 
     @property
     def filename(self) -> str:

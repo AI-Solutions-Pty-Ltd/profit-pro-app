@@ -1,26 +1,26 @@
 {% load static %}
 {% block content %}
-  <div>
-    <h1 class="text-4xl font-bold mb-2 text-primary fade-in centered-content">
-      Under Construction
-      <div class="construction-container mb-4">
-        {% heroicon_outline name="cog" class="construction-icon text-yellow-500" size="3rem" %}
-      </div>
-    </h1>
-    <div class="centered-content">
-      <!-- Optional description of what's coming -->
-      <p class="text-center text-600 px-3 max-w-30rem bounce-in mb-4">
-        {% if description %}{{ description }}{% endif %}
-      </p>
-      <p class="text-center text-600 px-3 max-w-30rem bounce-in mb-4 fs-6">
-        We are working hard to bring you exciting new features and improvements.
-        Thank you for your patience!
-      </p>
+    <div>
+        <h1 class="text-4xl font-bold mb-2 text-primary fade-in centered-content">
+            Under Construction
+            <div class="construction-container mb-4">
+                {% heroicon_outline name="cog" class="construction-icon text-yellow-500" size="3rem" %}
+            </div>
+        </h1>
+        <div class="centered-content">
+            <!-- Optional description of what's coming -->
+            <p class="text-center text-600 px-3 max-w-30rem bounce-in mb-4">
+                {% if description %}{{ description }}{% endif %}
+            </p>
+            <p class="text-center text-600 px-3 max-w-30rem bounce-in mb-4 fs-6">
+                We are working hard to bring you exciting new features and improvements.
+                Thank you for your patience!
+            </p>
+        </div>
     </div>
-  </div>
 {% endblock content %}
 {% block extra_css %}
-  <style>
+    <style>
     .construction-container {
       position: relative;
       display: flex;
@@ -111,5 +111,5 @@
         width: 100%;
       }
     }
-  </style>
+    </style>
 {% endblock extra_css %}

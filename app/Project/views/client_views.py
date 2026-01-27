@@ -19,7 +19,7 @@ from django.views.generic import (
 )
 
 from app.Account.models import Account
-from app.core.Utilities.mixins import BreadcrumbMixin
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import ClientForm, ClientUserInviteForm
 from app.Project.models import Client, Project
@@ -64,16 +64,18 @@ class ProjectAddClientView(GetProjectMixin, CreateView):
     form_class = ClientForm
     template_name = "client/client_form.html"
 
-    def get_breadcrumbs(self):
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": "Return to Project Detail",
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title="Return to Project Detail",
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.project.pk}
                 ),
-            },
-            {"title": f"Add Client to {self.project.name}", "url": None},
+            ),
+            BreadcrumbItem(title=f"Add Client to {self.project.name}", url=None),
         ]
 
     def dispatch(self, request, *args, **kwargs):
@@ -108,16 +110,18 @@ class ClientInviteUserView(ClientMixin, FormView):
     form_class = ClientUserInviteForm
     template_name = "client/client_invite_user.html"
 
-    def get_breadcrumbs(self):
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": "Return to Project Detail",
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title="Return to Project Detail",
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.project.pk}
                 ),
-            },
-            {"title": f"Invite User to {self.client.name}", "url": None},
+            ),
+            BreadcrumbItem(title=f"Invite User to {self.client.name}", url=None),
         ]
 
     def dispatch(self, request, *args, **kwargs):
@@ -144,7 +148,7 @@ class ClientInviteUserView(ClientMixin, FormView):
             user_exists = True
         except Account.DoesNotExist:
             # Create user account with type CLIENT and unusable password
-            user = Account.objects.create_user(  # type: ignore
+            user = Account.objects.create_user(
                 email=email,
                 first_name=form.cleaned_data["first_name"],
                 last_name=form.cleaned_data.get("last_name", ""),
@@ -254,19 +258,21 @@ class ClientEditView(ClientMixin, UpdateView):
     form_class = ClientForm
     template_name = "client/client_form.html"
 
-    def get_breadcrumbs(self: "ClientEditView"):
+    def get_breadcrumbs(self: "ClientEditView") -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": "Return to Project Detail",
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title="Return to Project Detail",
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.project.pk}
                 ),
-            },
-            {
-                "title": f"Edit Client {self.get_client(slug=self.kwargs['pk']).name}",
-                "url": None,
-            },
+            ),
+            BreadcrumbItem(
+                title=f"Edit Client {self.get_client(slug=self.kwargs['pk']).name}",
+                url=None,
+            ),
         ]
 
     def get_context_data(self, **kwargs):
@@ -288,19 +294,21 @@ class ClientRemoveView(ClientMixin, DeleteView):
     model = Client
     template_name = "client/client_confirm_remove.html"
 
-    def get_breadcrumbs(self):
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": "Return to Project Detail",
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title="Return to Project Detail",
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.project.pk}
                 ),
-            },
-            {
-                "title": f"Remove Client {self.get_client(slug=self.kwargs['pk']).name}",
-                "url": None,
-            },
+            ),
+            BreadcrumbItem(
+                title=f"Remove Client {self.get_client(slug=self.kwargs['pk']).name}",
+                url=None,
+            ),
         ]
 
     def dispatch(self, request, *args, **kwargs):
@@ -347,19 +355,21 @@ class ClientRemoveView(ClientMixin, DeleteView):
 class ClientRemoveUserView(ClientMixin, View):
     """Remove user association from client."""
 
-    def get_breadcrumbs(self: "ClientRemoveUserView"):
+    def get_breadcrumbs(self: "ClientRemoveUserView") -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": "Return to Project Detail",
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title="Return to Project Detail",
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.project.pk}
                 ),
-            },
-            {
-                "title": f"Remove User from Client {self.get_client(slug=self.kwargs['pk']).name}",
-                "url": None,
-            },
+            ),
+            BreadcrumbItem(
+                title=f"Remove User from Client {self.get_client(slug=self.kwargs['pk']).name}",
+                url=None,
+            ),
         ]
 
     def dispatch(self, request, *args, **kwargs):

@@ -32,7 +32,7 @@ class TestPaymentCertificateListView:
     def test_list_view_displays_certificates(self, client):
         """Test list view displays payment certificates."""
         user = AccountFactory.create()
-        project = ProjectFactory.create(account=user)
+        project = ProjectFactory.create(users=user)
         cert1 = PaymentCertificateFactory.create(project=project, certificate_number=1)
         cert2 = PaymentCertificateFactory.create(project=project, certificate_number=2)
 
@@ -50,7 +50,7 @@ class TestPaymentCertificateListView:
     def test_list_view_shows_active_certificate(self, client):
         """Test list view identifies active certificate."""
         user = AccountFactory.create()
-        project = ProjectFactory.create(account=user)
+        project = ProjectFactory.create(users=user)
         draft_cert = PaymentCertificateFactory.create(
             project=project, status=PaymentCertificate.Status.DRAFT
         )
@@ -105,7 +105,7 @@ class TestPaymentCertificateDetailView:
     def test_detail_view_displays_certificate(self, client):
         """Test detail view displays certificate details."""
         user = AccountFactory.create()
-        project = ProjectFactory.create(account=user)
+        project = ProjectFactory.create(users=user)
         line_item = LineItemFactory.create(project=project)
         certificate = PaymentCertificateFactory.create(project=project)
         _actual_transaction = ActualTransactionFactory.create(
@@ -128,7 +128,7 @@ class TestPaymentCertificateDetailView:
     def test_detail_view_calculates_total_amount(self, client):
         """Test detail view calculates total amount correctly."""
         user = AccountFactory.create()
-        project = ProjectFactory.create(account=user)
+        project = ProjectFactory.create(users=user)
         certificate: PaymentCertificate = PaymentCertificateFactory.create(
             project=project
         )
@@ -175,7 +175,7 @@ class TestPaymentCertificateEditView:
     def test_edit_view_creates_new_certificate_if_none_exists(self, client):
         """Test edit view creates new certificate when none exists."""
         user = AccountFactory.create()
-        project = ProjectFactory.create(account=user)
+        project = ProjectFactory.create(users=user)
         LineItemFactory.create(project=project)  # Need at least one line item
 
         client.force_login(user)
@@ -191,7 +191,7 @@ class TestPaymentCertificateEditView:
     def test_edit_view_prevents_editing_non_draft_certificates(self, client):
         """Test edit view prevents editing submitted/approved certificates."""
         user = AccountFactory.create()
-        project = ProjectFactory.create(account=user)
+        project = ProjectFactory.create(users=user)
         LineItemFactory.create(project=project)
         certificate = PaymentCertificateFactory.create(
             project=project, status=PaymentCertificate.Status.SUBMITTED
@@ -212,7 +212,7 @@ class TestPaymentCertificateEditView:
     def test_edit_view_post_creates_new_transactions(self, client):
         """Test POST request creates new actual transactions."""
         user = AccountFactory.create()
-        project = ProjectFactory.create(account=user)
+        project = ProjectFactory.create(users=user)
         line_item = LineItemFactory.create(
             project=project,
             unit_price=Decimal("100.00"),
@@ -237,7 +237,7 @@ class TestPaymentCertificateEditView:
     def test_edit_view_post_updates_existing_transactions(self, client):
         """Test POST request updates existing transactions."""
         user = AccountFactory.create()
-        project = ProjectFactory.create(account=user)
+        project = ProjectFactory.create(users=user)
         # start with 100 budget
         line_item = LineItemFactory.create(
             project=project,
@@ -297,7 +297,7 @@ class TestPaymentCertificateSubmitView:
     def test_submit_view_updates_status_to_submitted(self, client):
         """Test submit view changes status to SUBMITTED."""
         user = AccountFactory.create()
-        project = ProjectFactory.create(account=user)
+        project = ProjectFactory.create(users=user)
         certificate = PaymentCertificateFactory.create(
             project=project, status=PaymentCertificate.Status.DRAFT
         )
@@ -316,7 +316,7 @@ class TestPaymentCertificateSubmitView:
     def test_submit_view_marks_transactions_as_approved(self, client):
         """Test submit view marks all transactions as approved."""
         user = AccountFactory.create()
-        project = ProjectFactory.create(account=user)
+        project = ProjectFactory.create(users=user)
         certificate = PaymentCertificateFactory.create(
             project=project, status=PaymentCertificate.Status.DRAFT
         )
@@ -447,7 +447,7 @@ class TestPaymentCertificateEditViewPost:
     def test_post_deletes_transaction_with_empty_value(self, client):
         """Test POST with empty value deletes existing transaction."""
         user = AccountFactory.create()
-        project = ProjectFactory.create(account=user)
+        project = ProjectFactory.create(users=user)
         line_item = LineItemFactory.create(project=project)
         certificate = PaymentCertificateFactory.create(
             project=project, status=PaymentCertificate.Status.DRAFT
@@ -471,7 +471,7 @@ class TestPaymentCertificateEditViewPost:
     def test_post_ignores_invalid_decimal_values(self, client):
         """Test POST ignores invalid decimal values."""
         user = AccountFactory.create()
-        project = ProjectFactory.create(account=user)
+        project = ProjectFactory.create(users=user)
         line_item = LineItemFactory.create(project=project)
         certificate = PaymentCertificateFactory.create(
             project=project, status=PaymentCertificate.Status.DRAFT
@@ -490,7 +490,7 @@ class TestPaymentCertificateEditViewPost:
     def test_post_calculates_total_price_correctly(self, client):
         """Test POST calculates total_price from quantity and unit_price."""
         user = AccountFactory.create()
-        project = ProjectFactory.create(account=user)
+        project = ProjectFactory.create(users=user)
         line_item = LineItemFactory.create(
             project=project,
             unit_price=Decimal("50.00"),

@@ -32,11 +32,6 @@ urlpatterns = (
             include("app.Cost.urls", "cost"),
         ),
         path("consultant/", include("app.Consultant.urls", "consultant")),
-        path("inventories/", include("app.Inventories.urls", "inventories")),
-        path(
-            "suppliers/",
-            include("app.Inventories.urls_suppliers", "suppliers"),
-        ),
     ]
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

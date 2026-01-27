@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView
 
-from app.core.Utilities.mixins import BreadcrumbMixin
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import ProjectCategoryForm
 from app.Project.models import ProjectCategory
@@ -19,10 +19,12 @@ class ProjectCategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListVie
     context_object_name = "categories"
     permissions = ["contractor", "consultant"]
 
-    def get_breadcrumbs(self):
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Portfolio", "url": reverse("project:portfolio-dashboard")},
-            {"title": "Project Categories", "url": None},
+            BreadcrumbItem(
+                title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(title="Project Categories", url=None),
         ]
 
     def get_queryset(self):
@@ -45,7 +47,7 @@ class ProjectCategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, Creat
     permissions = ["contractor", "consultant"]
     success_url = reverse_lazy("project:category-list")
 
-    def get_breadcrumbs(self):
+    def get_breadcrumbs(self: "ProjectCategoryCreateView") -> list[BreadcrumbItem]:
         return [
             {"title": "Portfolio", "url": reverse("project:portfolio-dashboard")},
             {"title": "Project Categories", "url": reverse("project:category-list")},
@@ -54,7 +56,12 @@ class ProjectCategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, Creat
 
     def form_valid(self: "ProjectCategoryCreateView", form):
         """Handle successful form submission."""
-        response = super().form_valid(form)
+        # Save the form manually to get the object
+        self.object: ProjectCategory = (
+            form.save()
+        )  # This creates and returns the object
+
+        # Now you can use self.object immediately
         messages.success(
             self.request, f"Category '{self.object.name}' created successfully."
         )
@@ -69,7 +76,9 @@ class ProjectCategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, Creat
                     "description": self.object.description,
                 }
             )
-        return response
+
+        # For non-AJAX, call super() to handle the redirect
+        return super().form_valid(form)
 
     def form_invalid(self, form):
         """Handle form validation errors."""
@@ -86,11 +95,15 @@ class ProjectCategoryDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, Delet
     permissions = ["contractor", "consultant"]
     success_url = reverse_lazy("project:category-list")
 
-    def get_breadcrumbs(self):
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Portfolio", "url": reverse("project:portfolio-dashboard")},
-            {"title": "Project Categories", "url": reverse("project:category-list")},
-            {"title": "Delete Category", "url": None},
+            BreadcrumbItem(
+                title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title="Project Categories", url=reverse("project:category-list")
+            ),
+            BreadcrumbItem(title="Delete Category", url=None),
         ]
 
     def form_valid(self, form):

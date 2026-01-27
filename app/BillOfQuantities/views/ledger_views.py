@@ -67,7 +67,7 @@ class AdvancePaymentListView(UserHasGroupGenericMixin, ListView):
         running_balance = Decimal("0.00")
         for txn in reversed(transactions):
             running_balance += txn.signed_amount
-            txn.running_balance = running_balance  # type: ignore
+            txn.running_balance = running_balance
         context["transactions"] = transactions
 
         # Project advance payment settings
@@ -164,7 +164,7 @@ class AdvancePaymentUpdateView(UserHasGroupGenericMixin, UpdateView):
 
             # Filter payment certificates to current project
             if self.project:
-                self.fields[  # type: ignore[attr-defined]
+                self.fields[
                     "payment_certificate"
                 ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
                     "-created_at"
@@ -320,7 +320,7 @@ class RetentionListView(UserHasGroupGenericMixin, ListView):
         running_balance = Decimal("0.00")
         for txn in reversed(transactions):
             running_balance += txn.signed_amount
-            txn.running_balance = running_balance  # type: ignore
+            txn.running_balance = running_balance
         context["transactions"] = transactions
 
         # Project retention settings
@@ -411,7 +411,7 @@ class RetentionUpdateView(UserHasGroupGenericMixin, UpdateView):
 
             # Filter payment certificates to current project
             if self.project:
-                self.fields[  # type: ignore[attr-defined]
+                self.fields[
                     "payment_certificate"
                 ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
                     "-created_at"
@@ -561,7 +561,7 @@ class MaterialsOnSiteListView(UserHasGroupGenericMixin, ListView):
         running_balance = Decimal("0.00")
         for txn in reversed(transactions):
             running_balance += txn.signed_amount
-            txn.running_balance = running_balance  # type: ignore
+            txn.running_balance = running_balance
         context["transactions"] = transactions
 
         return context
@@ -578,7 +578,7 @@ class MaterialsOnSiteCreateView(UserHasGroupGenericMixin, CreateView):
 
             # Filter payment certificates to current project
             if self.project:
-                self.fields[  # type: ignore[attr-defined]
+                self.fields[
                     "payment_certificate"
                 ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
                     "-created_at"
@@ -814,7 +814,7 @@ class EscalationListView(UserHasGroupGenericMixin, ListView):
         running_balance = Decimal("0.00")
         for txn in reversed(transactions):
             running_balance += txn.signed_amount
-            txn.running_balance = running_balance  # type: ignore
+            txn.running_balance = running_balance
         context["transactions"] = transactions
 
         return context
@@ -833,9 +833,9 @@ class EscalationCreateView(UserHasGroupGenericMixin, CreateView):
 
             # Filter payment certificates to current project
             if self.project:
-                self.fields[  # type: ignore[attr-defined]
+                self.fields[
                     "payment_certificate"
-                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
+                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
                     "-created_at"
                 )
 
@@ -910,9 +910,9 @@ class EscalationUpdateView(UserHasGroupGenericMixin, UpdateView):
 
             # Filter payment certificates to current project
             if self.project:
-                self.fields[  # type: ignore[attr-defined]
+                self.fields[
                     "payment_certificate"
-                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
+                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
                     "-created_at"
                 )
 
@@ -1065,7 +1065,7 @@ class SpecialItemTransactionListView(UserHasGroupGenericMixin, ListView):
         running_balance = Decimal("0.00")
         for txn in reversed(transactions):
             running_balance += txn.signed_amount
-            txn.running_balance = running_balance  # type: ignore
+            txn.running_balance = running_balance
         context["transactions"] = transactions
 
         return context

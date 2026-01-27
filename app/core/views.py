@@ -22,7 +22,8 @@ class HomeView(TemplateView):
         """Redirect consultants to dashboard, show home page for others."""
         if (
             request.user.is_authenticated
-            and request.user.groups.filter(name="consultant").exists()  # type: ignore[attr-defined]
+            and hasattr(request.user, "groups")
+            and request.user.groups.filter(name="consultant").exists()
         ):
             return redirect("project:portfolio-dashboard")
         return super().get(request, *args, **kwargs)

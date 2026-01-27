@@ -3,8 +3,10 @@
 import factory
 from django.contrib.auth.models import Group
 from django.utils import timezone
-from factory import Faker
+from factory.declarations import LazyFunction, Sequence, SubFactory
 from factory.django import DjangoModelFactory
+from factory.faker import Faker
+from factory.helpers import post_generation
 
 from app.Account.models import Account
 from app.Account.tests.factories import UserFactory
@@ -18,8 +20,10 @@ from app.Project.models import (
     Project,
     ProjectCategory,
     ProjectDocument,
+    ProjectRole,
     Risk,
 )
+from app.Project.models.project_roles import Role
 
 
 class ProjectCategoryFactory(DjangoModelFactory):
@@ -28,7 +32,7 @@ class ProjectCategoryFactory(DjangoModelFactory):
     class Meta:
         model = ProjectCategory
 
-    name = factory.Sequence(lambda n: f"Category {n}")
+    name = Sequence(lambda n: f"Category {n}")
     description = Faker("text")
 
 
@@ -38,16 +42,17 @@ class ClientFactory(DjangoModelFactory):
     class Meta:
         model = Client
 
-    name = factory.Sequence(lambda n: f"Client {n}")
+    name = Sequence(lambda n: f"Client {n}")
     description = Faker("text")
-    user = factory.SubFactory(UserFactory)
-    consultant = factory.SubFactory(UserFactory)
+    user = SubFactory(UserFactory)
+    consultant: Account = SubFactory(UserFactory)  # type: ignore
 
-    @factory.post_generation
+    @post_generation
     def add_consultant_to_group(self, create, extracted, **kwargs):
         """Add consultant user to consultant group."""
-        self.consultant.type = Account.Type.CONSULTANT
-        self.consultant.save()
+        if self.consultant and hasattr(self.consultant, "type"):
+            self.consultant.type = Account.Type.CONSULTANT
+            self.consultant.save()
         if not create or not self.consultant:
             return
 
@@ -62,17 +67,43 @@ class ProjectFactory(DjangoModelFactory):
         model = Project
 
     description = Faker("text")
-    name = factory.Sequence(lambda n: f"Project {n}")  # type: ignore
-    account = factory.SubFactory(UserFactory)  # type: ignore
-    client = factory.SubFactory(ClientFactory)  # type: ignore
-    category = factory.SubFactory(ProjectCategoryFactory)  # type: ignore
+    name = Sequence(lambda n: f"Project {n}")
+    client = SubFactory(ClientFactory)
+    category = SubFactory(ProjectCategoryFactory)
 
-    @factory.post_generation  # type: ignore
+    @post_generation
     def users(self, create, extracted, **kwargs):
         if not create or not extracted:
             return
 
-        self.users.add(**extracted)  # type: ignore
+        # For ManyToManyField, we need to use the factory's instance
+        # The instance is stored as self.instance in some versions
+        # But the most compatible way is to use a RelatedManager
+        if hasattr(self, "instance"):
+            # Newer factory_boy versions
+            instance: Project = self.instance  # type: ignore[attr-defined]
+        else:
+            # Older versions - we need to find the instance differently
+            # This is a hack but works for older versions
+            # Find the most recently created Project
+            instance: Project = Project.objects.latest("created_at")
+
+        # Add users to the project
+        users_to_add = []
+        if isinstance(extracted, dict):
+            users_to_add = extracted.values()
+        elif isinstance(extracted, (list, tuple)):
+            users_to_add = extracted
+        else:
+            users_to_add = [extracted]
+
+        # Add each user and create an admin role for them
+        for user in users_to_add:
+            instance.users.add(user)
+            # Create admin project role for each user
+            ProjectRole.objects.get_or_create(
+                project=instance, user=user, role=Role.ADMIN
+            )
 
 
 class PlannedValueFactory(DjangoModelFactory):
@@ -81,12 +112,10 @@ class PlannedValueFactory(DjangoModelFactory):
     class Meta:
         model = PlannedValue
 
-    project = factory.SubFactory(ProjectFactory)
-    period = factory.LazyFunction(lambda: timezone.now().date().replace(day=1))
-    value = factory.Faker("pydecimal", left_digits=7, right_digits=2, positive=True)
-    forecast_value = factory.Faker(
-        "pydecimal", left_digits=7, right_digits=2, positive=True
-    )
+    project = SubFactory(ProjectFactory)
+    period = LazyFunction(lambda: timezone.now().date().replace(day=1))
+    value = Faker("pydecimal", left_digits=7, right_digits=2, positive=True)
+    forecast_value = Faker("pydecimal", left_digits=7, right_digits=2, positive=True)
 
 
 class MilestoneFactory(DjangoModelFactory):
@@ -95,12 +124,12 @@ class MilestoneFactory(DjangoModelFactory):
     class Meta:
         model = Milestone
 
-    project = factory.SubFactory(ProjectFactory)
-    name = factory.Sequence(lambda n: f"Milestone {n}")
-    planned_date = factory.LazyFunction(lambda: timezone.now().date())
+    project = SubFactory(ProjectFactory)
+    name = Sequence(lambda n: f"Milestone {n}")
+    planned_date = LazyFunction(lambda: timezone.now().date())
     forecast_date = None
     reason_for_change = ""
-    sequence = factory.Sequence(lambda n: n)
+    sequence = Sequence(lambda n: n)
     is_completed = False
     actual_date = None
 
@@ -111,11 +140,11 @@ class ProjectDocumentFactory(DjangoModelFactory):
     class Meta:
         model = ProjectDocument
 
-    project = factory.SubFactory(ProjectFactory)
+    project = SubFactory(ProjectFactory)
     category = ProjectDocument.Category.CONTRACT_DOCUMENTS
-    title = factory.Sequence(lambda n: f"Document {n}")
-    file = factory.django.FileField(filename="test_document.pdf")
-    uploaded_by = factory.SubFactory(UserFactory)
+    title = Sequence(lambda n: f"Document {n}")
+    file = factory.django.FileField(filename="test_document.pdf")  # type: ignore
+    uploaded_by = SubFactory(UserFactory)
     notes = ""
 
 
@@ -125,11 +154,11 @@ class RiskFactory(DjangoModelFactory):
     class Meta:
         model = Risk
 
-    project = factory.SubFactory(ProjectFactory)
-    risk_name = factory.Sequence(lambda n: f"Risk {n}")
+    project = SubFactory(ProjectFactory)
+    risk_name = Sequence(lambda n: f"Risk {n}")
     description = Faker("paragraph")
-    time_impact_start = factory.LazyFunction(lambda: timezone.now().date())
-    time_impact_end = factory.LazyFunction(
+    time_impact_start = LazyFunction(lambda: timezone.now().date())
+    time_impact_end = LazyFunction(
         lambda: timezone.now().date() + __import__("datetime").timedelta(days=30)
     )
     cost_impact = Faker("pydecimal", left_digits=6, right_digits=2, positive=True)
@@ -137,7 +166,7 @@ class RiskFactory(DjangoModelFactory):
         "pydecimal", left_digits=2, right_digits=2, min_value=0, max_value=100
     )
     is_active = True
-    created_by = factory.SubFactory(UserFactory)
+    created_by = SubFactory(UserFactory)
 
 
 class ContractualComplianceFactory(DjangoModelFactory):
@@ -146,18 +175,18 @@ class ContractualComplianceFactory(DjangoModelFactory):
     class Meta:
         model = ContractualCompliance
 
-    project = factory.SubFactory(ProjectFactory)
-    responsible_party = factory.SubFactory(UserFactory)
-    obligation_description = factory.Sequence(lambda n: f"Contractual Obligation {n}")
-    contract_reference = factory.Sequence(lambda n: f"Clause {n}.1")
-    due_date = factory.LazyFunction(
+    project = SubFactory(ProjectFactory)
+    responsible_party = SubFactory(UserFactory)
+    obligation_description = Sequence(lambda n: f"Contractual Obligation {n}")
+    contract_reference = Sequence(lambda n: f"Clause {n}.1")
+    due_date = LazyFunction(
         lambda: timezone.now().date() + __import__("datetime").timedelta(days=30)
     )
     frequency = ContractualCompliance.Frequency.MONTHLY
     expiry_date = None
     status = ContractualCompliance.Status.PENDING
     notes = ""
-    created_by = factory.SubFactory(UserFactory)
+    created_by = SubFactory(UserFactory)
 
 
 class AdministrativeComplianceFactory(DjangoModelFactory):
@@ -166,22 +195,22 @@ class AdministrativeComplianceFactory(DjangoModelFactory):
     class Meta:
         model = AdministrativeCompliance
 
-    project = factory.SubFactory(ProjectFactory)
+    project = SubFactory(ProjectFactory)
     item_type = AdministrativeCompliance.ItemType.CERTIFICATE
-    reference_number = factory.Sequence(lambda n: f"REF-{n:04d}")
-    description = factory.Sequence(lambda n: f"Administrative Item {n}")
-    responsible_party = factory.SubFactory(UserFactory)
-    submission_due_date = factory.LazyFunction(
+    reference_number = Sequence(lambda n: f"REF-{n:04d}")
+    description = Sequence(lambda n: f"Administrative Item {n}")
+    responsible_party = SubFactory(UserFactory)
+    submission_due_date = LazyFunction(
         lambda: timezone.now().date() + __import__("datetime").timedelta(days=14)
     )
     submission_date = None
-    approval_due_date = factory.LazyFunction(
+    approval_due_date = LazyFunction(
         lambda: timezone.now().date() + __import__("datetime").timedelta(days=21)
     )
     approval_date = None
     status = AdministrativeCompliance.Status.DRAFT
     notes = ""
-    created_by = factory.SubFactory(UserFactory)
+    created_by = SubFactory(UserFactory)
 
 
 class FinalAccountComplianceFactory(DjangoModelFactory):
@@ -190,14 +219,14 @@ class FinalAccountComplianceFactory(DjangoModelFactory):
     class Meta:
         model = FinalAccountCompliance
 
-    project = factory.SubFactory(ProjectFactory)
+    project = SubFactory(ProjectFactory)
     document_type = FinalAccountCompliance.DocumentType.TEST_CERTIFICATE
-    description = factory.Sequence(lambda n: f"Final Account Document {n}")
-    responsible_party = factory.SubFactory(UserFactory)
+    description = Sequence(lambda n: f"Final Account Document {n}")
+    responsible_party = SubFactory(UserFactory)
     test_date = None
     submission_date = None
     approval_date = None
     status = FinalAccountCompliance.Status.REQUIRED
     file = None
     notes = ""
-    created_by = factory.SubFactory(UserFactory)
+    created_by = SubFactory(UserFactory)

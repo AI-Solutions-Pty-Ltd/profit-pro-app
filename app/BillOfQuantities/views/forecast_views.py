@@ -259,8 +259,10 @@ class ForecastEditView(ForecastMixin, DetailView):
             ),
         ]
 
-    def get_object(self: "ForecastEditView") -> Forecast:
+    def get_object(self: "ForecastEditView", queryset=None) -> Forecast:
         """Get forecast for the project."""
+        if not queryset:
+            self.get_queryset()
         project = self.get_project()
         return get_object_or_404(Forecast, pk=self.kwargs["pk"], project=project)
 
@@ -461,8 +463,10 @@ class ForecastApproveView(ForecastMixin, DetailView):
             ),
         ]
 
-    def get_object(self):
+    def get_object(self, queryset=None):
         """Get forecast for the project."""
+        if not self.queryset:
+            self.get_queryset()
         project = self.get_project()
         return get_object_or_404(Forecast, pk=self.kwargs["pk"], project=project)
 

@@ -81,6 +81,8 @@ class EmailConnectionManager:
             else:
                 self._last_used = datetime.now()
 
+            # Type assertion - we know connection is not None at this point
+            assert self._connection is not None, "Connection should be initialized"
             return self._connection
 
     def record_error(self) -> None:
@@ -236,7 +238,10 @@ def django_email_service(
 
         for file in attachments:
             # Guess MIME type from file extension
-            mime_type, _ = mimetypes.guess_type(file.name)
+            if file.name is not None:
+                mime_type, _ = mimetypes.guess_type(file.name)
+            else:
+                mime_type = None
             if mime_type is None:
                 # Fallback to generic binary if can't determine type
                 mime_type = "application/octet-stream"

@@ -7,7 +7,7 @@ class TestProjectUrls:
         """Test all project urls with authenticated user."""
         # Create project owned by the authenticated user
         client.force_login(user)
-        project: Project = ProjectFactory.create(account=user)
+        project: Project = ProjectFactory.create(users=user)
         list_url = Project.get_list_url()
         create_url = Project.get_create_url()
         detail_url = project.get_absolute_url()

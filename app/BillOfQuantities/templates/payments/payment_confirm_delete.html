@@ -13,14 +13,16 @@
         <div class="px-6 py-6">
             <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
                 <div class="flex">
-                    <div class="flex-shrink-0">
-                        {% heroicon_outline "exclamation-triangle" class="h-5 w-5 text-yellow-400" %}
-                    </div>
+                    <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" class="h-5 w-5 text-yellow-400" %}</div>
                     <div class="ml-3">
                         <h3 class="text-sm font-medium text-yellow-800">You are about to delete this payment:</h3>
                         <div class="mt-2 text-sm text-yellow-700">
-                            <p><strong>Date:</strong> {{ object.date|date:"d F Y" }}</p>
-                            <p><strong>Amount:</strong> R {{ object.amount|floatformat:2|intcomma }}</p>
+                            <p>
+                                <strong>Date:</strong> {{ object.date|date:"d F Y" }}
+                            </p>
+                            <p>
+                                <strong>Amount:</strong> R {{ object.amount|floatformat:2|intcomma }}
+                            </p>
                         </div>
                     </div>
                 </div>

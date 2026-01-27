@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Any, cast
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -6,7 +7,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import CreateView, DetailView, ListView, UpdateView, View
 
-from app.BillOfQuantities.models import Bill
+from app.Account.models import Account
+from app.BillOfQuantities.models import Bill, Structure
 from app.core.Utilities.models import sum_queryset
 from app.Cost.models import Cost
 from app.Project.models import Project
@@ -18,23 +20,24 @@ class ProjectAccessMixin(LoginRequiredMixin):
     """Mixin to ensure user has access to the project."""
 
     bill = None
-    project = None
+    project: Project | None = None
 
     def get_bill(self) -> Bill:
         if not hasattr(self, "bill") or not self.bill:
-            self.bill = get_object_or_404(Bill, pk=self.kwargs.get("bill_pk"))
+            self.bill = get_object_or_404(Bill, pk=self.kwargs.get("bill_pk"))  # type: ignore
         return self.bill
 
     def get_project(self) -> Project:
         if not hasattr(self, "project") or not self.project:
-            self.project = get_object_or_404(Project, pk=self.kwargs.get("project_pk"))
+            self.project = get_object_or_404(Project, pk=self.kwargs.get("project_pk"))  # type: ignore
         return self.project
 
     def dispatch(self: "ProjectAccessMixin", request, *args, **kwargs):
-        self.project: Project = self.get_project()
+        self.project = self.get_project()
 
         # Check if user is linked to the project
-        if request.user not in self.project.users.all():
+        user: Account = cast(Account, request.user)
+        if user not in self.project.users.all():
             messages.error(
                 request, "You do not have permission to access this project."
             )
@@ -55,7 +58,9 @@ class ProjectCostTreeView(ProjectAccessMixin, DetailView):
         context = super().get_context_data(**kwargs)
 
         # Build tree structure: structure -> bills -> costs
-        tree = defaultdict(lambda: {"bills": [], "total": 0})
+        tree: dict[Structure, dict[str, Any]] = defaultdict(
+            lambda: {"bills": [], "total": 0}
+        )
 
         structures = self.object.structures.prefetch_related("bills__costs").order_by(
             "name"
@@ -108,7 +113,10 @@ class BillCostDetailView(ProjectAccessMixin, ListView):
             messages.error(
                 request, "This bill does not belong to the selected project."
             )
-            return redirect("cost:project-cost-tree", project_pk=self.project.pk)
+            return redirect(
+                "cost:project-cost-tree",
+                project_pk=self.project.pk if self.project else "",
+            )
 
         return response
 
@@ -170,7 +178,10 @@ class BillCostCreateView(ProjectAccessMixin, CreateView):
             messages.error(
                 request, "This bill does not belong to the selected project."
             )
-            return redirect("cost:project-cost-tree", project_pk=self.project.pk)
+            return redirect(
+                "cost:project-cost-tree",
+                project_pk=self.project.pk if self.project else "",
+            )
 
         return response
 
@@ -191,7 +202,7 @@ class BillCostCreateView(ProjectAccessMixin, CreateView):
         return reverse(
             "cost:bill-cost-detail",
             kwargs={
-                "project_pk": self.project.pk,
+                "project_pk": self.project.pk if self.project else "",
                 "bill_pk": self.get_bill().pk,
             },
         )
@@ -231,7 +242,10 @@ class BillCostUpdateView(ProjectAccessMixin, UpdateView):
             messages.error(
                 request, "This cost does not belong to the selected project."
             )
-            return redirect("cost:project-cost-tree", project_pk=self.project.pk)
+            return redirect(
+                "cost:project-cost-tree",
+                project_pk=self.project.pk if self.project else "",
+            )
 
         return response
 
@@ -251,7 +265,7 @@ class BillCostUpdateView(ProjectAccessMixin, UpdateView):
         return reverse(
             "cost:bill-cost-detail",
             kwargs={
-                "project_pk": self.project.pk,
+                "project_pk": self.project.pk if self.project else "",
                 "bill_pk": self.get_bill().pk,
             },
         )
@@ -271,7 +285,7 @@ class BillCostFormSetView(ProjectAccessMixin, View):
 
     template_name = "Cost/cost_formset.html"
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(self: "BillCostFormSetView", request, *args, **kwargs):
         # Call parent dispatch first to set self.project
         response = super().dispatch(request, *args, **kwargs)
 
@@ -283,7 +297,10 @@ class BillCostFormSetView(ProjectAccessMixin, View):
             messages.error(
                 request, "This bill does not belong to the selected project."
             )
-            return redirect("cost:project-cost-tree", project_pk=self.project.pk)
+            return redirect(
+                "cost:project-cost-tree",
+                project_pk=self.project.pk if self.project else "",
+            )
 
         return response
 
@@ -331,7 +348,7 @@ class BillCostFormSetView(ProjectAccessMixin, View):
 
             return redirect(
                 "cost:bill-cost-detail",
-                project_pk=self.project.pk,
+                project_pk=self.project.pk if self.project else "",
                 bill_pk=bill.pk,
             )
         else:

@@ -16,6 +16,7 @@ from django.views.generic import (
     UpdateView,
 )
 
+from app.Account.models import Account
 from app.BillOfQuantities.models import ActualTransaction, Forecast, PaymentCertificate
 from app.core.Utilities.dates import get_end_of_month, get_previous_n_months
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
@@ -60,7 +61,8 @@ class ProjectListView(LoginRequiredMixin, BreadcrumbMixin, ListView):
     def get_queryset(self: "ProjectListView") -> QuerySet[Project]:
         """Get filtered projects for dashboard view."""
         # Ensure filter_form exists and is valid
-        projects = self.request.user.get_projects.order_by("-created_at")
+        user: Account = self.request.user  # type: ignore
+        projects = user.get_projects.order_by("-created_at")
         if not self.filter_form or not self.filter_form.is_valid():
             # Return unfiltered queryset if form is invalid
             return projects
@@ -127,10 +129,12 @@ class ProjectDashboardView(ProjectMixin, DetailView):
     roles = [Role.ADMIN]
     project_slug = "pk"
 
-    def get_breadcrumbs(self):
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Portfolio", "url": reverse("project:portfolio-dashboard")},
-            {"title": f"{self.object.name} Dashboard", "url": None},
+            BreadcrumbItem(
+                title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(title=f"{self.object.name} Dashboard", url=None),
         ]
 
     def get_context_data(self: "ProjectDashboardView", **kwargs):
@@ -247,16 +251,16 @@ class ProjectManagementView(ProjectMixin, DetailView):
     roles = [Role.USER]
     project_slug = "pk"
 
-    def get_breadcrumbs(self):
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": f"{self.object.name} Dashboard",
-                "url": reverse(
-                    "project:project-dashboard", kwargs={"pk": self.object.pk}
-                ),
-            },
-            {"title": "Management", "url": None},
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=f"{self.object.name} Dashboard",
+                url=reverse("project:project-dashboard", kwargs={"pk": self.object.pk}),
+            ),
+            BreadcrumbItem(title="Management", url=None),
         ]
 
     def get_context_data(self: "ProjectManagementView", **kwargs):
@@ -280,16 +284,16 @@ class ProjectWBSDetailView(ProjectMixin, DetailView):
     roles = [Role.CONTRACT_BOQ, Role.ADMIN, Role.USER]
     project_slug = "pk"
 
-    def get_breadcrumbs(self):
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": f"{self.object.name} Dashboard",
-                "url": reverse(
-                    "project:project-dashboard", kwargs={"pk": self.object.pk}
-                ),
-            },
-            {"title": "WBS", "url": None},
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=f"{self.object.name} Dashboard",
+                url=reverse("project:project-dashboard", kwargs={"pk": self.object.pk}),
+            ),
+            BreadcrumbItem(title="WBS", url=None),
         ]
 
     def get_context_data(self, **kwargs):
@@ -350,12 +354,12 @@ class ProjectCreateView(LoginRequiredMixin, BreadcrumbMixin, CreateView):
     template_name = "project/project_form.html"
     permissions = ["contractor"]
 
-    def get_breadcrumbs(self):
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {
-                "title": "Return to Projects",
-                "url": reverse("project:portfolio-dashboard"),
-            },
+            BreadcrumbItem(
+                title="Return to Projects",
+                url=reverse("project:portfolio-dashboard"),
+            ),
         ]
 
     def form_valid(self, form):
@@ -423,22 +427,22 @@ class ProjectDeleteView(ProjectMixin, DeleteView):
     roles = [Role.ADMIN]
     project_slug = "pk"
 
-    def get_breadcrumbs(self):
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
-            {
-                "title": f"{self.object.name} Dashboard",
-                "url": reverse(
-                    "project:project-dashboard", kwargs={"pk": self.object.pk}
-                ),
-            },
-            {
-                "title": "Management",
-                "url": reverse(
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=f"{self.object.name} Dashboard",
+                url=reverse("project:project-dashboard", kwargs={"pk": self.object.pk}),
+            ),
+            BreadcrumbItem(
+                title="Management",
+                url=reverse(
                     "project:project-management", kwargs={"pk": self.object.pk}
                 ),
-            },
-            {"title": "Delete", "url": None},
+            ),
+            BreadcrumbItem(title="Delete", url=None),
         ]
 
 

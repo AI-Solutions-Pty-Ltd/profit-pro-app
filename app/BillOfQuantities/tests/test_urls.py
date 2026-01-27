@@ -8,7 +8,7 @@ class TestStructureUrls:
     def test_structure_urls_authenticated(self, client, user):
         """Test all structure urls with authenticated user."""
         # Create project and structure owned by the authenticated user
-        project: Project = ProjectFactory.create(account=user)
+        project: Project = ProjectFactory.create(users=user)
         structure: Structure = StructureFactory.create(project=project)
 
         detail_url = structure.get_absolute_url()
@@ -24,7 +24,7 @@ class TestStructureUrls:
     def test_structure_urls_unauthenticated(self, client, user):
         """Test all structure urls with unauthenticated user."""
         # Create project and structure owned by the authenticated user
-        project: Project = ProjectFactory.create(account=user)
+        project: Project = ProjectFactory.create(users=user)
         structure: Structure = StructureFactory.create(project=project)
 
         detail_url = structure.get_absolute_url()

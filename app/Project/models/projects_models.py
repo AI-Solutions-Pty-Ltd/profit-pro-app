@@ -17,6 +17,7 @@ from app.Project.models.client_models import Client
 
 if TYPE_CHECKING:
     from app.Account.models import Account
+    from app.BillOfQuantities.models import Structure
 
     from .planned_value_models import PlannedValue
     from .project_roles import ProjectRole
@@ -244,6 +245,7 @@ class Project(BaseModel):
         planned_values: QuerySet["PlannedValue"]
         users: models.ManyToManyField["Account", "Account"]
         project_roles: QuerySet["ProjectRole"]
+        structures: QuerySet["Structure"]
 
     def __str__(self):
         return self.name

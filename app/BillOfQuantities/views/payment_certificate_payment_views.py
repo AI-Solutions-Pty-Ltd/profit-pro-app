@@ -32,8 +32,8 @@ class PaymentCertificatePaymentMixin(UserHasProjectRoleGenericMixin, BreadcrumbM
         if not hasattr(self, "project"):
             self.project = get_object_or_404(
                 Project,
-                pk=self.kwargs[self.project_slug],  # type: ignore
-                users=self.request.user,  # type: ignore
+                pk=self.kwargs[self.project_slug],
+                users=self.request.user,
             )
         return self.project
 

@@ -193,8 +193,9 @@ class DocumentDeleteView(DocumentMixin, DeleteView):
     model = ProjectDocument
     template_name = "document/document_confirm_delete.html"
 
-    def get_object(self: "DocumentDeleteView") -> ProjectDocument:
+    def get_object(self: "DocumentDeleteView", queryset=None) -> ProjectDocument:
         """Get document and verify project ownership."""
+        self.get_queryset() if not queryset else None
         document = get_object_or_404(
             ProjectDocument,
             pk=self.kwargs["pk"],

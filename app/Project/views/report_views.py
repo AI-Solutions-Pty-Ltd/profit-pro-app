@@ -629,7 +629,7 @@ class TrendReportView(UserHasGroupGenericMixin, BreadcrumbMixin, TemplateView):
         if selected_project:
             projects = [p for p in projects if p.pk == selected_project.pk]
         if consultant:
-            projects = [p for p in projects if p.lead_consultant == consultant]
+            projects = [p for p in projects if consultant in p.lead_consultants.all()]
 
         # Monthly budget = total budget / 12 (simplified distribution)
         total_budget = sum(p.original_contract_value or Decimal("0") for p in projects)

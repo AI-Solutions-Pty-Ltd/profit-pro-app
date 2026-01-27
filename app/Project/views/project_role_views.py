@@ -53,10 +53,10 @@ class BaseRoleListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     def get_queryset(self) -> QuerySet[Account]:
         """Get all users with this role in the project."""
         project = self.get_project()
-        project_role = project.project_roles.filter(role=self.role).first()
-        if project_role:
-            return project_role.users.all().order_by("first_name", "last_name")
-        return Account.objects.none()
+        project_roles = project.project_roles.filter(role=self.role)
+        return Account.objects.filter(project_roles__in=project_roles).order_by(
+            "first_name", "last_name"
+        )
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -105,13 +105,9 @@ class BaseRoleAddView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     def get_queryset(self) -> QuerySet[Account]:
         """Get users not already in this role."""
         project = self.get_project()
-        project_role = project.project_roles.filter(role=self.role).first()
-
-        if project_role:
-            existing_users = project_role.users.all()
-            queryset = Account.objects.exclude(pk__in=existing_users)
-        else:
-            queryset = Account.objects.all()
+        project_roles = project.project_roles.filter(role=self.role)
+        existing_users = Account.objects.filter(project_roles__in=project_roles)
+        queryset = Account.objects.exclude(pk__in=existing_users)
 
         queryset = queryset.order_by("first_name", "last_name")
 
@@ -140,7 +136,10 @@ class BaseRoleAddView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
             )
 
             # Add user to this role
-            project_role.users.add(user_to_add)
+            # Since ProjectRole has a single user field, we need to create a new ProjectRole for each user
+            ProjectRole.objects.create(
+                project=project, role=self.role, user=user_to_add
+            )
             # Also add to project.users M2M for access
             project.users.add(user_to_add)
 
@@ -179,7 +178,7 @@ class BaseRoleRemoveView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView):
             Project, pk=self.kwargs["project_pk"], users=self.request.user
         )
 
-    def get_object(self) -> Account:
+    def get_object(self) -> Account:  # type: ignore
         """Get the user to remove."""
         return get_object_or_404(Account, pk=self.kwargs["user_pk"])
 
@@ -212,9 +211,11 @@ class BaseRoleRemoveView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView):
         user_to_remove = self.get_object()
         project = self.get_project()
 
-        project_role = project.project_roles.filter(role=self.role).first()
+        project_role = project.project_roles.filter(
+            role=self.role, user=user_to_remove
+        ).first()
         if project_role:
-            project_role.users.remove(user_to_remove)
+            project_role.delete()
             messages.success(
                 request,
                 f"Removed '{user_to_remove.email}' from {self.role_display_name}.",

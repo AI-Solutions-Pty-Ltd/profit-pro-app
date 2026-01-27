@@ -3,6 +3,7 @@
 from typing import Any
 
 from django.contrib import messages
+from django.db import models
 from django.db.models import Count, QuerySet
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
@@ -163,7 +164,9 @@ class ClientDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailView):
             ),
         ]
 
-    def get_object(self):
+    def get_object(
+        self, queryset: models.query.QuerySet[Client] | None = None
+    ) -> Client:
         """Get client and verify user has access."""
         client = get_object_or_404(Client, pk=self.kwargs["pk"])
         # Verify user has access to at least one project with this client
@@ -457,7 +460,9 @@ class ProjectUserRemoveView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteVie
         """Get the project and verify access."""
         return get_object_or_404(Project, pk=self.kwargs["pk"], users=self.request.user)
 
-    def get_object(self) -> Account:
+    def get_object(
+        self, queryset: models.query.QuerySet[Account] | None = None
+    ) -> Account:
         """Get the user to remove."""
         return get_object_or_404(Account, pk=self.kwargs["user_pk"])
 

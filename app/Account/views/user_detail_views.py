@@ -26,8 +26,10 @@ class UserDetailView(LoginRequiredMixin, DetailView):
     template_name = "account/user_detail.html"
     context_object_name = "user_obj"
 
-    def get_object(self):
+    def get_object(self, queryset=None):
         """Get the user object."""
+        if not queryset:
+            self.get_queryset()
         return get_object_or_404(Account, pk=self.kwargs["user_pk"])
 
     def get_context_data(self, **kwargs):
@@ -62,7 +64,7 @@ class UserGroupMixin(LoginRequiredMixin, UserPassesTestMixin):
 
     def test_func(self) -> bool:
         """Only superusers can manage user roles."""
-        return self.request.user.is_superuser
+        return self.request.user.is_superuser  # type: ignore
 
     def handle_no_permission(self):
         """Redirect if not authorized."""
@@ -173,8 +175,10 @@ class UserEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         "is_active",
     ]
 
-    def get_object(self):
+    def get_object(self, queryset=None):
         """Get the user object."""
+        if not queryset:
+            self.get_queryset()
         return get_object_or_404(Account, pk=self.kwargs["user_pk"])
 
     def test_func(self):
