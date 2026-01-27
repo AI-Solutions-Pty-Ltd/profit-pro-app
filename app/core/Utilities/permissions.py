@@ -41,7 +41,7 @@ class UserHasProjectRoleGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
             raise ValueError("Project slug must be specified.")
         if not Project.objects.filter(pk=kwargs[self.project_slug]).exists():
             raise ValueError("Project does not exist.")
-        return Project.objects.get(pk=kwargs[self.project_slug])  # type: ignore
+        return Project.objects.get(pk=kwargs[self.project_slug])
 
     def get_user(self) -> Account:
         request = self.request  # type: ignore

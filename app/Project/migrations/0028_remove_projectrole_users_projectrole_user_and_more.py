@@ -6,25 +6,61 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0027_projectrole_created_at_projectrole_deleted_and_more'),
+        ("Project", "0027_projectrole_created_at_projectrole_deleted_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='projectrole',
-            name='users',
+            model_name="projectrole",
+            name="users",
         ),
         migrations.AddField(
-            model_name='projectrole',
-            name='user',
-            field=models.ForeignKey(blank=True, help_text='User who has this project role', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='project_roles', to=settings.AUTH_USER_MODEL),
+            model_name="projectrole",
+            name="user",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="User who has this project role",
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="project_roles",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AlterField(
-            model_name='projectrole',
-            name='role',
-            field=models.CharField(choices=[('Admin', 'Admin'), ('User', 'User'), ('Portfolio Manager', 'Portfolio Manager'), ('Portfolio User', 'Portfolio User'), ('Contractor BOQ', 'Contractor BOQ'), ('Additional Line Items', 'Additional Line Items'), ('Contract Variations', 'Contract Variations'), ('Correspondence', 'Correspondence'), ('Contract Documents', 'Contract Documents'), ('Stage Gate Approvals', 'Stage Gate Approvals'), ('Other Documents', 'Other Documents'), ('Forecast Hub', 'Forecast Hub'), ('Cost Forecasts', 'Cost Forecasts'), ('Time Forecasts', 'Time Forecasts'), ('Cashflow Forecasts', 'Cashflow Forecasts'), ('Earned Values', 'Earned Values'), ('Risk Management', 'Risk Management'), ('Payment Certificates', 'Payment Certificates'), ('Advance Payments', 'Advance Payments'), ('Retention', 'Retention'), ('Materials On Site', 'Materials On Site'), ('Escalation', 'Escalation'), ('Special Items', 'Special Items'), ('Compliance', 'Compliance'), ('Expenditure Management', 'Expenditure Management'), ('Materials Management', 'Materials Management')], max_length=255),
+            model_name="projectrole",
+            name="role",
+            field=models.CharField(
+                choices=[
+                    ("Admin", "Admin"),
+                    ("User", "User"),
+                    ("Portfolio Manager", "Portfolio Manager"),
+                    ("Portfolio User", "Portfolio User"),
+                    ("Contractor BOQ", "Contractor BOQ"),
+                    ("Additional Line Items", "Additional Line Items"),
+                    ("Contract Variations", "Contract Variations"),
+                    ("Correspondence", "Correspondence"),
+                    ("Contract Documents", "Contract Documents"),
+                    ("Stage Gate Approvals", "Stage Gate Approvals"),
+                    ("Other Documents", "Other Documents"),
+                    ("Forecast Hub", "Forecast Hub"),
+                    ("Cost Forecasts", "Cost Forecasts"),
+                    ("Time Forecasts", "Time Forecasts"),
+                    ("Cashflow Forecasts", "Cashflow Forecasts"),
+                    ("Earned Values", "Earned Values"),
+                    ("Risk Management", "Risk Management"),
+                    ("Payment Certificates", "Payment Certificates"),
+                    ("Advance Payments", "Advance Payments"),
+                    ("Retention", "Retention"),
+                    ("Materials On Site", "Materials On Site"),
+                    ("Escalation", "Escalation"),
+                    ("Special Items", "Special Items"),
+                    ("Compliance", "Compliance"),
+                    ("Expenditure Management", "Expenditure Management"),
+                    ("Materials Management", "Materials Management"),
+                ],
+                max_length=255,
+            ),
         ),
     ]

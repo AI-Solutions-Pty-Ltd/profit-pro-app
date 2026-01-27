@@ -874,8 +874,9 @@ class PaymentCertificateInvoiceView(PaymentCertificateMixin, DetailView):
         """Check if PDF download is requested."""
         if self.request.GET.get("format") == "pdf":
             # Generate PDF using the template
-            from app.core.Utilities.generate_pdf import generate_pdf
             from django.template.loader import render_to_string
+
+            from app.core.Utilities.generate_pdf import generate_pdf
 
             # Render template to string
             html_content = render_to_string(self.template_name or "", context)

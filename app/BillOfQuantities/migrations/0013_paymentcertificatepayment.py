@@ -5,26 +5,52 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('BillOfQuantities', '0012_alter_paymentcertificate_status_signatory'),
-        ('Project', '0030_project_logo'),
+        ("BillOfQuantities", "0012_alter_paymentcertificate_status_signatory"),
+        ("Project", "0030_project_logo"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PaymentCertificatePayment',
+            name="PaymentCertificatePayment",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last modified')),
-                ('deleted', models.BooleanField(default=False, help_text='Soft delete flag')),
-                ('date', models.DateField()),
-                ('amount', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Project.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last modified"
+                    ),
+                ),
+                (
+                    "deleted",
+                    models.BooleanField(default=False, help_text="Soft delete flag"),
+                ),
+                ("date", models.DateField()),
+                ("amount", models.DecimalField(decimal_places=2, max_digits=10)),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="Project.project",
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
     ]

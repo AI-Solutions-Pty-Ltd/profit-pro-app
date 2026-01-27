@@ -4,15 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0029_migrate_projectrole_user'),
+        ("Project", "0029_migrate_projectrole_user"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='project',
-            name='logo',
-            field=models.ImageField(blank=True, help_text='Project logo for invoices and documents', null=True, upload_to='project_logos/'),
+            model_name="project",
+            name="logo",
+            field=models.ImageField(
+                blank=True,
+                help_text="Project logo for invoices and documents",
+                null=True,
+                upload_to="project_logos/",
+            ),
         ),
     ]
