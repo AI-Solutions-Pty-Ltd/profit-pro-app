@@ -13,40 +13,15 @@ from django.views.generic import CreateView, DeleteView, ListView
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.forms import ProjectDocumentForm
-from app.Project.models import Project, ProjectDocument
+from app.Project.models import ProjectDocument
 from app.Project.models.project_roles import Role
 
 
 class DocumentMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
     """Mixin for document views."""
 
-    def get_roles(self):
-        """Get required roles based on document category."""
-        category = self.get_category()
-        role_map = {
-            "CONTRACT_DOCUMENTS": [Role.CONTRACT_DOCUMENTS, Role.ADMIN, Role.USER],
-            "STAGE_GATE_APPROVAL": [Role.STAGE_GATE_APPROVALS, Role.ADMIN, Role.USER],
-            "OTHER": [Role.OTHER_DOCUMENTS, Role.ADMIN, Role.USER],
-        }
-        return role_map.get(category, [Role.ADMIN, Role.USER])
-
-    @property
-    def roles(self):
-        return self.get_roles()
-
-    @property
-    def project_slug(self):
-        return "project_pk"
-
-    def get_project(self) -> Project:
-        """Get the project for the current view."""
-        if not hasattr(self, "project"):
-            self.project = get_object_or_404(
-                Project,
-                pk=self.kwargs["project_pk"],
-                users=self.request.user,
-            )
-        return self.project
+    roles = [Role.CONTRACT_DOCUMENTS, Role.STAGE_GATE_APPROVALS]
+    project_slug = "project_pk"
 
     def get_category(self) -> str:
         """Get the document category from URL kwargs."""
@@ -199,11 +174,9 @@ class DocumentDeleteView(DocumentMixin, DeleteView):
         document = get_object_or_404(
             ProjectDocument,
             pk=self.kwargs["pk"],
-            project__pk=self.kwargs["project_pk"],
+            project=self.get_project(),
             category=self.get_category(),
         )
-        if self.request.user not in document.project.users:
-            raise Http404("You do not have permission to delete this document.")
         return document
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:

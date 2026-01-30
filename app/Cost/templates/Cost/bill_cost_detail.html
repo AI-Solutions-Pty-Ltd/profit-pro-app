@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_full.html" %}
 {% load humanize %}
 {% load heroicons %}
 {% block title %}
@@ -6,54 +6,28 @@
 {% endblock title %}
 {% block content %}
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Header -->
-        <div class="mb-6">
-            <nav class="flex mb-4" aria-label="Breadcrumb">
-                <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                    <li class="inline-flex items-center">
-                        <a href="{% url 'project:portfolio-dashboard' %}"
-                           class="text-gray-700 hover:text-indigo-600">Projects</a>
-                    </li>
-                    <li>
-                        <div class="flex items-center">
-                            <span class="mx-2 text-gray-400">/</span>
-                            <a href="{% url 'project:project-management' project.pk %}"
-                               class="text-gray-700 hover:text-indigo-600">{{ project.name }}</a>
-                        </div>
-                    </li>
-                    <li>
-                        <div class="flex items-center">
-                            <span class="mx-2 text-gray-400">/</span>
-                            <a href="{% url 'cost:project-cost-tree' project.pk %}"
-                               class="text-gray-700 hover:text-indigo-600">Costs</a>
-                        </div>
-                    </li>
-                    <li aria-current="page">
-                        <div class="flex items-center">
-                            <span class="mx-2 text-gray-400">/</span>
-                            <span class="text-gray-500">{{ bill.name }}</span>
-                        </div>
-                    </li>
-                </ol>
-            </nav>
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">{{ bill.name }}</h1>
-                    <p class="mt-1 text-sm text-gray-600">
-                        {{ structure.name }} • {{ bill.costs.count }} cost{{ bill.costs.count|pluralize }}
-                    </p>
-                </div>
-                <div class="flex items-center justify-between gap-2">
-                    <a href="{% url 'cost:bill-cost-create' project.pk bill.pk %}"
-                       class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        {% heroicon_outline "plus" class="w-5 h-5" %}
-                        Add Cost
-                    </a>
-                    <a href="{% url 'cost:bill-cost-formset' project.pk bill.pk %}"
-                       class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        {% heroicon_outline "plus" class="w-5 h-5" %}
-                        Add Multiple Costs
-                    </a>
+        <!-- Page Banner -->
+        <div class="bg-white shadow-sm rounded-lg mb-6">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">{{ bill.name }}</h1>
+                        <p class="text-sm text-gray-600 mt-1">
+                            {{ structure.name }} • {{ bill.costs.count }} cost{{ bill.costs.count|pluralize }}
+                        </p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <a href="{% url 'cost:bill-cost-create' project.pk bill.pk %}"
+                           class="inline-flex items-center px-2 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "plus" class="w-4 h-4" %}
+                            <span>Add Cost</span>
+                        </a>
+                        <a href="{% url 'cost:bill-cost-formset' project.pk bill.pk %}"
+                           class="inline-flex items-center px-2 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "plus" class="w-4 h-4" %}
+                            <span>Add Multiple Costs</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -163,10 +137,16 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-center">
                                     <a href="{% url 'cost:bill-cost-update' project.pk bill.pk cost.pk %}"
-                                       class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                       class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-900 text-sm font-medium mr-3">
                                         {% heroicon_outline "pencil" class="w-4 h-4" %}
                                         Edit
                                     </a>
+                                    <button type="button"
+                                            onclick="openDeleteModal({{ cost.pk }}, '{{ cost.description|escapejs }}')"
+                                            class="inline-flex items-center gap-1 text-red-600 hover:text-red-900 text-sm font-medium">
+                                        {% heroicon_outline "trash" class="w-4 h-4" %}
+                                        Delete
+                                    </button>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -228,12 +208,12 @@
                     <p class="mt-1 text-sm text-gray-500">Get started by adding a cost to this bill.</p>
                     <div class="mt-6">
                         <a href="{% url 'cost:bill-cost-create' project.pk bill.pk %}"
-                           class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                           class="inline-flex items-center px-2 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "plus" class="w-5 h-5" %}
                             Add Cost
                         </a>
                         <a href="{% url 'cost:bill-cost-formset' project.pk bill.pk %}"
-                           class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                           class="inline-flex items-center px-2 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "plus" class="w-5 h-5" %}
                             Add Multiple Costs
                         </a>
@@ -241,5 +221,69 @@
                 </div>
             {% endif %}
         </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'cost:project-cost-tree' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Back to Costs
+                </a>
+                <a href="{% url 'project:project-management' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    Project Management
+                    {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+                </a>
+            </div>
+        </div>
     </div>
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal"
+         class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                    {% heroicon_outline "exclamation-triangle" class="h-6 w-6 text-red-600" %}
+                </div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Delete Cost</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p class="text-sm text-gray-500">
+                        Are you sure you want to delete "<span id="deleteCostDescription" class="font-semibold"></span>"? This action cannot be undone.
+                    </p>
+                </div>
+                <div class="items-center px-4 py-3">
+                    <form id="deleteForm" method="post" action="">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="px-4 py-2 bg-red-600 text-white text-base font-medium rounded-md w-24 mr-2 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                            Delete
+                        </button>
+                        <button type="button"
+                                onclick="closeDeleteModal()"
+                                class="px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-24 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                            Cancel
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function openDeleteModal(costId, costDescription) {
+            document.getElementById('deleteCostDescription').textContent = costDescription;
+            document.getElementById('deleteForm').action = "{% url 'cost:bill-cost-delete' project.pk bill.pk 0 %}".replace('0', costId);
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+        
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDeleteModal();
+            }
+        });
+    </script>
 {% endblock content %}

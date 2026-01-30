@@ -1,58 +1,60 @@
 from collections import defaultdict
-from typing import Any, cast
+from decimal import Decimal
+from typing import Any
 
+from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import CreateView, DetailView, ListView, UpdateView, View
 
-from app.Account.models import Account
 from app.BillOfQuantities.models import Bill, Structure
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Cost.models import Cost
 from app.Project.models import Project
+from app.Project.models.project_roles import Role
 
 from .forms import CostForm, CostFormSet
 
 
-class ProjectAccessMixin(LoginRequiredMixin):
-    """Mixin to ensure user has access to the project."""
+class CostMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+    """Mixin for cost views."""
 
+    roles = [Role.USER]
+    project_slug = "project_pk"
     bill = None
-    project: Project | None = None
 
     def get_bill(self) -> Bill:
+        """Get the bill for this view."""
         if not hasattr(self, "bill") or not self.bill:
-            self.bill = get_object_or_404(Bill, pk=self.kwargs.get("bill_pk"))  # type: ignore
+            self.bill = get_object_or_404(Bill, pk=self.get_kwargs().get("bill_pk"))
         return self.bill
 
-    def get_project(self) -> Project:
-        if not hasattr(self, "project") or not self.project:
-            self.project = get_object_or_404(Project, pk=self.kwargs.get("project_pk"))  # type: ignore
-        return self.project
-
-    def dispatch(self: "ProjectAccessMixin", request, *args, **kwargs):
-        self.project = self.get_project()
-
-        # Check if user is linked to the project
-        user: Account = cast(Account, request.user)
-        if user not in self.project.users.all():
-            messages.error(
-                request, "You do not have permission to access this project."
-            )
-            return redirect("project:portfolio-dashboard")
-
-        return super().dispatch(request, *args, **kwargs)
+    def get_kwargs(self):
+        """Get kwargs for the view."""
+        return getattr(self, "kwargs", {})
 
 
-class ProjectCostTreeView(ProjectAccessMixin, DetailView):
+class ProjectCostTreeView(CostMixin, DetailView):
     """Tree view showing costs grouped by structure and bill."""
 
     model = Project
     template_name = "Cost/project_cost_tree.html"
     context_object_name = "project"
     pk_url_kwarg = "project_pk"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        return [
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
+            {
+                "title": project.name,
+                "url": reverse("project:project-management", kwargs={"pk": project.pk}),
+            },
+            {"title": "Costs", "url": None},
+        ]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -93,7 +95,7 @@ class ProjectCostTreeView(ProjectAccessMixin, DetailView):
         return context
 
 
-class BillCostDetailView(ProjectAccessMixin, ListView):
+class BillCostDetailView(CostMixin, ListView):
     """Detail view showing all costs for a specific bill."""
 
     model = Bill
@@ -101,24 +103,23 @@ class BillCostDetailView(ProjectAccessMixin, ListView):
     context_object_name = "costs"
     paginate_by = 20
 
-    def dispatch(self, request, *args, **kwargs):
-        # Call parent dispatch first to set self.project
-        response = super().dispatch(request, *args, **kwargs)
-
-        # Get and validate bill
-        self.bill = self.get_bill()
-
-        # Ensure bill belongs to project
-        if self.bill.structure.project != self.project:
-            messages.error(
-                request, "This bill does not belong to the selected project."
-            )
-            return redirect(
-                "cost:project-cost-tree",
-                project_pk=self.project.pk if self.project else "",
-            )
-
-        return response
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        bill = self.get_bill()
+        return [
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
+            {
+                "title": project.name,
+                "url": reverse("project:project-management", kwargs={"pk": project.pk}),
+            },
+            {
+                "title": "Costs",
+                "url": reverse(
+                    "cost:project-cost-tree", kwargs={"project_pk": project.pk}
+                ),
+            },
+            {"title": bill.name, "url": None},
+        ]
 
     def get_queryset(self):
         queryset = self.get_bill().costs.order_by("-date", "-created_at")
@@ -141,12 +142,14 @@ class BillCostDetailView(ProjectAccessMixin, ListView):
 
     def get_context_data(self: "BillCostDetailView", **kwargs):
         context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
-        context["structure"] = self.get_bill().structure
-        context["bill"] = self.get_bill()
+        project = self.get_project()
+        bill = self.get_bill()
+        context["project"] = project
+        context["structure"] = bill.structure
+        context["bill"] = bill
 
         # Calculate totals
-        costs = self.get_bill().costs
+        costs = bill.costs
         context["gross"] = sum_queryset(costs, "gross")
         context["vat_amount"] = sum_queryset(costs, "vat_amount")
         context["net"] = sum_queryset(costs, "net")
@@ -159,31 +162,37 @@ class BillCostDetailView(ProjectAccessMixin, ListView):
         return context
 
 
-class BillCostCreateView(ProjectAccessMixin, CreateView):
+class BillCostCreateView(CostMixin, CreateView):
     """View to add new costs to a bill."""
 
     model = Cost
     form_class = CostForm
     template_name = "Cost/cost_form.html"
 
-    def dispatch(self, request, *args, **kwargs):
-        # Call parent dispatch first to set self.project
-        response = super().dispatch(request, *args, **kwargs)
-
-        # Get and validate bill
-        self.bill = self.get_bill()
-
-        # Ensure bill belongs to project
-        if self.bill.structure.project != self.project:
-            messages.error(
-                request, "This bill does not belong to the selected project."
-            )
-            return redirect(
-                "cost:project-cost-tree",
-                project_pk=self.project.pk if self.project else "",
-            )
-
-        return response
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        bill = self.get_bill()
+        return [
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
+            {
+                "title": project.name,
+                "url": reverse("project:project-management", kwargs={"pk": project.pk}),
+            },
+            {
+                "title": "Costs",
+                "url": reverse(
+                    "cost:project-cost-tree", kwargs={"project_pk": project.pk}
+                ),
+            },
+            {
+                "title": bill.name,
+                "url": reverse(
+                    "cost:bill-cost-detail",
+                    kwargs={"project_pk": project.pk, "bill_pk": bill.pk},
+                ),
+            },
+            {"title": "Add Cost", "url": None},
+        ]
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -202,7 +211,7 @@ class BillCostCreateView(ProjectAccessMixin, CreateView):
         return reverse(
             "cost:bill-cost-detail",
             kwargs={
-                "project_pk": self.project.pk if self.project else "",
+                "project_pk": self.get_project().pk,
                 "bill_pk": self.get_bill().pk,
             },
         )
@@ -210,13 +219,13 @@ class BillCostCreateView(ProjectAccessMixin, CreateView):
     def get_context_data(self, **kwargs):
         bill = self.get_bill()
         context = super().get_context_data(**kwargs)
-        context["project"] = self.project
+        context["project"] = self.get_project()
         context["bill"] = bill
         context["structure"] = bill.structure or None
         return context
 
 
-class BillCostUpdateView(ProjectAccessMixin, UpdateView):
+class BillCostUpdateView(CostMixin, UpdateView):
     """View to edit an existing cost."""
 
     model = Cost
@@ -224,30 +233,49 @@ class BillCostUpdateView(ProjectAccessMixin, UpdateView):
     template_name = "Cost/cost_form.html"
     pk_url_kwarg = "cost_pk"
 
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        bill = self.get_bill()
+        return [
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
+            {
+                "title": project.name,
+                "url": reverse("project:project-management", kwargs={"pk": project.pk}),
+            },
+            {
+                "title": "Costs",
+                "url": reverse(
+                    "cost:project-cost-tree", kwargs={"project_pk": project.pk}
+                ),
+            },
+            {
+                "title": bill.name,
+                "url": reverse(
+                    "cost:bill-cost-detail",
+                    kwargs={"project_pk": project.pk, "bill_pk": bill.pk},
+                ),
+            },
+            {"title": "Edit Cost", "url": None},
+        ]
+
     def get_bill(self):
         return self.get_object().bill
 
     def dispatch(self, request, *args, **kwargs):
-        # Call parent dispatch first to set self.project
-        response = super().dispatch(request, *args, **kwargs)
-
-        # Get the cost object
+        # Get the cost object and validate bill belongs to project
         self.object = self.get_object()
+        bill = self.object.bill
 
-        # Get and validate bill
-        self.bill = self.get_bill()
-
-        # Ensure bill belongs to project
-        if self.bill.structure.project != self.project:
+        if bill.structure.project != self.get_project():
             messages.error(
                 request, "This cost does not belong to the selected project."
             )
             return redirect(
                 "cost:project-cost-tree",
-                project_pk=self.project.pk if self.project else "",
+                project_pk=self.get_project().pk,
             )
 
-        return response
+        return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -265,7 +293,7 @@ class BillCostUpdateView(ProjectAccessMixin, UpdateView):
         return reverse(
             "cost:bill-cost-detail",
             kwargs={
-                "project_pk": self.project.pk if self.project else "",
+                "project_pk": self.get_project().pk,
                 "bill_pk": self.get_bill().pk,
             },
         )
@@ -273,52 +301,116 @@ class BillCostUpdateView(ProjectAccessMixin, UpdateView):
     def get_context_data(self, **kwargs):
         bill = self.get_bill()
         context = super().get_context_data(**kwargs)
-        context["project"] = self.project
+        context["project"] = self.get_project()
         context["bill"] = bill
         context["structure"] = bill.structure or None
         context["is_edit"] = True
         return context
 
 
-class BillCostFormSetView(ProjectAccessMixin, View):
+class BillCostDeleteView(CostMixin, View):
+    """View to delete a cost."""
+
+    def post(self, request, *args, **kwargs):
+        # Get the cost object
+        cost = get_object_or_404(Cost, pk=kwargs.get("cost_pk"))
+        bill = cost.bill
+
+        # Validate bill belongs to project
+        if bill.structure.project != self.get_project():
+            messages.error(
+                request, "This cost does not belong to the selected project."
+            )
+            return redirect(
+                "cost:project-cost-tree",
+                project_pk=self.get_project().pk,
+            )
+
+        # Store description before deleting
+        cost_description = cost.description
+
+        # Delete the cost
+        cost.delete()
+
+        messages.success(request, f"Cost '{cost_description}' deleted successfully.")
+
+        return redirect(
+            "cost:bill-cost-detail",
+            project_pk=self.get_project().pk,
+            bill_pk=bill.pk,
+        )
+
+    def get_bill(self):
+        cost = get_object_or_404(Cost, pk=self.kwargs.get("cost_pk"))
+        return cost.bill
+
+
+class BillCostFormSetView(CostMixin, View):
     """View to add multiple costs using a formset."""
 
     template_name = "Cost/cost_formset.html"
 
-    def dispatch(self: "BillCostFormSetView", request, *args, **kwargs):
-        # Call parent dispatch first to set self.project
-        response = super().dispatch(request, *args, **kwargs)
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        bill = self.get_bill()
+        return [
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
+            {
+                "title": project.name,
+                "url": reverse("project:project-management", kwargs={"pk": project.pk}),
+            },
+            {
+                "title": "Costs",
+                "url": reverse(
+                    "cost:project-cost-tree", kwargs={"project_pk": project.pk}
+                ),
+            },
+            {
+                "title": bill.name,
+                "url": reverse(
+                    "cost:bill-cost-detail",
+                    kwargs={"project_pk": project.pk, "bill_pk": bill.pk},
+                ),
+            },
+            {"title": "Add Multiple Costs", "url": None},
+        ]
 
-        # Get and validate bill
-        self.bill = self.get_bill()
-
-        # Ensure bill belongs to project
-        if self.bill.structure.project != self.project:
+    def get(self, request, *args, **kwargs):
+        # Get bill and validate it belongs to project
+        bill = self.get_bill()
+        if bill.structure.project != self.get_project():
             messages.error(
                 request, "This bill does not belong to the selected project."
             )
             return redirect(
                 "cost:project-cost-tree",
-                project_pk=self.project.pk if self.project else "",
+                project_pk=self.get_project().pk,
             )
 
-        return response
-
-    def get(self, request, *args, **kwargs):
-        formset = CostFormSet(bill=self.get_bill())
+        formset = CostFormSet(bill=bill)
         return render(
             request,
             self.template_name,
             {
                 "formset": formset,
-                "project": self.project,
-                "bill": self.get_bill(),
-                "structure": self.get_bill().structure,
+                "project": self.get_project(),
+                "bill": bill,
+                "structure": bill.structure,
             },
         )
 
     def post(self, request, *args, **kwargs):
+        # Get bill and validate it belongs to project
         bill = self.get_bill()
+        if bill.structure.project != self.get_project():
+            messages.error(
+                request, "This bill does not belong to the selected project."
+            )
+            return redirect(
+                "cost:project-cost-tree",
+                project_pk=self.get_project().pk,
+            )
+
         formset = CostFormSet(request.POST, bill=bill)
 
         if formset.is_valid():
@@ -333,8 +425,22 @@ class BillCostFormSetView(ProjectAccessMixin, View):
                     if not form.cleaned_data.get("description"):
                         continue
 
+                    # Save without committing to avoid model save method issues
                     cost = form.save(commit=False)
                     cost.bill = bill
+
+                    # Pre-calculate all fields before save
+                    # The model's save() will recalculate but that's fine since bill is now set
+                    cost.gross = cost.quantity * cost.unit_price
+                    if bill.structure.project.vat:
+                        cost.vat_amount = cost.gross * settings.VAT_RATE
+                        cost.vat = True
+                    else:
+                        cost.vat_amount = Decimal("0")
+                        cost.vat = False
+                    cost.net = cost.gross + cost.vat_amount
+
+                    # Save normally - model's save() will handle timestamps
                     cost.save()
                     costs.append(cost.description)
 
@@ -348,7 +454,7 @@ class BillCostFormSetView(ProjectAccessMixin, View):
 
             return redirect(
                 "cost:bill-cost-detail",
-                project_pk=self.project.pk if self.project else "",
+                project_pk=self.get_project().pk,
                 bill_pk=bill.pk,
             )
         else:
@@ -358,7 +464,7 @@ class BillCostFormSetView(ProjectAccessMixin, View):
                 self.template_name,
                 {
                     "formset": formset,
-                    "project": self.project,
+                    "project": self.get_project(),
                     "bill": bill,
                     "structure": bill.structure,
                 },

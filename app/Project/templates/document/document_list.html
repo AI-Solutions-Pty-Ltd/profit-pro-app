@@ -91,7 +91,7 @@
                                         {% heroicon_outline "arrow-down-tray" class="w-5 h-5 inline" %}
                                         Download
                                     </a>
-                                    <a href="{% url 'project:document-delete' project.pk category document.pk %}"
+                                    <a href="{% url 'project:document-delete' project.pk document.category document.pk %}"
                                        class="text-red-600 hover:text-red-900">
                                         {% heroicon_outline "trash" class="w-5 h-5 inline" %}
                                         Delete

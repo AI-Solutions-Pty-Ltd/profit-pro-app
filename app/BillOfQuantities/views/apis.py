@@ -1,27 +1,30 @@
 """API views for AJAX requests."""
 
+from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
 from django.views import View
 
 from app.BillOfQuantities.models import Bill, Package
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
-from app.Project.models import Project
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.Project.models.project_roles import Role
 
 
-class GetBillsByStructureView(UserHasGroupGenericMixin, View):
+class GetBillsByStructureView(UserHasProjectRoleGenericMixin, View):
     """Get bills filtered by structure."""
 
-    permissions = ["contractor"]
+    roles = [Role.USER, Role.CONTRACT_BOQ]
+    project_slug = "project_pk"
+
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to handle permission failures as JSON."""
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except PermissionDenied:
+            return JsonResponse({"error": "Permission denied"}, status=403)
 
     def get(self, request, project_pk):
         """Return bills for a given structure."""
-        # Verify user has access to this project
-        project = get_object_or_404(Project, pk=project_pk, users=request.user)
-
-        # Verify user is in contractor group
-        if not request.user.groups.filter(name="contractor").exists():
-            return JsonResponse({"error": "Permission denied"}, status=403)
+        project = self.get_project()
 
         structure_id = request.GET.get("structure_id")
         if not structure_id:
@@ -33,19 +36,22 @@ class GetBillsByStructureView(UserHasGroupGenericMixin, View):
         return JsonResponse({"bills": list(bills)})
 
 
-class GetPackagesByBillView(UserHasGroupGenericMixin, View):
+class GetPackagesByBillView(UserHasProjectRoleGenericMixin, View):
     """Get packages filtered by bill."""
 
-    permissions = ["contractor"]
+    roles = [Role.USER, Role.CONTRACT_BOQ]
+    project_slug = "project_pk"
+
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to handle permission failures as JSON."""
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except PermissionDenied:
+            return JsonResponse({"error": "Permission denied"}, status=403)
 
     def get(self, request, project_pk):
         """Return packages for a given bill."""
-        # Verify user has access to this project
-        project = get_object_or_404(Project, pk=project_pk, users=request.user)
-
-        # Verify user is in contractor group
-        if not request.user.groups.filter(name="contractor").exists():
-            return JsonResponse({"error": "Permission denied"}, status=403)
+        project = self.get_project()
 
         bill_id = request.GET.get("bill_id")
         if not bill_id:

@@ -24,8 +24,17 @@
             </p>
         </div>
         <!-- Form -->
-        <form method="post" class="px-6 py-6">
+        <form method="post" class="px-6 py-6" enctype="multipart/form-data">
             {% csrf_token %}
+            {% if object and object.logo %}
+                <div id="logo-field">
+                    <img src="{{ object.logo.url }}"
+                         alt="Logo"
+                         class="object-cover"
+                         height="100"
+                         width="100">
+                </div>
+            {% endif %}
             {{ form|crispy }}
             <!-- Form Actions -->
             <div class="mt-6 flex items-center justify-end space-x-3">

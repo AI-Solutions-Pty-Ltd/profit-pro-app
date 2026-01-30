@@ -17,7 +17,7 @@ from django.views.generic import (
 )
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.forms import (
     AdministrativeComplianceForm,
     ContractualComplianceForm,
@@ -27,24 +27,15 @@ from app.Project.models import (
     AdministrativeCompliance,
     ContractualCompliance,
     FinalAccountCompliance,
-    Project,
 )
+from app.Project.models.project_roles import Role
 
 
-class ComplianceMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
+class ComplianceMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
     """Mixin for compliance views."""
 
-    permissions = ["contractor"]
-
-    def get_project(self) -> Project:
-        """Get the project for the current view."""
-        if not hasattr(self, "project"):
-            self.project = get_object_or_404(
-                Project,
-                pk=self.kwargs["project_pk"],
-                users=self.request.user,
-            )
-        return self.project
+    roles = [Role.USER]
+    project_slug = "project_pk"
 
     def get_context_data(self, **kwargs):
         """Add project to context."""

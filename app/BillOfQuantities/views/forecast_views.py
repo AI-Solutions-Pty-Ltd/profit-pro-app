@@ -3,7 +3,6 @@
 import json
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
-from typing import Any
 
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
@@ -32,16 +31,6 @@ class ForecastMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
 
     roles = [Role.COST_FORECASTS, Role.ADMIN, Role.USER]
     project_slug = "project_pk"
-
-    def get_project(self: Any) -> Project:
-        """Get the project for the current view."""
-        if not hasattr(self, "project") or not self.project:
-            self.project = get_object_or_404(
-                Project,
-                pk=self.kwargs[self.project_slug],
-                users=self.request.user,
-            )
-        return self.project
 
 
 class ForecastCreateView(ForecastMixin, TemplateView):

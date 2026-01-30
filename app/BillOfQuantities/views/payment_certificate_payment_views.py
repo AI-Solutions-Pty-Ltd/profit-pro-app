@@ -33,7 +33,6 @@ class PaymentCertificatePaymentMixin(UserHasProjectRoleGenericMixin, BreadcrumbM
             self.project = get_object_or_404(
                 Project,
                 pk=self.kwargs[self.project_slug],
-                users=self.request.user,
             )
         return self.project
 
@@ -65,9 +64,6 @@ class CreatePaymentCertificatePaymentView(PaymentCertificatePaymentMixin, Create
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
-        context["payment_certificate"] = get_object_or_404(
-            PaymentCertificate, pk=self.kwargs["payment_certificate_pk"]
-        )
         context["title"] = "Add Payment"
         return context
 
@@ -82,7 +78,6 @@ class CreatePaymentCertificatePaymentView(PaymentCertificatePaymentMixin, Create
                 "bill_of_quantities:payment-certificate-payment-statement",
                 kwargs={
                     "project_pk": self.kwargs["project_pk"],
-                    "pk": self.kwargs["payment_certificate_pk"],
                 },
             )
         )
@@ -115,9 +110,6 @@ class UpdatePaymentCertificatePaymentView(PaymentCertificatePaymentMixin, Update
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
-        context["payment_certificate"] = get_object_or_404(
-            PaymentCertificate, pk=self.kwargs["payment_certificate_pk"]
-        )
         context["title"] = "Edit Payment"
         return context
 
@@ -127,7 +119,6 @@ class UpdatePaymentCertificatePaymentView(PaymentCertificatePaymentMixin, Update
                 "bill_of_quantities:payment-certificate-payment-statement",
                 kwargs={
                     "project_pk": self.kwargs["project_pk"],
-                    "pk": self.kwargs["payment_certificate_pk"],
                 },
             )
         )
@@ -146,9 +137,6 @@ class DeletePaymentCertificatePaymentView(PaymentCertificatePaymentMixin, Delete
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
-        context["payment_certificate"] = get_object_or_404(
-            PaymentCertificate, pk=self.kwargs["payment_certificate_pk"]
-        )
         return context
 
     def get_success_url(self) -> str:
@@ -157,7 +145,6 @@ class DeletePaymentCertificatePaymentView(PaymentCertificatePaymentMixin, Delete
                 "bill_of_quantities:payment-certificate-payment-statement",
                 kwargs={
                     "project_pk": self.kwargs["project_pk"],
-                    "pk": self.kwargs["payment_certificate_pk"],
                 },
             )
         )
@@ -168,24 +155,19 @@ class DeletePaymentCertificatePaymentView(PaymentCertificatePaymentMixin, Delete
 
 
 class PaymentCertificatePaymentStatementView(PaymentCertificatePaymentMixin, View):
-    """View and download payment statement for a payment certificate."""
+    """View and download payment statement for payment certificates."""
 
-    def get(self, request: HttpRequest, project_pk: int, pk: int) -> HttpResponse:
+    def get(self, request: HttpRequest, project_pk: int) -> HttpResponse:
         project = self.get_project()
-        payment_certificate = get_object_or_404(PaymentCertificate, pk=pk)
 
         # Get all payment certificates up to and including this one
-        all_certificates = (
-            PaymentCertificate.objects.filter(
-                project=project,
-                status__in=[
-                    PaymentCertificate.Status.APPROVED,
-                    PaymentCertificate.Status.SUBMITTED,
-                ],
-            )
-            .filter(certificate_number__lte=payment_certificate.certificate_number)
-            .order_by("certificate_number")
-        )
+        all_certificates = PaymentCertificate.objects.filter(
+            project=project,
+            status__in=[
+                PaymentCertificate.Status.APPROVED,
+                PaymentCertificate.Status.SUBMITTED,
+            ],
+        ).order_by("certificate_number")
 
         # Get all payments for this project
         payments = PaymentCertificatePayment.objects.filter(project=project).order_by(
@@ -223,7 +205,7 @@ class PaymentCertificatePaymentStatementView(PaymentCertificatePaymentMixin, Vie
                 {
                     "date": payment_date,
                     "type": "credit",
-                    "description": f"Payment Received - Ref #INV-{payment_certificate.certificate_number}",
+                    "description": f"Payment Received - Ref #PMT-{payment.pk}",
                     "debit": None,
                     "credit": payment.amount,
                     "balance": None,  # Will be calculated after sorting
@@ -250,20 +232,13 @@ class PaymentCertificatePaymentStatementView(PaymentCertificatePaymentMixin, Vie
             entry["credit"] or Decimal("0.00") for entry in statement_entries
         )
 
-        # Check if current certificate is outstanding
-        is_outstanding = project.is_certificate_outstanding(
-            payment_certificate.approved_on or payment_certificate.created_at
-        )
-
         context = {
             "project": project,
-            "payment_certificate": payment_certificate,
             "statement_entries": statement_entries,
             "payments": payments,
             "total_debits": total_debits,
             "total_credits": total_credits,
             "final_balance": running_balance,
-            "is_outstanding": is_outstanding,
         }
 
         # Check if PDF download requested
@@ -284,7 +259,7 @@ class PaymentCertificatePaymentStatementView(PaymentCertificatePaymentMixin, Vie
             # Return PDF response
             response = HttpResponse(pdf_file, content_type="application/pdf")
             response["Content-Disposition"] = (
-                f'attachment; filename="payment_statement_{payment_certificate.certificate_number}.pdf"'
+                f'attachment; filename="project_{project.name}_payment_statement.pdf"'
             )
             return response
 
@@ -294,7 +269,7 @@ class PaymentCertificatePaymentStatementView(PaymentCertificatePaymentMixin, Vie
 class EmailPaymentStatementView(PaymentCertificatePaymentMixin, View):
     """Email payment statement to client."""
 
-    def post(self, request: HttpRequest, project_pk: int, pk: int) -> JsonResponse:
+    def post(self, request: HttpRequest, project_pk: int) -> JsonResponse:
         """Handle POST request to email payment statement."""
         # Get project for permission checking (handled by mixin)
         self.get_project()

@@ -13,19 +13,20 @@ from django.views.generic import ListView, TemplateView
 from app.BillOfQuantities.models import Forecast, PaymentCertificate
 from app.core.Utilities.dates import get_end_of_month
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.forms import FilterForm
 from app.Project.models import Portfolio, Project
 from app.Project.models.planned_value_models import PlannedValue
+from app.Project.models.project_roles import Role
 
 
-class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
+class FinancialReportView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
     """Financial Report - Project List with Budget, Forecast, Variances, Certified, CPI & SPI."""
 
     model = Project
     template_name = "portfolio/reports/financial_report.html"
     context_object_name = "projects"
-    permissions = ["consultant", "contractor"]
+    roles = [Role.USER]
 
     filter_form: FilterForm | None = None
 
@@ -221,13 +222,13 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         return context
 
 
-class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
-    """Schedule Report - Project List with Planned Time, Forecast, Actual."""
+class ScheduleReportView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
+    """Schedule Report - Project List with Start/End Dates, Durations, Progress & SPI."""
 
     model = Project
     template_name = "portfolio/reports/schedule_report.html"
     context_object_name = "projects"
-    permissions = ["consultant", "contractor"]
+    roles = [Role.USER]
 
     filter_form: FilterForm | None = None
 
@@ -377,13 +378,13 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         return context
 
 
-class CashflowReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
-    """Cashflow Report - Current Month Actuals and Next 3 Months Forecast."""
+class CashflowReportView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
+    """Cashflow Report - Project List with Monthly Cashflow Projections."""
 
     model = Project
     template_name = "portfolio/reports/cashflow_report.html"
     context_object_name = "projects"
-    permissions = ["consultant", "contractor"]
+    roles = [Role.USER]
 
     filter_form: FilterForm | None = None
 
@@ -537,11 +538,11 @@ class CashflowReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         return Decimal("0.00")
 
 
-class TrendReportView(UserHasGroupGenericMixin, BreadcrumbMixin, TemplateView):
-    """Trend Analysis Report - 12 Month Planned vs Actual vs Forecast vs Budget."""
+class TrendReportView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, TemplateView):
+    """Trend Report - Portfolio-level trends over time."""
 
     template_name = "portfolio/reports/trend_report.html"
-    permissions = ["consultant", "contractor"]
+    roles = [Role.USER]
 
     filter_form: FilterForm | None = None
 

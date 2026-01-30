@@ -2,14 +2,13 @@
 
 from django.contrib import messages
 from django.db.models import Max
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from app.BillOfQuantities.models import Bill, LineItem, Structure
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.Project.models import Project
 from app.Project.models.project_roles import Role
 
 
@@ -18,16 +17,6 @@ class AddendumMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
 
     roles = [Role.ADDITIONAL_LINE_ITEMS, Role.ADMIN, Role.USER]
     project_slug = "project_pk"
-
-    def get_project(self) -> Project:
-        """Get the project for the current view."""
-        if not hasattr(self, "project") or not self.project:
-            self.project = get_object_or_404(
-                Project,
-                pk=self.kwargs[self.project_slug],
-                users=self.request.user,
-            )
-        return self.project
 
 
 class AddendumListView(AddendumMixin, ListView):

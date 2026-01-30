@@ -10,25 +10,17 @@ from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.forms import RiskForm
-from app.Project.models import Project, Risk
+from app.Project.models import Risk
+from app.Project.models.project_roles import Role
 
 
-class RiskMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
+class RiskMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
     """Mixin for risk views."""
 
-    permissions = ["contractor"]
-
-    def get_project(self) -> Project:
-        """Get the project for the current view."""
-        if not hasattr(self, "project"):
-            self.project = get_object_or_404(
-                Project,
-                pk=self.kwargs["project_pk"],
-                users=self.request.user,
-            )
-        return self.project
+    roles = [Role.USER]
+    project_slug = "project_pk"
 
     def get_queryset(self) -> QuerySet[Risk]:
         """Filter risks by project."""
@@ -171,12 +163,10 @@ class RiskUpdateView(RiskMixin, UpdateView):
 
     def get_object(self, queryset=None) -> Risk:
         """Get risk and verify project ownership."""
-        self.get_queryset() if not queryset else None
         return get_object_or_404(
             Risk,
             pk=self.kwargs["pk"],
-            project__pk=self.kwargs["project_pk"],
-            project__users=self.request.user,
+            project=self.get_project(),
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
@@ -237,12 +227,10 @@ class RiskDeleteView(RiskMixin, DeleteView):
 
     def get_object(self, queryset=None) -> Risk:
         """Get risk and verify project ownership."""
-        self.get_queryset() if not queryset else None
         return get_object_or_404(
             Risk,
             pk=self.kwargs["pk"],
-            project__pk=self.kwargs["project_pk"],
-            project__users=self.request.user,
+            project=self.get_project(),
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:

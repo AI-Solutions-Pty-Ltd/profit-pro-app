@@ -9,6 +9,8 @@ from app.BillOfQuantities.models import (
     LineItem,
     Package,
     PaymentCertificate,
+    PaymentCertificatePhoto,
+    PaymentCertificateWorking,
     Structure,
 )
 from app.Project.models import Project
@@ -185,3 +187,80 @@ class PaymentCertificateFinalApprovalForm(forms.ModelForm):
         ]:
             raise forms.ValidationError("Please select either Approve or Reject.")
         return status
+
+
+class PaymentCertificatePhotoForm(forms.ModelForm):
+    """Form for uploading photos to a payment certificate."""
+
+    class Meta:
+        model = PaymentCertificatePhoto
+        fields = ["title", "image"]
+        widgets = {
+            "title": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter photo title or description",
+                }
+            ),
+            "image": forms.FileInput(
+                attrs={
+                    "class": "mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100",
+                    "accept": "image/*",
+                }
+            ),
+        }
+        labels = {
+            "title": "Photo Title",
+            "image": "Photo File",
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.payment_certificate = kwargs.pop("payment_certificate", None)
+        super().__init__(*args, **kwargs)
+
+    def save(self, commit=True, uploaded_by=None):
+        instance = super().save(commit=False)
+        instance.payment_certificate = self.payment_certificate
+        if uploaded_by:
+            instance.uploaded_by = uploaded_by
+        if commit:
+            instance.save()
+        return instance
+
+
+class PaymentCertificateWorkingForm(forms.ModelForm):
+    """Form for uploading working documents to a payment certificate."""
+
+    class Meta:
+        model = PaymentCertificateWorking
+        fields = ["title", "file"]
+        widgets = {
+            "title": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter document title or description",
+                }
+            ),
+            "file": forms.FileInput(
+                attrs={
+                    "class": "mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100",
+                }
+            ),
+        }
+        labels = {
+            "title": "Document Title",
+            "file": "Document File",
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.payment_certificate = kwargs.pop("payment_certificate", None)
+        super().__init__(*args, **kwargs)
+
+    def save(self, commit=True, uploaded_by=None):
+        instance = super().save(commit=False)
+        instance.payment_certificate = self.payment_certificate
+        if uploaded_by:
+            instance.uploaded_by = uploaded_by
+        if commit:
+            instance.save()
+        return instance

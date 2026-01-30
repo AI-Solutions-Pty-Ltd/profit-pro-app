@@ -9,80 +9,58 @@
     - {{ bill.name }}
 {% endblock title %}
 {% block content %}
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Header -->
-        <div class="mb-6">
-            <nav class="flex mb-4" aria-label="Breadcrumb">
-                <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                    <li class="inline-flex items-center">
-                        <a href="{% url 'project:portfolio-dashboard' %}"
-                           class="text-gray-700 hover:text-indigo-600">Projects</a>
-                    </li>
-                    <li>
-                        <div class="flex items-center">
-                            <span class="mx-2 text-gray-400">/</span>
-                            <a href="{% url 'project:project-management' project.pk %}"
-                               class="text-gray-700 hover:text-indigo-600">{{ project.name }}</a>
-                        </div>
-                    </li>
-                    <li>
-                        <div class="flex items-center">
-                            <span class="mx-2 text-gray-400">/</span>
-                            <a href="{% url 'cost:project-cost-tree' project.pk %}"
-                               class="text-gray-700 hover:text-indigo-600">Costs</a>
-                        </div>
-                    </li>
-                    <li>
-                        <div class="flex items-center">
-                            <span class="mx-2 text-gray-400">/</span>
-                            <a href="{% url 'cost:bill-cost-detail' project.pk bill.pk %}"
-                               class="text-gray-700 hover:text-indigo-600">{{ bill.name }}</a>
-                        </div>
-                    </li>
-                    <li aria-current="page">
-                        <div class="flex items-center">
-                            <span class="mx-2 text-gray-400">/</span>
-                            <span class="text-gray-500">
-                                {% if is_edit %}
-                                    Edit Cost
-                                {% else %}
-                                    Add Cost
-                                {% endif %}
-                            </span>
-                        </div>
-                    </li>
-                </ol>
-            </nav>
-            <h1 class="text-3xl font-bold text-gray-900">
-                {% if is_edit %}
-                    Edit Cost
-                {% else %}
-                    Add Cost
-                {% endif %}
-            </h1>
-            <p class="mt-1 text-sm text-gray-600">{{ structure.name }} • {{ bill.name }}</p>
-        </div>
-        <!-- Form -->
-        <div class="bg-white shadow-sm rounded-lg">
-            <form method="post" class="p-6 space-y-6">
-                {% csrf_token %}
-                {{ form|crispy }}
-                <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-                    <a href="{% url 'cost:bill-cost-detail' project.pk bill.pk %}"
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Cancel
-                    </a>
-                    <button type="submit"
-                            class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        {% heroicon_outline "check" class="w-5 h-5" %}
+    <!-- Page Banner -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">
                         {% if is_edit %}
-                            Update Cost
+                            Edit Cost
                         {% else %}
                             Add Cost
                         {% endif %}
-                    </button>
+                    </h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ structure.name }} • {{ bill.name }}</p>
                 </div>
-            </form>
+            </div>
+        </div>
+    </div>
+    <!-- Form -->
+    <div class="bg-white shadow-sm rounded-lg">
+        <form method="post" class="p-6 space-y-6">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+                <a href="{% url 'cost:bill-cost-detail' project.pk bill.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="inline-flex items-center gap-2 px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_outline "check" class="w-5 h-5" %}
+                    {% if is_edit %}
+                        Update Cost
+                    {% else %}
+                        Add Cost
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+        <div class="flex justify-between items-center">
+            <a href="{% url 'cost:bill-cost-detail' project.pk bill.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                Back to {{ bill.name }}
+            </a>
+            <a href="{% url 'cost:project-cost-tree' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                Cost Management
+                {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+            </a>
         </div>
     </div>
 {% endblock content %}

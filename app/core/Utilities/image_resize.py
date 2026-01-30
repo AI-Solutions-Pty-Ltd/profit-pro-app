@@ -9,7 +9,7 @@ from PIL import Image
 class ImageResize:
     """Utility class to resize images while maintaining quality."""
 
-    def resize_image(self, image, size=(900, 600)):
+    def resize_image(self, image, size=(900, 600)) -> File:
         """
         Resize an image to the specified size while maintaining aspect ratio.
 

@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load heroicons %}
+{% block content %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Page Header -->
+        <div class="bg-white shadow-sm rounded-lg mb-6">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Contractors</h1>
+                        <p class="text-sm text-gray-600 mt-1">Manage contractor companies</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <a href="{% url 'project:contractor-create' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "plus" class="w-4 h-4 mr-1" %}
+                            Add Contractor
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Contractors List -->
+        <div class="bg-white shadow rounded-lg">
+            {% if contractors %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registration No.</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">VAT Registered</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bank Account</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for contractor in contractors %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">{{ contractor.name }}</div>
+                                        <div class="text-sm text-gray-500">{{ contractor.tax_number }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ contractor.registration_number }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {% if contractor.vat_registered %}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                Yes
+                                                {% if contractor.vat_number %}({{ contractor.vat_number }}){% endif %}
+                                            </span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                No
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {% if contractor.bank_name %}
+                                            {{ contractor.bank_name }}
+                                            <br>
+                                            {{ contractor.bank_account_name }}
+                                        {% else %}
+                                            <span class="text-gray-400">Not set</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <a href="{% url 'project:contractor-update' project.pk contractor.pk %}"
+                                           class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
+                                        <a href="{% url 'project:contractor-delete' project.pk contractor.pk %}"
+                                           class="text-red-600 hover:text-red-900">Delete</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    {% heroicon_outline "building-office" class="mx-auto h-12 w-12 text-gray-400" %}
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No contractors</h3>
+                    <p class="mt-1 text-sm text-gray-500">Get started by adding a new contractor company.</p>
+                    <div class="mt-6">
+                        <a href="{% url 'project:contractor-create' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "plus" class="w-4 h-4 mr-1" %}
+                            Add Contractor
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'project:project-edit' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Back to Project Edit
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

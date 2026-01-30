@@ -1,616 +1,267 @@
+{% load static %}
+{% load heroicons %}
+{% load humanize %}
 <!DOCTYPE html>
-<html lang="en">
+<html>
     <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="description"
-              content="Payment statement for certificate {{ payment_certificate.certificate_number }}">
-        <meta name="keywords"
-              content="payment statement, certificate, {{ project.name }}, {{ payment_certificate.certificate_number }}">
-        <title>Payment Statement - {{ payment_certificate.certificate_number }}</title>
+        <meta charset="utf-8">
+        <title>Payment Statement - {{ project.name }}</title>
         <style>
-    @page {
-        size: A4;
-        margin: 1.5cm;
-    }
-    
-    body {
-        font-family: Arial, sans-serif;
-        font-size: 9px;
-        line-height: 1.3;
-        color: #000;
-        background: #fff;
-        margin: 0;
-        padding: 0;
-    }
-    
-    .header {
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #000;
-    }
-    
-    .logo {
-        max-height: 60px;
-        max-width: 150px;
-    }
-    
-    .statement-details {
-        text-align: right;
-    }
-    
-    .statement-details h1 {
-        font-size: 20px;
-        margin: 0 0 10px 0;
-        color: #000;
-        font-weight: bold;
-    }
-    
-    .statement-details p {
-        margin: 4px 0;
-        font-size: 10px;
-        color: #333;
-    }
-    
-    .statement-details strong {
-        color: #000;
-    }
-        
-    .company-details {
-        margin-bottom: 20px;
-    }
-    
-    .company-details div {
-        margin-bottom: 10px;
-    }
-    
-    .company-details h3 {
-        margin: 0 0 8px 0;
-        font-size: 12px;
-        color: #000;
-        font-weight: bold;
-    }
-    
-    .company-details p {
-        margin: 3px 0;
-        font-size: 9px;
-        color: #333;
-    }
-    
-    .company-details strong {
-        color: #000;
-    }
-        
-    .certificate-amount {
-        background-color: #f5f5f5;
-        padding: 10px;
-        margin-bottom: 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .certificate-amount h3 {
-        margin: 0;
-        font-size: 12px;
-    }
-    
-    .certificate-amount p {
-        margin: 0;
-        font-size: 14px;
-        font-weight: bold;
-    }
-    
-    .items-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-    }
-    .grid > div {
-        flex: 1;
-    }
-    .grid p {
-        margin: 5px 0;
-    }
-    .statement-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 20px;
-        font-size: 9px;
-    }
-    
-    .statement-table th {
-        background-color: #f5f5f5;
-        color: #000;
-        font-weight: bold;
-        font-size: 9px;
-        padding: 8px 5px;
-        text-align: left;
-        border-bottom: 2px solid #000;
-    }
-    
-    .statement-table td {
-        padding: 6px 5px;
-        border-bottom: 1px solid #ddd;
-        vertical-align: top;
-    }
-    
-    .statement-table .amount {
-        text-align: right;
-        font-family: Arial, sans-serif;
-        font-weight: bold;
-    }
-    
-    .statement-table .debit {
-        color: #000;
-    }
-    
-    .statement-table .credit {
-        color: #000;
-    }
-    
-    .statement-table .balance {
-        font-weight: bold;
-        color: #000;
-    }
-    .text-right {
-        text-align: right;
-    }
-    .text-center {
-        text-align: center;
-    }
-    .debit {
-        background-color: #f9f9f9;
-    }
-    .credit {
-        background-color: #f9f9f9;
-    }
-    .totals {
-        background-color: #f5f5f5;
-        font-weight: bold;
-    }
-    .summary {
-        background-color: #f5f5f5;
-        padding: 15px;
-        margin: 15px 0;
-        border: 1px solid #ddd;
-    }
-    
-    .summary-grid {
-        display: flex;
-        justify-content: space-around;
-        text-align: center;
-    }
-    
-    .summary-grid > div {
-        flex: 1;
-    }
-    
-    .summary-grid p {
-        margin: 3px 0;
-        color: #333;
-        font-size: 9px;
-    }
-    
-    .summary-grid .amount {
-        font-size: 12px;
-        font-weight: bold;
-        font-family: Arial, sans-serif;
-    }
-    
-    .info-section {
-        margin-bottom: 20px;
-        padding: 15px;
-        background: #f5f5f5;
-        border: 1px solid #ddd;
-    }
-    
-    .info-section h3 {
-        margin: 0 0 10px 0;
-        font-size: 11px;
-        color: #000;
-        font-weight: bold;
-    }
-    
-    .info-section p {
-        margin: 3px 0;
-        color: #333;
-        font-size: 9px;
-    }
-    
-    .info-section strong {
-        color: #000;
-    }
-    
-    .grid {
-        display: flex;
-        gap: 20px;
-    }
-    
-    .grid > div {
-        flex: 1;
-    }
-    .outstanding {
-        color: #000;
-        font-weight: bold;
-    }
-    .notes {
-        margin-top: 30px;
-        padding: 15px;
-        background: #f9f9f9;
-        border: 1px solid #ddd;
-    }
-    
-    .notes h3 {
-        margin: 0 0 10px 0;
-        font-size: 11px;
-        color: #000;
-        font-weight: bold;
-    }
-    
-    .notes ul {
-        margin: 8px 0;
-        padding-left: 20px;
-    }
-    
-    .notes li {
-        margin: 5px 0;
-        color: #333;
-        font-size: 9px;
-    }
-    
-    .outstanding {
-        color: #000;
-        font-weight: bold;
-    }
-    .footer {
-        margin-top: 30px;
-        padding-top: 15px;
-        border-top: 1px solid #ddd;
-        text-align: center;
-        color: #666;
-        font-size: 9px;
-    }
-    
-    .watermark {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) rotate(-45deg);
-        font-size: 80px;
-        color: rgba(0, 0, 0, 0.05);
-        font-weight: bold;
-        z-index: -1;
-        pointer-events: none;
-    }
-    
-    .status-badge {
-        display: inline-block;
-        padding: 2px 8px;
-        background: #000;
-        color: white;
-        font-size: 9px;
-        font-weight: bold;
-        text-transform: uppercase;
-        border-radius: 3px;
-        margin-left: 8px;
-    }
-    
-    .highlight {
-        background-color: #f5f5f5;
-        color: #000;
-        padding: 15px;
-        border: 1px solid #ddd;
-        margin: 15px 0;
-        text-align: center;
-    }
-    
-    .highlight p {
-        margin: 0;
-        font-size: 10px;
-        font-weight: bold;
-    }
-    
-    .company-name-fallback {
-        font-size: 16px;
-        font-weight: bold;
-        color: #000;
-    }
-    
-    .debit-amount {
-        color: #0066cc;
-    }
-    
-    .credit-amount {
-        color: #009900;
-    }
-    
-    .balance-positive {
-        color: #0066cc;
-    }
-    
-    .balance-negative {
-        color: #009900;
-    }
-    
-    .debit {
-        background-color: #f0f8ff;
-    }
-    .credit {
-        background-color: #f0fff0;
-    }
-    .totals {
-        background-color: #f5f5f5;
-        font-weight: bold;
-    }
-    .summary {
-        background-color: #f5f5f5;
-        padding: 20px;
-        margin: 20px 0;
-        border: 1px solid #ddd;
-    }
-        .summary-grid {
-            display: flex;
-            justify-content: space-around;
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.4;
+            color: #333;
+        }
+        .header {
+            background-color: #f9fafb;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 24pt;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+            color: #111827;
+        }
+        .header p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 14pt;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section h3 {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #111827;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .space-y-1 > * + * {
+            margin-top: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background-color: #f9fafb;
+            font-weight: bold;
+            color: #374151;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
             text-align: center;
         }
-        .summary-grid > div {
-            flex: 1;
-        }
-        .summary-grid p {
-            margin: 5px 0;
-        }
-        .summary-grid .amount {
-            font-size: 20px;
+        .font-bold {
             font-weight: bold;
         }
-        .outstanding {
+        .text-red-600 {
             color: #dc2626;
-            font-weight: bold;
+        }
+        .border-t {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+            margin-top: 10px;
         }
         .notes {
-            margin-top: 30px;
+            background-color: #f9fafb;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
         }
         .notes ul {
-            margin: 10px 0;
+            margin: 0;
             padding-left: 20px;
         }
         .notes li {
-            margin: 5px 0;
+            margin-bottom: 4px;
         }
-        .footer {
-            margin-top: 50px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            text-align: center;
-            color: #666;
-            font-size: 11px;
-        }
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #000;
-        }
-        .header-table td {
-            padding: 8px 0;
-            vertical-align: top;
-            font-size: 9px;
-        }
-        .client-details {
-            width: 40%;
-        }
-        .project-details {
-            width: 40%;
-            text-align: center;
-        }
-        .statement-date {
-            width: 20%;
-            text-align: right;
-            font-weight: bold;
-        }
-        .summary-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-            font-size: 9px;
-        }
-        .summary-table td {
-            padding: 6px 8px;
-            border-bottom: 1px solid #ddd;
-        }
-        .summary-table .text-right {
-            text-align: right;
-        }
-        .summary-table .balance-row {
-            border-top: 2px solid #000;
-        }
-        .banking-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-            font-size: 9px;
-        }
-        .banking-table td {
-            padding: 6px 8px;
-            border-bottom: 1px solid #ddd;
-        }
-        .banking-table td:first-child {
-            width: 30%;
-            font-weight: bold;
-        }
-        .banking-table tr:first-child td {
-            font-weight: bold;
-            background-color: #f5f5f5;
-            border-bottom: 2px solid #000;
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 72pt;
+            color: #e5e7eb;
+            z-index: -1;
+            opacity: 0.5;
         }
         </style>
     </head>
     <body>
-        <div class="watermark">STATEMENT</div>
-        <!-- Header -->
-        <table class="header-table">
-            <tr>
-                <td class="client-details">
-                    {% if project.client %}
-                        {% if project.client.company_name %}
-                            <strong>{{ project.client.company_name }}</strong>
-                            <br>
-                            {{ project.client.address|default:"" }}
-                            <br>
-                            {{ project.client.phone|default:"" }}
-                        {% elif project.client.user %}
-                            <strong>{{ project.client.user.get_full_name|default:"Client Name" }}</strong>
-                            <br>
-                            {{ project.client.address|default:"" }}
-                            <br>
-                            {{ project.client.phone|default:"" }}
-                        {% else %}
-                            Client Name
-                        {% endif %}
-                    {% else %}
-                        Client Name
-                        <br>
-                        Client Address
-                        <br>
-                        Client Phone
-                    {% endif %}
-                </td>
-                <td class="project-details">
-                    <strong>{{ project.name }}</strong>
-                    <br>
-                    Payment Statement
-                    <br>
-                    Certificate #{{ payment_certificate.certificate_number }}
-                </td>
-                <td class="statement-date">{% now "d F Y" %}</td>
-            </tr>
-        </table>
-        <!-- Highlight Box -->
-        <div class="highlight">
-            <p>
-                Payment Terms: {{ project.get_payment_terms_display|default:"30 Days" }} | Balance:
-                {% if final_balance > 0 %}
-                    R {{ final_balance|floatformat:2|intcomma }}
-                {% elif final_balance < 0 %}
-                    CR R {{ final_balance|abs|floatformat:2|intcomma }}
-                {% else %}
-                    R 0.00
-                {% endif %}
-            </p>
+        {% if final_balance > 0 %}<div class="watermark">OUTSTANDING</div>{% endif %}
+        <div class="header">
+            <h1>PAYMENT STATEMENT</h1>
+            <p>Statement for {{ project.name }}</p>
         </div>
-        <!-- Transactions Table -->
-        <table class="statement-table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Ref</th>
-                    <th class="text-right">Debit</th>
-                    <th class="text-right">Credit</th>
-                    <th class="text-right">Balance</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for entry in statement_entries %}
-                    <tr class="{% if entry.type == 'debit' %}debit{% else %}credit{% endif %}">
-                        <td>{{ entry.date|date:"d M Y" }}</td>
-                        <td>{{ entry.description }}</td>
-                        <td>{{ entry.reference }}</td>
-                        <td class="text-right">
-                            {% if entry.debit %}R {{ entry.debit|floatformat:2|intcomma }}{% endif %}
-                        </td>
-                        <td class="text-right">
-                            {% if entry.credit %}R {{ entry.credit|floatformat:2|intcomma }}{% endif %}
-                        </td>
-                        <td class="text-right">R {{ entry.balance|floatformat:2|intcomma }}</td>
+        <div class="section">
+            <div class="grid">
+                <div>
+                    <h3>CLIENT DETAILS</h3>
+                    <div class="space-y-1">
+                        <p>
+                            <strong>
+                                {% if project.client %}
+                                    {% if project.client.company_name %}
+                                        {{ project.client.company_name }}
+                                    {% else %}
+                                        {% if project.client.user %}
+                                            {{ project.client.user.get_full_name }}
+                                        {% else %}
+                                            Client Name
+                                        {% endif %}
+                                    {% endif %}
+                                {% else %}
+                                    No Client Assigned
+                                {% endif %}
+                            </strong>
+                        </p>
+                        {% if project.client %}
+                            {% if project.client.registration_number %}
+                                <p>
+                                    <strong>Registration:</strong> {{ project.client.registration_number }}
+                                </p>
+                            {% endif %}
+                            {% if project.client.tax_number %}
+                                <p>
+                                    <strong>Tax Number:</strong> {{ project.client.tax_number }}
+                                </p>
+                            {% endif %}
+                            {% if project.client.vat_registered %}
+                                <p>
+                                    <strong>VAT Registered:</strong> Yes
+                                </p>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <h3>PROJECT DETAILS</h3>
+                    <div class="space-y-1">
+                        <p>
+                            <strong>Project:</strong> {{ project.name }}
+                        </p>
+                        <p>
+                            <strong>Contract Sum:</strong> R {{ project.contract_sum|floatformat:2|intcomma }}
+                        </p>
+                        <p>
+                            <strong>Statement Date:</strong> {% now "d F Y" %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <h3>PAYMENT STATEMENT</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th class="text-right">Debit</th>
+                        <th class="text-right">Credit</th>
+                        <th class="text-right">Balance</th>
                     </tr>
-                {% endfor %}
-                <tr class="totals">
-                    <td colspan="3">TOTALS:</td>
-                    <td class="text-right">R {{ total_debits|floatformat:2|intcomma }}</td>
-                    <td class="text-right">R {{ total_credits|floatformat:2|intcomma }}</td>
-                    <td class="text-right">
-                        {% if final_balance > 0 %}
-                            R {{ final_balance|floatformat:2|intcomma }}
-                        {% elif final_balance < 0 %}
-                            CR R {{ final_balance|abs|floatformat:2|intcomma }}
-                        {% else %}
-                            R 0.00
-                        {% endif %}
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <!-- Summary -->
-        <table class="summary-table">
-            <tr>
-                <td>Payment Terms</td>
-                <td>{{ project.get_payment_terms_display|default:"30 Days" }}</td>
-            </tr>
-            <tr>
-                <td>Total Debits</td>
-                <td class="text-right">R {{ total_debits|floatformat:2|intcomma }}</td>
-            </tr>
-            <tr>
-                <td>Total Credits</td>
-                <td class="text-right">R {{ total_credits|floatformat:2|intcomma }}</td>
-            </tr>
-            <tr class="balance-row">
-                <td>
-                    <strong>Balance Due</strong>
-                </td>
-                <td class="text-right">
-                    <strong>
-                        {% if final_balance > 0 %}
-                            R {{ final_balance|floatformat:2|intcomma }}
-                        {% elif final_balance < 0 %}
-                            CR R {{ final_balance|abs|floatformat:2|intcomma }}
-                        {% else %}
-                            R 0.00
-                        {% endif %}
-                    </strong>
-                </td>
-            </tr>
-        </table>
-        <!-- Banking Details -->
-        <table class="banking-table">
-            <tr>
-                <td colspan="2">
-                    <strong>BANKING DETAILS</strong>
-                </td>
-            </tr>
-            <tr>
-                <td>Bank</td>
-                <td>{{ project.bank_name|default:"Please provide banking details" }}</td>
-            </tr>
-            <tr>
-                <td>Account Name</td>
-                <td>{{ project.bank_account_name|default:"Please provide account name" }}</td>
-            </tr>
-            <tr>
-                <td>Account Number</td>
-                <td>{{ project.bank_account_number|default:"Please provide account number" }}</td>
-            </tr>
-            <tr>
-                <td>Branch Code</td>
-                <td>{{ project.bank_branch_code|default:"Please provide branch code" }}</td>
-            </tr>
-        </table>
-        <!-- Notes -->
-        <div class="notes">
-            <h3>NOTES:</h3>
-            <ul>
-                <li>Please quote certificate number {{ payment_certificate.certificate_number }} when making payment.</li>
-                <li>Payment is due {{ project.get_payment_terms_display|default:"30 days" }} of certificate date.</li>
-                <li>This statement shows all transactions up to certificate #{{ payment_certificate.certificate_number }}.</li>
-                {% if is_outstanding %}<li class="outstanding">This certificate is OUTSTANDING - payment is overdue!</li>{% endif %}
-            </ul>
+                </thead>
+                <tbody>
+                    {% for entry in statement_entries %}
+                        <tr>
+                            <td>{{ entry.date|date:"d M Y" }}</td>
+                            <td class="text-center">{{ entry.type|title }}</td>
+                            <td>{{ entry.description }}</td>
+                            <td class="text-right">
+                                {% if entry.debit %}R {{ entry.debit|floatformat:2|intcomma }}{% endif %}
+                            </td>
+                            <td class="text-right">
+                                {% if entry.credit %}R {{ entry.credit|floatformat:2|intcomma }}{% endif %}
+                            </td>
+                            <td class="text-right font-bold">
+                                {% if entry.balance is not None %}R {{ entry.balance|floatformat:2|intcomma }}{% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" class="font-bold">TOTALS:</td>
+                        <td class="text-right font-bold">R {{ total_debits|floatformat:2|intcomma }}</td>
+                        <td class="text-right font-bold">R {{ total_credits|floatformat:2|intcomma }}</td>
+                        <td class="text-right font-bold">R {{ final_balance|floatformat:2|intcomma }}</td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
-        <!-- Footer -->
-        <div class="footer">
-            <p>This is a computer-generated statement and serves as official record of all payments.</p>
-            <p>Page 1 of 1 | Generated on {% now "d F Y H:i" %}</p>
+        <div class="section">
+            <div class="grid">
+                <div>
+                    <h3>BANKING DETAILS</h3>
+                    <div class="space-y-1">
+                        <p>
+                            <strong>Bank:</strong> {{ project.bank_name|default:"Please provide bank name" }}
+                        </p>
+                        <p>
+                            <strong>Account Name:</strong> {{ project.bank_account_name|default:"Please provide account name" }}
+                        </p>
+                        <p>
+                            <strong>Account Number:</strong> {{ project.bank_account_number|default:"Please provide account number" }}
+                        </p>
+                        <p>
+                            <strong>Branch Code:</strong> {{ project.bank_branch_code|default:"Please provide branch code" }}
+                        </p>
+                    </div>
+                </div>
+                <div>
+                    <h3>ADDITIONAL DETAILS</h3>
+                    <div class="space-y-1">
+                        <p>
+                            <strong>SWIFT Code:</strong> {{ project.bank_swift_code|default:"Please provide SWIFT code" }}
+                        </p>
+                        <p>
+                            <strong>VAT Number:</strong> {{ project.vat_number|default:"Please provide VAT number" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <div class="notes">
+                <h3>NOTES:</h3>
+                <ul>
+                    <li>Please quote certificate number when making payment.</li>
+                    {% if project.get_payment_terms_display %}
+                        <li>Payment is due {{ project.get_payment_terms_display|default:"30 days" }} of certificate date.</li>
+                    {% endif %}
+                    <li>This statement shows all transactions.</li>
+                    {% if final_balance > 0 %}<li class="text-red-600 font-bold">OUTSTANDING AMOUNT - Payment is overdue!</li>{% endif %}
+                </ul>
+            </div>
+        </div>
+        <div class="border-t">
+            <p class="text-center">
+                <strong>This is a computer-generated document and does not require a signature.</strong>
+            </p>
         </div>
     </body>
 </html>

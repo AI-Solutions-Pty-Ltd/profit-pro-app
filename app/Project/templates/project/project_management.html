@@ -4,547 +4,375 @@
 {% endblock title %}
 {% load humanize %}
 {% block content %}
-    <!-- Project Card -->
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
-        <!-- Header -->
-        <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+    <!-- Page Banner -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
-                    <p class="text-sm text-gray-500 mt-1">Project Management</p>
+                    <p class="text-sm text-gray-600 mt-1">Project Management</p>
                 </div>
-                <!-- Project Actions - Inline with header -->
-                <div class="flex items-center gap-2">
+                <!-- Project Actions -->
+                <div class="flex items-center space-x-3 text-xs">
                     <a href="{% url 'project:project-dashboard' project.pk %}"
-                       class="inline-flex items-center px-3 py-1.5 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                       class="inline-flex items-center p-2 border border-indigo-600 rounded-md shadow-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                         {% heroicon_outline "chart-bar" size="16" %}
-                        <span class="ml-1">Dashboard</span>
+                        Dashboard
                     </a>
                     {% if request.user|projectroles:project|userhasrole:'ADMIN' %}
-                        <a href="{% url 'project:project-update' project.pk %}"
-                           class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                            {% heroicon_outline "pencil" size="16" %}
-                            <span class="ml-1">Edit</span>
+                        <a href="{% url 'project:project-edit' project.pk %}"
+                           class="inline-flex items-center p-2 border border-gray-600 rounded-md shadow-sm font-medium text-gray-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
+                            {% heroicon_outline "cog-6-tooth" size="16" %}
+                            Edit
                         </a>
                     {% endif %}
                     <a href="{% url 'project:project-users' project.pk %}"
-                       class="inline-flex items-center px-3 py-1.5 border border-purple-300 rounded-md shadow-sm text-sm font-medium text-purple-700 bg-white hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">
+                       class="inline-flex items-center p-2 border border-purple-300 rounded-md shadow-sm font-medium text-purple-700 bg-white hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">
                         {% heroicon_outline "users" size="16" %}
-                        <span class="ml-1">Users</span>
+                        Users
                     </a>
                     {% if project.client and not project.client.user and request.user|projectroles:project|userhasrole:'ADMIN' %}
                         <a href="{% url 'project:client-invite-user' project.pk project.client.pk %}"
-                           class="inline-flex items-center px-3 py-1.5 border border-indigo-300 rounded-md shadow-sm text-sm font-medium text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                           class="inline-flex items-center p-2 border border-indigo-300 rounded-md shadow-sm font-medium text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                             {% heroicon_outline "user-plus" size="16" %}
-                            <span class="ml-1">Invite Client User</span>
+                            Invite Client User
                         </a>
                     {% endif %}
                     <a href="{% url 'project:project-delete' project.pk %}"
-                       class="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                       class="inline-flex items-center p-2 border border-transparent rounded-md shadow-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
                         {% heroicon_outline "trash" size="16" %}
-                        <span class="ml-1">Delete</span>
+                        Delete
                     </a>
                 </div>
             </div>
         </div>
-        <!-- Project Management Section -->
-        <div class="px-6 py-6 border-b border-gray-200 bg-white">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {% if request.user|projectroles:project|userhasrole:'Contractor BOQ,ADDITIONAL_LINE_ITEMS,CONTRACT_VARIATIONS,CORRESPONDENCE,CONTRACT_DOCUMENTS,STAGE_GATE_APPROVALS,OTHER_DOCUMENTS,ADMIN,User' %}
-                    <!-- Contracts Management Section -->
-                    <div class="group relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                        <div class="flex items-center mb-3">
-                            <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
-                                {% heroicon_outline "document-text" size="20" class="text-white" %}
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-bold text-blue-900">Contracts Management</h3>
-                                <p class="text-xs text-blue-600">BOQ, Variations & Correspondences</p>
-                            </div>
-                        </div>
-                        <div class="space-y-2">
-                            {% if project.line_items.exists %}
-                                {% if request.user|projectroles:project|userhasrole:'Contractor BOQ,ADMIN,User' %}
-                                    <a href="{% url 'project:project-wbs-detail' project.pk %}"
-                                       class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
-                                        <span class="text-sm font-medium text-blue-700">Contract BOQ</span>
-                                        {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                    </a>
-                                {% endif %}
-                                {% if request.user|projectroles:project|userhasrole:'ADDITIONAL_LINE_ITEMS,ADMIN,User' %}
-                                    <a href="{% url 'bill_of_quantities:addendum-list' project.pk %}"
-                                       class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors group/btn">
-                                        <span class="text-sm font-medium text-purple-700">Additional Items</span>
-                                        {% heroicon_outline "arrow-right" size="16" class="text-purple-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                    </a>
-                                {% endif %}
-                                {% if request.user|projectroles:project|userhasrole:'CONTRACT_VARIATIONS,ADMIN,User' %}
-                                    <a href="{% url 'bill_of_quantities:variation-list' project.pk %}"
-                                       class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-teal-200 hover:bg-teal-50 transition-colors group/btn">
-                                        <span class="text-sm font-medium text-teal-700">Contract Variations</span>
-                                        {% heroicon_outline "arrow-right" size="16" class="text-teal-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                    </a>
-                                {% endif %}
-                                {% if request.user|projectroles:project|userhasrole:'CORRESPONDENCE,ADMIN,User' %}
-                                    <a href="{% url 'bill_of_quantities:correspondence-list' project.pk %}"
-                                       class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
-                                        <span class="text-sm font-medium text-orange-700">Correspondences</span>
-                                        {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                    </a>
-                                {% endif %}
-                            {% else %}
-                                <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-red-700">Upload BOQ first</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-red-500 transition-opacity" %}
-                                </a>
-                            {% endif %}
-                            <!-- Contractual Requirements Section -->
-                            <span class="text-xs text-blue-600 pt-2 border-t border-blue-200 mt-2">Contractual Requirements</span>
-                            {% if request.user|projectroles:project|userhasrole:'CONTRACT_DOCUMENTS,ADMIN,User' %}
-                                <a href="{% url 'project:document-list' project.pk 'CONTRACT_DOCUMENTS' %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-cyan-700">Contract Documents</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-cyan-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                </a>
-                            {% endif %}
-                            {% if request.user|projectroles:project|userhasrole:'STAGE_GATE_APPROVALS,ADMIN,User' %}
-                                <a href="{% url 'project:document-list' project.pk 'STAGE_GATE_APPROVAL' %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-sky-200 hover:bg-sky-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-sky-700">Stage Gate Approvals</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-sky-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                </a>
-                            {% endif %}
-                            {% if request.user|projectroles:project|userhasrole:'OTHER_DOCUMENTS,ADMIN,User' %}
-                                <a href="{% url 'project:document-list' project.pk 'OTHER' %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-gray-700">Other Documents</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-gray-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                </a>
-                            {% endif %}
-                        </div>
+    </div>
+    <!-- Project Management Section -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {% if request.user|projectroles:project|userhasrole:'Contractor BOQ,ADDITIONAL_LINE_ITEMS,CONTRACT_VARIATIONS,CORRESPONDENCE,CONTRACT_DOCUMENTS,STAGE_GATE_APPROVALS,OTHER_DOCUMENTS,ADMIN,User' %}
+            <!-- Contracts Management Section -->
+            <div class="group relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                <div class="flex items-center mb-3">
+                    <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
+                        {% heroicon_outline "document-text" size="20" class="text-white" %}
                     </div>
-                {% endif %}
-                {% if request.user|projectroles:project|userhasrole:'FORECAST_HUB,COST_FORECASTS,TIME_FORECASTS,CASHFLOW_FORECASTS,EARNED_VALUES,RISK_MANAGEMENT,ADMIN,User' %}
-                    <!-- Forecasts Section (Unified) -->
-                    <div class="group relative bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                        <div class="flex items-center mb-3">
-                            <div class="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center mr-3">
-                                {% heroicon_outline "chart-bar" size="20" class="text-white" %}
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-bold text-emerald-900">Forecasts</h3>
-                                <p class="text-xs text-emerald-600">Cost, Time, Cashflow & EVM</p>
-                            </div>
-                        </div>
-                        <div class="space-y-2">
-                            {% if request.user|projectroles:project|userhasrole:'FORECAST_HUB,ADMIN,User' %}
-                                <a href="{% url 'project:forecast-hub' project.pk %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-emerald-700">Forecasts Hub</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                </a>
-                            {% endif %}
-                            {% if project.line_items.exists %}
-                                {% if request.user|projectroles:project|userhasrole:'COST_FORECASTS,ADMIN,User' %}
-                                    <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
-                                       class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
-                                        <span class="text-sm font-medium text-green-700">Cost Forecast</span>
-                                        {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                    </a>
-                                {% endif %}
-                            {% endif %}
-                            {% if request.user|projectroles:project|userhasrole:'TIME_FORECASTS,ADMIN,User' %}
-                                <a href="{% url 'project:time-forecast' project.pk %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-blue-700">Time Forecast</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                </a>
-                            {% endif %}
-                            {% if project.start_date and project.end_date %}
-                                {% if request.user|projectroles:project|userhasrole:'CASHFLOW_FORECASTS,ADMIN,User' %}
-                                    <a href="{% url 'project:cashflow-forecast-tab' project.pk %}"
-                                       class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
-                                        <span class="text-sm font-medium text-amber-700">Cashflow Forecast</span>
-                                        {% heroicon_outline "arrow-right" size="16" class="text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                    </a>
-                                {% endif %}
-                            {% endif %}
-                            {% if request.user|projectroles:project|userhasrole:'EARNED_VALUES,ADMIN,User' %}
-                                <a href="{% url 'project:earned-value' project.pk %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-violet-700">Earned Value</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-violet-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                </a>
-                            {% endif %}
-                            {% if request.user|projectroles:project|userhasrole:'RISK_MANAGEMENT,ADMIN,User' %}
-                                <a href="{% url 'project:risk-list' project.pk %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-red-700">Risk Management</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-red-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                </a>
-                            {% endif %}
-                        </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-blue-900">Contracts Management</h3>
+                        <p class="text-xs text-blue-600">BOQ, Variations & Correspondences</p>
                     </div>
-                {% endif %}
-                {% if request.user|projectroles:project|userhasrole:'PAYMENT_CERTIFICATES,ADVANCE_PAYMENTS,RETENTION,MATERIALS_ON_SITE,ESCALATION,SPECIAL_ITEMS,ADMIN,User' %}
-                    <!-- Payment Certificates Section -->
-                    <div class="group relative bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                        <div class="flex items-center mb-3">
-                            <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
-                                {% heroicon_outline "currency-dollar" size="20" class="text-white" %}
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-bold text-purple-900">Payment Certificates</h3>
-                                <p class="text-xs text-purple-600">Billing & ledger accounts</p>
-                            </div>
-                        </div>
-                        <div class="space-y-2">
-                            {% if project.line_items.exists %}
-                                {% if request.user|projectroles:project|userhasrole:'PAYMENT_CERTIFICATES,ADMIN,User' %}
-                                    <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
-                                       class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors group/btn relative">
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-sm font-medium text-purple-700">Certificates</span>
-                                            <div class="centered-content">
-                                                {% if project.active_payment_certificate %}
-                                                    <span class="centered-content px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 border border-green-300">
-                                                        <span>#{{ project.active_payment_certificate.certificate_number }}</span>
-                                                        <span>Active</span>
-                                                    </span>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        {% heroicon_outline "arrow-right" size="16" class="text-purple-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                    </a>
-                                {% endif %}
-                                {% if request.user|projectroles:project|userhasrole:'ADVANCE_PAYMENTS,ADMIN,User' %}
-                                    <a href="{% url 'bill_of_quantities:advance-payment-list' project.pk %}"
-                                       class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
-                                        <span class="text-sm font-medium text-blue-700">Advance Payments</span>
-                                        {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                    </a>
-                                {% endif %}
-                                {% if request.user|projectroles:project|userhasrole:'RETENTION,ADMIN,User' %}
-                                    <a href="{% url 'bill_of_quantities:retention-list' project.pk %}"
-                                       class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
-                                        <span class="text-sm font-medium text-amber-700">Retention</span>
-                                        {% heroicon_outline "arrow-right" size="16" class="text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                    </a>
-                                {% endif %}
-                                {% if request.user|projectroles:project|userhasrole:'MATERIALS_ON_SITE,ADMIN,User' %}
-                                    <a href="{% url 'bill_of_quantities:materials-list' project.pk %}"
-                                       class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
-                                        <span class="text-sm font-medium text-green-700">Materials on Site</span>
-                                        {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                    </a>
-                                {% endif %}
-                                {% if request.user|projectroles:project|userhasrole:'ESCALATION,ADMIN,User' %}
-                                    <a href="{% url 'bill_of_quantities:escalation-list' project.pk %}"
-                                       class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-rose-200 hover:bg-rose-50 transition-colors group/btn">
-                                        <span class="text-sm font-medium text-rose-700">Escalation</span>
-                                        {% heroicon_outline "arrow-right" size="16" class="text-rose-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                    </a>
-                                {% endif %}
-                                {% if request.user|projectroles:project|userhasrole:'SPECIAL_ITEMS,ADMIN,User' %}
-                                    <a href="{% url 'bill_of_quantities:special-item-list' project.pk %}"
-                                       class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
-                                        <span class="text-sm font-medium text-orange-700">Special Items</span>
-                                        {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                    </a>
-                                {% endif %}
-                            {% else %}
-                                <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-red-700">Upload BOQ first</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-red-500 transition-opacity" %}
-                                </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endif %}
-                {% if request.user|projectroles:project|userhasrole:'COMPLIANCE,ADMIN,User' %}
-                    <!-- Coming Soon Section -->
-                    <div class="group relative bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl p-4 border border-gray-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1  opacity-75">
-                        <div class="flex items-center mb-3">
-                            <div class="w-10 h-10 bg-gray-500 rounded-lg flex items-center justify-center mr-3">
-                                {% heroicon_outline "clock" size="20" class="text-white" %}
-                            </div>
-                            <div>
-                                <h3 class="text-sm font-bold text-gray-900">Coming Soon</h3>
-                                <p class="text-xs text-gray-600">Future features</p>
-                            </div>
-                        </div>
-                        <div class="space-y-2">
-                            <div class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-gray-200 opacity-75">
-                                <span class="text-sm font-medium text-gray-700">Impact</span>
-                                {% heroicon_outline "clock" size="16" class="text-gray-400" %}
-                            </div>
-                            {% if request.user|projectroles:project|userhasrole:'COMPLIANCE,ADMIN,User' %}
-                                <a href="{% url 'project:compliance-dashboard' project.pk %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-indigo-700">Compliance</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-indigo-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                </a>
-                            {% endif %}
-                            <span class="text-xs text-indigo-600 py-0.5 rounded">For Contractors</span>
-                            <div class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-indigo-200 opacity-75">
-                                <div class="flex items-center">
-                                    <span class="text-sm font-medium text-indigo-700">Expenditure Management</span>
-                                </div>
-                                {% heroicon_outline "clock" size="16" class="text-indigo-400" %}
-                            </div>
-                            <div class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-indigo-200 opacity-75">
-                                <div class="flex items-center">
-                                    <span class="text-sm font-medium text-indigo-700">Materials Management</span>
-                                </div>
-                                {% heroicon_outline "clock" size="16" class="text-indigo-400" %}
-                            </div>
-                        </div>
-                    </div>
-                {% endif %}
-                <!-- Final Account Section -->
-                {% if project.final_payment_certificate and request.user|projectroles:project|userhasrole:'PAYMENT_CERTIFICATES,ADMIN,User' %}
-                    <div class="mt-4 pt-4 border-t border-gray-200">
-                        <div class="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-300">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center">
-                                    <div class="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center mr-4">
-                                        {% heroicon_outline "document-check" size="24" class="text-white" %}
-                                    </div>
-                                    <div>
-                                        <h3 class="text-lg font-bold text-emerald-900">Final Account</h3>
-                                        <p class="text-sm text-emerald-600">
-                                            Certificate #{{ project.final_payment_certificate.certificate_number }}
-                                            {% if project.status == 'FINAL_ACCOUNT_ISSUED' %}
-                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                                    {% heroicon_outline "check-circle" size="12" class="mr-1" %}
-                                                    Approved
-                                                </span>
-                                            {% else %}
-                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                                                    {% heroicon_outline "clock" size="12" class="mr-1" %}
-                                                    Pending Approval
-                                                </span>
-                                            {% endif %}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    <a href="{% url 'bill_of_quantities:final-account-detail' project.pk project.final_payment_certificate.pk %}"
-                                       class="inline-flex items-center px-4 py-2 border border-emerald-300 rounded-lg shadow-sm text-sm font-medium text-emerald-700 bg-white hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200 hover:scale-105">
-                                        {% heroicon_outline "eye" size="16" %}
-                                        <span class="ml-2">View Final Account</span>
-                                    </a>
-                                    <form method="post"
-                                          action="{% url 'project:project-reset-final-account' project.pk %}"
-                                          onsubmit="return confirm('Are you sure you want to reset the final account? This will set the project back to Active status and unmark the final payment certificate.');">
-                                        {% csrf_token %}
-                                        <button type="submit"
-                                                class="inline-flex items-center px-4 py-2 border border-red-300 rounded-lg shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 hover:scale-105">
-                                            {% heroicon_outline "arrow-path" size="16" %}
-                                            <span class="ml-2">Reset</span>
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% endif %}
-                <!-- Additional Actions Row -->
-                {% if project.line_items.exists and request.user|projectroles:project|userhasrole:'EXPENDITURE_MANAGEMENT,ADMIN,User' %}
-                    <div class="mt-4 pt-4 border-t border-gray-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Cost Management:</span>
-                                {% if request.user|projectroles:project|userhasrole:'EXPENDITURE_MANAGEMENT,ADMIN,User' %}
-                                    <a href="{% url 'cost:project-cost-tree' project.pk %}"
-                                       class="inline-flex items-center px-3 py-1.5 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 hover:scale-105">
-                                        {% heroicon_outline "calculator" size="16" %}
-                                        <span class="ml-1">Cost Analysis</span>
-                                    </a>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                {% else %}
-                    {% if request.user|projectroles:project|userhasrole:'Contractor BOQ,ADMIN,User' %}
-                        <div class="mt-4 pt-4 border-t border-gray-200">
-                            <div class="flex items-center justify-center">
-                                <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
-                                   class="inline-flex items-center px-4 py-2 border border-red-600 rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 hover:scale-105 hover:shadow-lg">
-                                    {% heroicon_outline "arrow-up-tray" size="20" %}
-                                    <span class="ml-2">Upload BOQ to Get Started</span>
-                                </a>
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endif %}
-                <!-- Content -->
-                <div class="px-6 py-6 border-t border-gray-200">
-                    <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                        <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">Project Name</dt>
-                            <dd class="mt-1 text-sm text-gray-900">
-                                {{ project.name }}
-                            </dd>
-                        </div>
-                        <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">Owner</dt>
-                            <dd class="mt-1 text-sm text-gray-900">
-                                {{ project.client.name|default_if_none:"N/A" }}
-                            </dd>
-                        </div>
-                        <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">Created</dt>
-                            <dd class="mt-1 text-sm text-gray-900">
-                                {{ project.created_at|date:"F d, Y \a\t g:i A" }}
-                            </dd>
-                        </div>
-                        <div class="sm:col-span-1">
-                            <dt class="text-sm font-medium text-gray-500">Last Updated</dt>
-                            <dd class="mt-1 text-sm text-gray-900">
-                                {{ project.updated_at|date:"F d, Y \a\t g:i A" }}
-                            </dd>
-                        </div>
-                    </dl>
-                    <!-- Project Description -->
-                    {% if project.description %}
-                        <div class="mt-6 pt-6 border-t border-gray-200">
-                            <h3 class="text-sm font-medium text-gray-500 mb-2">Description</h3>
-                            <div class="prose prose-sm max-w-none text-gray-900">{{ project.description|linebreaks }}</div>
-                        </div>
-                    {% endif %}
                 </div>
-                <!-- client section -->
-                {% if project.client %}
-                    <div class="px-6 py-6 border-t border-gray-200">
-                        <div class="flex items-center justify-between mb-4">
-                            <h2 class="text-lg font-semibold text-gray-900">Client</h2>
-                            <div class="flex space-x-2">
-                                {% if request.user|projectroles:project|userhasrole:'ADMIN' %}
-                                    <a href="{% url 'project:client-edit' project.pk project.client.pk %}"
-                                       class="inline-flex items-center px-3 py-1.5 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                                        {% heroicon_outline "pencil" size="20" %}
-                                        Edit Client
-                                    </a>
-                                    <a href="{% url 'project:client-remove' project.pk project.client.pk %}"
-                                       class="inline-flex items-center px-3 py-1.5 border border-red-600 rounded-md shadow-sm text-sm font-medium text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                                        {% heroicon_outline "trash" size="20" %}
-                                        Remove Client
-                                    </a>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                            <div class="sm:col-span-1">
-                                <dt class="text-sm font-medium text-gray-500">Client Name</dt>
-                                <dd class="mt-1 text-sm text-gray-900">
-                                    {{ project.client.name }}
-                                </dd>
-                            </div>
-                            <div class="sm:col-span-1">
-                                <dt class="text-sm font-medium text-gray-500">Client Description</dt>
-                                <dd class="mt-1 text-sm text-gray-900">
-                                    {{ project.client.description }}
-                                </dd>
-                            </div>
-                            {% if project.client.user %}
-                                <div class="sm:col-span-1">
-                                    <dt class="text-sm font-medium text-gray-500">Client Email</dt>
-                                    <dd class="mt-1 text-sm text-gray-900">
-                                        {{ project.client.user.email }}
-                                    </dd>
-                                </div>
-                                <div class="sm:col-span-1">
-                                    <dt class="text-sm font-medium text-gray-500">Client Phone</dt>
-                                    <dd class="mt-1 text-sm text-gray-900">
-                                        {{ project.client.user.primary_contact }}
-                                    </dd>
-                                </div>
-                                <div class="sm:col-span-2">
-                                    {% if request.user|projectroles:project|userhasrole:'ADMIN' %}
-                                        <div class="flex space-x-2">
-                                            <a href="{% url 'project:client-resend-invite' project.pk project.client.pk %}"
-                                               class="loading-btn inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                                               data-loading-text="Resending...">
-                                                {% heroicon_outline "envelope" size="20" %}
-                                                Resend Invite
-                                            </a>
-                                            <form method="post"
-                                                  action="{% url 'project:client-remove-user' project.pk project.client.pk %}"
-                                                  onsubmit="return confirm('Are you sure you want to remove this user from the client? They will lose access to this project.');">
-                                                {% csrf_token %}
-                                                <button type="submit"
-                                                        class="inline-flex items-center px-3 py-1.5 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                                                    {% heroicon_outline "x-mark" size="20" %}
-                                                    Remove User
-                                                </button>
-                                            </form>
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            {% endif %}
-                        </dl>
-                    </div>
-                {% else %}
-                    <div class="px-6 py-6 border-t border-gray-200">
-                        <div class="flex items-center justify-between mb-4">
-                            <h2 class="text-lg font-semibold text-gray-900">Client</h2>
-                            <div class="flex space-x-2">
-                                {% if request.user|projectroles:project|userhasrole:'ADMIN' %}
-                                    <a href="{% url 'project:project-add-client' project.pk %}"
-                                       class="inline-flex items-center px-3 py-1.5 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                                        {% heroicon_outline "plus" size="20" %}
-                                        Add Client
-                                    </a>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                {% endif %}
-                <!-- Signatories Section -->
-                <div class="px-6 py-6 border-t border-gray-200">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-semibold text-gray-900">Signatories</h2>
-                        <div class="flex space-x-2">
-                            {% if request.user|projectroles:project|userhasrole:'ADMIN' %}
-                                <a href="{% url 'project:signatory-list' project.pk %}"
-                                   class="inline-flex items-center px-3 py-1.5 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                                    {% heroicon_outline "user-group" size="20" %}
-                                    Manage Signatories
-                                </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% if project.signatories.exists %}
-                        <div class="mt-4">
-                            <p class="text-sm text-gray-600 mb-2">
-                                {{ project.signatories.count }} signatory(ies) configured for payment certificates
-                            </p>
-                        </div>
+                <div class="space-y-2">
+                    {% if project.line_items.exists %}
+                        {% if request.user|projectroles:project|userhasrole:'Contractor BOQ,ADMIN,User' %}
+                            <a href="{% url 'project:project-wbs-detail' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-blue-700">Contract BOQ</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% endif %}
+                        {% if request.user|projectroles:project|userhasrole:'ADDITIONAL_LINE_ITEMS,ADMIN,User' %}
+                            <a href="{% url 'bill_of_quantities:addendum-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-purple-700">Additional Items</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-purple-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% endif %}
+                        {% if request.user|projectroles:project|userhasrole:'CONTRACT_VARIATIONS,ADMIN,User' %}
+                            <a href="{% url 'bill_of_quantities:variation-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-teal-200 hover:bg-teal-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-teal-700">Contract Variations</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-teal-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% endif %}
+                        {% if request.user|projectroles:project|userhasrole:'CORRESPONDENCE,ADMIN,User' %}
+                            <a href="{% url 'bill_of_quantities:correspondence-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-orange-700">Correspondences</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% endif %}
                     {% else %}
-                        <div class="text-center py-6 bg-gray-50 rounded-lg">
-                            <p class="text-sm text-gray-500">
-                                No signatories configured yet. Add signatories to include them in payment certificate PDFs and email distribution.
-                            </p>
-                        </div>
+                        <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-red-700">Upload BOQ first</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-red-500 transition-opacity" %}
+                        </a>
+                    {% endif %}
+                    <!-- Contractual Requirements Section -->
+                    <span class="text-xs text-blue-600 pt-2 border-t border-blue-200 mt-2">Contractual Requirements</span>
+                    {% if request.user|projectroles:project|userhasrole:'CONTRACT_DOCUMENTS,ADMIN,User' %}
+                        <a href="{% url 'project:document-list' project.pk 'CONTRACT_DOCUMENTS' %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-cyan-700">Contract Documents</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-cyan-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
+                    {% endif %}
+                    {% if request.user|projectroles:project|userhasrole:'STAGE_GATE_APPROVALS,ADMIN,User' %}
+                        <a href="{% url 'project:document-list' project.pk 'STAGE_GATE_APPROVAL' %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-sky-200 hover:bg-sky-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-sky-700">Stage Gate Approvals</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-sky-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
+                    {% endif %}
+                    {% if request.user|projectroles:project|userhasrole:'OTHER_DOCUMENTS,ADMIN,User' %}
+                        <a href="{% url 'project:document-list' project.pk 'OTHER' %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-gray-700">Other Documents</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-gray-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
+                    {% endif %}
+                    <!-- Cost Management Section -->
+                    {% if project.line_items.exists and request.user|projectroles:project|userhasrole:'EXPENDITURE_MANAGEMENT,ADMIN,User' %}
+                        <span class="text-xs text-blue-600 pt-2 border-t border-blue-200 mt-2">Cost Management</span>
+                        <a href="{% url 'cost:project-cost-tree' project.pk %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-indigo-700">Cost Analysis</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-indigo-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
                     {% endif %}
                 </div>
             </div>
-            <!-- Footer -->
-            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                <div class="flex justify-between items-center">
-                    <a href="{% url 'project:project-dashboard' project.pk %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                        {% heroicon_outline "chevron-left" %}
-                        Back to Dashboard
-                    </a>
-                    <a href="{% url 'project:portfolio-dashboard' %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                        All Projects
-                        {% heroicon_outline "chevron-right" %}
-                    </a>
+        {% endif %}
+        {% if request.user|projectroles:project|userhasrole:'FORECAST_HUB,COST_FORECASTS,TIME_FORECASTS,CASHFLOW_FORECASTS,EARNED_VALUES,RISK_MANAGEMENT,ADMIN,User' %}
+            <!-- Forecasts Section (Unified) -->
+            <div class="group relative bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                <div class="flex items-center mb-3">
+                    <div class="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center mr-3">
+                        {% heroicon_outline "chart-bar" size="20" class="text-white" %}
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-emerald-900">Forecasts</h3>
+                        <p class="text-xs text-emerald-600">Cost, Time, Cashflow & EVM</p>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    {% if request.user|projectroles:project|userhasrole:'FORECAST_HUB,ADMIN,User' %}
+                        <a href="{% url 'project:forecast-hub' project.pk %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-emerald-700">Forecasts Hub</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
+                    {% endif %}
+                    {% if project.line_items.exists %}
+                        {% if request.user|projectroles:project|userhasrole:'COST_FORECASTS,ADMIN,User' %}
+                            <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-green-700">Cost Forecast</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                    {% if request.user|projectroles:project|userhasrole:'TIME_FORECASTS,ADMIN,User' %}
+                        <a href="{% url 'project:time-forecast' project.pk %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-blue-700">Time Forecast</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
+                    {% endif %}
+                    {% if project.start_date and project.end_date %}
+                        {% if request.user|projectroles:project|userhasrole:'CASHFLOW_FORECASTS,ADMIN,User' %}
+                            <a href="{% url 'project:cashflow-forecast-tab' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-amber-700">Cashflow Forecast</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                    {% if request.user|projectroles:project|userhasrole:'EARNED_VALUES,ADMIN,User' %}
+                        <a href="{% url 'project:earned-value' project.pk %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-violet-700">Earned Value</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-violet-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
+                    {% endif %}
+                    {% if request.user|projectroles:project|userhasrole:'RISK_MANAGEMENT,ADMIN,User' %}
+                        <a href="{% url 'project:risk-list' project.pk %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-red-700">Risk Management</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-red-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
+                    {% endif %}
                 </div>
             </div>
-        {% endblock content %}
+        {% endif %}
+        {% if request.user|projectroles:project|userhasrole:'PAYMENT_CERTIFICATES,ADVANCE_PAYMENTS,RETENTION,MATERIALS_ON_SITE,ESCALATION,SPECIAL_ITEMS,ADMIN,User' %}
+            <!-- Payment Certificates Section -->
+            <div class="group relative bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                <div class="flex items-center mb-3">
+                    <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
+                        {% heroicon_outline "currency-dollar" size="20" class="text-white" %}
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-purple-900">Payment Certificates</h3>
+                        <p class="text-xs text-purple-600">Billing & ledger accounts</p>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    {% if project.line_items.exists %}
+                        {% if request.user|projectroles:project|userhasrole:'PAYMENT_CERTIFICATES,ADMIN,User' %}
+                            <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors group/btn relative">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-medium text-purple-700">Certificates</span>
+                                    <div class="centered-content">
+                                        {% if project.active_payment_certificate %}
+                                            <span class="centered-content px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 border border-green-300">
+                                                <span>#{{ project.active_payment_certificate.certificate_number }}</span>
+                                                <span>Active</span>
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% heroicon_outline "arrow-right" size="16" class="text-purple-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% endif %}
+                        {% if request.user|projectroles:project|userhasrole:'ADVANCE_PAYMENTS,ADMIN,User' %}
+                            <a href="{% url 'bill_of_quantities:advance-payment-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-blue-700">Advance Payments</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% endif %}
+                        {% if request.user|projectroles:project|userhasrole:'RETENTION,ADMIN,User' %}
+                            <a href="{% url 'bill_of_quantities:retention-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-amber-700">Retention</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% endif %}
+                        {% if request.user|projectroles:project|userhasrole:'MATERIALS_ON_SITE,ADMIN,User' %}
+                            <a href="{% url 'bill_of_quantities:materials-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-green-700">Materials on Site</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% endif %}
+                        {% if request.user|projectroles:project|userhasrole:'ESCALATION,ADMIN,User' %}
+                            <a href="{% url 'bill_of_quantities:escalation-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-rose-200 hover:bg-rose-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-rose-700">Escalation</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-rose-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% endif %}
+                        {% if request.user|projectroles:project|userhasrole:'SPECIAL_ITEMS,ADMIN,User' %}
+                            <a href="{% url 'bill_of_quantities:special-item-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-orange-700">Special Items</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-red-700">Upload BOQ first</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-red-500 transition-opacity" %}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+        {% if request.user|projectroles:project|userhasrole:'COMPLIANCE,ADMIN,User' %}
+            <!-- Coming Soon Section -->
+            <div class="group relative bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl p-4 border border-gray-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1  opacity-75">
+                <div class="flex items-center mb-3">
+                    <div class="w-10 h-10 bg-gray-500 rounded-lg flex items-center justify-center mr-3">
+                        {% heroicon_outline "clock" size="20" class="text-white" %}
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900">Coming Soon</h3>
+                        <p class="text-xs text-gray-600">Future features</p>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <div class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-gray-200 opacity-75">
+                        <span class="text-sm font-medium text-gray-700">Impact</span>
+                        {% heroicon_outline "clock" size="16" class="text-gray-400" %}
+                    </div>
+                    {% if request.user|projectroles:project|userhasrole:'COMPLIANCE,ADMIN,User' %}
+                        <a href="{% url 'project:compliance-dashboard' project.pk %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-indigo-700">Compliance</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-indigo-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
+                    {% endif %}
+                    <span class="text-xs text-indigo-600 py-0.5 rounded">For Contractors</span>
+                    <div class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-indigo-200 opacity-75">
+                        <div class="flex items-center">
+                            <span class="text-sm font-medium text-indigo-700">Expenditure Management</span>
+                        </div>
+                        {% heroicon_outline "clock" size="16" class="text-indigo-400" %}
+                    </div>
+                    <div class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-indigo-200 opacity-75">
+                        <div class="flex items-center">
+                            <span class="text-sm font-medium text-indigo-700">Materials Management</span>
+                        </div>
+                        {% heroicon_outline "clock" size="16" class="text-indigo-400" %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        <!-- Final Account Section -->
+        {% if project.final_payment_certificate and request.user|projectroles:project|userhasrole:'PAYMENT_CERTIFICATES,ADMIN,User' %}
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <div class="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-300">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center mr-4">
+                                {% heroicon_outline "document-check" size="24" class="text-white" %}
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-emerald-900">Final Account</h3>
+                                <p class="text-sm text-emerald-600">
+                                    Certificate #{{ project.final_payment_certificate.certificate_number }}
+                                    {% if project.status == 'FINAL_ACCOUNT_ISSUED' %}
+                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                            {% heroicon_outline "check-circle" size="12" class="mr-1" %}
+                                            Approved
+                                        </span>
+                                    {% else %}
+                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                            {% heroicon_outline "clock" size="12" class="mr-1" %}
+                                            Pending Approval
+                                        </span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <a href="{% url 'bill_of_quantities:final-account-detail' project.pk project.final_payment_certificate.pk %}"
+                               class="inline-flex items-center px-4 py-2 border border-emerald-300 rounded-lg shadow-sm text-sm font-medium text-emerald-700 bg-white hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200 hover:scale-105">
+                                {% heroicon_outline "eye" size="16" %}
+                                <span class="ml-2">View Final Account</span>
+                            </a>
+                            <form method="post"
+                                  action="{% url 'project:project-reset-final-account' project.pk %}"
+                                  onsubmit="return confirm('Are you sure you want to reset the final account? This will set the project back to Active status and unmark the final payment certificate.');">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="inline-flex items-center px-4 py-2 border border-red-300 rounded-lg shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 hover:scale-105">
+                                    {% heroicon_outline "arrow-path" size="16" %}
+                                    <span class="ml-2">Reset</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+        <div class="flex justify-between items-center">
+            <a href="{% url 'project:project-dashboard' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                Back to Dashboard
+            </a>
+            <a href="{% url 'project:portfolio-dashboard' %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                All Projects
+                {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+            </a>
+        </div>
+    </div>
+{% endblock content %}

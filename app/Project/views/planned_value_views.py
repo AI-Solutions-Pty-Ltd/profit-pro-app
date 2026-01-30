@@ -7,14 +7,15 @@ from typing import Any
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.db.models import QuerySet, Sum
-from django.http import Http404, HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.urls import reverse
 from django.views.generic import TemplateView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.forms import CashflowForecastForm, PlannedValueForm
 from app.Project.models import PlannedValue, Project
+from app.Project.models.project_roles import Role
 
 
 def get_months_between(start_date: date, end_date: date) -> list[date]:
@@ -30,25 +31,12 @@ def get_months_between(start_date: date, end_date: date) -> list[date]:
     return months
 
 
-class PlannedValueMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
+class PlannedValueMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
     """Mixin for PlannedValue views."""
 
-    permissions = ["contractor"]
+    roles = [Role.USER]
     project: Project
-
-    def get_project(self) -> Project:
-        """Get the project for this view."""
-        if hasattr(self, "project") and self.project:
-            return self.project
-
-        project_pk = self.kwargs.get("project_pk")
-        try:
-            self.project = Project.objects.get(pk=project_pk, users=self.request.user)
-            return self.project
-        except Project.DoesNotExist as err:
-            raise Http404(
-                "Project not found or you don't have permission to access it."
-            ) from err
+    project_slug = "project_pk"
 
     def get_queryset(self) -> QuerySet[PlannedValue]:
         """Get planned values for the project."""

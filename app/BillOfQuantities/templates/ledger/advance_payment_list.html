@@ -115,10 +115,10 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex items-center space-x-2">
-                                        <a href="{% url 'bill_of_quantities:advance-payment-edit' project.pk txn.pk %}"
+                                        <a href="{% url 'bill_of_quantities:advance-payment-edit' project.pk txn.id %}"
                                            class="text-gray-600 hover:text-gray-900"
                                            title="Edit">{% heroicon_outline "pencil" class="w-5 h-5" %}</a>
-                                        <a href="{% url 'bill_of_quantities:advance-payment-delete' project.pk txn.pk %}"
+                                        <a href="{% url 'bill_of_quantities:advance-payment-delete' project.pk txn.id %}"
                                            class="text-red-600 hover:text-red-900"
                                            title="Delete">{% heroicon_outline "trash" class="w-5 h-5" %}</a>
                                     </div>

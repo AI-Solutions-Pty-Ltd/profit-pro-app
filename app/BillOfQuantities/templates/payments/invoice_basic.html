@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+{% load static %}
+{% block extra_css %}
+    <style>
+        /* Centered content wrapper */
+        .centered-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+        }
+
+        .w-100 {
+            width: 100%;
+        }
+
+        /* Invoice specific styles */
+        .invoice-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .invoice-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #000;
+            margin: 0;
+            padding: 10px 0;
+        }
+
+        .invoice-meta-table {
+            width: 100%;
+            margin-bottom: 30px;
+            border-collapse: collapse;
+        }
+
+        .invoice-meta-table td {
+            padding: 8px;
+            vertical-align: top;
+        }
+
+        .invoice-meta-table .left-section {
+            width: 50%;
+            text-align: left;
+        }
+
+        .invoice-meta-table .right-section {
+            width: 50%;
+            text-align: right;
+        }
+
+        .meta-label {
+            font-weight: bold;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .meta-value {
+            font-size: 14px;
+            color: #000;
+            margin-top: 2px;
+        }
+
+        .parties-table {
+            width: 100%;
+            margin-bottom: 30px;
+            border-collapse: collapse;
+        }
+
+        .parties-table td {
+            padding: 15px 8px;
+            vertical-align: top;
+        }
+
+        .parties-table .left-section {
+            width: 50%;
+            border-right: 1px solid #eee;
+        }
+
+        .parties-table .right-section {
+            width: 50%;
+        }
+
+        .party-title {
+            font-weight: bold;
+            font-size: 14px;
+            color: #000;
+            margin-bottom: 8px;
+        }
+
+        .party-details {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .invoice-details {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .details-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .details-label {
+            color: #666;
+        }
+
+        .details-value {
+            font-weight: bold;
+            color: #000;
+        }
+
+        .total-row {
+            border-top: 2px solid #000;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .total-row .details-value {
+            font-size: 16px;
+        }
+
+        .description-section {
+            margin-bottom: 30px;
+        }
+
+        .description-content {
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .invoice-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+
+        @media print {
+            .centered-content {
+                padding: 0;
+                box-shadow: none;
+            }
+            
+            body {
+                background: white;
+            }
+        }
+        
+        /* Party logo styles */
+        .party-logo {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .party-logo-container {
+            width: 40px;
+            height: 40px;
+            background-color: #f3f4f6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .party-logo-container.logo-padding {
+            padding: 4px;
+        }
+        .party-logo-image {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+    </style>
+{% endblock extra_css %}
+{% block content %}
+    <div class="centered-content">
+        <!-- Invoice Title -->
+        <div class="invoice-header">
+            <h1 class="invoice-title">TAX INVOICE</h1>
+        </div>
+        <!-- Project and Invoice Details Table -->
+        <table class="invoice-meta-table">
+            <tr>
+                <td class="left-section">
+                    <div class="meta-label">Project Details</div>
+                    <div class="meta-value">
+                        <div class="party-logo">
+                            {% if project.logo %}
+                                <div class="party-logo-container logo-padding">
+                                    <img src="{{ project.logo.url }}"
+                                         alt="{{ project.name }}"
+                                         width="64"
+                                         height="64"
+                                         class="party-logo-image">
+                                </div>
+                            {% else %}
+                                <div class="party-logo-container">
+                                    <svg width="24"
+                                         height="24"
+                                         viewBox="0 0 24 24"
+                                         fill="none"
+                                         stroke="#6b7280"
+                                         stroke-width="1.5">
+                                        <path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5m-4 0h4" />
+                                    </svg>
+                                </div>
+                            {% endif %}
+                            <strong>{{ project.name }}</strong>
+                        </div>
+                        <br>
+                        {% if project.contract_number %}
+                            Contract No: {{ project.contract_number }}
+                            <br>
+                        {% endif %}
+                        {% if project.description %}
+                            {{ project.description|truncatewords:20 }}
+                            <br>
+                        {% endif %}
+                    </div>
+                </td>
+                <td class="right-section">
+                    <div class="meta-label">Invoice Details</div>
+                    <div class="meta-value">
+                        <strong>Invoice No:</strong> INV-{{ payment_certificate.certificate_number }}-{{ payment_certificate.pk|slice:"-4:" }}
+                        <br>
+                        <strong>Date:</strong> {% now "d M Y" %}
+                        <br>
+                        <strong>Payment Certificate:</strong> #{{ payment_certificate.certificate_number }}
+                        <br>
+                        <strong>Period:</strong> {{ payment_certificate.created_at|date:"F Y" }}
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <!-- Contractor and Client Details -->
+        <table class="parties-table">
+            <tr>
+                <td class="left-section">
+                    <div class="party-title">CONTRACTOR DETAILS</div>
+                    <div class="party-details">
+                        <div class="party-logo">
+                            {% if project.contractor.logo %}
+                                <div class="party-logo-container logo-padding">
+                                    <img src="{{ project.contractor.logo.url }}"
+                                         alt="{{ project.contractor.name }}"
+                                         width="64"
+                                         height="64"
+                                         class="party-logo-image">
+                                </div>
+                            {% else %}
+                                <div class="party-logo-container">
+                                    <svg width="24"
+                                         height="24"
+                                         viewBox="0 0 24 24"
+                                         fill="none"
+                                         stroke="#6b7280"
+                                         stroke-width="1.5">
+                                        <path d="M3 21h18M3 10h18M3 7l9-4 9 4M5 21V10m14 11V10M8 21v-6m8 6v-6" />
+                                    </svg>
+                                </div>
+                            {% endif %}
+                            <strong>{{ project.contractor.name }}</strong>
+                        </div>
+                        <br>
+                        {% if project.contractor.registration_number %}
+                            Reg No: {{ project.contractor.registration_number }}
+                            <br>
+                        {% endif %}
+                        {% if project.contractor.vat_number %}
+                            VAT No: {{ project.contractor.vat_number }}
+                            <br>
+                        {% endif %}
+                        {% if project.contractor.bank_name %}
+                            Bank: {{ project.contractor.bank_name }}
+                            <br>
+                        {% endif %}
+                        {% if project.contractor.bank_account_name %}
+                            Acc Name: {{ project.contractor.bank_account_name }}
+                            <br>
+                        {% endif %}
+                        {% if project.contractor.bank_account_number %}
+                            Acc No: {{ project.contractor.bank_account_number }}
+                            <br>
+                        {% endif %}
+                        {% if project.contractor.bank_swift_code %}
+                            SWIFT Code: {{ project.contractor.bank_swift_code }}
+                            <br>
+                        {% endif %}
+                    </div>
+                </td>
+                <td class="right-section">
+                    <div class="party-title">CLIENT DETAILS</div>
+                    <div class="party-details">
+                        <div class="party-logo">
+                            {% if project.client.logo %}
+                                <div class="party-logo-container logo-padding">
+                                    <img src="{{ project.client.logo.url }}"
+                                         alt="{{ project.client.name }}"
+                                         width="64"
+                                         height="64"
+                                         class="party-logo-image">
+                                </div>
+                            {% else %}
+                                <div class="party-logo-container">
+                                    <svg width="24"
+                                         height="24"
+                                         viewBox="0 0 24 24"
+                                         fill="none"
+                                         stroke="#6b7280"
+                                         stroke-width="1.5">
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M8.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM20 8v6M23 11h-6" />
+                                    </svg>
+                                </div>
+                            {% endif %}
+                            <strong>{{ project.client.name }}</strong>
+                        </div>
+                        <br>
+                        {% if project.client.registration_number %}
+                            Reg No: {{ project.client.registration_number }}
+                            <br>
+                        {% endif %}
+                        {% if project.client.vat_number %}
+                            VAT No: {{ project.client.vat_number }}
+                            <br>
+                        {% endif %}
+                        {% if project.client.address %}
+                            {{ project.client.address }}
+                            <br>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <!-- Invoice Details Section -->
+        <div class="description-section w-100 bg-gray-100 rounded-lg p-2">
+            <div class="meta-label">Invoice Details</div>
+            <table class="w-full">
+                <tr>
+                    <td class="text-left align-top w-3/5">
+                        <p>
+                            <strong>Payment Certificate #{{ payment_certificate.certificate_number }}</strong>
+                        </p>
+                        <p>Certificate for the period {{ payment_certificate.created_at|date:"F Y" }}</p>
+                        {% if payment_certificate.notes %}<p>{{ payment_certificate.notes }}</p>{% endif %}
+                    </td>
+                    <td class="text-right align-top w-2/5">
+                        <table class="w-full">
+                            <tr>
+                                <td class="text-left py-1">
+                                    <strong>Subtotal (Excl VAT):</strong>
+                                </td>
+                                <td class="text-right py-1">R {{ payment_certificate.contract_current_claim_total|floatformat:2|intcomma }}</td>
+                            </tr>
+                            {% if project.vat %}
+                                {% define payment_certificate.contract_current_claim_total|mul:vat_rate as vat_amount %}
+                                <tr>
+                                    <td class="text-left py-1">
+                                        <strong>VAT ({{ vat_rate|mul:100 }}%):</strong>
+                                    </td>
+                                    <td class="text-right py-1">R {{ vat_amount|floatformat:2|intcomma }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-left py-2 pt-3 border-t-2 border-gray-900">
+                                        <strong>TOTAL INVOICE VALUE:</strong>
+                                    </td>
+                                    <td class="text-right py-2 pt-3 border-t-2 border-gray-900">
+                                        <strong>R {{ payment_certificate.contract_current_claim_total|add:vat_amount|floatformat:2|intcomma }}</strong>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td class="text-left py-2 pt-3 border-t-2 border-gray-900">
+                                        <strong>TOTAL:</strong>
+                                    </td>
+                                    <td class="text-right py-2 pt-3 border-t-2 border-gray-900">
+                                        <strong>R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}</strong>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <!-- Footer Note -->
+        <div class="invoice-footer">
+            <p>Please remit payment to the bank account details above within 30 days of invoice date.</p>
+            <p>This is a computer-generated invoice and does not require a signature.</p>
+        </div>
+    </div>
+{% endblock content %}

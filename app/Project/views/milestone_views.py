@@ -3,43 +3,89 @@
 from typing import Any
 
 from django.contrib import messages
-from django.http import Http404, HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
-from django.views.generic import CreateView, DeleteView, UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, UpdateView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.forms import MilestoneForm
-from app.Project.models import Milestone, Project
+from app.Project.models import Milestone
+from app.Project.models.project_roles import Role
 
 
-class MilestoneMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
-    """Mixin for Milestone views."""
+class MilestoneDetailView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, DetailView):
+    """View a single milestone."""
 
-    permissions = ["contractor"]
+    model = Milestone
+    template_name = "forecasts/milestone_detail.html"
+    context_object_name = "milestone"
+    roles = [Role.USER]
+    project_slug = "project_pk"
+
+    def get_queryset(self):
+        """Filter milestones by project."""
+        return Milestone.objects.filter(project=self.get_project())
+
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        milestone = self.get_object()
+        return [
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
+            {
+                "title": project.name,
+                "url": reverse("project:project-management", kwargs={"pk": project.pk}),
+            },
+            {
+                "title": "Forecasts",
+                "url": reverse(
+                    "project:forecast-hub", kwargs={"project_pk": project.pk}
+                ),
+            },
+            {
+                "title": "Time Forecast",
+                "url": reverse(
+                    "project:time-forecast", kwargs={"project_pk": project.pk}
+                ),
+            },
+            {"title": milestone.name, "url": None},
+        ]
+
+
+class MilestoneCreateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, CreateView):
+    """Create a new milestone for a project."""
+
     model = Milestone
     form_class = MilestoneForm
-    project: Project
+    template_name = "forecasts/milestone_form.html"
+    roles = [Role.USER]
+    project_slug = "project_pk"
 
-    def get_project(self) -> Project:
-        """Get the project for this view."""
-        if hasattr(self, "project") and self.project:
-            return self.project
-
-        project_pk = self.kwargs.get("project_pk")
-        try:
-            self.project = Project.objects.get(pk=project_pk, users=self.request.user)
-            return self.project
-        except Project.DoesNotExist as err:
-            raise Http404(
-                "Project not found or you don't have permission to access it."
-            ) from err
+    def form_valid(self, form: MilestoneForm) -> HttpResponse:
+        form.instance.project = self.get_project()
+        messages.success(self.request, "Milestone created successfully.")
+        return super().form_valid(form)
 
     def get_success_url(self) -> str:
         return reverse(
             "project:time-forecast", kwargs={"project_pk": self.get_project().pk}
         )
+
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "project": self.get_project(),
+                "action": "Add",
+            }
+        )
+        return context
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
@@ -61,121 +107,134 @@ class MilestoneMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
                     "project:time-forecast", kwargs={"project_pk": project.pk}
                 ),
             },
+            {"title": "Add Milestone", "url": None},
         ]
 
 
-class MilestoneCreateView(MilestoneMixin, CreateView):
-    """Create a new milestone for a project."""
-
-    template_name = "forecasts/milestone_form.html"
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        breadcrumbs = super().get_breadcrumbs()
-        breadcrumbs.append(BreadcrumbItem(title="Add Milestone", url=None))
-        return breadcrumbs
-
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        project = self.get_project()
-        context.update(
-            {
-                "project": project,
-                "action": "Add",
-            }
-        )
-        return context
-
-    def form_valid(self, form: MilestoneForm) -> HttpResponse:
-        form.instance.project = self.get_project()
-        messages.success(self.request, "Milestone created successfully.")
-        return super().form_valid(form)
-
-
-class MilestoneUpdateView(MilestoneMixin, UpdateView):
+class MilestoneUpdateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, UpdateView):
     """Update an existing milestone."""
 
+    model = Milestone
+    form_class = MilestoneForm
     template_name = "forecasts/milestone_form.html"
+    roles = [Role.USER]
+    project_slug = "project_pk"
 
-    def get_object(self, queryset=None) -> Milestone:
-        self.get_queryset() if not queryset else None
-        project = self.get_project()
-        milestone_pk = self.kwargs.get("pk")
-        try:
-            return Milestone.objects.get(pk=milestone_pk, project=project)
-        except Milestone.DoesNotExist as err:
-            raise Http404("Milestone not found.") from err
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        breadcrumbs = super().get_breadcrumbs()
-        breadcrumbs.append(
-            BreadcrumbItem(title=f"Edit: {self.get_object().name}", url=None)
-        )
-        return breadcrumbs
-
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        project = self.get_project()
-        context.update(
-            {
-                "project": project,
-                "action": "Edit",
-            }
-        )
-        return context
+    def get_queryset(self):
+        """Filter milestones by project."""
+        return Milestone.objects.filter(project=self.get_project())
 
     def form_valid(self, form: MilestoneForm) -> HttpResponse:
         messages.success(self.request, "Milestone updated successfully.")
         return super().form_valid(form)
 
+    def get_success_url(self) -> str:
+        return reverse(
+            "project:time-forecast", kwargs={"project_pk": self.get_project().pk}
+        )
 
-class MilestoneDeleteView(MilestoneMixin, DeleteView):
-    """Delete a milestone."""
-
-    template_name = "forecasts/milestone_confirm_delete.html"
-
-    def get_object(self, queryset=None) -> Milestone:
-        if not queryset:
-            self.get_queryset()
-        project = self.get_project()
-        milestone_pk = self.kwargs.get("pk")
-        try:
-            return Milestone.objects.get(pk=milestone_pk, project=project)
-        except Milestone.DoesNotExist as err:
-            raise Http404("Milestone not found.") from err
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "project": self.get_project(),
+                "action": "Edit",
+            }
+        )
+        return context
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        breadcrumbs = super().get_breadcrumbs()
-        breadcrumbs.append(
-            BreadcrumbItem(title=f"Delete: {self.get_object().name}", url=None)
-        )
-        return breadcrumbs
+        project = self.get_project()
+        milestone = self.get_object()
+        return [
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
+            {
+                "title": project.name,
+                "url": reverse("project:project-management", kwargs={"pk": project.pk}),
+            },
+            {
+                "title": "Forecasts",
+                "url": reverse(
+                    "project:forecast-hub", kwargs={"project_pk": project.pk}
+                ),
+            },
+            {
+                "title": "Time Forecast",
+                "url": reverse(
+                    "project:time-forecast", kwargs={"project_pk": project.pk}
+                ),
+            },
+            {"title": f"Edit: {milestone.name}", "url": None},
+        ]
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
-        return context
+
+class MilestoneDeleteView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, DeleteView):
+    """Delete a milestone."""
+
+    model = Milestone
+    template_name = "forecasts/milestone_confirm_delete.html"
+    context_object_name = "milestone"
+    roles = [Role.USER]
+    project_slug = "project_pk"
+
+    def get_queryset(self):
+        """Filter milestones by project."""
+        return Milestone.objects.filter(project=self.get_project())
 
     def form_valid(self, form: Any) -> HttpResponse:
         messages.success(self.request, "Milestone deleted successfully.")
         return super().form_valid(form)
 
+    def get_success_url(self) -> str:
+        return reverse(
+            "project:time-forecast", kwargs={"project_pk": self.get_project().pk}
+        )
 
-class MilestoneCompleteView(MilestoneMixin, UpdateView):
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        milestone = self.get_object()
+        return [
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
+            {
+                "title": project.name,
+                "url": reverse("project:project-management", kwargs={"pk": project.pk}),
+            },
+            {
+                "title": "Forecasts",
+                "url": reverse(
+                    "project:forecast-hub", kwargs={"project_pk": project.pk}
+                ),
+            },
+            {
+                "title": "Time Forecast",
+                "url": reverse(
+                    "project:time-forecast", kwargs={"project_pk": project.pk}
+                ),
+            },
+            {"title": f"Delete: {milestone.name}", "url": None},
+        ]
+
+
+class MilestoneCompleteView(
+    UserHasProjectRoleGenericMixin, BreadcrumbMixin, UpdateView
+):
     """Mark a milestone as complete."""
 
+    model = Milestone
     http_method_names = ["post"]
+    roles = [Role.USER]
+    project_slug = "project_pk"
 
-    def get_object(self, queryset=None) -> Milestone:
-        if not queryset:
-            self.get_queryset()
-        project = self.get_project()
-        milestone_pk = self.kwargs.get("pk")
-        try:
-            return Milestone.objects.get(pk=milestone_pk, project=project)
-        except Milestone.DoesNotExist as err:
-            raise Http404("Milestone not found.") from err
+    def get_queryset(self):
+        """Filter milestones by project."""
+        return Milestone.objects.filter(project=self.get_project())
 
-    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+    def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         from django.utils import timezone
 
         milestone = self.get_object()
@@ -183,4 +242,8 @@ class MilestoneCompleteView(MilestoneMixin, UpdateView):
         milestone.actual_date = timezone.now().date()
         milestone.save()
         messages.success(request, f"Milestone '{milestone.name}' marked as complete.")
-        return redirect(self.get_success_url())
+        return redirect(
+            reverse(
+                "project:time-forecast", kwargs={"project_pk": self.get_project().pk}
+            )
+        )

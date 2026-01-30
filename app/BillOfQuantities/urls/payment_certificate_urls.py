@@ -64,28 +64,28 @@ payment_certificate_urls = [
         name="payment-certificate-invoice",
     ),
     path(
-        "project/<int:project_pk>/payment-certificates/<int:pk>/payment-statement/",
+        "project/<int:project_pk>/payment-certificates/payment-statement/",
         payment_certificate_payment_views.PaymentCertificatePaymentStatementView.as_view(),
         name="payment-certificate-payment-statement",
     ),
     path(
-        "project/<int:project_pk>/payment-certificates/<int:pk>/email-statement/",
+        "project/<int:project_pk>/payment-certificates/email-statement/",
         payment_certificate_payment_views.EmailPaymentStatementView.as_view(),
         name="email-payment-statement",
     ),
     # Payment CRUD URLs
     path(
-        "project/<int:project_pk>/payment-certificates/<int:payment_certificate_pk>/payments/new/",
+        "project/<int:project_pk>/payment-certificates/payments/new/",
         payment_certificate_payment_views.CreatePaymentCertificatePaymentView.as_view(),
         name="create-payment-certificate-payment",
     ),
     path(
-        "project/<int:project_pk>/payment-certificates/<int:payment_certificate_pk>/payments/<int:pk>/edit/",
+        "project/<int:project_pk>/payment-certificates/payments/<int:pk>/edit/",
         payment_certificate_payment_views.UpdatePaymentCertificatePaymentView.as_view(),
         name="update-payment-certificate-payment",
     ),
     path(
-        "project/<int:project_pk>/payment-certificates/<int:payment_certificate_pk>/payments/<int:pk>/delete/",
+        "project/<int:project_pk>/payment-certificates/payments/<int:pk>/delete/",
         payment_certificate_payment_views.DeletePaymentCertificatePaymentView.as_view(),
         name="delete-payment-certificate-payment",
     ),

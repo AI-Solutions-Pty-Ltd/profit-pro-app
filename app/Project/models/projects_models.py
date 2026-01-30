@@ -13,7 +13,7 @@ from app.BillOfQuantities.models.structure_models import LineItem
 from app.core.Utilities.image_resize import ImageResize
 from app.core.Utilities.models import BaseModel, sum_queryset
 from app.Project.models.category_models import ProjectCategory
-from app.Project.models.client_models import Client
+from app.Project.models.company_models import Company
 
 if TYPE_CHECKING:
     from app.Account.models import Account
@@ -168,11 +168,18 @@ class Project(BaseModel):
     )
 
     client = models.ForeignKey(
-        Client,
+        Company,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="projects",
+        related_name="client_projects",
+    )
+    contractor = models.ForeignKey(
+        Company,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contractor_projects",
     )
     category = models.ForeignKey(
         ProjectCategory,
@@ -181,26 +188,6 @@ class Project(BaseModel):
         blank=True,
         related_name="projects",
         help_text="Project category (e.g., Education, Health, Roads)",
-    )
-
-    # Banking Details
-    bank_name = models.CharField(
-        max_length=255, blank=True, help_text="Bank name for payments"
-    )
-    bank_account_name = models.CharField(
-        max_length=255, blank=True, help_text="Account holder name"
-    )
-    bank_account_number = models.CharField(
-        max_length=50, blank=True, help_text="Bank account number"
-    )
-    bank_branch_code = models.CharField(
-        max_length=20, blank=True, help_text="Bank branch code"
-    )
-    bank_swift_code = models.CharField(
-        max_length=20, blank=True, help_text="SWIFT/BIC code for international payments"
-    )
-    vat_number = models.CharField(
-        max_length=50, blank=True, help_text="VAT/Tax registration number"
     )
 
     # Payment Terms

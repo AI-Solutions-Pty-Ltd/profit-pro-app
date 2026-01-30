@@ -4,6 +4,7 @@ from datetime import datetime
 from io import BytesIO
 from typing import Literal
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.template.loader import get_template, render_to_string
 from pypdf import PdfReader, PdfWriter
@@ -74,6 +75,7 @@ def generate_payment_certificate_pdf(context) -> ContentFile:
     """
     # add current date to context
     context["now"] = datetime.now()
+    context["vat_rate"] = settings.VAT_RATE
     front_page_template = get_template("pdf_templates/1-front-page.html")
     line_items_template = get_template("pdf_templates/2-line-items.html")
 

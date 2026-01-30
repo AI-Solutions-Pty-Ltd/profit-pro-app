@@ -32,6 +32,9 @@ class UserHasGroupGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
 class UserHasProjectRoleGenericMixin(UserPassesTestMixin, LoginRequiredMixin):
     """Generic mixin for user project role permissions."""
 
+    roles: list[Role] = []
+    project_slug: str | None = None
+
     def dispatch(self, request, *args, **kwargs):
         """Override dispatch to ensure LoginRequiredMixin runs first."""
         # First check authentication (LoginRequiredMixin)
@@ -47,9 +50,6 @@ class UserHasProjectRoleGenericMixin(UserPassesTestMixin, LoginRequiredMixin):
         # Then run the normal dispatch which will call test_func
         dispatch = super().dispatch(request, *args, **kwargs)
         return dispatch
-
-    roles: list[Role] = []
-    project_slug: str | None = None
 
     def get_project(self) -> Project:
         kwargs = self.kwargs  # type: ignore
@@ -84,6 +84,12 @@ class UserHasProjectRoleGenericMixin(UserPassesTestMixin, LoginRequiredMixin):
             f"Page restricted to {self.roles}.",
         )
         return redirect("home")
+
+    def get_context_data(self, **kwargs):
+        """Add project to context."""
+        context = super().get_context_data(**kwargs)  # type: ignore
+        context["project"] = self.get_project()
+        return context
 
 
 def unauthenticated_user():

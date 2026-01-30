@@ -4,7 +4,6 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from django.http import Http404
 from django.urls import reverse
 from django.views.generic import TemplateView
 
@@ -22,24 +21,7 @@ class ForecastHubMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
 
     roles = [Role.FORECAST_HUB, Role.ADMIN, Role.USER]
     project: Project
-
-    @property
-    def project_slug(self):
-        return "project_pk"
-
-    def get_project(self) -> Project:
-        """Get the project for this view."""
-        if hasattr(self, "project") and self.project:
-            return self.project
-
-        project_pk = self.kwargs.get("project_pk")
-        try:
-            self.project = Project.objects.get(pk=project_pk, users=self.request.user)
-            return self.project
-        except Project.DoesNotExist as err:
-            raise Http404(
-                "Project not found or you don't have permission to access it."
-            ) from err
+    project_slug = "project_pk"
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()

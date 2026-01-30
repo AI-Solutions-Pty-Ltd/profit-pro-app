@@ -16,13 +16,13 @@ from app.core.Utilities.permissions import (
     UserHasGroupGenericMixin,
     UserHasProjectRoleGenericMixin,
 )
-from app.Project.models import Client, Project, ProjectRole, Role, Signatories
+from app.Project.models import Company, Project, ProjectRole, Role, Signatories
 
 
 class ClientRegisterView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     """Client Register - List all clients that can be assigned to projects."""
 
-    model = Client
+    model = Company
     template_name = "portfolio/registers/client_register.html"
     context_object_name = "clients"
     permissions = ["consultant", "contractor"]
@@ -44,13 +44,13 @@ class ClientRegisterView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
             ),
         ]
 
-    def get_queryset(self: "ClientRegisterView") -> QuerySet[Client]:
+    def get_queryset(self: "ClientRegisterView") -> QuerySet[Company]:
         """Get all clients for the user's projects."""
         # Get all projects owned by this user
         user_projects = Project.objects.filter(users=self.request.user)
         # Get clients associated with those projects
         return (
-            Client.objects.filter(projects__in=user_projects)
+            Company.objects.filter(type=Company.Type.CLIENT, projects__in=user_projects)
             .distinct()
             .annotate(project_count=Count("projects"))
             .order_by("user__first_name")
@@ -141,7 +141,7 @@ class SignatoriesRegisterView(UserHasGroupGenericMixin, BreadcrumbMixin, ListVie
 class ClientDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailView):
     """Client Detail - Show client with their projects and signatories."""
 
-    model = Client
+    model = Company
     template_name = "portfolio/registers/client_detail.html"
     context_object_name = "client"
     permissions = ["consultant", "contractor"]
@@ -165,10 +165,12 @@ class ClientDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailView):
         ]
 
     def get_object(
-        self, queryset: models.query.QuerySet[Client] | None = None
-    ) -> Client:
+        self, queryset: models.query.QuerySet[Company] | None = None
+    ) -> Company:
         """Get client and verify user has access."""
-        client = get_object_or_404(Client, pk=self.kwargs["pk"])
+        client = get_object_or_404(
+            Company, type=Company.Type.CLIENT, pk=self.kwargs["pk"]
+        )
         # Verify user has access to at least one project with this client
         user_projects = Project.objects.filter(users=self.request.user, client=client)
         if not user_projects.exists():

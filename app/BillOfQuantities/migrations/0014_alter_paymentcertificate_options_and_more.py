@@ -4,19 +4,22 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('BillOfQuantities', '0013_paymentcertificatepayment'),
+        ("BillOfQuantities", "0013_paymentcertificatepayment"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='paymentcertificate',
-            options={'ordering': ['-certificate_number'], 'verbose_name': 'Payment Certificate', 'verbose_name_plural': 'Payment Certificates'},
+            name="paymentcertificate",
+            options={
+                "ordering": ["-certificate_number"],
+                "verbose_name": "Payment Certificate",
+                "verbose_name_plural": "Payment Certificates",
+            },
         ),
         migrations.AlterField(
-            model_name='paymentcertificate',
-            name='certificate_number',
+            model_name="paymentcertificate",
+            name="certificate_number",
             field=models.IntegerField(default=1),
         ),
     ]

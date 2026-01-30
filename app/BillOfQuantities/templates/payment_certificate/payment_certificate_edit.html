@@ -33,6 +33,7 @@
         <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
             <div class="flex items-center justify-between">
                 <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
+                <h2 class="text-xl font-bold text-gray-900">{{ payment_certificate.certificate_number }}</h2>
             </div>
         </div>
         <!-- Content -->
@@ -153,6 +154,127 @@
                     </div>
                 {% endif %}
             </form>
+        </div>
+    </div>
+    <!-- Photos and Workings Section -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden mb-4">
+        <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+            <h2 class="text-lg font-semibold text-gray-900">Photos & Working Documents</h2>
+            <p class="mt-1 text-sm text-gray-600">Upload supporting photos and working documents</p>
+        </div>
+        <div class="px-6 py-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Photos Section -->
+                <div>
+                    <h3 class="text-md font-medium text-gray-900 mb-4">Photos</h3>
+                    <!-- Upload Form -->
+                    <form method="post" enctype="multipart/form-data" class="mb-4">
+                        {% csrf_token %}
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Photo Title</label>
+                                {{ photo_form.title }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Photo File</label>
+                                {{ photo_form.image }}
+                            </div>
+                            <button type="submit"
+                                    name="upload_photo"
+                                    class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                                {% heroicon_outline "photo" size="16" %}
+                                Upload Photo
+                            </button>
+                        </div>
+                    </form>
+                    <!-- Photos List -->
+                    {% if photos %}
+                        <div class="space-y-2">
+                            {% for photo in photos %}
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-900">{{ photo.title }}</p>
+                                        <p class="text-xs text-gray-500">Uploaded: {{ photo.created_at|date:"M d, Y H:i" }}</p>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <a href="{{ photo.image.url }}"
+                                           target="_blank"
+                                           class="text-indigo-600 hover:text-indigo-900">
+                                            {% heroicon_outline "eye" size="16" %}
+                                        </a>
+                                        <form method="post" class="inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="delete_photo" value="{{ photo.id }}">
+                                            <button type="submit"
+                                                    class="text-red-600 hover:text-red-900"
+                                                    onclick="return confirm('Delete this photo?')">
+                                                {% heroicon_outline "trash" size="16" %}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-sm text-gray-500">No photos uploaded yet.</p>
+                    {% endif %}
+                </div>
+                <!-- Working Documents Section -->
+                <div>
+                    <h3 class="text-md font-medium text-gray-900 mb-4">Workings/Calculations</h3>
+                    <!-- Upload Form -->
+                    <form method="post" enctype="multipart/form-data" class="mb-4">
+                        {% csrf_token %}
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Document Title</label>
+                                {{ working_form.title }}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Document File</label>
+                                {{ working_form.file }}
+                            </div>
+                            <button type="submit"
+                                    name="upload_working"
+                                    class="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                                {% heroicon_outline "document" size="16" %}
+                                Upload Document
+                            </button>
+                        </div>
+                    </form>
+                    <!-- Documents List -->
+                    {% if workings %}
+                        <div class="space-y-2">
+                            {% for working in workings %}
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-900">{{ working.title }}</p>
+                                        <p class="text-xs text-gray-500">Uploaded: {{ working.created_at|date:"M d, Y H:i" }}</p>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <a href="{{ working.file.url }}"
+                                           target="_blank"
+                                           class="text-indigo-600 hover:text-indigo-900">
+                                            {% heroicon_outline "arrow-down-tray" size="16" %}
+                                        </a>
+                                        <form method="post" class="inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="delete_working" value="{{ working.id }}">
+                                            <button type="submit"
+                                                    class="text-red-600 hover:text-red-900"
+                                                    onclick="return confirm('Delete this document?')">
+                                                {% heroicon_outline "trash" size="16" %}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-sm text-gray-500">No working documents uploaded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
     <form id="payment-certificate-form" method="post">

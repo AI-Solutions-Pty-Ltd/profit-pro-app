@@ -23,6 +23,8 @@ from .ledger_models import (
 from .payment_certificate_models import (
     ActualTransaction,
     PaymentCertificate,
+    PaymentCertificatePhoto,
+    PaymentCertificateWorking,
 )
 from .schedule_models import (
     ScheduleForecast,
@@ -45,6 +47,8 @@ __all__ = [
     # Payment certificate models
     "ActualTransaction",
     "PaymentCertificate",
+    "PaymentCertificatePhoto",
+    "PaymentCertificateWorking",
     # Forecast models
     "Forecast",
     "ForecastTransaction",

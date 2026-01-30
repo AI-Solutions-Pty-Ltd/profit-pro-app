@@ -21,28 +21,27 @@ from app.BillOfQuantities.models import (
     SpecialItemTransaction,
 )
 from app.core.Utilities.forms import styled_date_input
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
-from app.Project.models import Project
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.Project.models import Project, Role
 
 # =============================================================================
 # Advance Payment Views
 # =============================================================================
 
 
-class AdvancePaymentListView(UserHasGroupGenericMixin, ListView):
+class AdvancePaymentListView(UserHasProjectRoleGenericMixin, ListView):
     """List all advance payments for a project."""
 
     model = AdvancePayment
     template_name = "ledger/advance_payment_list.html"
     context_object_name = "transactions"
-    permissions = ["contractor"]
+    roles = [Role.USER]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -65,10 +64,29 @@ class AdvancePaymentListView(UserHasGroupGenericMixin, ListView):
         # Get ledger with running balances
         transactions = list(self.get_queryset())
         running_balance = Decimal("0.00")
+        transactions_with_balance = []
         for txn in reversed(transactions):
             running_balance += txn.signed_amount
-            txn.running_balance = running_balance
-        context["transactions"] = transactions
+            # Create a dict with transaction data and running balance
+            txn_data = {
+                "id": txn.pk,
+                "transaction_type": txn.transaction_type,
+                "amount": txn.amount,
+                "description": txn.description,
+                "date": txn.date,
+                "payment_certificate": txn.payment_certificate,
+                "recovery_method": txn.recovery_method,
+                "recovery_percentage": txn.recovery_percentage,
+                "guarantee_reference": txn.guarantee_reference,
+                "guarantee_expiry": txn.guarantee_expiry,
+                "captured_by": txn.captured_by,
+                "created_at": txn.created_at,
+                "signed_amount": txn.signed_amount,
+                "running_balance": running_balance,
+                "instance": txn,  # Keep reference to original instance for template access
+            }
+            transactions_with_balance.append(txn_data)
+        context["transactions"] = transactions_with_balance
 
         # Project advance payment settings
         context["advance_percentage"] = project.advance_payment_percentage
@@ -77,7 +95,7 @@ class AdvancePaymentListView(UserHasGroupGenericMixin, ListView):
         return context
 
 
-class AdvancePaymentCreateView(UserHasGroupGenericMixin, CreateView):
+class AdvancePaymentCreateView(UserHasProjectRoleGenericMixin, CreateView):
     """Create a new advance payment transaction."""
 
     class CreateForm(forms.ModelForm):
@@ -111,7 +129,7 @@ class AdvancePaymentCreateView(UserHasGroupGenericMixin, CreateView):
 
     model = AdvancePayment
     template_name = "ledger/advance_payment_form.html"
-    permissions = ["contractor"]
+    roles = [Role.USER]
     form_class = CreateForm
 
     def get_project(self):
@@ -119,7 +137,6 @@ class AdvancePaymentCreateView(UserHasGroupGenericMixin, CreateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_form_kwargs(self):
@@ -152,7 +169,7 @@ class AdvancePaymentCreateView(UserHasGroupGenericMixin, CreateView):
         return context
 
 
-class AdvancePaymentUpdateView(UserHasGroupGenericMixin, UpdateView):
+class AdvancePaymentUpdateView(UserHasProjectRoleGenericMixin, UpdateView):
     """Update an advance payment transaction."""
 
     class UpdateForm(forms.ModelForm):
@@ -186,7 +203,7 @@ class AdvancePaymentUpdateView(UserHasGroupGenericMixin, UpdateView):
 
     model = AdvancePayment
     template_name = "ledger/advance_payment_form.html"
-    permissions = ["contractor"]
+    roles = [Role.USER]
     form_class = UpdateForm
 
     def get_project(self):
@@ -194,7 +211,6 @@ class AdvancePaymentUpdateView(UserHasGroupGenericMixin, UpdateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_form_kwargs(self):
@@ -232,19 +248,18 @@ class AdvancePaymentUpdateView(UserHasGroupGenericMixin, UpdateView):
         return context
 
 
-class AdvancePaymentDeleteView(UserHasGroupGenericMixin, DeleteView):
+class AdvancePaymentDeleteView(UserHasProjectRoleGenericMixin, DeleteView):
     """Delete an advance payment transaction."""
 
     model = AdvancePayment
     template_name = "ledger/advance_payment_confirm_delete.html"
-    permissions = ["contractor"]
+    roles = [Role.USER]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -282,20 +297,19 @@ class AdvancePaymentDeleteView(UserHasGroupGenericMixin, DeleteView):
 # =============================================================================
 
 
-class RetentionListView(UserHasGroupGenericMixin, ListView):
+class RetentionListView(UserHasProjectRoleGenericMixin, ListView):
     """List all retention transactions for a project."""
 
     model = Retention
     template_name = "ledger/retention_list.html"
     context_object_name = "transactions"
-    permissions = ["contractor"]
+    roles = [Role.USER]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -318,10 +332,27 @@ class RetentionListView(UserHasGroupGenericMixin, ListView):
         # Get ledger with running balances
         transactions = list(self.get_queryset())
         running_balance = Decimal("0.00")
+        transactions_with_balance = []
         for txn in reversed(transactions):
             running_balance += txn.signed_amount
-            txn.running_balance = running_balance
-        context["transactions"] = transactions
+            # Create a dict with transaction data and running balance
+            txn_data = {
+                "id": txn.pk,
+                "retention_type": txn.retention_type,
+                "transaction_type": txn.transaction_type,
+                "amount": txn.amount,
+                "description": txn.description,
+                "date": txn.date,
+                "payment_certificate": txn.payment_certificate,
+                "retention_percentage": txn.retention_percentage,
+                "captured_by": txn.captured_by,
+                "created_at": txn.created_at,
+                "signed_amount": txn.signed_amount,
+                "running_balance": running_balance,
+                "instance": txn,  # Keep reference to original instance for template access
+            }
+            transactions_with_balance.append(txn_data)
+        context["transactions"] = transactions_with_balance
 
         # Project retention settings
         context["retention_percentage"] = project.retention_percentage
@@ -330,7 +361,7 @@ class RetentionListView(UserHasGroupGenericMixin, ListView):
         return context
 
 
-class RetentionCreateView(UserHasGroupGenericMixin, CreateView):
+class RetentionCreateView(UserHasProjectRoleGenericMixin, CreateView):
     """Create a new retention transaction."""
 
     class CreateForm(forms.ModelForm):
@@ -361,7 +392,7 @@ class RetentionCreateView(UserHasGroupGenericMixin, CreateView):
 
     model = Retention
     template_name = "ledger/retention_form.html"
-    permissions = ["contractor"]
+    roles = [Role.USER]
     form_class = CreateForm
 
     def get_project(self):
@@ -369,7 +400,6 @@ class RetentionCreateView(UserHasGroupGenericMixin, CreateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_form_kwargs(self):
@@ -400,7 +430,7 @@ class RetentionCreateView(UserHasGroupGenericMixin, CreateView):
         return context
 
 
-class RetentionUpdateView(UserHasGroupGenericMixin, UpdateView):
+class RetentionUpdateView(UserHasProjectRoleGenericMixin, UpdateView):
     """Update a retention transaction."""
 
     class UpdateForm(forms.ModelForm):
@@ -431,7 +461,7 @@ class RetentionUpdateView(UserHasGroupGenericMixin, UpdateView):
 
     model = Retention
     template_name = "ledger/retention_form.html"
-    permissions = ["contractor"]
+    roles = [Role.USER]
     form_class = UpdateForm
 
     def get_project(self):
@@ -439,7 +469,6 @@ class RetentionUpdateView(UserHasGroupGenericMixin, UpdateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_form_kwargs(self):
@@ -475,19 +504,18 @@ class RetentionUpdateView(UserHasGroupGenericMixin, UpdateView):
         return context
 
 
-class RetentionDeleteView(UserHasGroupGenericMixin, DeleteView):
+class RetentionDeleteView(UserHasProjectRoleGenericMixin, DeleteView):
     """Delete a retention transaction."""
 
     model = Retention
     template_name = "ledger/retention_confirm_delete.html"
-    permissions = ["contractor"]
+    roles = [Role.USER]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -518,25 +546,23 @@ class RetentionDeleteView(UserHasGroupGenericMixin, DeleteView):
         return context
 
 
-# =============================================================================
 # Materials on Site Views
 # =============================================================================
 
 
-class MaterialsOnSiteListView(UserHasGroupGenericMixin, ListView):
-    """List all materials on site for a project."""
+class MaterialsOnSiteListView(UserHasProjectRoleGenericMixin, ListView):
+    """List all materials on site transactions."""
 
     model = MaterialsOnSite
     template_name = "ledger/materials_list.html"
     context_object_name = "transactions"
-    permissions = ["contractor"]
+    roles = [Role.USER]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -559,15 +585,37 @@ class MaterialsOnSiteListView(UserHasGroupGenericMixin, ListView):
         # Get ledger with running balances
         transactions = list(self.get_queryset())
         running_balance = Decimal("0.00")
+        transactions_with_balance = []
         for txn in reversed(transactions):
             running_balance += txn.signed_amount
-            txn.running_balance = running_balance
-        context["transactions"] = transactions
+            # Create a dict with transaction data and running balance
+            txn_data = {
+                "id": txn.pk,
+                "transaction_type": txn.transaction_type,
+                "amount": txn.amount,
+                "description": txn.description,
+                "date": txn.date,
+                "payment_certificate": txn.payment_certificate,
+                "material_status": txn.material_status,
+                "material_description": txn.material_description,
+                "quantity": txn.quantity,
+                "unit": txn.unit,
+                "unit_price": txn.unit_price,
+                "delivery_note_reference": txn.delivery_note_reference,
+                "storage_location": txn.storage_location,
+                "captured_by": txn.captured_by,
+                "created_at": txn.created_at,
+                "signed_amount": txn.signed_amount,
+                "running_balance": running_balance,
+                "instance": txn,  # Keep reference to original instance for template access
+            }
+            transactions_with_balance.append(txn_data)
+        context["transactions"] = transactions_with_balance
 
         return context
 
 
-class MaterialsOnSiteCreateView(UserHasGroupGenericMixin, CreateView):
+class MaterialsOnSiteCreateView(UserHasProjectRoleGenericMixin, CreateView):
     """Create a new materials on site transaction."""
 
     class CreateForm(forms.ModelForm):
@@ -603,7 +651,7 @@ class MaterialsOnSiteCreateView(UserHasGroupGenericMixin, CreateView):
 
     model = MaterialsOnSite
     template_name = "ledger/materials_form.html"
-    permissions = ["contractor"]
+    roles = [Role.USER]
     form_class = CreateForm
 
     def get_project(self):
@@ -611,7 +659,6 @@ class MaterialsOnSiteCreateView(UserHasGroupGenericMixin, CreateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_form_kwargs(self):
@@ -644,7 +691,7 @@ class MaterialsOnSiteCreateView(UserHasGroupGenericMixin, CreateView):
         return context
 
 
-class MaterialsOnSiteUpdateView(UserHasGroupGenericMixin, UpdateView):
+class MaterialsOnSiteUpdateView(UserHasProjectRoleGenericMixin, UpdateView):
     """Update a materials on site transaction."""
 
     class UpdateForm(forms.ModelForm):
@@ -680,7 +727,7 @@ class MaterialsOnSiteUpdateView(UserHasGroupGenericMixin, UpdateView):
 
     model = MaterialsOnSite
     template_name = "ledger/materials_form.html"
-    permissions = ["contractor"]
+    roles = [Role.USER]
     form_class = UpdateForm
 
     def get_project(self):
@@ -688,7 +735,6 @@ class MaterialsOnSiteUpdateView(UserHasGroupGenericMixin, UpdateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_form_kwargs(self):
@@ -726,19 +772,18 @@ class MaterialsOnSiteUpdateView(UserHasGroupGenericMixin, UpdateView):
         return context
 
 
-class MaterialsOnSiteDeleteView(UserHasGroupGenericMixin, DeleteView):
+class MaterialsOnSiteDeleteView(UserHasProjectRoleGenericMixin, DeleteView):
     """Delete a materials on site transaction."""
 
     model = MaterialsOnSite
     template_name = "ledger/materials_confirm_delete.html"
-    permissions = ["contractor"]
+    roles = [Role.USER]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -776,20 +821,19 @@ class MaterialsOnSiteDeleteView(UserHasGroupGenericMixin, DeleteView):
 # =============================================================================
 
 
-class EscalationListView(UserHasGroupGenericMixin, ListView):
-    """List all escalation transactions for a project."""
+class EscalationListView(UserHasProjectRoleGenericMixin, ListView):
+    """List all escalation transactions."""
 
     model = Escalation
     template_name = "ledger/escalation_list.html"
     context_object_name = "transactions"
-    permissions = ["contractor"]
+    roles = [Role.USER]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -812,15 +856,37 @@ class EscalationListView(UserHasGroupGenericMixin, ListView):
         # Get ledger with running balances
         transactions = list(self.get_queryset())
         running_balance = Decimal("0.00")
+        transactions_with_balance = []
         for txn in reversed(transactions):
             running_balance += txn.signed_amount
-            txn.running_balance = running_balance
-        context["transactions"] = transactions
+            # Create a dict with transaction data and running balance
+            txn_data = {
+                "id": txn.pk,
+                "escalation_type": txn.escalation_type,
+                "transaction_type": txn.transaction_type,
+                "amount": txn.amount,
+                "description": txn.description,
+                "date": txn.date,
+                "payment_certificate": txn.payment_certificate,
+                "base_date": txn.base_date,
+                "current_date": txn.current_date,
+                "base_index": txn.base_index,
+                "current_index": txn.current_index,
+                "escalation_factor": txn.escalation_factor,
+                "formula_reference": txn.formula_reference,
+                "captured_by": txn.captured_by,
+                "created_at": txn.created_at,
+                "signed_amount": txn.signed_amount,
+                "running_balance": running_balance,
+                "instance": txn,  # Keep reference to original instance for template access
+            }
+            transactions_with_balance.append(txn_data)
+        context["transactions"] = transactions_with_balance
 
         return context
 
 
-class EscalationCreateView(UserHasGroupGenericMixin, CreateView):
+class EscalationCreateView(UserHasProjectRoleGenericMixin, CreateView):
     """Create a new escalation transaction."""
 
     class CreateForm(forms.ModelForm):
@@ -858,7 +924,7 @@ class EscalationCreateView(UserHasGroupGenericMixin, CreateView):
 
     model = Escalation
     template_name = "ledger/escalation_form.html"
-    permissions = ["contractor"]
+    roles = [Role.USER]
     form_class = CreateForm
 
     def get_project(self):
@@ -866,7 +932,6 @@ class EscalationCreateView(UserHasGroupGenericMixin, CreateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_form_kwargs(self):
@@ -897,7 +962,7 @@ class EscalationCreateView(UserHasGroupGenericMixin, CreateView):
         return context
 
 
-class EscalationUpdateView(UserHasGroupGenericMixin, UpdateView):
+class EscalationUpdateView(UserHasProjectRoleGenericMixin, UpdateView):
     """Update an escalation transaction."""
 
     class UpdateForm(forms.ModelForm):
@@ -935,7 +1000,7 @@ class EscalationUpdateView(UserHasGroupGenericMixin, UpdateView):
 
     model = Escalation
     template_name = "ledger/escalation_form.html"
-    permissions = ["contractor"]
+    roles = [Role.USER]
     form_class = UpdateForm
 
     def get_project(self):
@@ -943,7 +1008,6 @@ class EscalationUpdateView(UserHasGroupGenericMixin, UpdateView):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_form_kwargs(self):
@@ -979,19 +1043,18 @@ class EscalationUpdateView(UserHasGroupGenericMixin, UpdateView):
         return context
 
 
-class EscalationDeleteView(UserHasGroupGenericMixin, DeleteView):
+class EscalationDeleteView(UserHasProjectRoleGenericMixin, DeleteView):
     """Delete an escalation transaction."""
 
     model = Escalation
     template_name = "ledger/escalation_confirm_delete.html"
-    permissions = ["contractor"]
+    roles = [Role.USER]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -1027,20 +1090,19 @@ class EscalationDeleteView(UserHasGroupGenericMixin, DeleteView):
 # =============================================================================
 
 
-class SpecialItemTransactionListView(UserHasGroupGenericMixin, ListView):
-    """List all special item transactions for a project."""
+class SpecialItemTransactionListView(UserHasProjectRoleGenericMixin, ListView):
+    """List all special item transactions."""
 
     model = SpecialItemTransaction
     template_name = "ledger/special_item_list.html"
     context_object_name = "transactions"
-    permissions = ["contractor"]
+    roles = [Role.USER]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            users=self.request.user,
         )
 
     def get_queryset(self):
@@ -1063,9 +1125,24 @@ class SpecialItemTransactionListView(UserHasGroupGenericMixin, ListView):
         # Get ledger with running balances
         transactions = list(self.get_queryset())
         running_balance = Decimal("0.00")
+        transactions_with_balance = []
         for txn in reversed(transactions):
             running_balance += txn.signed_amount
-            txn.running_balance = running_balance
-        context["transactions"] = transactions
+            # Create a dict with transaction data and running balance
+            txn_data = {
+                "id": txn.pk,
+                "transaction_type": txn.transaction_type,
+                "amount": txn.amount,
+                "description": txn.description,
+                "date": txn.date,
+                "payment_certificate": txn.payment_certificate,
+                "captured_by": txn.captured_by,
+                "created_at": txn.created_at,
+                "signed_amount": txn.signed_amount,
+                "running_balance": running_balance,
+                "instance": txn,  # Keep reference to original instance for template access
+            }
+            transactions_with_balance.append(txn_data)
+        context["transactions"] = transactions_with_balance
 
         return context

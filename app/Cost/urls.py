@@ -35,4 +35,10 @@ urlpatterns = [
         views.BillCostUpdateView.as_view(),
         name="bill-cost-update",
     ),
+    # Delete cost
+    path(
+        "project/<int:project_pk>/bill/<int:bill_pk>/cost/<int:cost_pk>/delete/",
+        views.BillCostDeleteView.as_view(),
+        name="bill-cost-delete",
+    ),
 ]
