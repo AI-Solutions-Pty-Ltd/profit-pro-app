@@ -85,7 +85,7 @@
                     <tr>
                         <td>
                             {% if project.vat %}
-                                {% define project.total_contract_value|mul:0.15 as vat_value %}
+                                {% define project.total_contract_value|mul:vat_rate as vat_value %}
                                 VAT 15%
                             {% else %}
                                 {% define 0 as vat_value %}

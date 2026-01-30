@@ -1,10 +1,11 @@
 {% extends "base_full.html" %}
 {% load humanize %}
+{% load heroicons %}
 {% block title %}
     Risk Management - {{ project.name }}
 {% endblock title %}
 {% block content %}
-    <!-- Header -->
+    <!-- Page Header -->
     <div class="bg-white shadow-sm rounded-lg mb-6">
         <div class="px-6 py-4">
             <div class="flex items-center justify-between">
@@ -12,18 +13,11 @@
                     <h1 class="text-2xl font-bold text-gray-900">Risk Management</h1>
                     <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <a href="{% url 'project:project-management' project.pk %}"
-                       class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900">
-                        {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
-                        Back
-                    </a>
-                    <a href="{% url 'project:risk-create' project.pk %}"
-                       class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded">
-                        {% heroicon_outline "plus" class="w-4 h-4 mr-1" %}
-                        Add Risk
-                    </a>
-                </div>
+                <a href="{% url 'project:risk-create' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_outline "plus" class="w-5 h-5 mr-2" %}
+                    Add Risk
+                </a>
             </div>
         </div>
     </div>
@@ -74,9 +68,10 @@
             </div>
         </div>
     </div>
-    <!-- Filters -->
-    <div class="bg-white shadow-sm rounded-lg mb-6">
-        <div class="px-6 py-3 border-b border-gray-200">
+    <!-- Risks Card -->
+    <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+        <!-- Filters -->
+        <div class="px-6 py-3 bg-gray-50 border-b border-gray-200">
             <div class="flex items-center space-x-4">
                 <span class="text-sm font-medium text-gray-700">Filters:</span>
                 <a href="{% url 'project:risk-list' project.pk %}{% if filter_current %}?filter_current=true{% endif %}"
@@ -98,9 +93,6 @@
                 </a>
             </div>
         </div>
-    </div>
-    <!-- Risks Table -->
-    <div class="bg-white shadow-sm rounded-lg">
         {% if risks %}
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -193,21 +185,19 @@
             </div>
         {% endif %}
     </div>
-    <!-- Footer Navigation -->
-    <div class="bg-white shadow-sm rounded-lg mt-4">
-        <div class="px-6 py-4">
-            <div class="flex items-center justify-between">
-                <a href="{% url 'project:project-management' project.pk %}"
-                   class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900">
-                    {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
-                    Back
-                </a>
-                <a href="{% url 'project:risk-create' project.pk %}"
-                   class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded">
-                    {% heroicon_outline "plus" class="w-4 h-4 mr-1" %}
-                    Add Risk
-                </a>
-            </div>
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+        <div class="flex justify-between items-center">
+            <a href="{% url 'project:project-management' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                Back to Project Management
+            </a>
+            <a href="{% url 'project:project-dashboard' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                Project Dashboard
+                {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+            </a>
         </div>
     </div>
 {% endblock content %}

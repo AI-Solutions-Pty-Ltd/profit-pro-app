@@ -1,13 +1,12 @@
 """Tests for PaymentCertificate views."""
-from app.Account.models import Account
-
-from dateutil.utils import today
 
 from decimal import Decimal
 
 import pytest
+from dateutil.utils import today
 from django.urls import reverse
 
+from app.Account.models import Account
 from app.Account.tests.factories import AccountFactory
 from app.BillOfQuantities.models import ActualTransaction, PaymentCertificate
 from app.BillOfQuantities.tests.factories import (

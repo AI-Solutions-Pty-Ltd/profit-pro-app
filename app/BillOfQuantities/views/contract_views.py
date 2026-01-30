@@ -1,8 +1,8 @@
-"""Views for Contract Management."""
+"""Views for managing contract variations and correspondence."""
 
 from django import forms
 from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import (
     CreateView,
@@ -18,35 +18,29 @@ from app.BillOfQuantities.models import (
 )
 from app.core.Utilities.forms import styled_attachment_input, styled_date_input
 from app.core.Utilities.models import sum_queryset
-from app.core.Utilities.permissions import (
-    UserHasGroupGenericMixin,
-    UserHasProjectRoleGenericMixin,
-)
-from app.Project.models import Project
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.models.project_roles import Role
 
 
-class ContractVariationListView(UserHasProjectRoleGenericMixin, ListView):
+class ContractVariationMixin(UserHasProjectRoleGenericMixin):
+    """Mixin for contract variation views."""
+
+    project_slug = "project_pk"
+
+
+class ContractVariationListView(ContractVariationMixin, ListView):
     """List all contract variations for a project."""
 
     model = ContractVariation
     template_name = "contract/variation_list.html"
     context_object_name = "variations"
     roles = [Role.CONTRACT_VARIATIONS, Role.ADMIN, Role.USER]
-
-    def get_project(self):
-        """Get the project from URL and verify ownership."""
-        return get_object_or_404(
-            Project,
-            pk=self.kwargs["project_pk"],
-            users=self.request.user,
-        )
+    project_slug = "project_pk"
 
     def get_queryset(self):
         """Filter variations by project."""
         return ContractVariation.objects.filter(
             project=self.get_project(),
-            deleted=False,
         ).order_by("-created_at")
 
     def get_context_data(self, **kwargs):
@@ -84,8 +78,11 @@ class ContractVariationListView(UserHasProjectRoleGenericMixin, ListView):
         return context
 
 
-class ContractVariationCreateView(UserHasGroupGenericMixin, CreateView):
+class ContractVariationCreateView(ContractVariationMixin, CreateView):
     """Create a new contract variation."""
+
+    model = ContractVariation
+    template_name = "contract/variation_form.html"
 
     class CreateForm(forms.ModelForm):
         def __init__(self, *args, **kwargs):
@@ -109,18 +106,7 @@ class ContractVariationCreateView(UserHasGroupGenericMixin, CreateView):
                 "attachment",
             ]
 
-    model = ContractVariation
-    template_name = "contract/variation_form.html"
     form_class = CreateForm
-    permissions = ["contractor"]
-
-    def get_project(self):
-        """Get the project from URL and verify ownership."""
-        return get_object_or_404(
-            Project,
-            pk=self.kwargs["project_pk"],
-            users=self.request.user,
-        )
 
     def form_valid(self, form):
         """Set project and submitted_by before saving."""
@@ -147,8 +133,11 @@ class ContractVariationCreateView(UserHasGroupGenericMixin, CreateView):
         return context
 
 
-class ContractVariationUpdateView(UserHasGroupGenericMixin, UpdateView):
+class ContractVariationUpdateView(ContractVariationMixin, UpdateView):
     """Update an existing contract variation."""
+
+    model = ContractVariation
+    template_name = "contract/variation_form.html"
 
     class UpdateForm(forms.ModelForm):
         def __init__(self, *args, **kwargs):
@@ -171,18 +160,7 @@ class ContractVariationUpdateView(UserHasGroupGenericMixin, UpdateView):
                 "notes",
             ]
 
-    model = ContractVariation
-    template_name = "contract/variation_form.html"
     form_class = UpdateForm
-    permissions = ["contractor"]
-
-    def get_project(self):
-        """Get the project from URL and verify ownership."""
-        return get_object_or_404(
-            Project,
-            pk=self.kwargs["project_pk"],
-            users=self.request.user,
-        )
 
     def get_queryset(self):
         """Filter variations by project."""
@@ -214,21 +192,13 @@ class ContractVariationUpdateView(UserHasGroupGenericMixin, UpdateView):
         return context
 
 
-class ContractVariationDetailView(UserHasGroupGenericMixin, DetailView):
+class ContractVariationDetailView(ContractVariationMixin, DetailView):
     """View details of a contract variation."""
 
     model = ContractVariation
     template_name = "contract/variation_detail.html"
     context_object_name = "variation"
     permissions = ["contractor"]
-
-    def get_project(self):
-        """Get the project from URL and verify ownership."""
-        return get_object_or_404(
-            Project,
-            pk=self.kwargs["project_pk"],
-            users=self.request.user,
-        )
 
     def get_queryset(self):
         """Filter variations by project."""
@@ -244,20 +214,12 @@ class ContractVariationDetailView(UserHasGroupGenericMixin, DetailView):
         return context
 
 
-class ContractVariationDeleteView(UserHasGroupGenericMixin, DeleteView):
+class ContractVariationDeleteView(ContractVariationMixin, DeleteView):
     """Delete a contract variation."""
 
     model = ContractVariation
     template_name = "contract/variation_confirm_delete.html"
     permissions = ["contractor"]
-
-    def get_project(self):
-        """Get the project from URL and verify ownership."""
-        return get_object_or_404(
-            Project,
-            pk=self.kwargs["project_pk"],
-            users=self.request.user,
-        )
 
     def get_queryset(self):
         """Filter variations by project."""
@@ -295,21 +257,19 @@ class ContractVariationDeleteView(UserHasGroupGenericMixin, DeleteView):
 # =============================================================================
 
 
-class CorrespondenceListView(UserHasProjectRoleGenericMixin, ListView):
+class CorrespondenceMixin(UserHasProjectRoleGenericMixin):
+    """Mixin for correspondence views."""
+
+    roles = [Role.CORRESPONDENCE, Role.ADMIN, Role.USER]
+    project_slug = "project_pk"
+
+
+class CorrespondenceListView(CorrespondenceMixin, ListView):
     """List all correspondences for a project."""
 
     model = ContractualCorrespondence
     template_name = "contract/correspondence_list.html"
     context_object_name = "correspondences"
-    roles = [Role.CORRESPONDENCE, Role.ADMIN, Role.USER]
-
-    def get_project(self):
-        """Get the project from URL and verify ownership."""
-        return get_object_or_404(
-            Project,
-            pk=self.kwargs["project_pk"],
-            users=self.request.user,
-        )
 
     def get_queryset(self):
         """Filter correspondences by project."""
@@ -341,8 +301,15 @@ class CorrespondenceListView(UserHasProjectRoleGenericMixin, ListView):
         return context
 
 
-class CorrespondenceCreateView(UserHasGroupGenericMixin, CreateView):
+class CorrespondenceCreateView(CorrespondenceMixin, CreateView):
     """Create a new correspondence."""
+
+    model = ContractualCorrespondence
+    template_name = "contract/correspondence_form.html"
+
+    def get_form_class(self):
+        """Return the form class for this view."""
+        return self.CreateForm
 
     class CreateForm(forms.ModelForm):
         def __init__(self, *args, **kwargs):
@@ -366,19 +333,6 @@ class CorrespondenceCreateView(UserHasGroupGenericMixin, CreateView):
                 "response_due_date",
                 "attachment",
             ]
-
-    model = ContractualCorrespondence
-    template_name = "contract/correspondence_form.html"
-    permissions = ["contractor"]
-    form_class = CreateForm
-
-    def get_project(self):
-        """Get the project from URL and verify ownership."""
-        return get_object_or_404(
-            Project,
-            pk=self.kwargs["project_pk"],
-            users=self.request.user,
-        )
 
     def form_valid(self, form):
         """Set project and logged_by before saving."""
@@ -405,8 +359,15 @@ class CorrespondenceCreateView(UserHasGroupGenericMixin, CreateView):
         return context
 
 
-class CorrespondenceUpdateView(UserHasGroupGenericMixin, UpdateView):
+class CorrespondenceUpdateView(CorrespondenceMixin, UpdateView):
     """Update an existing correspondence."""
+
+    model = ContractualCorrespondence
+    template_name = "contract/correspondence_form.html"
+
+    def get_form_class(self):
+        """Return the form class for this view."""
+        return self.UpdateForm
 
     class UpdateForm(forms.ModelForm):
         def __init__(self, *args, **kwargs):
@@ -433,19 +394,6 @@ class CorrespondenceUpdateView(UserHasGroupGenericMixin, UpdateView):
                 "response_date",
                 "attachment",
             ]
-
-    model = ContractualCorrespondence
-    template_name = "contract/correspondence_form.html"
-    permissions = ["contractor"]
-    form_class = UpdateForm
-
-    def get_project(self):
-        """Get the project from URL and verify ownership."""
-        return get_object_or_404(
-            Project,
-            pk=self.kwargs["project_pk"],
-            users=self.request.user,
-        )
 
     def get_queryset(self):
         """Filter correspondences by project."""
@@ -477,21 +425,12 @@ class CorrespondenceUpdateView(UserHasGroupGenericMixin, UpdateView):
         return context
 
 
-class CorrespondenceDetailView(UserHasGroupGenericMixin, DetailView):
+class CorrespondenceDetailView(CorrespondenceMixin, DetailView):
     """View details of a correspondence."""
 
     model = ContractualCorrespondence
     template_name = "contract/correspondence_detail.html"
     context_object_name = "correspondence"
-    permissions = ["contractor"]
-
-    def get_project(self):
-        """Get the project from URL and verify ownership."""
-        return get_object_or_404(
-            Project,
-            pk=self.kwargs["project_pk"],
-            users=self.request.user,
-        )
 
     def get_queryset(self):
         """Filter correspondences by project."""
@@ -507,20 +446,11 @@ class CorrespondenceDetailView(UserHasGroupGenericMixin, DetailView):
         return context
 
 
-class CorrespondenceDeleteView(UserHasGroupGenericMixin, DeleteView):
+class CorrespondenceDeleteView(CorrespondenceMixin, DeleteView):
     """Delete a correspondence."""
 
     model = ContractualCorrespondence
     template_name = "contract/correspondence_confirm_delete.html"
-    permissions = ["contractor"]
-
-    def get_project(self):
-        """Get the project from URL and verify ownership."""
-        return get_object_or_404(
-            Project,
-            pk=self.kwargs["project_pk"],
-            users=self.request.user,
-        )
 
     def get_queryset(self):
         """Filter correspondences by project."""

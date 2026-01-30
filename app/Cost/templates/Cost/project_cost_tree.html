@@ -6,37 +6,20 @@
 {% endblock title %}
 {% block content %}
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Header -->
-        <div class="mb-6">
-            <nav class="flex mb-4" aria-label="Breadcrumb">
-                <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                    <li class="inline-flex items-center">
-                        <a href="{% url 'project:portfolio-dashboard' %}"
-                           class="text-gray-700 hover:text-indigo-600">Projects</a>
-                    </li>
-                    <li>
-                        <div class="flex items-center">
-                            <span class="mx-2 text-gray-400">/</span>
-                            <a href="{% url 'project:project-management' project.pk %}"
-                               class="text-gray-700 hover:text-indigo-600">{{ project.name }}</a>
+        <!-- Page Banner -->
+        <div class="bg-white shadow-sm rounded-lg mb-6">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Cost Management</h1>
+                        <p class="text-sm text-gray-600 mt-1">View and manage costs by structure and bill</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right">
+                            <p class="text-sm text-gray-600">Total Project Costs</p>
+                            <p class="text-2xl font-bold text-gray-900">R{{ grand_total|floatformat:2|intcomma }}</p>
                         </div>
-                    </li>
-                    <li aria-current="page">
-                        <div class="flex items-center">
-                            <span class="mx-2 text-gray-400">/</span>
-                            <span class="text-gray-500">Costs</span>
-                        </div>
-                    </li>
-                </ol>
-            </nav>
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Cost Management</h1>
-                    <p class="mt-1 text-sm text-gray-600">View and manage costs by structure and bill</p>
-                </div>
-                <div class="text-right">
-                    <p class="text-sm text-gray-600">Total Project Costs</p>
-                    <p class="text-2xl font-bold text-gray-900">R{{ grand_total|floatformat:2|intcomma }}</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -86,6 +69,21 @@
                     <p class="mt-1 text-sm text-gray-500">Get started by creating structures and bills in your project.</p>
                 </div>
             {% endif %}
+        </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'project:project-management' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Back to Project
+                </a>
+                <a href="{% url 'project:project-dashboard' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    Project Dashboard
+                    {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+                </a>
+            </div>
         </div>
     </div>
 {% endblock content %}

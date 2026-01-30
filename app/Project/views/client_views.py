@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
@@ -20,48 +21,41 @@ from django.views.generic import (
 
 from app.Account.models import Account
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
-from app.Project.forms import ClientForm, ClientUserInviteForm
-from app.Project.models import Client, Project, ProjectRole, Role
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.Project.forms import ClientCreateUpdateForm, ClientUserInviteForm
+from app.Project.models import Company, Project, ProjectRole, Role
 
 
-class GetProjectMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
-    permissions = ["contractor"]
+class ClientMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
 
-    def get_project(self, slug):
-        return get_object_or_404(
-            Project,
-            pk=slug,
-            users=self.request.user,
-        )
+    def get_queryset(self) -> QuerySet[Company]:
+        project = self.get_project()
+        return Company.objects.filter(
+            type=Company.Type.CLIENT, projects=project
+        ).order_by("-created_at")
 
-
-class ClientMixin(GetProjectMixin):
-    def get_queryset(self):
+    def get_object(self) -> Company:
         if not hasattr(self, "project") or not self.project:
-            self.project = self.get_project(self.kwargs["project_pk"])
-        return Client.objects.filter(projects=self.project).order_by("-created_at")
-
-    def get_object(self):
-        if not hasattr(self, "project") or not self.project:
-            self.project = self.get_project(self.kwargs["project_pk"])
+            self.project = self.get_project()
         queryset = self.get_queryset()
         return get_object_or_404(
             queryset,
             pk=self.kwargs["pk"],  ## MAKE SURE SLUG REMAINS "pk"
         )
 
-    def get_client(self: "ClientMixin", slug):
+    def get_client(self, slug: int) -> Company:
         if not hasattr(self, "project") or not self.project:
-            self.project = self.get_project(self.kwargs["project_pk"])
-        return get_object_or_404(Client, pk=slug)
+            self.project = self.get_project()
+        return get_object_or_404(Company, pk=slug)
 
 
-class ProjectAddClientView(GetProjectMixin, CreateView):
+class ProjectAddClientView(ClientMixin, CreateView):
     """Add a client to a project."""
 
-    model = Client
-    form_class = ClientForm
+    model = Company
+    form_class = ClientCreateUpdateForm
     template_name = "client/client_form.html"
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
@@ -72,36 +66,40 @@ class ProjectAddClientView(GetProjectMixin, CreateView):
             BreadcrumbItem(
                 title="Return to Project Detail",
                 url=reverse(
-                    "project:project-management", kwargs={"pk": self.project.pk}
+                    "project:project-management", kwargs={"pk": self.get_project().pk}
                 ),
             ),
-            BreadcrumbItem(title=f"Add Client to {self.project.name}", url=None),
+            BreadcrumbItem(title=f"Add Client to {self.get_project().name}", url=None),
         ]
-
-    def dispatch(self, request, *args, **kwargs):
-        """Get the project and verify ownership."""
-        self.project = self.get_project(self.kwargs["project_pk"])
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        """Add project to context."""
-        context = super().get_context_data(**kwargs)
-        context["project"] = self.project
-        return context
 
     def form_valid(self, form):
         """Save the client and associate with project."""
-        client = form.save(commit=False)
-        client.save()
+        project = self.get_project()
+
+        # Check if a company with this name already exists
+        name = form.cleaned_data.get("name")
+        existing_client = Company.objects.filter(name__iexact=name).first()
+
+        if existing_client:
+            # Use the existing client
+            client = existing_client
+            messages.info(
+                self.request,
+                f"Client '{client.name}' already exists. Using existing client.",
+            )
+        else:
+            # Create new client
+            client = form.save(commit=False)
+            client.save()
+            messages.success(
+                self.request, f"Client '{client.name}' has been added to the project."
+            )
 
         # Associate client with project
-        self.project.client = client
-        self.project.save()
+        project.client = client
+        project.save()
 
-        messages.success(
-            self.request, f"Client '{client.name}' has been added to the project."
-        )
-        return redirect("project:project-management", pk=self.project.pk)
+        return redirect("project:project-management", pk=project.pk)
 
 
 class ClientInviteUserView(ClientMixin, FormView):
@@ -127,7 +125,7 @@ class ClientInviteUserView(ClientMixin, FormView):
     def dispatch(self, request, *args, **kwargs):
         """Get the client and verify project ownership."""
         # Verify that the user owns the project associated with this client
-        self.project = self.get_project(self.kwargs["project_pk"])
+        self.project = self.get_project()
         self.client = self.get_client(self.kwargs["pk"])
         return super().dispatch(request, *args, **kwargs)
 
@@ -160,7 +158,7 @@ class ClientInviteUserView(ClientMixin, FormView):
             user_exists = False
 
         # Associate user with client
-        self.client.user = user
+        self.client.users.add(user)
         self.client.save()
 
         # get_or_create project role:
@@ -259,8 +257,8 @@ class ClientInviteUserView(ClientMixin, FormView):
 class ClientEditView(ClientMixin, UpdateView):
     """Edit a client for a project."""
 
-    model = Client
-    form_class = ClientForm
+    model = Company
+    form_class = ClientCreateUpdateForm
     template_name = "client/client_form.html"
 
     def get_breadcrumbs(self: "ClientEditView") -> list[BreadcrumbItem]:
@@ -283,7 +281,7 @@ class ClientEditView(ClientMixin, UpdateView):
     def get_context_data(self, **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project(self.kwargs["project_pk"])
+        context["project"] = self.get_project()
         return context
 
     def get_success_url(self):
@@ -296,7 +294,7 @@ class ClientEditView(ClientMixin, UpdateView):
 class ClientRemoveView(ClientMixin, DeleteView):
     """Remove client from project."""
 
-    model = Client
+    model = Company
     template_name = "client/client_confirm_remove.html"
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
@@ -319,7 +317,7 @@ class ClientRemoveView(ClientMixin, DeleteView):
     def dispatch(self, request, *args, **kwargs):
         """Get the client and verify project ownership."""
         # Verify that the user owns the project associated with this client
-        self.project = self.get_project(self.kwargs["project_pk"])
+        self.project = self.get_project()
         self.client = self.get_client(self.kwargs["pk"])
         return super().dispatch(request, *args, **kwargs)
 
@@ -380,20 +378,21 @@ class ClientRemoveUserView(ClientMixin, View):
     def dispatch(self, request, *args, **kwargs):
         """Get the client and verify project ownership."""
         # Verify that the user owns the project associated with this client
-        self.project = self.get_project(self.kwargs["project_pk"])
+        self.project = self.get_project()
         self.client = self.get_client(self.kwargs["pk"])
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         """Remove the user from the client."""
-        if self.client.user:
-            user_email = self.client.user.email
-            self.client.user = None
-            self.client.save()
-            messages.success(
-                self.request,
-                f"User '{user_email}' has been removed from client '{self.client.name}'.",
-            )
+        if self.client.users.exists():
+            user = self.client.users.first()
+            if user:  # Type guard
+                user_email = user.email
+                self.client.users.remove(user)
+                messages.success(
+                    self.request,
+                    f"User '{user_email}' has been removed from client '{self.client.name}'.",
+                )
         else:
             messages.warning(
                 self.request, "This client does not have an associated user."
@@ -408,15 +407,15 @@ class ClientRemoveUserView(ClientMixin, View):
 class ClientResendInviteView(ClientMixin, DetailView):
     """Resend invitation email to client user."""
 
-    model = Client
+    model = Company
 
     def dispatch(self, request, *args, **kwargs):
         """Get the client and verify project ownership."""
-        self.project = self.get_project(self.kwargs["project_pk"])
+        self.project = self.get_project()
         self.client = self.get_client(self.kwargs["pk"])
 
         # Check if client has a user
-        if not self.client.user:
+        if not self.client.users.exists():
             messages.error(
                 self.request, "This client does not have an associated user to invite."
             )
@@ -429,15 +428,22 @@ class ClientResendInviteView(ClientMixin, DetailView):
     def get(self, request, *args, **kwargs):
         """Send the invitation email."""
 
-        user = self.client.user
+        user = self.client.users.first()
+        if not user:
+            messages.error(
+                self.request, "This client does not have an associated user."
+            )
+            if self.project:
+                return redirect("project:project-management", pk=self.project.pk)
+            return redirect("project:portfolio-dashboard")
 
         # Send password reset email
-        if settings.USE_EMAIL:
+        if settings.USE_EMAIL and user:
             # Generate password reset token
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
 
-            # Build reset URL
+            # Build protocol and domain for email context
             protocol = "https" if self.request.is_secure() else "http"
             domain = self.request.get_host()
 

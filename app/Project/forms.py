@@ -1,13 +1,11 @@
 """Forms for Project app."""
 
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Fieldset, Layout
 from django import forms
 
 from app.Account.models import Account
 from app.Project.models import (
     AdministrativeCompliance,
-    Client,
+    Company,
     ContractualCompliance,
     FinalAccountCompliance,
     Milestone,
@@ -112,25 +110,6 @@ class ProjectCategoryForm(forms.ModelForm):
 class ProjectForm(forms.ModelForm):
     """Form for creating and updating projects."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.disable_csrf = True
-        self.helper.layout = Layout(
-            Fieldset(
-                "Project Information",
-                "name",
-                "description",
-                "category",
-                "start_date",
-                "end_date",
-                "contract_number",
-                "contract_clause",
-                "status",
-            )
-        )
-
     class Meta:
         model = Project
         fields = [
@@ -143,12 +122,7 @@ class ProjectForm(forms.ModelForm):
             "contract_number",
             "contract_clause",
             "status",
-            "bank_name",
-            "bank_account_name",
-            "bank_account_number",
-            "bank_branch_code",
-            "bank_swift_code",
-            "vat_number",
+            "vat",
             "payment_terms",
         ]
         widgets = {
@@ -200,40 +174,9 @@ class ProjectForm(forms.ModelForm):
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
             ),
-            "bank_name": forms.TextInput(
+            "vat": forms.CheckboxInput(
                 attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Enter bank name",
-                }
-            ),
-            "bank_account_name": forms.TextInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Enter account holder name",
-                }
-            ),
-            "bank_account_number": forms.TextInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Enter account number",
-                }
-            ),
-            "bank_branch_code": forms.TextInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Enter branch code",
-                }
-            ),
-            "bank_swift_code": forms.TextInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Enter SWIFT/BIC code",
-                }
-            ),
-            "vat_number": forms.TextInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Enter VAT/Tax number",
+                    "class": "w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500",
                 }
             ),
             "payment_terms": forms.Select(
@@ -275,12 +218,40 @@ class ProjectForm(forms.ModelForm):
         return cleaned_data
 
 
-class ClientForm(forms.ModelForm):
+class ProjectContractorForm(forms.ModelForm):
+    """Form for updating the project contractor."""
+
+    class Meta:
+        model = Project
+        fields = ["contractor"]
+        widgets = {
+            "contractor": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+        }
+        labels = {
+            "contractor": "Contractor",
+        }
+        help_texts = {
+            "contractor": "Select the contractor company for this project",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filter to only show contractor companies
+        self.fields["contractor"].queryset = Company.objects.filter(  # type: ignore
+            type="CONTRACTOR"
+        ).order_by("name")
+
+
+class ClientCreateUpdateForm(forms.ModelForm):
     """Form for creating and updating clients."""
 
     class Meta:
-        model = Client
-        fields = ["name", "description", "consultant"]
+        model = Company
+        fields = ["name", "consultants"]
         widgets = {
             "name": forms.TextInput(
                 attrs={
@@ -288,14 +259,7 @@ class ClientForm(forms.ModelForm):
                     "placeholder": "Enter client name",
                 }
             ),
-            "description": forms.Textarea(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Enter client description",
-                    "rows": 3,
-                }
-            ),
-            "consultant": forms.Select(
+            "consultants": forms.SelectMultiple(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
@@ -303,19 +267,18 @@ class ClientForm(forms.ModelForm):
         }
         labels = {
             "name": "Client Name",
-            "description": "Description",
-            "consultant": "Consultant",
+            "consultants": "Consultants",
         }
         help_texts = {
-            "consultant": "Optional - Select a consultant for this client",
+            "consultants": "Optional - Select a consultant for this client",
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Filter consultants to only show users with type CONSULTANT
         consultant_users = Account.objects.filter(groups__name="consultant")
-        self.fields["consultant"].queryset = consultant_users  # type: ignore
-        self.fields["consultant"].required = False
+        self.fields["consultants"].queryset = consultant_users  # type: ignore
+        self.fields["consultants"].required = False
 
 
 class ClientUserInviteForm(forms.Form):
@@ -1051,3 +1014,190 @@ class FinalAccountComplianceForm(forms.ModelForm):
         ).distinct()
         self.fields["responsible_party"].required = False
         self.fields["file"].required = False
+
+
+class CompanyForm(forms.ModelForm):
+    """Form for creating and editing companies."""
+
+    class Meta:
+        model = Company
+        fields = [
+            "logo",
+            "name",
+            "registration_number",
+            "tax_number",
+            "vat_registered",
+            "vat_number",
+            "bank_name",
+            "bank_account_name",
+            "bank_account_number",
+            "bank_branch_code",
+            "bank_swift_code",
+            "users",
+            "consultants",
+        ]
+        widgets = {
+            "logo": forms.FileInput(
+                attrs={
+                    "class": "mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100",
+                    "accept": "image/*",
+                }
+            ),
+            "name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter company name",
+                }
+            ),
+            "registration_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter registration number",
+                }
+            ),
+            "tax_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter tax number",
+                }
+            ),
+            "vat_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter VAT number",
+                }
+            ),
+            "bank_name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter bank name",
+                }
+            ),
+            "bank_account_name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter account holder name",
+                }
+            ),
+            "bank_account_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter account number",
+                }
+            ),
+            "bank_branch_code": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter branch code",
+                }
+            ),
+            "bank_swift_code": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter SWIFT/BIC code",
+                }
+            ),
+            "users": forms.SelectMultiple(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "consultants": forms.SelectMultiple(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+        }
+
+    def __init__(self, *args, contractor=False, client=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        # For contractors, only show users field (not consultants)
+        self.fields.pop("consultants", None)
+        self.fields["users"].label = "Company Users"
+
+
+class ClientForm(forms.ModelForm):
+    """Form for creating and editing companies."""
+
+    class Meta:
+        model = Company
+        fields = [
+            "logo",
+            "name",
+            "registration_number",
+            "tax_number",
+            "vat_registered",
+            "vat_number",
+            "users",
+            "consultants",
+        ]
+        widgets = {
+            "logo": forms.FileInput(
+                attrs={
+                    "class": "mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100",
+                    "accept": "image/*",
+                }
+            ),
+            "name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter company name",
+                }
+            ),
+            "registration_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter registration number",
+                }
+            ),
+            "tax_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter tax number",
+                }
+            ),
+            "vat_number": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter VAT number",
+                }
+            ),
+            "users": forms.SelectMultiple(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "consultants": forms.SelectMultiple(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+        }
+
+    def __init__(self, *args, contractor=False, client=False, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # For clients, show both users and consultants fields
+        self.fields["users"].label = "Client Users"
+        self.fields["consultants"].label = "Client Consultants"
+
+
+class ProjectClientForm(forms.Form):
+    """Form to select a client for a project."""
+
+    client = forms.ModelChoiceField(
+        queryset=Company.objects.filter(type=Company.Type.CLIENT),
+        widget=forms.Select(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+            }
+        ),
+        required=False,
+        help_text="Select a client company to associate with this project.",
+    )
+
+    def __init__(self, *args, **kwargs):
+        # Pop instance before calling super() to avoid passing it to Form
+        self.instance = kwargs.pop("instance", None)
+        super().__init__(*args, **kwargs)
+        self.fields["client"].label = "Client Company"

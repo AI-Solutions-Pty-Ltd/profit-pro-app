@@ -1,4 +1,3 @@
-from django import forms
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 from django.template.loader import render_to_string
@@ -8,29 +7,11 @@ from django.views.generic import DetailView, ListView, UpdateView
 from app.BillOfQuantities.forms import PaymentCertificateFinalApprovalForm
 from app.BillOfQuantities.models import PaymentCertificate
 from app.BillOfQuantities.views.payment_certificate_views import LineItemDetailMixin
+from app.Consultant.forms import PaymentCertificateApprovedDateForm
 from app.core.Utilities.django_email_service import django_email_service
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
-from app.Project.models import Client, Project
-
-
-class PaymentCertificateApprovedDateForm(forms.ModelForm):
-    """Form for editing only the approved_on date."""
-
-    class Meta:
-        model = PaymentCertificate
-        fields = ["approved_on"]
-        widgets = {
-            "approved_on": forms.DateInput(
-                attrs={
-                    "type": "date",
-                    "class": "block w-fit border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm",
-                }
-            ),
-        }
-        labels = {
-            "approved_on": "Approval Date",
-        }
+from app.Project.models import Company, Project
 
 
 class GetProjectMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
@@ -46,18 +27,18 @@ class GetProjectMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
 
 class ConsultantMixin(GetProjectMixin):
     def get_queryset(self):
-        return Client.objects.filter(consultant=self.request.user)
+        return Company.objects.filter(consultants=self.request.user)
 
 
 # Create your views here.
 class ClientListView(ConsultantMixin, ListView):
-    model = Client
+    model = Company
     template_name = "consultant/client_list.html"
     context_object_name = "clients"
 
 
 class ClientDetailView(ConsultantMixin, DetailView):
-    model = Client
+    model = Company
     template_name = "consultant/client_detail.html"
     context_object_name = "client"
 

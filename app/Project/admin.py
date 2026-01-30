@@ -5,7 +5,7 @@ from django.contrib import admin
 from app.core.Utilities.admin import SoftDeleteAdmin
 
 from .models import (
-    Client,
+    Company,
     PlannedValue,
     Portfolio,
     Project,
@@ -46,11 +46,11 @@ class ProjectRoleAdmin(SoftDeleteAdmin):
     readonly_fields = ["created_at", "updated_at"]
 
 
-@admin.register(Client)
-class ClientAdmin(SoftDeleteAdmin):
-    list_display = ["name", "user", "consultant", "deleted", "created_at"]
+@admin.register(Company)
+class CompanyAdmin(SoftDeleteAdmin):
+    list_display = ["name", "deleted", "created_at"]
     list_filter = ["deleted", "created_at"]
-    search_fields = ["name", "description", "user__email"]
+    search_fields = ["name"]
     readonly_fields = ["created_at", "updated_at"]
 
 

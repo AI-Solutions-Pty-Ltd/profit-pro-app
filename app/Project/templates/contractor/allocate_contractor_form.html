@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+{% block title %}
+    Update Contractor - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <div class="min-h-screen bg-gray-50 py-8">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Page Header -->
+            <div class="bg-white shadow-sm rounded-lg mb-6">
+                <div class="px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Update Project Contractor</h1>
+                            <p class="mt-1 text-sm text-gray-600">Project: {{ project.name }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Form -->
+            <div class="bg-white shadow-sm rounded-lg">
+                <form method="post" class="p-6">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="mb-4 rounded-md bg-red-50 p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" class="h-5 w-5 text-red-400" %}</div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-red-800">There were errors with your submission:</h3>
+                                    <div class="mt-2 text-sm text-red-700">
+                                        <ul class="list-disc space-y-1 pl-5">
+                                            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    <div class="grid grid-cols-1 gap-6">
+                        <div>
+                            {{ form.contractor.label_tag }}
+                            {% if form.contractor.help_text %}<p class="mt-1 text-sm text-gray-500">{{ form.contractor.help_text }}</p>{% endif %}
+                            {{ form.contractor }}
+                            {% if form.contractor.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.contractor.errors|join:", " }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Current Contractor Info -->
+                    {% if project.contractor %}
+                        <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                            <h3 class="text-sm font-medium text-gray-900 mb-2">Current Contractor</h3>
+                            <p class="text-sm text-gray-600">{{ project.contractor.name }}</p>
+                            <p class="text-xs text-gray-500 mt-1">Registration: {{ project.contractor.registration_number }}</p>
+                            {% if project.contractor.vat_number %}
+                                <p class="text-xs text-gray-500">VAT: {{ project.contractor.vat_number }}</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    <!-- Form Actions -->
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <a href="{% url 'project:project-edit' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "x-mark" class="w-4 h-4 mr-1" %}
+                            Cancel
+                        </a>
+                        <button type="submit"
+                                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "check" class="w-4 h-4 mr-1" %}
+                            Update Contractor
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

@@ -15,9 +15,14 @@ project_urls = [
         name="project-dashboard",
     ),
     path(
-        "<int:pk>/",
+        "<int:pk>/management/",
         project_views.ProjectManagementView.as_view(),
         name="project-management",
+    ),
+    path(
+        "<int:pk>/edit/",
+        project_views.ProjectEditView.as_view(),
+        name="project-edit",
     ),
     path(
         "<int:pk>/wbs/",

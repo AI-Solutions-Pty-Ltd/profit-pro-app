@@ -15,7 +15,7 @@ from app.Account.models import Account
 from app.Account.tests.factories import UserFactory
 from app.Project.models import (
     AdministrativeCompliance,
-    Client,
+    Company,
     ContractualCompliance,
     FinalAccountCompliance,
     Milestone,
@@ -42,24 +42,25 @@ class ClientFactory(DjangoModelFactory):
     """Factory for Client model."""
 
     class Meta:
-        model = Client
+        model = Company
 
     name = Sequence(lambda n: f"Client {n}")
+    type = Company.Type.CLIENT
     description = Faker("text")
-    user = SubFactory(UserFactory)
-    consultant: Account = SubFactory(UserFactory)  # type: ignore
+    users = SubFactory(UserFactory)
+    consultants: Account = SubFactory(UserFactory)  # type: ignore
 
     @post_generation
     def add_consultant_to_group(self, create, extracted, **kwargs):
         """Add consultant user to consultant group."""
-        if self.consultant and hasattr(self.consultant, "type"):
-            self.consultant.type = Account.Type.CONSULTANT
-            self.consultant.save()
-        if not create or not self.consultant:
+        if self.consultants and hasattr(self.consultants, "type"):
+            self.consultants.type = Account.Type.CONSULTANT
+            self.consultants.save()
+        if not create or not self.consultants:
             return
 
         consultant_group, _ = Group.objects.get_or_create(name="consultant")
-        self.consultant.groups.add(consultant_group)
+        self.consultants.groups.add(consultant_group)
 
 
 class ProjectFactory(DjangoModelFactory):

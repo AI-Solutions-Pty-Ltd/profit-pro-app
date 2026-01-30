@@ -3,31 +3,21 @@
 from django.contrib import messages
 from django.db.models import Max
 from django.db.models.query import QuerySet
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from app.BillOfQuantities.models import LineItem
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
-from app.Project.models import Project
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.Project.models.project_roles import Role
 
 
-class SpecialItemMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
+class SpecialItemMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
     """Mixin for special item views."""
 
-    permissions = ["contractor"]
+    roles = [Role.ADDITIONAL_LINE_ITEMS]
     project_slug = "project_pk"
-
-    def get_project(self):
-        """Get the project for the current view."""
-        if not hasattr(self, "project") or not self.project:
-            self.project = get_object_or_404(
-                Project,
-                pk=self.kwargs[self.project_slug],
-                users=self.request.user,
-            )
-        return self.project
 
 
 class SpecialItemListView(SpecialItemMixin, ListView):

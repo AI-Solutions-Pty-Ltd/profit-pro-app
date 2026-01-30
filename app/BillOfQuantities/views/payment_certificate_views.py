@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
+from django.conf import settings
 from django.contrib import messages
 from django.db.models import Sum
 from django.http import FileResponse, HttpResponse, JsonResponse
@@ -8,7 +9,17 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import DetailView, ListView, TemplateView, UpdateView, View
 
-from app.BillOfQuantities.models import ActualTransaction, LineItem, PaymentCertificate
+from app.BillOfQuantities.forms import (
+    PaymentCertificatePhotoForm,
+    PaymentCertificateWorkingForm,
+)
+from app.BillOfQuantities.models import (
+    ActualTransaction,
+    LineItem,
+    PaymentCertificate,
+    PaymentCertificatePhoto,
+    PaymentCertificateWorking,
+)
 from app.BillOfQuantities.tasks import (
     generate_pdf_async,
     group_line_items_by_hierarchy,
@@ -42,7 +53,6 @@ class PaymentCertificateMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
             self.queryset = (
                 PaymentCertificate.objects.filter(
                     project=self.get_project(),
-                    project__users=self.request.user,
                 )
                 .select_related("project")
                 .prefetch_related(
@@ -78,6 +88,7 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
     model = PaymentCertificate
     template_name = "payment_certificate/dashboard.html"
     context_object_name = "payment_certificates"
+    project_slug = "project_pk"
 
     def get_breadcrumbs(
         self: "PaymentCertificateListView",
@@ -274,6 +285,7 @@ class PaymentCertificateEditView(PaymentCertificateMixin, TemplateView):
         Role.CLIENT,
         Role.CONSULTANT,
     ]
+    project_slug = "project_pk"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -439,6 +451,10 @@ class PaymentCertificateEditView(PaymentCertificateMixin, TemplateView):
             "bills": bills,
             "packages": packages,
             "breadcrumbs": self.get_breadcrumbs(),
+            "photos": payment_certificate.photos.all().order_by("-created_at"),
+            "workings": payment_certificate.workings.all().order_by("-created_at"),
+            "photo_form": PaymentCertificatePhotoForm(),
+            "working_form": PaymentCertificateWorkingForm(),
         }
         return render(request, str(self.template_name), context)
 
@@ -453,6 +469,76 @@ class PaymentCertificateEditView(PaymentCertificateMixin, TemplateView):
         payment_certificate = get_object_or_404(
             PaymentCertificate, pk=pk, project=project
         )
+
+        # Handle photo uploads
+        if "upload_photo" in request.POST:
+            photo_form = PaymentCertificatePhotoForm(
+                request.POST, request.FILES, payment_certificate=payment_certificate
+            )
+            if photo_form.is_valid():
+                photo_form.save(uploaded_by=request.user)
+                messages.success(request, "Photo uploaded successfully!")
+            else:
+                messages.error(
+                    request, "Failed to upload photo. Please check the file."
+                )
+            return redirect(
+                "bill_of_quantities:payment-certificate-edit",
+                project_pk=project_pk,
+                pk=pk,
+            )
+
+        # Handle working document uploads
+        if "upload_working" in request.POST:
+            working_form = PaymentCertificateWorkingForm(
+                request.POST, request.FILES, payment_certificate=payment_certificate
+            )
+            if working_form.is_valid():
+                working_form.save(uploaded_by=request.user)
+                messages.success(request, "Working document uploaded successfully!")
+            else:
+                messages.error(
+                    request, "Failed to upload document. Please check the file."
+                )
+            return redirect(
+                "bill_of_quantities:payment-certificate-edit",
+                project_pk=project_pk,
+                pk=pk,
+            )
+
+        # Handle photo deletion
+        if "delete_photo" in request.POST:
+            photo_id = request.POST.get("delete_photo")
+            try:
+                photo = PaymentCertificatePhoto.objects.get(
+                    id=photo_id, payment_certificate=payment_certificate
+                )
+                photo.delete()
+                messages.success(request, "Photo deleted successfully!")
+            except PaymentCertificatePhoto.DoesNotExist:
+                messages.error(request, "Photo not found.")
+            return redirect(
+                "bill_of_quantities:payment-certificate-edit",
+                project_pk=project_pk,
+                pk=pk,
+            )
+
+        # Handle working document deletion
+        if "delete_working" in request.POST:
+            working_id = request.POST.get("delete_working")
+            try:
+                working = PaymentCertificateWorking.objects.get(
+                    id=working_id, payment_certificate=payment_certificate
+                )
+                working.delete()
+                messages.success(request, "Working document deleted successfully!")
+            except PaymentCertificateWorking.DoesNotExist:
+                messages.error(request, "Document not found.")
+            return redirect(
+                "bill_of_quantities:payment-certificate-edit",
+                project_pk=project_pk,
+                pk=pk,
+            )
 
         # Process actual quantities and create/update ActualTransaction records
         transactions_created = 0
@@ -893,11 +979,27 @@ class PaymentCertificateInvoiceView(PaymentCertificateMixin, DetailView):
     """Generate and display/download invoice for a payment certificate."""
 
     model = PaymentCertificate
-    template_name = "payments/invoice.html"
+    template_name = "payments/invoice_basic.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        """Check if payment certificate is approved before allowing access."""
+        obj = self.get_object()
+        if obj.status != obj.Status.APPROVED:
+            messages.error(
+                request, "Invoice is only available for approved payment certificates."
+            )
+            return redirect(
+                "bill_of_quantities:payment-certificate-detail",
+                project_pk=obj.project.pk,
+                pk=obj.pk,
+            )
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
+        context["vat_rate"] = settings.VAT_RATE
+        context["payment_certificate"] = self.get_object()
         return context
 
     def render_to_response(self, context, **response_kwargs):

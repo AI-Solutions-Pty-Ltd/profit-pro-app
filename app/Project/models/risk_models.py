@@ -120,8 +120,9 @@ class Risk(BaseModel):
     def save(self, *args, **kwargs):
         """Auto-generate risk number on creation."""
         if not self.risk_number:
-            # Get the max risk number for this project
-            max_number = Risk.objects.filter(project=self.project).aggregate(
+            # Use all_objects to include soft-deleted risks when finding max number
+            # This ensures we don't reuse numbers and violate unique_together constraint
+            max_number = Risk.all_objects.filter(project=self.project).aggregate(
                 max_num=models.Max("risk_number")
             )["max_num"]
             self.risk_number = (max_number or 0) + 1

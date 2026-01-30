@@ -17,10 +17,6 @@ if TYPE_CHECKING:
 class PaymentCertificate(BaseModel):
     """Used to send to clients for payment"""
 
-    if TYPE_CHECKING:
-        # Type hint for reverse relationship from ActualTransaction
-        actual_transactions: QuerySet[ActualTransaction]
-
     def upload_to(self, filename):
         return f"payment_certificates/{self.project.name}/{filename}"
 
@@ -59,6 +55,12 @@ class PaymentCertificate(BaseModel):
     pdf_generating = models.BooleanField(default=False)
     abridged_pdf_generating = models.BooleanField(default=False)
 
+    if TYPE_CHECKING:
+        # Type hint for reverse relationship from ActualTransaction
+        actual_transactions: QuerySet[ActualTransaction]
+        photos: QuerySet[PaymentCertificatePhoto]
+        workings: QuerySet[PaymentCertificateWorking]
+
     class Meta:
         verbose_name = "Payment Certificate"
         verbose_name_plural = "Payment Certificates"
@@ -92,8 +94,8 @@ class PaymentCertificate(BaseModel):
                     )
             except PaymentCertificate.DoesNotExist:
                 pass
-
-        self.certificate_number = self.get_next_certificate_number(self.project)
+        if not self.certificate_number:
+            self.certificate_number = self.get_next_certificate_number(self.project)
 
         super().save(*args, **kwargs)
 
@@ -373,3 +375,73 @@ class Signatory(BaseModel):
 
     def __str__(self):
         return f"{self.signatory} - {self.payment_certificate}"
+
+
+class PaymentCertificatePhoto(BaseModel):
+    """Photos attached to a payment certificate."""
+
+    def upload_to(self, filename):
+        return f"payment_certificates/{self.payment_certificate.project.name}/photos/{filename}"
+
+    payment_certificate = models.ForeignKey(
+        PaymentCertificate,
+        on_delete=models.CASCADE,
+        related_name="photos",
+    )
+    title = models.CharField(
+        max_length=255,
+        help_text="Photo title or description",
+    )
+    image = models.ImageField(
+        upload_to=upload_to,
+        help_text="Upload photo file",
+    )
+    uploaded_by = models.ForeignKey(
+        Account,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = "Payment Certificate Photo"
+        verbose_name_plural = "Payment Certificate Photos"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.title} - {self.payment_certificate}"
+
+
+class PaymentCertificateWorking(BaseModel):
+    """Working documents attached to a payment certificate."""
+
+    def upload_to(self, filename):
+        return f"payment_certificates/{self.payment_certificate.project.name}/workings/{filename}"
+
+    payment_certificate = models.ForeignKey(
+        PaymentCertificate,
+        on_delete=models.CASCADE,
+        related_name="workings",
+    )
+    title = models.CharField(
+        max_length=255,
+        help_text="Document title or description",
+    )
+    file = models.FileField(
+        upload_to=upload_to,
+        help_text="Upload working document",
+    )
+    uploaded_by = models.ForeignKey(
+        Account,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = "Payment Certificate Working"
+        verbose_name_plural = "Payment Certificate Workings"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.title} - {self.payment_certificate}"

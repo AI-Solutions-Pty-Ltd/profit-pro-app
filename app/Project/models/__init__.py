@@ -1,4 +1,5 @@
 from .category_models import ProjectCategory
+from .company_models import Company
 from .compliance_models import (
     AdministrativeCompliance,
     ContractualCompliance,
@@ -10,13 +11,13 @@ from .milestone_models import Milestone
 from .planned_value_models import PlannedValue
 from .portfolio_models import Portfolio
 from .project_roles import ProjectRole, Role
-from .projects_models import Client, Project
+from .projects_models import Project
 from .risk_models import Risk
 from .signatories_models import Signatories
 
 __all__ = [
     "AdministrativeCompliance",
-    "Client",
+    "Company",
     "ContractualCompliance",
     "FinalAccountCompliance",
     "Milestone",

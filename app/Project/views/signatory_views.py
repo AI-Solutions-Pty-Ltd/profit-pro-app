@@ -5,9 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.models import Group
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.db.models import QuerySet
-from django.http import Http404
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.utils.encoding import force_bytes
@@ -16,39 +14,17 @@ from django.views.generic import DeleteView, DetailView, FormView, ListView, Upd
 
 from app.Account.models import Account
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.forms import SignatoryForm, SignatoryInviteForm
 from app.Project.models import Project, Signatories
+from app.Project.models.project_roles import Role
 
 
-class SignatoryMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
+class SignatoryMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
     """Mixin for signatory views."""
 
-    permissions = ["contractor"]
-
-    def get_project(self: "SignatoryMixin") -> Project:
-        """Get the project for the current view."""
-        if not hasattr(self, "project"):
-            self.project = get_object_or_404(
-                Project,
-                pk=self.kwargs["project_pk"],
-                users=self.request.user,
-            )
-        return self.project
-
-    def get_queryset(self: "SignatoryMixin") -> QuerySet[Signatories]:
-        """Filter signatories by project."""
-        project = self.get_project()
-        return Signatories.objects.filter(
-            project=project, project__users=self.request.user
-        ).order_by("sequence_number")
-
-    def get_object(self: "SignatoryMixin") -> Signatories:
-        """Get signatory and verify project ownership."""
-        signatory: Signatories = super().get_object()  # type: ignore
-        if self.request.user not in signatory.project.users.all():
-            raise Http404("You do not have permission to view this signatory.")
-        return signatory
+    roles = [Role.USER]
+    project_slug = "project_pk"
 
 
 class SignatoryListView(SignatoryMixin, ListView):

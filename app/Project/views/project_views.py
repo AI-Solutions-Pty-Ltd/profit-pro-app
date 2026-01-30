@@ -6,7 +6,7 @@ from datetime import datetime
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import QuerySet, Sum
-from django.http import Http404, JsonResponse
+from django.http import JsonResponse
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
     CreateView,
@@ -33,10 +33,7 @@ class ProjectMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
         return Project.objects.filter(users=self.request.user).order_by("-created_at")
 
     def get_object(self: "ProjectMixin") -> Project:
-        project = super().get_object()  # type: ignore
-        if self.request.user not in project.users.all():
-            raise Http404("You do not have permission to view this project.")
-        return project
+        return self.get_project()
 
 
 class ProjectListView(LoginRequiredMixin, BreadcrumbMixin, ListView):
@@ -49,7 +46,10 @@ class ProjectListView(LoginRequiredMixin, BreadcrumbMixin, ListView):
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        self.filter_form = FilterForm(request.GET or {}, user=request.user)
+        self.filter_form = FilterForm(
+            request.GET or {},
+            user=request.user if request.user.is_authenticated else None,
+        )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         """Update breadcrumbs for project list page."""
@@ -242,12 +242,35 @@ class ProjectDashboardView(ProjectMixin, DetailView):
         }
 
 
+class ProjectEditView(ProjectMixin, DetailView):
+    """Display project edit page with all management options."""
+
+    model = Project
+    template_name = "project/project_edit.html"
+    context_object_name = "project"
+    roles = [Role.USER]
+    project_slug = "pk"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        return [
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.object.name,
+                url=reverse(
+                    "project:project-management", kwargs={"pk": self.object.pk}
+                ),
+            ),
+            BreadcrumbItem(title="Edit Project", url=None),
+        ]
+
+
 class ProjectManagementView(ProjectMixin, DetailView):
     """Display project management page with all buttons (no graphs)."""
 
     model = Project
     template_name = "project/project_management.html"
-    context_object_name = "project"
     roles = [Role.USER]
     project_slug = "pk"
 
