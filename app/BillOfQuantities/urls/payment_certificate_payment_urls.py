@@ -38,4 +38,9 @@ payment_certificate_payment_urls = [
         payment_certificate_payment_views.PaymentCertificateInvoiceView.as_view(),
         name="payment-certificate-invoice",
     ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/email-invoice/",
+        payment_certificate_payment_views.EmailPaymentCertificateView.as_view(),
+        name="email-payment-certificate",
+    ),
 ]

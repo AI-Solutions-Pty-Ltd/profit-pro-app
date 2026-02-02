@@ -1,13 +1,18 @@
 """Views for payment certificate payments."""
 
+import json
 from decimal import Decimal
 from typing import Any
 
 from django import forms
 from django.conf import settings
 from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
+from django.core.validators import validate_email
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, UpdateView, View
 
@@ -15,6 +20,7 @@ from app.BillOfQuantities.models.payment_certificate_models import PaymentCertif
 from app.BillOfQuantities.models.payment_certificate_payment_models import (
     PaymentCertificatePayment,
 )
+from app.core.Utilities.django_email_service import django_email_service
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import (
     UserHasProjectRoleGenericMixin,
@@ -300,14 +306,179 @@ class EmailPaymentStatementView(PaymentCertificatePaymentMixin, View):
     def post(self, request: HttpRequest, project_pk: int) -> JsonResponse:
         """Handle POST request to email payment statement."""
         # Get project for permission checking (handled by mixin)
-        self.get_project()
+        project = self.get_project()
 
-        # TODO: Implement email functionality
-        # Generate PDF and send to client email
+        # Parse JSON body to get emails list
+        try:
+            # Debug: Log the raw request body
+            print(f"Payment Statement - Raw request body: {request.body}")
+            data = json.loads(request.body)
+            print(f"Payment Statement - Parsed JSON data: {data}")
+            emails = data.get("emails", [])
+            print(f"Payment Statement - Extracted emails list: {emails}")
+            print(f"Payment Statement - Emails list type: {type(emails)}")
+            print(
+                f"Payment Statement - Emails list length: {len(emails) if emails else 'None'}"
+            )
+        except json.JSONDecodeError as e:
+            print(f"Payment Statement - JSON decode error: {e}")
+            return JsonResponse(
+                {"success": False, "message": "Invalid request format."}
+            )
 
-        return JsonResponse(
-            {"success": True, "message": "Payment statement sent successfully!"}
-        )
+        if not emails:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "Please provide at least one email address.",
+                }
+            )
+
+        # Validate emails
+        for email in emails:
+            try:
+                validate_email(email)
+            except ValidationError:
+                return JsonResponse(
+                    {"success": False, "message": f"Invalid email address: {email}"}
+                )
+
+        try:
+            # Generate the same data as the statement view
+            all_certificates = PaymentCertificate.objects.filter(
+                project=project,
+                status__in=[
+                    PaymentCertificate.Status.APPROVED,
+                    PaymentCertificate.Status.SUBMITTED,
+                ],
+            ).order_by("certificate_number")
+
+            # Get all payments for this project
+            payments = PaymentCertificatePayment.objects.filter(
+                project=project
+            ).order_by("date")
+
+            # Build statement entries (same logic as PaymentCertificatePaymentStatementView)
+            statement_entries = []
+
+            # Add payment certificates as debits
+            for cert in all_certificates:
+                if cert.current_claim_total > 0:
+                    cert_date = cert.approved_on or cert.created_at
+                    if hasattr(cert_date, "date"):
+                        cert_date = cert_date.date()
+                    statement_entries.append(
+                        {
+                            "date": cert_date,
+                            "type": "debit",
+                            "description": f"Payment Certificate #{cert.certificate_number}",
+                            "debit": cert.current_claim_total,
+                            "credit": None,
+                            "balance": None,
+                        }
+                    )
+
+            # Add payments as credits
+            for payment in payments:
+                payment_date = payment.date
+                if hasattr(payment_date, "date"):
+                    payment_date = payment.date.date()
+                statement_entries.append(
+                    {
+                        "date": payment_date,
+                        "type": "credit",
+                        "description": f"Payment Received - Ref #PMT-{payment.pk}",
+                        "debit": None,
+                        "credit": payment.amount,
+                        "balance": None,
+                    }
+                )
+
+            # Sort and calculate balance
+            statement_entries.sort(key=lambda x: x["date"])
+            running_balance = Decimal("0.00")
+            for entry in statement_entries:
+                if entry["debit"]:
+                    running_balance += entry["debit"]
+                if entry["credit"]:
+                    running_balance -= entry["credit"]
+                entry["balance"] = running_balance
+
+            # Calculate totals
+            total_debits = sum(
+                entry["debit"] or Decimal("0.00") for entry in statement_entries
+            )
+            total_credits = sum(
+                entry["credit"] or Decimal("0.00") for entry in statement_entries
+            )
+
+            # Get the latest certificate for period info
+            latest_certificate = all_certificates.last()
+
+            context = {
+                "project": project,
+                "statement_entries": statement_entries,
+                "payments": payments,
+                "total_debits": total_debits,
+                "total_credits": total_credits,
+                "final_balance": running_balance,
+                "payment_certificate": latest_certificate,
+            }
+
+            # Generate PDF
+            from app.core.Utilities.generate_pdf import generate_pdf
+
+            html_content = render_to_string(
+                "payments/payment_statement_pdf.html", context
+            )
+            pdf_file = generate_pdf(html_content)
+
+            # Create email body
+            latest_date = statement_entries[-1]["date"] if statement_entries else None
+            latest_date_str = (
+                latest_date.strftime("%d %B %Y") if latest_date else "today"
+            )
+
+            email_body = f"""Dear Valued Client,
+
+Please find attached the payment statement for {project.name}.
+
+This statement shows all transactions and the current balance as of {latest_date_str}.
+
+Should you have any questions, please don't hesitate to contact us.
+
+Best regards,
+{getattr(request.user, "get_full_name", lambda: str(request.user))() or str(request.user)}"""
+
+            # Create PDF attachment
+            pdf_attachment = ContentFile(
+                pdf_file.read(),
+                name=f"payment_statement_{project.name.replace(' ', '_')}.pdf",
+            )
+
+            # Send email using the email service
+            success, message = django_email_service(
+                to=emails,
+                subject=f"Payment Statement - {project.name}",
+                plain_body=email_body,
+                attachments=[pdf_attachment],
+                from_email=settings.DEFAULT_FROM_EMAIL,
+            )
+
+            if success:
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "message": f"Payment statement sent to {len(emails)} recipient(s)",
+                    }
+                )
+            else:
+                return JsonResponse({"success": False, "message": message})
+
+        except Exception as e:
+            return JsonResponse(
+                {"success": False, "message": f"Failed to send email: {str(e)}"}
+            )
 
 
 class PaymentCertificateInvoiceView(PaymentCertificatePaymentMixin, DetailView):
@@ -391,3 +562,115 @@ class PaymentCertificateInvoiceView(PaymentCertificatePaymentMixin, DetailView):
             return response
 
         return super().render_to_response(context, **response_kwargs)
+
+
+class EmailPaymentCertificateView(PaymentCertificatePaymentMixin, View):
+    """Email payment certificate invoice to client."""
+
+    def post(self, request: HttpRequest, project_pk: int, pk: int) -> JsonResponse:
+        """Handle POST request to email invoice."""
+        # Get project for permission checking (handled by mixin)
+        project = self.get_project()
+
+        # Get payment certificate
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=pk, project=project
+        )
+
+        # Check if certificate is approved
+        if payment_certificate.status != payment_certificate.Status.APPROVED:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "Invoice is only available for approved payment certificates.",
+                }
+            )
+
+        # Parse JSON body to get emails list
+        try:
+            data = json.loads(request.body)
+            emails = data.get("emails", [])
+        except json.JSONDecodeError:
+            return JsonResponse(
+                {"success": False, "message": "Invalid request format."}
+            )
+
+        if not emails:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "Please provide at least one email address.",
+                }
+            )
+
+        # Validate emails
+        for email in emails:
+            try:
+                validate_email(email)
+            except ValidationError:
+                return JsonResponse(
+                    {"success": False, "message": f"Invalid email address: {email}"}
+                )
+
+        try:
+            # Generate context for invoice
+            context = {
+                "project": project,
+                "payment_certificate": payment_certificate,
+                "vat_rate": settings.VAT_RATE,
+            }
+
+            # Generate PDF
+            from app.core.Utilities.generate_pdf import generate_pdf
+
+            html_content = render_to_string("payments/invoice_html.html", context)
+            pdf_file = generate_pdf(html_content)
+
+            # Create email body
+            amount_str = f"{payment_certificate.current_claim_total:,.2f}"
+
+            email_body = f"""Dear Valued Client,
+
+Please find attached invoice #{payment_certificate.certificate_number} for {project.name}.
+
+Invoice Details:
+- Certificate Number: #{payment_certificate.certificate_number}
+- Amount: R {amount_str}
+
+Payment should be made according to the payment terms specified in the contract.
+Our banking details are included in the attached invoice.
+
+Should you have any questions, please don't hesitate to contact us.
+
+Best regards,
+{getattr(request.user, "get_full_name", lambda: str(request.user))() or str(request.user)}"""
+
+            # Create PDF attachment
+            pdf_attachment = ContentFile(
+                pdf_file.read(),
+                name=f"invoice_{payment_certificate.certificate_number}_{project.name.replace(' ', '_')}.pdf",
+            )
+
+            # Send email using the email service
+            success, message = django_email_service(
+                to=emails,
+                subject=f"Invoice #{payment_certificate.certificate_number} - {project.name}",
+                plain_body=email_body,
+                attachments=[pdf_attachment],
+                from_email=settings.DEFAULT_FROM_EMAIL,
+            )
+
+            if success:
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "message": f"Invoice #{payment_certificate.certificate_number} sent to {len(emails)} recipient(s)",
+                    }
+                )
+            else:
+                return JsonResponse({"success": False, "message": message})
+
+        except Exception as e:
+            return JsonResponse(
+                {"success": False, "message": f"Failed to send email: {str(e)}"}
+            )
