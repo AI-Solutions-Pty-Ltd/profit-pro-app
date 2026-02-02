@@ -1,6 +1,22 @@
 {% extends "base.html" %}
 {% block extra_js %}
     <script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 function showEmailForm() {
     document.getElementById('email-modal').classList.remove('hidden');
 }
@@ -47,12 +63,14 @@ function sendEmail() {
     const emails = [];
     
     // Get checked client user emails
-    document.querySelectorAll('input[name="emails"]:checked').forEach(cb => {
+    const checkedBoxes = document.querySelectorAll('input[name="emails"]:checked');
+    checkedBoxes.forEach(cb => {
         emails.push(cb.value);
     });
     
     // Get additional email addresses
-    document.querySelectorAll('input[name="additional_email"]').forEach(input => {
+    const additionalInputs = document.querySelectorAll('input[name="additional_email"]');
+    additionalInputs.forEach(input => {
         if (input.value.trim()) {
             emails.push(input.value.trim());
         }
@@ -74,7 +92,7 @@ function sendEmail() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-CSRFToken': getCookie('csrftoken') || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
         },
         body: JSON.stringify({ emails: emails })
     })
@@ -178,21 +196,31 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p class="text-sm text-gray-500 mb-4">Select email addresses to send the invoice:</p>
                     <form onsubmit="event.preventDefault(); sendEmail();">
                         {% csrf_token %}
-                        {% if project.client and project.client.users.all %}
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Client Users</label>
-                                <div class="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
-                                    {% for user in project.client.users.all %}
-                                        <label class="flex items-center">
-                                            <input type="checkbox"
-                                                   name="emails"
-                                                   value="{{ user.email }}"
-                                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                                   {% if forloop.first %}checked{% endif %}>
-                                            <span class="ml-2 text-sm text-gray-700">{{ user.get_full_name|default:user.email }} ({{ user.email }})</span>
-                                        </label>
-                                    {% endfor %}
+                        {% if project.client %}
+                            {% if project.client.users.all %}
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Client Users</label>
+                                    <div class="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-md p-2">
+                                        {% for user in project.client.users.all %}
+                                            <label class="flex items-center">
+                                                <input type="checkbox"
+                                                       name="emails"
+                                                       value="{{ user.email }}"
+                                                       class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                       {% if forloop.first %}checked{% endif %}>
+                                                <span class="ml-2 text-sm text-gray-700">{{ user.get_full_name|default:user.email }} ({{ user.email }})</span>
+                                            </label>
+                                        {% endfor %}
+                                    </div>
                                 </div>
+                            {% else %}
+                                <div class="mb-4">
+                                    <p class="text-sm text-yellow-600">No users found for this client. Please add additional email addresses below.</p>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="mb-4">
+                                <p class="text-sm text-yellow-600">No client assigned to this project. Please add email addresses below.</p>
                             </div>
                         {% endif %}
                         <div class="mb-4">

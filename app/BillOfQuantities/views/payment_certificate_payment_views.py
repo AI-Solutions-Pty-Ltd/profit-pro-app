@@ -161,8 +161,12 @@ class DeletePaymentCertificatePaymentView(PaymentCertificatePaymentMixin, Delete
         return super().delete(request, *args, **kwargs)
 
 
-class PaymentCertificatePaymentStatementView(PaymentCertificatePaymentMixin, View):
+class PaymentCertificatePaymentStatementView(
+    PaymentCertificatePaymentMixin, BreadcrumbMixin, View
+):
     """Generate and display payment statement for a payment certificate."""
+
+    template_name = "payments/payment_statement.html"
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         """Return breadcrumbs for payment statement view."""
@@ -170,14 +174,10 @@ class PaymentCertificatePaymentStatementView(PaymentCertificatePaymentMixin, Vie
         return [
             BreadcrumbItem(
                 title="Projects",
-                url=reverse("project:project-list"),
+                url=reverse("project:portfolio-project-list"),
             ),
             BreadcrumbItem(
                 title=project.name,
-                url=reverse("project:project-detail", kwargs={"pk": project.pk}),
-            ),
-            BreadcrumbItem(
-                title="Project Management",
                 url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
@@ -273,6 +273,7 @@ class PaymentCertificatePaymentStatementView(PaymentCertificatePaymentMixin, Vie
             "total_debits": total_debits,
             "total_credits": total_credits,
             "final_balance": running_balance,
+            "breadcrumbs": self.get_breadcrumbs(),
         }
 
         # Check if PDF download requested
@@ -297,7 +298,7 @@ class PaymentCertificatePaymentStatementView(PaymentCertificatePaymentMixin, Vie
             )
             return response
 
-        return render(request, "payments/payment_statement.html", context)
+        return render(request, self.template_name, context)
 
 
 class EmailPaymentStatementView(PaymentCertificatePaymentMixin, View):
@@ -310,18 +311,9 @@ class EmailPaymentStatementView(PaymentCertificatePaymentMixin, View):
 
         # Parse JSON body to get emails list
         try:
-            # Debug: Log the raw request body
-            print(f"Payment Statement - Raw request body: {request.body}")
             data = json.loads(request.body)
-            print(f"Payment Statement - Parsed JSON data: {data}")
             emails = data.get("emails", [])
-            print(f"Payment Statement - Extracted emails list: {emails}")
-            print(f"Payment Statement - Emails list type: {type(emails)}")
-            print(
-                f"Payment Statement - Emails list length: {len(emails) if emails else 'None'}"
-            )
-        except json.JSONDecodeError as e:
-            print(f"Payment Statement - JSON decode error: {e}")
+        except json.JSONDecodeError:
             return JsonResponse(
                 {"success": False, "message": "Invalid request format."}
             )
@@ -566,6 +558,52 @@ class PaymentCertificateInvoiceView(PaymentCertificatePaymentMixin, DetailView):
 
 class EmailPaymentCertificateView(PaymentCertificatePaymentMixin, View):
     """Email payment certificate invoice to client."""
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        """Return breadcrumbs for email invoice view."""
+        project = self.get_project()
+        payment_certificate = get_object_or_404(
+            PaymentCertificate, pk=self.kwargs["pk"], project=project
+        )
+        return [
+            BreadcrumbItem(
+                title="Projects",
+                url=reverse("project:project-list"),
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-detail", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(
+                title="Project Management",
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(
+                title="Payment Certificates",
+                url=reverse(
+                    "bill_of_quantities:payment-certificate-list",
+                    kwargs={"project_pk": project.pk},
+                ),
+            ),
+            BreadcrumbItem(
+                title=f"Certificate #{payment_certificate.certificate_number}",
+                url=reverse(
+                    "bill_of_quantities:payment-certificate-detail",
+                    kwargs={"project_pk": project.pk, "pk": payment_certificate.pk},
+                ),
+            ),
+            BreadcrumbItem(
+                title="Invoice",
+                url=reverse(
+                    "bill_of_quantities:payment-certificate-invoice",
+                    kwargs={"project_pk": project.pk, "pk": payment_certificate.pk},
+                ),
+            ),
+            BreadcrumbItem(
+                title="Email Invoice",
+                url=None,
+            ),
+        ]
 
     def post(self, request: HttpRequest, project_pk: int, pk: int) -> JsonResponse:
         """Handle POST request to email invoice."""
