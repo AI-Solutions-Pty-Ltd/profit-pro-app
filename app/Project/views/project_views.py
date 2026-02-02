@@ -10,7 +10,6 @@ from django.http import JsonResponse
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
     CreateView,
-    DeleteView,
     DetailView,
     ListView,
     UpdateView,
@@ -310,11 +309,13 @@ class ProjectWBSDetailView(ProjectMixin, DetailView):
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
             BreadcrumbItem(
-                title="Projects", url=reverse("project:portfolio-dashboard")
+                title="Projects", url=reverse("project:portfolio-project-list")
             ),
             BreadcrumbItem(
                 title=f"{self.object.name} Dashboard",
-                url=reverse("project:project-dashboard", kwargs={"pk": self.object.pk}),
+                url=reverse(
+                    "project:project-management", kwargs={"pk": self.object.pk}
+                ),
             ),
             BreadcrumbItem(title="WBS", url=None),
         ]
@@ -399,7 +400,7 @@ class ProjectCreateView(LoginRequiredMixin, BreadcrumbMixin, CreateView):
         """Redirect to the project dashboard."""
         if self.object and self.object.pk:
             return reverse_lazy(
-                "project:project-dashboard", kwargs={"pk": self.object.pk}
+                "bill_of_quantities:structure-upload", kwargs={"pk": self.object.pk}
             )
         return reverse_lazy("project:portfolio-dashboard")
 
@@ -439,34 +440,6 @@ class ProjectUpdateView(ProjectMixin, UpdateView):
     def get_success_url(self):
         """Redirect to project management."""
         return reverse_lazy("project:project-management", kwargs={"pk": self.object.pk})
-
-
-class ProjectDeleteView(ProjectMixin, DeleteView):
-    """Delete a project."""
-
-    model = Project
-    template_name = "project/project_confirm_delete.html"
-    success_url = reverse_lazy("project:portfolio-dashboard")
-    roles = [Role.ADMIN]
-    project_slug = "pk"
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        return [
-            BreadcrumbItem(
-                title="Projects", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title=f"{self.object.name} Dashboard",
-                url=reverse("project:project-dashboard", kwargs={"pk": self.object.pk}),
-            ),
-            BreadcrumbItem(
-                title="Management",
-                url=reverse(
-                    "project:project-management", kwargs={"pk": self.object.pk}
-                ),
-            ),
-            BreadcrumbItem(title="Delete", url=None),
-        ]
 
 
 class ProjectResetFinalAccountView(ProjectMixin, DetailView):

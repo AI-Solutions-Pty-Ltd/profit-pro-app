@@ -1,8 +1,7 @@
-from typing import TYPE_CHECKING
 import os
+from typing import TYPE_CHECKING
 
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -37,7 +36,7 @@ class Company(BaseModel):
     )
     name = models.CharField(max_length=255)
     registration_number = models.CharField(max_length=255)
-    tax_number = models.CharField(max_length=255)
+    tax_number = models.CharField(max_length=255, blank=True)
     vat_registered = models.BooleanField(default=False)
     vat_number = models.CharField(max_length=255, blank=True)
 
@@ -69,7 +68,8 @@ class Company(BaseModel):
     )
 
     if TYPE_CHECKING:
-        projects: models.QuerySet["Project"]
+        contractor_projects: models.QuerySet["Project"]
+        client_projects: models.QuerySet["Project"]
 
     class Meta:
         verbose_name = "Company"

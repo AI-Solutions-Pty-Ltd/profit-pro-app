@@ -4,17 +4,18 @@ from decimal import Decimal
 from typing import Any
 
 from django import forms
+from django.conf import settings
 from django.contrib import messages
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404, render
-from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, UpdateView, View
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
+from django.views.generic import CreateView, DeleteView, DetailView, UpdateView, View
 
 from app.BillOfQuantities.models.payment_certificate_models import PaymentCertificate
 from app.BillOfQuantities.models.payment_certificate_payment_models import (
     PaymentCertificatePayment,
 )
-from app.core.Utilities.mixins import BreadcrumbMixin
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import (
     UserHasProjectRoleGenericMixin,
 )
@@ -155,12 +156,39 @@ class DeletePaymentCertificatePaymentView(PaymentCertificatePaymentMixin, Delete
 
 
 class PaymentCertificatePaymentStatementView(PaymentCertificatePaymentMixin, View):
-    """View and download payment statement for payment certificates."""
+    """Generate and display payment statement for a payment certificate."""
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        """Return breadcrumbs for payment statement view."""
+        project = self.get_project()
+        return [
+            BreadcrumbItem(
+                title="Projects",
+                url=reverse("project:project-list"),
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-detail", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(
+                title="Project Management",
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(
+                title="Payment Certificates",
+                url=reverse(
+                    "bill_of_quantities:payment-certificate-list",
+                    kwargs={"project_pk": project.pk},
+                ),
+            ),
+            BreadcrumbItem(
+                title="Payment Statement",
+                url=None,
+            ),
+        ]
 
     def get(self, request: HttpRequest, project_pk: int) -> HttpResponse:
         project = self.get_project()
-
-        # Get all payment certificates up to and including this one
         all_certificates = PaymentCertificate.objects.filter(
             project=project,
             status__in=[
@@ -280,3 +308,86 @@ class EmailPaymentStatementView(PaymentCertificatePaymentMixin, View):
         return JsonResponse(
             {"success": True, "message": "Payment statement sent successfully!"}
         )
+
+
+class PaymentCertificateInvoiceView(PaymentCertificatePaymentMixin, DetailView):
+    """Generate and display/download invoice for a payment certificate."""
+
+    model = PaymentCertificate
+    template_name = "payments/invoice_template.html"
+    pdf_template_name = "payments/invoice_html.html"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        """Return breadcrumbs for invoice view."""
+        project = self.get_project()
+        payment_certificate = self.get_object()
+        return [
+            BreadcrumbItem(
+                title="Project Management",
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(
+                title="Payment Certificates",
+                url=reverse(
+                    "bill_of_quantities:payment-certificate-list",
+                    kwargs={"project_pk": project.pk},
+                ),
+            ),
+            BreadcrumbItem(
+                title=f"Certificate #{payment_certificate.certificate_number}",
+                url=reverse(
+                    "bill_of_quantities:payment-certificate-detail",
+                    kwargs={"project_pk": project.pk, "pk": payment_certificate.pk},
+                ),
+            ),
+            BreadcrumbItem(
+                title="Invoice",
+                url=None,
+            ),
+        ]
+
+    def dispatch(self, request, *args, **kwargs):
+        """Check if payment certificate is approved before allowing access."""
+        obj = self.get_object()
+        if obj.status != obj.Status.APPROVED:
+            messages.error(
+                request, "Invoice is only available for approved payment certificates."
+            )
+            return redirect(
+                "bill_of_quantities:payment-certificate-detail",
+                project_pk=obj.project.pk,
+                pk=obj.pk,
+            )
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        context["vat_rate"] = settings.VAT_RATE
+        context["payment_certificate"] = self.get_object()
+        return context
+
+    def render_to_response(self, context, **response_kwargs):
+        """Check if PDF download is requested."""
+        if self.request.GET.get("format") == "pdf":
+            # Generate PDF using the template
+            from django.template.loader import render_to_string
+
+            from app.core.Utilities.generate_pdf import generate_pdf
+
+            context["pdf"] = True
+
+            # Render template to string
+            html_content = render_to_string(str(self.pdf_template_name), context)
+
+            # Generate PDF using the existing utility
+            pdf_file = generate_pdf(html_content)
+
+            # Return PDF response
+            response = HttpResponse(pdf_file, content_type="application/pdf")
+            response["Content-Disposition"] = (
+                f'attachment; filename="invoice_{context["payment_certificate"].certificate_number}.pdf"'
+            )
+            return response
+
+        return super().render_to_response(context, **response_kwargs)

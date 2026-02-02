@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% load heroicons %}
-
 {% block content %}
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Page Header -->
@@ -15,7 +14,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Form -->
         <div class="bg-white shadow rounded-lg">
             <form method="post" novalidate>
@@ -23,9 +21,7 @@
                 <div class="px-6 py-4">
                     <div class="mb-6">
                         <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                {% heroicon_outline "building-office" class="h-6 w-6 text-gray-400" %}
-                            </div>
+                            <div class="flex-shrink-0">{% heroicon_outline "building-office" class="h-6 w-6 text-gray-400" %}</div>
                             <div class="ml-3">
                                 <h2 class="text-lg font-medium text-gray-900">Client Selection</h2>
                                 <p class="mt-1 text-sm text-gray-500">
@@ -34,22 +30,17 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="grid grid-cols-1 gap-6">
-                        {{ form.client|as_crispy_field }}
-                    </div>
-
+                    <div class="grid grid-cols-1 gap-6">{{ form.client|as_crispy_field }}</div>
                     <div class="mt-6">
                         <p class="text-sm text-gray-600">
                             Need to add a new client?
-                            <a href="{% url 'project:client-create' project.pk %}" 
+                            <a href="{% url 'project:client-create' project.pk %}"
                                class="font-medium text-indigo-600 hover:text-indigo-500">
                                 Create a new client company
                             </a>
                         </p>
                     </div>
                 </div>
-
                 <!-- Form Actions -->
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
                     <div class="flex justify-end space-x-3">
@@ -67,7 +58,6 @@
                 </div>
             </form>
         </div>
-
         <!-- Footer -->
         <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
             <div class="flex justify-between items-center">

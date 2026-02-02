@@ -62,11 +62,6 @@ portfolio_urls = [
         user_management_views.ClientDetailView.as_view(),
         name="client-detail",
     ),
-    path(
-        "register/signatories/",
-        user_management_views.SignatoriesRegisterView.as_view(),
-        name="signatory-register",
-    ),
     # Project User Management
     path(
         "project/<int:pk>/users/",

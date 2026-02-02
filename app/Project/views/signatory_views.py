@@ -10,7 +10,14 @@ from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
-from django.views.generic import DeleteView, DetailView, FormView, ListView, UpdateView
+from django.views.generic import (
+    DeleteView,
+    DetailView,
+    FormView,
+    ListView,
+    UpdateView,
+    View,
+)
 
 from app.Account.models import Account
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
@@ -42,7 +49,7 @@ class SignatoryListView(SignatoryMixin, ListView):
             BreadcrumbItem(
                 title=self.get_project().name,
                 url=reverse(
-                    "project:project-detail", kwargs={"pk": self.get_project().pk}
+                    "project:project-edit", kwargs={"pk": self.get_project().pk}
                 ),
             ),
             BreadcrumbItem(title="Signatories", url=None),
@@ -51,7 +58,20 @@ class SignatoryListView(SignatoryMixin, ListView):
     def get_context_data(self: "SignatoryListView", **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
+        project = self.get_project()
+        context["project"] = project
+
+        # Get users who are signatories in this project
+        project_signatories = project.signatories.all()
+
+        # Get users who are signatories elsewhere but not in this project
+        unlinked_users = Signatories.objects.exclude(project=project).order_by(
+            "user__first_name", "user__last_name"
+        )
+
+        context["project_signatories"] = project_signatories
+        context["unlinked_signatory_users"] = unlinked_users
+
         return context
 
 
@@ -234,25 +254,15 @@ class SignatoryUpdateView(SignatoryMixin, UpdateView):
             BreadcrumbItem(title=f"Update Signatory {signatory}", url=None),
         ]
 
-    def get_context_data(self, **kwargs):
-        """Add project to context."""
-        context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
-        context["signatory"] = self.get_object()
-        return context
-
     def form_valid(self, form):
-        """Show success message."""
-        messages.success(
-            self.request,
-            f"Signatory '{form.instance}' has been updated successfully.",
-        )
+        """Handle form submission."""
         return super().form_valid(form)
 
     def get_success_url(self):
         """Redirect to the signatory list."""
         return reverse_lazy(
-            "project:signatory-register",
+            "project:signatory-list",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
         )
 
 
@@ -364,3 +374,47 @@ class SignatoryResendInviteView(SignatoryMixin, DetailView):
             )
 
         return redirect("project:signatory-list", project_pk=self.project.pk)
+
+
+class SignatoryLinkView(SignatoryMixin, View):
+    """Link existing signatories to a project."""
+
+    def post(self, request, *args, **kwargs):
+        """Handle linking of a single signatory."""
+        project = self.get_project()
+
+        # Get user ID from form data
+        user_id = request.POST.get("signatories")
+
+        if not user_id:
+            messages.error(request, "No user selected for linking.")
+            return redirect("project:signatory-list", project_pk=project.pk)
+
+        try:
+            user = Account.objects.get(pk=user_id)
+
+            # Check if user is already a signatory for this project
+
+            # Get the next sequence number
+            max_seq = project.signatories.order_by("-sequence_number").first()
+            next_seq = (max_seq.sequence_number + 1) if max_seq else 1
+
+            # Create signatory record
+            Signatories.objects.create(
+                project=project,
+                user=user,
+                role="Signatory",
+                sequence_number=next_seq,
+            )
+
+            messages.success(
+                request,
+                f"Successfully linked {user.first_name} {user.last_name} as a signatory.",
+            )
+
+        except Account.DoesNotExist:
+            messages.error(request, "User not found.")
+        except Exception as e:
+            messages.error(request, f"Error linking signatory: {str(e)}")
+
+        return redirect("project:signatory-list", project_pk=project.pk)

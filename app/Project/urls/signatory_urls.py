@@ -30,4 +30,9 @@ signatory_urls = [
         signatory_views.SignatoryResendInviteView.as_view(),
         name="signatory-resend-invite",
     ),
+    path(
+        "project/<int:project_pk>/signatories/link/",
+        signatory_views.SignatoryLinkView.as_view(),
+        name="signatory-link",
+    ),
 ]

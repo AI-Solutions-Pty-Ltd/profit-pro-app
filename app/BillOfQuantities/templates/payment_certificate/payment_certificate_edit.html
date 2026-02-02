@@ -327,7 +327,9 @@
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
                                         {{ line_item.unit_price|default:""|floatformat:2|intcomma }}
                                     </td>
-                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.budgeted_quantity|default:"" }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                        {{ line_item.budgeted_quantity|default:""|intcomma }}
+                                    </td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
                                         {{ line_item.claimed_to_date|default:""|floatformat:2|intcomma }}
                                     </td>
@@ -371,157 +373,169 @@
             {% endif %}
         </div>
         <!-- addendum items section -->
-        <div id="addendum-items">
-            <h2 class="font-medium text-gray-900 mb-4">Addendum Items</h2>
-            <table class="min-w-full divide-y divide-gray-200">
-                {% define "8" as colSpan %}
-                <thead class="sticky-table-header">
-                    <tr>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item No.</th>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pay Ref</th>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate / unit</th>
-                        <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Qty</th>
-                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Claimed to date</th>
-                        <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actual Quantity</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% for line_item in addendum_line_items %}
-                        {% if line_item.structure.name %}
-                            {% if not structure_name or structure_name != line_item.structure.name %}
-                                {% define line_item.structure.name as structure_name %}
-                                <tr>
-                                    <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
-                                        colspan="{{ colSpan }}">{{ structure_name }}</td>
-                                </tr>
-                            {% endif %}
-                        {% endif %}
-                        {% if line_item.bill.name %}
-                            {% if not bill_name or bill_name != line_item.bill.name %}
-                                {% define line_item.bill.name as bill_name %}
-                                <tr>
-                                    <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
-                                        colspan="{{ colSpan }}">{{ bill_name }}</td>
-                                </tr>
-                            {% endif %}
-                        {% endif %}
-                        {% if line_item.package.name %}
-                            {% if not package_name or package_name != line_item.package.name %}
-                                {% define line_item.package.name as package_name %}
-                                <tr>
-                                    <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
-                                        colspan="{{ colSpan }}">{{ package_name }}</td>
-                                </tr>
-                            {% endif %}
-                        {% endif %}
-                        <tr class="hover:bg-gray-50 {% if not line_item.is_work %}bg-gray-100 font-semibold{% endif %}">
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.item_number|default:"" }}</td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.payment_reference|default:"" }}</td>
-                            <td class="px-3 py-2 text-sm text-gray-900">{{ line_item.description|default:"" }}</td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                                R{{ line_item.unit_price|default:""|floatformat:2|intcomma }}/{{ line_item.unit_measurement|default:"" }}
-                            </td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.budgeted_quantity|default:"" }}</td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                {{ line_item.claimed_to_date|default:""|floatformat:2|intcomma }}
-                            </td>
-                            {% if line_item.budgeted_quantity %}
-                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                    {% if line_item.current_transaction %}
-                                        <input name="edit_actual_quantity_{{ line_item.current_transaction.pk }}"
-                                               type="number"
-                                               step="0.01"
-                                               min="0"
-                                               value="{{ line_item.claimed_to_date|addition:line_item.current_transaction.quantity }}"
-                                               class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                               placeholder="0.00">
-                                    {% else %}
-                                        <input name="new_actual_quantity_{{ line_item.pk }}"
-                                               type="number"
-                                               step="0.01"
-                                               min="0"
-                                               class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                                               placeholder="0.00">
+        <div id="addendum-items"
+             class="bg-white shadow-md rounded-lg overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h2 class="text-lg font-semibold text-gray-900">Addendum Items</h2>
+            </div>
+            {% if addendum_line_items %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        {% define "8" as colSpan %}
+                        <thead class="sticky-table-header">
+                            <tr>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item No.</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pay Ref</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate / unit</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Qty</th>
+                                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Claimed to date</th>
+                                <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actual Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for line_item in addendum_line_items %}
+                                {% if line_item.structure.name %}
+                                    {% if not structure_name or structure_name != line_item.structure.name %}
+                                        {% define line_item.structure.name as structure_name %}
+                                        <tr>
+                                            <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
+                                                colspan="{{ colSpan }}">{{ structure_name }}</td>
+                                        </tr>
                                     {% endif %}
-                                </td>
-                            {% else %}
-                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right"></td>
-                            {% endif %}
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                                {% endif %}
+                                {% if line_item.bill.name %}
+                                    {% if not bill_name or bill_name != line_item.bill.name %}
+                                        {% define line_item.bill.name as bill_name %}
+                                        <tr>
+                                            <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
+                                                colspan="{{ colSpan }}">{{ bill_name }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endif %}
+                                {% if line_item.package.name %}
+                                    {% if not package_name or package_name != line_item.package.name %}
+                                        {% define line_item.package.name as package_name %}
+                                        <tr>
+                                            <td class="px-3 py-2 whitespace-nowrap text-xl font-bold text-gray-900 header bg-gray-100"
+                                                colspan="{{ colSpan }}">{{ package_name }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endif %}
+                                <tr class="hover:bg-gray-50 {% if not line_item.is_work %}bg-gray-100 font-semibold{% endif %}">
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.item_number|default:"" }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.payment_reference|default:"" }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-900">{{ line_item.description|default:"" }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                        R{{ line_item.unit_price|default:""|floatformat:2|intcomma }}/{{ line_item.unit_measurement|default:"" }}
+                                    </td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ line_item.budgeted_quantity|default:"" }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                        {{ line_item.claimed_to_date|default:""|floatformat:2|intcomma }}
+                                    </td>
+                                    {% if line_item.budgeted_quantity %}
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                            {% if line_item.current_transaction %}
+                                                <input name="edit_actual_quantity_{{ line_item.current_transaction.pk }}"
+                                                       type="number"
+                                                       step="0.01"
+                                                       min="0"
+                                                       value="{{ line_item.claimed_to_date|addition:line_item.current_transaction.quantity }}"
+                                                       class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                       placeholder="0.00">
+                                            {% else %}
+                                                <input name="new_actual_quantity_{{ line_item.pk }}"
+                                                       type="number"
+                                                       step="0.01"
+                                                       min="0"
+                                                       class="w-full border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                       placeholder="0.00">
+                                            {% endif %}
+                                        </td>
+                                    {% else %}
+                                        <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right"></td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-12 flex flex-col items-center px-6">
+                    {% heroicon_outline "document" class="w-12 h-12 text-gray-400" %}
+                    <p class="mt-3 text-sm font-medium text-gray-900">No addendum items found</p>
+                    <p class="mt-1 text-sm text-gray-500">Get started by adding your first addendum item.</p>
+                    <a href="{% url 'bill_of_quantities:addendum-list' project.pk %}?certificate={{ payment_certificate.pk }}"
+                       class="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        {% heroicon_outline "plus" size="20" class="mr-2" %}
+                        Add Addendum Item
+                    </a>
+                </div>
+            {% endif %}
         </div>
         <!-- special items section -->
         <div id="special-items"
-             class="bg-white shadow-md rounded-lg overflow-hidden mb-4">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-gray-900">Special Items</h2>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm text-gray-500 mr-2">Quick Add:</span>
-                        <a href="{% url 'bill_of_quantities:advance-payment-list' project.pk %}?certificate={{ payment_certificate.pk }}"
-                           class="inline-flex items-center px-3 py-1.5 border border-blue-300 text-xs font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
-                            {% heroicon_outline "banknotes" size="14" class="mr-1" %}
-                            Advance Payment
-                        </a>
-                        <a href="{% url 'bill_of_quantities:retention-list' project.pk %}?certificate={{ payment_certificate.pk }}"
-                           class="inline-flex items-center px-3 py-1.5 border border-amber-300 text-xs font-medium rounded-md text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors">
-                            {% heroicon_outline "lock-closed" size="14" class="mr-1" %}
-                            Retention
-                        </a>
-                        <a href="{% url 'bill_of_quantities:materials-list' project.pk %}?certificate={{ payment_certificate.pk }}"
-                           class="inline-flex items-center px-3 py-1.5 border border-emerald-300 text-xs font-medium rounded-md text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">
-                            {% heroicon_outline "cube" size="14" class="mr-1" %}
-                            Materials on Site
-                        </a>
-                        <a href="{% url 'bill_of_quantities:escalation-list' project.pk %}?certificate={{ payment_certificate.pk }}"
-                           class="inline-flex items-center px-3 py-1.5 border border-purple-300 text-xs font-medium rounded-md text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors">
-                            {% heroicon_outline "arrow-trending-up" size="14" class="mr-1" %}
-                            Escalation
+             class="bg-white shadow-md rounded-lg overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h2 class="text-lg font-semibold text-gray-900">Special Items</h2>
+            </div>
+            <div class="px-6 py-6">
+                {% if special_line_items %}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full border-collapse">
+                            <thead>
+                                <tr class="border-b-2 border-gray-200">
+                                    <th class="py-3 pr-8 text-left text-sm font-semibold text-gray-700">Description</th>
+                                    <th class="py-3 pr-8 text-right text-sm font-semibold text-gray-700">Claimed To Date</th>
+                                    <th class="py-3 text-right text-sm font-semibold text-gray-700">Actual Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                {% for special_item in special_line_items %}
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="py-4 pr-8 text-sm font-medium text-gray-900">{{ special_item.description }}</td>
+                                        <td class="py-4 pr-8 text-sm text-gray-600 text-right font-mono">
+                                            R {{ special_item.claimed_to_date_value|default:"0.00"|floatformat:2|intcomma }}
+                                        </td>
+                                        <td class="py-4 text-right">
+                                            {% if special_item.current_transaction %}
+                                                <input name="edit_actual_quantity_{{ special_item.current_transaction.pk }}"
+                                                       type="number"
+                                                       min="0"
+                                                       step="0.01"
+                                                       value="{{ special_item.claimed_to_date_value|addition:special_item.current_transaction.total_price }}"
+                                                       class="w-32 border border-gray-300 rounded-md px-3 py-2 text-sm text-right focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                                       placeholder="0.00">
+                                            {% else %}
+                                                <input name="new_actual_quantity_{{ special_item.pk }}"
+                                                       type="number"
+                                                       min="0"
+                                                       step="0.01"
+                                                       class="w-32 border border-gray-300 rounded-md px-3 py-2 text-sm text-right focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                                                       placeholder="0.00">
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-12 flex flex-col items-center">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                            {% heroicon_outline "document-text" class="w-8 h-8 text-gray-400" %}
+                        </div>
+                        <p class="text-sm font-medium text-gray-900">No special items found</p>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Add special items like advance payments, retention, materials on site, or escalation.
+                        </p>
+                        <a href="{% url 'bill_of_quantities:special-item-list' project.pk %}"
+                           class="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                            {% heroicon_outline "plus" size="20" class="mr-2" %}
+                            Add Special Item
                         </a>
                     </div>
-                </div>
-            </div>
-            <div class="px-6 py-4">
-                <table class="w-auto border-collapse">
-                    <thead>
-                        <tr class="border-b border-gray-200">
-                            <th class="py-2 pr-8 text-left text-sm font-medium text-gray-700">Description</th>
-                            <th class="py-2 pr-8 text-right text-sm font-medium text-gray-700">Claimed To Date</th>
-                            <th class="py-2 text-right text-sm font-medium text-gray-700">Actual Quantity</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        {% for special_item in special_line_items %}
-                            <tr class="hover:bg-gray-50">
-                                <td class="py-3 pr-8 text-sm text-gray-900">{{ special_item.description }}</td>
-                                <td class="py-3 pr-8 text-sm text-gray-600 text-right">
-                                    {{ special_item.claimed_to_date_value|default:"0.00"|floatformat:2|intcomma }}
-                                </td>
-                                <td class="py-3 text-right">
-                                    {% if special_item.current_transaction %}
-                                        <input name="edit_actual_quantity_{{ special_item.current_transaction.pk }}"
-                                               type="number"
-                                               min="0"
-                                               step="0.01"
-                                               value="{{ special_item.claimed_to_date_value|addition:special_item.current_transaction.total_price }}"
-                                               class="border border-gray-300 rounded px-3 py-1 text-sm text-right focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                               placeholder="0.00">
-                                    {% else %}
-                                        <input name="new_actual_quantity_{{ special_item.pk }}"
-                                               type="number"
-                                               min="0"
-                                               step="0.01"
-                                               class="border border-gray-300 rounded px-3 py-1 text-sm text-right focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                                               placeholder="0.00">
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                {% endif %}
             </div>
         </div>
         <!-- Save button -->
@@ -562,9 +576,9 @@
             title="Scroll to bottom">{% heroicon_outline "chevron-down" size="24" class="w-6 h-6" %}</button>
     <script language="javascript">
         window.addEventListener('keydown',function(e) {
-        if (e.keyIdentifier=='U+000A' || e.keyIdentifier=='Enter' || e.keyCode==13) {
-            e.preventDefault();
-            const activeElement = document.activeElement;
+            if (e.keyIdentifier=='U+000A' || e.keyIdentifier=='Enter' || e.keyCode==13) {
+                e.preventDefault();
+                const activeElement = document.activeElement;
             
             // Only prevent default if the active element is an input (not textarea or button)
             if (activeElement && activeElement.tagName === 'INPUT' && activeElement.type !== 'submit') {

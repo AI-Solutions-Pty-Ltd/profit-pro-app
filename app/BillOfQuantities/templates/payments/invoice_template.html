@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+    <!-- Header with back button -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Invoice</h1>
+                    <p class="text-sm text-gray-600 mt-1">Payment Certificate #{{ payment_certificate.certificate_number }}</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk payment_certificate.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "arrow-left" size="16" class="mr-2" %}
+                        Back to Certificate
+                    </a>
+                    {% if payment_certificate.status == payment_certificate.Status.APPROVED %}
+                        <a href="?format=pdf"
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "document-arrow-down" size="16" class="mr-2" %}
+                            Download PDF
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Invoice Content -->
+    <div>{% include "payments/invoice_html.html" %}</div>
+    <!-- Footer with additional actions -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg mt-6">
+        <div class="flex justify-between items-center">
+            <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
+                Back to Payment Certificates
+            </a>
+            <div class="flex items-center space-x-3">
+                {% if payment_certificate.status == payment_certificate.Status.APPROVED %}
+                    <a href="{% url 'bill_of_quantities:payment-certificate-payment-statement' project.pk %}"
+                       class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                        {% heroicon_outline "document-text" size="16" class="mr-2" %}
+                        Payment Statement
+                    </a>
+                {% endif %}
+                <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk payment_certificate.pk %}"
+                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                    {% heroicon_outline "eye" size="16" class="mr-2" %}
+                    View Certificate Details
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

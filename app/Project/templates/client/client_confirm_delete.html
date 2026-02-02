@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% load heroicons %}
-
 {% block content %}
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Page Header -->
@@ -15,7 +14,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Confirmation Card -->
         <div class="bg-white shadow rounded-lg">
             <div class="px-6 py-4">
@@ -29,7 +27,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Client Details -->
             <div class="border-t border-gray-200 px-6 py-4">
                 <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
@@ -68,14 +65,13 @@
                     </div>
                 </dl>
             </div>
-
             <!-- Form Actions -->
             <form method="post"
                   class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
                 {% csrf_token %}
                 <div class="flex justify-end space-x-3">
                     <a href="{% url 'project:client-list' project.pk %}"
-                        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         {% heroicon_outline "x-mark" class="w-4 h-4 mr-1" %}
                         Cancel
                     </a>
@@ -87,12 +83,11 @@
                 </div>
             </form>
         </div>
-
         <!-- Footer -->
         <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
             <div class="flex justify-between items-center">
                 <a href="{% url 'project:client-list' project.pk %}"
-                    class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
                     {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
                     Back to Clients
                 </a>
