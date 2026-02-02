@@ -10,16 +10,32 @@ from django.db.models import QuerySet, Sum
 from django.urls import reverse
 from django.views.generic import ListView, TemplateView
 
+from app.Account.models import Account
 from app.BillOfQuantities.models import Forecast, PaymentCertificate
 from app.core.Utilities.dates import get_end_of_month
-from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
+from app.core.Utilities.mixins import (
+    BreadcrumbItem,
+    BreadcrumbMixin,
+)
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.Project.forms import FilterForm
 from app.Project.models import Portfolio, Project
 from app.Project.models.planned_value_models import PlannedValue
 
 
-class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
+class ProjectAccessMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
+    """Mixin to add project to context."""
+
+    def get_queryset(self):
+        user: Account = self.request.user  # type: ignore
+        user_projects = user.get_projects
+        return user_projects.filter(
+            status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
+            project_roles__user=user,
+        )
+
+
+class FinancialReportView(ProjectAccessMixin, ListView):
     """Financial Report - Project List with Budget, Forecast, Variances, Certified, CPI & SPI."""
 
     model = Project
@@ -53,10 +69,7 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
 
     def get_queryset(self: "FinancialReportView") -> QuerySet[Project]:
         """Get active projects for the user's portfolio with optional category filter."""
-        projects = Project.objects.filter(
-            users=self.request.user,
-            status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
-        )
+        projects = super().get_queryset()
 
         # Apply filters if valid
         if self.filter_form and self.filter_form.is_valid():
@@ -221,7 +234,7 @@ class FinancialReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         return context
 
 
-class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
+class ScheduleReportView(ProjectAccessMixin, ListView):
     """Schedule Report - Project List with Start/End Dates, Durations, Progress & SPI."""
 
     model = Project
@@ -255,10 +268,7 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
 
     def get_queryset(self: "ScheduleReportView") -> QuerySet[Project]:
         """Get active projects for the user's portfolio with optional category filter."""
-        projects = Project.objects.filter(
-            users=self.request.user,
-            status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
-        )
+        projects = super().get_queryset()
 
         # Apply filters if valid
         if self.filter_form and self.filter_form.is_valid():
@@ -377,7 +387,7 @@ class ScheduleReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         return context
 
 
-class CashflowReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
+class CashflowReportView(ProjectAccessMixin, ListView):
     """Cashflow Report - Project List with Monthly Cashflow Projections."""
 
     model = Project
@@ -411,10 +421,7 @@ class CashflowReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
 
     def get_queryset(self: "CashflowReportView") -> QuerySet[Project]:
         """Get active projects for the user's portfolio with optional category filter."""
-        projects = Project.objects.filter(
-            users=self.request.user,
-            status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
-        ).order_by("name")
+        projects = super().get_queryset()
 
         # Apply filters if valid
         if self.filter_form and self.filter_form.is_valid():
@@ -537,7 +544,7 @@ class CashflowReportView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         return Decimal("0.00")
 
 
-class TrendReportView(UserHasGroupGenericMixin, BreadcrumbMixin, TemplateView):
+class TrendReportView(ProjectAccessMixin, TemplateView):
     """Trend Report - Portfolio-level trends over time."""
 
     template_name = "portfolio/reports/trend_report.html"
@@ -625,7 +632,7 @@ class TrendReportView(UserHasGroupGenericMixin, BreadcrumbMixin, TemplateView):
 
         current_date = datetime.now()
         # Get projects to include
-        projects = list(portfolio.get_active_projects(category))
+        projects = list(self.get_queryset())
         if selected_project:
             projects = [p for p in projects if p.pk == selected_project.pk]
         if consultant:
