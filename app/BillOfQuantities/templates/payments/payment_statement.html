@@ -1,169 +1,130 @@
-{% extends "base_full.html" %}
-{% load static %}
-{% load heroicons %}
-{% load humanize %}
+{% extends "base.html" %}
 {% block title %}
     Payment Statement - {{ block.super }}
 {% endblock title %}
 {% block extra_js %}
     <script>
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
             }
+            return cookieValue;
         }
-    }
-    return cookieValue;
-}
 
-function showEmailForm() {
-    document.getElementById('email-modal').classList.remove('hidden');
-}
-
-function hideEmailForm() {
-    document.getElementById('email-modal').classList.add('hidden');
-    // Reset form
-    document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        if (cb.closest('.space-y-2').querySelectorAll('input[type="checkbox"]').length > 1) {
-            cb.checked = cb.closest('.space-y-2').querySelector('input[type="checkbox"]').checked;
+        function showEmailForm() {
+            document.getElementById('email-modal').classList.remove('hidden');
         }
-    });
-    // Clear additional emails
-    const container = document.getElementById('additional-emails');
-    container.innerHTML = `
-        <div class="flex">
-            <input type="email" name="additional_email" class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter additional email">
-            <button type="button" onclick="addEmailField()" class="ml-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md">
-                {% heroicon_outline "plus" class="w-4 h-4" %}
-            </button>
-        </div>
-    `;
-}
 
-function addEmailField() {
-    const container = document.getElementById('additional-emails');
-    const newField = document.createElement('div');
-    newField.className = 'flex';
-    newField.innerHTML = `
-        <input type="email" name="additional_email" class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter additional email">
-        <button type="button" onclick="removeEmailField(this)" class="ml-2 px-3 py-2 text-sm bg-red-100 hover:bg-red-200 text-red-600 rounded-md">
-            {% heroicon_outline "minus" class="w-4 h-4" %}
-        </button>
-    `;
-    container.appendChild(newField);
-}
+        function hideEmailForm() {
+            document.getElementById('email-modal').classList.add('hidden');
+            // Reset form
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                if (cb.closest('.space-y-2').querySelectorAll('input[type="checkbox"]').length > 1) {
+                    cb.checked = cb.closest('.space-y-2').querySelector('input[type="checkbox"]').checked;
+                }
+            });
+            // Clear additional emails
+            const container = document.getElementById('additional-emails');
+            container.innerHTML = `
+                <div class="flex">
+                    <input type="email" name="additional_email" class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter additional email">
+                    <button type="button" onclick="addEmailField()" class="ml-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-md">
+                        {% heroicon_outline "plus" class="w-4 h-4" %}
+                    </button>
+                </div>
+            `;
+        }
 
-function removeEmailField(button) {
-    button.parentElement.remove();
-}
+        function addEmailField() {
+            const container = document.getElementById('additional-emails');
+            const newField = document.createElement('div');
+            newField.className = 'flex';
+            newField.innerHTML = `
+                <input type="email" name="additional_email" class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter additional email">
+                <button type="button" onclick="removeEmailField(this)" class="ml-2 px-3 py-2 text-sm bg-red-100 hover:bg-red-200 text-red-600 rounded-md">
+                    {% heroicon_outline "minus" class="w-4 h-4" %}
+                </button>
+            `;
+            container.appendChild(newField);
+        }
 
-function sendEmail() {
-    // Collect selected emails
-    const emails = [];
-    
-    // Debug: Check if we're inside the modal
-    console.log('Modal exists:', !!document.getElementById('email-modal'));
-    console.log('Modal hidden:', document.getElementById('email-modal').classList.contains('hidden'));
-    
-    // Get checked client user emails
-    const allCheckboxes = document.querySelectorAll('input[name="emails"]');
-    console.log('All email checkboxes found:', allCheckboxes.length);
-    allCheckboxes.forEach((cb, index) => {
-        console.log(`Checkbox ${index}:`, {
-            name: cb.name,
-            value: cb.value,
-            checked: cb.checked,
-            type: cb.type
+        function removeEmailField(button) {
+            button.parentElement.remove();
+        }
+
+        function sendEmail() {
+            // Collect selected emails
+            const emails = [];
+            
+            // Get checked client user emails
+            const checkedBoxes = document.querySelectorAll('input[name="emails"]:checked');
+            checkedBoxes.forEach(cb => {
+                emails.push(cb.value);
+            });
+            
+            // Get additional email addresses
+            const additionalInputs = document.querySelectorAll('input[name="additional_email"]');
+            additionalInputs.forEach(input => {
+                if (input.value.trim()) {
+                    emails.push(input.value.trim());
+                }
+            });
+            
+            if (emails.length === 0) {
+                alert('Please select at least one email address');
+                return;
+            }
+            
+            const button = document.getElementById('send-email-btn');
+            const originalText = button.innerHTML;
+            
+            // Show loading state
+            button.disabled = true;
+            button.innerHTML = 'Sending Email...';
+            
+            fetch('{% url "bill_of_quantities:email-payment-statement" project.pk %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken') || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                },
+                body: JSON.stringify({ emails: emails })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    hideEmailForm();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                alert('Failed to send email. Please try again.');
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            });
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('email-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    hideEmailForm();
+                }
+            });
         });
-    });
-    
-    const checkedBoxes = document.querySelectorAll('input[name="emails"]:checked');
-    console.log('Found checked checkboxes:', checkedBoxes.length);
-    checkedBoxes.forEach(cb => {
-        console.log('Adding email from checkbox:', cb.value);
-        emails.push(cb.value);
-    });
-    
-    // Get additional email addresses
-    const additionalInputs = document.querySelectorAll('input[name="additional_email"]');
-    console.log('Found additional email inputs:', additionalInputs.length);
-    additionalInputs.forEach((input, index) => {
-        console.log(`Additional input ${index}:`, {
-            name: input.name,
-            value: input.value,
-            type: input.type
-        });
-        if (input.value.trim()) {
-            console.log('Adding additional email:', input.value.trim());
-            emails.push(input.value.trim());
-        }
-    });
-    
-    console.log('Final emails array:', emails);
-    console.log('Emails array length:', emails.length);
-    
-    if (emails.length === 0) {
-        alert('Please select at least one email address');
-        return;
-    }
-    
-    const button = document.getElementById('send-email-btn');
-    const originalText = button.innerHTML;
-    
-    // Show loading state
-    button.disabled = true;
-    button.innerHTML = 'Sending Email...';
-    
-    const payload = { emails: emails };
-    console.log('Sending payload:', JSON.stringify(payload));
-    
-    fetch('{% url "bill_of_quantities:email-payment-statement" project.pk %}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken') || document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
-        },
-        body: JSON.stringify(payload)
-    })
-    .then(response => {
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
-        return response.json();
-    })
-    .then(data => {
-        console.log('Response data:', data);
-        if (data.success) {
-            alert(data.message);
-            hideEmailForm();
-        } else {
-            alert(data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Fetch error:', error);
-        alert('Failed to send email. Please try again.');
-    })
-    .finally(() => {
-        button.disabled = false;
-        button.innerHTML = originalText;
-    });
-}
-
-// Close modal when clicking outside
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('email-modal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            hideEmailForm();
-        }
-    });
-});
     </script>
 {% endblock extra_js %}
 {% block content %}
