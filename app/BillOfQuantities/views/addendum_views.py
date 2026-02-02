@@ -29,7 +29,7 @@ class AddendumListView(AddendumMixin, ListView):
     def get_breadcrumbs(self: "AddendumListView", **kwargs) -> list[BreadcrumbItem]:
         return [
             {
-                "title": "Return to Project",
+                "title": f"{self.get_project().name} Management",
                 "url": reverse(
                     "project:project-management",
                     kwargs={"pk": self.get_project().pk},

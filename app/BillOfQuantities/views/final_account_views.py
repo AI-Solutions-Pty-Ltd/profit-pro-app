@@ -7,15 +7,18 @@ from django.views.generic import DetailView
 
 from app.BillOfQuantities.models import LineItem, PaymentCertificate
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.Project.models.project_roles import Role
 from app.Project.models.projects_models import Project
 
 
-class FinalAccountDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailView):
+class FinalAccountDetailView(
+    UserHasProjectRoleGenericMixin, BreadcrumbMixin, DetailView
+):
     model = PaymentCertificate
     template_name = "final_account/final_account_detail.html"
     context_object_name = "final_account"
-    permissions = ["contractor"]
+    roles = [Role.CONTRACT_BOQ]
     project_slug = "project_pk"
     pk = "pk"
 
@@ -25,7 +28,6 @@ class FinalAccountDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailVi
             self.project = get_object_or_404(
                 Project,
                 pk=self.kwargs[self.project_slug],
-                users=self.request.user,
             )
         return self.project
 
@@ -39,7 +41,6 @@ class FinalAccountDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailVi
                 pk=self.kwargs[self.pk],
                 project=self.get_project(),
                 is_final=True,
-                project__users=self.request.user,
             )
         return self.payment_certificate
 

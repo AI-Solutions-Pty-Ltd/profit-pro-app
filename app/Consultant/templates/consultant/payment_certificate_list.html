@@ -66,14 +66,9 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
                                         R {{ cert.progressive_to_date|default:0|floatformat:2|intcomma }}
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                                        <div class="flex items-center justify-center space-x-2">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="right-content space-x-2">
                                             <!-- View Button -->
-                                            <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk cert.pk %}"
-                                               class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                                {% heroicon_outline "eye" size="14" %}
-                                                <span class="ml-1">View</span>
-                                            </a>
                                             {% if cert.status == 'SUBMITTED' %}
                                                 <!-- Approve Button for SUBMITTED certificates -->
                                                 <a href="{% url 'consultant:payment-certificate-approve' project.pk cert.pk %}"
@@ -82,6 +77,11 @@
                                                     <span class="ml-1">Review & Approve</span>
                                                 </a>
                                             {% endif %}
+                                            <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk cert.pk %}"
+                                               class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                {% heroicon_outline "eye" size="14" %}
+                                                <span class="ml-1">View</span>
+                                            </a>
                                             <!-- Edit Date Button -->
                                             <a href="{% url 'consultant:payment-certificate-edit-date' project.pk cert.pk %}"
                                                class="inline-flex items-center px-3 py-1.5 border border-indigo-300 text-xs font-medium rounded text-indigo-700 bg-indigo-50 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">

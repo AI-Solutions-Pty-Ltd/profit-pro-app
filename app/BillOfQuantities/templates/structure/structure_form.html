@@ -10,30 +10,6 @@
 {% endblock title %}
 {% block content %}
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Breadcrumb -->
-        <nav class="flex mb-6" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                <li class="inline-flex items-center">
-                    <a href="{% url 'project:project-management' project.pk %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">
-                        {% heroicon_outline name="chevron-left" size="20" %}
-                        Structures
-                    </a>
-                </li>
-                <li>
-                    <div class="flex items-center">
-                        {% heroicon_outline name="chevron-right" size="20" %}
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">
-                            {% if form.instance.pk %}
-                                Edit
-                            {% else %}
-                                Create
-                            {% endif %}
-                        </span>
-                    </div>
-                </li>
-            </ol>
-        </nav>
         <!-- Form Card -->
         <div class="bg-white shadow-md rounded-lg overflow-hidden">
             <!-- Header -->

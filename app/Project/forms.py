@@ -1115,6 +1115,19 @@ class CompanyForm(forms.ModelForm):
         self.fields.pop("consultants", None)
         self.fields["users"].label = "Company Users"
 
+    def save(self, commit=True):
+        """Save the instance, discarding VAT number if VAT registered is not selected."""
+        instance = super().save(commit=False)
+
+        # If VAT registered is not checked, clear the VAT number
+        if not instance.vat_registered:
+            instance.vat_number = ""
+
+        if commit:
+            instance.save()
+
+        return instance
+
 
 class ClientForm(forms.ModelForm):
     """Form for creating and editing companies."""
@@ -1201,3 +1214,46 @@ class ProjectClientForm(forms.Form):
         self.instance = kwargs.pop("instance", None)
         super().__init__(*args, **kwargs)
         self.fields["client"].label = "Client Company"
+
+
+class SignatoryLinkForm(forms.Form):
+    """Form to link existing signatories to a project."""
+
+    signatories: forms.ModelMultipleChoiceField = forms.ModelMultipleChoiceField(
+        queryset=Account.objects.none(),
+        widget=forms.CheckboxSelectMultiple(
+            attrs={
+                "class": "space-y-2",
+            }
+        ),
+        required=False,
+        help_text="Select existing users to add as signatories for this project.",
+    )
+
+    def __init__(self, *args, **kwargs):
+        project = kwargs.pop("project", None)
+        super().__init__(*args, **kwargs)
+
+        if project:
+            # Get all users who are signatories in any project
+            from app.Project.models import Signatories
+
+            all_signatory_user_ids = (
+                Signatories.objects.filter(user__isnull=False)
+                .values_list("user_id", flat=True)
+                .distinct()
+            )
+
+            # Get users who are already signatories for this project
+            existing_signatory_ids = project.signatories.filter(
+                user__isnull=False
+            ).values_list("user_id", flat=True)
+
+            # Show users who are signatories elsewhere but not in this project
+            signatories_field = self.fields["signatories"]
+            assert isinstance(signatories_field, forms.ModelMultipleChoiceField)
+            signatories_field.queryset = (
+                Account.objects.filter(id__in=all_signatory_user_ids)
+                .exclude(id__in=existing_signatory_ids)
+                .order_by("first_name", "last_name")
+            )

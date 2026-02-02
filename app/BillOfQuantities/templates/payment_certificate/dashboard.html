@@ -15,14 +15,12 @@
                     <p class="text-sm text-gray-600 mt-1">Payment Certificates</p>
                 </div>
                 <div class="flex items-center space-x-3">
-                    {% if completed_payment_certificates %}
-                        <a href="{% url 'bill_of_quantities:payment-certificate-payment-statement' project.pk %}"
-                           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                           title="View Payment Statement">
-                            {% heroicon_outline "document-text" class="w-4 h-4 mr-2" %}
-                            Payment Statement
-                        </a>
-                    {% endif %}
+                    <a href="{% url 'bill_of_quantities:payment-certificate-payment-statement' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                       title="View Payment Statement">
+                        {% heroicon_outline "document-text" class="w-4 h-4 mr-2" %}
+                        Payment Statement
+                    </a>
                     {% if not active_certificate %}
                         <a href="{% url 'bill_of_quantities:payment-certificate-new' project.pk %}"
                            class="loading-btn inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
@@ -84,22 +82,22 @@
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div class="bg-white rounded-lg shadow p-4">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Revised Contract</p>
-            <p class="mt-1 text-xl font-bold text-gray-900">R {{ revised_contract_value|default:"0"|floatformat:0|intcomma }}</p>
+            <p class="mt-1 text-xl font-bold text-gray-900">R {{ revised_contract_value|default:"0"|floatformat:2|intcomma }}</p>
         </div>
         <div class="bg-white rounded-lg shadow p-4">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Certified</p>
-            <p class="mt-1 text-xl font-bold text-emerald-600">R {{ total_certified|default:"0"|floatformat:0|intcomma }}</p>
+            <p class="mt-1 text-xl font-bold text-emerald-600">R {{ total_certified|default:"0"|floatformat:2|intcomma }}</p>
             {% if certified_percent %}
                 <p class="text-xs text-emerald-600">{{ certified_percent }}% of contract</p>
             {% endif %}
         </div>
         <div class="bg-white rounded-lg shadow p-4">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Current Claim</p>
-            <p class="mt-1 text-xl font-bold text-blue-600">R {{ current_claim|default:"0"|floatformat:0|intcomma }}</p>
+            <p class="mt-1 text-xl font-bold text-blue-600">R {{ current_claim|default:"0"|floatformat:2|intcomma }}</p>
         </div>
         <div class="bg-white rounded-lg shadow p-4">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Remaining</p>
-            <p class="mt-1 text-xl font-bold text-amber-600">R {{ remaining_amount|default:"0"|floatformat:0|intcomma }}</p>
+            <p class="mt-1 text-xl font-bold text-amber-600">R {{ remaining_amount|default:"0"|floatformat:2|intcomma }}</p>
             {% if remaining_percent %}
                 <p class="text-xs text-amber-600">{{ remaining_percent }}% of contract</p>
             {% endif %}
@@ -239,6 +237,34 @@
                                         </p>
                                         <p class="text-xs text-gray-500">{{ cert.approved_on|date:"M d, Y" }}</p>
                                     </div>
+                                    <!-- Minimalistic Action Buttons -->
+                                    <div class="flex items-center space-x-1 ml-4">
+                                        <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk cert.pk %}"
+                                           class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                                           title="View Certificate Details">
+                                            {% heroicon_outline "eye" class="w-4 h-4" %}
+                                        </a>
+                                        {% if cert.status == "APPROVED" %}
+                                            <a href="{% url 'bill_of_quantities:payment-certificate-invoice' project.pk cert.pk %}"
+                                               class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                                               title="View Invoice">
+                                                {% heroicon_outline "document" class="w-4 h-4" %}
+                                            </a>
+                                        {% endif %}
+                                        {% if forloop.first and not active_certificate and not project.final_payment_certificate and cert.status == 'APPROVED' %}
+                                            <form method="post"
+                                                  action="{% url 'bill_of_quantities:payment-certificate-mark-final' project.pk cert.pk %}"
+                                                  onsubmit="return confirm('Are you sure you want to mark this as the Final Payment Certificate? This will update the project status.');"
+                                                  class="inline">
+                                                {% csrf_token %}
+                                                <button type="submit"
+                                                        class="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100 rounded transition-colors"
+                                                        title="Mark as Final">
+                                                    {% heroicon_outline "document-check" class="w-4 h-4" %}
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
                                 </div>
                                 <div class="flex items-center space-x-8">
                                     <div class="text-right min-w-[140px]">
@@ -261,28 +287,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-lg flex items-center justify-end space-x-2">
-                            <a href="{% url 'bill_of_quantities:payment-certificate-detail' project.pk cert.pk %}"
-                               class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                               title="View Certificate Details">{% heroicon_outline "eye" class="w-4 h-4" %}</a>
-                            {% if cert.status == "APPROVED" %}
-                                <a href="{% url 'bill_of_quantities:payment-certificate-invoice' project.pk cert.pk %}"
-                                   class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                   title="View Invoice">{% heroicon_outline "document" class="w-4 h-4" %}</a>
-                            {% endif %}
-                            {% if forloop.first and not active_certificate and not project.final_payment_certificate and cert.status == 'APPROVED' %}
-                                <form method="post"
-                                      action="{% url 'bill_of_quantities:payment-certificate-mark-final' project.pk cert.pk %}"
-                                      onsubmit="return confirm('Are you sure you want to mark this as the Final Payment Certificate? This will update the project status.');">
-                                    {% csrf_token %}
-                                    <button type="submit"
-                                            class="inline-flex items-center px-3 py-2 border border-emerald-300 text-sm leading-4 font-medium rounded-md text-emerald-700 bg-emerald-100 hover:bg-emerald-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                                        {% heroicon_outline "document-check" class="w-4 h-4 mr-1" %}
-                                        Mark as Final
-                                    </button>
-                                </form>
-                            {% endif %}
                         </div>
                     </div>
                 {% endfor %}

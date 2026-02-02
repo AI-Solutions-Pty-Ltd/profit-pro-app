@@ -46,6 +46,7 @@ class PaymentCertificate(BaseModel):
     approved_by = models.ForeignKey(
         Account, on_delete=models.SET_NULL, null=True, blank=True
     )
+    assessment_date = models.DateTimeField(blank=True, null=True)
 
     # files
     pdf = models.FileField(upload_to=upload_to, blank=True, null=True)

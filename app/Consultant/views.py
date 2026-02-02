@@ -21,7 +21,7 @@ class GetProjectMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
         return get_object_or_404(
             Project,
             pk=self.kwargs["project_pk"],
-            client__consultant=self.request.user,
+            client__consultants=self.request.user,
         )
 
 
@@ -80,7 +80,7 @@ class PaymentCertificateFinalApprovalView(
     def get_queryset(self):
         return (
             PaymentCertificate.objects.filter(
-                project__client__consultant=self.request.user
+                project__client__consultants=self.request.user
             )
             .select_related("project")
             .prefetch_related(
@@ -97,7 +97,7 @@ class PaymentCertificateFinalApprovalView(
 
         # Mark all transactions as claimed based on status
         if payment_certificate.status == PaymentCertificate.Status.APPROVED:
-            payment_certificate.actual_transactions.update(claimed=True)
+            payment_certificate.actual_transactions.update(claimed=True, approved=True)
             messages.success(
                 self.request,
                 f"Payment Certificate #{payment_certificate.certificate_number} has been approved!",

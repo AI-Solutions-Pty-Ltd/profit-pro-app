@@ -1,0 +1,432 @@
+{% block extra_css %}
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+            line-height: 0.9;
+        }
+        
+        /* Reusable utility classes */
+        .text-center {
+            text-align: center;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-left {
+            text-align: left;
+        }
+        
+        .font-bold {
+            font-weight: bold;
+        }
+        
+        .font-large {
+            font-size: 28px;
+            letter-spacing: 2px;
+        }
+        
+        .font-medium {
+            font-size: 14px;
+        }
+        
+        .font-small {
+            font-size: 11px;
+        }
+        
+        .mb-30 {
+            margin-bottom: 3px;
+        }
+        
+        .mb-20 {
+            margin-bottom: 2px;
+        }
+        
+        .mb-10 {
+            margin-bottom: 1px;
+        }
+        
+        .mt-30 {
+            margin-top: 3px;
+        }
+        
+        .mt-20 {
+            margin-top: 2px;
+        }
+        
+        .pt-20 {
+            padding-top: 2px;
+        }
+        
+        .pt-10 {
+            padding-top: 1px;
+        }
+        
+        .pb-10 {
+            padding-bottom: 1px;
+        }
+        
+        .border-top {
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .border-top-thick {
+            border-top: 2px solid #333;
+        }
+        
+        .border-bottom {
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .w-100 {
+            width: 100%;
+        }
+        
+        .w-30 {
+            width: 30%;
+        }
+        
+        .w-40 {
+            width: 40%;
+        }
+
+        .w-50 {
+            width: 50%;
+        }
+        
+        .w-60 {
+            width: 60%;
+        }
+        
+        .w-70 {
+            width: 70%;
+        }
+        
+        
+        .valign-top {
+            vertical-align: top;
+        }
+        
+        .valign-middle {
+            vertical-align: middle;
+        }
+        
+        .pr-20 {
+            padding-right: 2px;
+        }
+
+        .pr-30 {
+            padding-right: 10px;
+        }
+        
+        .pl-20 {
+            padding-left: 2px;
+        }
+
+        .pl-30 {
+            padding-left: 10px;
+        }
+        
+        .border-left {
+            border-left: 1px solid #e0e0e0;
+        }
+        
+        /* Header styling */
+        .invoice-header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        /* Section styling */
+        .section-box {
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            color: #555;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+        }
+        
+        .section-border {
+            border-bottom: 2px solid #333;
+        }
+
+        .hr {
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        /* Image styling */
+        img {
+            max-width: 80px;
+            max-height: 80px;
+            padding: 4px;
+            background-color: #fff;
+        }
+        
+        /* Table styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        td {
+            padding: 4px;
+            vertical-align: top;
+        }
+        
+        .info-table td {
+            padding: 2px 2px;
+        }
+        
+        .bordered {
+            border: 1px solid #e0e0e0;
+        }
+        
+        .amount-table {
+            margin-top: 20px;
+        }
+        
+        .amount-table td {
+            padding: 8px 6px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .amount-table .total td {
+            font-weight: bold;
+            font-size: 14px;
+            border-top: 2px solid #333;
+            border-bottom: none;
+            padding-top: 15px;
+        }
+        
+        /* Footer styling */
+        .footer {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            text-align: center;
+        }
+        
+        .footer p {
+            margin: 5px 0;
+            color: #666;
+        }
+        
+        /* Highlight styling */
+        .highlight {
+            color: #2563eb;
+        }
+        
+        .label {
+            color: #666;
+            font-weight: normal;
+        }
+    </style>
+{% endblock extra_css %}
+{% block content %}
+    <!-- 1. TAX INVOICE Header -->
+    <div class="invoice-header">
+        <h1 class="text-center font-bold font-large">TAX INVOICE</h1>
+    </div>
+    <hr>
+    <!-- 2. Project and Invoice Details -->
+    <table class="info-table mb-30">
+        <tr>
+            <!-- 2a. Left side - project name and logo -->
+            <td class="w-70 valign-top">
+                <div class="w-30">
+                    <div class="w-30 section-title">PROJECT DETAILS</div>
+                </div>
+                <span class="font-medium font-bold">{{ project.name }}</span>
+                {% if project.contract_number %}
+                    <br>
+                    <span class="font-small label">Contract No:</span> {{ project.contract_number }}
+                {% endif %}
+                {% if project.description %}
+                    <br>
+                    <span class="font-small">{{ project.description|truncatewords:20 }}</span>
+                {% endif %}
+                {% if project.logo %}
+                    <br>
+                    <br>
+                    <img src="{{ project.logo.url }}"
+                         alt="{{ project.name }}"
+                         width="80"
+                         height="80">
+                {% endif %}
+            </td>
+            <!-- 2b. Right side - invoice details -->
+            <td class="w-30 text-left valign-top">
+                <div class="section-title text-left">INVOICE INFORMATION</div>
+                <table class="w-100">
+                    <tr>
+                        <td class="text-left font-small label">Invoice Number:</td>
+                        <td class="text-left font-small font-bold">
+                            INV-{{ payment_certificate.certificate_number }}-{{ payment_certificate.pk|slice:"-4:" }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-left font-small label">Date:</td>
+                        <td class="text-left font-small">{% now "d M Y" %}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-left font-small label">Payment Certificate:</td>
+                        <td class="text-left font-small highlight">#{{ payment_certificate.certificate_number }}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <hr>
+    <!-- 3. Contractor and Client Details -->
+    <div class="section-box">
+        <table class="w-100">
+            <tr>
+                <!-- 3a. Left: contractor details -->
+                <td class="w-50 text-left valign-top pr-30">
+                    <div class="section-title">CONTRACTOR</div>
+                    <div class="font-medium font-bold mb-10">{{ project.contractor.name }}</div>
+                    {% if project.contractor.logo %}
+                        <img src="{{ project.contractor.logo.url }}"
+                             alt="{{ project.contractor.name }}"
+                             width="80"
+                             height="80">
+                        <br>
+                        <br>
+                    {% endif %}
+                    <div class="font-small">
+                        {% if project.contractor.registration_number %}
+                            <span class="label">Registration No:</span> {{ project.contractor.registration_number }}
+                            <br>
+                        {% endif %}
+                        {% if project.contractor.tax_number %}
+                            <span class="label">Tax No:</span> {{ project.contractor.tax_number }}
+                            <br>
+                        {% endif %}
+                        {% if project.contractor.vat_number %}
+                            <span class="label">VAT No:</span> {{ project.contractor.vat_number }}
+                            <br>
+                        {% endif %}
+                        {% if project.contractor.bank_name %}
+                            <span class="label">Bank:</span> {{ project.contractor.bank_name }}
+                            <br>
+                        {% endif %}
+                        {% if project.contractor.bank_account_number %}
+                            <span class="label">Account No:</span> {{ project.contractor.bank_account_number }}
+                        {% endif %}
+                    </div>
+                </td>
+                <!-- 3b. Right: client details -->
+                <td class="w-50 text-left valign-top pl-30">
+                    <div class="section-title">CLIENT</div>
+                    <div class="font-medium font-bold mb-10">{{ project.client.name }}</div>
+                    {% if project.client.logo %}
+                        <img src="{{ project.client.logo.url }}"
+                             alt="{{ project.client.name }}"
+                             width="80"
+                             height="80">
+                        <br>
+                        <br>
+                    {% endif %}
+                    <div class="font-small">
+                        {% if project.client.registration_number %}
+                            <span class="label">Registration No:</span> {{ project.client.registration_number }}
+                            <br>
+                        {% endif %}
+                        {% if project.client.vat_number %}
+                            <span class="label">VAT No:</span> {{ project.client.vat_number }}
+                            <br>
+                        {% endif %}
+                        {% if project.client.address %}
+                            <span class="label">Address:</span>
+                            <br>
+                            {{ project.client.address }}
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <hr>
+    <!-- 4. Invoice Details -->
+    <div class="section-box">
+        <table class="w-100 bordered">
+            <tr>
+                <!-- 4a. Left side: payment cert details -->
+                <td class="w-50 text-left valign-top pr-20">
+                    <div class="section-title">PAYMENT CERTIFICATE DETAILS</div>
+                    <div class="font-small">
+                        <div class="mb-10">
+                            <span class="label">Certificate Number:</span>
+                            <span class="font-bold highlight">#{{ payment_certificate.certificate_number }}</span>
+                        </div>
+                        <div class="mb-10">
+                            <span class="label">Period:</span> {{ payment_certificate.created_at|date:"F Y" }}
+                        </div>
+                        {% if payment_certificate.notes %}
+                            <div>
+                                <span class="label">Notes:</span>
+                                <br>
+                                {{ payment_certificate.notes }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </td>
+                <!-- 4b. Right side: amounts -->
+                <td class="w-50 text-right valign-top pl-20 border-left">
+                    <div class="section-title text-left">AMOUNT DUE</div>
+                    <table class="amount-table w-100">
+                        {% if project.vat %}
+                            {% define payment_certificate.contract_current_claim_total|mul:vat_rate as vat_amount %}
+                            <tr>
+                                <td class="text-left font-small label">Subtotal (Excl VAT)</td>
+                                <td class="text-right font-small">R {{ payment_certificate.contract_current_claim_total|floatformat:2|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-left font-small label">VAT ({{ vat_rate|mul:100 }}%)</td>
+                                <td class="text-right font-small">R {{ vat_amount|floatformat:2|intcomma }}</td>
+                            </tr>
+                        {% endif %}
+                        <tr class="total">
+                            <td class="text-left">
+                                {% if project.vat %}
+                                    TOTAL INVOICE VALUE
+                                {% else %}
+                                    TOTAL AMOUNT
+                                {% endif %}
+                            </td>
+                            <td class="text-right">
+                                {% if project.vat %}
+                                    R {{ payment_certificate.contract_current_claim_total|add:vat_amount|floatformat:2|intcomma }}
+                                {% else %}
+                                    R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <!-- 5. Footer -->
+    <div class="footer">
+        <p class="font-small">Please remit payment to the bank account details above within 30 days of invoice date.</p>
+        <p class="font-small">This is a computer-generated invoice and does not require a signature.</p>
+    </div>
+{% endblock content %}

@@ -8,9 +8,15 @@ class PaymentCertificateApprovedDateForm(forms.ModelForm):
 
     class Meta:
         model = PaymentCertificate
-        fields = ["approved_on"]
+        fields = ["approved_on", "assessment_date"]
         widgets = {
             "approved_on": forms.DateInput(
+                attrs={
+                    "type": "date",
+                    "class": "block w-fit border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm",
+                }
+            ),
+            "assessment_date": forms.DateInput(
                 attrs={
                     "type": "date",
                     "class": "block w-fit border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm",
@@ -19,4 +25,5 @@ class PaymentCertificateApprovedDateForm(forms.ModelForm):
         }
         labels = {
             "approved_on": "Approval Date",
+            "assessment_date": "Assessment Date",
         }

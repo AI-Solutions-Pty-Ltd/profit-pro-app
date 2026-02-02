@@ -145,9 +145,15 @@ class PaymentCertificateFinalApprovalForm(forms.ModelForm):
 
     class Meta:
         model = PaymentCertificate
-        fields = ["approved_on", "status", "notes"]
+        fields = ["approved_on", "assessment_date", "status", "notes"]
         widgets = {
             "approved_on": forms.DateInput(
+                attrs={
+                    "type": "date",
+                    "class": "block w-fit border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm",
+                }
+            ),
+            "assessment_date": forms.DateInput(
                 attrs={
                     "type": "date",
                     "class": "block w-fit border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm",

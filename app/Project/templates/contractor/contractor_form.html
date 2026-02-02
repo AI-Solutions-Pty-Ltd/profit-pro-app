@@ -59,9 +59,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div id="vat-number-field"
-                                 style="{% if not form.vat_registered.value %}display: none;
-                                        {% endif %}">{{ form.vat_number|as_crispy_field }}</div>
+                            <div id="vat-number-field">{{ form.vat_number|as_crispy_field }}</div>
                         </div>
                     </div>
                     <!-- Banking Details Section -->
@@ -113,20 +111,4 @@
             </div>
         </div>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const vatRegistered = document.getElementById('{{ form.vat_registered.id_for_label }}');
-            const vatNumberField = document.getElementById('vat-number-field');
-            
-            if (vatRegistered && vatNumberField) {
-                vatRegistered.addEventListener('change', function() {
-                    if (this.checked) {
-                        vatNumberField.style.display = 'block';
-                    } else {
-                        vatNumberField.style.display = 'none';
-                    }
-                });
-            }
-        });
-    </script>
 {% endblock content %}

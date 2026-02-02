@@ -12,30 +12,30 @@ from django.views.generic import (
     UpdateView,
 )
 
-from app.BillOfQuantities.models import (
-    ContractVariation,
-)
+from app.BillOfQuantities.models import ContractualCorrespondence
 from app.core.Utilities.forms import styled_attachment_input, styled_date_input
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.models.project_roles import Role
 
+# =============================================================================
+# Contractual Correspondence Views
+# =============================================================================
 
-class ContractVariationMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
-    """Mixin for contract variation views."""
 
+class CorrespondenceMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+    """Mixin for correspondence views."""
+
+    roles = [Role.CORRESPONDENCE, Role.ADMIN, Role.USER]
     project_slug = "project_pk"
 
 
-class ContractVariationListView(ContractVariationMixin, ListView):
-    """List all contract variations for a project."""
+class CorrespondenceListView(CorrespondenceMixin, ListView):
+    """List all correspondences for a project."""
 
-    model = ContractVariation
-    template_name = "contract/variation_list.html"
-    context_object_name = "variations"
-    roles = [Role.CONTRACT_VARIATIONS, Role.ADMIN, Role.USER]
-    project_slug = "project_pk"
+    model = ContractualCorrespondence
+    template_name = "contract/correspondence_list.html"
+    context_object_name = "correspondences"
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
@@ -46,14 +46,15 @@ class ContractVariationListView(ContractVariationMixin, ListView):
                     kwargs={"pk": self.kwargs["project_pk"]},
                 ),
             },
-            {"title": "Contract Variations", "url": None},
+            {"title": "Correspondences", "url": None},
         ]
 
     def get_queryset(self):
-        """Filter variations by project."""
-        return ContractVariation.objects.filter(
+        """Filter correspondences by project."""
+        return ContractualCorrespondence.objects.filter(
             project=self.get_project(),
-        ).order_by("-created_at")
+            deleted=False,
+        ).order_by("-date_of_correspondence")
 
     def get_context_data(self, **kwargs):
         """Add project and summary stats to context."""
@@ -62,39 +63,31 @@ class ContractVariationListView(ContractVariationMixin, ListView):
         context["project"] = project
 
         # Summary statistics
-        variations = self.get_queryset()
-        approved_variations = variations.filter(
-            status=ContractVariation.Status.APPROVED
-        )
-
-        context["total_count"] = variations.count()
-        context["approved_count"] = approved_variations.count()
-        context["pending_count"] = variations.filter(
-            status__in=[
-                ContractVariation.Status.DRAFT,
-                ContractVariation.Status.SUBMITTED,
-                ContractVariation.Status.UNDER_REVIEW,
-            ]
+        correspondences = self.get_queryset()
+        context["total_count"] = correspondences.count()
+        context["incoming_count"] = correspondences.filter(
+            direction=ContractualCorrespondence.Direction.INCOMING
         ).count()
-
-        # Total approved amounts
-        context["total_approved_amount"] = sum_queryset(
-            approved_variations, "variation_amount"
-        )
-
-        # Total approved time extensions
-        context["total_approved_days"] = sum_queryset(
-            approved_variations, "time_extension_days"
-        )
+        context["outgoing_count"] = correspondences.filter(
+            direction=ContractualCorrespondence.Direction.OUTGOING
+        ).count()
+        context["pending_response_count"] = correspondences.filter(
+            requires_response=True,
+            response_sent=False,
+        ).count()
 
         return context
 
 
-class ContractVariationCreateView(ContractVariationMixin, CreateView):
-    """Create a new contract variation."""
+class CorrespondenceCreateView(CorrespondenceMixin, CreateView):
+    """Create a new correspondence."""
 
-    model = ContractVariation
-    template_name = "contract/variation_form.html"
+    model = ContractualCorrespondence
+    template_name = "contract/correspondence_form.html"
+
+    def get_form_class(self):
+        """Return the form class for this view."""
+        return self.CreateForm
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
@@ -106,53 +99,52 @@ class ContractVariationCreateView(ContractVariationMixin, CreateView):
                 ),
             },
             {
-                "title": "Contract Variations",
+                "title": "Correspondences",
                 "url": reverse(
-                    "bill_of_quantities:variation-list",
+                    "bill_of_quantities:correspondence-list",
                     kwargs={"project_pk": self.kwargs["project_pk"]},
                 ),
             },
-            {"title": "Create Variation", "url": None},
+            {"title": "Create Correspondence", "url": None},
         ]
 
     class CreateForm(forms.ModelForm):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.fields["date_identified"].widget = styled_date_input
+            self.fields["date_of_correspondence"].widget = styled_date_input
+            self.fields["response_due_date"].widget = styled_date_input
             self.fields["attachment"].widget = styled_attachment_input
-            # Status choices limited for create - starts as Draft
-            self.fields["status"].initial = ContractVariation.Status.DRAFT
 
         class Meta:
-            model = ContractVariation
+            model = ContractualCorrespondence
             fields = [
-                "title",
-                "description",
-                "category",
-                "variation_type",
-                "status",
-                "variation_amount",
-                "time_extension_days",
-                "date_identified",
+                "reference_number",
+                "subject",
+                "correspondence_type",
+                "direction",
+                "date_of_correspondence",
+                "sender",
+                "recipient",
+                "summary",
+                "requires_response",
+                "response_due_date",
                 "attachment",
             ]
 
-    form_class = CreateForm
-
     def form_valid(self, form):
-        """Set project and submitted_by before saving."""
+        """Set project and logged_by before saving."""
         form.instance.project = self.get_project()
-        form.instance.submitted_by = self.request.user
+        form.instance.logged_by = self.request.user
         messages.success(
             self.request,
-            f"Contract Variation '{form.instance.variation_number}' created successfully!",
+            f"Correspondence '{form.instance.reference_number}' created successfully!",
         )
         return super().form_valid(form)
 
     def get_success_url(self):
-        """Redirect to variation list."""
+        """Redirect to correspondence list."""
         return reverse(
-            "bill_of_quantities:variation-list",
+            "bill_of_quantities:correspondence-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
         )
 
@@ -164,11 +156,15 @@ class ContractVariationCreateView(ContractVariationMixin, CreateView):
         return context
 
 
-class ContractVariationUpdateView(ContractVariationMixin, UpdateView):
-    """Update an existing contract variation."""
+class CorrespondenceUpdateView(CorrespondenceMixin, UpdateView):
+    """Update an existing correspondence."""
 
-    model = ContractVariation
-    template_name = "contract/variation_form.html"
+    model = ContractualCorrespondence
+    template_name = "contract/correspondence_form.html"
+
+    def get_form_class(self):
+        """Return the form class for this view."""
+        return self.UpdateForm
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
@@ -180,41 +176,44 @@ class ContractVariationUpdateView(ContractVariationMixin, UpdateView):
                 ),
             },
             {
-                "title": "Contract Variations",
+                "title": "Correspondences",
                 "url": reverse(
-                    "bill_of_quantities:variation-list",
+                    "bill_of_quantities:correspondence-list",
                     kwargs={"project_pk": self.kwargs["project_pk"]},
                 ),
             },
-            {"title": f"Edit {self.object.variation_number}", "url": None},
+            {"title": f"Edit {self.object.reference_number}", "url": None},
         ]
 
     class UpdateForm(forms.ModelForm):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.fields["date_identified"].widget = styled_date_input
+            self.fields["date_of_correspondence"].widget = styled_date_input
+            self.fields["response_due_date"].widget = styled_date_input
+            self.fields["response_date"].widget = styled_date_input
             self.fields["attachment"].widget = styled_attachment_input
 
         class Meta:
-            model = ContractVariation
+            model = ContractualCorrespondence
             fields = [
-                "title",
-                "description",
-                "category",
-                "variation_type",
-                "status",
-                "variation_amount",
-                "time_extension_days",
-                "date_identified",
+                "reference_number",
+                "subject",
+                "correspondence_type",
+                "direction",
+                "date_of_correspondence",
+                "sender",
+                "recipient",
+                "summary",
+                "requires_response",
+                "response_due_date",
+                "response_sent",
+                "response_date",
                 "attachment",
-                "notes",
             ]
 
-    form_class = UpdateForm
-
     def get_queryset(self):
-        """Filter variations by project."""
-        return ContractVariation.objects.filter(
+        """Filter correspondences by project."""
+        return ContractualCorrespondence.objects.filter(
             project=self.get_project(),
             deleted=False,
         )
@@ -223,14 +222,14 @@ class ContractVariationUpdateView(ContractVariationMixin, UpdateView):
         """Add success message."""
         messages.success(
             self.request,
-            f"Contract Variation '{form.instance.variation_number}' updated successfully!",
+            f"Correspondence '{form.instance.reference_number}' updated successfully!",
         )
         return super().form_valid(form)
 
     def get_success_url(self):
-        """Redirect to variation list."""
+        """Redirect to correspondence list."""
         return reverse(
-            "bill_of_quantities:variation-list",
+            "bill_of_quantities:correspondence-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
         )
 
@@ -242,13 +241,12 @@ class ContractVariationUpdateView(ContractVariationMixin, UpdateView):
         return context
 
 
-class ContractVariationDetailView(ContractVariationMixin, DetailView):
-    """View details of a contract variation."""
+class CorrespondenceDetailView(CorrespondenceMixin, DetailView):
+    """View details of a correspondence."""
 
-    model = ContractVariation
-    template_name = "contract/variation_detail.html"
-    context_object_name = "variation"
-    permissions = ["contractor"]
+    model = ContractualCorrespondence
+    template_name = "contract/correspondence_detail.html"
+    context_object_name = "correspondence"
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
@@ -260,18 +258,18 @@ class ContractVariationDetailView(ContractVariationMixin, DetailView):
                 ),
             },
             {
-                "title": "Contract Variations",
+                "title": "Correspondences",
                 "url": reverse(
-                    "bill_of_quantities:variation-list",
+                    "bill_of_quantities:correspondence-list",
                     kwargs={"project_pk": self.kwargs["project_pk"]},
                 ),
             },
-            {"title": self.object.variation_number, "url": None},
+            {"title": self.object.reference_number, "url": None},
         ]
 
     def get_queryset(self):
-        """Filter variations by project."""
-        return ContractVariation.objects.filter(
+        """Filter correspondences by project."""
+        return ContractualCorrespondence.objects.filter(
             project=self.get_project(),
             deleted=False,
         )
@@ -283,11 +281,11 @@ class ContractVariationDetailView(ContractVariationMixin, DetailView):
         return context
 
 
-class ContractVariationDeleteView(ContractVariationMixin, DeleteView):
-    """Delete a contract variation."""
+class CorrespondenceDeleteView(CorrespondenceMixin, DeleteView):
+    """Delete a correspondence."""
 
-    model = ContractVariation
-    template_name = "contract/variation_confirm_delete.html"
+    model = ContractualCorrespondence
+    template_name = "contract/correspondence_confirm_delete.html"
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
@@ -299,40 +297,36 @@ class ContractVariationDeleteView(ContractVariationMixin, DeleteView):
                 ),
             },
             {
-                "title": "Contract Variations",
+                "title": "Correspondences",
                 "url": reverse(
-                    "bill_of_quantities:variation-list",
+                    "bill_of_quantities:correspondence-list",
                     kwargs={"project_pk": self.kwargs["project_pk"]},
                 ),
             },
-            {"title": f"Delete {self.object.variation_number}", "url": None},
+            {"title": f"Delete {self.object.reference_number}", "url": None},
         ]
 
-    model = ContractVariation
-    template_name = "contract/variation_confirm_delete.html"
-    permissions = ["contractor"]
-
     def get_queryset(self):
-        """Filter variations by project."""
-        return ContractVariation.objects.filter(
+        """Filter correspondences by project."""
+        return ContractualCorrespondence.objects.filter(
             project=self.get_project(),
             deleted=False,
         )
 
     def form_valid(self, form):
-        """Soft delete the variation."""
+        """Soft delete the correspondence."""
         self.object = self.get_object()
         self.object.soft_delete()
         messages.success(
             self.request,
-            f"Contract Variation '{self.object.variation_number}' deleted successfully!",
+            f"Correspondence '{self.object.reference_number}' deleted successfully!",
         )
         return redirect(self.get_success_url())
 
     def get_success_url(self):
-        """Redirect to variation list."""
+        """Redirect to correspondence list."""
         return reverse(
-            "bill_of_quantities:variation-list",
+            "bill_of_quantities:correspondence-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
         )
 

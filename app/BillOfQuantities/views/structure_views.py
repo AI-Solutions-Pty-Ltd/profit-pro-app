@@ -18,38 +18,58 @@ from app.BillOfQuantities.forms import (
     StructureForm,
 )
 from app.BillOfQuantities.models import Bill, LineItem, Package, Structure
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
-from app.Project.models import Project
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.Project.models import Project, Role
 
 
-class StructureDetailView(UserHasGroupGenericMixin, DetailView):
+class StructureDetailView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, DetailView):
     """Display a single structure."""
 
     model = Structure
     template_name = "structure/structure_detail.html"
     context_object_name = "structure"
-    permissions = ["contractor"]
+    roles = [Role.CONTRACT_BOQ]
+    project_slug = "project_pk"
 
     def get_queryset(self):
         """Filter structures by the current project."""
-        return Structure.objects.filter(
-            project__users=self.request.user
-        ).select_related("project")
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        self.project = project
+        return Structure.objects.filter(project=project).select_related("project")
+
+    def test_func(self):
+        """Check user has project role."""
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        return self.request.user.has_project_role(project, self.roles)  # type: ignore
 
     def get_context_data(self, **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
-        context["project"] = self.get_object().project
+        context["project"] = self.project
         return context
 
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        """Get breadcrumb navigation."""
+        return [
+            {
+                "title": "Structures",
+                "url": reverse(
+                    "project:project-management", kwargs={"pk": self.project.pk}
+                ),
+            },
+            {"title": self.object.name, "url": None},
+        ]
 
-class StructureUpdateView(UserHasGroupGenericMixin, UpdateView):
+
+class StructureUpdateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, UpdateView):
     """Update an existing structure."""
 
     model = Structure
     form_class = StructureForm
     template_name = "structure/structure_form.html"
-    permissions = ["contractor"]
+    roles = [Role.CONTRACT_BOQ]
+    project_slug = "project_pk"
 
     def form_valid(self, form):
         """Add success message."""
@@ -58,28 +78,58 @@ class StructureUpdateView(UserHasGroupGenericMixin, UpdateView):
         )
         return super().form_valid(form)
 
+    def get_queryset(self):
+        """Filter structures by the current project."""
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        self.project = project
+        return Structure.objects.filter(project=project)
+
+    def test_func(self):
+        """Check user has project role."""
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        return self.request.user.has_project_role(project, self.roles)  # type: ignore
+
     def get_success_url(self):
         """Redirect to project's structure list."""
-        project: Project = self.object.project
-        return reverse("project:project-management", kwargs={"pk": project.pk})
+        return reverse("project:project-management", kwargs={"pk": self.project.pk})
 
     def get_context_data(self, **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
-        context["project"] = self.get_object().project
+        context["project"] = self.project
         return context
 
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        """Get breadcrumb navigation."""
+        return [
+            {
+                "title": "Structures",
+                "url": reverse(
+                    "project:project-management", kwargs={"pk": self.project.pk}
+                ),
+            },
+            {"title": f"Edit {self.object.name}", "url": None},
+        ]
 
-class StructureDeleteView(UserHasGroupGenericMixin, DeleteView):
+
+class StructureDeleteView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, DeleteView):
     """Delete a structure."""
 
     model = Structure
     template_name = "structure/structure_confirm_delete.html"
-    permissions = ["contractor"]
+    roles = [Role.CONTRACT_BOQ]
+    project_slug = "project_pk"
 
     def get_queryset(self):
         """Filter structures by the current project."""
-        return Structure.objects.filter(project__users=self.request.user)
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        self.project = project
+        return Structure.objects.filter(project=project)
+
+    def test_func(self):
+        """Check user has project role."""
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        return self.request.user.has_project_role(project, self.roles)  # type: ignore
 
     def form_valid(self, form):
         """Add success message."""
@@ -91,31 +141,40 @@ class StructureDeleteView(UserHasGroupGenericMixin, DeleteView):
 
     def get_success_url(self):
         """Redirect to project's structure list."""
-        return reverse(
-            "project:project-management", kwargs={"pk": self.object.project.pk}
-        )
+        return reverse("project:project-management", kwargs={"pk": self.project.pk})
 
     def get_context_data(self, **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
-        context["project"] = self.get_object().project
+        context["project"] = self.project
         return context
 
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        """Get breadcrumb navigation."""
+        return [
+            {
+                "title": "Structures",
+                "url": reverse(
+                    "project:project-management", kwargs={"pk": self.project.pk}
+                ),
+            },
+            {"title": f"Delete {self.object.name}", "url": None},
+        ]
 
-class StructureExcelUploadView(UserHasGroupGenericMixin, FormView):
+
+class StructureExcelUploadView(
+    UserHasProjectRoleGenericMixin, BreadcrumbMixin, FormView
+):
     """Upload structures from Excel file."""
 
     form_class = StructureExcelUploadForm
     template_name = "structure/structure_excel_upload.html"
-    permissions = ["contractor"]
+    roles = [Role.CONTRACT_BOQ]
+    project_slug = "project_pk"
 
     def get_project(self):
-        """Get the project from URL and verify ownership."""
-        project = get_object_or_404(
-            Project,
-            pk=self.kwargs["project_pk"],
-            users=self.request.user,
-        )
+        """Get the project from URL."""
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
         return project
 
     def get_form_kwargs(self):
@@ -124,6 +183,11 @@ class StructureExcelUploadView(UserHasGroupGenericMixin, FormView):
         kwargs["user"] = self.request.user
         kwargs["project"] = self.get_project()
         return kwargs
+
+    def test_func(self):
+        """Check user has project role."""
+        project = self.get_project()
+        return self.request.user.has_project_role(project, self.roles)  # type: ignore
 
     def get_context_data(self, **kwargs):
         """Add project to context."""
@@ -134,6 +198,17 @@ class StructureExcelUploadView(UserHasGroupGenericMixin, FormView):
             context["upload_errors"] = self.request.session.pop("upload_errors")
             context["error_count"] = self.request.session.pop("error_count", 0)
         return context
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        """Get breadcrumb navigation."""
+        project = self.get_project()
+        return [
+            {
+                "title": "Structures",
+                "url": reverse("project:project-management", kwargs={"pk": project.pk}),
+            },
+            {"title": "Upload Structures", "url": None},
+        ]
 
     def clean_pd_data(self, value):
         """Clean pandas data: handle NaN, nan, and empty strings."""
@@ -195,7 +270,7 @@ class StructureExcelUploadView(UserHasGroupGenericMixin, FormView):
 
             for row_index, row in df.iterrows():
                 # Excel rows are 1-indexed, and we add 2 to account for header row
-                display_row = row_index + 1
+                display_row = int(str(row_index)) + 1
 
                 try:
                     structure = self.clean_pd_data(row["Structure"])
