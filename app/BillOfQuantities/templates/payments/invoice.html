@@ -1,4 +1,56 @@
 {% extends "base.html" %}
+{% block extra_css %}
+    <style>
+        @media print {
+            /* Hide elements that shouldn't be printed */
+            header, nav, .bg-gray-50, button, a[href^="?format=pdf"], 
+            .bg-gradient-to-r > div:first-child > div:first-child > button,
+            .bg-gradient-to-r > div:first-child > div:last-child > a:not(:last-child) {
+                display: none !important;
+            }
+            
+            /* Ensure invoice takes full width */
+            .bg-white {
+                box-shadow: none !important;
+                border: none !important;
+                max-width: 100% !important;
+            }
+            
+            /* Adjust header for print */
+            .bg-gradient-to-r {
+                background: #4f46e5 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            /* Remove hover effects */
+            .hover\\:bg-gray-50:hover {
+                background-color: transparent !important;
+            }
+            
+            /* Ensure proper page breaks */
+            .bg-white {
+                page-break-inside: avoid;
+            }
+            
+            /* Adjust font sizes for print */
+            body {
+                font-size: 12pt;
+            }
+            
+            /* Ensure table borders print properly */
+            table {
+                border-collapse: collapse;
+            }
+            
+            .border-b, .border-t {
+                border-color: #000 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+{% endblock extra_css %}
 {% block extra_js %}
     <script>
 function getCookie(name) {
@@ -134,6 +186,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p class="text-sm text-gray-600 mt-1">Payment Certificate #{{ payment_certificate.certificate_number }}</p>
                 </div>
                 <div class="flex items-center space-x-3">
+                    <button onclick="window.print()"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "printer" size="16" class="mr-2" %}
+                        Print Invoice
+                    </button>
                     <button onclick="showEmailForm()"
                             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                         {% heroicon_outline "envelope" size="16" class="mr-2" %}
@@ -156,7 +213,177 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
     <!-- Invoice Content -->
-    <div>{% include "payments/invoice_html.html" %}</div>
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <!-- Invoice Header -->
+        <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 px-8 py-6">
+            <div class="flex justify-between items-start">
+                <div class="text-white">
+                    <h1 class="text-3xl font-bold mb-2">INVOICE</h1>
+                    <p class="text-indigo-100">Certificate #{{ payment_certificate.certificate_number }}</p>
+                </div>
+                <div class="text-right text-white">
+                    <p class="text-sm text-indigo-100 mb-1">Invoice Date</p>
+                    <p class="text-xl font-semibold">{{ payment_certificate.approved_on|date:"d F Y" }}</p>
+                </div>
+            </div>
+        </div>
+        <!-- Company & Client Info -->
+        <div class="px-8 py-6 border-b border-gray-200">
+            <div class="grid grid-cols-2 gap-8">
+                <!-- Company Info -->
+                <div>
+                    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">From</h2>
+                    <div class="space-y-1">
+                        <p class="font-medium text-gray-900">{{ user_company.name }}</p>
+                        {% if user_company.registration_number %}
+                            <p class="text-sm text-gray-600">Reg No: {{ user_company.registration_number }}</p>
+                        {% endif %}
+                        {% if user_company.vat_number %}<p class="text-sm text-gray-600">VAT No: {{ user_company.vat_number }}</p>{% endif %}
+                        {% if user_company.bank_name %}<p class="text-sm text-gray-600">Bank: {{ user_company.bank_name }}</p>{% endif %}
+                        {% if user_company.bank_account_number %}
+                            <p class="text-sm text-gray-600">Acc No: {{ user_company.bank_account_number }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <!-- Client Info -->
+                <div>
+                    <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Bill To</h2>
+                    <div class="space-y-1">
+                        {% if project.client.company_name %}
+                            <p class="font-medium text-gray-900">{{ project.client.company_name }}</p>
+                        {% elif project.client.users.all %}
+                            {% for user in project.client.users.all %}
+                                {% if forloop.first %}{{ user.get_full_name|default:user.email }}{% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <p class="font-medium text-gray-900">{{ project.client.name }}</p>
+                        {% endif %}
+                        {% if project.client.address %}<p class="text-sm text-gray-600">{{ project.client.address }}</p>{% endif %}
+                        {% if project.client.city %}
+                            <p class="text-sm text-gray-600">
+                                {{ project.client.city }}
+                                {% if project.client.province %}, {{ project.client.province }}{% endif %}
+                            </p>
+                        {% endif %}
+                        {% if project.client.postal_code %}<p class="text-sm text-gray-600">{{ project.client.postal_code }}</p>{% endif %}
+                        {% if project.client.vat_number %}<p class="text-sm text-gray-600">VAT: {{ project.client.vat_number }}</p>{% endif %}
+                        {% if project.client.users.all %}
+                            {% for user in project.client.users.all %}
+                                {% if forloop.first and not project.client.company_name %}
+                                    <p class="text-sm text-gray-600">Email: {{ user.email }}</p>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Invoice Details & Amount Due -->
+        <div class="px-8 py-6 border-b border-gray-200">
+            <div class="grid grid-cols-2 gap-8">
+                <!-- Left side: Details -->
+                <div>
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1">Project</p>
+                        <p class="font-medium text-gray-900">{{ project.name }}</p>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-sm text-gray-500 mb-1">Certificate Number</p>
+                        <p class="font-medium text-gray-900">#{{ payment_certificate.certificate_number }}</p>
+                    </div>
+                    {% if payment_certificate.notes %}
+                        <div class="mt-4">
+                            <p class="text-sm text-gray-500 mb-1">Notes</p>
+                            <p class="text-gray-900">{{ payment_certificate.notes }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <!-- Right side: Amount Due -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">AMOUNT DUE</h3>
+                    <table class="w-full">
+                        <tbody>
+                            {% if project.vat %}
+                                {% define payment_certificate.current_claim_total|mul:vat_rate as vat_amount %}
+                                <tr>
+                                    <td class="py-2 text-sm text-gray-600 text-left">Subtotal (Excl VAT)</td>
+                                    <td class="py-2 text-sm text-gray-900 text-right">
+                                        R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 text-sm text-gray-600 text-left">VAT ({{ vat_rate|mul:100 }}%)</td>
+                                    <td class="py-2 text-sm text-gray-900 text-right">R {{ vat_amount|floatformat:2|intcomma }}</td>
+                                </tr>
+                            {% endif %}
+                            <tr class="border-t-2 border-gray-200">
+                                <td class="py-3 font-bold text-gray-900 text-left">
+                                    {% if project.vat %}
+                                        TOTAL INVOICE VALUE
+                                    {% else %}
+                                        TOTAL AMOUNT
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 font-bold text-xl text-indigo-600 text-right">
+                                    {% if project.vat %}
+                                        R {{ payment_certificate.current_claim_total|add:vat_amount|floatformat:2|intcomma }}
+                                    {% else %}
+                                        R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- Banking Details -->
+        <div class="px-8 py-6 bg-gray-50 border-t border-gray-200">
+            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Banking Details</h3>
+            <div class="grid grid-cols-2 gap-8">
+                <div class="space-y-2">
+                    <p class="text-sm">
+                        <span class="font-medium text-gray-700">Bank:</span>
+                        <span class="text-gray-600 ml-2">{{ project.contractor.bank_name|default:"Please provide bank name" }}</span>
+                    </p>
+                    <p class="text-sm">
+                        <span class="font-medium text-gray-700">Account Number:</span>
+                        <span class="text-gray-600 ml-2">{{ project.contractor.bank_account_number|default:"Please provide account number" }}</span>
+                    </p>
+                    <p class="text-sm">
+                        <span class="font-medium text-gray-700">Account Name:</span>
+                        <span class="text-gray-600 ml-2">{{ project.contractor.bank_account_name|default:"Please provide account name" }}</span>
+                    </p>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-sm">
+                        <span class="font-medium text-gray-700">Branch Code:</span>
+                        <span class="text-gray-600 ml-2">{{ project.contractor.bank_branch_code|default:"Please provide branch code" }}</span>
+                    </p>
+                    <p class="text-sm">
+                        <span class="font-medium text-gray-700">SWIFT Code:</span>
+                        <span class="text-gray-600 ml-2">{{ project.contractor.bank_swift_code|default:"Please provide SWIFT code" }}</span>
+                    </p>
+                    <p class="text-sm">
+                        <span class="font-medium text-gray-700">VAT Number:</span>
+                        <span class="text-gray-600 ml-2">{{ project.contractor.vat_number|default:"Please provide VAT number" }}</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <!-- Notes -->
+        <div class="px-8 py-6 bg-white border-t border-gray-200">
+            <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Notes</h3>
+            <ul class="text-sm text-gray-600 space-y-1">
+                <li>• Please quote certificate number {{ payment_certificate.certificate_number }} when making payment.</li>
+                {% if project.get_payment_terms_display %}
+                    <li>• Payment is due {{ project.get_payment_terms_display|default:"30 days" }} of certificate date.</li>
+                {% endif %}
+                <li>• This invoice is for payment certificate #{{ payment_certificate.certificate_number }}.</li>
+                <li>• All prices include VAT where applicable.</li>
+            </ul>
+        </div>
+    </div>
     <!-- Footer with additional actions -->
     <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg mt-6">
         <div class="flex justify-between items-center">

@@ -477,8 +477,8 @@ class PaymentCertificateInvoiceView(PaymentCertificatePaymentMixin, DetailView):
     """Generate and display/download invoice for a payment certificate."""
 
     model = PaymentCertificate
-    template_name = "payments/invoice_template.html"
-    pdf_template_name = "payments/invoice_html.html"
+    template_name = "payments/invoice.html"
+    pdf_template_name = "payments/invoice_pdf_template.html"
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         """Return breadcrumbs for invoice view."""
@@ -528,6 +528,40 @@ class PaymentCertificateInvoiceView(PaymentCertificatePaymentMixin, DetailView):
         context["project"] = self.get_project()
         context["vat_rate"] = settings.VAT_RATE
         context["payment_certificate"] = self.get_object()
+
+        # Get the user's company (contractor company)
+        user_company = None
+        if self.request.user.is_authenticated and hasattr(
+            self.request.user, "companies"
+        ):
+            user_company = self.request.user.companies.first()
+
+        # Calculate VAT amounts
+        from decimal import Decimal
+
+        vat_rate = Decimal(str(settings.VAT_RATE))
+
+        # Check if either company or client is VAT registered
+        is_vat_applicable = bool(
+            user_company.vat_number
+            if user_company
+            else False
+            or (self.get_project().client and self.get_project().client.vat_number)
+        )
+
+        if is_vat_applicable:
+            # Calculate subtotal (excluding VAT)
+            subtotal = self.get_object().current_claim_total / (Decimal("1") + vat_rate)
+            vat_amount = self.get_object().current_claim_total - subtotal
+        else:
+            subtotal = self.get_object().current_claim_total
+            vat_amount = Decimal("0.00")
+
+        context["subtotal"] = subtotal
+        context["vat_amount"] = vat_amount
+        context["is_vat_applicable"] = is_vat_applicable
+        context["user_company"] = user_company
+
         return context
 
     def render_to_response(self, context, **response_kwargs):
