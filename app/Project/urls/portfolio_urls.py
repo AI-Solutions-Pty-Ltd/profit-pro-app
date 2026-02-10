@@ -53,12 +53,12 @@ portfolio_urls = [
     ),
     # User Management - Registers
     path(
-        "register/clients/",
+        "register/clients/<int:pk>/list/",
         user_management_views.ClientRegisterView.as_view(),
         name="client-register",
     ),
     path(
-        "register/clients/<int:pk>/",
+        "register/clients/detail/<int:pk>/",
         user_management_views.ClientDetailView.as_view(),
         name="client-detail",
     ),

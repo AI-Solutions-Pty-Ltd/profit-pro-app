@@ -200,10 +200,22 @@
                 <h3 class="text-lg font-semibold">Final Payment Certificate</h3>
                 <p class="text-sm text-gray-500">View and manage final payment certificate details</p>
             </div>
-            <a href="{% url 'bill_of_quantities:final-account-detail' project.pk project.final_payment_certificate.pk %}"
-               class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                View
-            </a>
+            <div class="flex items-center space-x-3">
+                <a href="{% url 'bill_of_quantities:final-account-detail' project.pk project.final_payment_certificate.pk %}"
+                   class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-indigo-600 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    View
+                </a>
+                <form method="post"
+                      action="{% url 'bill_of_quantities:payment-certificate-unmark-final' project.pk project.final_payment_certificate.pk %}"
+                      onsubmit="return confirm('Are you sure you want to unmark this payment certificate as final?')">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        {% heroicon_outline "x-mark" size="16" class="mr-1" %}
+                        Unmark as Final
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 {% endif %}

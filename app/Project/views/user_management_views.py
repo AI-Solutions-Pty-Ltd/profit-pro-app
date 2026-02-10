@@ -47,10 +47,8 @@ class ClientRegisterView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     def get_queryset(self: "ClientRegisterView") -> QuerySet[Company]:
         """Get all clients for the user's projects."""
         # Get all projects owned by this user
-        user_projects = Project.objects.filter(users=self.request.user)
-        # Get clients associated with those projects
         return (
-            Company.objects.filter(type=Company.Type.CLIENT, projects__in=user_projects)
+            Company.objects.filter(type=Company.Type.CLIENT)
             .distinct()
             .annotate(project_count=Count("projects"))
             .order_by("user__first_name")
@@ -112,7 +110,7 @@ class ClientDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailView):
             Company, type=Company.Type.CLIENT, pk=self.kwargs["pk"]
         )
         # Verify user has access to at least one project with this client
-        user_projects = Project.objects.filter(users=self.request.user, client=client)
+        user_projects = Project.objects.filter(client=client)
         if not user_projects.exists():
             from django.http import Http404
 

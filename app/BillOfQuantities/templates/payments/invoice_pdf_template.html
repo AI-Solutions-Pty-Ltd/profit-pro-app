@@ -273,6 +273,30 @@
             </td>
             <!-- 2b. Right side - invoice details -->
             <td class="w-30 text-left valign-top">
+                <div class="w-30">
+                    <div class="w-30 section-title">FROM {{ project.contractor }}</div>
+                </div>
+                {% if project.contractor %}
+                    <span class="font-medium font-bold">{{ project.contractor.name }}</span>
+                    {% if project.contractor.registration_number %}
+                        <br>
+                        <span class="font-small label">Reg No:</span> {{ project.contractor.registration_number }}
+                    {% endif %}
+                    {% if project.contractor.vat_number %}
+                        <br>
+                        <span class="font-small label">VAT No:</span> {{ project.contractor.vat_number }}
+                    {% endif %}
+                    {% if project.contractor.bank_name %}
+                        <br>
+                        <span class="font-small label">Bank:</span> {{ project.contractor.bank_name }}
+                    {% endif %}
+                    {% if project.contractor.bank_account_number %}
+                        <br>
+                        <span class="font-small label">Acc No:</span> {{ project.contractor.bank_account_number }}
+                    {% endif %}
+                {% else %}
+                    <span class="font-small">No contractor assigned</span>
+                {% endif %}
                 <div class="section-title text-left">INVOICE INFORMATION</div>
                 <table class="w-100">
                     <tr>
