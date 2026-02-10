@@ -306,54 +306,6 @@
                 </div>
             </div>
         {% endif %}
-        <!-- Final Account Section -->
-        {% if project.final_payment_certificate and request.user|projectroles:project|userhasrole:'PAYMENT_CERTIFICATES,ADMIN,User' %}
-            <div class="mt-4 pt-4 border-t border-gray-200">
-                <div class="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-4 border border-emerald-300">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <div class="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center mr-4">
-                                {% heroicon_outline "document-check" size="24" class="text-white" %}
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-bold text-emerald-900">Final Account</h3>
-                                <p class="text-sm text-emerald-600">
-                                    Certificate #{{ project.final_payment_certificate.certificate_number }}
-                                    {% if project.status == 'FINAL_ACCOUNT_ISSUED' %}
-                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                            {% heroicon_outline "check-circle" size="12" class="mr-1" %}
-                                            Approved
-                                        </span>
-                                    {% else %}
-                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                                            {% heroicon_outline "clock" size="12" class="mr-1" %}
-                                            Pending Approval
-                                        </span>
-                                    {% endif %}
-                                </p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <a href="{% url 'bill_of_quantities:final-account-detail' project.pk project.final_payment_certificate.pk %}"
-                               class="inline-flex items-center px-4 py-2 border border-emerald-300 rounded-lg shadow-sm text-sm font-medium text-emerald-700 bg-white hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200 hover:scale-105">
-                                {% heroicon_outline "eye" size="16" %}
-                                <span class="ml-2">View Final Account</span>
-                            </a>
-                            <form method="post"
-                                  action="{% url 'project:project-reset-final-account' project.pk %}"
-                                  onsubmit="return confirm('Are you sure you want to reset the final account? This will set the project back to Active status and unmark the final payment certificate.');">
-                                {% csrf_token %}
-                                <button type="submit"
-                                        class="inline-flex items-center px-4 py-2 border border-red-300 rounded-lg shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 hover:scale-105">
-                                    {% heroicon_outline "arrow-path" size="16" %}
-                                    <span class="ml-2">Reset</span>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% endif %}
     </div>
     <!-- Footer -->
     <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">

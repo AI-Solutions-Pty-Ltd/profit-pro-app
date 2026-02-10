@@ -1001,7 +1001,7 @@ class PaymentCertificateUnmarkFinalView(PaymentCertificateMixin, DetailView):
                 "This payment certificate is not marked as final.",
             )
             return redirect(
-                "bill_of_quantities:payment-certificate-dashboard",
+                "bill_of_quantities:payment-certificate-list",
                 project_pk=project.pk,
             )
 
@@ -1022,13 +1022,13 @@ class PaymentCertificateUnmarkFinalView(PaymentCertificateMixin, DetailView):
         )
 
         return redirect(
-            "bill_of_quantities:payment-certificate-dashboard",
+            "bill_of_quantities:payment-certificate-list",
             project_pk=project.pk,
         )
 
     def get(self, request, *args, **kwargs):
         """Redirect GET requests to dashboard."""
         return redirect(
-            "bill_of_quantities:payment-certificate-dashboard",
+            "bill_of_quantities:payment-certificate-list",
             project_pk=self.kwargs["project_pk"],
         )
