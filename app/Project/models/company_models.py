@@ -12,7 +12,7 @@ from app.core.Utilities.models import BaseModel
 Account = get_user_model()
 
 if TYPE_CHECKING:
-    from app.Project.models import Project
+    pass
 
 
 def company_logo_upload_path(instance, filename):
@@ -67,10 +67,6 @@ class Company(BaseModel):
         related_name="consultants",
     )
 
-    if TYPE_CHECKING:
-        contractor_projects: models.QuerySet["Project"]
-        client_projects: models.QuerySet["Project"]
-
     class Meta:
         verbose_name = "Company"
         verbose_name_plural = "Companies"
@@ -81,6 +77,8 @@ class Company(BaseModel):
 
     def save(self, *args, **kwargs):
         """Save the instance."""
+        if not self.logo:
+            return super().save(*args, **kwargs)
         if self.pk:
             old_instance = Company.objects.get(pk=self.pk)
             if old_instance.logo != self.logo:

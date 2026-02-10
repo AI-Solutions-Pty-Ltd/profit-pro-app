@@ -387,7 +387,7 @@ class ClientRemoveUserView(ClientMixin, View):
         if self.client.users.exists():
             user = self.client.users.first()
             if user:  # Type guard
-                user_email = user.email
+                user_email = user.email  # type: ignore
                 self.client.users.remove(user)
                 messages.success(
                     self.request,
@@ -425,10 +425,10 @@ class ClientResendInviteView(ClientMixin, DetailView):
 
         return super().dispatch(request, *args, **kwargs)
 
-    def get(self, request, *args, **kwargs):
+    def get(self: "ClientResendInviteView", request, *args, **kwargs):
         """Send the invitation email."""
 
-        user = self.client.users.first()
+        user: Account | None = self.client.users.first()  # type: ignore
         if not user:
             messages.error(
                 self.request, "This client does not have an associated user."
