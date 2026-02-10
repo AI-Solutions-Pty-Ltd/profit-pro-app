@@ -12,7 +12,7 @@ from app.core.Utilities.models import BaseModel
 Account = get_user_model()
 
 if TYPE_CHECKING:
-    from app.Project.models import Project
+    pass
 
 
 def company_logo_upload_path(instance, filename):
@@ -66,10 +66,6 @@ class Company(BaseModel):
         blank=True,
         related_name="consultants",
     )
-
-    if TYPE_CHECKING:
-        contractor_projects: models.QuerySet["Project"]
-        client_projects: models.QuerySet["Project"]
 
     class Meta:
         verbose_name = "Company"

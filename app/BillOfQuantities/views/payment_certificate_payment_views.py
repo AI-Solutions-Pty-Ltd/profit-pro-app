@@ -534,7 +534,7 @@ class PaymentCertificateInvoiceView(PaymentCertificatePaymentMixin, DetailView):
         if self.request.user.is_authenticated and hasattr(
             self.request.user, "companies"
         ):
-            user_company = self.request.user.companies.first()
+            user_company = self.request.user.companies.first()  # type: ignore
 
         # Calculate VAT amounts
         from decimal import Decimal
