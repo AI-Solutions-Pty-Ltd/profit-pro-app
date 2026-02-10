@@ -30,17 +30,17 @@ class StructureDetailView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Detai
     template_name = "structure/structure_detail.html"
     context_object_name = "structure"
     roles = [Role.CONTRACT_BOQ]
-    project_slug = "project_pk"
+    project_slug = "pk"
 
     def get_queryset(self):
         """Filter structures by the current project."""
-        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        project = get_object_or_404(Project, pk=self.kwargs["pk"])
         self.project = project
         return Structure.objects.filter(project=project).select_related("project")
 
     def test_func(self):
         """Check user has project role."""
-        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        project = get_object_or_404(Project, pk=self.kwargs["pk"])
         return self.request.user.has_project_role(project, self.roles)  # type: ignore
 
     def get_context_data(self, **kwargs):
@@ -69,7 +69,7 @@ class StructureUpdateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Updat
     form_class = StructureForm
     template_name = "structure/structure_form.html"
     roles = [Role.CONTRACT_BOQ]
-    project_slug = "project_pk"
+    project_slug = "pk"
 
     def form_valid(self, form):
         """Add success message."""
@@ -80,13 +80,13 @@ class StructureUpdateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Updat
 
     def get_queryset(self):
         """Filter structures by the current project."""
-        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        project = get_object_or_404(Project, pk=self.kwargs["pk"])
         self.project = project
         return Structure.objects.filter(project=project)
 
     def test_func(self):
         """Check user has project role."""
-        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        project = get_object_or_404(Project, pk=self.kwargs["pk"])
         return self.request.user.has_project_role(project, self.roles)  # type: ignore
 
     def get_success_url(self):
@@ -118,17 +118,17 @@ class StructureDeleteView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Delet
     model = Structure
     template_name = "structure/structure_confirm_delete.html"
     roles = [Role.CONTRACT_BOQ]
-    project_slug = "project_pk"
+    project_slug = "pk"
 
     def get_queryset(self):
         """Filter structures by the current project."""
-        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        project = get_object_or_404(Project, pk=self.kwargs["pk"])
         self.project = project
         return Structure.objects.filter(project=project)
 
     def test_func(self):
         """Check user has project role."""
-        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        project = get_object_or_404(Project, pk=self.kwargs["pk"])
         return self.request.user.has_project_role(project, self.roles)  # type: ignore
 
     def form_valid(self, form):

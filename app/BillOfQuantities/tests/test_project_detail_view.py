@@ -1,28 +1,18 @@
 """Tests for project detail payment certificate view."""
 
-import pytest
 from django.urls import reverse
 
 from app.Account.tests.factories import AccountFactory
 from app.BillOfQuantities.models import PaymentCertificate
-from app.BillOfQuantities.tests.factories import PaymentCertificateFactory
+from app.BillOfQuantities.tests.factories import (
+    LineItemFactory,
+    PaymentCertificateFactory,
+)
 from app.Project.tests.factories import ProjectFactory
 
 
 class TestProjectPaymentCertificateDetailView:
     """Test cases for ProjectPaymentCertificateDetailView."""
-
-    @pytest.fixture
-    def user(self):
-        return AccountFactory()
-
-    @pytest.fixture
-    def project(self, user):
-        return ProjectFactory(users=user)
-
-    @pytest.fixture
-    def certificate(self, project):
-        return PaymentCertificateFactory(project=project)
 
     def test_view_requires_login(self, client, certificate):
         """Test that view requires login."""
@@ -34,9 +24,10 @@ class TestProjectPaymentCertificateDetailView:
         assert response.status_code == 302
         assert "login" in response.url
 
-    def test_view_shows_no_certificates(self, client, user, project):
+    def test_view_shows_no_certificates(self, client, project):
+        LineItemFactory.create(project=project)
         """Test view shows no certificates message."""
-        client.force_login(user)
+        client.force_login(project.users.first())
         url = reverse(
             "bill_of_quantities:payment-certificate-list",
             kwargs={"project_pk": project.pk},
@@ -59,9 +50,9 @@ class TestProjectPaymentCertificateDetailView:
             in response.content.decode()
         )
 
-    def test_view_shows_completed_certificates(self, client, user, project):
+    def test_view_shows_completed_certificates(self, client, project):
         """Test view shows completed certificates with totals."""
-        client.force_login(user)
+        client.force_login(project.users.first())
         _certificate = PaymentCertificateFactory.create(
             project=project, status=PaymentCertificate.Status.APPROVED
         )
@@ -73,10 +64,12 @@ class TestProjectPaymentCertificateDetailView:
         assert response.status_code == 200
         assert "Completed Payment Certificates" in response.content.decode()
 
-    def test_view_shows_correct_project(self, client, user, project):
+    def test_view_shows_correct_project(self, client, project):
         """Test view only shows certificates for correct project."""
+        user = project.users.first()
         client.force_login(user)
-        other_project = ProjectFactory(account=user)
+        other_project = ProjectFactory(users=user)
+        LineItemFactory.create(project=other_project)
         PaymentCertificateFactory.create(
             project=other_project, status=PaymentCertificate.Status.SUBMITTED
         )
@@ -93,6 +86,7 @@ class TestProjectPaymentCertificateDetailView:
         """Test user can only see their own projects."""
         other_user = AccountFactory.create()
         other_project = ProjectFactory.create(users=other_user)
+        LineItemFactory.create(project=other_project)
 
         client.force_login(user)
         url = reverse(
@@ -100,4 +94,4 @@ class TestProjectPaymentCertificateDetailView:
             kwargs={"project_pk": other_project.pk},
         )
         response = client.get(url)
-        assert response.status_code == 404
+        assert response.status_code == 302

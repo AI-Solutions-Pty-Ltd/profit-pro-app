@@ -11,6 +11,7 @@ from app.Account.tests.factories import (
     SuperuserFactory,
     TownFactory,
 )
+from app.BillOfQuantities.tests.factories import LineItemFactory
 from app.Project.tests.factories import ProjectFactory
 
 User = get_user_model()
@@ -71,4 +72,5 @@ def town():
 def project(user):
     """Create a test project."""
     project = ProjectFactory.create(name="Test Project", users=(user,))
+    LineItemFactory.create(project=project)
     return project

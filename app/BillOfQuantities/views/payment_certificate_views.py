@@ -39,13 +39,19 @@ class PaymentCertificateMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
 
     def dispatch(self, request, *args, **kwargs):
         """Check if project has line items before allowing any view access."""
-        project = self.get_project()
-        if not project.line_items.exists():
-            messages.error(request, "Project has no WBS loaded, please upload!")
-            return redirect(
-                "bill_of_quantities:structure-upload", project_pk=project.pk
-            )
-        return super().dispatch(request, *args, **kwargs)
+        # First, let the parent handle authentication and permissions
+        response = super().dispatch(request, *args, **kwargs)
+
+        # Only check line items if user is authenticated and has permissions
+        if request.user.is_authenticated:
+            project = self.get_project()
+            if not project.line_items.exists():
+                messages.error(request, "Project has no WBS loaded, please upload!")
+                return redirect(
+                    "bill_of_quantities:structure-upload", project_pk=project.pk
+                )
+
+        return response
 
     def get_queryset(self: "PaymentCertificateMixin"):
         if not hasattr(self, "queryset") or not self.queryset:
@@ -684,7 +690,7 @@ class PaymentCertificateSubmitView(
         today = datetime.now().date()
 
         # Validate approval date falls within project dates
-        if self.get_object().status == PaymentCertificate.Status.SUBMITTED:
+        if payment_certificate.status == PaymentCertificate.Status.SUBMITTED:
             if project.start_date and today < project.start_date:
                 messages.error(
                     self.request,

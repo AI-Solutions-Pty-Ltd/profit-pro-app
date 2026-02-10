@@ -46,21 +46,80 @@ class ClientFactory(DjangoModelFactory):
 
     name = Sequence(lambda n: f"Client {n}")
     type = Company.Type.CLIENT
-    description = Faker("text")
-    users = SubFactory(UserFactory)
-    consultants: Account = SubFactory(UserFactory)  # type: ignore
+
+    @post_generation
+    def users(self, create, extracted, **kwargs):
+        """Add users to the client company."""
+        if not create:
+            return
+
+        # Cast self to Company type for type checker
+        # At runtime, self is actually the Company instance
+        company: Company = self  # type: ignore
+
+        # Get the actual model instance - it's passed as the first argument when called
+        # In post_generation, the model instance is available via self when the method is called
+        # But for type checking, we need to be careful
+        if extracted:
+            # If users were passed in, add them
+            if isinstance(extracted, (list, tuple)):
+                for user in extracted:
+                    company.users.add(user)
+            else:
+                company.users.add(extracted)
+        else:
+            # Default: add a new user if none provided
+            default_user = UserFactory.create()
+            company.users.add(default_user)
+
+    @post_generation
+    def consultants(self, create, extracted, **kwargs):
+        """Add consultants to the client company."""
+        if not create:
+            return
+
+        # Cast self to Company type for type checker
+        # At runtime, self is actually the Company instance
+        company: Company = self  # type: ignore
+
+        if extracted:
+            # If consultants were passed in, add them
+            if isinstance(extracted, (list, tuple)):
+                for consultant in extracted:
+                    company.consultants.add(consultant)
+
+            else:
+                company.consultants.add(extracted)
+
+        else:
+            # Default: add a new consultant if none provided
+            default_consultant = UserFactory.create()
+            company.consultants.add(default_consultant)
 
     @post_generation
     def add_consultant_to_group(self, create, extracted, **kwargs):
-        """Add consultant user to consultant group."""
-        if self.consultants and hasattr(self.consultants, "type"):
-            self.consultants.type = Account.Type.CONSULTANT
-            self.consultants.save()
-        if not create or not self.consultants:
+        """Add consultant users to consultant group."""
+        if not create:
             return
 
-        consultant_group, _ = Group.objects.get_or_create(name="consultant")
-        self.consultants.groups.add(consultant_group)
+        # Cast self to Company type for type checker
+        # At runtime, self is actually the Company instance
+        company: Company = self  # type: ignore
+
+        # Get all consultants and add them to the consultant group
+        # self refers to the model instance at runtime, not PostGeneration
+        for consultant in company.consultants.all():
+            # Cast to Account type to access type field
+            account_consultant: Account = consultant  # type: ignore
+            if hasattr(account_consultant, "type"):
+                account_consultant.type = Account.Type.CONSULTANT
+                account_consultant.save()
+
+            consultant_group, _ = Group.objects.get_or_create(name="consultant")
+            # Use getattr to safely access groups
+            groups_manager = getattr(consultant, "groups", None)
+            if groups_manager:
+                groups_manager.add(consultant_group)
 
 
 class ProjectFactory(DjangoModelFactory):
@@ -75,7 +134,9 @@ class ProjectFactory(DjangoModelFactory):
     category = SubFactory(ProjectCategoryFactory)
     start_date = Faker("date_between", start_date="-2y", end_date="today")
     end_date = LazyAttribute(
-        lambda o: o.start_date + timedelta(days=random.randint(30, 365))
+        lambda o: o.start_date + timedelta(days=random.randint(3650, 7300))
+        if o.start_date
+        else Faker("date_between", start_date="today", end_date="+1y")
     )
 
     @post_generation
@@ -124,17 +185,30 @@ class ProjectFactory(DjangoModelFactory):
         else:
             instance: Project = Project.objects.latest("created_at")
 
-        # Create roles for client user
-        if instance.client and instance.client.user:
-            ProjectRole.objects.get_or_create(
-                project=instance, user=instance.client.user, role=Role.CLIENT
-            )
+        # Create roles for all client users
+        if instance.client and instance.client.users.exists():
+            for user in instance.client.users.all():
+                ProjectRole.objects.get_or_create(
+                    project=instance, user=user, role=Role.CLIENT
+                )
 
-        # Create roles for consultant user
-        if instance.client and instance.client.consultant:
-            ProjectRole.objects.get_or_create(
-                project=instance, user=instance.client.consultant, role=Role.CONSULTANT
-            )
+        # Create roles for all consultant users
+        if instance.client and instance.client.consultants.exists():
+            for consultant in instance.client.consultants.all():
+                ProjectRole.objects.get_or_create(
+                    project=instance, user=consultant, role=Role.CONSULTANT
+                )
+
+
+class ProjectRoleFactory(DjangoModelFactory):
+    """Factory for ProjectRole model."""
+
+    class Meta:
+        model = ProjectRole
+
+    project = SubFactory(ProjectFactory)
+    user = SubFactory(UserFactory)
+    role = Role.ADMIN
 
 
 class PlannedValueFactory(DjangoModelFactory):

@@ -77,6 +77,8 @@ class Company(BaseModel):
 
     def save(self, *args, **kwargs):
         """Save the instance."""
+        if not self.logo:
+            return super().save(*args, **kwargs)
         if self.pk:
             old_instance = Company.objects.get(pk=self.pk)
             if old_instance.logo != self.logo:

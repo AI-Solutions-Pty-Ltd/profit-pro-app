@@ -1,7 +1,7 @@
 from app.BillOfQuantities.models import Structure
 from app.BillOfQuantities.tests.factories import StructureFactory
-from app.Project.models import Project
-from app.Project.tests.factories import ProjectFactory
+from app.Project.models import Project, Role
+from app.Project.tests.factories import ProjectFactory, ProjectRoleFactory
 
 
 class TestStructureUrls:
@@ -10,6 +10,7 @@ class TestStructureUrls:
         # Create project and structure owned by the authenticated user
         project: Project = ProjectFactory.create(users=user)
         structure: Structure = StructureFactory.create(project=project)
+        ProjectRoleFactory.create(project=project, user=user, role=Role.CONTRACT_BOQ)
 
         detail_url = structure.get_absolute_url()
         update_url = structure.get_update_url()

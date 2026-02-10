@@ -81,6 +81,7 @@ precision = 2
 directory = "htmlcov"
 
 [tool.djlint]
+ignore = "H037"
 extend_exclude = """
 ./documentation,
 ./htmlcov,
@@ -88,5 +89,6 @@ extend_exclude = """
 ./app/Account/templates/auth/password_reset_email.html,
 ./app/Project/templates/client/password_reset_email.html,
 ./app/Project/templates/client/client_added_email.html,
-./app/BillOfQuantities/templates/payment_certificate/email_payment_certificate.html
+./app/BillOfQuantities/templates/payment_certificate/email_payment_certificate.html,
+./app/BillOfQuantities/templates/payments/payment_statement_pdf.html
 """

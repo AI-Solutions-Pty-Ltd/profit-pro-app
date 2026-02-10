@@ -3,8 +3,14 @@
 from datetime import date, timedelta
 from decimal import Decimal
 
-import factory
+from factory.declarations import (
+    LazyAttribute,
+    LazyFunction,
+    Sequence,
+    SubFactory,
+)
 from factory.django import DjangoModelFactory
+from factory.faker import Faker
 
 from app.Account.tests.factories import AccountFactory
 from app.BillOfQuantities.models import (
@@ -40,9 +46,9 @@ class StructureFactory(DjangoModelFactory):
     class Meta:
         model = Structure
 
-    project = factory.SubFactory(ProjectFactory)
-    name = factory.Sequence(lambda n: f"Structure {n}")
-    description = factory.Faker("sentence")
+    project = SubFactory(ProjectFactory)
+    name = Sequence(lambda n: f"Structure {n}")
+    description = Faker("sentence")
 
 
 class BillFactory(DjangoModelFactory):
@@ -51,8 +57,8 @@ class BillFactory(DjangoModelFactory):
     class Meta:
         model = Bill
 
-    structure = factory.SubFactory(StructureFactory)
-    name = factory.Sequence(lambda n: f"Bill {n}")
+    structure = SubFactory(StructureFactory)
+    name = Sequence(lambda n: f"Bill {n}")
 
 
 class PackageFactory(DjangoModelFactory):
@@ -61,8 +67,8 @@ class PackageFactory(DjangoModelFactory):
     class Meta:
         model = Package
 
-    bill = factory.SubFactory(BillFactory)
-    name = factory.Sequence(lambda n: f"Package {n}")
+    bill = SubFactory(BillFactory)
+    name = Sequence(lambda n: f"Package {n}")
 
 
 class LineItemFactory(DjangoModelFactory):
@@ -71,25 +77,21 @@ class LineItemFactory(DjangoModelFactory):
     class Meta:
         model = LineItem
 
-    project = factory.SubFactory(ProjectFactory)
-    structure = factory.SubFactory(StructureFactory)
-    bill = factory.SubFactory(BillFactory)
-    package = factory.SubFactory(PackageFactory)
-    row_index = factory.Sequence(lambda n: n)
-    item_number = factory.Sequence(lambda n: f"ITEM-{n:03d}")
-    payment_reference = factory.Sequence(lambda n: f"PAY-{n:03d}")
-    description = factory.Faker("sentence")
+    project = SubFactory(ProjectFactory)
+    structure = SubFactory(StructureFactory)
+    bill = SubFactory(BillFactory)
+    package = SubFactory(PackageFactory)
+    row_index = Sequence(lambda n: n)
+    item_number = Sequence(lambda n: f"ITEM-{n:03d}")
+    payment_reference = Sequence(lambda n: f"PAY-{n:03d}")
+    description = Faker("sentence")
     is_work = True
     unit_measurement = "m"
-    unit_price = factory.Faker(
-        "pydecimal", left_digits=4, right_digits=2, positive=True
-    )
-    budgeted_quantity = factory.Faker(
-        "pydecimal", left_digits=3, right_digits=2, positive=True
-    )
-    total_price = factory.LazyAttribute(
-        lambda obj: obj.unit_price * obj.budgeted_quantity
-    )
+    unit_price = Faker("pydecimal", left_digits=4, right_digits=2, positive=True)
+    budgeted_quantity = Faker("pydecimal", left_digits=3, right_digits=2, positive=True)
+    total_price = LazyAttribute(lambda obj: obj.unit_price * obj.budgeted_quantity)
+    addendum = False
+    special_item = False
 
 
 class PaymentCertificateFactory(DjangoModelFactory):
@@ -98,8 +100,9 @@ class PaymentCertificateFactory(DjangoModelFactory):
     class Meta:
         model = PaymentCertificate
 
-    project = factory.SubFactory(ProjectFactory)
+    project = SubFactory(ProjectFactory)
     status = PaymentCertificate.Status.DRAFT
+    # certificate_number = Sequence(lambda n: n + 1)
 
 
 class ActualTransactionFactory(DjangoModelFactory):
@@ -108,13 +111,13 @@ class ActualTransactionFactory(DjangoModelFactory):
     class Meta:
         model = ActualTransaction
 
-    payment_certificate = factory.SubFactory(PaymentCertificateFactory)
-    line_item = factory.SubFactory(LineItemFactory)
-    captured_by = factory.SubFactory(AccountFactory)
-    approved_by = factory.SubFactory(AccountFactory)
-    quantity = factory.Faker("pydecimal", left_digits=3, right_digits=2, positive=True)
-    unit_price = factory.LazyAttribute(lambda obj: obj.line_item.unit_price)
-    total_price = factory.LazyAttribute(lambda obj: obj.quantity * obj.unit_price)
+    payment_certificate = SubFactory(PaymentCertificateFactory)
+    line_item = SubFactory(LineItemFactory)
+    captured_by = SubFactory(AccountFactory)
+    approved_by = SubFactory(AccountFactory)
+    quantity = Faker("pydecimal", left_digits=3, right_digits=2, positive=True)
+    unit_price = LazyAttribute(lambda obj: obj.line_item.unit_price)
+    total_price = LazyAttribute(lambda obj: obj.quantity * obj.unit_price)
     approved = False
     claimed = False
 
@@ -130,11 +133,11 @@ class ForecastFactory(DjangoModelFactory):
     class Meta:
         model = Forecast
 
-    project = factory.SubFactory(ProjectFactory)
-    period = factory.LazyFunction(lambda: date.today().replace(day=1))
+    project = SubFactory(ProjectFactory)
+    period = LazyFunction(lambda: date.today().replace(day=1))
     status = Forecast.Status.DRAFT
-    notes = factory.Faker("sentence")
-    captured_by = factory.SubFactory(AccountFactory)
+    notes = Faker("sentence")
+    captured_by = SubFactory(AccountFactory)
 
 
 class ForecastTransactionFactory(DjangoModelFactory):
@@ -143,11 +146,11 @@ class ForecastTransactionFactory(DjangoModelFactory):
     class Meta:
         model = ForecastTransaction
 
-    forecast = factory.SubFactory(ForecastFactory)
-    line_item = factory.SubFactory(LineItemFactory)
-    quantity = factory.Faker("pydecimal", left_digits=3, right_digits=2, positive=True)
-    unit_price = factory.LazyAttribute(lambda obj: obj.line_item.unit_price)
-    total_price = factory.LazyAttribute(lambda obj: obj.quantity * obj.unit_price)
+    forecast = SubFactory(ForecastFactory)
+    line_item = SubFactory(LineItemFactory)
+    quantity = Faker("pydecimal", left_digits=3, right_digits=2, positive=True)
+    unit_price = LazyAttribute(lambda obj: obj.line_item.unit_price)
+    total_price = LazyAttribute(lambda obj: obj.quantity * obj.unit_price)
     notes = ""
 
 
@@ -162,18 +165,16 @@ class ContractVariationFactory(DjangoModelFactory):
     class Meta:
         model = ContractVariation
 
-    project = factory.SubFactory(ProjectFactory)
-    variation_number = factory.Sequence(lambda n: f"VAR-{n:03d}")
-    title = factory.Faker("sentence", nb_words=5)
-    description = factory.Faker("paragraph")
+    project = SubFactory(ProjectFactory)
+    variation_number = Sequence(lambda n: f"VAR-{n:03d}")
+    title = Faker("sentence", nb_words=5)
+    description = Faker("paragraph")
     category = ContractVariation.Category.SCOPE_CHANGE
     variation_type = ContractVariation.VariationType.AMOUNT
     status = ContractVariation.Status.DRAFT
-    variation_amount = factory.Faker(
-        "pydecimal", left_digits=6, right_digits=2, positive=True
-    )
-    date_identified = factory.LazyFunction(date.today)
-    submitted_by = factory.SubFactory(AccountFactory)
+    variation_amount = Faker("pydecimal", left_digits=6, right_digits=2, positive=True)
+    date_identified = LazyFunction(date.today)
+    submitted_by = SubFactory(AccountFactory)
 
 
 class ContractualCorrespondenceFactory(DjangoModelFactory):
@@ -182,16 +183,16 @@ class ContractualCorrespondenceFactory(DjangoModelFactory):
     class Meta:
         model = ContractualCorrespondence
 
-    project = factory.SubFactory(ProjectFactory)
-    reference_number = factory.Sequence(lambda n: f"CORR-{n:04d}")
-    subject = factory.Faker("sentence", nb_words=8)
+    project = SubFactory(ProjectFactory)
+    reference_number = Sequence(lambda n: f"CORR-{n:04d}")
+    subject = Faker("sentence", nb_words=8)
     correspondence_type = ContractualCorrespondence.CorrespondenceType.LETTER
     direction = ContractualCorrespondence.Direction.OUTGOING
-    date_of_correspondence = factory.LazyFunction(date.today)
-    sender = factory.Faker("company")
-    recipient = factory.Faker("company")
-    summary = factory.Faker("paragraph")
-    logged_by = factory.SubFactory(AccountFactory)
+    date_of_correspondence = LazyFunction(date.today)
+    sender = Faker("company")
+    recipient = Faker("company")
+    summary = Faker("paragraph")
+    logged_by = SubFactory(AccountFactory)
 
 
 # ============================================================================
@@ -205,13 +206,13 @@ class AdvancePaymentFactory(DjangoModelFactory):
     class Meta:
         model = AdvancePayment
 
-    project = factory.SubFactory(ProjectFactory)
-    payment_certificate = factory.SubFactory(PaymentCertificateFactory)
+    project = SubFactory(ProjectFactory)
+    payment_certificate = SubFactory(PaymentCertificateFactory)
     transaction_type = AdvancePayment.TransactionType.DEBIT
-    amount = factory.Faker("pydecimal", left_digits=6, right_digits=2, positive=True)
-    description = factory.Faker("sentence")
-    date = factory.LazyFunction(date.today)
-    captured_by = factory.SubFactory(AccountFactory)
+    amount = Faker("pydecimal", left_digits=6, right_digits=2, positive=True)
+    description = Faker("sentence")
+    date = LazyFunction(date.today)
+    captured_by = SubFactory(AccountFactory)
     recovery_method = AdvancePayment.RecoveryMethod.PERCENTAGE
     recovery_percentage = Decimal("10.00")
 
@@ -222,13 +223,13 @@ class RetentionFactory(DjangoModelFactory):
     class Meta:
         model = Retention
 
-    project = factory.SubFactory(ProjectFactory)
-    payment_certificate = factory.SubFactory(PaymentCertificateFactory)
+    project = SubFactory(ProjectFactory)
+    payment_certificate = SubFactory(PaymentCertificateFactory)
     transaction_type = Retention.TransactionType.DEBIT
-    amount = factory.Faker("pydecimal", left_digits=5, right_digits=2, positive=True)
-    description = factory.Faker("sentence")
-    date = factory.LazyFunction(date.today)
-    captured_by = factory.SubFactory(AccountFactory)
+    amount = Faker("pydecimal", left_digits=5, right_digits=2, positive=True)
+    description = Faker("sentence")
+    date = LazyFunction(date.today)
+    captured_by = SubFactory(AccountFactory)
     retention_type = Retention.RetentionType.WITHHELD
     retention_percentage = Decimal("10.00")
 
@@ -239,16 +240,16 @@ class MaterialsOnSiteFactory(DjangoModelFactory):
     class Meta:
         model = MaterialsOnSite
 
-    project = factory.SubFactory(ProjectFactory)
-    payment_certificate = factory.SubFactory(PaymentCertificateFactory)
+    project = SubFactory(ProjectFactory)
+    payment_certificate = SubFactory(PaymentCertificateFactory)
     transaction_type = MaterialsOnSite.TransactionType.DEBIT
-    amount = factory.Faker("pydecimal", left_digits=5, right_digits=2, positive=True)
-    description = factory.Faker("sentence")
-    date = factory.LazyFunction(date.today)
-    captured_by = factory.SubFactory(AccountFactory)
+    amount = Faker("pydecimal", left_digits=5, right_digits=2, positive=True)
+    description = Faker("sentence")
+    date = LazyFunction(date.today)
+    captured_by = SubFactory(AccountFactory)
     material_status = MaterialsOnSite.MaterialStatus.CLAIMED
-    material_description = factory.Faker("sentence", nb_words=4)
-    quantity = factory.Faker("pydecimal", left_digits=3, right_digits=2, positive=True)
+    material_description = Faker("sentence", nb_words=4)
+    quantity = Faker("pydecimal", left_digits=3, right_digits=2, positive=True)
     unit = "m3"
 
 
@@ -258,13 +259,13 @@ class EscalationFactory(DjangoModelFactory):
     class Meta:
         model = Escalation
 
-    project = factory.SubFactory(ProjectFactory)
-    payment_certificate = factory.SubFactory(PaymentCertificateFactory)
+    project = SubFactory(ProjectFactory)
+    payment_certificate = SubFactory(PaymentCertificateFactory)
     transaction_type = Escalation.TransactionType.DEBIT
-    amount = factory.Faker("pydecimal", left_digits=5, right_digits=2, positive=True)
-    description = factory.Faker("sentence")
-    date = factory.LazyFunction(date.today)
-    captured_by = factory.SubFactory(AccountFactory)
+    amount = Faker("pydecimal", left_digits=5, right_digits=2, positive=True)
+    description = Faker("sentence")
+    date = LazyFunction(date.today)
+    captured_by = SubFactory(AccountFactory)
     escalation_type = Escalation.EscalationType.COMBINED
 
 
@@ -274,15 +275,15 @@ class SpecialItemTransactionFactory(DjangoModelFactory):
     class Meta:
         model = SpecialItemTransaction
 
-    project = factory.SubFactory(ProjectFactory)
-    payment_certificate = factory.SubFactory(PaymentCertificateFactory)
+    project = SubFactory(ProjectFactory)
+    payment_certificate = SubFactory(PaymentCertificateFactory)
     transaction_type = SpecialItemTransaction.TransactionType.DEBIT
-    amount = factory.Faker("pydecimal", left_digits=5, right_digits=2, positive=True)
-    description = factory.Faker("sentence")
-    date = factory.LazyFunction(date.today)
-    captured_by = factory.SubFactory(AccountFactory)
+    amount = Faker("pydecimal", left_digits=5, right_digits=2, positive=True)
+    description = Faker("sentence")
+    date = LazyFunction(date.today)
+    captured_by = SubFactory(AccountFactory)
     special_item_type = SpecialItemTransaction.SpecialItemType.PROVISIONAL
-    item_reference = factory.Sequence(lambda n: f"SI-{n:03d}")
+    item_reference = Sequence(lambda n: f"SI-{n:03d}")
 
 
 # ============================================================================
@@ -296,12 +297,10 @@ class BaselineCashflowFactory(DjangoModelFactory):
     class Meta:
         model = BaselineCashflow
 
-    project = factory.SubFactory(ProjectFactory)
+    project = SubFactory(ProjectFactory)
     version = 1
-    period = factory.LazyFunction(lambda: date.today().replace(day=1))
-    planned_value = factory.Faker(
-        "pydecimal", left_digits=6, right_digits=2, positive=True
-    )
+    period = LazyFunction(lambda: date.today().replace(day=1))
+    planned_value = Faker("pydecimal", left_digits=6, right_digits=2, positive=True)
     status = BaselineCashflow.Status.DRAFT
 
 
@@ -311,18 +310,14 @@ class RevisedBaselineFactory(DjangoModelFactory):
     class Meta:
         model = RevisedBaseline
 
-    project = factory.SubFactory(ProjectFactory)
-    revision_number = factory.Sequence(lambda n: n + 1)
-    revision_date = factory.LazyFunction(date.today)
+    project = SubFactory(ProjectFactory)
+    revision_number = Sequence(lambda n: n + 1)
+    revision_date = LazyFunction(date.today)
     revision_reason = RevisedBaseline.RevisionReason.VARIATION
-    reason_description = factory.Faker("paragraph")
+    reason_description = Faker("paragraph")
     status = RevisedBaseline.Status.DRAFT
-    original_completion_date = factory.LazyFunction(
-        lambda: date.today() + timedelta(days=180)
-    )
-    revised_completion_date = factory.LazyFunction(
-        lambda: date.today() + timedelta(days=210)
-    )
+    original_completion_date = LazyFunction(lambda: date.today() + timedelta(days=180))
+    revised_completion_date = LazyFunction(lambda: date.today() + timedelta(days=210))
 
 
 class RevisedBaselineDetailFactory(DjangoModelFactory):
@@ -331,11 +326,9 @@ class RevisedBaselineDetailFactory(DjangoModelFactory):
     class Meta:
         model = RevisedBaselineDetail
 
-    revised_baseline = factory.SubFactory(RevisedBaselineFactory)
-    period = factory.LazyFunction(lambda: date.today().replace(day=1))
-    planned_value = factory.Faker(
-        "pydecimal", left_digits=6, right_digits=2, positive=True
-    )
+    revised_baseline = SubFactory(RevisedBaselineFactory)
+    period = LazyFunction(lambda: date.today().replace(day=1))
+    planned_value = Faker("pydecimal", left_digits=6, right_digits=2, positive=True)
 
 
 class CashflowForecastFactory(DjangoModelFactory):
@@ -344,14 +337,12 @@ class CashflowForecastFactory(DjangoModelFactory):
     class Meta:
         model = CashflowForecast
 
-    project = factory.SubFactory(ProjectFactory)
-    forecast_date = factory.LazyFunction(date.today)
-    forecast_period = factory.LazyFunction(lambda: date.today().replace(day=1))
-    forecast_value = factory.Faker(
-        "pydecimal", left_digits=6, right_digits=2, positive=True
-    )
+    project = SubFactory(ProjectFactory)
+    forecast_date = LazyFunction(date.today)
+    forecast_period = LazyFunction(lambda: date.today().replace(day=1))
+    forecast_value = Faker("pydecimal", left_digits=6, right_digits=2, positive=True)
     status = CashflowForecast.Status.DRAFT
-    captured_by = factory.SubFactory(AccountFactory)
+    captured_by = SubFactory(AccountFactory)
 
 
 # ============================================================================
@@ -365,13 +356,11 @@ class SectionalCompletionDateFactory(DjangoModelFactory):
     class Meta:
         model = SectionalCompletionDate
 
-    project = factory.SubFactory(ProjectFactory)
-    section_name = factory.Sequence(lambda n: f"Section {n}")
-    section_description = factory.Faker("sentence")
-    planned_start_date = factory.LazyFunction(date.today)
-    planned_completion_date = factory.LazyFunction(
-        lambda: date.today() + timedelta(days=90)
-    )
+    project = SubFactory(ProjectFactory)
+    section_name = Sequence(lambda n: f"Section {n}")
+    section_description = Faker("sentence")
+    planned_start_date = LazyFunction(date.today)
+    planned_completion_date = LazyFunction(lambda: date.today() + timedelta(days=90))
     status = SectionalCompletionDate.Status.NOT_STARTED
 
 
@@ -381,17 +370,17 @@ class ScheduleForecastFactory(DjangoModelFactory):
     class Meta:
         model = ScheduleForecast
 
-    project = factory.SubFactory(ProjectFactory)
-    forecast_date = factory.LazyFunction(date.today)
-    reporting_period = factory.LazyFunction(lambda: date.today().replace(day=1))
-    planned_project_completion = factory.LazyFunction(
+    project = SubFactory(ProjectFactory)
+    forecast_date = LazyFunction(date.today)
+    reporting_period = LazyFunction(lambda: date.today().replace(day=1))
+    planned_project_completion = LazyFunction(
         lambda: date.today() + timedelta(days=180)
     )
-    forecast_project_completion = factory.LazyFunction(
+    forecast_project_completion = LazyFunction(
         lambda: date.today() + timedelta(days=200)
     )
     status = ScheduleForecast.Status.DRAFT
-    captured_by = factory.SubFactory(AccountFactory)
+    captured_by = SubFactory(AccountFactory)
 
 
 class ScheduleForecastSectionFactory(DjangoModelFactory):
@@ -400,8 +389,6 @@ class ScheduleForecastSectionFactory(DjangoModelFactory):
     class Meta:
         model = ScheduleForecastSection
 
-    schedule_forecast = factory.SubFactory(ScheduleForecastFactory)
-    sectional_completion = factory.SubFactory(SectionalCompletionDateFactory)
-    forecast_completion_date = factory.LazyFunction(
-        lambda: date.today() + timedelta(days=95)
-    )
+    schedule_forecast = SubFactory(ScheduleForecastFactory)
+    sectional_completion = SubFactory(SectionalCompletionDateFactory)
+    forecast_completion_date = LazyFunction(lambda: date.today() + timedelta(days=95))

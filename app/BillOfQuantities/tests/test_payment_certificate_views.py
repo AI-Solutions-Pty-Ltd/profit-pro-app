@@ -14,6 +14,7 @@ from app.BillOfQuantities.tests.factories import (
     LineItemFactory,
     PaymentCertificateFactory,
 )
+from app.Project.models import ProjectRole, Role
 from app.Project.tests.factories import ProjectFactory
 
 
@@ -307,16 +308,17 @@ class TestPaymentCertificateSubmitView:
         certificate = PaymentCertificateFactory.create(
             project=project, status=PaymentCertificate.Status.DRAFT
         )
+        _line_item = LineItemFactory.create(project=project)
 
         client.force_login(user)
         url = reverse(
             "bill_of_quantities:payment-certificate-submit",
             kwargs={"project_pk": project.pk, "pk": certificate.pk},
         )
-        response = client.post(url, {"status": "SUBMITTED"})
+        response = client.post(url, {"status": PaymentCertificate.Status.SUBMITTED})
 
         assert response.status_code == 302
-        certificate.refresh_from_db()
+        certificate = PaymentCertificate.objects.get(pk=certificate.pk)
         assert certificate.status == PaymentCertificate.Status.SUBMITTED
 
     def test_submit_view_marks_transactions_as_approved(self, client):
@@ -389,7 +391,7 @@ class TestPaymentCertificateFinalApprovalView:
         )
 
         assert response.status_code == 302
-        certificate.refresh_from_db()
+        certificate = PaymentCertificate.objects.get(pk=certificate.pk)
         assert certificate.status == PaymentCertificate.Status.REJECTED
 
     def test_final_approval_rejection_unmarks_transactions(
@@ -530,7 +532,7 @@ class TestPaymentCertificateWorkflow:
         )
         client.post(submit_url, {"status": PaymentCertificate.Status.SUBMITTED})
 
-        certificate.refresh_from_db()
+        certificate = PaymentCertificate.objects.get(pk=certificate.pk)
         assert certificate.status == PaymentCertificate.Status.SUBMITTED
         assert certificate.actual_transactions.first().approved is True
 
@@ -539,12 +541,16 @@ class TestPaymentCertificateWorkflow:
             "bill_of_quantities:payment-certificate-submit",
             kwargs={"project_pk": project.pk, "pk": certificate.pk},
         )
-        client.force_login(project.client.consultant)
+        consultant_user = project.client.consultants.first()
+        ProjectRole.objects.create(
+            user=consultant_user, project=project, role=Role.PAYMENT_CERTIFICATES
+        )
+        client.force_login(consultant_user)
         _response = client.post(
             approve_url, {"status": PaymentCertificate.Status.APPROVED}
         )
 
-        certificate.refresh_from_db()
+        certificate = PaymentCertificate.objects.get(pk=certificate.pk)
         assert certificate.status == PaymentCertificate.Status.APPROVED
         assert certificate.actual_transactions.first().claimed is True
 
@@ -561,12 +567,17 @@ class TestPaymentCertificateWorkflow:
             claimed=False,
         )
 
-        client.force_login(project.client.consultant)
+        consultant_user = project.client.consultants.first()
+        ProjectRole.objects.create(
+            user=consultant_user, project=project, role=Role.PAYMENT_CERTIFICATES
+        )
+
+        client.force_login(consultant_user)
         approve_url = reverse(
-            "bill_of_quantities:payment-certificate-approve",
+            "bill_of_quantities:payment-certificate-submit",
             kwargs={"project_pk": project.pk, "pk": certificate.pk},
         )
-        client.post(approve_url, {"status": "REJECTED"})
+        client.post(approve_url, {"status": PaymentCertificate.Status.REJECTED})
 
         certificate.refresh_from_db()
         transaction.refresh_from_db()

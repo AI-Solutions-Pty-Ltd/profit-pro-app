@@ -34,7 +34,7 @@ class PaymentCertificate(BaseModel):
         max_length=20, choices=Status.choices, default=Status.DRAFT
     )
 
-    certificate_number = models.IntegerField(default=1)
+    certificate_number = models.IntegerField()
     notes = models.TextField(
         blank=True, default="", help_text="Additional notes or comments"
     )

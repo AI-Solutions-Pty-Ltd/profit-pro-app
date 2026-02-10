@@ -45,9 +45,34 @@ class ProjectListView(LoginRequiredMixin, BreadcrumbMixin, ListView):
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
+
+        # Prepare form data and querysets
+        form_data = request.GET or {}
+        projects_queryset = None
+        consultant_queryset = None
+
+        if request.user.is_authenticated:
+            # Get user's projects
+            projects_queryset = Project.objects.filter(
+                users=request.user,
+                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
+            ).order_by("name")
+
+            # Get unique lead consultants from user's projects
+            consultant_ids = (
+                projects_queryset.filter(lead_consultants__isnull=False)
+                .values_list("lead_consultants", flat=True)
+                .distinct()
+            )
+            consultant_queryset = Account.objects.filter(
+                pk__in=consultant_ids
+            ).order_by("first_name", "last_name")
+
         self.filter_form = FilterForm(
-            request.GET or {},
+            form_data,
             user=request.user if request.user.is_authenticated else None,
+            projects_queryset=projects_queryset,
+            consultant_queryset=consultant_queryset,
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:

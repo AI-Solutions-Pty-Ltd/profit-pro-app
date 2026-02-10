@@ -1,6 +1,7 @@
 """Forms for Project app."""
 
 from django import forms
+from django.db.models import QuerySet
 
 from app.Account.models import Account
 from app.Project.models import (
@@ -43,8 +44,24 @@ class FilterForm(forms.Form):
         empty_label="All Consultants",
     )
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        user: Account | None = None,
+        projects_queryset: QuerySet[Project] | None = None,
+        consultant_queryset: QuerySet[Account] | None = None,
+        **kwargs,
+    ):
+        """Initialize filter form with user-specific querysets."""
         super().__init__(*args, **kwargs)
+
+        # Set custom querysets if provided
+        if projects_queryset is not None:
+            self.fields["projects"].queryset = projects_queryset  # type: ignore
+        if consultant_queryset is not None:
+            self.fields["consultant"].queryset = consultant_queryset  # type: ignore
+
+        # Set widget attributes
         self.fields["active_projects"].label = "Active Projects"
         self.fields["search"].widget = forms.TextInput(
             attrs={
@@ -62,22 +79,6 @@ class FilterForm(forms.Form):
                 "class": "block w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors",
             }
         )
-        # Set projects and consultant querysets based on user
-        if user:
-            user_projects = Project.objects.filter(
-                users=user,
-                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
-            )
-            self.fields["projects"].queryset = user_projects.order_by("name")  # type: ignore
-            # Get unique lead consultants from user's projects
-            consultant_ids = (
-                user_projects.filter(lead_consultants__isnull=False)
-                .values_list("lead_consultants", flat=True)
-                .distinct()
-            )
-            self.fields["consultant"].queryset = Account.objects.filter(  # type: ignore
-                pk__in=consultant_ids
-            ).order_by("first_name", "last_name")
 
 
 class ProjectCategoryForm(forms.ModelForm):

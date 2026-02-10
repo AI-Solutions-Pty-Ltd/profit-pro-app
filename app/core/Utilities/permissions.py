@@ -29,7 +29,7 @@ class UserHasGroupGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
         return redirect("home")
 
 
-class UserHasProjectRoleGenericMixin(UserPassesTestMixin, LoginRequiredMixin):
+class UserHasProjectRoleGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Generic mixin for user project role permissions."""
 
     roles: list[Role] = []
