@@ -134,9 +134,11 @@ class ProjectFactory(DjangoModelFactory):
     category = SubFactory(ProjectCategoryFactory)
     start_date = Faker("date_between", start_date="-2y", end_date="today")
     end_date = LazyAttribute(
-        lambda o: o.start_date + timedelta(days=random.randint(3650, 7300))
-        if o.start_date
-        else Faker("date_between", start_date="today", end_date="+1y")
+        lambda o: (
+            o.start_date + timedelta(days=random.randint(3650, 7300))
+            if o.start_date
+            else Faker("date_between", start_date="today", end_date="+1y")
+        )
     )
 
     @post_generation

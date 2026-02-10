@@ -440,7 +440,9 @@ This statement shows all transactions and the current balance as of {latest_date
 Should you have any questions, please don't hesitate to contact us.
 
 Best regards,
-{getattr(request.user, "get_full_name", lambda: str(request.user))() or str(request.user)}"""
+{getattr(request.user, "get_full_name", lambda: str(
+                    request.user
+                ))() or str(request.user)}"""
 
             # Create PDF attachment
             pdf_attachment = ContentFile(
@@ -715,7 +717,9 @@ Our banking details are included in the attached invoice.
 Should you have any questions, please don't hesitate to contact us.
 
 Best regards,
-{getattr(request.user, "get_full_name", lambda: str(request.user))() or str(request.user)}"""
+{getattr(request.user, "get_full_name", lambda: str(
+                    request.user
+                ))() or str(request.user)}"""
 
             # Create PDF attachment
             pdf_attachment = ContentFile(

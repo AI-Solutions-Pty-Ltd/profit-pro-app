@@ -71,9 +71,9 @@ class AccountFactory(DjangoModelFactory):
     last_name = factory.Faker("last_name")
     primary_contact = factory.Sequence(lambda n: f"+2782{n:07d}")
     alternative_contact = factory.LazyAttribute(
-        lambda obj: f"+2783{obj.email.split('@')[0][-7:].zfill(7)}"
-        if obj.email
-        else None
+        lambda obj: (
+            f"+2783{obj.email.split('@')[0][-7:].zfill(7)}" if obj.email else None
+        )
     )
     type = Account.Type.CLIENT
     identification_type = Account.IdentificationType.SOUTH_AFRICA_ID
