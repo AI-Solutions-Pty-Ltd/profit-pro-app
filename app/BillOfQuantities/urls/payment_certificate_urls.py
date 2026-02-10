@@ -57,4 +57,9 @@ payment_certificate_urls = [
         payment_certificate_views.PaymentCertificateMarkFinalView.as_view(),
         name="payment-certificate-mark-final",
     ),
+    path(
+        "project/<int:project_pk>/payment-certificates/<int:pk>/unmark-final/",
+        payment_certificate_views.PaymentCertificateUnmarkFinalView.as_view(),
+        name="payment-certificate-unmark-final",
+    ),
 ]

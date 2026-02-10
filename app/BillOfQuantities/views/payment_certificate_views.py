@@ -976,3 +976,53 @@ class PaymentCertificateMarkFinalView(PaymentCertificateMixin, DetailView):
             "bill_of_quantities:payment-certificate-list",
             project_pk=self.kwargs["project_pk"],
         )
+
+
+class PaymentCertificateUnmarkFinalView(PaymentCertificateMixin, DetailView):
+    """Unmark a payment certificate as the final payment certificate."""
+
+    model = PaymentCertificate
+
+    def post(self, request, *args, **kwargs):
+        """Handle POST request to unmark certificate as final."""
+        payment_certificate = self.get_object()
+        project = payment_certificate.project
+
+        # Validate the certificate is currently marked as final
+        if not payment_certificate.is_final:
+            messages.error(
+                request,
+                "This payment certificate is not marked as final.",
+            )
+            return redirect(
+                "bill_of_quantities:payment-certificate-dashboard",
+                project_pk=project.pk,
+            )
+
+        # Unmark as final
+        payment_certificate.is_final = False
+        payment_certificate.save(update_fields=["is_final"])
+
+        # Update project
+        project.final_payment_certificate = None
+        # Only change status if it was FINAL_ACCOUNT_ISSUED
+        if project.status == Project.Status.FINAL_ACCOUNT_ISSUED:
+            project.status = Project.Status.ACTIVE
+        project.save(update_fields=["final_payment_certificate", "status"])
+
+        messages.success(
+            request,
+            f"Payment Certificate #{payment_certificate.certificate_number} is no longer marked as the Final Payment Certificate.",
+        )
+
+        return redirect(
+            "bill_of_quantities:payment-certificate-dashboard",
+            project_pk=project.pk,
+        )
+
+    def get(self, request, *args, **kwargs):
+        """Redirect GET requests to dashboard."""
+        return redirect(
+            "bill_of_quantities:payment-certificate-dashboard",
+            project_pk=self.kwargs["project_pk"],
+        )
