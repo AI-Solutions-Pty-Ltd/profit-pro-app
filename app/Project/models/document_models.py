@@ -36,7 +36,10 @@ class ProjectDocument(BaseModel):
 
     def upload_to(self, filename: str) -> str:
         """Generate upload path for document files."""
-        return f"project_documents/{self.project.pk}/{self.category}/{filename}"
+        import os
+
+        base_filename = os.path.basename(filename)
+        return f"project_documents/{self.project.pk}/{self.category}/{base_filename}"
 
     project = models.ForeignKey(
         "Project.Project",

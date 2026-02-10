@@ -288,7 +288,10 @@ class FinalAccountCompliance(BaseModel):
 
     def upload_to(self, filename: str) -> str:
         """Generate upload path for final account documents."""
-        return f"final_account_documents/{self.project.pk}/{filename}"
+        import os
+
+        base_filename = os.path.basename(filename)
+        return f"final_account_documents/{self.project.pk}/{base_filename}"
 
     project = models.ForeignKey(
         "Project.Project",

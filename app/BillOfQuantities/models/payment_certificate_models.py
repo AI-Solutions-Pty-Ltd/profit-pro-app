@@ -18,7 +18,10 @@ class PaymentCertificate(BaseModel):
     """Used to send to clients for payment"""
 
     def upload_to(self, filename):
-        return f"payment_certificates/{self.project.name}/{filename}"
+        import os
+
+        base_filename = os.path.basename(filename)
+        return f"payment_certificates/{self.project.name}/{base_filename}"
 
     class Status(models.TextChoices):
         DRAFT = "DRAFT", "Draft"
@@ -382,7 +385,10 @@ class PaymentCertificatePhoto(BaseModel):
     """Photos attached to a payment certificate."""
 
     def upload_to(self, filename):
-        return f"payment_certificates/{self.payment_certificate.project.name}/photos/{filename}"
+        import os
+
+        base_filename = os.path.basename(filename)
+        return f"payment_certificates/{self.payment_certificate.project.name}/photos/{base_filename}"
 
     payment_certificate = models.ForeignKey(
         PaymentCertificate,
@@ -417,7 +423,10 @@ class PaymentCertificateWorking(BaseModel):
     """Working documents attached to a payment certificate."""
 
     def upload_to(self, filename):
-        return f"payment_certificates/{self.payment_certificate.project.name}/workings/{filename}"
+        import os
+
+        base_filename = os.path.basename(filename)
+        return f"payment_certificates/{self.payment_certificate.project.name}/workings/{base_filename}"
 
     payment_certificate = models.ForeignKey(
         PaymentCertificate,

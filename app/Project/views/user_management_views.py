@@ -478,7 +478,7 @@ class ProjectUserCreateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, For
                 f"but the welcome email could not be sent.",
             )
 
-        return redirect("project:project-users", pk=project.pk)
+        return redirect("project:project-user-detail", pk=project.pk, user_pk=user.pk)
 
     def form_invalid(self, form):
         """Handle form submission errors."""

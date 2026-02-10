@@ -48,7 +48,10 @@ class ContractVariation(BaseModel):
 
     def upload_to(self, filename: str) -> str:
         """Generate upload path for attachments."""
-        return f"contract_variations/{self.project.name}/{filename}"
+        import os
+
+        base_filename = os.path.basename(filename)
+        return f"contract_variations/{self.project.name}/{base_filename}"
 
     project = models.ForeignKey(
         "Project.Project",
@@ -260,7 +263,10 @@ class ContractualCorrespondence(BaseModel):
 
     def upload_to(self, filename: str) -> str:
         """Generate upload path for attachments."""
-        return f"contract_correspondences/{self.project.name}/{filename}"
+        import os
+
+        base_filename = os.path.basename(filename)
+        return f"contract_correspondences/{self.project.name}/{base_filename}"
 
     project = models.ForeignKey(
         "Project.Project",
