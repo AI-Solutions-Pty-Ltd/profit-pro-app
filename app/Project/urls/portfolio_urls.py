@@ -79,6 +79,11 @@ portfolio_urls = [
         name="project-user-add",
     ),
     path(
+        "project/<int:pk>/users/create/",
+        user_management_views.ProjectUserCreateView.as_view(),
+        name="project-user-create",
+    ),
+    path(
         "project/<int:pk>/users/<int:user_pk>/remove/",
         user_management_views.ProjectUserRemoveView.as_view(),
         name="project-user-remove",

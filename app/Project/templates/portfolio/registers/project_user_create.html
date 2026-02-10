@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+{% block title %}
+    Create User - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <div class="max-w-2xl mx-auto">
+        <!-- Page Header -->
+        <div class="bg-white shadow-sm rounded-lg mb-6">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Create New User</h1>
+                        <p class="text-sm text-gray-600 mt-1">Project: {{ project.name }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Create User Form -->
+        <div class="bg-white shadow-sm rounded-lg">
+            <form method="post" class="p-6">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="mb-4 rounded-md bg-red-50 p-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" class="h-5 w-5 text-red-400" %}</div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">There was an error</h3>
+                                <div class="mt-2 text-sm text-red-700">{{ form.non_field_errors }}</div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                <div class="space-y-6">
+                    <div>
+                        <label for="id_email" class="block text-sm font-medium text-gray-700">
+                            Email Address <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <p class="mt-2 text-sm text-red-600" id="email-error">{{ form.email.errors|join:", " }}</p>
+                        {% endif %}
+                        <p class="mt-2 text-sm text-gray-500">The user will receive a welcome email at this address.</p>
+                    </div>
+                    <div>
+                        <label for="id_first_name" class="block text-sm font-medium text-gray-700">
+                            First Name <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                            <p class="mt-2 text-sm text-red-600" id="first_name-error">{{ form.first_name.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="id_last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                            <p class="mt-2 text-sm text-red-600" id="last_name-error">{{ form.last_name.errors|join:", " }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end space-x-3">
+                    <a href="{% url 'project:project-user-add' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "user-plus" class="w-4 h-4 mr-2" %}
+                        Create User
+                    </button>
+                </div>
+            </form>
+        </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'project:project-users' pk=project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Back to Project Users
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

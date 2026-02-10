@@ -8,7 +8,7 @@ from django.db.models import Count, QuerySet
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.views.generic import DeleteView, DetailView, ListView
+from django.views.generic import DeleteView, DetailView, FormView, ListView
 
 from app.Account.models import Account
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
@@ -16,7 +16,11 @@ from app.core.Utilities.permissions import (
     UserHasGroupGenericMixin,
     UserHasProjectRoleGenericMixin,
 )
+from app.Project.forms import ProjectUserCreateForm
 from app.Project.models import Company, Project, ProjectRole, Role, Signatories
+
+# Import the task
+from app.Project.tasks import send_project_user_welcome_email
 
 
 class ClientRegisterView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
@@ -154,13 +158,14 @@ class ClientDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailView):
 # =============================================================================
 
 
-class ProjectUserListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
+class ProjectUserListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
     """List all users and their roles assigned to a project."""
 
     model = Account
     template_name = "portfolio/registers/project_users.html"
     context_object_name = "project_users"
-    permissions = ["consultant", "contractor"]
+    roles = [Role.ADMIN]
+    project_slug = "pk"
 
     def get_project(self) -> Project:
         """Get the project and verify access."""
@@ -208,13 +213,16 @@ class ProjectUserListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         return context
 
 
-class ProjectUserDetailView(UserHasGroupGenericMixin, BreadcrumbMixin, DetailView):
+class ProjectUserDetailView(
+    UserHasProjectRoleGenericMixin, BreadcrumbMixin, DetailView
+):
     """View and edit a user's roles in the context of a project."""
 
     model = Account
     template_name = "portfolio/registers/project_user_detail.html"
     context_object_name = "user"
-    permissions = ["consultant", "contractor"]
+    roles = [Role.ADMIN]
+    project_slug = "pk"
 
     def get_project(self) -> Project:
         """Get the project and verify access."""
@@ -322,6 +330,13 @@ class ProjectUserAddView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListVi
             BreadcrumbItem(title="Add User", url=None),
         ]
 
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        project = self.get_project()
+        context["project"] = project
+        context["search"] = self.request.GET.get("search", "")
+        return context
+
     def get_queryset(self) -> QuerySet[Account]:
         """Get all users (can add same user with different roles)."""
         queryset = Account.objects.all().order_by("first_name", "last_name")
@@ -368,26 +383,118 @@ class ProjectUserAddView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListVi
             )
         else:
             messages.error(request, "Please select a user.")
+            return redirect("project:project-user-add", pk=self.get_project().pk)
 
-        return HttpResponseRedirect(
-            reverse("project:project-user-add", kwargs={"pk": self.get_project().pk})
-        )
 
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+class ProjectUserCreateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, FormView):
+    """Create a new user and add them to the project."""
+
+    form_class = ProjectUserCreateForm
+    template_name = "portfolio/registers/project_user_create.html"
+    roles = [Role.ADMIN]
+
+    def get_project(self) -> Project:
+        """Get the project and verify access."""
+        user: Account = self.request.user  # type: ignore
+        project = Project.objects.get(pk=self.kwargs["pk"])
+        if not project.users.filter(pk=user.pk).exists():
+            messages.error(self.request, "User does not have access to this project")
+            raise Http404("User does not have access to this project")
+        return project
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        return [
+            BreadcrumbItem(
+                title="Portfolio",
+                url=reverse("project:portfolio-dashboard"),
+            ),
+            BreadcrumbItem(
+                title="Projects",
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(
+                title="Project Users",
+                url=reverse("project:project-users", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(
+                title="Create User",
+                url=None,
+            ),
+        ]
+
+    def get_initial(self) -> dict[str, Any]:
+        """Pre-populate email from query parameter."""
+        initial = super().get_initial()
+        email = self.request.GET.get("email", "")
+        if email:
+            initial["email"] = email
+        return initial
+
+    def get_context_data(self, **kwargs) -> dict[str, Any]:
+        """Add project to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
-        context["search"] = self.request.GET.get("search", "")
-        context["available_roles"] = Role.choices
         return context
 
+    def form_valid(self, form):
+        """Create the user and send welcome email."""
+        project = self.get_project()
+        email = form.cleaned_data["email"]
+        first_name = form.cleaned_data["first_name"]
+        last_name = form.cleaned_data.get("last_name", "")
 
-class ProjectUserRemoveView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView):
+        # Create user account with unusable password
+        user = Account.objects.create_user(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+        )
+        user.set_unusable_password()
+        user.save()
+
+        # Add user to project without roles
+        project.users.add(user)
+        project.save()
+
+        # Send welcome email using the task
+        email_sent = send_project_user_welcome_email(
+            user=user,
+            project_name=project.name,
+            request_domain=self.request.get_host(),
+            request_protocol="https" if self.request.is_secure() else "http",
+        )
+
+        if email_sent:
+            messages.success(
+                self.request,
+                f"User '{user.email}' has been created and added to the project. "
+                f"A welcome email with setup instructions has been sent.",
+            )
+        else:
+            messages.warning(
+                self.request,
+                f"User '{user.email}' has been created and added to the project, "
+                f"but the welcome email could not be sent.",
+            )
+
+        return redirect("project:project-users", pk=project.pk)
+
+    def form_invalid(self, form):
+        """Handle form submission errors."""
+        messages.error(self.request, "Please correct the errors below.")
+        return super().form_invalid(form)
+
+
+class ProjectUserRemoveView(
+    UserHasProjectRoleGenericMixin, BreadcrumbMixin, DeleteView
+):
     """Remove a user from a project role."""
 
     model = Account
     template_name = "portfolio/registers/project_user_confirm_remove.html"
     context_object_name = "user_to_remove"
-    permissions = ["consultant", "contractor"]
+    roles = [Role.ADMIN]
 
     def dispatch(self: "ProjectUserRemoveView", request, *args, **kwargs):
         """Dispatch the request."""

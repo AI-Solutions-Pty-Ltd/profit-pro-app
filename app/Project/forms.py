@@ -1,6 +1,7 @@
 """Forms for Project app."""
 
 from django import forms
+from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 
 from app.Account.models import Account
@@ -1258,3 +1259,44 @@ class SignatoryLinkForm(forms.Form):
                 .exclude(id__in=existing_signatory_ids)
                 .order_by("first_name", "last_name")
             )
+
+
+class ProjectUserCreateForm(forms.Form):
+    """Form for creating a new project user."""
+
+    email = forms.EmailField(
+        widget=forms.EmailInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                "placeholder": "user@example.com",
+            }
+        )
+    )
+    first_name = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                "placeholder": "John",
+            }
+        ),
+    )
+    last_name = forms.CharField(
+        max_length=150,
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                "placeholder": "Doe (optional)",
+            }
+        ),
+    )
+
+    def clean_email(self):
+        """Check if email already exists."""
+        email = self.cleaned_data["email"]
+        if Account.objects.filter(email__iexact=email).exists():
+            raise ValidationError(
+                "A user with this email address already exists in the system."
+            )
+        return email
