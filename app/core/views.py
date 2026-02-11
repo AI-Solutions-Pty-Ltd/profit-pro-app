@@ -1,14 +1,14 @@
 """Core views for the application."""
 
-from django import forms
+from typing import TYPE_CHECKING, cast
+
 from django.conf import settings
-from django.contrib import messages
-from django.contrib.auth import get_user_model, login
-from django.contrib.auth.forms import BaseUserCreationForm
+from django.contrib.auth import get_user_model
 from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
 from django.views.generic import TemplateView
-from django.views.generic.edit import CreateView
+
+if TYPE_CHECKING:
+    from app.Account.models import Account
 
 User = get_user_model()
 
@@ -20,12 +20,14 @@ class HomeView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         """Redirect consultants to dashboard, show home page for others."""
-        if (
-            request.user.is_authenticated
-            and hasattr(request.user, "groups")
-            and request.user.groups.filter(name="consultant").exists()
-        ):
-            return redirect("project:portfolio-dashboard")
+        if request.user.is_authenticated:
+            # Cast to Account model to access groups
+            user = cast("Account", request.user)
+            if (
+                hasattr(user, "groups")
+                and user.groups.filter(name="consultant").exists()
+            ):
+                return redirect("project:portfolio-dashboard")
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -196,62 +198,6 @@ class AboutView(TemplateView):
         )
         context["admin_email"] = settings.ADMIN_EMAIL
         return context
-
-
-class RegisterView(CreateView):
-    """Registration page view for new users."""
-
-    class RegisterForm(BaseUserCreationForm):
-        username = None
-        email = forms.EmailField(
-            widget=forms.EmailInput(attrs={"placeholder": "Enter your email address"})
-        )
-        first_name = forms.CharField(
-            max_length=150,
-            required=True,
-            widget=forms.TextInput(attrs={"placeholder": "Enter your first name"}),
-        )
-        last_name = forms.CharField(
-            max_length=150,
-            required=True,
-            widget=forms.TextInput(attrs={"placeholder": "Enter your last name"}),
-        )
-        password1 = forms.CharField(
-            widget=forms.PasswordInput(attrs={"placeholder": "Create a password"})
-        )
-        password2 = forms.CharField(
-            widget=forms.PasswordInput(attrs={"placeholder": "Confirm your password"})
-        )
-
-        class Meta:
-            model = User
-            fields = ["email", "first_name", "last_name", "password1", "password2"]
-
-        def clean_email(self):
-            email = self.cleaned_data["email"]
-            if User.objects.filter(email=email).exists():
-                raise forms.ValidationError("This email is already in use.")
-            return email
-
-    template_name = "auth/register.html"
-    form_class = RegisterForm
-    success_url = reverse_lazy("home")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "page_title": f"Register - {settings.SITE_NAME or 'Profit Pro'}",
-                "next": self.request.GET.get("next", "home"),
-            }
-        )
-        return context
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        login(self.request, form.instance)
-        messages.success(self.request, "Registration successful.")
-        return response
 
 
 # Custom error handlers

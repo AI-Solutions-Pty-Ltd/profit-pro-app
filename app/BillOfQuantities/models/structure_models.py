@@ -76,6 +76,12 @@ class Structure(BaseModel):
             line_item__special_item=False,
         ).aggregate(total=Coalesce(Sum("total_price"), Value(Decimal("0.00"))))["total"]
 
+    @staticmethod
+    def upload_wbs_csv(project: Project):
+        return reverse(
+            "bill_of_quantities:structure-upload", kwargs={"project_pk": project.id}
+        )
+
 
 class Bill(BaseModel):
     structure = models.ForeignKey(

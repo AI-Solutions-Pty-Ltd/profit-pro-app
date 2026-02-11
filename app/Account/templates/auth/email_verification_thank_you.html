@@ -1,0 +1,65 @@
+{% autoescape off %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to {{ site_name }}!</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background-color: #10b981; padding: 32px; text-align: center; border-radius: 12px 12px 0 0">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">Welcome to {{ site_name }}!</h1>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 32px;">
+                            <p style="margin: 0 0 16px 0; color: #374151; font-size: 16px; line-height: 1.6;">Hi {{ user.first_name }},</p>
+                            
+                            <p style="margin: 0 0 24px 0; color: #374151; font-size: 16px; line-height: 1.6;">
+                                Thank you for verifying your email address! Your account is now fully active and ready to use.
+                            </p>
+                            
+                            <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0;">
+                                <p style="margin: 0; color: #065f46; font-size: 15px;">
+                                    <strong>What's next?</strong><br>
+                                    You can now log in to your account and start using all the features {{ site_name }} has to offer.
+                                </p>
+                            </div>
+                            
+                            <p style="margin: 24px 0 16px 0; color: #374151; font-size: 16px; line-height: 1.6;">
+                                If you have any questions or need help getting started, feel free to contact our support team.
+                            </p>
+                            
+                            <p style="margin: 0; color: #374151; font-size: 16px; line-height: 1.6;">
+                                Best regards,<br>
+                                The {{ site_name }} Team
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 24px; text-align: center; border-radius: 0 0 12px 12px">
+                            <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 14px;">
+                                © {% now "Y" %} {{ site_name }}. All rights reserved.
+                            </p>
+                            <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                                This is an automated message. Please do not reply to this email.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+{% endautoescape %}

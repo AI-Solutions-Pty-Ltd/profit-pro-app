@@ -23,19 +23,7 @@
                         <a href="{% url 'project:project-edit' project.pk %}"
                            class="inline-flex items-center p-2 border border-gray-600 rounded-md shadow-sm font-medium text-gray-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
                             {% heroicon_outline "cog-6-tooth" size="16" %}
-                            Edit
-                        </a>
-                    {% endif %}
-                    <a href="{% url 'project:project-users' project.pk %}"
-                       class="inline-flex items-center p-2 border border-purple-300 rounded-md shadow-sm font-medium text-purple-700 bg-white hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">
-                        {% heroicon_outline "users" size="16" %}
-                        Users
-                    </a>
-                    {% if project.client and not project.client.user and request.user|projectroles:project|userhasrole:'ADMIN' %}
-                        <a href="{% url 'project:client-invite-user' project.pk project.client.pk %}"
-                           class="inline-flex items-center p-2 border border-indigo-300 rounded-md shadow-sm font-medium text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                            {% heroicon_outline "user-plus" size="16" %}
-                            Invite Client User
+                            Setup Project
                         </a>
                     {% endif %}
                 </div>

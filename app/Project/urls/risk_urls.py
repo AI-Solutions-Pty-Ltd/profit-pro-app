@@ -4,7 +4,7 @@ from django.urls import path
 
 from app.Project.views import risk_views
 
-risk_urls = [
+urlpatterns = [
     path(
         "project/<int:project_pk>/risks/",
         risk_views.RiskListView.as_view(),

@@ -4,7 +4,7 @@ from django.urls import path
 
 from app.Project.views import category_views
 
-category_urls = [
+urlpatterns = [
     path(
         "categories/",
         category_views.ProjectCategoryListView.as_view(),

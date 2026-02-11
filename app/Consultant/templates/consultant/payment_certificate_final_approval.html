@@ -61,7 +61,7 @@
                 <!-- Action Buttons -->
                 <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
                     <a id="cancel-btn"
-                       href="{% url 'consultant:client-detail' project.client.pk %}"
+                       href="{% url 'client:consultant:client-detail' project.client.pk %}"
                        class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                        data-loading-text="Canceling..."
                        data-disable-elements="#approve-btn">

@@ -4,7 +4,7 @@ from django.urls import path
 
 from app.Project.views import planned_value_views
 
-planned_value_urls = [
+urlpatterns = [
     path(
         "project/<int:project_pk>/planned-values/",
         planned_value_views.PlannedValueEditView.as_view(),

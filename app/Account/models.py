@@ -7,6 +7,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import QuerySet
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -128,6 +129,10 @@ class Account(AbstractUser, BaseModel):
         max_length=20, choices=NotificationType.choices, default=NotificationType.EMAIL
     )
 
+    # Email verification fields
+    email_verified = models.BooleanField(default=False)
+    email_verified_at = models.DateTimeField(null=True, blank=True)
+
     objects: UserManager = UserManager()
 
     USERNAME_FIELD = "email"
@@ -195,3 +200,11 @@ class Account(AbstractUser, BaseModel):
         from app.Project.models import Project
 
         return Project.objects.none()
+
+    @property
+    def detail_url(self: "Account") -> str:
+        return reverse("users:account:user_detail")
+
+    @property
+    def edit_url(self: "Account") -> str:
+        return reverse("users:account:user_edit")

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load heroicons %}
 {% block title %}
     Signatories - {{ project.name }}
 {% endblock title %}
@@ -200,11 +201,21 @@
                 <div class="mt-6">
                     <a href="{% url 'project:signatory-invite' project.pk %}"
                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        {% heroicon_outline "plus" class="w-5 h-5" %}
-                        Add Signatory
+                        {% heroicon_outline "plus" class="w-4 h-4 mr-1" %}
+                        Invite New Signatory
                     </a>
                 </div>
             </div>
         {% endif %}
+    </div>
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+        <div class="flex justify-between items-center">
+            <a href="{% url 'project:project-edit' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                Back to Project Edit
+            </a>
+        </div>
     </div>
 {% endblock content %}

@@ -1117,6 +1117,21 @@ class CompanyForm(forms.ModelForm):
         self.fields.pop("consultants", None)
         self.fields["users"].label = "Company Users"
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if cleaned_data is None:
+            return cleaned_data
+
+        if (
+            Company.objects.filter(
+                name=cleaned_data["name"], type=Company.Type.CONTRACTOR
+            )
+            .exclude(id=self.instance.id)
+            .exists()
+        ):
+            raise forms.ValidationError("Contractor with this name already exists.")
+
     def save(self, commit=True):
         """Save the instance, discarding VAT number if VAT registered is not selected."""
         instance = super().save(commit=False)
@@ -1196,26 +1211,18 @@ class ClientForm(forms.ModelForm):
         self.fields["users"].label = "Client Users"
         self.fields["consultants"].label = "Client Consultants"
 
+    def clean(self):
+        cleaned_data = super().clean()
 
-class ProjectClientForm(forms.Form):
-    """Form to select a client for a project."""
+        if cleaned_data is None:
+            return cleaned_data
 
-    client = forms.ModelChoiceField(
-        queryset=Company.objects.filter(type=Company.Type.CLIENT),
-        widget=forms.Select(
-            attrs={
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-            }
-        ),
-        required=False,
-        help_text="Select a client company to associate with this project.",
-    )
-
-    def __init__(self, *args, **kwargs):
-        # Pop instance before calling super() to avoid passing it to Form
-        self.instance = kwargs.pop("instance", None)
-        super().__init__(*args, **kwargs)
-        self.fields["client"].label = "Client Company"
+        if (
+            Company.objects.filter(name=cleaned_data["name"], type=Company.Type.CLIENT)
+            .exclude(id=self.instance.id)
+            .exists()
+        ):
+            raise forms.ValidationError("Client with this name already exists.")
 
 
 class SignatoryLinkForm(forms.Form):

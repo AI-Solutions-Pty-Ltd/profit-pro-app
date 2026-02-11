@@ -23,7 +23,7 @@
                     <h2 class="text-2xl font-bold text-gray-900 mb-2">Create Account</h2>
                     <p class="text-gray-600">Join thousands of businesses already using {{ SITE_NAME|default:"Profit Pro" }}</p>
                 </div>
-                <form method="post" action="{% url 'register' %}">
+                <form method="post" action="{% url 'users:auth:register' %}">
                     {% csrf_token %}
                     {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
                     <div class="space-y-6">
@@ -48,7 +48,7 @@
                 <div class="mt-6 text-center">
                     <p class="text-sm text-gray-600">
                         Already have an account?
-                        <a href="{% url 'login' %}"
+                        <a href="{% url 'users:auth:login' %}"
                            class="font-medium text-indigo-600 hover:text-indigo-500">Sign in here</a>
                     </p>
                 </div>

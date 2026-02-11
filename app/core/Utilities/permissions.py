@@ -49,13 +49,16 @@ class UserHasProjectRoleGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
             )
         # Then run the normal dispatch which will call test_func
         dispatch = super().dispatch(request, *args, **kwargs)
+        self.project = self.get_project()
         return dispatch
 
     def get_project(self) -> Project:
         kwargs = self.kwargs  # type: ignore
         if not kwargs[self.project_slug]:
             raise ValueError("Project slug must be specified.")
-        return get_object_or_404(Project, pk=kwargs[self.project_slug])
+        if not hasattr(self, "project"):
+            self.project = get_object_or_404(Project, pk=kwargs[self.project_slug])
+        return self.project
 
     def get_user(self) -> Account:
         request = self.request  # type: ignore

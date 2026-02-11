@@ -1,0 +1,142 @@
+{% extends "base_full.html" %}
+{% load heroicons %}
+{% block title %}
+    Users - {{ client.name }}
+{% endblock title %}
+{% block content %}
+    <div class="centered-content">
+        <!-- Page Header -->
+        <!-- Users List -->
+        <div>
+            <div class="bg-white shadow-sm rounded-lg mb-6 w-full">
+                <div class="px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">Client Users</h1>
+                            <p class="text-sm text-gray-600 mt-1">{{ client.name }}</p>
+                        </div>
+                        <a href="{% url 'client:consultant:client-invite-user' client.pk client.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                            {% heroicon_outline "user-plus" class="w-4 h-4 mr-2" %}
+                            Invite User
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white shadow-sm rounded-lg px-6 py-4">
+                {% if users %}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        User
+                                    </th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Email
+                                    </th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Phone
+                                    </th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Status
+                                    </th>
+                                    <th scope="col" class="relative px-6 py-3">
+                                        <span class="sr-only">Actions</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for user in users %}
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10">
+                                                    <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                                        <span class="text-sm font-medium text-indigo-600">{{ user.first_name|slice:":2"|upper }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">{{ user.first_name }} {{ user.last_name }}</div>
+                                                    <div class="text-sm text-gray-500">{{ user.get_type_display }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">{{ user.email }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">{{ user.primary_contact|default:"--" }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            {% if user.has_usable_password %}
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    {% heroicon_outline "check-circle" class="w-4 h-4 mr-1" %}
+                                                    Active
+                                                </span>
+                                            {% else %}
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                                    {% heroicon_outline "clock" class="w-4 h-4 mr-1" %}
+                                                    Pending
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            {% if not user.has_usable_password %}
+                                                <form method="post"
+                                                      action="{% url 'client:consultant:client-resend-invite' client.pk user.pk %}"
+                                                      class="inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit"
+                                                            class="text-yellow-600 hover:text-yellow-900 mr-3"
+                                                            title="Resend Invitation">
+                                                        {% heroicon_outline "paper-airplane" class="w-4 h-4 inline" %}
+                                                        Resend
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                            {% if user.pk != request.user.pk %}
+                                                <form method="post"
+                                                      action="{% url 'client:consultant:client-remove-user' client.pk user.pk %}"
+                                                      class="inline"
+                                                      onsubmit="return confirm('Are you sure you want to remove this user from {{ client.name }}?')">
+                                                    {% csrf_token %}
+                                                    <button type="submit"
+                                                            class="text-red-600 hover:text-red-900"
+                                                            title="Remove User">
+                                                        {% heroicon_outline "trash" class="w-4 h-4 inline" %}
+                                                        Remove
+                                                    </button>
+                                                </form>
+                                            {% else %}
+                                                <span class="text-gray-400 italic">You</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <!-- Empty State -->
+                    <div class="centered-content p-4">
+                        {% heroicon_outline "users" class="mx-auto h-12 w-12 text-gray-400" %}
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">No users</h3>
+                        <p class="mt-1 text-sm text-gray-500">No users have been added to this client yet.</p>
+                        <div class="mt-6">
+                            <a href="{% url 'client:consultant:client-invite-user' client.pk client.pk %}"
+                               class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}
+                                Invite First User
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock content %}

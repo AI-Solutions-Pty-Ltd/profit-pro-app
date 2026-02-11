@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from django.db import models
 from django.db.models import DecimalField, Sum, Value
@@ -54,6 +55,9 @@ class BaseModel(models.Model):
         help_text="When this record was last modified",
     )
     deleted = models.BooleanField(default=False, help_text="Soft delete flag")
+
+    if TYPE_CHECKING:
+        id: int
 
     # Default manager excludes soft-deleted objects
     objects = SoftDeleteManager()

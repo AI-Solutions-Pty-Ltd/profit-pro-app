@@ -1,30 +1,22 @@
 """URL configuration for Project app."""
 
-from app.Project.urls.category_urls import category_urls
-from app.Project.urls.client_company_urls import client_company_urls
-from app.Project.urls.compliance_urls import urlpatterns as compliance_urls
-from app.Project.urls.contractor_urls import contractor_urls
-from app.Project.urls.document_urls import document_urls
-from app.Project.urls.forecast_hub_urls import forecast_hub_urls
-from app.Project.urls.planned_value_urls import planned_value_urls
-from app.Project.urls.portfolio_urls import portfolio_urls
-from app.Project.urls.project_urls import project_urls
-from app.Project.urls.risk_urls import risk_urls
-from app.Project.urls.signatory_urls import signatory_urls
+from django.urls import include, path
 
 app_name = "project"
 
 # Combine all URL patterns
-urlpatterns = (
-    project_urls
-    + category_urls
-    + client_company_urls
-    + compliance_urls
-    + contractor_urls
-    + document_urls
-    + risk_urls
-    + signatory_urls
-    + planned_value_urls
-    + portfolio_urls
-    + forecast_hub_urls
-)
+urlpatterns = [
+    path("category/", include("app.Project.urls.category_urls")),
+    path("compliance/", include("app.Project.urls.compliance_urls")),
+    path("document/", include("app.Project.urls.document_urls")),
+    path("forecast-hub/", include("app.Project.urls.forecast_hub_urls")),
+    path("milestone/", include("app.Project.urls.milestone_urls")),
+    path("planned-value/", include("app.Project.urls.planned_value_urls")),
+    path("portfolio/", include("app.Project.urls.portfolio_urls")),
+    path("project-role/", include("app.Project.urls.project_role_urls")),
+    path("project/", include("app.Project.urls.project_urls")),
+    path("report/", include("app.Project.urls.report_urls")),
+    path("risk/", include("app.Project.urls.risk_urls")),
+    path("signatory/", include("app.Project.urls.signatory_urls")),
+    path("user/", include("app.Project.urls.user_urls")),
+]

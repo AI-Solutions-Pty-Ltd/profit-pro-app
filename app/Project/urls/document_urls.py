@@ -4,7 +4,7 @@ from django.urls import path
 
 from app.Project.views import document_views
 
-document_urls = [
+urlpatterns = [
     path(
         "<int:project_pk>/documents/<str:category>/",
         document_views.DocumentListView.as_view(),

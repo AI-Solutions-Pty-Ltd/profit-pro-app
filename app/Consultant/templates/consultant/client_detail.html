@@ -6,47 +6,71 @@
 {% block content %}
     <div class="centered-content">
         <!-- Client Header -->
-        <div class="bg-gradient-to-r from-indigo-50 to-blue-50 shadow-lg rounded-xl overflow-hidden mb-8 transition-all duration-300 hover:shadow-xl">
-            <div class="px-8 py-10">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="h-24 w-24 rounded-full bg-gradient-to-br from-indigo-100 to-blue-100 flex items-center justify-center ring-4 ring-indigo-200 transition-all duration-300 hover:ring-indigo-300">
-                            <span class="text-indigo-700 font-bold text-4xl">{{ client.name|first|upper }}</span>
+        <div class="bg-white shadow-lg rounded-xl overflow-hidden mb-8 transition-all duration-300 hover:shadow-xl">
+            <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 p-4">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <div class="h-20 w-20 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center ring-4 ring-white/30 transition-all duration-300 hover:scale-105">
+                                <span class="text-white font-bold text-3xl">{{ client.name|first|upper }}</span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="ml-8">
-                        <h1 class="text-4xl font-bold text-gray-900 mb-2">{{ client.name }}</h1>
-                        <div class="flex items-center gap-4">
-                            <p class="text-sm text-gray-600 flex items-center gap-2">
-                                {% heroicon_outline "folder" size="16" class="text-indigo-500" %}
-                                {{ client.projects.count }} active project{{ client.projects.count|pluralize }}
-                            </p>
-                            <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                {% heroicon_outline "check-circle" size="12" %}
-                                Active Client
+                        <div class="ml-8 mt-2">
+                            <h1 class="text-4xl font-bold text-white mb-4">{{ client.name }}</h1>
+                            <div class="flex flex-col gap-3">
+                                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-white/20 text-white backdrop-blur-sm w-fit">
+                                    {% heroicon_outline "building-office" size="18" class="mr-3" %}
+                                    ID: #{{ client.pk|stringformat:"05d" }}
+                                </span>
+                                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-500/30 text-green-100 backdrop-blur-sm w-fit">
+                                    {% heroicon_outline "check-circle" size="18" class="mr-3" %}
+                                    Active Client
+                                </span>
                             </div>
                         </div>
                     </div>
-                </div>
-                {% if client.description %}
-                    <div class="mt-8 pt-8 border-t border-indigo-100">
-                        <h2 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                            {% heroicon_outline "document-text" size="16" class="text-indigo-500" %}
-                            Description
-                        </h2>
-                        <p class="text-gray-700 leading-relaxed bg-white/50 rounded-lg p-4">{{ client.description }}</p>
+                    <div class="flex flex-col gap-3 mt-2">
+                        <a href="{% url 'client:consultant:client-user-list' client.pk %}"
+                           class="inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-sm font-medium rounded-lg text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white/50 transition-all duration-300">
+                            {% heroicon_outline "users" class="w-5 h-5 mr-3" %}
+                            Manage Users
+                        </a>
+                        <a href="{% url 'client:consultant:client-invite-user' client.pk client.pk %}"
+                           class="inline-flex items-center px-6 py-3 bg-white text-indigo-600 text-sm font-medium rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 shadow-lg">
+                            {% heroicon_outline "user-plus" class="w-5 h-5 mr-3" %}
+                            Invite User
+                        </a>
                     </div>
-                {% endif %}
+                </div>
             </div>
+            {% if client.description %}
+                <div class="px-8 py-6 bg-gradient-to-r from-gray-50 to-white border-t border-gray-100">
+                    <div class="flex items-start gap-3">
+                        {% heroicon_outline "information-circle" size="20" class="text-gray-400 mt-0.5" %}
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-700 mb-2">About</h3>
+                            <p class="text-gray-600 leading-relaxed">{{ client.description }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
         <!-- Projects Section -->
         <div class="bg-white shadow-lg rounded-xl overflow-hidden transition-all duration-300 hover:shadow-xl">
             <div class="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-gray-100">
-                <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                    {% heroicon_outline "briefcase" size="24" class="text-indigo-600" %}
-                    Projects Portfolio
-                </h2>
-                <p class="text-sm text-gray-600 mt-1">Manage and review all client projects</p>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                            {% heroicon_outline "briefcase" size="24" class="text-indigo-600" %}
+                            Projects Portfolio
+                        </h2>
+                        <p class="text-sm text-gray-600 mt-1">Manage and review all client projects</p>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm text-gray-500">
+                        {% heroicon_outline "folder" size="16" class="text-gray-400" %}
+                        <span>{{ client.client_projects.all|length }} project{{ client.client_projects.all|length|pluralize }}</span>
+                    </div>
+                </div>
             </div>
             {% if client.client_projects.all %}
                 <div class="overflow-x-auto">
@@ -93,7 +117,7 @@
                                                 <div class="p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl transition-all duration-300 hover:shadow-md">
                                                     <div class="centered-content-horizontal">
                                                         {% heroicon_outline name="document-text" size="12" class="text-amber-600 w-6 h-6" %}
-                                                        <a href="{% url 'consultant:payment-certificate-approve' project.id active_payment_certificate.id %}"
+                                                        <a href="{% url 'client:consultant:payment-certificate-approve' project.id active_payment_certificate.id %}"
                                                            class="hover:underline">
                                                             <p class="text-sm font-semibold text-gray-900">Certificate #{{ active_payment_certificate.certificate_number }}</p>
                                                         </a>
@@ -108,7 +132,7 @@
                                         {% endif %}
                                     </td>
                                     <td class="px-8 py-6 text-right">
-                                        <a href="{% url 'consultant:payment-certificate-list' project.pk %}"
+                                        <a href="{% url 'client:consultant:payment-certificate-list' project.pk %}"
                                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">
                                             {% heroicon_outline "clipboard-document-list" size="16" class="mr-2" %}
                                             View Certificates

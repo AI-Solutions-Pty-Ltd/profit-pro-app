@@ -1,0 +1,69 @@
+from django.urls import path
+
+from app.Project.views import (
+    project_role_views,
+)
+
+urlpatterns = [
+    # Project role management URLs
+    path(
+        "project/<int:project_pk>/contractors/",
+        project_role_views.ContractorListView.as_view(),
+        name="project-contractors",
+    ),
+    path(
+        "project/<int:project_pk>/contractors/add/",
+        project_role_views.ContractorAddView.as_view(),
+        name="project-contractors-add",
+    ),
+    path(
+        "project/<int:project_pk>/contractors/<int:user_pk>/remove/",
+        project_role_views.ContractorRemoveView.as_view(),
+        name="project-contractors-remove",
+    ),
+    path(
+        "project/<int:project_pk>/quantity-surveyors/",
+        project_role_views.QuantitySurveyorListView.as_view(),
+        name="project-quantity-surveyors",
+    ),
+    path(
+        "project/<int:project_pk>/quantity-surveyors/add/",
+        project_role_views.QuantitySurveyorAddView.as_view(),
+        name="project-quantity-surveyors-add",
+    ),
+    path(
+        "project/<int:project_pk>/quantity-surveyors/<int:user_pk>/remove/",
+        project_role_views.QuantitySurveyorRemoveView.as_view(),
+        name="project-quantity-surveyors-remove",
+    ),
+    path(
+        "project/<int:project_pk>/lead-consultants/",
+        project_role_views.LeadConsultantListView.as_view(),
+        name="project-lead-consultants",
+    ),
+    path(
+        "project/<int:project_pk>/lead-consultants/add/",
+        project_role_views.LeadConsultantAddView.as_view(),
+        name="project-lead-consultants-add",
+    ),
+    path(
+        "project/<int:project_pk>/lead-consultants/<int:user_pk>/remove/",
+        project_role_views.LeadConsultantRemoveView.as_view(),
+        name="project-lead-consultants-remove",
+    ),
+    path(
+        "project/<int:project_pk>/client-representatives/",
+        project_role_views.ClientRepresentativeListView.as_view(),
+        name="project-client-representatives",
+    ),
+    path(
+        "project/<int:project_pk>/client-representatives/add/",
+        project_role_views.ClientRepresentativeAddView.as_view(),
+        name="project-client-representatives-add",
+    ),
+    path(
+        "project/<int:project_pk>/client-representatives/<int:user_pk>/remove/",
+        project_role_views.ClientRepresentativeRemoveView.as_view(),
+        name="project-client-representatives-remove",
+    ),
+]

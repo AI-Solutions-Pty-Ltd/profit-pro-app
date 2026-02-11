@@ -16,7 +16,12 @@ from django.views.generic import (
 )
 
 from app.Account.models import Account
-from app.BillOfQuantities.models import ActualTransaction, Forecast, PaymentCertificate
+from app.BillOfQuantities.models import (
+    ActualTransaction,
+    Forecast,
+    PaymentCertificate,
+    Structure,
+)
 from app.core.Utilities.dates import get_end_of_month, get_previous_n_months
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
@@ -424,9 +429,8 @@ class ProjectCreateView(LoginRequiredMixin, BreadcrumbMixin, CreateView):
     def get_success_url(self: "ProjectCreateView"):
         """Redirect to the project dashboard."""
         if self.object and self.object.pk:
-            return reverse_lazy(
-                "bill_of_quantities:structure-upload", kwargs={"pk": self.object.pk}
-            )
+            url = Structure.upload_wbs_csv(self.object)
+            return url
         return reverse_lazy("project:portfolio-dashboard")
 
 

@@ -9,7 +9,6 @@ from .views import (
     AboutView,
     FeaturesView,
     HomeView,
-    RegisterView,
 )
 
 urlpatterns = (
@@ -18,20 +17,18 @@ urlpatterns = (
         path("features/", FeaturesView.as_view(), name="features"),
         path("about/", AboutView.as_view(), name="about"),
         path("", HomeView.as_view(), name="home"),
-        path("", include("app.Account.auth_urls")),
-        path("register/", RegisterView.as_view(), name="register"),
+        path("users/", include("app.Account.urls", namespace="users")),
         # app urls
-        path("account/", include("app.Account.urls", "account")),
-        path("project/", include("app.Project.urls", "project")),
+        path("project/", include("app.Project.urls", namespace="project")),
         path(
             "bill-of-quantities/",
-            include("app.BillOfQuantities.urls", "bill_of_quantities"),
+            include("app.BillOfQuantities.urls", namespace="bill_of_quantities"),
         ),
         path(
             "cost/",
-            include("app.Cost.urls", "cost"),
+            include("app.Cost.urls", namespace="cost"),
         ),
-        path("consultant/", include("app.Consultant.urls", "consultant")),
+        path("client/", include("app.Consultant.urls", namespace="client")),
     ]
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

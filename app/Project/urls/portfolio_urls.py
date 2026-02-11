@@ -2,151 +2,28 @@ from django.urls import path
 
 from app.Project.views import (
     portfolio_views,
-    project_role_views,
-    report_views,
-    report_views_portfolio,
-    user_management_views,
 )
 
-portfolio_urls = [
+urlpatterns = [
     path(
         "portfolio/dashboard/",
         portfolio_views.PortfolioDashboardView.as_view(),
         name="portfolio-dashboard",
     ),
-    # Portfolio Reports
-    path(
-        "portfolio/reports/financial/",
-        report_views.FinancialReportView.as_view(),
-        name="portfolio-financial-report",
-    ),
-    path(
-        "portfolio/reports/schedule/",
-        report_views.ScheduleReportView.as_view(),
-        name="portfolio-schedule-report",
-    ),
-    path(
-        "portfolio/reports/cashflow/",
-        report_views.CashflowReportView.as_view(),
-        name="portfolio-cashflow-report",
-    ),
-    path(
-        "portfolio/reports/trend/",
-        report_views.TrendReportView.as_view(),
-        name="portfolio-trend-report",
-    ),
     # New Portfolio Reports
     path(
         "portfolio/reports/compliance/",
-        report_views_portfolio.ComplianceReportView.as_view(),
+        portfolio_views.ComplianceReportView.as_view(),
         name="compliance-report",
     ),
     path(
         "portfolio/reports/impact/",
-        report_views_portfolio.ImpactReportView.as_view(),
+        portfolio_views.ImpactReportView.as_view(),
         name="impact-report",
     ),
     path(
         "portfolio/reports/risk/",
-        report_views_portfolio.RiskReportView.as_view(),
+        portfolio_views.RiskReportView.as_view(),
         name="risk-report",
-    ),
-    # User Management - Registers
-    path(
-        "register/clients/<int:pk>/list/",
-        user_management_views.ClientRegisterView.as_view(),
-        name="client-register",
-    ),
-    path(
-        "register/clients/detail/<int:pk>/",
-        user_management_views.ClientDetailView.as_view(),
-        name="client-detail",
-    ),
-    # Project User Management
-    path(
-        "project/<int:pk>/users/",
-        user_management_views.ProjectUserListView.as_view(),
-        name="project-users",
-    ),
-    path(
-        "project/<int:pk>/users/<int:user_pk>/",
-        user_management_views.ProjectUserDetailView.as_view(),
-        name="project-user-detail",
-    ),
-    path(
-        "project/<int:pk>/users/add/",
-        user_management_views.ProjectUserAddView.as_view(),
-        name="project-user-add",
-    ),
-    path(
-        "project/<int:pk>/users/create/",
-        user_management_views.ProjectUserCreateView.as_view(),
-        name="project-user-create",
-    ),
-    path(
-        "project/<int:pk>/users/<int:user_pk>/remove/",
-        user_management_views.ProjectUserRemoveView.as_view(),
-        name="project-user-remove",
-    ),
-    # Project role management URLs
-    path(
-        "project/<int:project_pk>/contractors/",
-        project_role_views.ContractorListView.as_view(),
-        name="project-contractors",
-    ),
-    path(
-        "project/<int:project_pk>/contractors/add/",
-        project_role_views.ContractorAddView.as_view(),
-        name="project-contractors-add",
-    ),
-    path(
-        "project/<int:project_pk>/contractors/<int:user_pk>/remove/",
-        project_role_views.ContractorRemoveView.as_view(),
-        name="project-contractors-remove",
-    ),
-    path(
-        "project/<int:project_pk>/quantity-surveyors/",
-        project_role_views.QuantitySurveyorListView.as_view(),
-        name="project-quantity-surveyors",
-    ),
-    path(
-        "project/<int:project_pk>/quantity-surveyors/add/",
-        project_role_views.QuantitySurveyorAddView.as_view(),
-        name="project-quantity-surveyors-add",
-    ),
-    path(
-        "project/<int:project_pk>/quantity-surveyors/<int:user_pk>/remove/",
-        project_role_views.QuantitySurveyorRemoveView.as_view(),
-        name="project-quantity-surveyors-remove",
-    ),
-    path(
-        "project/<int:project_pk>/lead-consultants/",
-        project_role_views.LeadConsultantListView.as_view(),
-        name="project-lead-consultants",
-    ),
-    path(
-        "project/<int:project_pk>/lead-consultants/add/",
-        project_role_views.LeadConsultantAddView.as_view(),
-        name="project-lead-consultants-add",
-    ),
-    path(
-        "project/<int:project_pk>/lead-consultants/<int:user_pk>/remove/",
-        project_role_views.LeadConsultantRemoveView.as_view(),
-        name="project-lead-consultants-remove",
-    ),
-    path(
-        "project/<int:project_pk>/client-representatives/",
-        project_role_views.ClientRepresentativeListView.as_view(),
-        name="project-client-representatives",
-    ),
-    path(
-        "project/<int:project_pk>/client-representatives/add/",
-        project_role_views.ClientRepresentativeAddView.as_view(),
-        name="project-client-representatives-add",
-    ),
-    path(
-        "project/<int:project_pk>/client-representatives/<int:user_pk>/remove/",
-        project_role_views.ClientRepresentativeRemoveView.as_view(),
-        name="project-client-representatives-remove",
     ),
 ]

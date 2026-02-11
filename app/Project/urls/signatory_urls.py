@@ -4,7 +4,7 @@ from django.urls import path
 
 from app.Project.views import signatory_views
 
-signatory_urls = [
+urlpatterns = [
     path(
         "project/<int:project_pk>/signatories/",
         signatory_views.SignatoryListView.as_view(),

@@ -33,15 +33,18 @@
                             </div>
                         </div>
                     </div>
-                    {% if request.user.is_superuser %}
-                        <div class="flex items-center space-x-3">
-                            <a href="{% url 'account:user-group-add' user_pk=user_obj.pk %}"
-                               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
-                                {% heroicon_outline "user-group" size="20" class="mr-2" %}
-                                Manage Roles
-                            </a>
-                        </div>
-                    {% endif %}
+                    <div class="flex space-x-3">
+                        <a href="{% url 'users:auth:password_change' %}"
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            {% heroicon_outline "key" class="w-4 h-4 mr-2" %}
+                            Change Password
+                        </a>
+                        <a href="{{ user.edit_url }}"
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                            {% heroicon_outline "pencil" class="w-4 h-4 mr-2" %}
+                            Edit User
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -98,45 +101,6 @@
                                 </dd>
                             </div>
                         </dl>
-                    </div>
-                </div>
-                <!-- User Groups/Roles -->
-                <div class="bg-white shadow-sm rounded-lg mt-6">
-                    <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
-                        <div class="flex items-center justify-between">
-                            <h2 class="text-lg font-semibold text-gray-900">
-                                {% heroicon_outline "shield-check" class="w-5 h-5 inline mr-2" %}
-                                User Roles
-                            </h2>
-                            {% if request.user.is_superuser %}
-                                <a href="{% url 'account:user-group-add' user_pk=user_obj.pk %}"
-                                   class="text-indigo-600 hover:text-indigo-500 text-sm font-medium">Edit</a>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="px-6 py-4">
-                        {% if user_groups %}
-                            <div class="space-y-2">
-                                {% for group in user_groups %}
-                                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
-                                        <span class="text-sm font-medium text-gray-900">{{ group.name }}</span>
-                                        {% if request.user.is_superuser %}
-                                            <a href="{% url 'account:user-group-remove' user_pk=user_obj.pk group_pk=group.pk %}"
-                                               class="text-red-600 hover:text-red-700 text-xs">Remove</a>
-                                        {% endif %}
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <p class="text-sm text-gray-500">No roles assigned</p>
-                            {% if request.user.is_superuser %}
-                                <a href="{% url 'account:user-group-add' user_pk=user_obj.pk %}"
-                                   class="mt-2 inline-flex items-center text-sm text-indigo-600 hover:text-indigo-500">
-                                    {% heroicon_outline "plus" size="16" class="mr-1" %}
-                                    Add Role
-                                </a>
-                            {% endif %}
-                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -285,13 +249,11 @@
                     {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
                     Back to Dashboard
                 </a>
-                {% if request.user.is_superuser %}
-                    <a href="{% url 'account:user-edit' user_pk=request.user.pk %}"
-                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                        Edit User
-                        {% heroicon_outline "pencil" class="w-4 h-4 ml-1" %}
-                    </a>
-                {% endif %}
+                <a href="{{ user.edit_url }}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    Edit User
+                    {% heroicon_outline "pencil" class="w-4 h-4 ml-1" %}
+                </a>
             </div>
         </div>
     </div>

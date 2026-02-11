@@ -247,13 +247,6 @@ class Project(BaseModel):
         # Import here to avoid circular import
         from app.Project.models.planned_value_models import PlannedValue
 
-        # Handle logo resizing
-        logo = self.logo
-        if logo and hasattr(logo, "file"):
-            image_resizer = ImageResize()
-            resized_logo = image_resizer.resize_image(logo)
-            self.logo = resized_logo
-
         # Check if this is an existing instance
         dates_changed = False
         old_start_date = None
@@ -270,7 +263,23 @@ class Project(BaseModel):
             except Project.DoesNotExist:
                 pass
 
-        # Save the project first
+        if not self.logo:
+            return super().save(*args, **kwargs)
+
+        # check if logo changed
+        if self.pk:
+            old_instance = Project.objects.get(pk=self.pk)
+            if old_instance.logo != self.logo:
+                # Logo field has changed
+                self.logo = ImageResize().resize_image(self.logo)
+
+        elif self.logo:
+            # no pk and logo present
+            logo = ImageResize().resize_image(self.logo)
+            super().save(*args, **kwargs)  # set pk, save without logo
+            self.logo = logo
+
+        # Save the project with / without logo
         super().save(*args, **kwargs)
 
         # Only manage PlannedValue instances if dates changed and we have valid dates

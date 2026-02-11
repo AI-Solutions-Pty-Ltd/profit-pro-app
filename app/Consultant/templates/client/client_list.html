@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load heroicons %}
+{% load template_extras %}
+{% block content %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Page Header -->
+        <div class="bg-white shadow-sm rounded-lg mb-6">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Clients</h1>
+                        <p class="text-sm text-gray-600 mt-1">Manage client companies</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <a href="{% url 'client:project-client:project-client-allocate' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "plus" class="w-4 h-4 mr-1" %}
+                            Allocate Client
+                        </a>
+                        <a href="{% url 'client:client-management:client-create' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "plus" class="w-4 h-4 mr-1" %}
+                            Add Client
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Clients List -->
+        <div class="bg-white shadow rounded-lg">
+            {% if clients %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registration No.</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for client in clients %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="text-sm font-medium text-gray-900">{{ client.name }}</div>
+                                            {% if project.client == client %}
+                                                <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    Current
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-sm text-gray-500">{{ client.tax_number }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ client.registration_number }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        {% if project.client == client %}
+                                            <a href="{% url 'client:project-client:project-client-remove' project.pk client.pk %}"
+                                               class="text-orange-600 hover:text-orange-900 mr-3">
+                                                {% heroicon_outline "x-mark" class="w-4 h-4 inline" %}
+                                                Remove
+                                            </a>
+                                        {% endif %}
+                                        <a href="{% url 'client:client-management:client-update' project.pk client.pk %}"
+                                           class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                            {% heroicon_outline "pencil" class="w-4 h-4 inline" %}
+                                            Edit
+                                        </a>
+                                        {% if user|useringroup:"consultant" %}
+                                            <a href="{% url 'client:consultant:client-detail' client.pk %}"
+                                               class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                                {% heroicon_outline "eye" class="w-4 h-4 inline" %}
+                                                Details
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="centered-content py-12">
+                    {% heroicon_outline "building-office" class="mx-auto h-12 w-12 text-gray-400" %}
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No clients</h3>
+                    <p class="mt-1 text-sm text-gray-500">Get started by adding a new client company.</p>
+                    <div class="mt-6">
+                        <a href="{% url 'client:project-client:project-client-allocate' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "plus" class="w-4 h-4 mr-1" %}
+                            Allocate Client
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'project:project-edit' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Back to Project Edit
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

@@ -2,9 +2,9 @@
 
 from django.urls import path
 
-from app.Project.views import forecast_hub_views, milestone_views
+from app.Project.views import forecast_hub_views
 
-forecast_hub_urls = [
+urlpatterns = [
     # Main forecast hub
     path(
         "project/<int:project_pk>/forecasts/",
@@ -28,26 +28,5 @@ forecast_hub_urls = [
         "project/<int:project_pk>/forecasts/earned-value/",
         forecast_hub_views.EarnedValueView.as_view(),
         name="earned-value",
-    ),
-    # Milestone CRUD
-    path(
-        "project/<int:project_pk>/milestones/create/",
-        milestone_views.MilestoneCreateView.as_view(),
-        name="milestone-create",
-    ),
-    path(
-        "project/<int:project_pk>/milestones/<int:pk>/edit/",
-        milestone_views.MilestoneUpdateView.as_view(),
-        name="milestone-update",
-    ),
-    path(
-        "project/<int:project_pk>/milestones/<int:pk>/delete/",
-        milestone_views.MilestoneDeleteView.as_view(),
-        name="milestone-delete",
-    ),
-    path(
-        "project/<int:project_pk>/milestones/<int:pk>/complete/",
-        milestone_views.MilestoneCompleteView.as_view(),
-        name="milestone-complete",
     ),
 ]

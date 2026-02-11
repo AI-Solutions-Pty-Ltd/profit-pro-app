@@ -2,6 +2,7 @@ import os
 from decimal import Decimal
 from pathlib import Path
 
+from django.urls import reverse_lazy
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
@@ -11,7 +12,9 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 AUTH_USER_MODEL = "Account.Account"
 
 # Authentication settings
-LOGIN_URL = "login"  # Redirect to login page when authentication is required
+LOGIN_URL = reverse_lazy(
+    "users:auth:login"
+)  # Redirect to login page when authentication is required
 LOGIN_REDIRECT_URL = "home"  # Redirect to home after successful login
 LOGOUT_REDIRECT_URL = "home"  # Redirect to home after logout
 

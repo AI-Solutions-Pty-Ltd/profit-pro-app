@@ -34,5 +34,8 @@ class ImageResize:
         thumb_io = BytesIO()
         img.save(thumb_io, "JPEG", quality=100)
 
-        thumbnail = File(thumb_io, name=image.name)
+        import os
+
+        base_name = os.path.basename(image.name)
+        thumbnail = File(thumb_io, name=base_name)
         return thumbnail
