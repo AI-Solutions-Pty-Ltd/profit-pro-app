@@ -15,12 +15,12 @@ class TestUrls:
         assert response.status_code == 200
 
     def test_register(self, client):
-        response = client.get(reverse("register"))
+        response = client.get(reverse("users:auth:register"))
         assert response.status_code == 200
 
         # test register
         response = client.post(
-            reverse("register"),
+            reverse("users:auth:register"),
             {
                 "email": "test@test.com",
                 "first_name": "test",

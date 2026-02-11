@@ -131,5 +131,7 @@ class TestProjectModel:
     def test_project_urls(self):
         """Test project urls."""
         project: Project = ProjectFactory.create()
-        assert project.get_absolute_url() == f"/project/{project.pk}/management/"
-        assert project.get_update_url() == f"/project/{project.pk}/update/"
+        assert (
+            project.get_absolute_url() == f"/project/project/{project.pk}/management/"
+        )
+        assert project.get_update_url() == f"/project/project/{project.pk}/update/"
