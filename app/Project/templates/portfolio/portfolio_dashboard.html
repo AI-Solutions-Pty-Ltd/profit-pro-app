@@ -101,11 +101,11 @@
         <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2">
             <h5 class="text-sm font-semibold text-white flex items-center">
                 {% heroicon_outline "briefcase" size="16" class="mr-2" %}
-                Company Status
+                Project Stats
             </h5>
         </div>
         <div class="p-4">
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <!-- Active Projects -->
                 <a href="{% url 'project:portfolio-project-list' %}"
                    class="bg-blue-50 rounded-lg p-3 text-center border border-blue-100 hover:bg-blue-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
@@ -114,14 +114,6 @@
                     </div>
                     <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Active Projects</p>
                     <p class="text-xl font-bold text-blue-700 mt-1">{{ active_projects_count }}</p>
-                </a>
-                <!-- Profits -->
-                <a class="bg-rose-50 rounded-lg p-3 text-center border border-rose-100 hover:bg-rose-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <div class="w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-rose-600 transition-colors">
-                        {% heroicon_outline "currency-dollar" size="16" class="text-white" %}
-                    </div>
-                    <p class="text-xs font-medium text-rose-600 uppercase tracking-wider">Profits</p>
-                    <p class="text-xl font-bold text-rose-700 mt-1">R {{ profits|default:0|floatformat:0|intcomma }}</p>
                 </a>
                 <!-- Urgent Intervention -->
                 <a href="{% url 'project:portfolio-financial-report' %}?sort=cpi_asc"
@@ -132,104 +124,87 @@
                     <p class="text-xs font-medium text-red-600 uppercase tracking-wider">Urgent Intervention</p>
                     <p class="text-xl font-bold text-red-700 mt-1">{{ urgent_projects_count }}</p>
                     <p class="text-xs text-red-500">({{ urgent_projects_percentage|floatformat:0 }}%)</p>
+                    <p class="text-xs text-red-400 mt-1">
+                        CPI & SPI < 0.96
+                    </p>
                 </a>
                 <!-- Requiring Attention -->
                 <a href="{% url 'project:portfolio-financial-report' %}?sort=cpi_asc"
-                   class="bg-orange-50 rounded-lg p-3 text-center border border-orange-200 hover:bg-orange-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-orange-600 transition-colors">
+                   class="bg-amber-50 rounded-lg p-3 text-center border border-amber-100 hover:bg-amber-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <div class="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-amber-600 transition-colors">
                         {% heroicon_outline "eye" size="16" class="text-white" %}
                     </div>
-                    <p class="text-xs font-medium text-orange-700 uppercase tracking-wider">Requiring Attention</p>
-                    <p class="text-xl font-bold text-orange-800 mt-1">{{ attention_projects_count }}</p>
-                    <p class="text-xs text-orange-600">({{ attention_projects_percentage|floatformat:0 }}%)</p>
-                </a>
-                <!-- Compliance % -->
-                <a href="{% url 'project:compliance-report' %}"
-                   class="bg-emerald-50 rounded-lg p-3 text-center border border-emerald-100 hover:bg-emerald-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-emerald-600 transition-colors">
-                        {% heroicon_outline "shield-check" size="16" class="text-white" %}
-                    </div>
-                    <p class="text-xs font-medium text-emerald-600 uppercase tracking-wider">Compliance %</p>
-                    <p class="text-xl font-bold text-emerald-700 mt-1">{{ compliance_percentage|floatformat:1 }}%</p>
-                    <p class="text-xs text-emerald-500">{{ total_compliance_items }} items</p>
-                </a>
-                <!-- Urgent Compliance Matters -->
-                <a href="{% url 'project:compliance-report' %}?party=overdue"
-                   class="bg-indigo-50 rounded-lg p-3 text-center border border-indigo-100 hover:bg-indigo-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-indigo-600 transition-colors">
-                        {% heroicon_outline "shield-exclamation" size="16" class="text-white" %}
-                    </div>
-                    <p class="text-xs font-medium text-indigo-600 uppercase tracking-wider">Urgent Compliance</p>
-                    <p class="text-xl font-bold text-indigo-700 mt-1">{{ urgent_compliance_count }}</p>
-                    <p class="text-xs text-indigo-500">overdue items</p>
+                    <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Requiring Attention</p>
+                    <p class="text-xl font-bold text-amber-700 mt-1">{{ attention_projects_count }}</p>
+                    <p class="text-xs text-amber-500">({{ attention_projects_percentage|floatformat:0 }}%)</p>
+                    <p class="text-xs text-amber-400 mt-1">
+                        0.96 ≤ CPI or SPI < 1.0
+                    </p>
                 </a>
             </div>
         </div>
     </div>
     <!-- ==========================================
-             Group 2 - Income Statement
+             Group 2 - Budgets, Payments & Forecasts (Combined)
              ========================================== -->
     <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-4">
         <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-2">
             <h5 class="text-sm font-semibold text-white flex items-center">
                 {% heroicon_outline "banknotes" size="16" class="mr-2" %}
-                Income Statement
+                Budgets, Payments & Forecasts
             </h5>
         </div>
         <div class="p-4">
-            <!-- Income Statement Summary -->
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-                <!-- Revenue -->
-                <div class="bg-green-50 rounded-lg p-2 text-center border border-green-100">
-                    <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Revenue</p>
-                    <p class="text-lg font-bold text-green-700 mt-1">R {{ revenue|default:0|floatformat:0|intcomma }}</p>
-                </div>
-                <!-- Variable Costs -->
-                <div class="bg-orange-50 rounded-lg p-2 text-center border border-orange-100">
-                    <p class="text-xs font-medium text-orange-600 uppercase tracking-wider">Variable Costs</p>
-                    <p class="text-lg font-bold text-orange-700 mt-1">R {{ variable_costs|default:0|floatformat:0|intcomma }}</p>
-                </div>
-                <!-- Gross Profit -->
-                <div class="bg-blue-50 rounded-lg p-2 text-center border border-blue-100">
-                    <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Gross Profit</p>
-                    <p class="text-lg font-bold text-blue-700 mt-1">R {{ gross_profit|default:0|floatformat:0|intcomma }}</p>
-                    <p class="text-xs text-blue-500">({{ gross_profit_margin|default:0|floatformat:1 }}%)</p>
-                </div>
-                <!-- Net Profit -->
-                <div class="bg-purple-50 rounded-lg p-2 text-center border border-purple-100">
-                    <p class="text-xs font-medium text-purple-600 uppercase tracking-wider">Net Profit</p>
-                    <p class="text-lg font-bold text-purple-700 mt-1">R {{ net_profit|default:0|floatformat:0|intcomma }}</p>
-                    <p class="text-xs text-purple-500">({{ net_profit_margin|default:0|floatformat:1 }}%)</p>
-                </div>
-                <!-- Forecast Profit at Completion -->
-                <div class="bg-amber-50 rounded-lg p-2 text-center border border-amber-100">
-                    <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Forecast Profit</p>
-                    <p class="text-lg font-bold text-amber-700 mt-1">R {{ forecast_profit|default:0|floatformat:0|intcomma }}</p>
-                    <p class="text-xs text-amber-500">at completion</p>
-                </div>
-            </div>
-            <!-- Profit Trend Charts -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <!-- Gross Profit Trend -->
-                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
-                    <h6 class="text-sm font-semibold text-blue-700 mb-3 flex items-center">
-                        {% heroicon_outline "chart-bar-square" size="16" class="mr-2" %}
-                        Gross Profit Trend (6 Months)
-                    </h6>
-                    <div class="h-48">
-                        <canvas id="grossProfitChart"></canvas>
-                    </div>
-                </div>
-                <!-- Net Profit Trend -->
-                <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-100">
-                    <h6 class="text-sm font-semibold text-purple-700 mb-3 flex items-center">
-                        {% heroicon_outline "chart-bar-square" size="16" class="mr-2" %}
-                        Net Profit Trend (6 Months)
-                    </h6>
-                    <div class="h-48">
-                        <canvas id="netProfitChart"></canvas>
-                    </div>
-                </div>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <!-- Original Budget -->
+                <a href="{% url 'project:portfolio-financial-report' %}"
+                   class="bg-green-50 rounded-lg p-2 text-center border border-green-100 hover:bg-green-100 hover:shadow-md transition-all duration-200 cursor-pointer">
+                    <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Original Budget</p>
+                    <p class="text-lg font-bold text-green-700 mt-1">R {{ original_budget|floatformat:0|intcomma }}</p>
+                </a>
+                <!-- Approved Variations -->
+                <a href="{% url 'project:portfolio-financial-report' %}"
+                   class="bg-cyan-50 rounded-lg p-2 text-center border border-cyan-100 hover:bg-cyan-100 hover:shadow-md transition-all duration-200 cursor-pointer">
+                    <p class="text-xs font-medium text-cyan-600 uppercase tracking-wider">Approved Variations</p>
+                    <p class="text-lg font-bold text-cyan-700 mt-1">R {{ approved_variations|floatformat:0|intcomma }}</p>
+                    <p class="text-xs text-cyan-500">({{ approved_variations_percentage|floatformat:1 }}%)</p>
+                </a>
+                <!-- Total Certified -->
+                <a href="{% url 'project:portfolio-financial-report' %}"
+                   class="bg-purple-50 rounded-lg p-2 text-center border border-purple-100 hover:bg-purple-100 hover:shadow-md transition-all duration-200 cursor-pointer">
+                    <p class="text-xs font-medium text-purple-600 uppercase tracking-wider">Total Certified</p>
+                    <p class="text-lg font-bold text-purple-700 mt-1">R {{ total_certified|floatformat:0|intcomma }}</p>
+                    <p class="text-xs text-purple-500">({{ total_certified_percentage|floatformat:1 }}%)</p>
+                </a>
+                <!-- Forecast Cost at Completion -->
+                <a href="{% url 'project:portfolio-financial-report' %}"
+                   class="bg-amber-50 rounded-lg p-2 text-center border border-amber-100 hover:bg-amber-100 hover:shadow-md transition-all duration-200 cursor-pointer">
+                    <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Forecast at Completion</p>
+                    <p class="text-lg font-bold text-amber-700 mt-1">
+                        {% if forecast_at_completion %}
+                            R {{ forecast_at_completion|floatformat:0|intcomma }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </p>
+                </a>
+                <!-- Cost Variance at Completion -->
+                <a href="{% url 'project:portfolio-financial-report' %}?sort=variance_asc"
+                   class="bg-{% if cost_variance_at_completion and cost_variance_at_completion >= 0 %}green{% else %}red{% endif %}-50 rounded-lg p-2 text-center border border-{% if cost_variance_at_completion and cost_variance_at_completion >= 0 %}green{% else %}red{% endif %}-100 hover:shadow-md transition-all duration-200 cursor-pointer">
+                    <p class="text-xs font-medium text-{% if cost_variance_at_completion and cost_variance_at_completion >= 0 %}green{% else %}red{% endif %}-600 uppercase tracking-wider">
+                        Cost Variance
+                    </p>
+                    <p class="text-lg font-bold text-{% if cost_variance_at_completion and cost_variance_at_completion >= 0 %}green{% else %}red{% endif %}-700 mt-1">
+                        {% if cost_variance_at_completion %}
+                            R {{ cost_variance_at_completion|floatformat:0|intcomma }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </p>
+                    <p class="text-xs text-{% if cost_variance_at_completion and cost_variance_at_completion >= 0 %}green{% else %}red{% endif %}-500">
+                        ({{ cost_variance_at_completion_percentage|floatformat:1 }}%)
+                    </p>
+                </a>
             </div>
         </div>
     </div>
@@ -457,124 +432,6 @@
                 },
                 options: commonOptions
             });
-
-            // Profit Trend Charts (6 months)
-            const profitLabels = {{ profit_labels|safe }};
-            const grossProfitData = {{ gross_profit_percentage_data|safe }};
-            const netProfitData = {{ net_profit_data|safe }};
-            
-            // Gross Profit Chart
-            const grossProfitCtx = document.getElementById('grossProfitChart').getContext('2d');
-            new Chart(grossProfitCtx, {
-                type: 'line',
-                data: {
-                    labels: profitLabels,
-                    datasets: [{
-                        label: 'Gross Profit %',
-                        data: grossProfitData,
-                        borderColor: 'rgb(59, 130, 246)',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        fill: true,
-                        borderWidth: 2,
-                        tension: 0.3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            padding: 10,
-                            titleFont: { size: 11 },
-                            bodyFont: { size: 10 },
-                            callbacks: {
-                                label: function(context) {
-                                    return `Gross Profit: ${context.parsed.y.toFixed(1)}%`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: { size: 9 } }
-                        },
-                        y: {
-                            min: 0,
-                            max: 30,
-                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                            ticks: { 
-                                font: { size: 9 },
-                                callback: function(value) {
-                                    return value + '%';
-                                }
-                            }
-                        }
-                    },
-                    elements: {
-                        point: { radius: 3, hoverRadius: 5 }
-                    }
-                }
-            });
-
-            // Net Profit Chart
-            const netProfitCtx = document.getElementById('netProfitChart').getContext('2d');
-            new Chart(netProfitCtx, {
-                type: 'line',
-                data: {
-                    labels: profitLabels,
-                    datasets: [{
-                        label: 'Net Profit',
-                        data: netProfitData,
-                        borderColor: 'rgb(147, 51, 234)',
-                        backgroundColor: 'rgba(147, 51, 234, 0.1)',
-                        fill: true,
-                        borderWidth: 2,
-                        tension: 0.3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            padding: 10,
-                            titleFont: { size: 11 },
-                            bodyFont: { size: 10 },
-                            callbacks: {
-                                label: function(context) {
-                                    return `Net Profit: R ${context.parsed.y.toLocaleString()}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: { size: 9 } }
-                        },
-                        y: {
-                            min: 0,
-                            max: 2000000,
-                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                            ticks: { 
-                                font: { size: 9 },
-                                callback: function(value) {
-                                    return 'R ' + (value / 1000000).toFixed(1) + 'M';
-                                }
-                            }
-                        }
-                    },
-                    elements: {
-                        point: { radius: 3, hoverRadius: 5 }
-                    }
-                }
-            });
-
         });
     </script>
 {% endblock content %}
