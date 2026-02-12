@@ -121,7 +121,7 @@
                         {% heroicon_outline "currency-dollar" size="16" class="text-white" %}
                     </div>
                     <p class="text-xs font-medium text-rose-600 uppercase tracking-wider">Profits</p>
-                    <p class="text-xl font-bold text-rose-700 mt-1">{{ profits|default:0|intcomma|floatformat:2 }}</p>
+                    <p class="text-xl font-bold text-rose-700 mt-1">R {{ profits|default:0|floatformat:0|intcomma }}</p>
                 </a>
                 <!-- Urgent Intervention -->
                 <a href="{% url 'project:portfolio-financial-report' %}?sort=cpi_asc"
