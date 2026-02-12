@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% load static %}
+{% block title %}
+    Sections - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="bg-white shadow-sm rounded-lg mb-6">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">Sections</h1>
+                        <p class="mt-2 text-gray-600">
+                            Project:
+                            <a href="{{ project.get_absolute_url }}"
+                               class="text-indigo-600 hover:text-indigo-800">{{ project.name }}</a>
+                        </p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        {% if not structures %}
+                            <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
+                               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                {% heroicon_outline "arrow-up-tray" size="20" class="mr-2" %}
+                                Upload Sections
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Sections List -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-md">
+            {% if structures %}
+                <ul class="divide-y divide-gray-200">
+                    {% for structure in structures %}
+                        <li>
+                            <a href="{% url 'bill_of_quantities:structure-detail' project.pk structure.pk %}"
+                               class="block hover:bg-gray-50">
+                                <div class="px-4 py-4 sm:px-6">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium text-indigo-600 truncate">{{ structure.name }}</p>
+                                            <p class="mt-1 text-sm text-gray-500">
+                                                {% if structure.description %}
+                                                    {{ structure.description|truncatewords:20 }}
+                                                {% else %}
+                                                    <em>No description</em>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <a href="{% url 'bill_of_quantities:structure-update' project.pk structure.pk %}"
+                                               class="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                                {% heroicon_outline "pencil" size="16" class="mr-1" %}
+                                                Edit
+                                            </a>
+                                            <a href="{% url 'bill_of_quantities:structure-delete' project.pk structure.pk %}"
+                                               class="inline-flex items-center px-3 py-1 border border-red-300 text-xs font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                                {% heroicon_outline "trash" size="16" class="mr-1" %}
+                                                Delete
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <div class="flex items-center text-sm text-gray-500">
+                                            <p>
+                                                {% with bills=structure.bills.all %}{{ bills|length }} bill{{ bills|length|pluralize }}{% endwith %}
+                                            </p>
+                                            <span class="mx-2">•</span>
+                                            <p>
+                                                {% with total_items=structure.get_total_line_items %}{{ total_items }} item{{ total_items|pluralize }}{% endwith %}
+                                            </p>
+                                            <span class="mx-2">•</span>
+                                            <p>
+                                                {% with total_value=structure.get_total_value %}Total: R {{ total_value|floatformat:2|intcomma }}{% endwith %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <!-- Empty State -->
+                <div class="text-center py-12">
+                    {% heroicon_outline "folder-open" size="48" class="mx-auto h-12 w-12 text-gray-400" %}
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No Sections</h3>
+                    <p class="mt-1 text-sm text-gray-500">Get started by uploading Sections from an Excel file.</p>
+                    <div class="mt-6">
+                        <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "arrow-up-tray" size="20" class="mr-2" %}
+                            Upload Sections
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <!-- Back to Project -->
+        <div class="mt-6">
+            <a href="{% url 'project:project-wbs-detail' project.pk %}"
+               class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                {% heroicon_outline "arrow-left" size="20" class="mr-2" %}
+                Back to Bill of Quantities
+            </a>
+        </div>
+    </div>
+{% endblock content %}

@@ -65,6 +65,16 @@ class Structure(BaseModel):
             total=Coalesce(Sum("total_price"), Value(Decimal("0.00")))
         )["total"]
 
+    def get_total_line_items(self) -> int:
+        """Get total number of line items in this structure."""
+        return self.line_items.count()
+
+    def get_total_value(self) -> Decimal:
+        """Get total value of all line items in this structure."""
+        return self.line_items.aggregate(
+            total=Coalesce(Sum("total_price"), Value(Decimal("0.00")))
+        )["total"]
+
     def get_forecast_total(self, forecast: Forecast) -> Decimal:
         """Get total forecast for all line items in this structure for a specific forecast."""
         from app.BillOfQuantities.models import ForecastTransaction

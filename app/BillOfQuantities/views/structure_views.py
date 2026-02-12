@@ -3,11 +3,12 @@
 import pandas as pd
 from django.contrib import messages
 from django.db import transaction
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import (
     DeleteView,
     DetailView,
+    ListView,
     UpdateView,
 )
 from django.views.generic.edit import FormView
@@ -20,7 +21,40 @@ from app.BillOfQuantities.forms import (
 from app.BillOfQuantities.models import Bill, LineItem, Package, Structure
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.Project.models import Project, Role
+from app.Project.models import Role
+
+
+class StructureListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
+    """List all structures for a project."""
+
+    model = Structure
+    template_name = "structure/structure_list.html"
+    context_object_name = "structures"
+    roles = [Role.CONTRACT_BOQ]
+    project_slug = "project_pk"
+
+    def get_queryset(self):
+        """Filter structures by the current project."""
+        project = self.get_project()
+        return Structure.objects.filter(project=project).select_related("project")
+
+    def get_context_data(self, **kwargs):
+        """Add project to context."""
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        """Get breadcrumb navigation."""
+        return [
+            {
+                "title": "Project Management",
+                "url": reverse(
+                    "project:project-management", kwargs={"pk": self.get_project().pk}
+                ),
+            },
+            {"title": "Sections", "url": None},
+        ]
 
 
 class StructureDetailView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, DetailView):
@@ -30,32 +64,22 @@ class StructureDetailView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Detai
     template_name = "structure/structure_detail.html"
     context_object_name = "structure"
     roles = [Role.CONTRACT_BOQ]
-    project_slug = "pk"
+    project_slug = "project_pk"
 
     def get_queryset(self):
         """Filter structures by the current project."""
-        project = get_object_or_404(Project, pk=self.kwargs["pk"])
-        self.project = project
-        return Structure.objects.filter(project=project).select_related("project")
-
-    def test_func(self):
-        """Check user has project role."""
-        project = get_object_or_404(Project, pk=self.kwargs["pk"])
-        return self.request.user.has_project_role(project, self.roles)  # type: ignore
-
-    def get_context_data(self, **kwargs):
-        """Add project to context."""
-        context = super().get_context_data(**kwargs)
-        context["project"] = self.project
-        return context
+        return Structure.objects.filter(project=self.get_project()).select_related(
+            "project"
+        )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         """Get breadcrumb navigation."""
         return [
             {
-                "title": "Structures",
+                "title": "Sections",
                 "url": reverse(
-                    "project:project-management", kwargs={"pk": self.project.pk}
+                    "bill_of_quantities:structure-list",
+                    kwargs={"project_pk": self.project.pk},
                 ),
             },
             {"title": self.object.name, "url": None},
@@ -69,43 +93,34 @@ class StructureUpdateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Updat
     form_class = StructureForm
     template_name = "structure/structure_form.html"
     roles = [Role.CONTRACT_BOQ]
-    project_slug = "pk"
+    project_slug = "project_pk"
 
     def form_valid(self, form):
         """Add success message."""
         messages.success(
-            self.request, f"Structure '{form.instance.name}' updated successfully!"
+            self.request, f"Section '{form.instance.name}' updated successfully!"
         )
         return super().form_valid(form)
 
     def get_queryset(self):
         """Filter structures by the current project."""
-        project = get_object_or_404(Project, pk=self.kwargs["pk"])
-        self.project = project
+        project = self.get_project()
         return Structure.objects.filter(project=project)
-
-    def test_func(self):
-        """Check user has project role."""
-        project = get_object_or_404(Project, pk=self.kwargs["pk"])
-        return self.request.user.has_project_role(project, self.roles)  # type: ignore
 
     def get_success_url(self):
         """Redirect to project's structure list."""
-        return reverse("project:project-management", kwargs={"pk": self.project.pk})
-
-    def get_context_data(self, **kwargs):
-        """Add project to context."""
-        context = super().get_context_data(**kwargs)
-        context["project"] = self.project
-        return context
+        return reverse(
+            "bill_of_quantities:structure-list", kwargs={"project_pk": self.project.pk}
+        )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         """Get breadcrumb navigation."""
         return [
             {
-                "title": "Structures",
+                "title": "Sections",
                 "url": reverse(
-                    "project:project-management", kwargs={"pk": self.project.pk}
+                    "bill_of_quantities:structure-list",
+                    kwargs={"project_pk": self.project.pk},
                 ),
             },
             {"title": f"Edit {self.object.name}", "url": None},
@@ -118,44 +133,34 @@ class StructureDeleteView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Delet
     model = Structure
     template_name = "structure/structure_confirm_delete.html"
     roles = [Role.CONTRACT_BOQ]
-    project_slug = "pk"
+    project_slug = "project_pk"
 
     def get_queryset(self):
         """Filter structures by the current project."""
-        project = get_object_or_404(Project, pk=self.kwargs["pk"])
-        self.project = project
-        return Structure.objects.filter(project=project)
-
-    def test_func(self):
-        """Check user has project role."""
-        project = get_object_or_404(Project, pk=self.kwargs["pk"])
-        return self.request.user.has_project_role(project, self.roles)  # type: ignore
+        return Structure.objects.filter(project=self.get_project())
 
     def form_valid(self, form):
         """Add success message."""
         structure_name = self.object.name
         messages.success(
-            self.request, f"Structure '{structure_name}' deleted successfully!"
+            self.request, f"Section '{structure_name}' deleted successfully!"
         )
         return super().form_valid(form)
 
     def get_success_url(self):
         """Redirect to project's structure list."""
-        return reverse("project:project-management", kwargs={"pk": self.project.pk})
-
-    def get_context_data(self, **kwargs):
-        """Add project to context."""
-        context = super().get_context_data(**kwargs)
-        context["project"] = self.project
-        return context
+        return reverse(
+            "bill_of_quantities:structure-list", kwargs={"project_pk": self.project.pk}
+        )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         """Get breadcrumb navigation."""
         return [
             {
-                "title": "Structures",
+                "title": "Sections",
                 "url": reverse(
-                    "project:project-management", kwargs={"pk": self.project.pk}
+                    "bill_of_quantities:structure-list",
+                    kwargs={"project_pk": self.project.pk},
                 ),
             },
             {"title": f"Delete {self.object.name}", "url": None},
@@ -172,22 +177,12 @@ class StructureExcelUploadView(
     roles = [Role.CONTRACT_BOQ]
     project_slug = "project_pk"
 
-    def get_project(self):
-        """Get the project from URL."""
-        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
-        return project
-
     def get_form_kwargs(self):
         """Pass user and project to form."""
         kwargs = super().get_form_kwargs()
         kwargs["user"] = self.request.user
         kwargs["project"] = self.get_project()
         return kwargs
-
-    def test_func(self):
-        """Check user has project role."""
-        project = self.get_project()
-        return self.request.user.has_project_role(project, self.roles)  # type: ignore
 
     def get_context_data(self, **kwargs):
         """Add project to context."""

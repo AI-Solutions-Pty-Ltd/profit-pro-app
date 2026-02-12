@@ -4,15 +4,31 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0036_alter_projectrole_role'),
+        ("Project", "0036_alter_projectrole_role"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='projectdocument',
-            name='category',
-            field=models.CharField(choices=[('CONTRACT_DOCUMENTS', 'Contract Documents & Appointment Letters'), ('STAGE_GATE_APPROVAL', 'Stage Gate Approval Documentation'), ('TECHNICAL_SPECIFICATIONS', 'Technical Specifications'), ('BILL_OF_QUANTITIES', 'Bill of Quantities'), ('APPOINTMENT_LETTER', 'Appointment Letter'), ('FINANCIAL_DOCUMENTS', 'Financial Documents'), ('MEETING_MINUTES', 'Meeting Minutes'), ('GENERAL_CORRESPONDENCE', 'General Correspondence'), ('REPORTS', 'Reports'), ('PERMITS_APPROVALS', 'Permits & Approvals'), ('PHOTOS_IMAGES', 'Photos & Images'), ('OTHER', 'Other')], help_text='Category of the document', max_length=30),
+            model_name="projectdocument",
+            name="category",
+            field=models.CharField(
+                choices=[
+                    ("CONTRACT_DOCUMENTS", "Contract Documents & Appointment Letters"),
+                    ("STAGE_GATE_APPROVAL", "Stage Gate Approval Documentation"),
+                    ("TECHNICAL_SPECIFICATIONS", "Technical Specifications"),
+                    ("BILL_OF_QUANTITIES", "Bill of Quantities"),
+                    ("APPOINTMENT_LETTER", "Appointment Letter"),
+                    ("FINANCIAL_DOCUMENTS", "Financial Documents"),
+                    ("MEETING_MINUTES", "Meeting Minutes"),
+                    ("GENERAL_CORRESPONDENCE", "General Correspondence"),
+                    ("REPORTS", "Reports"),
+                    ("PERMITS_APPROVALS", "Permits & Approvals"),
+                    ("PHOTOS_IMAGES", "Photos & Images"),
+                    ("OTHER", "Other"),
+                ],
+                help_text="Category of the document",
+                max_length=30,
+            ),
         ),
     ]

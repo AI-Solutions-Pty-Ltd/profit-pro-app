@@ -1,23 +1,23 @@
 {% extends "base.html" %}
 {% block title %}
-    Delete Structure - {{ block.super }}
+    Delete Section - {{ block.super }}
 {% endblock title %}
 {% block content %}
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="bg-white shadow-md rounded-lg overflow-hidden">
             <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-semibold text-gray-900">Delete Structure</h3>
+                <h3 class="text-lg leading-6 font-semibold text-gray-900">Delete Section</h3>
                 <div class="mt-2 max-w-xl text-sm text-gray-600">
                     <p>
-                        Are you sure you want to delete the structure <strong>"{{ structure.name }}"</strong>?
+                        Are you sure you want to delete the Section <strong>"{{ structure.name }}"</strong>?
                     </p>
                     <p class="mt-2">This action cannot be undone.</p>
                 </div>
                 <form method="post"
-                      action="{% url 'bill_of_quantities:structure-delete' structure.pk %}">
+                      action="{% url 'bill_of_quantities:structure-delete' project.pk structure.pk %}">
                     {% csrf_token %}
                     <div class="mt-6 flex items-center justify-end space-x-3">
-                        <a href="{{ project.get_structure_list_url }}"
+                        <a href="{% url 'bill_of_quantities:structure-list' project.pk %}"
                            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             Cancel
                         </a>

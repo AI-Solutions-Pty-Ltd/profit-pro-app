@@ -11,12 +11,12 @@
                 <div class="flex items-center justify-between">
                     <h1 class="text-2xl font-bold text-gray-900">{{ structure.name }}</h1>
                     <div class="flex space-x-3">
-                        <a href="{% url 'bill_of_quantities:structure-update' structure.pk %}"
+                        <a href="{% url 'bill_of_quantities:structure-update' project.pk structure.pk %}"
                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                             {% heroicon_outline name="pencil" size="20" %}
                             Edit
                         </a>
-                        <a href="{% url 'bill_of_quantities:structure-delete' structure.pk %}"
+                        <a href="{% url 'bill_of_quantities:structure-delete' project.pk structure.pk %}"
                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
                             {% heroicon_outline name="trash" size="20" %}
                             Delete
@@ -28,7 +28,7 @@
             <div class="px-6 py-6">
                 <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
                     <div class="sm:col-span-1">
-                        <dt class="text-sm font-medium text-gray-500">Structure Name</dt>
+                        <dt class="text-sm font-medium text-gray-500">Section Name</dt>
                         <dd class="mt-1 text-sm text-gray-900">
                             {{ structure.name }}
                         </dd>
@@ -70,7 +70,7 @@
                     <a href="{% url 'project:project-management' structure.project.pk %}"
                        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
                         {% heroicon_outline name="chevron-left" size="20" %}
-                        Back to Structures
+                        Back to Sections
                     </a>
                 </div>
             </div>

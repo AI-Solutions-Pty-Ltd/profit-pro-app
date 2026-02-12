@@ -12,7 +12,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <h1 class="text-2xl font-bold text-gray-900">Cost Management</h1>
-                        <p class="text-sm text-gray-600 mt-1">View and manage costs by structure and bill</p>
+                        <p class="text-sm text-gray-600 mt-1">View and manage costs by Section and bill</p>
                     </div>
                     <div class="flex items-center space-x-3">
                         <div class="text-right">
@@ -28,7 +28,7 @@
             {% if tree %}
                 {% for structure, structure_data in tree.items %}
                     <div class="border-b border-gray-200 last:border-b-0">
-                        <!-- Structure Header -->
+                        <!-- Section Header -->
                         <div class="bg-gray-50 px-6 py-4">
                             <div class="flex items-center justify-between">
                                 <h2 class="text-lg font-semibold text-gray-900">{{ structure.name }}</h2>
@@ -57,7 +57,7 @@
                                     </div>
                                 </a>
                             {% empty %}
-                                <div class="px-6 py-4 text-sm text-gray-500">No bills in this structure</div>
+                                <div class="px-6 py-4 text-sm text-gray-500">No bills in this Section</div>
                             {% endfor %}
                         </div>
                     </div>
@@ -65,8 +65,8 @@
             {% else %}
                 <div class="px-6 py-12 text-center">
                     <{% heroicon_outline "inbox" class="mx-auto h-12 w-12 text-gray-400" %}
-                    <h3 class="mt-2 text-sm font-medium text-gray-900">No structures found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Get started by creating structures and bills in your project.</p>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No Sections found</h3>
+                    <p class="mt-1 text-sm text-gray-500">Get started by creating Sections and bills in your project.</p>
                 </div>
             {% endif %}
         </div>

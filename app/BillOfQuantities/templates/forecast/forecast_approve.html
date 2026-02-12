@@ -104,15 +104,15 @@
                     </p>
                 </div>
             </div>
-            <!-- L1/L2 Structure Summary -->
+            <!-- L1/L2 Section Summary -->
             {% if structure_summary %}
                 <div class="mb-8">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Structure Summary (L1/L2)</h2>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Section Summary (L1/L2)</h2>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Structure / Bill</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section / Bill</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Budget</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Forecast</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Variance</th>
@@ -120,7 +120,7 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 {% for item in structure_summary %}
-                                    <!-- Structure (L1) Row -->
+                                    <!-- Section (L1) Row -->
                                     <tr class="bg-indigo-50">
                                         <td class="px-6 py-3 text-sm font-semibold text-indigo-900">
                                             <div class="flex items-center">

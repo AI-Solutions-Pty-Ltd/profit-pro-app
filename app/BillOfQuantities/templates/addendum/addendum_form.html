@@ -60,7 +60,7 @@
         <form method="post" class="px-6 py-6">
             {% csrf_token %}
             <div class="space-y-6">
-                <!-- Structure and Bill -->
+                <!-- Section and Bill -->
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <div>{{ form.structure|as_crispy_field }}</div>
                     <div>{{ form.bill|as_crispy_field }}</div>
@@ -151,7 +151,7 @@
         // Initially disable bill and package if no structure selected
         if (!structureSelect.value) {
             billSelect.disabled = true;
-            billSelect.innerHTML = '<option value="">Select a structure first</option>';
+            billSelect.innerHTML = '<option value="">Select a Section first</option>';
         }
         packageSelect.disabled = true;
         packageSelect.innerHTML = '<option value="">Select a bill first</option>';
@@ -176,7 +176,7 @@
             
             // If no structure selected, reset and disable bill and package
             if (!structureId) {
-                billSelect.innerHTML = '<option value="">Select a structure first</option>';
+                billSelect.innerHTML = '<option value="">Select a Section first</option>';
                 billSelect.disabled = true;
                 billSelect.value = '';
                 packageSelect.innerHTML = '<option value="">Select a bill first</option>';
@@ -210,7 +210,7 @@
                 if (data.error) {
                     console.error('Permission error:', data.error);
                     alert('You do not have permission to access this data.');
-                    billSelect.innerHTML = '<option value="">Select a structure first</option>';
+                    billSelect.innerHTML = '<option value="">Select a Section first</option>';
                     billSelect.disabled = true;
                     packageSelect.innerHTML = '<option value="">Select a bill first</option>';
                     packageSelect.disabled = true;
