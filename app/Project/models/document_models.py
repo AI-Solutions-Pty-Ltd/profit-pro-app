@@ -26,6 +26,8 @@ class ProjectDocument(BaseModel):
             "TECHNICAL_SPECIFICATIONS",
             "Technical Specifications",
         )
+        BILL_OF_QUANTITIES = "BILL_OF_QUANTITIES", "Bill of Quantities"
+        APPOINTMENT_LETTER = "APPOINTMENT_LETTER", "Appointment Letter"
         FINANCIAL_DOCUMENTS = "FINANCIAL_DOCUMENTS", "Financial Documents"
         MEETING_MINUTES = "MEETING_MINUTES", "Meeting Minutes"
         GENERAL_CORRESPONDENCE = "GENERAL_CORRESPONDENCE", "General Correspondence"
