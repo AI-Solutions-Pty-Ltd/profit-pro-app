@@ -1,5 +1,10 @@
 """Views for Project app - Portfolio Dashboard and Reports."""
 
+import random
+
+from dateutil.utils import today
+from app.Project.models.projects_models import get_months_between
+
 import json
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -14,6 +19,7 @@ from django.views.generic import (
 )
 
 from app.Account.models import Account
+from app.core.Utilities.dates import get_month_range, get_previous_n_months
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
@@ -224,39 +230,17 @@ class PortfolioDashboardView(LoginRequiredMixin, BreadcrumbMixin, ListView):
         context["total_compliance_items"] = total_compliance_items
 
         # ==========================================
-        # Group 2 - Budgets and Payments
+        # Group 2 - Income Statement
         # ==========================================
-        original_budget = portfolio.get_total_original_budget(category_filter)
-        approved_variations = portfolio.get_total_approved_variations(category_filter)
-        total_certified = portfolio.get_total_certified_value(category_filter)
-
-        context["original_budget"] = original_budget
-        context["approved_variations"] = approved_variations
-        context["approved_variations_percentage"] = (
-            (approved_variations / original_budget * 100) if original_budget > 0 else 0
-        )
-        context["total_certified"] = total_certified
-        context["total_certified_percentage"] = (
-            (total_certified / original_budget * 100) if original_budget > 0 else 0
-        )
-
-        # ==========================================
-        # Cost Forecasts
-        # ==========================================
-        forecast_at_completion = portfolio.get_forecast_cost_at_completion(
-            current_date, category_filter
-        )
-        cost_variance_at_completion = portfolio.get_cost_variance_at_completion(
-            current_date, category_filter
-        )
-
-        context["forecast_at_completion"] = forecast_at_completion
-        context["cost_variance_at_completion"] = cost_variance_at_completion
-        context["cost_variance_at_completion_percentage"] = (
-            (cost_variance_at_completion / original_budget * 100)
-            if original_budget > 0 and cost_variance_at_completion
-            else 0
-        )
+        # Income Statement Summary (dummy data for now)
+        context["revenue"] = 15000000  # R15M
+        context["variable_costs"] = 12000000  # R12M
+        context["gross_profit"] = 3000000  # R3M
+        context["gross_profit_margin"] = 20.0  # 20%
+        context["net_profit"] = 1200000  # R1.2M
+        context["net_profit_margin"] = 8.0  # 8%
+        context["forecast_profit"] = 2500000  # R2.5M
+        context["profits"] = 1200000  # R1.2M (same as net profit for Company Status)
 
         # ==========================================
         # Earned Value Management (EVM)
@@ -294,6 +278,14 @@ class PortfolioDashboardView(LoginRequiredMixin, BreadcrumbMixin, ListView):
         context["forecast_data"] = json.dumps(cashflow_data["forecast"])
         context["budget_data"] = json.dumps(cashflow_data["budget"])
         context["cashflow_table_data"] = cashflow_data["table_data"]
+
+        # Profit trend data for charts
+        profit_data = self._get_profit_trend_data()
+        context["profit_labels"] = json.dumps(profit_data["labels"])
+        context["gross_profit_percentage_data"] = json.dumps(
+            profit_data["gross_profit_percentages"]
+        )
+        context["net_profit_data"] = json.dumps(profit_data["net_profit_values"])
 
         return context
 
@@ -437,6 +429,26 @@ class PortfolioDashboardView(LoginRequiredMixin, BreadcrumbMixin, ListView):
             "forecast": forecast_values,
             "budget": budget_values,
             "table_data": table_data,
+        }
+
+    def _get_profit_trend_data(self) -> dict:
+        """Generate 6 months of profit trend data for charts.
+
+        Returns:
+            dict: Contains labels, gross_profit_percentages, and net_profit_values
+        """
+        labels = [month.strftime("%b %Y") for month in get_previous_n_months(6)]
+        # Generate dummy gross profit percentages (10-30%)
+        gross_profit_percentages = [round(random.uniform(10, 30), 1) for _ in range(6)]
+        # Generate dummy net profit values (500k-1.5M)
+        net_profit_values = [
+            round(random.uniform(500000, 1500000), 0) for _ in range(6)
+        ]
+
+        return {
+            "labels": labels,
+            "gross_profit_percentages": gross_profit_percentages,
+            "net_profit_values": net_profit_values,
         }
 
 
