@@ -27,8 +27,8 @@ from app.Project.models import (
     AdministrativeCompliance,
     ContractualCompliance,
     FinalAccountCompliance,
+    Role,
 )
-from app.Project.models.project_roles import Role
 
 
 class ComplianceMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):

@@ -14,8 +14,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 from app.core.Utilities.models import BaseModel
 
 if TYPE_CHECKING:
-    from app.Project.models import Portfolio, Project
-    from app.Project.models.project_roles import ProjectRole, Role
+    from app.Project.models import Portfolio, Project, ProjectRole, Role
 
 
 class UserManager(BaseUserManager):
@@ -167,7 +166,7 @@ class Account(AbstractUser, BaseModel):
         Returns:
             True if user has the role, False otherwise
         """
-        from app.Project.models.project_roles import Role
+        from app.Project.models import Role
 
         if self.is_superuser:
             return True

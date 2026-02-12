@@ -17,10 +17,10 @@ from app.Project.models.company_models import Company
 
 if TYPE_CHECKING:
     from app.Account.models import Account
-    from app.BillOfQuantities.models import Structure
+    from app.BillOfQuantities.models import Claim, Structure
 
     from .planned_value_models import PlannedValue
-    from .project_roles import ProjectRole
+    from .project_roles_models import ProjectRole
     from .signatories_models import Signatories
 
 
@@ -233,6 +233,7 @@ class Project(BaseModel):
         users: models.ManyToManyField["Account", "Account"]
         project_roles: QuerySet["ProjectRole"]
         structures: QuerySet["Structure"]
+        claims: QuerySet["Claim"]
 
     def __str__(self):
         return self.name

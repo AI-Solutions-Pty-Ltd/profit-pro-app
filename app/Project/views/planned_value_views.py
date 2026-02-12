@@ -14,8 +14,7 @@ from django.views.generic import TemplateView
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.forms import CashflowForecastForm, PlannedValueForm
-from app.Project.models import PlannedValue, Project
-from app.Project.models.project_roles import Role
+from app.Project.models import PlannedValue, Project, Role
 
 
 def get_months_between(start_date: date, end_date: date) -> list[date]:

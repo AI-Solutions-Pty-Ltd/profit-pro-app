@@ -13,8 +13,7 @@ from django.views.generic import CreateView, DeleteView, ListView
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.forms import ProjectDocumentForm
-from app.Project.models import ProjectDocument
-from app.Project.models.project_roles import Role
+from app.Project.models import ProjectDocument, Role
 
 
 class DocumentMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):

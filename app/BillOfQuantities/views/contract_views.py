@@ -19,7 +19,7 @@ from app.core.Utilities.forms import styled_attachment_input, styled_date_input
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.Project.models.project_roles import Role
+from app.Project.models import Role
 
 
 class ContractVariationMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):

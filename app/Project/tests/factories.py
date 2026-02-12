@@ -23,9 +23,10 @@ from app.Project.models import (
     Project,
     ProjectCategory,
     ProjectDocument,
+    ProjectRole,
     Risk,
+    Role,
 )
-from app.Project.models.project_roles import ProjectRole, Role
 
 
 class ProjectCategoryFactory(DjangoModelFactory):

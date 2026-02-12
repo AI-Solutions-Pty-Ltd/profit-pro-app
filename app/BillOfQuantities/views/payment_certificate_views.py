@@ -29,8 +29,7 @@ from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import (
     UserHasProjectRoleGenericMixin,
 )
-from app.Project.models import PlannedValue, Project
-from app.Project.models.project_roles import Role
+from app.Project.models import PlannedValue, Project, Role
 
 
 class PaymentCertificateMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):

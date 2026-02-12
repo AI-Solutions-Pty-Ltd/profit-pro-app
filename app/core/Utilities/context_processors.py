@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from app.Project.models.project_roles import Role
+from app.Project.models import Role
 
 
 def custom_context_processor(request):

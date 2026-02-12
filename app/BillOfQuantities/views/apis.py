@@ -6,7 +6,7 @@ from django.views import View
 
 from app.BillOfQuantities.models import Bill, Package
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.Project.models.project_roles import Role
+from app.Project.models import Role
 
 
 class GetBillsByStructureView(UserHasProjectRoleGenericMixin, View):

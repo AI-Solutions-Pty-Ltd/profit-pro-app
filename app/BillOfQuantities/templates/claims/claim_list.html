@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% load static %}
+{% block title %}
+    Claims - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Claims</h1>
+                    <p class="mt-2 text-gray-600">
+                        Project:
+                        <a href="{{ project.get_absolute_url }}"
+                           class="text-indigo-600 hover:text-indigo-800">{{ project.name }}</a>
+                    </p>
+                </div>
+                {% if request.user|projectroles:project|userhasrole:'CLAIMS,ADMIN,USER' %}
+                    <a href="{% url 'bill_of_quantities:claim-create' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "plus" size="20" class="mr-2" %}
+                        Create Claim
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Description -->
+    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+        <div class="flex">
+            <div class="flex-shrink-0">{% heroicon_outline "information-circle" size="20" class="h-5 w-5 text-blue-400" %}</div>
+            <div class="ml-3">
+                <p class="text-sm text-blue-700">
+                    <strong>What are claims?</strong> Claims are estimated payment certificates used to compare against actual payment certificates.
+                    They help track project progress and provide evidence for trend reports by documenting the expected payment amounts for each period.
+                </p>
+            </div>
+        </div>
+    </div>
+    <!-- Claims List -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-md">
+        {% if claims %}
+            <ul class="divide-y divide-gray-200">
+                {% for claim in claims %}
+                    <li>
+                        <div class="px-4 py-4 sm:px-6 hover:bg-gray-50">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm font-medium text-indigo-600 truncate">{{ claim.period|date:"F Y" }}</p>
+                                        <div class="ml-2 flex-shrink-0 flex">
+                                            {% if request.user|projectroles:project|userhasrole:'CLAIMS,ADMIN,USER' %}
+                                                <a href="{% url 'bill_of_quantities:claim-update' project.pk claim.pk %}"
+                                                   class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                                    {% heroicon_outline "pencil" size="16" class="inline" %}
+                                                </a>
+                                                <a href="{% url 'bill_of_quantities:claim-delete' project.pk claim.pk %}"
+                                                   class="text-red-600 hover:text-red-900">
+                                                    {% heroicon_outline "trash" size="16" class="inline" %}
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <p class="text-sm text-gray-500">
+                                            Estimated Claim: <span class="font-medium text-gray-900">R {{ claim.estimated_claim|floatformat:2|intcomma }}</span>
+                                        </p>
+                                        {% if claim.notes %}<p class="text-sm text-gray-500 mt-1">Notes: {{ claim.notes|truncatewords:20 }}</p>{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <div class="mt-6 flex items-center justify-between">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}"
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Previous
+                        </a>
+                    {% endif %}
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}"
+                           class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Next
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Showing
+                            <span class="font-medium">{{ page_obj.start_index }}</span>
+                            to
+                            <span class="font-medium">{{ page_obj.end_index }}</span>
+                            of
+                            <span class="font-medium">{{ page_obj.paginator.count }}</span>
+                            results
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                             aria-label="Pagination">
+                            {% if page_obj.has_previous %}
+                                <a href="?page={{ page_obj.previous_page_number }}"
+                                   class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    {% heroicon_outline "chevron-left" size="20" %}
+                                </a>
+                            {% endif %}
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <span aria-current="page"
+                                          class="relative inline-flex items-center px-4 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600">
+                                        {{ num }}
+                                    </span>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <a href="?page={{ num }}"
+                                       class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                        {{ num }}
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                            {% if page_obj.has_next %}
+                                <a href="?page={{ page_obj.next_page_number }}"
+                                   class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    {% heroicon_outline "chevron-right" size="20" %}
+                                </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                </div>
+            {% endif %}
+        {% else %}
+            <!-- Empty State -->
+            <div class="centered-content py-12">
+                {% heroicon_outline "document-text" size="48" class="mx-auto h-12 w-12 text-gray-400" %}
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No claims</h3>
+                <p class="mt-1 text-sm text-gray-500">Get started by creating a new claim.</p>
+                <div class="mt-6">
+                    {% if request.user|projectroles:project|userhasrole:'CLAIMS,ADMIN,USER' %}
+                        <a href="{% url 'bill_of_quantities:claim-create' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "plus" size="20" class="mr-2" %}
+                            Create Claim
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock content %}

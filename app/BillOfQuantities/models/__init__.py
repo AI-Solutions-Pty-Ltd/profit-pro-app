@@ -4,6 +4,9 @@ from .cashflow_models import (
     RevisedBaseline,
     RevisedBaselineDetail,
 )
+from .claim_models import (
+    Claim,
+)
 from .contract_models import (
     ContractualCorrespondence,
     ContractVariation,
@@ -49,6 +52,8 @@ __all__ = [
     "PaymentCertificate",
     "PaymentCertificatePhoto",
     "PaymentCertificateWorking",
+    # Claim models
+    "Claim",
     # Forecast models
     "Forecast",
     "ForecastTransaction",

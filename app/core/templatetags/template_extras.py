@@ -1,7 +1,7 @@
 from django import template
 from django.db.models import QuerySet
 
-from app.Project.models.project_roles import ProjectRole, Role
+from app.Project.models import ProjectRole, Role
 
 register = template.Library()
 

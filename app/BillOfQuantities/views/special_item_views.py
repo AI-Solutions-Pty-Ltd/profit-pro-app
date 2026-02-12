@@ -10,7 +10,7 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from app.BillOfQuantities.models import LineItem
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.Project.models.project_roles import Role
+from app.Project.models import Role
 
 
 class SpecialItemMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):

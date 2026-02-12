@@ -1,11 +1,14 @@
-"""Forms for Structure app."""
+"""Forms for Bill of Quantities app."""
 
+from datetime import date
 from typing import Any
 
 from django import forms
+from django.core.exceptions import ValidationError
 
 from app.BillOfQuantities.models import (
     Bill,
+    Claim,
     LineItem,
     Package,
     PaymentCertificate,
@@ -14,6 +17,35 @@ from app.BillOfQuantities.models import (
     Structure,
 )
 from app.Project.models import Project
+
+
+class MonthDateField(forms.DateField):
+    """A DateField that accepts month input in YYYY-MM format."""
+
+    def to_python(self, value):
+        """Convert YYYY-MM string to date object."""
+        if value in self.empty_values:
+            return None
+
+        if isinstance(value, date):
+            return value
+
+        # Handle month input from type="month" widget
+        if isinstance(value, str) and len(value) == 7:  # Format: "YYYY-MM"
+            try:
+                year, month = map(int, value.split("-"))
+                return date(year, month, 1)
+            except ValueError as err:
+                raise ValidationError("Enter a valid date.") from err
+
+        # Let parent handle full date format
+        return super().to_python(value)
+
+    def prepare_value(self, value):
+        """Convert date object to YYYY-MM format for widget."""
+        if isinstance(value, date):
+            return value.strftime("%Y-%m")
+        return value
 
 
 class StructureForm(forms.ModelForm):
@@ -270,3 +302,82 @@ class PaymentCertificateWorkingForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class ClaimForm(forms.ModelForm):
+    """Form for creating and updating claims."""
+
+    period = MonthDateField(widget=forms.DateInput(attrs={"type": "month"}))
+
+    class Meta:
+        model = Claim
+        fields = ["period", "estimated_claim", "notes"]
+        widgets = {
+            "estimated_claim": forms.NumberInput(
+                attrs={
+                    "step": "0.01",
+                    "min": "0",
+                }
+            ),
+            "notes": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        """Initialize form with project instance."""
+        self.project = kwargs.pop("project", None)
+        super().__init__(*args, **kwargs)
+
+        # Set project on instance if it exists
+        if self.project and hasattr(self, "instance"):
+            self.instance.project = self.project
+
+        # Set min and max dates based on project dates
+        if self.project:
+            self.fields["period"].widget.attrs.update(
+                {
+                    "min": self.project.start_date.strftime("%Y-%m"),
+                    "max": self.project.end_date.strftime("%Y-%m"),
+                }
+            )
+
+    def clean_period(self):
+        """Validate period is within project dates."""
+        period = self.cleaned_data["period"]
+
+        if self.project and period:
+            if period < self.project.start_date:
+                raise ValidationError(
+                    f"Period cannot be before project start date ({self.project.start_date})"
+                )
+            if period > self.project.end_date:
+                raise ValidationError(
+                    f"Period cannot be after project end date ({self.project.end_date})"
+                )
+        return period
+
+    def clean_estimated_claim(self):
+        """Validate estimated claim is positive."""
+        estimated_claim = self.cleaned_data["estimated_claim"]
+        if estimated_claim <= 0:
+            raise ValidationError("Estimated claim must be greater than 0.")
+        return estimated_claim
+
+    def clean(self):
+        """Validate claim doesn't already exist for this period."""
+        cleaned_data = super().clean()
+        if not cleaned_data:
+            return cleaned_data
+        period = cleaned_data.get("period")
+
+        if self.project and period:
+            # Check if claim already exists for this period
+            existing_claim = Claim.objects.filter(
+                project=self.project, period=period
+            ).exclude(pk=self.instance.pk if self.instance else None)
+
+            if existing_claim.exists():
+                raise ValidationError(
+                    {"period": "Claim for this project and period already exists"}
+                )
+
+        return cleaned_data

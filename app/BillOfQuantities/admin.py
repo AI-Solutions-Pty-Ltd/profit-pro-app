@@ -8,6 +8,7 @@ from .models import (
     BaselineCashflow,
     Bill,
     CashflowForecast,
+    Claim,
     ContractualCorrespondence,
     ContractVariation,
     Escalation,
@@ -46,6 +47,14 @@ class BillAdmin(SoftDeleteAdmin):
     ]
     list_filter = ["deleted", "created_at", "structure__project"]
     search_fields = ["name", "structure__name"]
+
+
+@admin.register(Claim)
+class ClaimAdmin(SoftDeleteAdmin):
+    list_display = ["project", "period", "estimated_claim", "deleted", "created_at"]
+    list_filter = ["deleted", "created_at", "project", "period"]
+    search_fields = ["project__name", "notes"]
+    date_hierarchy = "period"
 
 
 @admin.register(Package)

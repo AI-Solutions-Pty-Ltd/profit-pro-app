@@ -45,6 +45,7 @@ class Role(models.TextChoices):
 
     # PAYMENT CERTIFICATES
     PAYMENT_CERTIFICATES = "Payment Certificates", "Payment Certificates"
+    CLAIMS = "Claims", "Claims"
     ADVANCE_PAYMENTS = "Advance Payments", "Advance Payments"
     RETENTION = "Retention", "Retention"
     MATERIALS_ON_SITE = "Materials On Site", "Materials On Site"
@@ -65,6 +66,7 @@ CLAIMS_AND_CERTIFICATES_MODULE = [
     Role.USER,
     Role.CONTRACT_BOQ,
     Role.PAYMENT_CERTIFICATES,
+    Role.CLAIMS,
     Role.RETENTION,
     Role.CASHFLOW_FORECASTS,
     Role.COST_FORECASTS,

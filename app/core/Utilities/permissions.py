@@ -4,8 +4,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 
 from app.Account.models import Account
-from app.Project.models.project_roles import Role
-from app.Project.models.projects_models import Project
+from app.Project.models import Project, Role
 
 
 class UserHasGroupGenericMixin(LoginRequiredMixin, UserPassesTestMixin):

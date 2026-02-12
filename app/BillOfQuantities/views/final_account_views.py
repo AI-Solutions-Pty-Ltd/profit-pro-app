@@ -8,8 +8,7 @@ from django.views.generic import DetailView
 from app.BillOfQuantities.models import LineItem, PaymentCertificate
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.Project.models.project_roles import Role
-from app.Project.models.projects_models import Project
+from app.Project.models import Project, Role
 
 
 class FinalAccountDetailView(

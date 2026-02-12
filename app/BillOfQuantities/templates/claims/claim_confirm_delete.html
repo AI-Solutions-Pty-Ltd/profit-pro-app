@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% load static %}
+{% block title %}
+    Delete Claim - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Delete Claim</h1>
+                    <p class="mt-2 text-gray-600">
+                        Project:
+                        <a href="{{ project.get_absolute_url }}"
+                           class="text-indigo-600 hover:text-indigo-800">{{ project.name }}</a>
+                    </p>
+                </div>
+                <a href="{% url 'bill_of_quantities:claim-list' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_outline "arrow-left" size="20" class="mr-2" %}
+                    Back to Claims
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- Confirmation Card -->
+    <div class="bg-white shadow sm:rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="sm:flex sm:items-start">
+                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                    {% heroicon_outline "exclamation-triangle" size="24" class="h-6 w-6 text-red-600" %}
+                </div>
+                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Delete claim for {{ claim.period|date:"F Y" }}</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500">Are you sure you want to delete this claim? This action cannot be undone.</p>
+                        <div class="mt-3 bg-gray-50 p-4 rounded-md">
+                            <p class="text-sm">
+                                <strong>Period:</strong> {{ claim.period|date:"F Y" }}
+                                <br>
+                                <strong>Estimated Claim:</strong> R {{ claim.estimated_claim|floatformat:2|intcomma }}
+                                {% if claim.notes %}
+                                    <br>
+                                    <strong>Notes:</strong> {{ claim.notes }}
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    Delete Claim
+                </button>
+            </form>
+            <a href="{% url 'bill_of_quantities:claim-list' project.pk %}"
+               class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                Cancel
+            </a>
+        </div>
+    </div>
+{% endblock content %}

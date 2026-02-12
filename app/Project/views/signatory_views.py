@@ -23,8 +23,7 @@ from app.Account.models import Account
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.forms import SignatoryForm, SignatoryInviteForm
-from app.Project.models import Project, Signatories
-from app.Project.models.project_roles import Role
+from app.Project.models import Project, Role, Signatories
 
 
 class SignatoryMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):

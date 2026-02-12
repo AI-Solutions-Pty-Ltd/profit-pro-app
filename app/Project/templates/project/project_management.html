@@ -185,7 +185,7 @@
                 </div>
                 <div class="space-y-2">
                     {% if project.line_items.exists %}
-                        {% if request.user|projectroles:project|userhasrole:'PAYMENT_CERTIFICATES,ADMIN,User' %}
+                        {% if request.user|projectroles:project|userhasrole:'PAYMENT_CERTIFICATES,ADMIN,USER' %}
                             <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
                                class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors group/btn relative">
                                 <div class="flex items-center gap-2">
@@ -202,37 +202,7 @@
                                 {% heroicon_outline "arrow-right" size="16" class="text-purple-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                         {% endif %}
-                        {% comment %} {% if request.user|projectroles:project|userhasrole:'ADVANCE_PAYMENTS,ADMIN,User' %}
-                            <a href="{% url 'bill_of_quantities:advance-payment-list' project.pk %}" class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-blue-700">Advance Payments</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                            </a>
-                        {% endif %}
-                        {% if request.user|projectroles:project|userhasrole:'RETENTION,ADMIN,User' %}
-                            <a href="{% url 'bill_of_quantities:retention-list' project.pk %}" class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-amber-700">Retention</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                            </a>
-                        {% endif %}
-                        {% if request.user|projectroles:project|userhasrole:'MATERIALS_ON_SITE,ADMIN,User' %}
-                            <a href="{% url 'bill_of_quantities:materials-list' project.pk %}" class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-green-700">Materials on Site</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                            </a>
-                        {% endif %}
-                        {% if request.user|projectroles:project|userhasrole:'ESCALATION,ADMIN,User' %}
-                            <a href="{% url 'bill_of_quantities:escalation-list' project.pk %}" class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-rose-200 hover:bg-rose-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-rose-700">Escalation</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-rose-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                            </a>
-                        {% endif %}
-                        {% if request.user|projectroles:project|userhasrole:'SPECIAL_ITEMS,ADMIN,User' %}
-                            <a href="{% url 'bill_of_quantities:special-item-list' project.pk %}" class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-orange-700">Special Items</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                            </a>
-                        {% endif %} {% endcomment %}
-                        {% if request.user|projectroles:project|userhasrole:'ADDITIONAL_LINE_ITEMS,ADMIN,User' %}
+                        {% if request.user|projectroles:project|userhasrole:'ADDITIONAL_LINE_ITEMS,ADMIN,USER' %}
                             <a href="{% url 'bill_of_quantities:addendum-list' project.pk %}"
                                class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
                                 <span class="text-sm font-medium text-blue-700">Additional Items</span>
@@ -242,6 +212,13 @@
                                class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
                                 <span class="text-sm font-medium text-orange-700">Special Items</span>
                                 {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% endif %}
+                        {% if request.user|projectroles:project|userhasrole:'CLAIMS,ADMIN,USER' %}
+                            <a href="{% url 'bill_of_quantities:claim-list' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-green-700">Claims</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                         {% endif %}
                     {% else %}

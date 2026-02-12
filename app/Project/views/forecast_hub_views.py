@@ -12,8 +12,7 @@ from app.core.Utilities.dates import get_end_of_month
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.Project.models import Milestone, PlannedValue, Project
-from app.Project.models.project_roles import Role
+from app.Project.models import Milestone, PlannedValue, Project, Role
 
 
 class ForecastHubMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):

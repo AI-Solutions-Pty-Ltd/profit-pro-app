@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% load static %}
+{% block title %}
+    {{ title }} - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+                    <p class="mt-2 text-gray-600">
+                        Project:
+                        <a href="{{ project.get_absolute_url }}"
+                           class="text-indigo-600 hover:text-indigo-800">{{ project.name }}</a>
+                    </p>
+                </div>
+                <a href="{% url 'bill_of_quantities:claim-list' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_outline "arrow-left" size="20" class="mr-2" %}
+                    Back to Claims
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- Form -->
+    <div class="bg-white shadow sm:rounded-lg">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            <div class="px-4 py-5 sm:p-6">
+                {% if form.non_field_errors %}
+                    <div class="rounded-md bg-red-50 p-4 mb-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" size="20" class="h-5 w-5 text-red-400" %}</div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">There were errors with your submission:</h3>
+                                <div class="mt-2 text-sm text-red-700">
+                                    <ul class="list-disc list-inside space-y-1">
+                                        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <!-- Period -->
+                    <div>
+                        {{ form.period.label_tag }}
+                        {% if form.period.errors %}
+                            <div class="mt-1 relative rounded-md shadow-sm">
+                                {{ form.period|add_class:"block w-full pr-10 border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md" }}
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    {% heroicon_outline "exclamation-circle" size="20" class="h-5 w-5 text-red-500" %}
+                                </div>
+                            </div>
+                            <p class="mt-2 text-sm text-red-600">{{ form.period.errors.0 }}</p>
+                        {% else %}
+                            {{ form.period|add_class:"mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" }}
+                        {% endif %}
+                        <p class="mt-2 text-sm text-gray-500">Select the month for this claim</p>
+                    </div>
+                    <!-- Estimated Claim -->
+                    <div>
+                        {{ form.estimated_claim.label_tag }}
+                        {% if form.estimated_claim.errors %}
+                            <div class="mt-1 relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm">R</span>
+                                </div>
+                                {{ form.estimated_claim|add_class:"block w-full pl-7 pr-10 border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md" }}
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    {% heroicon_outline "exclamation-circle" size="20" class="h-5 w-5 text-red-500" %}
+                                </div>
+                            </div>
+                            <p class="mt-2 text-sm text-red-600">{{ form.estimated_claim.errors.0 }}</p>
+                        {% else %}
+                            <div class="mt-1 relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm">R</span>
+                                </div>
+                                {{ form.estimated_claim|add_class:"block w-full pl-7 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" }}
+                            </div>
+                        {% endif %}
+                        <p class="mt-2 text-sm text-gray-500">Enter the estimated claim amount</p>
+                    </div>
+                </div>
+                <!-- Notes -->
+                <div>
+                    {{ form.notes.label_tag }}
+                    {% if form.notes.errors %}
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            {{ form.notes|add_class:"block w-full border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md" }}
+                            <p class="mt-2 text-sm text-red-600">{{ form.notes.errors.0 }}</p>
+                        </div>
+                    {% else %}
+                        {{ form.notes|add_class:"mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" }}
+                    {% endif %}
+                    <p class="mt-2 text-sm text-gray-500">Additional notes or comments (optional)</p>
+                </div>
+            </div>
+            <!-- Actions -->
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="submit"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    {% if title == "Create Claim" %}
+                        Create Claim
+                    {% else %}
+                        Update Claim
+                    {% endif %}
+                </button>
+                <a href="{% url 'bill_of_quantities:claim-list' project.pk %}"
+                   class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+{% endblock content %}
