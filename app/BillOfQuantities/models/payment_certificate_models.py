@@ -104,11 +104,29 @@ class PaymentCertificate(BaseModel):
         super().save(*args, **kwargs)
 
     @staticmethod
-    def get_next_certificate_number(project: Project) -> int:
-        total_payment_certificates = PaymentCertificate.objects.filter(
+    def validate_certificate_numbers(project):
+        payment_certificates = PaymentCertificate.objects.filter(
             project=project
-        ).count()
-        return total_payment_certificates + 1
+        ).order_by("certificate_number")
+
+        for i, payment_certificate in enumerate(payment_certificates):
+            if not payment_certificate.certificate_number == i + 1:
+                payment_certificate.certificate_number = i + 1
+                payment_certificate.save()
+
+    @staticmethod
+    def get_next_certificate_number(project: Project) -> int:
+        PaymentCertificate.validate_certificate_numbers(project)
+        total_payment_certificates = (
+            PaymentCertificate.objects.filter(project=project).count() + 1
+        )
+        if PaymentCertificate.objects.filter(
+            project=project, certificate_number=total_payment_certificates
+        ).exists():
+            raise ValueError(
+                f"Certificate with Certificate number: {total_payment_certificates} already exists.\nPlease contact an administrator to remedy."
+            )
+        return total_payment_certificates
 
     @property
     def previous_certificates(self) -> QuerySet[PaymentCertificate]:

@@ -33,7 +33,7 @@ from app.Project.models import PlannedValue, Project, Role
 
 
 class PaymentCertificateMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
-    roles = [Role.PAYMENT_CERTIFICATES, Role.ADMIN, Role.USER]
+    roles = [Role.PAYMENT_CERTIFICATES]
     project_slug = "project_pk"
 
     def dispatch(self, request, *args, **kwargs):
@@ -281,21 +281,14 @@ class PaymentCertificateDetailView(
 
 
 class PaymentCertificateEditView(PaymentCertificateMixin, TemplateView):
-    template_name: str = "payment_certificate/payment_certificate_edit.html"
+    template_name = "payment_certificate/payment_certificate_edit.html"
     roles = [
         Role.PAYMENT_CERTIFICATES,
-        Role.ADMIN,
         Role.USER,
         Role.CLIENT,
         Role.CONSULTANT,
     ]
     project_slug = "project_pk"
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Ensure template_name is always a string
-        if not self.template_name:
-            self.template_name = "payment_certificate/payment_certificate_edit.html"
 
     def get_breadcrumbs(
         self: "PaymentCertificateEditView", **kwargs
@@ -551,10 +544,6 @@ class PaymentCertificateEditView(PaymentCertificateMixin, TemplateView):
         for key, value in request.POST.items():
             line_item_pk = ""
             actual_transaction_pk = ""
-            delete = False
-            if value == "":
-                delete = True
-                value = 0
             try:
                 value = Decimal(value)
             except (ValueError, TypeError, InvalidOperation):
@@ -605,10 +594,7 @@ class PaymentCertificateEditView(PaymentCertificateMixin, TemplateView):
                     )
                 except ActualTransaction.DoesNotExist:
                     continue
-                if delete:
-                    actual_transaction.delete()
-                    transactions_updated += 1
-                    continue
+
                 line_item = actual_transaction.line_item
                 if not line_item.special_item:
                     # normal item / addendum - update quantity
