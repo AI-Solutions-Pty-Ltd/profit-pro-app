@@ -238,123 +238,10 @@
             </div>
         </div>
     </div>
-    <!-- ==========================================
-             Performance Indices & Earned Value Management
-             ========================================== -->
-    <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-4">
-        <div class="bg-gradient-to-r from-gray-700 to-gray-900 px-4 py-2">
-            <h5 class="text-sm font-semibold text-white flex items-center">
-                {% heroicon_outline "chart-bar" size="16" class="mr-2" %}
-                Performance Indices (CPI & SPI)
-            </h5>
-        </div>
-        <div class="p-4">
-            <!-- CPI & SPI Trend Charts (6 Months) -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-                <!-- CPI Trend -->
-                <div class="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg p-3 border border-cyan-100">
-                    <div class="flex items-center justify-between mb-2">
-                        <div>
-                            <p class="text-xs font-medium text-cyan-600 uppercase tracking-wider">CPI Trend (6 Months)</p>
-                            <p class="text-lg font-bold text-cyan-700">
-                                {{ current_cpi|default:"--" }}
-                                {% if current_cpi %}
-                                    {% if current_cpi >= 1 %}
-                                        <span class="text-xs font-medium text-green-600 ml-1">Under Budget</span>
-                                    {% else %}
-                                        <span class="text-xs font-medium text-red-600 ml-1">Over Budget</span>
-                                    {% endif %}
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
-                    <div class="h-36">
-                        <canvas id="cpiChart"></canvas>
-                    </div>
-                </div>
-                <!-- SPI Trend -->
-                <div class="bg-gradient-to-br from-violet-50 to-purple-50 rounded-lg p-3 border border-violet-100">
-                    <div class="flex items-center justify-between mb-2">
-                        <div>
-                            <p class="text-xs font-medium text-violet-600 uppercase tracking-wider">SPI Trend (6 Months)</p>
-                            <p class="text-lg font-bold text-violet-700">
-                                {{ current_spi|default:"--" }}
-                                {% if current_spi %}
-                                    {% if current_spi >= 1 %}
-                                        <span class="text-xs font-medium text-green-600 ml-1">On Schedule</span>
-                                    {% else %}
-                                        <span class="text-xs font-medium text-red-600 ml-1">Behind</span>
-                                    {% endif %}
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
-                    <div class="h-36">
-                        <canvas id="spiChart"></canvas>
-                    </div>
-                </div>
-            </div>
-            <!-- Earned Value Stats (Below Graphs) -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
-                <!-- Earned Value -->
-                <a href="{% url 'project:portfolio-financial-report' %}"
-                   class="bg-violet-50 rounded-lg p-2 text-center border border-violet-100 hover:bg-violet-100 hover:shadow-md transition-all duration-200 cursor-pointer">
-                    <p class="text-xs font-medium text-violet-600 uppercase tracking-wider">Earned Value</p>
-                    <p class="text-sm font-bold text-violet-700">
-                        {% if total_earned_value %}
-                            R {{ total_earned_value|floatformat:0|intcomma }}
-                        {% else %}
-                            --
-                        {% endif %}
-                    </p>
-                </a>
-                <!-- Cost Variance -->
-                <a href="{% url 'project:portfolio-financial-report' %}?sort=variance_asc"
-                   class="bg-{% if total_cost_variance and total_cost_variance >= 0 %}green{% else %}red{% endif %}-50 rounded-lg p-2 text-center border border-{% if total_cost_variance and total_cost_variance >= 0 %}green{% else %}red{% endif %}-100 hover:shadow-md transition-all duration-200 cursor-pointer">
-                    <p class="text-xs font-medium text-{% if total_cost_variance and total_cost_variance >= 0 %}green{% else %}red{% endif %}-600 uppercase tracking-wider">
-                        Cost Variance
-                    </p>
-                    <p class="text-sm font-bold text-{% if total_cost_variance and total_cost_variance >= 0 %}green{% else %}red{% endif %}-700">
-                        {% if total_cost_variance %}
-                            R {{ total_cost_variance|floatformat:0|intcomma }}
-                        {% else %}
-                            --
-                        {% endif %}
-                    </p>
-                </a>
-                <!-- Schedule Variance -->
-                <a href="{% url 'project:portfolio-schedule-report' %}?sort=variance_asc"
-                   class="bg-{% if total_schedule_variance and total_schedule_variance >= 0 %}green{% else %}red{% endif %}-50 rounded-lg p-2 text-center border border-{% if total_schedule_variance and total_schedule_variance >= 0 %}green{% else %}red{% endif %}-100 hover:shadow-md transition-all duration-200 cursor-pointer">
-                    <p class="text-xs font-medium text-{% if total_schedule_variance and total_schedule_variance >= 0 %}green{% else %}red{% endif %}-600 uppercase tracking-wider">
-                        Schedule Variance
-                    </p>
-                    <p class="text-sm font-bold text-{% if total_schedule_variance and total_schedule_variance >= 0 %}green{% else %}red{% endif %}-700">
-                        {% if total_schedule_variance %}
-                            R {{ total_schedule_variance|floatformat:0|intcomma }}
-                        {% else %}
-                            --
-                        {% endif %}
-                    </p>
-                </a>
-                <!-- EAC - Estimate at Completion -->
-                <a href="{% url 'project:portfolio-financial-report' %}"
-                   class="bg-amber-50 rounded-lg p-2 text-center border border-amber-100 hover:bg-amber-100 hover:shadow-md transition-all duration-200 cursor-pointer">
-                    <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Estimate at Completion</p>
-                    <p class="text-sm font-bold text-amber-700">
-                        {% if total_eac %}
-                            R {{ total_eac|floatformat:0|intcomma }}
-                        {% else %}
-                            --
-                        {% endif %}
-                    </p>
-                </a>
-            </div>
-        </div>
-    </div>
     <!-- Footer -->
     <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-4">
         <div class="flex justify-between items-center max-w-7xl mx-auto">
-            <span class="text-sm text-gray-500">Portfolio Dashboard</span>
+            <span class="text-sm text-gray-500">Company Dashboard</span>
             <a href="{% url 'project:portfolio-project-list' %}"
                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                 {% heroicon_outline "list-bullet" size="16" class="mr-2" %}
@@ -368,8 +255,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Performance Index Charts (6 months)
             const labels = {{ performance_labels|safe }};
-            const cpiData = {{ cpi_data|safe }};
-            const spiData = {{ spi_data|safe }};
 
             // Common chart options for performance indices
             const commonOptions = {
@@ -408,60 +293,6 @@
                     line: { tension: 0.3 }
                 }
             };
-
-            // CPI Chart
-            const cpiCtx = document.getElementById('cpiChart').getContext('2d');
-            new Chart(cpiCtx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'CPI',
-                        data: cpiData,
-                        borderColor: 'rgb(6, 182, 212)',
-                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
-                        fill: true,
-                        borderWidth: 2,
-                        spanGaps: true
-                    }, {
-                        label: 'Target',
-                        data: Array(labels.length).fill(1),
-                        borderColor: 'rgba(156, 163, 175, 0.5)',
-                        borderDash: [5, 5],
-                        borderWidth: 1,
-                        pointRadius: 0,
-                        fill: false
-                    }]
-                },
-                options: commonOptions
-            });
-
-            // SPI Chart
-            const spiCtx = document.getElementById('spiChart').getContext('2d');
-            new Chart(spiCtx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'SPI',
-                        data: spiData,
-                        borderColor: 'rgb(139, 92, 246)',
-                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                        fill: true,
-                        borderWidth: 2,
-                        spanGaps: true
-                    }, {
-                        label: 'Target',
-                        data: Array(labels.length).fill(1),
-                        borderColor: 'rgba(156, 163, 175, 0.5)',
-                        borderDash: [5, 5],
-                        borderWidth: 1,
-                        pointRadius: 0,
-                        fill: false
-                    }]
-                },
-                options: commonOptions
-            });
 
             // Profit Trend Charts (6 months)
             const profitLabels = {{ profit_labels|safe }};
