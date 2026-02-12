@@ -392,6 +392,7 @@ class ScheduleForecastSectionFactory(DjangoModelFactory):
 
     schedule_forecast = SubFactory(ScheduleForecastFactory)
     sectional_completion = SubFactory(SectionalCompletionDateFactory)
+    forecast_completion_date = LazyFunction(lambda: date.today() + timedelta(days=90))
 
 
 class ClaimFactory(DjangoModelFactory):
