@@ -15,8 +15,8 @@
                     {% endif %}
                 </h1>
                 <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-                    Streamline your business operations with our comprehensive management platform.
-                    Track finances, manage customers, and grow your business with confidence.
+                    Complete project lifecycle management from estimation to final account for construction contractors.
+                    Streamline operations, track profits, and manage contracts with confidence.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
                     {% if not user.is_authenticated %}
@@ -37,19 +37,216 @@
     <section id="features" class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Powerful Features</h2>
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Contractor Module System</h2>
                 <p class="text-xl text-gray-600 max-w-2xl mx-auto">
-                    Everything you need to manage your business efficiently and effectively.
+                    Comprehensive tools for project estimation, risk assessment, profit management, and contract administration.
                 </p>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {% for feature in features %}
-                    <div class="bg-gray-50 p-8 rounded-xl hover:shadow-lg transition-shadow">
-                        <div class="text-4xl mb-4">{{ feature.icon }}</div>
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ feature.title }}</h3>
-                        <p class="text-gray-600">{{ feature.description }}</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Project Estimator -->
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-xl hover:shadow-xl transition-all duration-300 border border-blue-100">
+                    <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mb-4">
+                        {% heroicon_outline "calculator" size="24" class="text-white" %}
                     </div>
-                {% endfor %}
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Project Estimator</h3>
+                    <p class="text-gray-600 mb-4">Advanced tools for accurate project estimation and cost calculation.</p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Drawings Calculator
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            BoQ Calculator
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Rate Builder
+                        </li>
+                    </ul>
+                </div>
+                <!-- Baseline Risk Assessment -->
+                <div class="bg-gradient-to-br from-orange-50 to-amber-50 p-8 rounded-xl hover:shadow-xl transition-all duration-300 border border-orange-100">
+                    <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mb-4">
+                        {% heroicon_outline "exclamation-triangle" size="24" class="text-white" %}
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Baseline Risk Assessment</h3>
+                    <p class="text-gray-600 mb-4">Comprehensive risk analysis and baseline reporting tools.</p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Quantity Analysis
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Rates Analysis
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Contract Analysis
+                        </li>
+                    </ul>
+                </div>
+                <!-- Profit Management -->
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-8 rounded-xl hover:shadow-xl transition-all duration-300 border border-green-100">
+                    <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mb-4">
+                        {% heroicon_outline "currency-dollar" size="24" class="text-white" %}
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Profit Management</h3>
+                    <p class="text-gray-600 mb-4">Track and analyze project and company profitability.</p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Income Statements
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            P&L by Trade
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Balance Sheets
+                        </li>
+                    </ul>
+                </div>
+                <!-- Contracts Management -->
+                <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-8 rounded-xl hover:shadow-xl transition-all duration-300 border border-purple-100">
+                    <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center mb-4">
+                        {% heroicon_outline "document-text" size="24" class="text-white" %}
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Contracts Management</h3>
+                    <p class="text-gray-600 mb-4">Streamlined contract administration and tracking.</p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Contract Creation
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Amendment Tracking
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Compliance Monitoring
+                        </li>
+                    </ul>
+                </div>
+                <!-- Certificates and Invoicing -->
+                <div class="bg-gradient-to-br from-teal-50 to-cyan-50 p-8 rounded-xl hover:shadow-xl transition-all duration-300 border border-teal-100">
+                    <div class="w-12 h-12 bg-teal-500 rounded-lg flex items-center justify-center mb-4">
+                        {% heroicon_outline "document-currency-dollar" size="24" class="text-white" %}
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Certificates & Invoicing</h3>
+                    <p class="text-gray-600 mb-4">Automated certificate generation and invoicing system.</p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Payment Certificates
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Invoice Generation
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Payment Tracking
+                        </li>
+                    </ul>
+                </div>
+                <!-- Project Setup -->
+                <div class="bg-gradient-to-br from-indigo-50 to-blue-50 p-8 rounded-xl hover:shadow-xl transition-all duration-300 border border-indigo-100">
+                    <div class="w-12 h-12 bg-indigo-500 rounded-lg flex items-center justify-center mb-4">
+                        {% heroicon_outline "cog" size="24" class="text-white" %}
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Project Setup</h3>
+                    <p class="text-gray-600 mb-4">Configure and initialize new projects efficiently.</p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Project Templates
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Team Assignment
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Document Management
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </section>

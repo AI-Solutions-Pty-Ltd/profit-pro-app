@@ -43,10 +43,8 @@ class PortfolioDashboardView(LoginRequiredMixin, BreadcrumbMixin, ListView):
         self.filter_form = None
 
     def setup(self, request, *args, **kwargs):
-        """Initialize filter form during view setup."""
+        """Initialize view during setup."""
         super().setup(request, *args, **kwargs)
-        user: Account = cast(Account, request.user)
-        self.filter_form = FilterForm(request.GET or {}, user=user)
 
     def get_breadcrumbs(self: "PortfolioDashboardView") -> list[BreadcrumbItem]:
         return [
@@ -56,9 +54,15 @@ class PortfolioDashboardView(LoginRequiredMixin, BreadcrumbMixin, ListView):
 
     def get_queryset(self: "PortfolioDashboardView") -> QuerySet[Project]:
         """Get filtered projects for dashboard view."""
-        # Ensure filter_form exists and is valid
+        # Initialize filter form with user's projects
         user: Account = self.request.user  # type: ignore
         projects = user.get_projects.order_by("-created_at")
+
+        # Initialize filter form with the base queryset
+        self.filter_form = FilterForm(
+            self.request.GET or {}, user=user, projects_queryset=projects
+        )
+
         if not self.filter_form or not self.filter_form.is_valid():
             # Return unfiltered queryset if form is invalid
             return projects

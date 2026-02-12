@@ -180,6 +180,7 @@ class Account(AbstractUser, BaseModel):
     @property
     def get_projects(self: "Account") -> QuerySet["Project"]:
         if self.is_superuser:
+            print("user is super")
             # Import here to avoid circular import
             from app.Project.models import Project
 

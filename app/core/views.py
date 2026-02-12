@@ -35,23 +35,6 @@ class HomeView(TemplateView):
         context.update(
             {
                 "page_title": f"Welcome to {settings.SITE_NAME or 'Profit Pro'}",
-                "features": [
-                    {
-                        "title": "Smart Analytics",
-                        "description": "Get insights into your business performance with advanced analytics.",
-                        "icon": "",
-                    },
-                    {
-                        "title": "Easy Management",
-                        "description": "Manage your business operations with our intuitive interface.",
-                        "icon": "",
-                    },
-                    {
-                        "title": "Secure & reliable",
-                        "description": "Your data is safe with enterprise-grade security.",
-                        "icon": "",
-                    },
-                ],
             }
         )
         return context
@@ -67,74 +50,6 @@ class FeaturesView(TemplateView):
         context.update(
             {
                 "page_title": f"Features - {settings.SITE_NAME or 'Profit Pro'}",
-                "features": [
-                    {
-                        "title": "Advanced Analytics Dashboard",
-                        "description": "Real-time insights into your business metrics with customizable dashboards and detailed reporting.",
-                        "icon": "",
-                        "details": [
-                            "Custom KPI tracking",
-                            "Real-time data updates",
-                            "Export to multiple formats",
-                            "Historical trend analysis",
-                        ],
-                    },
-                    {
-                        "title": "Smart Inventory Management",
-                        "description": "Keep track of your stock levels, set reorder points, and get automated alerts when running low.",
-                        "icon": "",
-                        "details": [
-                            "Real-time stock tracking",
-                            "Automated reorder alerts",
-                            "Supplier management",
-                            "Barcode scanning support",
-                        ],
-                    },
-                    {
-                        "title": "Customer Relationship Management",
-                        "description": "Build stronger customer relationships with integrated CRM tools and communication tracking.",
-                        "icon": "",
-                        "details": [
-                            "Customer profiles",
-                            "Purchase history tracking",
-                            "Communication logs",
-                            "Loyalty program integration",
-                        ],
-                    },
-                    {
-                        "title": "Financial Reporting",
-                        "description": "Generate comprehensive financial reports including profit & loss, balance sheets, and cash flow statements.",
-                        "icon": "",
-                        "details": [
-                            "Automated P&L reports",
-                            "Tax-ready reports",
-                            "Cash flow forecasting",
-                            "Multi-currency support",
-                        ],
-                    },
-                    {
-                        "title": "Mobile Access",
-                        "description": "Access your business data anywhere with our responsive web application optimized for mobile devices.",
-                        "icon": "",
-                        "details": [
-                            "Responsive design",
-                            "Touch-friendly interface",
-                            "Offline capability",
-                            "Push notifications",
-                        ],
-                    },
-                    {
-                        "title": "Team Collaboration",
-                        "description": "Work together seamlessly with role-based access control and team activity tracking.",
-                        "icon": "",
-                        "details": [
-                            "Role-based permissions",
-                            "Activity logs",
-                            "Team messaging",
-                            "Task assignment",
-                        ],
-                    },
-                ],
             }
         )
         return context
