@@ -115,6 +115,14 @@
                     <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Active Projects</p>
                     <p class="text-xl font-bold text-blue-700 mt-1">{{ active_projects_count }}</p>
                 </a>
+                <!-- Profits -->
+                <a class="bg-rose-50 rounded-lg p-3 text-center border border-rose-100 hover:bg-rose-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <div class="w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-rose-600 transition-colors">
+                        {% heroicon_outline "currency-dollar" size="16" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-rose-600 uppercase tracking-wider">Profits</p>
+                    <p class="text-xl font-bold text-rose-700 mt-1">{{ profits|default:0|intcomma|floatformat:2 }}</p>
+                </a>
                 <!-- Urgent Intervention -->
                 <a href="{% url 'project:portfolio-financial-report' %}?sort=cpi_asc"
                    class="bg-red-50 rounded-lg p-3 text-center border border-red-100 hover:bg-red-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
@@ -147,23 +155,13 @@
                 </a>
                 <!-- Urgent Compliance Matters -->
                 <a href="{% url 'project:compliance-report' %}?party=overdue"
-                   class="bg-rose-50 rounded-lg p-3 text-center border border-rose-100 hover:bg-rose-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <div class="w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-rose-600 transition-colors">
-                        {% heroicon_outline "shield-exclamation" size="16" class="text-white" %}
-                    </div>
-                    <p class="text-xs font-medium text-rose-600 uppercase tracking-wider">Urgent Compliance</p>
-                    <p class="text-xl font-bold text-rose-700 mt-1">{{ urgent_compliance_count }}</p>
-                    <p class="text-xs text-rose-500">overdue items</p>
-                </a>
-                <!-- Impacts -->
-                <a href="{% url 'project:impact-report' %}"
                    class="bg-indigo-50 rounded-lg p-3 text-center border border-indigo-100 hover:bg-indigo-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
                     <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-indigo-600 transition-colors">
-                        {% heroicon_outline "bolt" size="16" class="text-white" %}
+                        {% heroicon_outline "shield-exclamation" size="16" class="text-white" %}
                     </div>
-                    <p class="text-xs font-medium text-indigo-600 uppercase tracking-wider">Impacts</p>
-                    <p class="text-xl font-bold text-indigo-700 mt-1">{{ impact_total_jobs|default:0 }}</p>
-                    <p class="text-xs text-indigo-500">Jobs Created</p>
+                    <p class="text-xs font-medium text-indigo-600 uppercase tracking-wider">Urgent Compliance</p>
+                    <p class="text-xl font-bold text-indigo-700 mt-1">{{ urgent_compliance_count }}</p>
+                    <p class="text-xs text-indigo-500">overdue items</p>
                 </a>
             </div>
         </div>
