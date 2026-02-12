@@ -1,11 +1,7 @@
 """Views for Project app - Portfolio Dashboard and Reports."""
 
-import random
-
-from dateutil.utils import today
-from app.Project.models.projects_models import get_months_between
-
 import json
+import random
 from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any, cast
@@ -19,7 +15,7 @@ from django.views.generic import (
 )
 
 from app.Account.models import Account
-from app.core.Utilities.dates import get_month_range, get_previous_n_months
+from app.core.Utilities.dates import get_previous_n_months
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
