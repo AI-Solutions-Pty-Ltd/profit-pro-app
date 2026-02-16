@@ -173,7 +173,7 @@ class PaymentCertificatePaymentStatementView(
         return [
             BreadcrumbItem(
                 title="Projects",
-                url=reverse("project:portfolio-project-list"),
+                url=reverse("project:project-list"),
             ),
             BreadcrumbItem(
                 title=project.name,

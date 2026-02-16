@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+    Income Statement - {{ company.name }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Income Statement</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ company.name }}</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'ledger:ledger-list' company.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2"
+                             xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 20 20"
+                             fill="currentColor">
+                            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Back to Ledgers
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Date Range Filter -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="p-6">
+            <form method="get" class="flex flex-wrap items-end gap-4">
+                <div>
+                    <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                    <input type="date"
+                           id="start_date"
+                           name="start_date"
+                           value="{{ start_date_str }}"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                    <input type="date"
+                           id="end_date"
+                           name="end_date"
+                           value="{{ end_date_str }}"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                </div>
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                    <svg class="w-4 h-4 mr-2"
+                         xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 20 20"
+                         fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.293a1 1 0 00-1.414 0L10 10.586 8.707 9.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 11.414l1.293 1.293a1 1 0 001.414 0l4-4a1 1 0 000-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Update Report
+                </button>
+            </form>
+        </div>
+    </div>
+    {% if has_transactions %}
+        <!-- Income Statement Report -->
+        <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">Period: {{ start_date|date:"d F Y" }} - {{ end_date|date:"d F Y" }}</h2>
+            </div>
+            <!-- Revenue Section -->
+            <div class="p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Revenue</h3>
+                {% if revenue_items %}
+                    <div class="space-y-2">
+                        {% for item in revenue_items %}
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <div>
+                                    <span class="text-sm font-medium text-gray-900">{{ item.code }}</span>
+                                    <span class="ml-2 text-sm text-gray-600">{{ item.name }}</span>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">R {{ item.amount }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <span class="text-base font-semibold text-gray-900">Total Revenue</span>
+                            <span class="text-base font-semibold text-green-600">R {{ total_revenue }}</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-sm text-gray-500">No revenue transactions found for this period.</p>
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <div class="flex justify-between items-center">
+                            <span class="text-base font-semibold text-gray-900">Total Revenue</span>
+                            <span class="text-base font-semibold text-green-600">R 0.00</span>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            <!-- Expenses Section -->
+            <div class="p-6 bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Expenses</h3>
+                {% if expense_items %}
+                    <div class="space-y-2">
+                        {% for item in expense_items %}
+                            <div class="flex justify-between items-center py-2 border-b border-gray-200">
+                                <div>
+                                    <span class="text-sm font-medium text-gray-900">{{ item.code }}</span>
+                                    <span class="ml-2 text-sm text-gray-600">{{ item.name }}</span>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">R {{ item.amount }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-300">
+                        <div class="flex justify-between items-center">
+                            <span class="text-base font-semibold text-gray-900">Total Expenses</span>
+                            <span class="text-base font-semibold text-red-600">R {{ total_expenses }}</span>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-sm text-gray-500">No expense transactions found for this period.</p>
+                    <div class="mt-4 pt-4 border-t border-gray-300">
+                        <div class="flex justify-between items-center">
+                            <span class="text-base font-semibold text-gray-900">Total Expenses</span>
+                            <span class="text-base font-semibold text-red-600">R 0.00</span>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            <!-- Net Profit/Loss Section -->
+            <div class="p-6 bg-white border-t-2 border-gray-200">
+                <div class="flex justify-between items-center">
+                    <span class="text-xl font-bold text-gray-900">
+                        {% if net_profit >= 0 %}
+                            Net Profit
+                        {% else %}
+                            Net Loss
+                        {% endif %}
+                    </span>
+                    <span class="text-xl font-bold {% if net_profit >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                        R {{ net_profit }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- No Transactions Message -->
+        <div class="bg-white shadow-sm rounded-lg">
+            <div class="px-6 py-12 centered-content">
+                <svg class="mx-auto h-12 w-12 text-gray-400"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v1a1 1 0 001 1h4a1 1 0 001-1v-1m3-2V8a2 2 0 00-2-2H8a2 2 0 00-2 2v6m0 0V9a2 2 0 012-2h4a2 2 0 012 2v6m0 0h2a2 2 0 002-2V8a2 2 0 00-2-2h-2" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No transactions found</h3>
+                <p class="mt-1 text-sm text-gray-500">There are no transactions for the selected period.</p>
+                <div class="mt-6">
+                    <a href="{% url 'ledger:transaction-create' company_id=company.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                        <svg class="-ml-1 mr-2 h-5 w-5"
+                             xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 20 20"
+                             fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Create Transaction
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock content %}

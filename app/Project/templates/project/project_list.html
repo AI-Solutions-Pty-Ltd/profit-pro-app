@@ -24,7 +24,7 @@
     <div class="bg-white shadow-sm rounded-lg">
         <div class="border-b border-gray-200">
             <nav class="flex -mb-px" aria-label="Tabs">
-                <a href="{% url 'project:portfolio-project-list' %}"
+                <a href="{% url 'project:project-list' %}"
                    class="border-indigo-500 text-indigo-600 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
                     {% heroicon_outline "folder" size="16" class="inline mr-1.5" %}
                     Projects
@@ -101,7 +101,7 @@
                         Filter
                     </button>
                     {% if filter_form.search.value or filter_form.category.value or filter_form.status.value and filter_form.status.value != 'ALL' %}
-                        <a href="{% url 'project:portfolio-project-list' %}"
+                        <a href="{% url 'project:project-list' %}"
                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
                             {% heroicon_outline "x-mark" class="w-4 h-4 mr-1" %}
                             Clear

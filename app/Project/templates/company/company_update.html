@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+    Update {{ object.name }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Update Company</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ object.name }}</p>
+                </div>
+                {% if object %}
+                    <a href="{% url 'project:company-detail' object.id %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Back to Company Detail
+                    </a>
+                {% else %}
+                    <a href="{% url 'project:company-list' %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Back to Companies
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="bg-white shadow-sm rounded-lg">
+        <form method="post" enctype="multipart/form-data" class="p-6">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">
+                    {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                </div>
+            {% endif %}
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <!-- Logo -->
+                <div class="sm:col-span-2">
+                    <label for="{{ form.logo.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">Company Logo</label>
+                    <div class="mt-1 flex items-center space-x-6">
+                        {% if object.logo %}
+                            <img src="{{ object.logo.url }}"
+                                 alt="{{ object.name }}"
+                                 class="h-16 w-16 object-cover rounded-full"
+                                 width="64"
+                                 height="64">
+                        {% else %}
+                            <div class="h-16 w-16 bg-gray-200 rounded-full flex items-center justify-center">
+                                <svg class="h-8 w-8 text-gray-400"
+                                     fill="none"
+                                     viewBox="0 0 24 24"
+                                     stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            </div>
+                        {% endif %}
+                        <div class="flex-1">
+                            {{ form.logo }}
+                            {% if form.logo.errors %}<p class="mt-2 text-sm text-red-600">{{ form.logo.errors.0 }}</p>{% endif %}
+                        </div>
+                    </div>
+                </div>
+                <!-- Basic Information -->
+                <div>
+                    <label for="{{ form.name.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">
+                        Company Name <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}<p class="mt-2 text-sm text-red-600">{{ form.name.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.registration_number.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">Registration Number</label>
+                    {{ form.registration_number }}
+                    {% if form.registration_number.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.registration_number.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.tax_number.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">Tax Number</label>
+                    {{ form.tax_number }}
+                    {% if form.tax_number.errors %}<p class="mt-2 text-sm text-red-600">{{ form.tax_number.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.vat_registered.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">VAT Registered</label>
+                    {{ form.vat_registered }}
+                    {% if form.vat_registered.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.vat_registered.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.vat_number.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">VAT Number</label>
+                    {{ form.vat_number }}
+                    {% if form.vat_number.errors %}<p class="mt-2 text-sm text-red-600">{{ form.vat_number.errors.0 }}</p>{% endif %}
+                </div>
+                <!-- Bank Information -->
+                <div>
+                    <label for="{{ form.bank_name.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">Bank Name</label>
+                    {{ form.bank_name }}
+                    {% if form.bank_name.errors %}<p class="mt-2 text-sm text-red-600">{{ form.bank_name.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.bank_account_name.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">Bank Account Name</label>
+                    {{ form.bank_account_name }}
+                    {% if form.bank_account_name.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.bank_account_name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.bank_account_number.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">Bank Account Number</label>
+                    {{ form.bank_account_number }}
+                    {% if form.bank_account_number.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.bank_account_number.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.bank_branch_code.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">Bank Branch Code</label>
+                    {{ form.bank_branch_code }}
+                    {% if form.bank_branch_code.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.bank_branch_code.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label for="{{ form.bank_swift_code.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">Bank SWIFT Code</label>
+                    {{ form.bank_swift_code }}
+                    {% if form.bank_swift_code.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.bank_swift_code.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- Users -->
+                <div class="sm:col-span-2">
+                    <label for="{{ form.users.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">Company Users</label>
+                    {{ form.users }}
+                    {% if form.users.errors %}<p class="mt-2 text-sm text-red-600">{{ form.users.errors.0 }}</p>{% endif %}
+                    <p class="mt-2 text-sm text-gray-500">Select users who should have access to this company.</p>
+                </div>
+                <!-- Consultants -->
+                <div class="sm:col-span-2">
+                    <label for="{{ form.consultants.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">Company Consultants</label>
+                    {{ form.consultants }}
+                    {% if form.consultants.errors %}<p class="mt-2 text-sm text-red-600">{{ form.consultants.errors.0 }}</p>{% endif %}
+                    <p class="mt-2 text-sm text-gray-500">Select consultants who should have access to this company.</p>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end">
+                {% if object %}
+                    <a href="{% url 'project:company-detail' object.id %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Cancel
+                    </a>
+                {% else %}
+                    <a href="{% url 'project:company-list' %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Cancel
+                    </a>
+                {% endif %}
+                <button type="submit"
+                        class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                    Update Company
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock content %}

@@ -338,9 +338,7 @@ class ProjectWBSDetailView(ProjectMixin, DetailView):
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            BreadcrumbItem(
-                title="Projects", url=reverse("project:portfolio-project-list")
-            ),
+            BreadcrumbItem(title="Projects", url=reverse("project:project-list")),
             BreadcrumbItem(
                 title=f"{self.object.name} Dashboard",
                 url=reverse(

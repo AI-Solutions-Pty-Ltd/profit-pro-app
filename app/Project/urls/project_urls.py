@@ -6,7 +6,7 @@ urlpatterns = [
     path(
         "list/",
         project_views.ProjectListView.as_view(),
-        name="portfolio-project-list",
+        name="project-list",
     ),
     path("create/", project_views.ProjectCreateView.as_view(), name="project-create"),
     path(

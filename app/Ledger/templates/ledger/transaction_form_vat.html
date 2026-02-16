@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+    {% if object %}
+        Update
+    {% else %}
+        Create
+    {% endif %}
+    Transaction - {{ company.name }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        {% if object %}
+                            Update
+                        {% else %}
+                            Create
+                        {% endif %}
+                        Transaction
+                    </h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ company.name }} (VAT Registered)</p>
+                </div>
+                <a href="{% url 'ledger:transaction-list' company_id=company.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Back to Transactions
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white shadow-sm rounded-lg">
+        {{ form.errors }}
+        {{ form.non_field_errors }}
+        <form method="post" class="p-7" id="vat-transaction-form">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-700">
+                    {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+                </div>
+            {% endif %}
+            <div class="grid grid-cols-1 gap-7 sm:grid-cols-2">
+                <div>
+                    {{ form.ledger|as_crispy_field }}
+                    {% if form.ledger.errors %}<p class="mt-2 text-sm text-red-600">{{ form.ledger.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    {{ form.structure|as_crispy_field }}
+                    <p class="mt-2 text-xs text-gray-500">Use this to narrow down bill choices.</p>
+                </div>
+                <div>
+                    <label for="{{ form.bill.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">Bill</label>
+                    <input type="text"
+                           id="bill_search"
+                           placeholder="Search bills..."
+                           class="mt-2 block w-full rounded-lg border-gray-300 px-4 py-2.5 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <select name="{{ form.bill.name }}"
+                            id="{{ form.bill.id_for_label }}"
+                            class="mt-2 block w-full rounded-lg border-gray-300 px-4 py-2.5 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                        <option value="">Select a bill (optional)</option>
+                        {% for choice in form.bill.field.queryset %}
+                            <option value="{{ choice.pk }}"
+                                    data-structure-id="{{ choice.structure.pk }}"
+                                    data-search-text="{{ choice.structure.name|lower }} {{ choice.name|lower }}"
+                                    {% if form.bill.value|stringformat:"s" == choice.pk|stringformat:"s" %}selected{% endif %}>
+                                {{ choice.structure.name }}: {{ choice.name }}
+                            </option>
+                        {% empty %}
+                            <option value="" disabled>No bills available</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.bill.errors %}<p class="mt-2 text-sm text-red-600">{{ form.bill.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    {{ form.date|as_crispy_field }}
+                    {% if form.date.errors %}<p class="mt-2 text-sm text-red-600">{{ form.date.errors.0 }}</p>{% endif %}
+                </div>
+                <div id="vat-rate-container" class="hidden">
+                    <label for="{{ form.vat_rate.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700">
+                        <span id="vat-rate-label">VAT Rate</span> <span class="text-red-500">*</span>
+                    </label>
+                    <select name="{{ form.vat_rate.name }}"
+                            id="{{ form.vat_rate.id_for_label }}"
+                            class="mt-2 block w-full rounded-lg border-gray-300 px-4 py-2.5 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                            disabled>
+                        <option value="">Select VAT rate</option>
+                        {% for vat in all_vat_rates %}
+                            <option value="{{ vat.pk }}"
+                                    data-rate="{{ vat.rate }}"
+                                    data-start="{% if vat.start_date %}{{ vat.start_date|date:'Y-m-d' }}{% endif %}"
+                                    data-end="{% if vat.end_date %}{{ vat.end_date|date:'Y-m-d' }}{% endif %}"
+                                    {% if form.vat_rate.value|stringformat:"s" == vat.pk|stringformat:"s" %}selected{% endif %}>
+                                {{ vat.name }} ({{ vat.rate }}%)
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {% if form.vat_rate.errors %}<p class="mt-2 text-sm text-red-600">{{ form.vat_rate.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    {{ form.type|as_crispy_field }}
+                    {% if form.type.errors %}<p class="mt-2 text-sm text-red-600">{{ form.type.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">VAT Incl / Excl</label>
+                    <div class="mt-2 space-y-2">
+                        <label class="inline-flex items-center">
+                            <input type="radio"
+                                   name="{{ form.vat_mode.name }}"
+                                   value="inclusive"
+                                   {% if form.vat_mode.value|default:'inclusive' == 'inclusive' %}checked{% endif %}
+                                   class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="ml-2 text-sm text-gray-700">VAT Inclusive</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio"
+                                   name="{{ form.vat_mode.name }}"
+                                   value="exclusive"
+                                   {% if form.vat_mode.value|stringformat:"s" == 'exclusive' %}checked{% endif %}
+                                   class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="ml-2 text-sm text-gray-700">VAT Exclusive</span>
+                        </label>
+                    </div>
+                    {% if form.vat_mode.errors %}<p class="mt-2 text-sm text-red-600">{{ form.vat_mode.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    {{ form.amount|as_crispy_field }}
+                    {% if form.amount.errors %}<p class="mt-2 text-sm text-red-600">{{ form.amount.errors.0 }}</p>{% endif %}
+                    <p id="amount-preview" class="mt-2 text-xs text-gray-500">
+                        Select date and VAT rate to preview inclusive/exclusive amounts.
+                    </p>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end">
+                <a href="{% url 'ledger:transaction-list' company_id=company.pk %}"
+                   class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                    {% if object %}
+                        Update
+                    {% else %}
+                        Create
+                    {% endif %}
+                    Transaction
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock content %}
+{% block extra_js %}
+    <script src="{% static 'ledger/js/bill-filter.js' %}"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Initialize bill filtering
+            const billFilter = new BillFilter(
+                "structure_filter",
+                "bill_search", 
+                "{{ form.bill.id_for_label }}"
+            );
+
+            const dateInput = document.getElementById("{{ form.date.id_for_label }}");
+            const vatRateSelect = document.getElementById("{{ form.vat_rate.id_for_label }}");
+            const amountInput = document.getElementById("{{ form.amount.id_for_label }}");
+            const modeInputs = document.querySelectorAll('input[name="{{ form.vat_mode.name }}"]');
+            const amountPreview = document.getElementById("amount-preview");
+
+            function isVatOptionValidForDate(option, selectedDate) {
+                if (!option.value) {
+                    return true;
+                }
+
+                // "No VAT" and "VAT Exempt" have no date constraints
+                if (!option.dataset.start && !option.dataset.end) {
+                    return true;
+                }
+
+                if (!selectedDate) {
+                    return false;
+                }
+
+                const startDate = option.dataset.start;
+                const endDate = option.dataset.end;
+
+                if (startDate && selectedDate < startDate) {
+                    return false;
+                }
+
+                if (endDate && selectedDate > endDate) {
+                    return false;
+                }
+
+                return true;
+            }
+
+            function updateVatRateLabel() {
+                const vatRateLabel = document.getElementById("vat-rate-label");
+                const vatRateContainer = document.getElementById("vat-rate-container");
+                if (!vatRateLabel || !vatRateContainer) return;
+
+                const selectedDate = dateInput.value;
+                if (selectedDate) {
+                    vatRateLabel.textContent = "VAT Rate";
+                    vatRateContainer.classList.remove("hidden");
+                    vatRateSelect.disabled = false;
+                } else {
+                    vatRateLabel.textContent = "Select date before selecting VAT";
+                    vatRateContainer.classList.add("hidden");
+                    vatRateSelect.disabled = true;
+                    vatRateSelect.value = ""; // Clear selection
+                    refreshAmountPreview(); // Update preview after clearing
+                }
+            }
+
+            function refreshVatRateOptions() {
+                if (!dateInput || !vatRateSelect) {
+                    return;
+                }
+
+                const selectedDate = dateInput.value;
+                const selectedValueBefore = vatRateSelect.value;
+
+                // If no date selected, container is hidden, don't process options
+                if (!selectedDate) {
+                    return;
+                }
+
+                Array.from(vatRateSelect.options).forEach((option) => {
+                    option.hidden = !isVatOptionValidForDate(option, selectedDate);
+                });
+
+                vatRateSelect.disabled = !selectedDate;
+
+                const currentOption = Array.from(vatRateSelect.options).find(
+                    (option) => option.value === selectedValueBefore && !option.hidden
+                );
+                vatRateSelect.value = currentOption ? selectedValueBefore : "";
+            }
+
+            function getSelectedVatMode() {
+                const checkedMode = Array.from(modeInputs).find((input) => input.checked);
+                return checkedMode ? checkedMode.value : "inclusive";
+            }
+
+            function refreshAmountPreview() {
+                if (!vatRateSelect || !amountInput || !amountPreview) {
+                    return;
+                }
+
+                const amount = parseFloat(amountInput.value);
+                const selectedRateOption = vatRateSelect.options[vatRateSelect.selectedIndex];
+
+                if (!amount || !selectedRateOption || !selectedRateOption.value) {
+                    amountPreview.textContent = "Select date, VAT rate, and amount to preview inclusive/exclusive values.";
+                    return;
+                }
+
+                const vatRate = parseFloat(selectedRateOption.dataset.rate || "0");
+                const multiplier = 1 + (vatRate / 100);
+                const vatMode = getSelectedVatMode();
+
+                let excl = amount;
+                let incl = amount;
+
+                if (vatMode === "inclusive") {
+                    excl = amount / multiplier;
+                } else {
+                    incl = amount * multiplier;
+                }
+
+                amountPreview.textContent = `Excl VAT: R ${excl.toFixed(2)} | Incl VAT: R ${incl.toFixed(2)}`;
+            }
+
+            if (dateInput && vatRateSelect) {
+                dateInput.addEventListener("change", function() {
+                    refreshVatRateOptions();
+                    refreshAmountPreview();
+                    updateVatRateLabel();
+                });
+                vatRateSelect.addEventListener("change", refreshAmountPreview);
+                updateVatRateLabel(); // Set initial state
+                if (dateInput.value) {
+                    refreshVatRateOptions(); // Only filter options if date exists
+                }
+            }
+
+            if (amountInput) {
+                amountInput.addEventListener("input", refreshAmountPreview);
+            }
+
+            modeInputs.forEach((input) => input.addEventListener("change", refreshAmountPreview));
+            refreshAmountPreview();
+        });
+    </script>
+{% endblock extra_js %}

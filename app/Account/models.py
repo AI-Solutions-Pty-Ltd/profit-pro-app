@@ -14,7 +14,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 from app.core.Utilities.models import BaseModel
 
 if TYPE_CHECKING:
-    from app.Project.models import Portfolio, Project, ProjectRole, Role
+    from app.Project.models import Company, Portfolio, Project, ProjectRole, Role
 
 
 class UserManager(BaseUserManager):
@@ -200,6 +200,15 @@ class Account(AbstractUser, BaseModel):
         from app.Project.models import Project
 
         return Project.objects.none()
+
+    @property
+    def get_companies(self: "Account") -> QuerySet["Company"]:
+        from app.Project.models import Company
+
+        if self.is_superuser:
+            return Company.objects.filter(type=Company.Type.CLIENT)
+        else:
+            return Company.objects.filter(type=Company.Type.CLIENT, users=self)
 
     @property
     def detail_url(self: "Account") -> str:

@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+    Ledgers - {{ company.name }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Ledgers</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ company.name }}</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'ledger:income-statement' company_id=company.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2"
+                             xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 20 20"
+                             fill="currentColor">
+                            <path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd" />
+                        </svg>
+                        Income Statement
+                    </a>
+                    <a href="{% url 'ledger:transaction-list' company_id=company.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2"
+                             xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 20 20"
+                             fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                        </svg>
+                        View Transactions
+                    </a>
+                    <a href="{% url 'ledger:ledger-create' company_id=company.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                        <svg class="-ml-1 mr-2 h-5 w-5"
+                             xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 20 20"
+                             fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        Create Ledger
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Filters Section -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="p-6">
+            <form method="get" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Financial Statement Filter -->
+                    <div>
+                        <label for="financial_statement"
+                               class="block text-sm font-medium text-gray-700 mb-1">Financial Statement</label>
+                        <select id="financial_statement"
+                                name="financial_statement"
+                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            {% for choice in financial_statement_choices %}
+                                <option value="{{ choice.value }}"
+                                        {% if choice.value == filter_financial_statement %}selected{% endif %}>
+                                    {{ choice.label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- Code Filter -->
+                    <div>
+                        <label for="code" class="block text-sm font-medium text-gray-700 mb-1">Code</label>
+                        <input type="text"
+                               id="code"
+                               name="code"
+                               value="{{ filter_code }}"
+                               placeholder="Filter by code..."
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </div>
+                    <!-- Name Filter -->
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                        <input type="text"
+                               id="name"
+                               name="name"
+                               value="{{ filter_name }}"
+                               placeholder="Filter by name..."
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2"
+                             xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 20 20"
+                             fill="currentColor">
+                            <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.293a1 1 0 00-1.414 0L10 10.586 8.707 9.293a1 1 0 00-1.414 0l-2 2a1 1 0 101.414 1.414L8 11.414l1.293 1.293a1 1 0 001.414 0l4-4a1 1 0 000-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Apply Filters
+                    </button>
+                    <a href="{% url 'ledger:ledger-list' company_id=company.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2"
+                             xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 20 20"
+                             fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        Clear Filters
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% if ledgers %}
+        <div class="bg-white shadow-sm rounded-lg">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Financial Statement</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transactions</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for ledger in ledgers %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ ledger.code }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">{{ ledger.name }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                                        {{ ledger.get_financial_statement_display }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ ledger.transaction_set.count }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <a href="{% url 'ledger:transaction-list' company_id=company.pk %}?ledger={{ ledger.pk }}"
+                                       class="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
+                                        <svg class="w-4 h-4 mr-1"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             viewBox="0 0 20 20"
+                                             fill="currentColor">
+                                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 1 1 0 000 2H6a2 2 0 100 4h2a2 2 0 100 4h2a1 1 0 100 2 2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd" />
+                                        </svg>
+                                        View Transactions
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="bg-white shadow-sm rounded-lg">
+            <div class="px-6 py-12 centered-content">
+                <svg class="mx-auto h-12 w-12 text-gray-400"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No ledgers</h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    Get started by creating a standard chart of accounts with common ledger accounts, or create individual ledgers as needed.
+                </p>
+                <div class="mt-6">
+                    <form method="post"
+                          action="{% url 'ledger:create-standard-chart' company_id=company.pk %}">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors duration-200">
+                            <svg class="-ml-1 mr-2 h-5 w-5"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 viewBox="0 0 20 20"
+                                 fill="currentColor">
+                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 1 1 0 000 2H6a2 2 0 100 4h2a2 2 0 100 4h2a1 1 0 100 2 2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd" />
+                            </svg>
+                            Create Standard Chart of Accounts
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock content %}
+{% block extra_js %}
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.querySelector('form[method="get"]');
+    const financialStatementSelect = document.getElementById('financial_statement');
+    const codeInput = document.getElementById('code');
+    const nameInput = document.getElementById('name');
+    const applyButton = document.querySelector('button[type="submit"]');
+    const clearButton = document.querySelector('a[href*="ledger-list"]');
+    
+    // Debounce function to prevent too many rapid requests
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    // Function to submit the form
+    function submitForm() {
+        // Show loading state on apply button
+        const originalContent = applyButton.innerHTML;
+        applyButton.innerHTML = `
+            <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Filtering...
+        `;
+        applyButton.disabled = true;
+        
+        filterForm.submit();
+    }
+    
+    // Auto-submit on financial statement change (immediate)
+    financialStatementSelect.addEventListener('change', function() {
+        submitForm();
+    });
+    
+    // Auto-submit on code input with debounce
+    const debouncedCodeSubmit = debounce(function() {
+        submitForm();
+    }, 500);
+    
+    codeInput.addEventListener('input', debouncedCodeSubmit);
+    
+    // Auto-submit on name input with debounce
+    const debouncedNameSubmit = debounce(function() {
+        submitForm();
+    }, 500);
+    
+    nameInput.addEventListener('input', debouncedNameSubmit);
+    
+    // Handle Enter key in text inputs
+    [codeInput, nameInput].forEach(input => {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitForm();
+            }
+        });
+    });
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + K to focus code input
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            codeInput.focus();
+            codeInput.select();
+        }
+        // Ctrl/Cmd + F to focus name input
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            e.preventDefault();
+            nameInput.focus();
+            nameInput.select();
+        }
+        // Escape to clear filters
+        if (e.key === 'Escape') {
+            const currentUrl = new URL(window.location);
+            const baseUrl = currentUrl.pathname;
+            window.location.href = baseUrl;
+        }
+    });
+    
+    // Add visual feedback for active filters
+    function updateFilterVisuals() {
+        // Highlight inputs with values
+        [financialStatementSelect, codeInput, nameInput].forEach(element => {
+            if (element.value) {
+                element.classList.add('ring-2', 'ring-indigo-500');
+            } else {
+                element.classList.remove('ring-2', 'ring-indigo-500');
+            }
+        });
+    }
+    
+    // Initial visual update
+    updateFilterVisuals();
+    
+    // Update visuals on input
+    [financialStatementSelect, codeInput, nameInput].forEach(element => {
+        element.addEventListener('input', updateFilterVisuals);
+        element.addEventListener('change', updateFilterVisuals);
+    });
+    
+    // Add tooltips for keyboard shortcuts
+    codeInput.title = 'Filter by code (Ctrl+K)';
+    nameInput.title = 'Filter by name (Ctrl+F)';
+    
+    // Show filter count badge if filters are active
+    function updateFilterBadge() {
+        const activeFilters = [
+            financialStatementSelect.value,
+            codeInput.value.trim(),
+            nameInput.value.trim()
+        ].filter(Boolean).length;
+        
+        // Remove existing badge if any
+        const existingBadge = document.querySelector('.filter-badge');
+        if (existingBadge) {
+            existingBadge.remove();
+        }
+        
+        if (activeFilters > 0) {
+            const badge = document.createElement('span');
+            badge.className = 'filter-badge inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 ml-2';
+            badge.textContent = `${activeFilters} active`;
+            
+            // Insert after "Ledgers" heading
+            const heading = document.querySelector('h1');
+            heading.appendChild(badge);
+        }
+    }
+    
+    updateFilterBadge();
+    [financialStatementSelect, codeInput, nameInput].forEach(element => {
+        element.addEventListener('input', updateFilterBadge);
+        element.addEventListener('change', updateFilterBadge);
+    });
+});
+    </script>
+{% endblock extra_js %}
