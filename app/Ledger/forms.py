@@ -12,7 +12,7 @@ from app.Ledger.models import Ledger, Transaction, Vat
 from app.Project.models import Company
 
 
-class BaseTransactionForm(forms.ModelForm):
+class TransactionForm(forms.ModelForm):
     """Base form for shared create-transaction fields."""
 
     VAT_MODE_INCLUSIVE = "inclusive"
@@ -154,7 +154,6 @@ class BaseTransactionForm(forms.ModelForm):
             if cleaned_data is None:
                 return {}
             cleaned_data["company"] = self.company
-            print("cleaned_data", cleaned_data)
 
             amount = cleaned_data.get("amount")
             tx_date = cleaned_data.get("date")
@@ -168,17 +167,7 @@ class BaseTransactionForm(forms.ModelForm):
 
             # Explicit type assertion for mypy - we know company is a Company instance
             company_instance = cast(Company, self.company)
-            if not company_instance.vat_registered:
-                # For non-VAT companies, store calculated values in cleaned_data
-                # These will be used in the save method
-                cleaned_data["vat"] = False
-                cleaned_data["vat_rate"] = None
-                cleaned_data["amount_excl_vat"] = amount
-                cleaned_data["amount_incl_vat"] = amount
-
-                return cleaned_data
-            else:
-                # Get form values
+            if company_instance.vat_registered:
                 vat_rate = cleaned_data.get("vat_rate")
                 vat_mode = cleaned_data.get("vat_mode")
 
@@ -202,12 +191,6 @@ class BaseTransactionForm(forms.ModelForm):
                             f"Select a VAT rate valid for {tx_date}."
                         }
                     )
-                if cleaned_data["vat_mode"] == self.VAT_MODE_INCLUSIVE:
-                    cleaned_data["amount_excl_vat"] = amount / (1 + vat_rate.rate / 100)
-                    cleaned_data["amount_incl_vat"] = amount
-                else:
-                    cleaned_data["amount_excl_vat"] = amount
-                    cleaned_data["amount_incl_vat"] = amount * (1 + vat_rate.rate / 100)
 
             return cleaned_data
         except Exception as e:
@@ -232,17 +215,39 @@ class BaseTransactionForm(forms.ModelForm):
         if not instance.company_id:
             instance.company = self.company
 
+        company_instance = cast(Company, self.company)
+        amount = self.cleaned_data.get("amount")
+        if not company_instance.vat_registered:
+            # For non-VAT companies, store calculated values in cleaned_data
+            # These will be used in the save method
+            instance.vat = False
+            instance.vat_rate = None
+            instance.amount_excl_vat = amount
+            instance.amount_incl_vat = amount
+
+        else:
+            # Get form values
+            vat_rate: Vat = cast(Vat, self.cleaned_data.get("vat_rate"))
+            vat_mode = self.cleaned_data.get("vat_mode")
+
+            if vat_mode == self.VAT_MODE_INCLUSIVE:
+                instance.amount_excl_vat = amount / (1 + vat_rate.rate / 100)
+                instance.amount_incl_vat = amount
+            else:
+                instance.amount_excl_vat = amount
+                instance.amount_incl_vat = amount * (1 + vat_rate.rate / 100)
+
         if commit:
             instance.save()
 
         return instance
 
 
-class NonVatTransactionCreateUpdateForm(BaseTransactionForm):
+class NonVatTransactionCreateUpdateForm(TransactionForm):
     """Transaction form for non-VAT registered companies."""
 
 
-class VatTransactionCreateUpdateForm(BaseTransactionForm):
+class VatTransactionCreateUpdateForm(TransactionForm):
     """Transaction form for VAT-registered companies."""
 
     vat_rate = forms.ModelChoiceField(
@@ -257,10 +262,10 @@ class VatTransactionCreateUpdateForm(BaseTransactionForm):
         help_text="Enter either VAT-inclusive or VAT-exclusive amount.",
     )
     vat_mode = forms.ChoiceField(
-        choices=BaseTransactionForm.VAT_MODE_CHOICES,
-        initial=BaseTransactionForm.VAT_MODE_INCLUSIVE,
+        choices=TransactionForm.VAT_MODE_CHOICES,
+        initial=TransactionForm.VAT_MODE_INCLUSIVE,
         required=True,
     )
 
-    class Meta(BaseTransactionForm.Meta):
+    class Meta(TransactionForm.Meta):
         fields = ["ledger", "bill", "date", "vat_rate", "type", "amount", "vat_mode"]

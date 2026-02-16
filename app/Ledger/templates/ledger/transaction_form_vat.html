@@ -157,7 +157,7 @@
         document.addEventListener("DOMContentLoaded", function() {
             // Initialize bill filtering
             const billFilter = new BillFilter(
-                "structure_filter",
+                "{{ form.structure.id_for_label }}",
                 "bill_search", 
                 "{{ form.bill.id_for_label }}"
             );

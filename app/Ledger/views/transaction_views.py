@@ -8,10 +8,7 @@ from django.views.generic import DeleteView, DetailView, ListView, View
 
 from app.BillOfQuantities.models import Structure
 from app.core.Utilities.mixins import BreadcrumbItem
-from app.Ledger.forms import (
-    NonVatTransactionCreateUpdateForm,
-    VatTransactionCreateUpdateForm,
-)
+from app.Ledger.forms import TransactionForm
 from app.Ledger.mixins import UserHasCompanyRoleMixin
 from app.Ledger.models import Ledger, Transaction, Vat
 
@@ -144,16 +141,14 @@ class VatRegisteredTransactionCreateView(UserHasCompanyRoleMixin, View):
     def get(self, request, company_id, *args, **kwargs):
         """Handle GET requests - display the form."""
         company = self.get_company()
-        form = VatTransactionCreateUpdateForm(company=company)
+        form = TransactionForm(company=company)
         context = self.get_context_data(form=form, company=company)
         return render(request, self.template_name, context)
 
     def post(self, request, company_id, *args, **kwargs):
         """Handle POST requests - process form submission."""
         company = self.get_company()
-        form = VatTransactionCreateUpdateForm(
-            company=company, data=request.POST, files=request.FILES
-        )
+        form = TransactionForm(company=company, data=request.POST, files=request.FILES)
 
         if form.is_valid():
             transaction = form.save()
@@ -192,16 +187,14 @@ class NonVatRegisteredTransactionCreateView(UserHasCompanyRoleMixin, View):
     def get(self, request, company_id, *args, **kwargs):
         """Handle GET requests - display the form."""
         company = self.get_company()
-        form = NonVatTransactionCreateUpdateForm(company=company)
+        form = TransactionForm(company=company)
         context = self.get_context_data(form=form, company=company)
         return render(request, self.template_name, context)
 
     def post(self, request, company_id, *args, **kwargs):
         """Handle POST requests - process form submission."""
         company = self.get_company()
-        form = NonVatTransactionCreateUpdateForm(
-            company=company, data=request.POST, files=request.FILES
-        )
+        form = TransactionForm(company=company, data=request.POST, files=request.FILES)
 
         if form.is_valid():
             transaction = form.save()
@@ -244,7 +237,7 @@ class VatRegisteredTransactionUpdateView(UserHasCompanyRoleMixin, View):
         """Handle GET requests - display the form."""
         company = self.get_company()
         transaction = self.get_object(company_id, pk)
-        form = VatTransactionCreateUpdateForm(company=company, instance=transaction)
+        form = TransactionForm(company=company, instance=transaction)
         context = self.get_context_data(form=form, company=company, object=transaction)
         return render(request, self.template_name, context)
 
@@ -252,7 +245,7 @@ class VatRegisteredTransactionUpdateView(UserHasCompanyRoleMixin, View):
         """Handle POST requests - process form submission."""
         company = self.get_company()
         transaction = self.get_object(company_id, pk)
-        form = VatTransactionCreateUpdateForm(
+        form = TransactionForm(
             company=company,
             instance=transaction,
             data=request.POST,
@@ -303,7 +296,7 @@ class NonVatRegisteredTransactionUpdateView(UserHasCompanyRoleMixin, View):
         """Handle GET requests - display the form."""
         company = self.get_company()
         transaction = self.get_object(company_id, pk)
-        form = NonVatTransactionCreateUpdateForm(company=company, instance=transaction)
+        form = TransactionForm(company=company, instance=transaction)
         context = self.get_context_data(form=form, company=company, object=transaction)
         return render(request, self.template_name, context)
 
@@ -311,7 +304,7 @@ class NonVatRegisteredTransactionUpdateView(UserHasCompanyRoleMixin, View):
         """Handle POST requests - process form submission."""
         company = self.get_company()
         transaction = self.get_object(company_id, pk)
-        form = NonVatTransactionCreateUpdateForm(
+        form = TransactionForm(
             company=company,
             instance=transaction,
             data=request.POST,
