@@ -47,6 +47,7 @@ class TransactionFactory(DjangoModelFactory):
     class Meta:
         model = Transaction
 
+    company = factory.SubFactory(ClientFactory)
     ledger = factory.SubFactory(LedgerFactory)
     bill = factory.SubFactory(BillFactory)
     date = factory.LazyFunction(lambda: timezone.now().date())

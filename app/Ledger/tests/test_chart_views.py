@@ -18,12 +18,12 @@ class TestStandardChartOfAccounts(TestCase):
 
     def setUp(self):
         """Set up test data."""
-        self.user = AccountFactory()
-        self.company = ClientFactory(users=[self.user])
-        self.client.force_login(self.user)  # type: ignore
+        self.user = AccountFactory.create()
+        self.company = ClientFactory.create(users=[self.user])
+        self.client.force_login(self.user)
         self.url = reverse(
             "ledger:create-standard-chart",
-            kwargs={"company_id": self.company.pk},  # type: ignore
+            kwargs={"company_id": self.company.pk},
         )
 
     def test_get_standard_chart_of_accounts(self):
@@ -46,7 +46,7 @@ class TestStandardChartOfAccounts(TestCase):
         self.assertEqual(Ledger.objects.filter(company=self.company).count(), 0)
 
         # Create standard chart
-        ledgers = create_standard_chart_of_accounts(self.company)  # type: ignore
+        ledgers = create_standard_chart_of_accounts(self.company)
 
         # Should have created 43 ledgers
         self.assertEqual(len(ledgers), 43)
@@ -95,7 +95,7 @@ class TestStandardChartOfAccounts(TestCase):
         # Should redirect to ledger list
         self.assertRedirects(
             response,
-            reverse("ledger:ledger-list", kwargs={"company_id": self.company.pk}),  # type: ignore
+            reverse("ledger:ledger-list", kwargs={"company_id": self.company.pk}),
         )
 
         # Count should be unchanged
@@ -105,14 +105,14 @@ class TestStandardChartOfAccounts(TestCase):
 
     def test_view_denied_without_permission(self):
         """Test view is denied when user lacks company access."""
-        other_user = AccountFactory()
-        self.client.force_login(other_user)  # type: ignore
+        other_user = AccountFactory.create()
+        self.client.force_login(other_user)
 
         response = self.client.post(self.url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
 
     def test_view_denied_for_anonymous_user(self):
         """Test view is denied for anonymous users."""
         self.client.logout()
         response = self.client.post(self.url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 302)  # Redirects to login

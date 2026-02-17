@@ -1,9 +1,9 @@
-from django.db.models import QuerySet
 import os
 from typing import TYPE_CHECKING
 
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import QuerySet
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 

@@ -1,16 +1,15 @@
 """Views for Ledger reports."""
 
-from django.urls import reverse
-
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
 from django.db.models import Sum
 from django.http import HttpRequest, HttpResponse
+from django.urls import reverse
 from django.views.generic import TemplateView
 
-from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
+from app.core.Utilities.mixins import BreadcrumbItem
 from app.Ledger.models import Ledger, Transaction
 
 from ..mixins import UserHasCompanyRoleMixin

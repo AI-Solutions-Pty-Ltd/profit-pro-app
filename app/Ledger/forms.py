@@ -265,8 +265,9 @@ class TransactionForm(forms.ModelForm):
             instance.amount_excl_vat = amount
             instance.amount_incl_vat = amount
         else:
-            instance.vat = True
             vat_rate: Vat = cast(Vat, self.cleaned_data.get("vat_rate"))
+            # Set vat=False for 0% VAT rate, vat=True otherwise
+            instance.vat = vat_rate.rate > 0
             vat_mode = self.cleaned_data.get("vat_mode")
             if vat_mode == self.VAT_MODE_INCLUSIVE:
                 instance.amount_excl_vat = amount / (1 + vat_rate.rate / 100)

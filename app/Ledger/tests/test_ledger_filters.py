@@ -14,12 +14,12 @@ class TestLedgerFilters(TestCase):
 
     def setUp(self):
         """Set up test data."""
-        self.user = AccountFactory()
-        self.company = ClientFactory(users=[self.user])
-        self.client.force_login(self.user)  # type: ignore
+        self.user = AccountFactory.create()
+        self.company = ClientFactory.create(users=[self.user])
+        self.client.force_login(self.user)
         self.url = reverse(
             "ledger:ledger-list",
-            kwargs={"company_id": self.company.pk},  # type: ignore
+            kwargs={"company_id": self.company.pk},
         )
 
         # Create test ledgers

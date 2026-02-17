@@ -1,10 +1,10 @@
 """Views for Ledger model."""
 
 from django.contrib import messages
-from django.urls import reverse_lazy, reverse
+from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, ListView
 
-from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
+from app.core.Utilities.mixins import BreadcrumbItem
 from app.Ledger.models import Ledger
 
 from ..mixins import UserHasCompanyRoleMixin
