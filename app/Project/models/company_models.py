@@ -1,3 +1,4 @@
+from django.db.models import QuerySet
 import os
 from typing import TYPE_CHECKING
 
@@ -12,7 +13,7 @@ from app.core.Utilities.models import BaseModel
 Account = get_user_model()
 
 if TYPE_CHECKING:
-    pass
+    from app.Project.models import Project
 
 
 def company_logo_upload_path(instance, filename):
@@ -66,6 +67,10 @@ class Company(BaseModel):
         blank=True,
         related_name="consultants",
     )
+
+    if TYPE_CHECKING:
+        contractor_projects: QuerySet["Project"]
+        client_projects: QuerySet["Project"]
 
     class Meta:
         verbose_name = "Company"

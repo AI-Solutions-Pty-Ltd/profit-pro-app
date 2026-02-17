@@ -7,7 +7,6 @@ from django.db.models import QuerySet
 from django.urls import reverse_lazy
 from django.views.generic import DetailView, ListView, UpdateView
 
-from app.Account.models import Account
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.Project.forms import CompanyForm
 from app.Project.models import Company
@@ -23,7 +22,7 @@ class CompanyListView(LoginRequiredMixin, BreadcrumbMixin, ListView):
 
     def get_queryset(self) -> QuerySet:
         """Filter companies to show only those the user has access to."""
-        return self.request.user.get_companies  # type: ignore
+        return self.request.user.get_contractors  # type: ignore
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         """Get breadcrumb navigation."""
@@ -45,7 +44,7 @@ class CompanyDetailView(LoginRequiredMixin, BreadcrumbMixin, DetailView):
 
     def get_queryset(self) -> QuerySet:
         """Filter companies to show only those the user has access to."""
-        return self.request.user.get_companies  # type: ignore
+        return self.request.user.get_contractors  # type: ignore
 
     def get_context_data(self, **kwargs):
         """Add additional context data."""
@@ -78,12 +77,7 @@ class CompanyUpdateView(LoginRequiredMixin, BreadcrumbMixin, UpdateView):
 
     def get_queryset(self) -> QuerySet:
         """Filter companies to show only those the user has access to."""
-        user = self.request.user
-        if isinstance(user, Account) and user.is_superuser:
-            return Company.objects.filter(type=Company.Type.CLIENT)
-        if hasattr(user, "get_companies"):
-            return user.get_companies  # type: ignore
-        return Company.objects.none()
+        return self.request.user.get_contractors  # type: ignore
 
     def get_context_data(self, **kwargs):
         """Add additional context data."""

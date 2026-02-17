@@ -202,13 +202,22 @@ class Account(AbstractUser, BaseModel):
         return Project.objects.none()
 
     @property
-    def get_companies(self: "Account") -> QuerySet["Company"]:
+    def get_clients(self: "Account") -> QuerySet["Company"]:
         from app.Project.models import Company
 
         if self.is_superuser:
             return Company.objects.filter(type=Company.Type.CLIENT)
         else:
             return Company.objects.filter(type=Company.Type.CLIENT, users=self)
+
+    @property
+    def get_contractors(self: "Account") -> QuerySet["Company"]:
+        from app.Project.models import Company
+
+        if self.is_superuser:
+            return Company.objects.filter(type=Company.Type.CONTRACTOR)
+        else:
+            return Company.objects.filter(type=Company.Type.CONTRACTOR, users=self)
 
     @property
     def detail_url(self: "Account") -> str:

@@ -48,7 +48,7 @@
                                 </div>
                             </div>
                             <!-- 3. Companies (only if user has companies) -->
-                            {% if user.get_companies.exists %}
+                            {% if user.get_contractors.exists %}
                                 <a href="{% url 'project:company-list' %}"
                                    class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
                                     {% heroicon_outline "building-office" class="w-4 h-4 mr-1" %}

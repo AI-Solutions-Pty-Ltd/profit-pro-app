@@ -62,6 +62,10 @@ class Transaction(BaseModel):
 
     company = models.ForeignKey("Project.Company", on_delete=models.CASCADE)
     ledger = models.ForeignKey(Ledger, on_delete=models.SET_NULL, null=True)
+    project = models.ForeignKey("Project.Project", on_delete=models.SET_NULL, null=True)
+    structure = models.ForeignKey(
+        "BillOfQuantities.Structure", on_delete=models.SET_NULL, null=True
+    )
     bill = models.ForeignKey(
         "BillOfQuantities.Bill", on_delete=models.SET_NULL, null=True
     )

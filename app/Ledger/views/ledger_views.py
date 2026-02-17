@@ -1,7 +1,7 @@
 """Views for Ledger model."""
 
 from django.contrib import messages
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views.generic import CreateView, ListView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
@@ -10,7 +10,7 @@ from app.Ledger.models import Ledger
 from ..mixins import UserHasCompanyRoleMixin
 
 
-class LedgerListView(UserHasCompanyRoleMixin, BreadcrumbMixin, ListView):
+class LedgerListView(UserHasCompanyRoleMixin, ListView):
     """List all ledgers for a company."""
 
     model = Ledger
@@ -67,14 +67,17 @@ class LedgerListView(UserHasCompanyRoleMixin, BreadcrumbMixin, ListView):
         return [
             {
                 "title": "Companies",
-                "url": "/companies/",
+                "url": reverse("project:company-list"),
             },
-            {"title": company.name, "url": None},
+            {
+                "title": company.name,
+                "url": reverse("project:company-detail", kwargs={"pk": company.pk}),
+            },
             {"title": "Ledgers", "url": None},
         ]
 
 
-class LedgerCreateView(UserHasCompanyRoleMixin, BreadcrumbMixin, CreateView):
+class LedgerCreateView(UserHasCompanyRoleMixin, CreateView):
     """Create a new ledger."""
 
     model = Ledger
@@ -109,16 +112,15 @@ class LedgerCreateView(UserHasCompanyRoleMixin, BreadcrumbMixin, CreateView):
         return [
             {
                 "title": "Companies",
-                "url": "/companies/",
+                "url": reverse("project:company-list"),
             },
-            {"title": company.name, "url": None},
+            {
+                "title": company.name,
+                "url": reverse("project:company-detail", kwargs={"pk": company.pk}),
+            },
             {
                 "title": "Ledgers",
-                "url": str(
-                    reverse_lazy(
-                        "ledger:ledger-list", kwargs={"company_id": company.pk}
-                    )
-                ),
+                "url": reverse("ledger:ledger-list", kwargs={"company_id": company.pk}),
             },
-            {"title": "Create Ledger", "url": None},
+            {"title": "New Ledger", "url": None},
         ]

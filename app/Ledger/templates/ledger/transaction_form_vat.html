@@ -33,6 +33,7 @@
     <div class="bg-white shadow-sm rounded-lg">
         {{ form.errors }}
         {{ form.non_field_errors }}
+        {% include "ledger/utils/get_project.html" %}
         <form method="post" class="p-7" id="vat-transaction-form">
             {% csrf_token %}
             {% if form.non_field_errors %}
@@ -44,34 +45,6 @@
                 <div>
                     {{ form.ledger|as_crispy_field }}
                     {% if form.ledger.errors %}<p class="mt-2 text-sm text-red-600">{{ form.ledger.errors.0 }}</p>{% endif %}
-                </div>
-                <div>
-                    {{ form.structure|as_crispy_field }}
-                    <p class="mt-2 text-xs text-gray-500">Use this to narrow down bill choices.</p>
-                </div>
-                <div>
-                    <label for="{{ form.bill.id_for_label }}"
-                           class="block text-sm font-medium text-gray-700">Bill</label>
-                    <input type="text"
-                           id="bill_search"
-                           placeholder="Search bills..."
-                           class="mt-2 block w-full rounded-lg border-gray-300 px-4 py-2.5 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                    <select name="{{ form.bill.name }}"
-                            id="{{ form.bill.id_for_label }}"
-                            class="mt-2 block w-full rounded-lg border-gray-300 px-4 py-2.5 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                        <option value="">Select a bill (optional)</option>
-                        {% for choice in form.bill.field.queryset %}
-                            <option value="{{ choice.pk }}"
-                                    data-structure-id="{{ choice.structure.pk }}"
-                                    data-search-text="{{ choice.structure.name|lower }} {{ choice.name|lower }}"
-                                    {% if form.bill.value|stringformat:"s" == choice.pk|stringformat:"s" %}selected{% endif %}>
-                                {{ choice.structure.name }}: {{ choice.name }}
-                            </option>
-                        {% empty %}
-                            <option value="" disabled>No bills available</option>
-                        {% endfor %}
-                    </select>
-                    {% if form.bill.errors %}<p class="mt-2 text-sm text-red-600">{{ form.bill.errors.0 }}</p>{% endif %}
                 </div>
                 <div>
                     {{ form.date|as_crispy_field }}
@@ -152,16 +125,8 @@
     </div>
 {% endblock content %}
 {% block extra_js %}
-    <script src="{% static 'ledger/js/bill-filter.js' %}"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Initialize bill filtering
-            const billFilter = new BillFilter(
-                "{{ form.structure.id_for_label }}",
-                "bill_search", 
-                "{{ form.bill.id_for_label }}"
-            );
-
             const dateInput = document.getElementById("{{ form.date.id_for_label }}");
             const vatRateSelect = document.getElementById("{{ form.vat_rate.id_for_label }}");
             const amountInput = document.getElementById("{{ form.amount.id_for_label }}");

@@ -2,15 +2,12 @@
 
 from django.contrib import messages
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
 from django.urls import reverse, reverse_lazy
-from django.views.generic import DeleteView, DetailView, ListView, View
+from django.views.generic import DeleteView, DetailView, ListView
 
-from app.BillOfQuantities.models import Structure
 from app.core.Utilities.mixins import BreadcrumbItem
-from app.Ledger.forms import TransactionForm
-from app.Ledger.mixins import UserHasCompanyRoleMixin
-from app.Ledger.models import Ledger, Transaction, Vat
+from app.Ledger.mixins import TransactionFormViewMixin, UserHasCompanyRoleMixin
+from app.Ledger.models import Ledger, Transaction
 
 
 class TransactionListView(UserHasCompanyRoleMixin, ListView):
@@ -97,7 +94,7 @@ class TransactionDetailView(UserHasCompanyRoleMixin, DetailView):
         ]
 
 
-class TransactionCreateRouterView(UserHasCompanyRoleMixin, View):
+class TransactionCreateRouterView(UserHasCompanyRoleMixin):
     """Route create requests to VAT-aware transaction create forms."""
 
     def get(self, request, company_id, *args, **kwargs):
@@ -117,7 +114,7 @@ class TransactionCreateRouterView(UserHasCompanyRoleMixin, View):
         return self.get(request, company_id, *args, **kwargs)
 
 
-class TransactionUpdateRouterView(UserHasCompanyRoleMixin, View):
+class TransactionUpdateRouterView(UserHasCompanyRoleMixin):
     """Router that directs to appropriate update view based on company VAT status."""
 
     def get(self, request, company_id, pk, *args, **kwargs):
@@ -133,212 +130,32 @@ class TransactionUpdateRouterView(UserHasCompanyRoleMixin, View):
         )
 
 
-class VatRegisteredTransactionCreateView(UserHasCompanyRoleMixin, View):
+class VatRegisteredTransactionCreateView(TransactionFormViewMixin):
     """Create transaction form for VAT-registered companies."""
 
     template_name = "ledger/transaction_form_vat.html"
-
-    def get(self, request, company_id, *args, **kwargs):
-        """Handle GET requests - display the form."""
-        company = self.get_company()
-        form = TransactionForm(company=company)
-        context = self.get_context_data(form=form, company=company)
-        return render(request, self.template_name, context)
-
-    def post(self, request, company_id, *args, **kwargs):
-        """Handle POST requests - process form submission."""
-        company = self.get_company()
-        form = TransactionForm(company=company, data=request.POST, files=request.FILES)
-
-        if form.is_valid():
-            transaction = form.save()
-            messages.success(
-                request, f"Transaction '{transaction.pk}' created successfully!"
-            )
-            return HttpResponseRedirect(
-                reverse(
-                    "ledger:transaction-detail",
-                    kwargs={"company_id": company.pk, "pk": transaction.pk},
-                )
-            )
-        else:
-            messages.error(request, "Transaction could not be created.")
-            context = self.get_context_data(form=form, company=company)
-            return render(request, self.template_name, context)
-
-    def get_context_data(self, **kwargs):
-        """Add context data for template."""
-        context = {}
-        context["company"] = kwargs.get("company")
-        context["form"] = kwargs.get("form")
-        context["title"] = "Create Transaction"
-        context["structures"] = Structure.objects.filter(
-            project__client=context["company"]
-        ).select_related("project")
-        context["all_vat_rates"] = Vat.objects.all()
-        return context
+    vat_view = True
 
 
-class NonVatRegisteredTransactionCreateView(UserHasCompanyRoleMixin, View):
+class NonVatRegisteredTransactionCreateView(TransactionFormViewMixin):
     """Create transaction form for non-VAT registered companies."""
 
     template_name = "ledger/transaction_form_non_vat.html"
-
-    def get(self, request, company_id, *args, **kwargs):
-        """Handle GET requests - display the form."""
-        company = self.get_company()
-        form = TransactionForm(company=company)
-        context = self.get_context_data(form=form, company=company)
-        return render(request, self.template_name, context)
-
-    def post(self, request, company_id, *args, **kwargs):
-        """Handle POST requests - process form submission."""
-        company = self.get_company()
-        form = TransactionForm(company=company, data=request.POST, files=request.FILES)
-
-        if form.is_valid():
-            transaction = form.save()
-            messages.success(
-                request, f"Transaction '{transaction.pk}' created successfully!"
-            )
-            return HttpResponseRedirect(
-                reverse(
-                    "ledger:transaction-detail",
-                    kwargs={"company_id": company.pk, "pk": transaction.pk},
-                )
-            )
-        else:
-            messages.error(request, "Transaction could not be created.")
-            context = self.get_context_data(form=form, company=company)
-            return render(request, self.template_name, context)
-
-    def get_context_data(self, **kwargs):
-        """Add context data for template."""
-        context = {}
-        context["company"] = kwargs.get("company")
-        context["form"] = kwargs.get("form")
-        context["title"] = "Create Transaction"
-        context["structures"] = Structure.objects.filter(
-            project__client=context["company"]
-        ).select_related("project")
-        return context
+    vat_view = False
 
 
-class VatRegisteredTransactionUpdateView(UserHasCompanyRoleMixin, View):
+class VatRegisteredTransactionUpdateView(TransactionFormViewMixin):
     """Update transaction form for VAT-registered companies."""
 
     template_name = "ledger/transaction_form_vat.html"
-
-    def get_object(self, company_id, pk):
-        """Get the transaction object."""
-        return get_object_or_404(Transaction, pk=pk, company_id=company_id)
-
-    def get(self, request, company_id, pk, *args, **kwargs):
-        """Handle GET requests - display the form."""
-        company = self.get_company()
-        transaction = self.get_object(company_id, pk)
-        form = TransactionForm(company=company, instance=transaction)
-        context = self.get_context_data(form=form, company=company, object=transaction)
-        return render(request, self.template_name, context)
-
-    def post(self, request, company_id, pk, *args, **kwargs):
-        """Handle POST requests - process form submission."""
-        company = self.get_company()
-        transaction = self.get_object(company_id, pk)
-        form = TransactionForm(
-            company=company,
-            instance=transaction,
-            data=request.POST,
-        )
-
-        if form.is_valid():
-            updated_transaction = form.save()
-            messages.success(
-                request, f"Transaction '{updated_transaction.pk}' updated successfully!"
-            )
-            return HttpResponseRedirect(
-                reverse(
-                    "ledger:transaction-detail",
-                    kwargs={"company_id": company.pk, "pk": updated_transaction.pk},
-                )
-            )
-        else:
-            messages.error(request, "Transaction could not be updated.")
-            context = self.get_context_data(
-                form=form, company=company, object=transaction
-            )
-            return render(request, self.template_name, context)
-
-    def get_context_data(self, **kwargs):
-        """Add context data for template."""
-        context = {}
-        context["company"] = kwargs.get("company")
-        context["form"] = kwargs.get("form")
-        context["object"] = kwargs.get("object")
-        context["title"] = "Update Transaction"
-        context["structures"] = Structure.objects.filter(
-            project__client=context["company"]
-        ).select_related("project")
-        context["all_vat_rates"] = Vat.objects.all()
-        return context
+    vat_view = True
 
 
-class NonVatRegisteredTransactionUpdateView(UserHasCompanyRoleMixin, View):
+class NonVatRegisteredTransactionUpdateView(TransactionFormViewMixin):
     """Update transaction form for non-VAT registered companies."""
 
     template_name = "ledger/transaction_form_non_vat.html"
-
-    def get_object(self, company_id, pk):
-        """Get the transaction object."""
-        return get_object_or_404(Transaction, pk=pk, company_id=company_id)
-
-    def get(self, request, company_id, pk, *args, **kwargs):
-        """Handle GET requests - display the form."""
-        company = self.get_company()
-        transaction = self.get_object(company_id, pk)
-        form = TransactionForm(company=company, instance=transaction)
-        context = self.get_context_data(form=form, company=company, object=transaction)
-        return render(request, self.template_name, context)
-
-    def post(self, request, company_id, pk, *args, **kwargs):
-        """Handle POST requests - process form submission."""
-        company = self.get_company()
-        transaction = self.get_object(company_id, pk)
-        form = TransactionForm(
-            company=company,
-            instance=transaction,
-            data=request.POST,
-        )
-
-        if form.is_valid():
-            updated_transaction = form.save()
-            messages.success(
-                request, f"Transaction '{updated_transaction.pk}' updated successfully!"
-            )
-            return HttpResponseRedirect(
-                reverse(
-                    "ledger:transaction-detail",
-                    kwargs={"company_id": company.pk, "pk": updated_transaction.pk},
-                )
-            )
-        else:
-            messages.error(request, "Transaction could not be updated.")
-            context = self.get_context_data(
-                form=form, company=company, object=transaction
-            )
-            return render(request, self.template_name, context)
-
-    def get_context_data(self, **kwargs):
-        """Add context data for template."""
-        context = {}
-        context["company"] = kwargs.get("company")
-        context["form"] = kwargs.get("form")
-        context["object"] = kwargs.get("object")
-        context["title"] = "Update Transaction"
-        context["structures"] = Structure.objects.filter(
-            project__client=context["company"]
-        ).select_related("project")
-        return context
+    vat_view = False
 
 
 class TransactionDeleteView(UserHasCompanyRoleMixin, DeleteView):

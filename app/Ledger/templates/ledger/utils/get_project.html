@@ -1,0 +1,152 @@
+<form method="get"
+      id="project-filter-form"
+      class="bg-white shadow-sm rounded-lg">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-medium text-gray-900">Add transaction to Project</h3>
+        <p class="text-sm text-gray-600 mt-1">Select project, structure, and bill to pre-fill transaction details</p>
+    </div>
+    <div class="p-6">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+            <!-- Projects Field -->
+            {% if project_filter_form.project %}
+                <div class="sm:col-span-2 lg:col-span-2 xl:col-span-2">{{ project_filter_form.project|as_crispy_field }}</div>
+            {% endif %}
+            <!-- Structures Field -->
+            {% if project_filter_form.structure %}
+                <div class="sm:col-span-2 lg:col-span-2 xl:col-span-2">{{ project_filter_form.structure|as_crispy_field }}</div>
+            {% endif %}
+            <!-- Bills Search Field -->
+            {% if project_filter_form.bill_search %}
+                <div class="sm:col-span-1 lg:col-span-1 xl:col-span-1">{{ project_filter_form.bill_search|as_crispy_field }}</div>
+            {% endif %}
+            <!-- Bills Field -->
+            {% if project_filter_form.bill %}
+                <div class="sm:col-span-2 lg:col-span-2 xl:col-span-3">{{ project_filter_form.bill|as_crispy_field }}</div>
+            {% endif %}
+            <!-- Error Display -->
+            {% if project_filter_form.errors %}
+                <div class="sm:col-span-2 lg:col-span-4 xl:col-span-6">
+                    <div class="rounded-md bg-red-50 p-3">
+                        <p class="text-sm text-red-600">{{ project_filter_form.errors.0 }}</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        <div class="mt-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="text-sm text-gray-500 order-2 sm:order-1">
+                <span id="selection-summary">No selection made</span>
+            </div>
+            <div class="flex space-x-3 order-1 sm:order-2">
+                <button type="button"
+                        onclick="clearSelection()"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_outline "x-mark" class="w-4 h-4 mr-2" %}
+                    Clear
+                </button>
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_outline "check" class="w-4 h-4 mr-2" %}
+                    Apply Selection
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Try multiple ways to find the project select element
+        let projectSelect = document.getElementById("{{ project_filter_form.project.id_for_label }}");
+        let structureSelect = document.getElementById("{{ project_filter_form.structure.id_for_label }}");
+        let billSelect = document.getElementById("{{ project_filter_form.bill.id_for_label }}");
+        let billSearch = document.getElementById("{{ project_filter_form.bill_search.id_for_label }}");
+        
+        console.log("Project select element found:", projectSelect);
+        console.log("Structure select element found:", structureSelect);
+        console.log("Bill select element found:", billSelect);
+        console.log("Bill search element found:", billSearch);
+        
+        const projectFilterForm = document.getElementById("project-filter-form");
+        
+        if (projectSelect) {
+            projectSelect.addEventListener("change", function() {
+                projectFilterForm.submit();
+            });
+        }
+        if (structureSelect) {
+            structureSelect.addEventListener("change", function() {
+                projectFilterForm.submit();
+            });
+        }
+        if (billSelect) {
+            billSelect.addEventListener("change", function() {
+                projectFilterForm.submit();
+            });
+        }
+
+        if (billSearch) {
+            let debounceTimer;
+            billSearch.addEventListener("input", function() {
+                clearTimeout(debounceTimer);
+                
+                // Only search if we have meaningful input
+                if (billSearch.value.trim().length >= 3) {
+                    debounceTimer = setTimeout(function() {
+                        console.log("Submitting bill search for:", billSearch.value);
+                        projectFilterForm.submit();
+                    }, 600); // Reduced delay for better UX
+                } else if (billSearch.value.trim().length === 0) {
+                    // Submit immediately when cleared to show all bills
+                    projectFilterForm.submit();
+                }
+            });
+        }
+
+        // Update selection summary
+        function updateSelectionSummary() {
+            const summary = document.getElementById("selection-summary");
+            let parts = [];
+            
+            if (projectSelect && projectSelect.value) {
+                const selectedOption = projectSelect.options[projectSelect.selectedIndex];
+                parts.push(`Project: ${selectedOption.text}`);
+            }
+            
+            if (structureSelect && structureSelect.value) {
+                const selectedOption = structureSelect.options[structureSelect.selectedIndex];
+                parts.push(`Structure: ${selectedOption.text}`);
+            }
+            
+            if (billSelect && billSelect.value) {
+                const selectedOption = billSelect.options[billSelect.selectedIndex];
+                parts.push(`Bill: ${selectedOption.text}`);
+            }
+            
+            if (parts.length > 0) {
+                summary.textContent = parts.join(" → ");
+            } else {
+                summary.textContent = "No selection made";
+            }
+        }
+
+        // Clear selection function
+        window.clearSelection = function() {
+            if (projectSelect) projectSelect.value = "";
+            if (structureSelect) structureSelect.value = "";
+            if (billSelect) billSelect.value = "";
+            if (billSearch) billSearch.value = "";
+            updateSelectionSummary();
+            projectFilterForm.submit();
+        };
+
+        // Update summary when selections change
+        [projectSelect, structureSelect, billSelect].forEach(select => {
+            if (select) {
+                select.addEventListener("change", updateSelectionSummary);
+            }
+        });
+
+        // Initial summary update
+        updateSelectionSummary();
+
+    });
+</script>

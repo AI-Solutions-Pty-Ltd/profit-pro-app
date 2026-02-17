@@ -31,33 +31,37 @@ class TransactionAdmin(admin.ModelAdmin):
     """Admin configuration for Transaction model."""
 
     list_display = [
-        "pk",
         "date",
-        "type",
+        "company",
+        "project",
         "ledger",
-        "bill",
-        "amount_incl_vat",
+        "type",
         "vat",
+        "amount_incl_vat",
     ]
     list_filter = [
         "type",
         "date",
         "vat",
-        "ledger__company",
-        "ledger__financial_statement",
+        "company",
+        "project",
     ]
     search_fields = [
-        "ledger__name",
+        "company__name",
+        "project__name",
         "ledger__code",
+        "ledger__name",
+        "ledger__financial_statement",
+        "structure__name",
         "bill__name",
     ]
     ordering = ["-date", "ledger__code"]
-    autocomplete_fields = ["ledger", "bill", "vat_rate"]
+    autocomplete_fields = ["ledger", "bill", "vat_rate", "company", "project"]
 
     def get_queryset(self, request):
         """Optimize queries."""
         return (
             super()
             .get_queryset(request)
-            .select_related("ledger", "bill", "vat_rate", "ledger__company")
+            .select_related("ledger", "bill", "vat_rate", "company", "project")
         )

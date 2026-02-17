@@ -1,5 +1,7 @@
 """Views for Ledger reports."""
 
+from django.urls import reverse
+
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
@@ -14,7 +16,7 @@ from app.Ledger.models import Ledger, Transaction
 from ..mixins import UserHasCompanyRoleMixin
 
 
-class IncomeStatementView(UserHasCompanyRoleMixin, BreadcrumbMixin, TemplateView):
+class IncomeStatementView(UserHasCompanyRoleMixin, TemplateView):
     """View and generate income statement reports."""
 
     template_name = "ledger/income_statement.html"
@@ -129,10 +131,12 @@ class IncomeStatementView(UserHasCompanyRoleMixin, BreadcrumbMixin, TemplateView
         return [
             {
                 "title": "Companies",
-                "url": "/companies/",
+                "url": reverse("project:company-list"),
             },
-            {"title": company.name, "url": None},
-            {"title": "Reports", "url": None},
+            {
+                "title": company.name,
+                "url": reverse("project:company-detail", kwargs={"pk": company.pk}),
+            },
             {"title": "Income Statement", "url": None},
         ]
 
