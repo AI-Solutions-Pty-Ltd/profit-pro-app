@@ -121,9 +121,15 @@ class TestStructureModel:
         project = ProjectFactory.create()
         structure = StructureFactory.create(project=project)
 
-        expected_detail = f"/bill-of-quantities/project/{structure.pk}/"
-        expected_update = f"/bill-of-quantities/project/{structure.pk}/update/"
-        expected_delete = f"/bill-of-quantities/project/{structure.pk}/delete/"
+        expected_detail = (
+            f"/bill-of-quantities/project/{project.pk}/structure/{structure.pk}/"
+        )
+        expected_update = (
+            f"/bill-of-quantities/project/{project.pk}/structure/{structure.pk}/update/"
+        )
+        expected_delete = (
+            f"/bill-of-quantities/project/{project.pk}/structure/{structure.pk}/delete/"
+        )
 
         assert structure.get_absolute_url() == expected_detail
         assert structure.get_update_url() == expected_update

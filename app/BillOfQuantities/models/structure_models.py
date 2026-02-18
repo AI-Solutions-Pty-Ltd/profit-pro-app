@@ -43,19 +43,19 @@ class Structure(BaseModel):
     def get_absolute_url(self):
         return reverse(
             "bill_of_quantities:structure-detail",
-            kwargs={"pk": self.pk},
+            kwargs={"project_pk": self.project.pk, "pk": self.pk},
         )
 
     def get_update_url(self):
         return reverse(
             "bill_of_quantities:structure-update",
-            kwargs={"pk": self.pk},
+            kwargs={"project_pk": self.project.pk, "pk": self.pk},
         )
 
     def get_delete_url(self):
         return reverse(
             "bill_of_quantities:structure-delete",
-            kwargs={"pk": self.pk},
+            kwargs={"project_pk": self.project.pk, "pk": self.pk},
         )
 
     @property
