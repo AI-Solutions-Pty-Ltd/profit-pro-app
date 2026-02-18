@@ -66,6 +66,7 @@ def send_verification_email(request, user_email: str) -> bool:
         )
         messages.success(request, "Verification email sent. Please check your inbox.")
         return True
-    except Exception:
+    except Exception as e:
+        print(f"Failed to send verification email: {e}")
         messages.error(request, "Failed to send verification email. Please try again.")
         return False

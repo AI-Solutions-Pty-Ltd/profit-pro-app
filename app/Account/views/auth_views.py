@@ -237,7 +237,7 @@ class LoginView(BaseLoginView):
             if not user.email_verified:
                 # Email not verified - send verification email
                 send_verification_email(self.request, user.email)
-                messages.error(
+                messages.info(
                     self.request,
                     "Your email address has not been verified. "
                     "We've sent a new verification email. Please check your inbox.",
