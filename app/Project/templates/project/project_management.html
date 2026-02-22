@@ -60,13 +60,6 @@
                                 {% heroicon_outline "arrow-right" size="16" class="text-teal-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                         {% endif %}
-                        {% if request.user|projectroles:project|userhasrole:'CORRESPONDENCE,ADMIN,User' %}
-                            <a href="{% url 'bill_of_quantities:correspondence-list' project.pk %}"
-                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-orange-700">Correspondences</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                            </a>
-                        {% endif %}
                     {% else %}
                         <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
                            class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
@@ -232,42 +225,30 @@
             </div>
         {% endif %}
         {% if request.user|projectroles:project|userhasrole:'COMPLIANCE,ADMIN,User' %}
-            <!-- Coming Soon Section -->
-            <div class="group relative bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl p-4 border border-gray-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1  opacity-75">
+            <!-- Compliance & Correspondence Section -->
+            <div class="group relative bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-4 border border-indigo-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                 <div class="flex items-center mb-3">
-                    <div class="w-10 h-10 bg-gray-500 rounded-lg flex items-center justify-center mr-3">
-                        {% heroicon_outline "clock" size="20" class="text-white" %}
+                    <div class="w-10 h-10 bg-indigo-500 rounded-lg flex items-center justify-center mr-3">
+                        {% heroicon_outline "shield-check" size="20" class="text-white" %}
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold text-gray-900">Coming Soon</h3>
-                        <p class="text-xs text-gray-600">Future features</p>
+                        <h3 class="text-sm font-bold text-gray-900">Compliance & Correspondence</h3>
+                        <p class="text-xs text-gray-600">Manage compliance requirements</p>
                     </div>
                 </div>
                 <div class="space-y-2">
-                    <div class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-gray-200 opacity-75">
-                        <span class="text-sm font-medium text-gray-700">Impact</span>
-                        {% heroicon_outline "clock" size="16" class="text-gray-400" %}
-                    </div>
+                    <a href="{% url 'project:compliance-dashboard' project.pk %}"
+                       class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
+                        <span class="text-sm font-medium text-indigo-700">Compliance</span>
+                        {% heroicon_outline "arrow-right" size="16" class="text-indigo-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                    </a>
                     {% if request.user|projectroles:project|userhasrole:'COMPLIANCE,ADMIN,User' %}
-                        <a href="{% url 'project:compliance-dashboard' project.pk %}"
+                        <a href="{% url 'bill_of_quantities:correspondence-list' project.pk %}"
                            class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
-                            <span class="text-sm font-medium text-indigo-700">Compliance</span>
+                            <span class="text-sm font-medium text-indigo-700">Correspondence</span>
                             {% heroicon_outline "arrow-right" size="16" class="text-indigo-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                         </a>
                     {% endif %}
-                    <span class="text-xs text-indigo-600 py-0.5 rounded">For Contractors</span>
-                    <div class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-indigo-200 opacity-75">
-                        <div class="flex items-center">
-                            <span class="text-sm font-medium text-indigo-700">Expenditure Management</span>
-                        </div>
-                        {% heroicon_outline "clock" size="16" class="text-indigo-400" %}
-                    </div>
-                    <div class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-indigo-200 opacity-75">
-                        <div class="flex items-center">
-                            <span class="text-sm font-medium text-indigo-700">Materials Management</span>
-                        </div>
-                        {% heroicon_outline "clock" size="16" class="text-indigo-400" %}
-                    </div>
                 </div>
             </div>
         {% endif %}

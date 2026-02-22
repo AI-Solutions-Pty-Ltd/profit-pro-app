@@ -107,6 +107,10 @@
                                             {% heroicon_outline "arrow-down-tray" class="w-4 h-4 inline" %}
                                         </a>
                                     {% endif %}
+                                    <a href="{% url 'project:final-account-compliance-detail' project.pk item.pk %}"
+                                       class="text-gray-600 hover:text-gray-900 mr-3">
+                                        {% heroicon_outline "eye" class="w-4 h-4 inline" %}
+                                    </a>
                                     <a href="{% url 'project:final-account-compliance-update' project.pk item.pk %}"
                                        class="text-indigo-600 hover:text-indigo-900 mr-3">
                                         {% heroicon_outline "pencil" class="w-4 h-4 inline" %}

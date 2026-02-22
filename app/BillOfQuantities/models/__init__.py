@@ -10,6 +10,8 @@ from .claim_models import (
 from .contract_models import (
     ContractualCorrespondence,
     ContractVariation,
+    CorrespondenceDialog,
+    CorrespondenceDialogFile,
 )
 from .forecast_models import (
     Forecast,
@@ -60,6 +62,8 @@ __all__ = [
     # Contract management models
     "ContractVariation",
     "ContractualCorrespondence",
+    "CorrespondenceDialog",
+    "CorrespondenceDialogFile",
     # Ledger models
     "AdvancePayment",
     "BaseLedgerItem",

@@ -11,6 +11,8 @@ from .models import (
     Claim,
     ContractualCorrespondence,
     ContractVariation,
+    CorrespondenceDialog,
+    CorrespondenceDialogFile,
     Escalation,
     Forecast,
     ForecastTransaction,
@@ -222,6 +224,35 @@ class ContractualCorrespondenceAdmin(SoftDeleteAdmin):
     search_fields = ["reference_number", "subject", "summary", "project__name"]
     date_hierarchy = "date_of_correspondence"
     ordering = ["-date_of_correspondence"]
+
+
+@admin.register(CorrespondenceDialog)
+class CorrespondenceDialogAdmin(admin.ModelAdmin):
+    """Admin for Correspondence Dialogs."""
+
+    list_display = [
+        "correspondence",
+        "sender",
+        "recipient",
+        "sender_user",
+        "receiver_user",
+        "created_at",
+    ]
+    list_filter = ["correspondence", "created_at"]
+    search_fields = ["message", "sender", "receiver"]
+    date_hierarchy = "created_at"
+    ordering = ["-created_at"]
+
+
+@admin.register(CorrespondenceDialogFile)
+class CorrespondenceDialogFileAdmin(admin.ModelAdmin):
+    """Admin for Correspondence Dialog Files."""
+
+    list_display = ["dialog", "file", "created_at"]
+    list_filter = ["dialog", "created_at"]
+    search_fields = ["file"]
+    date_hierarchy = "created_at"
+    ordering = ["-created_at"]
 
 
 # ============================================================================

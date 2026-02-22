@@ -2,8 +2,14 @@ from .category_models import ProjectCategory
 from .company_models import Company
 from .compliance_models import (
     AdministrativeCompliance,
+    AdministrativeComplianceDialog,
+    AdministrativeComplianceDialogFile,
     ContractualCompliance,
+    ContractualComplianceDialog,
+    ContractualComplianceDialogFile,
     FinalAccountCompliance,
+    FinalAccountComplianceDialog,
+    FinalAccountComplianceDialogFile,
 )
 from .document_models import ProjectDocument
 from .impact_models import ProjectImpact
@@ -17,9 +23,15 @@ from .signatories_models import Signatories
 
 __all__ = [
     "AdministrativeCompliance",
+    "AdministrativeComplianceDialog",
+    "AdministrativeComplianceDialogFile",
     "Company",
     "ContractualCompliance",
+    "ContractualComplianceDialog",
+    "ContractualComplianceFile",
     "FinalAccountCompliance",
+    "FinalAccountComplianceDialog",
+    "FinalAccountComplianceDialogFile",
     "Milestone",
     "PlannedValue",
     "Portfolio",

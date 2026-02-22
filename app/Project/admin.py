@@ -5,7 +5,16 @@ from django.contrib import admin
 from app.core.Utilities.admin import SoftDeleteAdmin
 
 from .models import (
+    AdministrativeCompliance,
+    AdministrativeComplianceDialog,
+    AdministrativeComplianceDialogFile,
     Company,
+    ContractualCompliance,
+    ContractualComplianceDialog,
+    ContractualComplianceDialogFile,
+    FinalAccountCompliance,
+    FinalAccountComplianceDialog,
+    FinalAccountComplianceDialogFile,
     PlannedValue,
     Portfolio,
     Project,
@@ -96,3 +105,104 @@ class PlannedValueAdmin(SoftDeleteAdmin):
     list_filter = ["deleted", "created_at", "project"]
     search_fields = ["project__name", "project__description"]
     readonly_fields = ["created_at", "updated_at"]
+
+
+# ============================================================================
+# Compliance Models Admin
+# ============================================================================
+
+
+@admin.register(ContractualCompliance)
+class ContractualComplianceAdmin(SoftDeleteAdmin):
+    list_display = [
+        "project",
+        "status",
+        "due_date",
+        "deleted",
+        "created_at",
+    ]
+    list_filter = ["deleted", "created_at", "status", "project"]
+    search_fields = ["project__name", "description", "notes"]
+    readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(ContractualComplianceDialog)
+class ContractualComplianceDialogAdmin(SoftDeleteAdmin):
+    list_display = ["compliance", "sender", "receiver", "created_at"]
+    list_filter = ["compliance", "created_at"]
+    search_fields = ["message", "sender__email", "receiver__email"]
+    date_hierarchy = "created_at"
+    ordering = ["-created_at"]
+
+
+@admin.register(ContractualComplianceDialogFile)
+class ContractualComplianceFileAdmin(SoftDeleteAdmin):
+    list_display = ["dialog", "file", "created_at"]
+    list_filter = ["dialog", "created_at"]
+    search_fields = ["file"]
+    date_hierarchy = "created_at"
+    ordering = ["-created_at"]
+
+
+@admin.register(AdministrativeCompliance)
+class AdministrativeComplianceAdmin(SoftDeleteAdmin):
+    list_display = [
+        "project",
+        "status",
+        "submission_due_date",
+        "deleted",
+        "created_at",
+    ]
+    list_filter = ["deleted", "created_at", "status", "project"]
+    search_fields = ["project__name", "description", "notes"]
+    readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(AdministrativeComplianceDialog)
+class AdministrativeComplianceDialogAdmin(SoftDeleteAdmin):
+    list_display = ["compliance", "sender", "receiver", "created_at"]
+    list_filter = ["compliance", "created_at"]
+    search_fields = ["message", "sender__email", "receiver__email"]
+    date_hierarchy = "created_at"
+    ordering = ["-created_at"]
+
+
+@admin.register(AdministrativeComplianceDialogFile)
+class AdministrativeComplianceDialogFileAdmin(SoftDeleteAdmin):
+    list_display = ["dialog", "file", "created_at"]
+    list_filter = ["dialog", "created_at"]
+    search_fields = ["file"]
+    date_hierarchy = "created_at"
+    ordering = ["-created_at"]
+
+
+@admin.register(FinalAccountCompliance)
+class FinalAccountComplianceAdmin(SoftDeleteAdmin):
+    list_display = [
+        "project",
+        "status",
+        "submission_date",
+        "deleted",
+        "created_at",
+    ]
+    list_filter = ["deleted", "created_at", "status", "project"]
+    search_fields = ["project__name", "description", "notes"]
+    readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(FinalAccountComplianceDialog)
+class FinalAccountComplianceDialogAdmin(SoftDeleteAdmin):
+    list_display = ["compliance", "sender", "receiver", "created_at"]
+    list_filter = ["compliance", "created_at"]
+    search_fields = ["message", "sender__email", "receiver__email"]
+    date_hierarchy = "created_at"
+    ordering = ["-created_at"]
+
+
+@admin.register(FinalAccountComplianceDialogFile)
+class FinalAccountComplianceDialogFileAdmin(SoftDeleteAdmin):
+    list_display = ["dialog", "file", "created_at"]
+    list_filter = ["dialog", "created_at"]
+    search_fields = ["file"]
+    date_hierarchy = "created_at"
+    ordering = ["-created_at"]

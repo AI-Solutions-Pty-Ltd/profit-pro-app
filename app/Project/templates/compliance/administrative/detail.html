@@ -2,18 +2,18 @@
 {% load heroicons %}
 {% load humanize %}
 {% block title %}
-    {{ correspondence.reference_number }} - {{ project.name }}
+    {{ compliance.reference_number }} - {{ project.name }}
 {% endblock title %}
 {% block content %}
     <div class="bg-white shadow-sm rounded-lg overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">{{ correspondence.reference_number }}</h1>
-                    <p class="text-sm text-gray-600 mt-1">{{ correspondence.subject }}</p>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ compliance.reference_number }}</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ compliance.compliance_type }}</p>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <a href="{% url 'bill_of_quantities:correspondence-edit' project.pk correspondence.pk %}"
+                    <a href="{% url 'project:administrative-compliance-update' project.pk compliance.pk %}"
                        class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                         {% heroicon_outline "pencil" class="w-4 h-4 mr-2" %}Edit
                     </a>
@@ -23,74 +23,58 @@
         <div class="px-6 py-6">
             <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
                 <div>
-                    <dt class="text-sm font-medium text-gray-500">Date</dt>
-                    <dd class="mt-1 text-sm text-gray-900">
-                        {{ correspondence.date_of_correspondence|date:"d M Y" }}
-                    </dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">Type</dt>
-                    <dd class="mt-1 text-sm text-gray-900">
-                        {{ correspondence.get_correspondence_type_display }}
-                    </dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">Direction</dt>
+                    <dt class="text-sm font-medium text-gray-500">Status</dt>
                     <dd class="mt-1">
-                        {% if correspondence.direction == 'OUTGOING' %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Outgoing</span>
+                        {% if compliance.status == 'COMPLIANT' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Compliant</span>
+                        {% elif compliance.status == 'NON_COMPLIANT' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Non-Compliant</span>
+                        {% elif compliance.status == 'PENDING' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Pending</span>
                         {% else %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Incoming</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{{ compliance.status }}</span>
                         {% endif %}
                     </dd>
                 </div>
                 <div>
-                    <dt class="text-sm font-medium text-gray-500">Sender</dt>
+                    <dt class="text-sm font-medium text-gray-500">Due Date</dt>
                     <dd class="mt-1 text-sm text-gray-900">
-                        {% if correspondence.sender_user %}
-                            {{ correspondence.sender_user.get_full_name|default:correspondence.sender_user.email }}
+                        {% if compliance.due_date %}
+                            {{ compliance.due_date|date:"d M Y" }}
                         {% else %}
-                            {{ correspondence.sender|default:"-" }}
+                            -
                         {% endif %}
                     </dd>
                 </div>
                 <div>
-                    <dt class="text-sm font-medium text-gray-500">Recipient</dt>
+                    <dt class="text-sm font-medium text-gray-500">Date Completed</dt>
                     <dd class="mt-1 text-sm text-gray-900">
-                        {% if correspondence.recipient_user %}
-                            {{ correspondence.recipient_user.get_full_name|default:correspondence.recipient_user.email }}
+                        {% if compliance.date_completed %}
+                            {{ compliance.date_completed|date:"d M Y" }}
                         {% else %}
-                            {{ correspondence.recipient|default:"-" }}
-                        {% endif %}
-                    </dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">Response Status</dt>
-                    <dd class="mt-1">
-                        {% if correspondence.requires_response %}
-                            {% if correspondence.response_sent %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Sent</span>
-                            {% else %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Pending</span>
-                            {% endif %}
-                        {% else %}
-                            <span class="text-sm text-gray-500">Not required</span>
+                            -
                         {% endif %}
                     </dd>
                 </div>
             </dl>
-            {% if correspondence.summary %}
+            {% if compliance.description %}
                 <div class="mt-6 pt-6 border-t border-gray-200">
-                    <h3 class="text-sm font-medium text-gray-500 mb-2">Summary</h3>
-                    <div class="prose prose-sm max-w-none text-gray-900">{{ correspondence.summary|linebreaks }}</div>
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Description</h3>
+                    <div class="prose prose-sm max-w-none text-gray-900">{{ compliance.description|linebreaks }}</div>
                 </div>
             {% endif %}
-            {% if correspondence.attachment %}
+            {% if compliance.notes %}
                 <div class="mt-6 pt-6 border-t border-gray-200">
-                    <a href="{{ correspondence.attachment.url }}"
+                    <h3 class="text-sm font-medium text-gray-500 mb-2">Notes</h3>
+                    <div class="prose prose-sm max-w-none text-gray-900">{{ compliance.notes|linebreaks }}</div>
+                </div>
+            {% endif %}
+            {% if compliance.document %}
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <a href="{{ compliance.document.url }}"
                        target="_blank"
                        class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                        {% heroicon_outline "paper-clip" class="w-4 h-4 mr-2" %}Download Attachment
+                        {% heroicon_outline "paper-clip" class="w-4 h-4 mr-2" %}Download Document
                     </a>
                 </div>
             {% endif %}
@@ -101,18 +85,18 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Add Message</h3>
                 <form method="post"
                       enctype="multipart/form-data"
-                      action="{% url 'bill_of_quantities:correspondence-dialog' project.pk correspondence.pk %}">
+                      action="{% url 'project:administrative-compliance-dialog' project.pk compliance.pk %}">
                     {% csrf_token %}
                     <div class="mb-4">
                         <label for="{{ form.message.id_for_label }}"
                                class="block text-sm font-medium text-gray-700 mb-2">Message</label>
-                        {{ form.message|as_crispy_field }}
+                        {{ form.message }}
                         {% if form.message.errors %}<p class="mt-1 text-sm text-red-600">{{ form.message.errors }}</p>{% endif %}
                     </div>
                     <div class="mb-4">
                         <label for="{{ form.attachments.id_for_label }}"
                                class="block text-sm font-medium text-gray-700 mb-2">Attachments</label>
-                        {{ form.attachments|as_crispy_field }}
+                        {{ form.attachments }}
                         <p class="mt-1 text-sm text-gray-500">You can select multiple files</p>
                         {% if form.attachments.errors %}<p class="mt-1 text-sm text-red-600">{{ form.attachments.errors }}</p>{% endif %}
                     </div>
@@ -126,25 +110,25 @@
             </div>
         </div>
         <!-- Dialog History Section -->
-        {% if correspondence.dialogs.all %}
+        {% if compliance.dialogs.all %}
             <div class="border-t border-gray-200">
                 <div class="px-6 py-4">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Message History</h3>
                     <div class="space-y-4">
-                        {% for dialog in correspondence.dialogs.all %}
+                        {% for dialog in compliance.dialogs.all %}
                             <div class="bg-gray-50 rounded-lg p-4">
                                 <div class="flex items-start justify-between mb-2">
                                     <div>
                                         <p class="text-sm font-medium text-gray-900">
-                                            {% if dialog.sender_user %}
-                                                {{ dialog.sender_user.get_full_name|default:dialog.sender_user.email }}
+                                            {% if dialog.sender %}
+                                                {{ dialog.sender.get_full_name|default:dialog.sender.email }}
                                             {% else %}
                                                 System
                                             {% endif %}
                                         </p>
                                         <p class="text-xs text-gray-500">{{ dialog.created_at|date:"d M Y H:i" }}</p>
                                     </div>
-                                    {% if dialog.sender_user == request.user %}
+                                    {% if dialog.sender == request.user %}
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">You</span>
                                     {% endif %}
                                 </div>
@@ -170,9 +154,9 @@
             </div>
         {% endif %}
         <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
-            <a href="{% url 'bill_of_quantities:correspondence-list' project.pk %}"
+            <a href="{% url 'project:administrative-compliance-list' project.pk %}"
                class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600">
-                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}Back to Correspondences
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}Back to Administrative Compliance
             </a>
         </div>
     </div>

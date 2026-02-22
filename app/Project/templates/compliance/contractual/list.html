@@ -106,6 +106,10 @@
                                        class="text-indigo-600 hover:text-indigo-900 mr-3">
                                         {% heroicon_outline "pencil" class="w-4 h-4 inline" %}
                                     </a>
+                                    <a href="{% url 'project:contractual-compliance-detail' project.pk item.pk %}"
+                                       class="text-gray-600 hover:text-gray-900 mr-3">
+                                        {% heroicon_outline "eye" class="w-4 h-4 inline" %}
+                                    </a>
                                     <a href="{% url 'project:contractual-compliance-delete' project.pk item.pk %}"
                                        class="text-red-600 hover:text-red-900">
                                         {% heroicon_outline "trash" class="w-4 h-4 inline" %}

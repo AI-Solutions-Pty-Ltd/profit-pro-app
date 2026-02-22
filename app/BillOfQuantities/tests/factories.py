@@ -3,14 +3,10 @@
 from datetime import date, timedelta
 from decimal import Decimal
 
-from factory.declarations import (
-    LazyAttribute,
-    LazyFunction,
-    Sequence,
-    SubFactory,
-)
+from django.core.files.uploadedfile import SimpleUploadedFile
+from factory import LazyAttribute, LazyFunction, Sequence, SubFactory
 from factory.django import DjangoModelFactory
-from factory.faker import Faker
+from faker import Faker
 
 from app.Account.tests.factories import AccountFactory
 from app.BillOfQuantities.models import (
@@ -22,6 +18,8 @@ from app.BillOfQuantities.models import (
     Claim,
     ContractualCorrespondence,
     ContractVariation,
+    CorrespondenceDialog,
+    CorrespondenceDialogFile,
     Escalation,
     Forecast,
     ForecastTransaction,
@@ -40,6 +38,8 @@ from app.BillOfQuantities.models import (
 )
 from app.Project.tests.factories import ProjectFactory
 
+fake = Faker()
+
 
 class StructureFactory(DjangoModelFactory):
     """Factory for Structure model."""
@@ -49,7 +49,7 @@ class StructureFactory(DjangoModelFactory):
 
     project = SubFactory(ProjectFactory)
     name = Sequence(lambda n: f"Structure {n}")
-    description = Faker("sentence")
+    description = fake.sentence()
 
 
 class BillFactory(DjangoModelFactory):
@@ -85,11 +85,11 @@ class LineItemFactory(DjangoModelFactory):
     row_index = Sequence(lambda n: n)
     item_number = Sequence(lambda n: f"ITEM-{n:03d}")
     payment_reference = Sequence(lambda n: f"PAY-{n:03d}")
-    description = Faker("sentence")
+    description = fake.sentence()
     is_work = True
     unit_measurement = "m"
-    unit_price = Faker("pydecimal", left_digits=4, right_digits=2, positive=True)
-    budgeted_quantity = Faker("pydecimal", left_digits=3, right_digits=2, positive=True)
+    unit_price = fake.pydecimal(left_digits=4, right_digits=2, positive=True)
+    budgeted_quantity = fake.pydecimal(left_digits=3, right_digits=2, positive=True)
     total_price = LazyAttribute(lambda obj: obj.unit_price * obj.budgeted_quantity)
     addendum = False
     special_item = False
@@ -116,7 +116,7 @@ class ActualTransactionFactory(DjangoModelFactory):
     line_item = SubFactory(LineItemFactory)
     captured_by = SubFactory(AccountFactory)
     approved_by = SubFactory(AccountFactory)
-    quantity = Faker("pydecimal", left_digits=3, right_digits=2, positive=True)
+    quantity = fake.pydecimal(left_digits=3, right_digits=2, positive=True)
     unit_price = LazyAttribute(lambda obj: obj.line_item.unit_price)
     total_price = LazyAttribute(lambda obj: obj.quantity * obj.unit_price)
     approved = False
@@ -137,7 +137,7 @@ class ForecastFactory(DjangoModelFactory):
     project = SubFactory(ProjectFactory)
     period = LazyFunction(lambda: date.today().replace(day=1))
     status = Forecast.Status.DRAFT
-    notes = Faker("sentence")
+    notes = fake.sentence()
     captured_by = SubFactory(AccountFactory)
 
 
@@ -149,7 +149,7 @@ class ForecastTransactionFactory(DjangoModelFactory):
 
     forecast = SubFactory(ForecastFactory)
     line_item = SubFactory(LineItemFactory)
-    quantity = Faker("pydecimal", left_digits=3, right_digits=2, positive=True)
+    quantity = fake.pydecimal(left_digits=3, right_digits=2, positive=True)
     unit_price = LazyAttribute(lambda obj: obj.line_item.unit_price)
     total_price = LazyAttribute(lambda obj: obj.quantity * obj.unit_price)
     notes = ""
@@ -168,12 +168,12 @@ class ContractVariationFactory(DjangoModelFactory):
 
     project = SubFactory(ProjectFactory)
     variation_number = Sequence(lambda n: f"VAR-{n:03d}")
-    title = Faker("sentence", nb_words=5)
-    description = Faker("paragraph")
+    title = fake.sentence(nb_words=5)
+    description = fake.paragraph()
     category = ContractVariation.Category.SCOPE_CHANGE
     variation_type = ContractVariation.VariationType.AMOUNT
     status = ContractVariation.Status.DRAFT
-    variation_amount = Faker("pydecimal", left_digits=6, right_digits=2, positive=True)
+    variation_amount = fake.pydecimal(left_digits=6, right_digits=2, positive=True)
     date_identified = LazyFunction(date.today)
     submitted_by = SubFactory(AccountFactory)
 
@@ -186,14 +186,46 @@ class ContractualCorrespondenceFactory(DjangoModelFactory):
 
     project = SubFactory(ProjectFactory)
     reference_number = Sequence(lambda n: f"CORR-{n:04d}")
-    subject = Faker("sentence", nb_words=8)
+    subject = fake.sentence(nb_words=8)
     correspondence_type = ContractualCorrespondence.CorrespondenceType.LETTER
     direction = ContractualCorrespondence.Direction.OUTGOING
     date_of_correspondence = LazyFunction(date.today)
-    sender = Faker("company")
-    recipient = Faker("company")
-    summary = Faker("paragraph")
+    sender = fake.company()
+    recipient = fake.company()
+    summary = fake.paragraph()
     logged_by = SubFactory(AccountFactory)
+    sender_user = None
+    recipient_user = None
+
+
+class CorrespondenceDialogFactory(DjangoModelFactory):
+    """Factory for CorrespondenceDialog model."""
+
+    class Meta:
+        model = CorrespondenceDialog
+
+    correspondence = SubFactory(ContractualCorrespondenceFactory)
+    sender_user = SubFactory(AccountFactory)
+    receiver_user = SubFactory(AccountFactory)
+    message = fake.paragraph(nb_sentences=3)
+    sender = ""
+    receiver = ""
+
+
+class CorrespondenceDialogFileFactory(DjangoModelFactory):
+    """Factory for CorrespondenceDialogFile model."""
+
+    class Meta:
+        model = CorrespondenceDialogFile
+
+    dialog = SubFactory(CorrespondenceDialogFactory)
+    file = LazyAttribute(
+        lambda _: SimpleUploadedFile(
+            f"test_file_{fake.uuid4()[:8]}.pdf",
+            b"fake file content",
+            content_type="application/pdf",
+        )
+    )
 
 
 # ============================================================================
@@ -210,8 +242,8 @@ class AdvancePaymentFactory(DjangoModelFactory):
     project = SubFactory(ProjectFactory)
     payment_certificate = SubFactory(PaymentCertificateFactory)
     transaction_type = AdvancePayment.TransactionType.DEBIT
-    amount = Faker("pydecimal", left_digits=6, right_digits=2, positive=True)
-    description = Faker("sentence")
+    amount = fake.pydecimal(left_digits=6, right_digits=2, positive=True)
+    description = fake.sentence()
     date = LazyFunction(date.today)
     captured_by = SubFactory(AccountFactory)
     recovery_method = AdvancePayment.RecoveryMethod.PERCENTAGE
@@ -227,8 +259,8 @@ class RetentionFactory(DjangoModelFactory):
     project = SubFactory(ProjectFactory)
     payment_certificate = SubFactory(PaymentCertificateFactory)
     transaction_type = Retention.TransactionType.DEBIT
-    amount = Faker("pydecimal", left_digits=5, right_digits=2, positive=True)
-    description = Faker("sentence")
+    amount = fake.pydecimal(left_digits=5, right_digits=2, positive=True)
+    description = fake.sentence()
     date = LazyFunction(date.today)
     captured_by = SubFactory(AccountFactory)
     retention_type = Retention.RetentionType.WITHHELD
@@ -244,13 +276,13 @@ class MaterialsOnSiteFactory(DjangoModelFactory):
     project = SubFactory(ProjectFactory)
     payment_certificate = SubFactory(PaymentCertificateFactory)
     transaction_type = MaterialsOnSite.TransactionType.DEBIT
-    amount = Faker("pydecimal", left_digits=5, right_digits=2, positive=True)
-    description = Faker("sentence")
+    amount = fake.pydecimal(left_digits=5, right_digits=2, positive=True)
+    description = fake.sentence()
     date = LazyFunction(date.today)
     captured_by = SubFactory(AccountFactory)
     material_status = MaterialsOnSite.MaterialStatus.CLAIMED
-    material_description = Faker("sentence", nb_words=4)
-    quantity = Faker("pydecimal", left_digits=3, right_digits=2, positive=True)
+    material_description = fake.sentence(nb_words=4)
+    quantity = fake.pydecimal(left_digits=3, right_digits=2, positive=True)
     unit = "m3"
 
 
@@ -263,8 +295,8 @@ class EscalationFactory(DjangoModelFactory):
     project = SubFactory(ProjectFactory)
     payment_certificate = SubFactory(PaymentCertificateFactory)
     transaction_type = Escalation.TransactionType.DEBIT
-    amount = Faker("pydecimal", left_digits=5, right_digits=2, positive=True)
-    description = Faker("sentence")
+    amount = fake.pydecimal(left_digits=5, right_digits=2, positive=True)
+    description = fake.sentence()
     date = LazyFunction(date.today)
     captured_by = SubFactory(AccountFactory)
     escalation_type = Escalation.EscalationType.COMBINED
@@ -279,8 +311,8 @@ class SpecialItemTransactionFactory(DjangoModelFactory):
     project = SubFactory(ProjectFactory)
     payment_certificate = SubFactory(PaymentCertificateFactory)
     transaction_type = SpecialItemTransaction.TransactionType.DEBIT
-    amount = Faker("pydecimal", left_digits=5, right_digits=2, positive=True)
-    description = Faker("sentence")
+    amount = fake.pydecimal(left_digits=5, right_digits=2, positive=True)
+    description = fake.sentence()
     date = LazyFunction(date.today)
     captured_by = SubFactory(AccountFactory)
     special_item_type = SpecialItemTransaction.SpecialItemType.PROVISIONAL
@@ -301,7 +333,7 @@ class BaselineCashflowFactory(DjangoModelFactory):
     project = SubFactory(ProjectFactory)
     version = 1
     period = LazyFunction(lambda: date.today().replace(day=1))
-    planned_value = Faker("pydecimal", left_digits=6, right_digits=2, positive=True)
+    planned_value = fake.pydecimal(left_digits=6, right_digits=2, positive=True)
     status = BaselineCashflow.Status.DRAFT
 
 
@@ -315,7 +347,7 @@ class RevisedBaselineFactory(DjangoModelFactory):
     revision_number = Sequence(lambda n: n + 1)
     revision_date = LazyFunction(date.today)
     revision_reason = RevisedBaseline.RevisionReason.VARIATION
-    reason_description = Faker("paragraph")
+    reason_description = fake.paragraph()
     status = RevisedBaseline.Status.DRAFT
     original_completion_date = LazyFunction(lambda: date.today() + timedelta(days=180))
     revised_completion_date = LazyFunction(lambda: date.today() + timedelta(days=210))
@@ -329,7 +361,7 @@ class RevisedBaselineDetailFactory(DjangoModelFactory):
 
     revised_baseline = SubFactory(RevisedBaselineFactory)
     period = LazyFunction(lambda: date.today().replace(day=1))
-    planned_value = Faker("pydecimal", left_digits=6, right_digits=2, positive=True)
+    planned_value = fake.pydecimal(left_digits=6, right_digits=2, positive=True)
 
 
 class CashflowForecastFactory(DjangoModelFactory):
@@ -341,7 +373,7 @@ class CashflowForecastFactory(DjangoModelFactory):
     project = SubFactory(ProjectFactory)
     forecast_date = LazyFunction(date.today)
     forecast_period = LazyFunction(lambda: date.today().replace(day=1))
-    forecast_value = Faker("pydecimal", left_digits=6, right_digits=2, positive=True)
+    forecast_value = fake.pydecimal(left_digits=6, right_digits=2, positive=True)
     status = CashflowForecast.Status.DRAFT
     captured_by = SubFactory(AccountFactory)
 
@@ -359,7 +391,7 @@ class SectionalCompletionDateFactory(DjangoModelFactory):
 
     project = SubFactory(ProjectFactory)
     section_name = Sequence(lambda n: f"Section {n}")
-    section_description = Faker("sentence")
+    section_description = fake.sentence()
     planned_start_date = LazyFunction(date.today)
     planned_completion_date = LazyFunction(lambda: date.today() + timedelta(days=90))
     status = SectionalCompletionDate.Status.NOT_STARTED
@@ -404,4 +436,4 @@ class ClaimFactory(DjangoModelFactory):
     project = SubFactory(ProjectFactory)
     period = LazyFunction(lambda: date.today().replace(day=1, year=2024, month=1))
     estimated_claim = LazyFunction(lambda: Decimal("100000.00"))
-    notes = Faker("text", max_nb_chars=200)
+    notes = fake.text(max_nb_chars=200)

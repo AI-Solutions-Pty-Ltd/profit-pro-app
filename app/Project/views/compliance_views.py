@@ -11,6 +11,7 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import (
     CreateView,
     DeleteView,
+    DetailView,
     ListView,
     TemplateView,
     UpdateView,
@@ -23,11 +24,24 @@ from app.Project.forms import (
     ContractualComplianceForm,
     FinalAccountComplianceForm,
 )
+from app.Project.forms.compliance_forms import (
+    AdministrativeComplianceDialogForm,
+    ContractualComplianceDialogForm,
+    FinalAccountComplianceDialogForm,
+)
 from app.Project.models import (
     AdministrativeCompliance,
+    AdministrativeComplianceDialog,
     ContractualCompliance,
+    ContractualComplianceDialog,
     FinalAccountCompliance,
+    FinalAccountComplianceDialog,
     Role,
+)
+from app.Project.models.compliance_models import (
+    AdministrativeComplianceDialogFile,
+    ContractualComplianceDialogFile,
+    FinalAccountComplianceDialogFile,
 )
 
 
@@ -696,4 +710,279 @@ class FinalAccountComplianceDeleteView(ComplianceMixin, DeleteView):
         return reverse_lazy(
             "project:final-account-compliance-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+
+# =============================================================================
+# Compliance Detail Views
+# =============================================================================
+
+
+class ContractualComplianceDetailView(ComplianceMixin, DetailView):
+    """Detail view for contractual compliance."""
+
+    model = ContractualCompliance
+    template_name = "compliance/contractual/detail.html"
+    context_object_name = "compliance"
+
+    def get_object(self, queryset=None) -> ContractualCompliance:
+        self.get_queryset() if not queryset else None
+        return get_object_or_404(
+            ContractualCompliance,
+            pk=self.kwargs["pk"],
+            project__pk=self.kwargs["project_pk"],
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = ContractualComplianceDialogForm()
+        return context
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        return [
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
+                    "project:project-management", kwargs={"pk": self.get_project().pk}
+                ),
+            ),
+            BreadcrumbItem(
+                title="Contractual Compliance",
+                url=reverse(
+                    "project:contractual-compliance-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            ),
+            BreadcrumbItem(
+                title=f"{self.get_object().id} - {self.get_object().obligation_description[:10]}",
+                url=None,
+            ),
+        ]
+
+
+class ContractualComplianceDialogView(ComplianceMixin, CreateView):
+    """Create a new dialog for contractual compliance."""
+
+    model = ContractualComplianceDialog
+    form_class = ContractualComplianceDialogForm
+    template_name = "compliance/contractual/detail.html"
+    http_method_names = ["post"]
+
+    def get_compliance(self) -> ContractualCompliance:
+        return get_object_or_404(
+            ContractualCompliance,
+            pk=self.kwargs["pk"],
+            project__pk=self.kwargs["project_pk"],
+        )
+
+    def form_valid(self, form):
+        dialog = form.save(commit=False)
+        dialog.compliance = self.get_compliance()
+        dialog.sender = self.request.user
+        dialog.save()
+        attachments = self.request.FILES.getlist("attachments")
+        for file in attachments:
+            ContractualComplianceDialogFile.objects.create(dialog=dialog, file=file)
+        messages.success(self.request, "Message added successfully.")
+        return redirect(
+            reverse(
+                "project:contractual-compliance-detail",
+                kwargs={
+                    "project_pk": self.kwargs["project_pk"],
+                    "pk": self.kwargs["pk"],
+                },
+            )
+        )
+
+    def form_invalid(self, form):
+        compliance = self.get_compliance()
+        messages.error(self.request, "Please correct the errors below.")
+        return self.render_to_response(
+            self.get_context_data(
+                object=compliance,
+                compliance=compliance,
+                form=form,
+            )
+        )
+
+
+class AdministrativeComplianceDetailView(ComplianceMixin, DetailView):
+    """Detail view for administrative compliance."""
+
+    model = AdministrativeCompliance
+    template_name = "compliance/administrative/detail.html"
+    context_object_name = "compliance"
+
+    def get_object(self, queryset=None) -> AdministrativeCompliance:
+        self.get_queryset() if not queryset else None
+        return get_object_or_404(
+            AdministrativeCompliance,
+            pk=self.kwargs["pk"],
+            project__pk=self.kwargs["project_pk"],
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = AdministrativeComplianceDialogForm()
+        return context
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        return [
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
+                    "project:project-management", kwargs={"pk": self.get_project().pk}
+                ),
+            ),
+            BreadcrumbItem(
+                title="Administrative Compliance",
+                url=reverse(
+                    "project:administrative-compliance-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            ),
+            BreadcrumbItem(title=self.get_object().reference_number, url=None),
+        ]
+
+
+class AdministrativeComplianceDialogView(ComplianceMixin, CreateView):
+    """Create a new dialog for administrative compliance."""
+
+    model = AdministrativeComplianceDialog
+    form_class = AdministrativeComplianceDialogForm
+    template_name = "compliance/administrative/detail.html"
+    http_method_names = ["post"]
+
+    def get_compliance(self) -> AdministrativeCompliance:
+        return get_object_or_404(
+            AdministrativeCompliance,
+            pk=self.kwargs["pk"],
+            project__pk=self.kwargs["project_pk"],
+        )
+
+    def form_valid(self, form):
+        dialog = form.save(commit=False)
+        dialog.compliance = self.get_compliance()
+        dialog.sender = self.request.user
+        dialog.save()
+        attachments = self.request.FILES.getlist("attachments")
+        for file in attachments:
+            AdministrativeComplianceDialogFile.objects.create(dialog=dialog, file=file)
+        messages.success(self.request, "Message added successfully.")
+        return redirect(
+            reverse(
+                "project:administrative-compliance-detail",
+                kwargs={
+                    "project_pk": self.kwargs["project_pk"],
+                    "pk": self.kwargs["pk"],
+                },
+            )
+        )
+
+    def form_invalid(self, form):
+        compliance = self.get_compliance()
+        messages.error(self.request, "Please correct the errors below.")
+        return self.render_to_response(
+            self.get_context_data(
+                object=compliance,
+                compliance=compliance,
+                form=form,
+            )
+        )
+
+
+class FinalAccountComplianceDetailView(ComplianceMixin, DetailView):
+    """Detail view for final account compliance."""
+
+    model = FinalAccountCompliance
+    template_name = "compliance/final_account/detail.html"
+    context_object_name = "compliance"
+
+    def get_object(self, queryset=None) -> FinalAccountCompliance:
+        self.get_queryset() if not queryset else None
+        return get_object_or_404(
+            FinalAccountCompliance,
+            pk=self.kwargs["pk"],
+            project__pk=self.kwargs["project_pk"],
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = FinalAccountComplianceDialogForm()
+        return context
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        return [
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=self.get_project().name,
+                url=reverse(
+                    "project:project-management", kwargs={"pk": self.get_project().pk}
+                ),
+            ),
+            BreadcrumbItem(
+                title="Final Account Compliance",
+                url=reverse(
+                    "project:final-account-compliance-list",
+                    kwargs={"project_pk": self.get_project().pk},
+                ),
+            ),
+            BreadcrumbItem(
+                title=f"{self.get_object().id} - {self.get_object().description[:10]}",
+                url=None,
+            ),
+        ]
+
+
+class FinalAccountComplianceDialogView(ComplianceMixin, CreateView):
+    """Create a new dialog for final account compliance."""
+
+    model = FinalAccountComplianceDialog
+    form_class = FinalAccountComplianceDialogForm
+    template_name = "compliance/final_account/detail.html"
+    http_method_names = ["post"]
+
+    def get_compliance(self) -> FinalAccountCompliance:
+        return get_object_or_404(
+            FinalAccountCompliance,
+            pk=self.kwargs["pk"],
+            project__pk=self.kwargs["project_pk"],
+        )
+
+    def form_valid(self, form):
+        dialog = form.save(commit=False)
+        dialog.compliance = self.get_compliance()
+        dialog.sender = self.request.user
+        dialog.save()
+        attachments = self.request.FILES.getlist("attachments")
+        for file in attachments:
+            FinalAccountComplianceDialogFile.objects.create(dialog=dialog, file=file)
+        messages.success(self.request, "Message added successfully.")
+        return redirect(
+            reverse(
+                "project:final-account-compliance-detail",
+                kwargs={
+                    "project_pk": self.kwargs["project_pk"],
+                    "pk": self.kwargs["pk"],
+                },
+            )
+        )
+
+    def form_invalid(self, form):
+        compliance = self.get_compliance()
+        messages.error(self.request, "Please correct the errors below.")
+        return self.render_to_response(
+            self.get_context_data(
+                object=compliance,
+                compliance=compliance,
+                form=form,
+            )
         )

@@ -29,4 +29,9 @@ correspondence_urls = [
         correspondence_views.CorrespondenceDeleteView.as_view(),
         name="correspondence-delete",
     ),
+    path(
+        "project/<int:project_pk>/correspondences/<int:pk>/dialog/",
+        correspondence_views.CorrespondenceDialog.as_view(),
+        name="correspondence-dialog",
+    ),
 ]

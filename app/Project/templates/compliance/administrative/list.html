@@ -111,6 +111,10 @@
                                     {% endif %}
                                 </td>
                                 <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="{% url 'project:administrative-compliance-detail' project.pk item.pk %}"
+                                       class="text-gray-600 hover:text-gray-900 mr-3">
+                                        {% heroicon_outline "eye" class="w-4 h-4 inline" %}
+                                    </a>
                                     <a href="{% url 'project:administrative-compliance-update' project.pk item.pk %}"
                                        class="text-indigo-600 hover:text-indigo-900 mr-3">
                                         {% heroicon_outline "pencil" class="w-4 h-4 inline" %}

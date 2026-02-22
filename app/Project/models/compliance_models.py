@@ -4,6 +4,8 @@ This module contains models for tracking contractor, consultant and client
 performance against their contractual obligations.
 """
 
+from typing import TYPE_CHECKING
+
 from django.db import models
 
 from app.Account.models import Account
@@ -375,3 +377,139 @@ class FinalAccountCompliance(BaseModel):
         if self.file:
             return self.file.name.split("/")[-1]
         return ""
+
+
+class BaseDialog(BaseModel):
+    """TODO if update, update to compliance dialogs as well."""
+
+    sender = models.ForeignKey(
+        Account,
+        on_delete=models.SET_NULL,
+        related_name="%(class)s_senders",
+        null=True,
+        blank=True,
+    )
+    receiver = models.ForeignKey(
+        Account,
+        on_delete=models.SET_NULL,
+        related_name="%(class)s_receivers",
+        null=True,
+        blank=True,
+    )
+    message = models.TextField()
+
+    class Meta:
+        ordering = ["-created_at"]
+        abstract = True
+
+
+class ContractualComplianceDialog(BaseDialog):
+    compliance = models.ForeignKey(
+        ContractualCompliance,
+        on_delete=models.CASCADE,
+        related_name="dialogs",
+    )
+    if TYPE_CHECKING:
+        attachments: models.QuerySet["ContractualComplianceDialogFile"]
+
+
+class AdministrativeComplianceDialog(BaseDialog):
+    compliance = models.ForeignKey(
+        AdministrativeCompliance,
+        on_delete=models.CASCADE,
+        related_name="dialogs",
+    )
+
+    if TYPE_CHECKING:
+        attachments: models.QuerySet["AdministrativeComplianceDialogFile"]
+
+
+class FinalAccountComplianceDialog(BaseDialog):
+    compliance = models.ForeignKey(
+        FinalAccountCompliance,
+        on_delete=models.CASCADE,
+        related_name="dialogs",
+    )
+
+    if TYPE_CHECKING:
+        attachments: models.QuerySet["FinalAccountComplianceDialogFile"]
+
+
+class ContractualComplianceDialogFile(BaseModel):
+    """TODO if update, update to compliance dialogs as well."""
+
+    def upload_to(self, filename):
+        """Generate upload path for correspondence dialog file attachments."""
+        import os
+
+        base_filename = os.path.basename(filename)
+        # Use a combination of dialog ID and UUID to ensure uniqueness
+        project = self.dialog.compliance.project
+        return f"contractual_compliance/{project.id}/{self.dialog.id}/{base_filename}"
+
+    file = models.FileField(upload_to=upload_to)
+    dialog: ContractualComplianceDialog = models.ForeignKey(  # type: ignore
+        ContractualComplianceDialog,
+        on_delete=models.CASCADE,
+        related_name="attachments",
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.file.name.split("/")[-1] if self.file else ""
+
+
+class AdministrativeComplianceDialogFile(BaseModel):
+    """TODO if update, update to compliance dialogs as well."""
+
+    def upload_to(self, filename):
+        """Generate upload path for correspondence dialog file attachments."""
+        import os
+
+        base_filename = os.path.basename(filename)
+        # Use a combination of dialog ID and UUID to ensure uniqueness
+        project = self.dialog.compliance.project
+        return (
+            f"administrative_compliance/{project.id}/{self.dialog.id}/{base_filename}"
+        )
+
+    file = models.FileField(upload_to=upload_to)
+    dialog: AdministrativeComplianceDialog = models.ForeignKey(  # type: ignore
+        AdministrativeComplianceDialog,
+        on_delete=models.CASCADE,
+        related_name="attachments",
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.file.name.split("/")[-1] if self.file else ""
+
+
+class FinalAccountComplianceDialogFile(BaseModel):
+    """TODO if update, update to compliance dialogs as well."""
+
+    def upload_to(self, filename):
+        """Generate upload path for correspondence dialog file attachments."""
+        import os
+
+        base_filename = os.path.basename(filename)
+        # Use a combination of dialog ID and UUID to ensure uniqueness
+        project = self.dialog.compliance.project
+        return f"final_account_compliance/{project.id}/{self.dialog.id}/{base_filename}"
+
+    file = models.FileField(upload_to=upload_to)
+    dialog: FinalAccountComplianceDialog = models.ForeignKey(  # type: ignore
+        FinalAccountComplianceDialog,
+        on_delete=models.CASCADE,
+        related_name="attachments",
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.file.name.split("/")[-1] if self.file else ""

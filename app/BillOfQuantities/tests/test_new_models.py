@@ -5,6 +5,7 @@ from decimal import Decimal
 
 import pytest
 
+from app.Account.tests.factories import AccountFactory
 from app.BillOfQuantities.models import (
     AdvancePayment,
     ContractualCorrespondence,
@@ -89,6 +90,31 @@ class TestContractualCorrespondenceModel:
                 correspondence_type=corr_type
             )
             assert correspondence.correspondence_type == corr_type
+
+    def test_correspondence_with_user_fields(self):
+        """Test correspondence with user fields."""
+        sender = AccountFactory.create()
+        recipient = AccountFactory.create()
+
+        correspondence = ContractualCorrespondenceFactory.create(
+            sender_user=sender,
+            recipient_user=recipient,
+            sender="String Sender",
+            recipient="String Recipient",
+        )
+
+        assert correspondence.sender_user == sender
+        assert correspondence.recipient_user == recipient
+        assert correspondence.sender == "String Sender"
+        assert correspondence.recipient == "String Recipient"
+
+    def test_correspondence_directions(self):
+        """Test all correspondence directions are valid."""
+        for direction in ContractualCorrespondence.Direction:
+            correspondence = ContractualCorrespondenceFactory.create(
+                direction=direction
+            )
+            assert correspondence.direction == direction
 
 
 @pytest.mark.django_db

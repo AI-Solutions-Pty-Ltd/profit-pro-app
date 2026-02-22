@@ -2,8 +2,9 @@
 
 from django import forms
 from django.contrib import messages
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.views import View
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -12,7 +13,9 @@ from django.views.generic import (
     UpdateView,
 )
 
+from app.BillOfQuantities.forms.correspondence_forms import CorrespondenceDialogForm
 from app.BillOfQuantities.models import ContractualCorrespondence
+from app.BillOfQuantities.models.contract_models import CorrespondenceDialogFile
 from app.core.Utilities.forms import styled_attachment_input, styled_date_input
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
@@ -275,9 +278,10 @@ class CorrespondenceDetailView(CorrespondenceMixin, DetailView):
         )
 
     def get_context_data(self, **kwargs):
-        """Add project to context."""
+        """Add project and form to context."""
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
+        context["form"] = CorrespondenceDialogForm()
         return context
 
 
@@ -335,3 +339,47 @@ class CorrespondenceDeleteView(CorrespondenceMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         return context
+
+
+class CorrespondenceDialog(CorrespondenceMixin, View):
+    """Handle correspondence dialog creation with file attachments."""
+
+    def post(self, request, project_pk, pk, *args, **kwargs):
+        project = self.get_project()
+        correspondence = get_object_or_404(
+            ContractualCorrespondence, pk=pk, project=project
+        )
+
+        if not correspondence.sender_user:
+            correspondence.sender_user = request.user
+            correspondence.save()
+            correspondence.refresh_from_db()
+
+        form = CorrespondenceDialogForm(data=request.POST, files=request.FILES)
+
+        if form.is_valid():
+            dialog = form.save(commit=False)
+            dialog.correspondence = correspondence
+            dialog.sender_user = request.user
+            if request.user == correspondence.recipient_user:
+                dialog.recipient = correspondence.sender
+                dialog.receiver_user = correspondence.sender_user
+            else:
+                dialog.recipient = correspondence.recipient
+                dialog.receiver_user = correspondence.recipient_user
+            dialog.save()
+
+            # Form already handles attachments if commit=True
+            # But we saved with commit=False, so handle them manually
+            attachments = form.cleaned_data.get("attachments", [])
+            for file in attachments:
+                if file:
+                    CorrespondenceDialogFile.objects.create(dialog=dialog, file=file)
+
+            messages.success(request, "Message sent successfully!")
+        else:
+            messages.error(request, "Please correct the errors below.")
+
+        return redirect(
+            "bill_of_quantities:correspondence-detail", project_pk=project.pk, pk=pk
+        )

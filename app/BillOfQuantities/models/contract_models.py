@@ -1,6 +1,7 @@
 """Models for Contract Variations and Contractual Correspondences."""
 
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from django.db import models
 
@@ -51,7 +52,7 @@ class ContractVariation(BaseModel):
         import os
 
         base_filename = os.path.basename(filename)
-        return f"contract_variations/{self.project.name}/{base_filename}"
+        return f"contract_variations/{self.project.id}/{base_filename}"
 
     project = models.ForeignKey(
         "Project.Project",
@@ -266,7 +267,7 @@ class ContractualCorrespondence(BaseModel):
         import os
 
         base_filename = os.path.basename(filename)
-        return f"contract_correspondences/{self.project.name}/{base_filename}"
+        return f"contract_correspondences/{self.project.id}/{base_filename}"
 
     project = models.ForeignKey(
         "Project.Project",
@@ -304,6 +305,21 @@ class ContractualCorrespondence(BaseModel):
     )
 
     # Parties involved
+    sender_user = models.ForeignKey(
+        to=Account,
+        on_delete=models.SET_NULL,
+        related_name="correspondence_senders",
+        help_text="Name/organization of sender",
+        null=True,
+    )
+    recipient_user = models.ForeignKey(
+        to=Account,
+        on_delete=models.SET_NULL,
+        related_name="correspondence_receivers",
+        help_text="Name/organization of recipient",
+        null=True,
+    )
+
     sender = models.CharField(
         max_length=255,
         blank=True,
@@ -377,6 +393,9 @@ class ContractualCorrespondence(BaseModel):
         help_text="Additional notes",
     )
 
+    if TYPE_CHECKING:
+        dialogs = models.QuerySet["CorrespondenceDialog"]
+
     class Meta:
         verbose_name = "Contractual Correspondence"
         verbose_name_plural = "Contractual Correspondences"
@@ -389,3 +408,76 @@ class ContractualCorrespondence(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.reference_number}: {self.subject}"
+
+
+class CorrespondenceDialog(BaseModel):
+    """TODO if update, update to compliance dialogs as well."""
+
+    correspondence: ContractualCorrespondence = models.ForeignKey(  # type: ignore
+        ContractualCorrespondence,
+        on_delete=models.CASCADE,
+        related_name="dialogs",
+    )
+    sender = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Name/organization of sender",
+    )
+    recipient = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text="Name/organization of recipient",
+    )
+
+    sender_user = models.ForeignKey(
+        Account,
+        on_delete=models.SET_NULL,
+        related_name="correspondence_dialog_senders",
+        null=True,
+        blank=True,
+    )
+    receiver_user = models.ForeignKey(
+        Account,
+        on_delete=models.SET_NULL,
+        related_name="correspondence_dialog_receivers",
+        null=True,
+        blank=True,
+    )
+    message = models.TextField()
+
+    if TYPE_CHECKING:
+        attachments: models.QuerySet["CorrespondenceDialogFile"]
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"Dialog for {self.correspondence}"
+
+
+class CorrespondenceDialogFile(BaseModel):
+    """TODO if update, update to compliance dialogs as well."""
+
+    def correspondence_dialog_file_upload_to(self, filename):
+        """Generate upload path for correspondence dialog file attachments."""
+        import os
+
+        base_filename = os.path.basename(filename)
+        # Use a combination of dialog ID and UUID to ensure uniqueness
+        project = self.dialog.correspondence.project
+        return f"contract_correspondences/{project.id}/{self.dialog.id}/{base_filename}"
+
+    file = models.FileField(upload_to=correspondence_dialog_file_upload_to)
+    dialog: CorrespondenceDialog = models.ForeignKey(  # type: ignore
+        CorrespondenceDialog,
+        on_delete=models.CASCADE,
+        related_name="attachments",
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.file.name.split("/")[-1] if self.file else ""

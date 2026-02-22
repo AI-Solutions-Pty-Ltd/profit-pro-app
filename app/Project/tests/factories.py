@@ -12,7 +12,7 @@ from factory.faker import Faker
 from factory.helpers import post_generation
 
 from app.Account.models import Account
-from app.Account.tests.factories import UserFactory
+from app.Account.tests.factories import AccountFactory, UserFactory
 from app.Project.models import (
     AdministrativeCompliance,
     Company,
@@ -144,9 +144,6 @@ class ProjectFactory(DjangoModelFactory):
 
     @post_generation
     def users(self, create, extracted, **kwargs):
-        if not create or not extracted:
-            return
-
         # For ManyToManyField, we need to use the factory's instance
         # The instance is stored as self.instance in some versions
         # But the most compatible way is to use a RelatedManager
@@ -161,12 +158,16 @@ class ProjectFactory(DjangoModelFactory):
 
         # Add users to the project
         users_to_add = []
-        if isinstance(extracted, dict):
-            users_to_add = extracted.values()
-        elif isinstance(extracted, (list, tuple)):
-            users_to_add = extracted
-        else:
-            users_to_add = [extracted]
+        if extracted:
+            if isinstance(extracted, dict):
+                users_to_add = extracted.values()
+            elif isinstance(extracted, (list, tuple)):
+                users_to_add = extracted
+            else:
+                users_to_add = [extracted]
+
+        if not users_to_add:
+            users_to_add = [AccountFactory.create()]
 
         # Add each user and create an admin role for them
         for user in users_to_add:
