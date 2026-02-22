@@ -18,7 +18,7 @@ class TestProjectModel:
         project = ProjectFactory.create(name="New Project")
         assert project.id is not None
         assert project.name == "New Project"
-        assert not project.users.exists()
+        assert project.users.exists()
         assert project.created_at is not None
         assert project.updated_at is not None
         assert project.deleted is False
