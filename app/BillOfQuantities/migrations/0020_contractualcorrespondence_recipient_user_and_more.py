@@ -9,7 +9,7 @@ import app.BillOfQuantities.models.contract_models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("BillOfQuantities", "0020_clear_receivers_senders"),
+        ("BillOfQuantities", "0019_alter_claim_period"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
