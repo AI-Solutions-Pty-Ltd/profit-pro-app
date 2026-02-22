@@ -120,7 +120,12 @@ class TransactionForm(forms.ModelForm):
         (VAT_MODE_EXCLUSIVE, "VAT Exclusive"),
     )
 
-    ledger = forms.ModelChoiceField(
+    debit_ledger = forms.ModelChoiceField(
+        queryset=Ledger.objects.none(),
+        required=True,
+        empty_label="Select ledger",
+    )
+    credit_ledger = forms.ModelChoiceField(
         queryset=Ledger.objects.none(),
         required=True,
         empty_label="Select ledger",
@@ -145,11 +150,6 @@ class TransactionForm(forms.ModelForm):
         initial=VAT_MODE_INCLUSIVE,
         required=False,
     )
-    type = SafeChoiceField(
-        choices=Transaction.TransactionType.choices,
-        initial=Transaction.TransactionType.DEBIT,
-        required=False,
-    )
 
     company = forms.ModelChoiceField(
         queryset=Company.objects.all(), widget=forms.HiddenInput(), required=False
@@ -171,9 +171,9 @@ class TransactionForm(forms.ModelForm):
             "project",
             "structure",
             "bill",
-            "ledger",
+            "debit_ledger",
+            "credit_ledger",
             "date",
-            "type",
             "amount",
             "vat_rate",
             "vat_mode",
@@ -188,9 +188,13 @@ class TransactionForm(forms.ModelForm):
         if not self.company:
             raise ValueError("Company is required for transaction form.")
 
-        # Filter ledger choices to company's ledgers
-        ledger_field = cast(forms.ModelChoiceField, self.fields["ledger"])
-        ledger_field.queryset = Ledger.objects.filter(company=self.company)
+        # Filter debit ledger choices to company's ledgers
+        debit_ledger_field = cast(forms.ModelChoiceField, self.fields["debit_ledger"])
+        debit_ledger_field.queryset = Ledger.objects.filter(company=self.company)
+
+        # Filter credit ledger choices to company's ledgers
+        credit_ledger_field = cast(forms.ModelChoiceField, self.fields["credit_ledger"])
+        credit_ledger_field.queryset = Ledger.objects.filter(company=self.company)
 
         # initial values
         # set amount field
@@ -204,6 +208,11 @@ class TransactionForm(forms.ModelForm):
 
         if not self.company:
             raise ValueError("Company is required for transaction form.")
+
+        if cleaned_data.get("debit_ledger") == cleaned_data.get("credit_ledger"):
+            raise forms.ValidationError(
+                {"credit_ledger": "Debit and credit ledgers cannot be the same."}
+            )
 
         project = cleaned_data.get("project")
         if project:
@@ -226,7 +235,6 @@ class TransactionForm(forms.ModelForm):
 
         tx_date = cleaned_data.get("date")
 
-        # Explicit type assertion for mypy - we know company is a Company instance
         company_instance = cast(Company, self.company)
         if company_instance.vat_registered:
             vat_rate = cleaned_data.get("vat_rate")
@@ -308,4 +316,12 @@ class VatTransactionCreateUpdateForm(TransactionForm):
     )
 
     class Meta(TransactionForm.Meta):
-        fields = ["ledger", "bill", "date", "vat_rate", "type", "amount", "vat_mode"]
+        fields = [
+            "debit_ledger",
+            "credit_ledger",
+            "bill",
+            "date",
+            "vat_rate",
+            "amount",
+            "vat_mode",
+        ]

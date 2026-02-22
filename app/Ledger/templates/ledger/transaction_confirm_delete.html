@@ -33,23 +33,29 @@
                     <div class="mt-4 bg-gray-50 rounded-md p-4">
                         <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
-                                <dt class="text-sm font-medium text-gray-500">Transaction ID</dt>
-                                <dd class="mt-1 text-sm text-gray-900">
-                                    #{{ transaction.pk }}
-                                </dd>
-                            </div>
-                            <div>
                                 <dt class="text-sm font-medium text-gray-500">Date</dt>
                                 <dd class="mt-1 text-sm text-gray-900">
                                     {{ transaction.date|date:"d F Y" }}
                                 </dd>
                             </div>
                             <div>
-                                <dt class="text-sm font-medium text-gray-500">Type</dt>
-                                <dd class="mt-1">
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {% if transaction.type == 'debit' %}bg-red-100 text-red-800 {% else %}bg-green-100 text-green-800{% endif %}">
-                                        {{ transaction.get_type_display }}
-                                    </span>
+                                <dt class="text-sm font-medium text-gray-500">Debit Ledger</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    {% if transaction.debit_ledger %}
+                                        {{ transaction.debit_ledger.code }} - {{ transaction.debit_ledger.name }}
+                                    {% else %}
+                                        <span class="text-gray-400">No debit ledger</span>
+                                    {% endif %}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500">Credit Ledger</dt>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    {% if transaction.credit_ledger %}
+                                        {{ transaction.credit_ledger.code }} - {{ transaction.credit_ledger.name }}
+                                    {% else %}
+                                        <span class="text-gray-400">No credit ledger</span>
+                                    {% endif %}
                                 </dd>
                             </div>
                             <div>

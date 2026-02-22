@@ -22,24 +22,24 @@ class Vat(BaseModel):
         return f"{self.name} - {self.rate}%"
 
 
+class FinancialStatement(BaseModel):
+    name = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        verbose_name = "Financial Statement"
+        verbose_name_plural = "Financial Statements"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class Ledger(BaseModel):
     """Ledger accounts"""
 
     company = models.ForeignKey("Project.Company", on_delete=models.CASCADE)
-
-    class FinancialStatement(models.TextChoices):
-        BALANCE_SHEET = "balance_sheet", "Balance Sheet"
-        INCOME_STATEMENT = "income_statement", "Income Statement"
-        CASH_FLOW_STATEMENT = "cash_flow_statement", "Cash Flow Statement"
-        STATEMENT_OF_CHANGES_IN_EQUITY = (
-            "statement_of_changes_in_equity",
-            "Statement of Changes in Equity",
-        )
-
-    financial_statement = models.CharField(
-        max_length=35,
-        choices=FinancialStatement.choices,
-        default=FinancialStatement.BALANCE_SHEET,
+    financial_statement = models.ForeignKey(
+        "FinancialStatement", on_delete=models.PROTECT, related_name="ledgers"
     )
     code = models.CharField(max_length=10)
     name = models.CharField(max_length=100)
@@ -47,7 +47,17 @@ class Ledger(BaseModel):
     class Meta:
         verbose_name = "Ledger"
         verbose_name_plural = "Ledgers"
-        ordering = ["financial_statement", "code", "name"]
+        ordering = ["financial_statement__name", "code", "name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["company", "code"],
+                name="unique_ledger_code",
+            ),
+            models.UniqueConstraint(
+                fields=["company", "name"],
+                name="unique_ledger_name",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.code} - {self.name}"
@@ -56,12 +66,13 @@ class Ledger(BaseModel):
 class Transaction(BaseModel):
     """Transaction"""
 
-    class TransactionType(models.TextChoices):
-        DEBIT = "debit", "Debit"
-        CREDIT = "credit", "Credit"
-
     company = models.ForeignKey("Project.Company", on_delete=models.CASCADE)
-    ledger = models.ForeignKey(Ledger, on_delete=models.SET_NULL, null=True)
+    debit_ledger = models.ForeignKey(
+        Ledger, on_delete=models.SET_NULL, null=True, related_name="debit_transactions"
+    )
+    credit_ledger = models.ForeignKey(
+        Ledger, on_delete=models.SET_NULL, null=True, related_name="credit_transactions"
+    )
     project = models.ForeignKey("Project.Project", on_delete=models.SET_NULL, null=True)
     structure = models.ForeignKey(
         "BillOfQuantities.Structure", on_delete=models.SET_NULL, null=True
@@ -70,7 +81,6 @@ class Transaction(BaseModel):
         "BillOfQuantities.Bill", on_delete=models.SET_NULL, null=True
     )
     date = models.DateField()
-    type = models.CharField(max_length=20, choices=TransactionType.choices)
     amount_excl_vat = models.DecimalField(max_digits=10, decimal_places=2)
     amount_incl_vat = models.DecimalField(max_digits=10, decimal_places=2)
     vat = models.BooleanField(default=False)

@@ -65,12 +65,12 @@
             <div class="px-6 py-4 border-b border-gray-200">
                 <h2 class="text-lg font-medium text-gray-900">Period: {{ start_date|date:"d F Y" }} - {{ end_date|date:"d F Y" }}</h2>
             </div>
-            <!-- Revenue Section -->
+            <!-- Income Statement Items -->
             <div class="p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Revenue</h3>
-                {% if revenue_items %}
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Income Statement Items</h3>
+                {% if income_statement_items %}
                     <div class="space-y-2">
-                        {% for item in revenue_items %}
+                        {% for item in income_statement_items %}
                             <div class="flex justify-between items-center py-2 border-b border-gray-100">
                                 <div>
                                     <span class="text-sm font-medium text-gray-900">{{ item.code }}</span>
@@ -82,65 +82,19 @@
                     </div>
                     <div class="mt-4 pt-4 border-t border-gray-200">
                         <div class="flex justify-between items-center">
-                            <span class="text-base font-semibold text-gray-900">Total Revenue</span>
-                            <span class="text-base font-semibold text-green-600">R {{ total_revenue }}</span>
+                            <span class="text-base font-semibold text-gray-900">Total</span>
+                            <span class="text-base font-semibold {% if total_sum >= 0 %}text-green-600{% else %}text-red-600{% endif %}">R {{ total_sum }}</span>
                         </div>
                     </div>
                 {% else %}
-                    <p class="text-sm text-gray-500">No revenue transactions found for this period.</p>
+                    <p class="text-sm text-gray-500">No transactions found for this period.</p>
                     <div class="mt-4 pt-4 border-t border-gray-200">
                         <div class="flex justify-between items-center">
-                            <span class="text-base font-semibold text-gray-900">Total Revenue</span>
-                            <span class="text-base font-semibold text-green-600">R 0.00</span>
+                            <span class="text-base font-semibold text-gray-900">Total</span>
+                            <span class="text-base font-semibold text-gray-600">R 0.00</span>
                         </div>
                     </div>
                 {% endif %}
-            </div>
-            <!-- Expenses Section -->
-            <div class="p-6 bg-gray-50">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Expenses</h3>
-                {% if expense_items %}
-                    <div class="space-y-2">
-                        {% for item in expense_items %}
-                            <div class="flex justify-between items-center py-2 border-b border-gray-200">
-                                <div>
-                                    <span class="text-sm font-medium text-gray-900">{{ item.code }}</span>
-                                    <span class="ml-2 text-sm text-gray-600">{{ item.name }}</span>
-                                </div>
-                                <span class="text-sm font-medium text-gray-900">R {{ item.amount }}</span>
-                            </div>
-                        {% endfor %}
-                    </div>
-                    <div class="mt-4 pt-4 border-t border-gray-300">
-                        <div class="flex justify-between items-center">
-                            <span class="text-base font-semibold text-gray-900">Total Expenses</span>
-                            <span class="text-base font-semibold text-red-600">R {{ total_expenses }}</span>
-                        </div>
-                    </div>
-                {% else %}
-                    <p class="text-sm text-gray-500">No expense transactions found for this period.</p>
-                    <div class="mt-4 pt-4 border-t border-gray-300">
-                        <div class="flex justify-between items-center">
-                            <span class="text-base font-semibold text-gray-900">Total Expenses</span>
-                            <span class="text-base font-semibold text-red-600">R 0.00</span>
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-            <!-- Net Profit/Loss Section -->
-            <div class="p-6 bg-white border-t-2 border-gray-200">
-                <div class="flex justify-between items-center">
-                    <span class="text-xl font-bold text-gray-900">
-                        {% if net_profit >= 0 %}
-                            Net Profit
-                        {% else %}
-                            Net Loss
-                        {% endif %}
-                    </span>
-                    <span class="text-xl font-bold {% if net_profit >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
-                        R {{ net_profit }}
-                    </span>
-                </div>
             </div>
         </div>
     {% else %}

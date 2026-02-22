@@ -43,16 +43,18 @@
             {% endif %}
             <div class="grid grid-cols-1 gap-7 sm:grid-cols-2">
                 <div>
-                    {{ form.ledger|as_crispy_field }}
-                    {% if form.ledger.errors %}<p class="mt-2 text-sm text-red-600">{{ form.ledger.errors.0 }}</p>{% endif %}
+                    {{ form.debit_ledger|as_crispy_field }}
+                    {% if form.debit_ledger.errors %}<p class="mt-2 text-sm text-red-600">{{ form.debit_ledger.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    {{ form.credit_ledger|as_crispy_field }}
+                    {% if form.credit_ledger.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.credit_ledger.errors.0 }}</p>
+                    {% endif %}
                 </div>
                 <div>
                     {{ form.date|as_crispy_field }}
                     {% if form.date.errors %}<p class="mt-2 text-sm text-red-600">{{ form.date.errors.0 }}</p>{% endif %}
-                </div>
-                <div>
-                    {{ form.type|as_crispy_field }}
-                    {% if form.type.errors %}<p class="mt-2 text-sm text-red-600">{{ form.type.errors.0 }}</p>{% endif %}
                 </div>
                 <div>
                     {{ form.amount|as_crispy_field }}

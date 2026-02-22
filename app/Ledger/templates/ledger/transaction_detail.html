@@ -31,58 +31,114 @@
             <h2 class="text-lg font-medium text-gray-900">Transaction Information</h2>
         </div>
         <dl class="divide-y divide-gray-200">
-            <div class="px-6 py-4 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4">
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">Transaction ID</dt>
-                    <dd class="mt-1 text-sm text-gray-900">
-                        #{{ transaction.pk }}
-                    </dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">Date</dt>
-                    <dd class="mt-1 text-sm text-gray-900">
-                        {{ transaction.date|date:"d F Y" }}
-                    </dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">Type</dt>
-                    <dd class="mt-1">
-                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {% if transaction.type == 'debit' %}bg-red-100 text-red-800 {% else %}bg-green-100 text-green-800{% endif %}">
-                            {{ transaction.get_type_display }}
-                        </span>
-                    </dd>
-                </div>
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">Ledger</dt>
-                    <dd class="mt-1 text-sm text-gray-900">
-                        {{ transaction.ledger.code }} - {{ transaction.ledger.name }}
-                    </dd>
-                </div>
-                {% if transaction.project %}
+            <!-- Transaction Details Section -->
+            <div class="px-6 py-4">
+                <h3 class="text-base font-medium text-gray-900 mb-4">Transaction Details</h3>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4">
                     <div>
-                        <dt class="text-sm font-medium text-gray-500">Project</dt>
+                        <dt class="text-sm font-medium text-gray-500">Transaction ID</dt>
                         <dd class="mt-1 text-sm text-gray-900">
-                            {{ transaction.bill.structure.project.name }}
+                            #{{ transaction.pk }}
                         </dd>
                     </div>
                     <div>
-                        <dt class="text-sm font-medium text-gray-500">Structure</dt>
+                        <dt class="text-sm font-medium text-gray-500">Date</dt>
                         <dd class="mt-1 text-sm text-gray-900">
-                            {{ transaction.bill.structure.name }}
+                            {{ transaction.date|date:"d F Y" }}
                         </dd>
                     </div>
-                {% endif %}
-                <div>
-                    <dt class="text-sm font-medium text-gray-500">Bill</dt>
-                    <dd class="mt-1 text-sm text-gray-900">
-                        {% if transaction.bill %}
-                            {{ transaction.bill.name }}
-                        {% else %}
-                            <span class="text-gray-400">No bill assigned</span>
-                        {% endif %}
-                    </dd>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Debit Ledger</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {% if transaction.debit_ledger %}
+                                {{ transaction.debit_ledger.code }} - {{ transaction.debit_ledger.name }}
+                            {% else %}
+                                <span class="text-gray-400">No debit ledger</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Credit Ledger</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {% if transaction.credit_ledger %}
+                                {{ transaction.credit_ledger.code }} - {{ transaction.credit_ledger.name }}
+                            {% else %}
+                                <span class="text-gray-400">No credit ledger</span>
+                            {% endif %}
+                        </dd>
+                    </div>
                 </div>
             </div>
+            <!-- Financial Information Section -->
+            <div class="px-6 py-4 bg-gray-50">
+                <h3 class="text-base font-medium text-gray-900 mb-4">Financial Information</h3>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Amount (incl. VAT)</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{ transaction.amount_incl_vat|floatformat:2|intcomma }}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Amount (excl. VAT)</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{ transaction.amount_excl_vat|floatformat:2|intcomma }}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">VAT</dt>
+                        <dd class="mt-1">
+                            {% if transaction.vat %}
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                    Yes ({{ transaction.vat_rate.rate|floatformat:1 }}%)
+                                </span>
+                            {% else %}
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">No VAT</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+                    {% if transaction.vat_rate %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">VAT Rate</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {{ transaction.vat_rate.name }}
+                            </dd>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <!-- Project Information Section -->
+            {% if transaction.project %}
+                <div class="px-6 py-4">
+                    <h3 class="text-base font-medium text-gray-900 mb-4">Project Information</h3>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Project</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {{ transaction.bill.structure.project.name }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Structure</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {{ transaction.bill.structure.name }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Bill</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {{ transaction.bill.name }}
+                            </dd>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="px-6 py-4 bg-gray-50">
+                    <div class="text-center">
+                        <span class="text-gray-400">No project assigned</span>
+                    </div>
+                </div>
+            {% endif %}
         </dl>
     </div>
     {% if transaction.vat %}

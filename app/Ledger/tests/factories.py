@@ -9,7 +9,7 @@ from factory import fuzzy
 from factory.django import DjangoModelFactory
 
 from app.BillOfQuantities.tests.factories import BillFactory
-from app.Ledger.models import Ledger, Transaction, Vat
+from app.Ledger.models import FinancialStatement, Ledger, Transaction, Vat
 from app.Project.tests.factories import ClientFactory
 
 
@@ -27,6 +27,15 @@ class VatFactory(DjangoModelFactory):
     )
 
 
+class FinancialStatementFactory(DjangoModelFactory):
+    """Factory for FinancialStatement model."""
+
+    class Meta:
+        model = FinancialStatement
+
+    name = factory.Sequence(lambda n: f"Financial Statement {n}")
+
+
 class LedgerFactory(DjangoModelFactory):
     """Factory for Ledger model."""
 
@@ -34,9 +43,7 @@ class LedgerFactory(DjangoModelFactory):
         model = Ledger
 
     company = factory.SubFactory(ClientFactory)
-    financial_statement = fuzzy.FuzzyChoice(
-        Ledger.FinancialStatement.choices, getter=lambda c: c[0]
-    )
+    financial_statement = factory.SubFactory(FinancialStatementFactory)
     code = factory.Sequence(lambda n: f"{n:04d}")
     name = factory.Sequence(lambda n: f"Ledger Account {n}")
 
@@ -48,7 +55,8 @@ class TransactionFactory(DjangoModelFactory):
         model = Transaction
 
     company = factory.SubFactory(ClientFactory)
-    ledger = factory.SubFactory(LedgerFactory)
+    debit_ledger = factory.SubFactory(LedgerFactory)
+    credit_ledger = factory.SubFactory(LedgerFactory)
     bill = factory.SubFactory(BillFactory)
     date = factory.LazyFunction(lambda: timezone.now().date())
     type = fuzzy.FuzzyChoice(Transaction.TransactionType.choices, getter=lambda c: c[0])

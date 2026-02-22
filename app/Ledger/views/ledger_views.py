@@ -5,7 +5,7 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, ListView
 
 from app.core.Utilities.mixins import BreadcrumbItem
-from app.Ledger.models import Ledger
+from app.Ledger.models import Ledger, FinancialStatement
 
 from ..mixins import UserHasCompanyRoleMixin
 
@@ -30,6 +30,9 @@ class LedgerListView(UserHasCompanyRoleMixin, ListView):
 
         # Apply filters
         if financial_statement:
+            financial_statement = FinancialStatement.objects.get(
+                name=financial_statement
+            )
             queryset = queryset.filter(financial_statement=financial_statement)
 
         if code:
@@ -53,11 +56,16 @@ class LedgerListView(UserHasCompanyRoleMixin, ListView):
         context["filter_name"] = self.request.GET.get("name", "")
 
         # Add financial statement choices for filter
-        context["financial_statement_choices"] = [
-            {"value": "", "label": "All"},
-            {"value": "balance_sheet", "label": "Balance Sheet"},
-            {"value": "income_statement", "label": "Income Statement"},
+        context["financial_statement_choices"] = [{"value": "", "label": "All"}] + [
+            {"value": statement.name, "label": statement.name}
+            for statement in FinancialStatement.objects.all()
         ]
+
+        # Preserve filter parameters in pagination links
+        query_params = self.request.GET.copy()
+        if "page" in query_params:
+            del query_params["page"]
+        context["query_params"] = query_params.urlencode()
 
         return context
 

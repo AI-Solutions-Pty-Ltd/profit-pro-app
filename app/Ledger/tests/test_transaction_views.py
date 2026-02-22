@@ -24,17 +24,20 @@ class TestTransactionListView(TestCase):
         """Set up test data."""
         self.user = AccountFactory.create()
         self.company = ClientFactory.create(users=[self.user])
-        self.ledger = LedgerFactory.create(company=self.company)
+        self.debit_ledger = LedgerFactory.create(company=self.company)
+        self.credit_ledger = LedgerFactory.create(company=self.company)
         self.transaction1 = TransactionFactory.create(
             company=self.company,
-            ledger=self.ledger,
+            debit_ledger=self.debit_ledger,
+            credit_ledger=self.credit_ledger,
             date=timezone.now().date(),
             type=Transaction.TransactionType.DEBIT,
             amount_incl_vat=Decimal("100.00"),
         )
         self.transaction2 = TransactionFactory.create(
             company=self.company,
-            ledger=self.ledger,
+            debit_ledger=self.debit_ledger,
+            credit_ledger=self.credit_ledger,
             date=timezone.now().date(),
             type=Transaction.TransactionType.CREDIT,
             amount_incl_vat=Decimal("200.00"),
@@ -53,9 +56,12 @@ class TestTransactionListView(TestCase):
     def test_view_shows_company_transactions(self):
         """Test view shows transactions for the correct company."""
         other_company = ClientFactory.create()
-        other_ledger = LedgerFactory.create(company=other_company)
+        other_debit_ledger = LedgerFactory.create(company=other_company)
+        other_credit_ledger = LedgerFactory.create(company=other_company)
         other_transaction = TransactionFactory.create(
-            company=other_company, ledger=other_ledger
+            company=other_company,
+            debit_ledger=other_debit_ledger,
+            credit_ledger=other_credit_ledger,
         )
 
         response = self.client.get(self.url)
@@ -95,10 +101,12 @@ class TestTransactionDetailView(TestCase):
         """Set up test data."""
         self.user = AccountFactory.create()
         self.company = ClientFactory.create(users=[self.user])
-        self.ledger = LedgerFactory.create(company=self.company)
+        self.debit_ledger = LedgerFactory.create(company=self.company)
+        self.credit_ledger = LedgerFactory.create(company=self.company)
         self.transaction = TransactionFactory.create(
             company=self.company,
-            ledger=self.ledger,
+            debit_ledger=self.debit_ledger,
+            credit_ledger=self.credit_ledger,
             date=timezone.now().date(),
             type=Transaction.TransactionType.DEBIT,
             amount_incl_vat=Decimal("100.00"),
@@ -189,7 +197,8 @@ class BaseTransactionCreateScenarioTest(TestCase):
         self.company = ClientFactory.create(
             users=[self.user], vat_registered=self.vat_registered
         )
-        self.ledger = LedgerFactory.create(company=self.company)
+        self.debit_ledger = LedgerFactory.create(company=self.company)
+        self.credit_ledger = LedgerFactory.create(company=self.company)
 
         self.project = ProjectFactory.create(client=self.company)
         self.structure = StructureFactory.create(
@@ -229,16 +238,25 @@ class TestNonVatTransactionCreateView(BaseTransactionCreateScenarioTest):
     def test_form_submission_sets_non_vat_defaults(self):
         """Test non-VAT create form stores VAT defaults and total."""
         data = {
-            "ledger": self.ledger.pk,
+            "debit_ledger": self.debit_ledger.pk,
+            "credit_ledger": self.credit_ledger.pk,
             "date": timezone.now().date(),
             "type": Transaction.TransactionType.DEBIT,
             "amount": "100.00",
         }
 
         response = self.client.post(self.url, data)
+        if response.status_code != 302:
+            print("Form data posted:", data)
+            print("Form errors:", response.context["form"].errors)
+            print("Non-field errors:", response.context["form"].non_field_errors())
+            print("Form data:", response.context["form"].data)
+            print("Form files:", response.context["form"].files)
         self.assertEqual(response.status_code, 302)
 
-        transaction = Transaction.objects.get(ledger=self.ledger)
+        transaction = Transaction.objects.filter(company=self.company).latest(
+            "created_at"
+        )
         self.assertEqual(transaction.amount_excl_vat, Decimal("100.00"))
         self.assertEqual(transaction.amount_incl_vat, Decimal("100.00"))
         self.assertFalse(transaction.vat)
@@ -299,7 +317,8 @@ class TestVatTransactionCreateView(BaseTransactionCreateScenarioTest):
     def test_form_submission_with_vat_inclusive_calculates_values(self):
         """Test VAT inclusive amount creates matching inclusive/exclusive fields."""
         data = {
-            "ledger": self.ledger.pk,
+            "debit_ledger": self.debit_ledger.pk,
+            "credit_ledger": self.credit_ledger.pk,
             "date": timezone.now().date(),
             "type": Transaction.TransactionType.DEBIT,
             "vat_rate": self.current_vat.pk,
@@ -309,7 +328,9 @@ class TestVatTransactionCreateView(BaseTransactionCreateScenarioTest):
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, 302)
 
-        transaction = Transaction.objects.get(ledger=self.ledger)
+        transaction = Transaction.objects.filter(company=self.company).latest(
+            "created_at"
+        )
         self.assertTrue(transaction.vat)
         self.assertEqual(transaction.vat_rate, self.current_vat)
         self.assertEqual(transaction.amount_incl_vat, Decimal("115.00"))
@@ -318,7 +339,8 @@ class TestVatTransactionCreateView(BaseTransactionCreateScenarioTest):
     def test_form_rejects_vat_rate_outside_selected_date(self):
         """Test backend validator blocks VAT rate not active for transaction date."""
         data = {
-            "ledger": self.ledger.pk,
+            "debit_ledger": self.debit_ledger.pk,
+            "credit_ledger": self.credit_ledger.pk,
             "date": timezone.now().date(),
             "type": Transaction.TransactionType.DEBIT,
             "vat_rate": self.expired_vat.pk,
@@ -337,7 +359,8 @@ class TestVatTransactionCreateView(BaseTransactionCreateScenarioTest):
     def test_form_submission_with_no_vat_sets_vat_false(self):
         """Test 'No VAT' option sets vat=False and uses amount for both fields."""
         data = {
-            "ledger": self.ledger.pk,
+            "debit_ledger": self.debit_ledger.pk,
+            "credit_ledger": self.credit_ledger.pk,
             "date": timezone.now().date(),
             "type": Transaction.TransactionType.DEBIT,
             "vat_rate": self.no_vat.pk,
@@ -347,7 +370,9 @@ class TestVatTransactionCreateView(BaseTransactionCreateScenarioTest):
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, 302)
 
-        transaction = Transaction.objects.get(ledger=self.ledger)
+        transaction = Transaction.objects.filter(company=self.company).latest(
+            "created_at"
+        )
         self.assertFalse(transaction.vat)
         self.assertEqual(transaction.vat_rate, self.no_vat)
         self.assertEqual(transaction.amount_incl_vat, Decimal("100.00"))

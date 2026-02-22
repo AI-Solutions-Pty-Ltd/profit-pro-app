@@ -1,8 +1,9 @@
-"""eEdger Models"""
+"""Ledger Models"""
 
-from .ledger_models import Ledger, Transaction, Vat
+from .ledger_models import FinancialStatement, Ledger, Transaction, Vat
 
 __all__ = [
+    "FinancialStatement",
     "Ledger",
     "Transaction",
     "Vat",

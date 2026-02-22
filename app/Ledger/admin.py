@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from app.Ledger.models import Ledger, Transaction, Vat
+from app.Ledger.models import FinancialStatement, Ledger, Transaction, Vat
 
 
 @admin.register(Vat)
@@ -13,6 +13,15 @@ class VatAdmin(admin.ModelAdmin):
     list_filter = ["rate", "start_date", "end_date"]
     search_fields = ["name"]
     ordering = ["-start_date", "name"]
+
+
+@admin.register(FinancialStatement)
+class FinancialStatementAdmin(admin.ModelAdmin):
+    """Admin configuration for FinancialStatement model."""
+
+    list_display = ["name"]
+    search_fields = ["name"]
+    ordering = ["name"]
 
 
 @admin.register(Ledger)
@@ -34,13 +43,12 @@ class TransactionAdmin(admin.ModelAdmin):
         "date",
         "company",
         "project",
-        "ledger",
-        "type",
+        "debit_ledger",
+        "credit_ledger",
         "vat",
         "amount_incl_vat",
     ]
     list_filter = [
-        "type",
         "date",
         "vat",
         "company",
@@ -49,19 +57,36 @@ class TransactionAdmin(admin.ModelAdmin):
     search_fields = [
         "company__name",
         "project__name",
-        "ledger__code",
-        "ledger__name",
-        "ledger__financial_statement",
+        "debit_ledger__code",
+        "debit_ledger__name",
+        "debit_ledger__financial_statement",
+        "credit_ledger__code",
+        "credit_ledger__name",
+        "credit_ledger__financial_statement",
         "structure__name",
         "bill__name",
     ]
-    ordering = ["-date", "ledger__code"]
-    autocomplete_fields = ["ledger", "bill", "vat_rate", "company", "project"]
+    ordering = [
+        "-date",
+        "debit_ledger__financial_statement",
+        "debit_ledger__code",
+        "credit_ledger__code",
+    ]
+    autocomplete_fields = [
+        "debit_ledger",
+        "credit_ledger",
+        "bill",
+        "vat_rate",
+        "company",
+        "project",
+    ]
 
     def get_queryset(self, request):
         """Optimize queries."""
         return (
             super()
             .get_queryset(request)
-            .select_related("ledger", "bill", "vat_rate", "company", "project")
+            .select_related(
+                "debit_ledger", "credit_ledger", "vat_rate", "company", "project"
+            )
         )

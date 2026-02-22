@@ -10,7 +10,7 @@ from django.views.generic import View
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.Ledger.models import Ledger
-from app.Ledger.utils import create_standard_chart_of_accounts
+from app.Ledger.utils import create_standard_chart_for_company
 
 from ..mixins import UserHasCompanyRoleMixin
 
@@ -31,7 +31,7 @@ class CreateStandardChartView(UserHasCompanyRoleMixin, BreadcrumbMixin, View):
                 )
             else:
                 # Create the standard chart of accounts
-                ledgers = create_standard_chart_of_accounts(company)
+                ledgers = create_standard_chart_for_company(company)
                 messages.success(
                     request,
                     f"Successfully created {len(ledgers)} standard ledgers for {company.name}.",

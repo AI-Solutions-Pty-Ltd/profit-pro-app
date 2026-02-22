@@ -7,8 +7,12 @@ from django.test import TestCase
 from django.urls import reverse
 
 from app.Account.tests.factories import AccountFactory
-from app.Ledger.models import Ledger, Transaction
-from app.Ledger.tests.factories import LedgerFactory, TransactionFactory, VatFactory
+from app.Ledger.models import FinancialStatement, Transaction
+from app.Ledger.tests.factories import (
+    LedgerFactory,
+    TransactionFactory,
+    VatFactory,
+)
 from app.Project.tests.factories import ClientFactory
 
 
@@ -20,12 +24,17 @@ class TestIncomeStatementView(TestCase):
         self.user = AccountFactory.create()
         self.company = ClientFactory.create(users=[self.user])
 
+        # Get or create Income Statement financial statement
+        self.income_statement_fs, _ = FinancialStatement.objects.get_or_create(
+            name="Income Statement"
+        )
+
         # Create revenue ledger (code starts with 4)
         self.revenue_ledger = LedgerFactory.create(
             company=self.company,
             code="4001",
             name="Sales Revenue",
-            financial_statement=Ledger.FinancialStatement.INCOME_STATEMENT,
+            financial_statement=self.income_statement_fs,
         )
 
         # Create expense ledger (code starts with 5)
@@ -33,7 +42,7 @@ class TestIncomeStatementView(TestCase):
             company=self.company,
             code="5001",
             name="Office Expenses",
-            financial_statement=Ledger.FinancialStatement.INCOME_STATEMENT,
+            financial_statement=self.income_statement_fs,
         )
 
         self.vat_rate = VatFactory(rate=Decimal("15.00"))
@@ -41,7 +50,8 @@ class TestIncomeStatementView(TestCase):
         # Create transactions
         self.revenue_transaction = TransactionFactory.create(
             company=self.company,
-            ledger=self.revenue_ledger,
+            debit_ledger=self.expense_ledger,
+            credit_ledger=self.revenue_ledger,
             date=date.today(),
             type=Transaction.TransactionType.CREDIT,
             amount_incl_vat=Decimal("1150.00"),
@@ -50,10 +60,11 @@ class TestIncomeStatementView(TestCase):
 
         self.expense_transaction = TransactionFactory.create(
             company=self.company,
-            ledger=self.expense_ledger,
+            debit_ledger=self.expense_ledger,
+            credit_ledger=self.revenue_ledger,
             date=date.today(),
             type=Transaction.TransactionType.DEBIT,
-            amount_incl_vat=Decimal("230.00"),
+            amount_incl_vat=Decimal("575.00"),
             vat_rate=self.vat_rate,
         )
 
@@ -81,32 +92,42 @@ class TestIncomeStatementView(TestCase):
 
         # Check context data
         self.assertEqual(response.context["company"], self.company)
-        self.assertEqual(response.context["total_revenue"], Decimal("1150.00"))
-        self.assertEqual(response.context["total_expenses"], Decimal("230.00"))
-        self.assertEqual(response.context["net_profit"], Decimal("920.00"))
+        self.assertEqual(
+            response.context["total_sum"], Decimal("-575.00")
+        )  # Net result
 
-        # Check that revenue items are present
-        self.assertEqual(len(response.context["revenue_items"]), 1)
-        self.assertEqual(response.context["revenue_items"][0]["name"], "Sales Revenue")
-        self.assertEqual(
-            response.context["revenue_items"][0]["amount"], Decimal("1150.00")
-        )
+        # Check that income statement items are present
+        self.assertEqual(len(response.context["income_statement_items"]), 2)
 
-        # Check that expense items are present
-        self.assertEqual(len(response.context["expense_items"]), 1)
-        self.assertEqual(
-            response.context["expense_items"][0]["name"], "Office Expenses"
+        # Check revenue item (should be negative since it's credit)
+        revenue_item = next(
+            item
+            for item in response.context["income_statement_items"]
+            if item["code"] == "4001"
         )
+        self.assertEqual(revenue_item["name"], "Sales Revenue")
         self.assertEqual(
-            response.context["expense_items"][0]["amount"], Decimal("230.00")
+            revenue_item["amount"], Decimal("-1150.00")
+        )  # Credit shows as negative
+
+        # Check expense item
+        expense_item = next(
+            item
+            for item in response.context["income_statement_items"]
+            if item["code"] == "5001"
         )
+        self.assertEqual(expense_item["name"], "Office Expenses")
+        self.assertEqual(
+            expense_item["amount"], Decimal("575.00")
+        )  # Debit shows as positive
 
     def test_view_with_date_range_filter(self):
         """Test view respects date range filters."""
         # Create transaction outside default date range
         TransactionFactory(
             company=self.company,
-            ledger=self.revenue_ledger,
+            debit_ledger=self.expense_ledger,
+            credit_ledger=self.revenue_ledger,
             date=date.today() - timedelta(days=60),
             type=Transaction.TransactionType.CREDIT,
             amount_incl_vat=Decimal("1000.00"),
@@ -121,8 +142,8 @@ class TestIncomeStatementView(TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-        # Old transaction should not be included
-        self.assertEqual(response.context["total_revenue"], Decimal("1150.00"))
+        # Old transaction should not be included, so we should still have the same total
+        self.assertEqual(response.context["total_sum"], Decimal("-575.00"))
 
     def test_view_denied_without_permission(self):
         """Test view is denied when user lacks company access."""

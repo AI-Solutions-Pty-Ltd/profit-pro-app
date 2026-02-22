@@ -23,7 +23,7 @@ class TransactionListView(UserHasCompanyRoleMixin, ListView):
         company = self.get_company()
         return (
             Transaction.objects.filter(company=company)
-            .select_related("ledger", "bill", "vat_rate")
+            .select_related("debit_ledger", "credit_ledger", "bill", "vat_rate")
             .order_by("-date")
         )
 
@@ -61,7 +61,7 @@ class TransactionDetailView(UserHasCompanyRoleMixin, DetailView):
         """Filter transactions by company."""
         company = self.get_company()
         return Transaction.objects.filter(company=company).select_related(
-            "ledger", "bill", "vat_rate"
+            "debit_ledger", "credit_ledger", "bill", "vat_rate"
         )
 
     def get_context_data(self, **kwargs):
@@ -168,8 +168,8 @@ class TransactionDeleteView(UserHasCompanyRoleMixin, DeleteView):
     def get_queryset(self):
         """Filter transactions by company."""
         company = self.get_company()
-        return Transaction.objects.filter(ledger__company=company).select_related(
-            "ledger", "bill", "vat_rate"
+        return Transaction.objects.filter(company=company).select_related(
+            "debit_ledger", "credit_ledger", "bill", "vat_rate"
         )
 
     def form_valid(self, form):

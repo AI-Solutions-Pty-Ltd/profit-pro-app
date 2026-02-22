@@ -4,13 +4,13 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.http import HttpRequest, HttpResponse
 from django.urls import reverse
 from django.views.generic import TemplateView
 
 from app.core.Utilities.mixins import BreadcrumbItem
-from app.Ledger.models import Ledger, Transaction
+from app.Ledger.models import FinancialStatement, Ledger, Transaction
 
 from ..mixins import UserHasCompanyRoleMixin
 
@@ -47,77 +47,75 @@ class IncomeStatementView(UserHasCompanyRoleMixin, TemplateView):
         context["start_date_str"] = start_date_str or start_date.strftime("%Y-%m-%d")
         context["end_date_str"] = end_date_str or end_date.strftime("%Y-%m-%d")
 
+        # Get Income Statement financial statement
+        income_statement_fs = FinancialStatement.objects.filter(
+            name="Income Statement"
+        ).first()
+
+        if not income_statement_fs:
+            # If no Income Statement found, return empty data
+            context.update(
+                {
+                    "revenue_items": [],
+                    "expense_items": [],
+                    "total_revenue": Decimal("0"),
+                    "total_expenses": Decimal("0"),
+                    "net_profit": Decimal("0"),
+                }
+            )
+            return context
+
+        # Get all ledgers for Income Statement
+        income_statement_ledgers = Ledger.objects.filter(
+            company=company,
+            financial_statement=income_statement_fs,
+        ).order_by("code")
+
         # Get all transactions for the period
-        transactions = Transaction.objects.filter(
-            company=company,
-            date__gte=start_date,
-            date__lte=end_date,
-        ).select_related("ledger")
-
-        # Calculate revenue (credit transactions from revenue accounts)
-        revenue_ledgers = Ledger.objects.filter(
-            company=company,
-            financial_statement=Ledger.FinancialStatement.INCOME_STATEMENT,
-        ).filter(code__regex=r"^4")  # Revenue accounts starting with 4
-
-        revenue_data = (
-            transactions.filter(
-                ledger__in=revenue_ledgers, type=Transaction.TransactionType.CREDIT
+        transactions = (
+            Transaction.objects.filter(
+                company=company,
+                date__gte=start_date,
+                date__lte=end_date,
             )
-            .values("ledger__code", "ledger__name")
-            .annotate(total=Sum("amount_incl_vat"))
-            .order_by("ledger__code")
+            .filter(
+                Q(credit_ledger__in=income_statement_ledgers)
+                | Q(debit_ledger__in=income_statement_ledgers)
+            )
+            .select_related("credit_ledger", "debit_ledger")
         )
 
-        total_revenue = Decimal("0")
-        revenue_items = []
-        for item in revenue_data:
-            total_revenue += item["total"] or Decimal("0")
-            revenue_items.append(
-                {
-                    "code": item["ledger__code"],
-                    "name": item["ledger__name"],
-                    "amount": item["total"] or Decimal("0"),
-                }
-            )
+        # Calculate totals for each ledger
+        income_statement_items = []
+        total_sum = Decimal("0")
 
-        # Calculate expenses (debit transactions from expense accounts)
-        expense_ledgers = Ledger.objects.filter(
-            company=company,
-            financial_statement=Ledger.FinancialStatement.INCOME_STATEMENT,
-        ).filter(code__regex=r"^[5-8]")  # Expense accounts starting with 5, 6, 7, or 8
+        for ledger in income_statement_ledgers:
+            # Sum all credit transactions for this ledger
+            credit_total = transactions.filter(
+                credit_ledger=ledger,
+            ).aggregate(total=Sum("amount_excl_vat"))["total"] or Decimal("0")
 
-        expense_data = (
-            transactions.filter(
-                ledger__in=expense_ledgers, type=Transaction.TransactionType.DEBIT
-            )
-            .values("ledger__code", "ledger__name")
-            .annotate(total=Sum("amount_incl_vat"))
-            .order_by("ledger__code")
-        )
+            # Sum all debit transactions for this ledger
+            debit_total = transactions.filter(
+                debit_ledger=ledger,
+            ).aggregate(total=Sum("amount_excl_vat"))["total"] or Decimal("0")
 
-        total_expenses = Decimal("0")
-        expense_items = []
-        for item in expense_data:
-            total_expenses += item["total"] or Decimal("0")
-            expense_items.append(
-                {
-                    "code": item["ledger__code"],
-                    "name": item["ledger__name"],
-                    "amount": item["total"] or Decimal("0"),
-                }
-            )
+            net_amount = debit_total - credit_total
 
-        # Calculate net profit/loss
-        net_profit = total_revenue - total_expenses
+            if net_amount != 0:  # Only show ledgers with activity
+                income_statement_items.append(
+                    {
+                        "code": ledger.code,
+                        "name": ledger.name,
+                        "amount": net_amount,
+                    }
+                )
+                total_sum += net_amount
 
         context.update(
             {
-                "revenue_items": revenue_items,
-                "total_revenue": total_revenue,
-                "expense_items": expense_items,
-                "total_expenses": total_expenses,
-                "net_profit": net_profit,
+                "income_statement_items": income_statement_items,
+                "total_sum": total_sum,
                 "has_transactions": transactions.exists(),
             }
         )
