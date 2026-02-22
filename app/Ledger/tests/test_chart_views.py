@@ -4,10 +4,10 @@ from django.test import TestCase
 from django.urls import reverse
 
 from app.Account.tests.factories import AccountFactory
-from app.Ledger.models import Ledger
+from app.Ledger.models import FinancialStatement, Ledger
 from app.Ledger.tests.factories import LedgerFactory
 from app.Ledger.utils import (
-    create_standard_chart_of_accounts,
+    create_standard_chart_for_company,
     get_standard_chart_of_accounts,
 )
 from app.Project.tests.factories import ClientFactory
@@ -20,6 +20,12 @@ class TestStandardChartOfAccounts(TestCase):
         """Set up test data."""
         self.user = AccountFactory.create()
         self.company = ClientFactory.create(users=[self.user])
+        self.balance_sheet_fs, _ = FinancialStatement.objects.get_or_create(
+            name="Balance Sheet"
+        )
+        self.income_statement_fs, _ = FinancialStatement.objects.get_or_create(
+            name="Income Statement"
+        )
         self.client.force_login(self.user)
         self.url = reverse(
             "ledger:create-standard-chart",
@@ -30,8 +36,8 @@ class TestStandardChartOfAccounts(TestCase):
         """Test getting the standard chart of accounts."""
         chart = get_standard_chart_of_accounts()
 
-        # Should have 43 standard accounts
-        self.assertEqual(len(chart), 43)
+        # Should have 46 standard accounts (18 Balance Sheet + 28 Income Statement)
+        self.assertEqual(len(chart), 46)
 
         # Check structure of returned data
         for account in chart:
@@ -42,31 +48,33 @@ class TestStandardChartOfAccounts(TestCase):
 
     def test_create_standard_chart_of_accounts(self):
         """Test creating standard chart of accounts for a company."""
+        # Clean up any existing ledgers for this company
+        Ledger.objects.filter(company=self.company).delete()
+
         # Initially no ledgers
         self.assertEqual(Ledger.objects.filter(company=self.company).count(), 0)
 
         # Create standard chart
-        ledgers = create_standard_chart_of_accounts(self.company)
+        ledgers = create_standard_chart_for_company(self.company)
 
-        # Should have created 43 ledgers
-        self.assertEqual(len(ledgers), 43)
-        self.assertEqual(Ledger.objects.filter(company=self.company).count(), 43)
+        # Should have created 46 ledgers
+        self.assertEqual(len(ledgers), 46)
+        self.assertEqual(Ledger.objects.filter(company=self.company).count(), 46)
 
         # Check specific ledgers were created
         cash_ledger = Ledger.objects.get(company=self.company, code="1000")
         self.assertEqual(cash_ledger.name, "Cash and Cash Equivalents")
-        self.assertEqual(
-            cash_ledger.financial_statement, Ledger.FinancialStatement.BALANCE_SHEET
-        )
+        self.assertEqual(cash_ledger.financial_statement, self.balance_sheet_fs)
 
         sales_ledger = Ledger.objects.get(company=self.company, code="4000")
         self.assertEqual(sales_ledger.name, "Sales Revenue")
-        self.assertEqual(
-            sales_ledger.financial_statement, Ledger.FinancialStatement.INCOME_STATEMENT
-        )
+        self.assertEqual(sales_ledger.financial_statement, self.income_statement_fs)
 
     def test_create_standard_chart_view_post(self):
         """Test POST request to create standard chart."""
+        # Clean up any existing ledgers for this company
+        Ledger.objects.filter(company=self.company).delete()
+
         # Initially no ledgers
         self.assertEqual(Ledger.objects.filter(company=self.company).count(), 0)
 
@@ -80,8 +88,8 @@ class TestStandardChartOfAccounts(TestCase):
         # Should be on ledger list page
         self.assertContains(response, "Ledgers")
 
-        # Should have created 43 ledgers
-        self.assertEqual(Ledger.objects.filter(company=self.company).count(), 43)
+        # Should have created 46 ledgers
+        self.assertEqual(Ledger.objects.filter(company=self.company).count(), 46)
 
     def test_create_standard_chart_view_with_existing_ledgers(self):
         """Test that standard chart is not created if ledgers already exist."""

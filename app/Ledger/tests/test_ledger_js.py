@@ -4,6 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from app.Account.tests.factories import AccountFactory
+from app.Ledger.models import FinancialStatement
 from app.Ledger.tests.factories import LedgerFactory
 from app.Project.tests.factories import ClientFactory
 
@@ -21,16 +22,26 @@ class TestLedgerJavaScript(TestCase):
             kwargs={"company_id": self.company.pk},
         )
 
+        # Create financial statements
+        self.balance_sheet_fs, _ = FinancialStatement.objects.get_or_create(
+            name="Balance Sheet"
+        )
+        self.income_statement_fs, _ = FinancialStatement.objects.get_or_create(
+            name="Income Statement"
+        )
+
         # Create test ledgers
         LedgerFactory(
             company=self.company,
             code="1000",
             name="Cash",
+            financial_statement=self.balance_sheet_fs,
         )
         LedgerFactory(
             company=self.company,
             code="4000",
             name="Sales Revenue",
+            financial_statement=self.income_statement_fs,
         )
 
     def test_javascript_present_in_template(self):
@@ -65,14 +76,20 @@ class TestLedgerJavaScript(TestCase):
     def test_filter_with_parameters_preserves_values(self):
         """Test that filter values are preserved when using GET parameters."""
         response = self.client.get(
-            f"{self.url}?financial_statement=balance_sheet&code=1000&name=Cash"
+            f"{self.url}?financial_statement={self.balance_sheet_fs.pk}&code=1000&name=Cash"
         )
         self.assertEqual(response.status_code, 200)
 
         # Check that filter values are preserved in the form
-        self.assertContains(response, 'value="balance_sheet"')
+        # For select option, check if the value exists and is selected
+        self.assertContains(response, f'value="{self.balance_sheet_fs.pk}"')
         self.assertContains(response, 'value="1000"')
         self.assertContains(response, 'value="Cash"')
+
+        # Also check that the financial statement option is marked as selected
+        self.assertContains(response, f'value="{self.balance_sheet_fs.pk}"')
+        # Check that the option contains the selected attribute
+        self.assertContains(response, "selected")
 
     def test_empty_filter_state(self):
         """Test that the page loads correctly without any filters."""

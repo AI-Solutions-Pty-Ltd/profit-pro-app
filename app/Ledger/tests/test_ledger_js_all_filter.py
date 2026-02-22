@@ -4,6 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from app.Account.tests.factories import AccountFactory
+from app.Ledger.models import FinancialStatement
 from app.Ledger.tests.factories import LedgerFactory
 from app.Project.tests.factories import ClientFactory
 
@@ -21,18 +22,26 @@ class TestLedgerAllFilter(TestCase):
             kwargs={"company_id": self.company.pk},
         )
 
+        # Create financial statements
+        self.balance_sheet_fs, _ = FinancialStatement.objects.get_or_create(
+            name="Balance Sheet"
+        )
+        self.income_statement_fs, _ = FinancialStatement.objects.get_or_create(
+            name="Income Statement"
+        )
+
         # Create test ledgers
         LedgerFactory(
             company=self.company,
             code="1000",
             name="Cash",
-            financial_statement="balance_sheet",
+            financial_statement=self.balance_sheet_fs,
         )
         LedgerFactory(
             company=self.company,
             code="4000",
             name="Sales Revenue",
-            financial_statement="income_statement",
+            financial_statement=self.income_statement_fs,
         )
 
     def test_filter_with_all_shows_all_ledgers(self):
@@ -51,7 +60,7 @@ class TestLedgerAllFilter(TestCase):
         """Test clearing all filters with empty parameters."""
         # Start with filters applied
         response = self.client.get(
-            f"{self.url}?financial_statement=balance_sheet&code=1000"
+            f"{self.url}?financial_statement={self.balance_sheet_fs.pk}&code=1000"
         )
         self.assertEqual(response.status_code, 200)
 

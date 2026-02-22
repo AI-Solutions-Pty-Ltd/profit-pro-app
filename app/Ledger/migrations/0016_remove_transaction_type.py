@@ -4,14 +4,13 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Ledger', '0015_fix_financial_statements'),
+        ("Ledger", "0015_fix_financial_statements"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='transaction',
-            name='type',
+            model_name="transaction",
+            name="type",
         ),
     ]

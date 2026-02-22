@@ -3,9 +3,9 @@
 from datetime import timedelta
 from decimal import Decimal
 
-import factory
 from django.utils import timezone
 from factory import fuzzy
+from factory.declarations import LazyFunction, Sequence, SubFactory
 from factory.django import DjangoModelFactory
 
 from app.BillOfQuantities.tests.factories import BillFactory
@@ -19,12 +19,10 @@ class VatFactory(DjangoModelFactory):
     class Meta:
         model = Vat
 
-    name = factory.Sequence(lambda n: f"VAT Rate {n}")
+    name = Sequence(lambda n: f"VAT Rate {n}")
     rate = fuzzy.FuzzyChoice([Decimal("0.00"), Decimal("7.00"), Decimal("15.00")])
-    start_date = factory.LazyFunction(lambda: timezone.now().date())
-    end_date = factory.LazyFunction(
-        lambda: timezone.now().date() + timedelta(days=3650)
-    )
+    start_date = LazyFunction(lambda: timezone.now().date())
+    end_date = LazyFunction(lambda: timezone.now().date() + timedelta(days=3650))
 
 
 class FinancialStatementFactory(DjangoModelFactory):
@@ -33,7 +31,7 @@ class FinancialStatementFactory(DjangoModelFactory):
     class Meta:
         model = FinancialStatement
 
-    name = factory.Sequence(lambda n: f"Financial Statement {n}")
+    name = Sequence(lambda n: f"Financial Statement {n}")
 
 
 class LedgerFactory(DjangoModelFactory):
@@ -42,10 +40,10 @@ class LedgerFactory(DjangoModelFactory):
     class Meta:
         model = Ledger
 
-    company = factory.SubFactory(ClientFactory)
-    financial_statement = factory.SubFactory(FinancialStatementFactory)
-    code = factory.Sequence(lambda n: f"{n:04d}")
-    name = factory.Sequence(lambda n: f"Ledger Account {n}")
+    company = SubFactory(ClientFactory)
+    financial_statement = SubFactory(FinancialStatementFactory)
+    code = Sequence(lambda n: f"{n:04d}")
+    name = Sequence(lambda n: f"Ledger Account {n}")
 
 
 class TransactionFactory(DjangoModelFactory):
@@ -54,13 +52,12 @@ class TransactionFactory(DjangoModelFactory):
     class Meta:
         model = Transaction
 
-    company = factory.SubFactory(ClientFactory)
-    debit_ledger = factory.SubFactory(LedgerFactory)
-    credit_ledger = factory.SubFactory(LedgerFactory)
-    bill = factory.SubFactory(BillFactory)
-    date = factory.LazyFunction(lambda: timezone.now().date())
-    type = fuzzy.FuzzyChoice(Transaction.TransactionType.choices, getter=lambda c: c[0])
+    company = SubFactory(ClientFactory)
+    debit_ledger = SubFactory(LedgerFactory)
+    credit_ledger = SubFactory(LedgerFactory)
+    bill = SubFactory(BillFactory)
+    date = LazyFunction(lambda: timezone.now().date())
     amount_excl_vat = fuzzy.FuzzyDecimal(0.01, 10000.00, 2)
     amount_incl_vat = fuzzy.FuzzyDecimal(0.01, 11500.00, 2)
     vat = fuzzy.FuzzyChoice([True, False])
-    vat_rate = factory.SubFactory(VatFactory)
+    vat_rate = SubFactory(VatFactory)

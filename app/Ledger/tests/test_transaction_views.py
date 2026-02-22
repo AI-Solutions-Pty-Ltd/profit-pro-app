@@ -31,7 +31,6 @@ class TestTransactionListView(TestCase):
             debit_ledger=self.debit_ledger,
             credit_ledger=self.credit_ledger,
             date=timezone.now().date(),
-            type=Transaction.TransactionType.DEBIT,
             amount_incl_vat=Decimal("100.00"),
         )
         self.transaction2 = TransactionFactory.create(
@@ -39,7 +38,6 @@ class TestTransactionListView(TestCase):
             debit_ledger=self.debit_ledger,
             credit_ledger=self.credit_ledger,
             date=timezone.now().date(),
-            type=Transaction.TransactionType.CREDIT,
             amount_incl_vat=Decimal("200.00"),
         )
         self.client.force_login(self.user)
@@ -108,7 +106,6 @@ class TestTransactionDetailView(TestCase):
             debit_ledger=self.debit_ledger,
             credit_ledger=self.credit_ledger,
             date=timezone.now().date(),
-            type=Transaction.TransactionType.DEBIT,
             amount_incl_vat=Decimal("100.00"),
         )
         self.client.force_login(self.user)
@@ -241,7 +238,6 @@ class TestNonVatTransactionCreateView(BaseTransactionCreateScenarioTest):
             "debit_ledger": self.debit_ledger.pk,
             "credit_ledger": self.credit_ledger.pk,
             "date": timezone.now().date(),
-            "type": Transaction.TransactionType.DEBIT,
             "amount": "100.00",
         }
 
@@ -320,7 +316,6 @@ class TestVatTransactionCreateView(BaseTransactionCreateScenarioTest):
             "debit_ledger": self.debit_ledger.pk,
             "credit_ledger": self.credit_ledger.pk,
             "date": timezone.now().date(),
-            "type": Transaction.TransactionType.DEBIT,
             "vat_rate": self.current_vat.pk,
             "amount": "115.00",
             "vat_mode": "inclusive",
@@ -342,7 +337,6 @@ class TestVatTransactionCreateView(BaseTransactionCreateScenarioTest):
             "debit_ledger": self.debit_ledger.pk,
             "credit_ledger": self.credit_ledger.pk,
             "date": timezone.now().date(),
-            "type": Transaction.TransactionType.DEBIT,
             "vat_rate": self.expired_vat.pk,
             "amount": "100.00",
             "vat_mode": "exclusive",
@@ -362,7 +356,6 @@ class TestVatTransactionCreateView(BaseTransactionCreateScenarioTest):
             "debit_ledger": self.debit_ledger.pk,
             "credit_ledger": self.credit_ledger.pk,
             "date": timezone.now().date(),
-            "type": Transaction.TransactionType.DEBIT,
             "vat_rate": self.no_vat.pk,
             "amount": "100.00",
             "vat_mode": "inclusive",

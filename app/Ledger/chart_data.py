@@ -49,10 +49,10 @@ STANDARD_CHART_OF_ACCOUNTS = [
     ("7000", "Interest Expense", "Income Statement"),
     ("7100", "Tax Expense", "Income Statement"),
     ("7200", "Loss on Sale of Assets", "Income Statement"),
-    ("7300", "Other Operating Expenses", "Income Statement"),
-    # Non-operating Items (Income Statement) - 8000-8999
-    ("8000", "Gain on Sale of Assets", "Income Statement"),
-    ("8100", "Loss on Sale of Assets", "Income Statement"),
+    ("7300", "Gain on Sale of Assets", "Income Statement"),
+    # Non-operating Income and Expenses (Income Statement) - 8000-8999
+    ("8000", "Non-operating Interest Income", "Income Statement"),
+    ("8100", "Loss on Disposal of Assets", "Income Statement"),
     ("8200", "Other Non-operating Income", "Income Statement"),
     ("8300", "Other Non-operating Expenses", "Income Statement"),
     # Suspense Account (Balance Sheet) - 9999
@@ -113,8 +113,9 @@ CHART_BY_STATEMENT = {
         ("7200", "Loss on Sale of Assets"),
         ("7300", "Other Operating Expenses"),
         ("8000", "Gain on Sale of Assets"),
-        ("8100", "Loss on Sale of Assets"),
-        ("8200", "Other Non-operating Income"),
-        ("8300", "Other Non-operating Expenses"),
+        ("8100", "Non-operating Interest Income"),
+        ("8200", "Loss on Disposal of Assets"),
+        ("8300", "Other Non-operating Income"),
+        ("8400", "Other Non-operating Expenses"),
     ],
 }

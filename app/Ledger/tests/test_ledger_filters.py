@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from app.Account.tests.factories import AccountFactory
-from app.Ledger.models import Ledger
+from app.Ledger.models import FinancialStatement
 from app.Ledger.tests.factories import LedgerFactory
 from app.Project.tests.factories import ClientFactory
 
@@ -23,29 +23,37 @@ class TestLedgerFilters(TestCase):
         )
 
         # Create test ledgers
+        # Get or create financial statements
+        self.balance_sheet_fs, _ = FinancialStatement.objects.get_or_create(
+            name="Balance Sheet"
+        )
+        self.income_statement_fs, _ = FinancialStatement.objects.get_or_create(
+            name="Income Statement"
+        )
+
         self.bs_ledger1 = LedgerFactory(
             company=self.company,
             code="1000",
             name="Cash",
-            financial_statement=Ledger.FinancialStatement.BALANCE_SHEET,
+            financial_statement=self.balance_sheet_fs,
         )
         self.bs_ledger2 = LedgerFactory(
             company=self.company,
             code="2000",
             name="Accounts Payable",
-            financial_statement=Ledger.FinancialStatement.BALANCE_SHEET,
+            financial_statement=self.balance_sheet_fs,
         )
         self.is_ledger1 = LedgerFactory(
             company=self.company,
             code="4000",
             name="Sales Revenue",
-            financial_statement=Ledger.FinancialStatement.INCOME_STATEMENT,
+            financial_statement=self.income_statement_fs,
         )
         self.is_ledger2 = LedgerFactory(
             company=self.company,
             code="6000",
             name="Office Expenses",
-            financial_statement=Ledger.FinancialStatement.INCOME_STATEMENT,
+            financial_statement=self.income_statement_fs,
         )
 
         # Create ledgers for another company (should not appear)
@@ -54,7 +62,7 @@ class TestLedgerFilters(TestCase):
             company=self.other_company,
             code="9999",
             name="Other Ledger",
-            financial_statement=Ledger.FinancialStatement.BALANCE_SHEET,
+            financial_statement=self.balance_sheet_fs,
         )
 
     def test_no_filters_shows_all_ledgers(self):
@@ -75,7 +83,9 @@ class TestLedgerFilters(TestCase):
 
     def test_filter_by_financial_statement_balance_sheet(self):
         """Test filtering by Balance Sheet financial statement."""
-        response = self.client.get(f"{self.url}?financial_statement=balance_sheet")
+        response = self.client.get(
+            f"{self.url}?financial_statement={self.balance_sheet_fs.pk}"
+        )
         self.assertEqual(response.status_code, 200)
 
         ledgers = response.context["ledgers"]
@@ -89,7 +99,9 @@ class TestLedgerFilters(TestCase):
 
     def test_filter_by_financial_statement_income_statement(self):
         """Test filtering by Income Statement financial statement."""
-        response = self.client.get(f"{self.url}?financial_statement=income_statement")
+        response = self.client.get(
+            f"{self.url}?financial_statement={self.income_statement_fs.pk}"
+        )
         self.assertEqual(response.status_code, 200)
 
         ledgers = response.context["ledgers"]
@@ -151,7 +163,7 @@ class TestLedgerFilters(TestCase):
     def test_combined_filters(self):
         """Test combining multiple filters."""
         response = self.client.get(
-            f"{self.url}?financial_statement=balance_sheet&code=1000"
+            f"{self.url}?financial_statement={self.balance_sheet_fs.pk}&code=1000"
         )
         self.assertEqual(response.status_code, 200)
 
@@ -160,7 +172,7 @@ class TestLedgerFilters(TestCase):
         self.assertEqual(ledgers.first().code, "1000")
         self.assertEqual(
             ledgers.first().financial_statement,
-            Ledger.FinancialStatement.BALANCE_SHEET,
+            self.balance_sheet_fs,
         )
 
     def test_filter_with_no_results(self):
@@ -174,12 +186,14 @@ class TestLedgerFilters(TestCase):
     def test_filter_values_preserved_in_context(self):
         """Test that filter values are preserved in the context."""
         response = self.client.get(
-            f"{self.url}?financial_statement=balance_sheet&code=1000&name=Cash"
+            f"{self.url}?financial_statement={self.balance_sheet_fs.pk}&code=1000&name=Cash"
         )
         self.assertEqual(response.status_code, 200)
 
         context = response.context
-        self.assertEqual(context["filter_financial_statement"], "balance_sheet")
+        self.assertEqual(
+            context["filter_financial_statement"], str(self.balance_sheet_fs.pk)
+        )
         self.assertEqual(context["filter_code"], "1000")
         self.assertEqual(context["filter_name"], "Cash")
 
@@ -189,10 +203,17 @@ class TestLedgerFilters(TestCase):
         self.assertEqual(response.status_code, 200)
 
         choices = response.context["financial_statement_choices"]
-        self.assertEqual(len(choices), 3)
+        self.assertGreaterEqual(
+            len(choices), 5
+        )  # At least All + Balance Sheet + Income Statement
         self.assertEqual(choices[0]["value"], "")
         self.assertEqual(choices[0]["label"], "All")
-        self.assertEqual(choices[1]["value"], "balance_sheet")
-        self.assertEqual(choices[1]["label"], "Balance Sheet")
-        self.assertEqual(choices[2]["value"], "income_statement")
-        self.assertEqual(choices[2]["label"], "Income Statement")
+
+        # Find our specific financial statements in the choices
+        bs_choice = next((c for c in choices if c["label"] == "Balance Sheet"), {})
+        is_choice = next((c for c in choices if c["label"] == "Income Statement"), {})
+
+        self.assertIsNotNone(bs_choice)
+        self.assertIsNotNone(is_choice)
+        self.assertEqual(bs_choice["value"], str(self.balance_sheet_fs.pk))
+        self.assertEqual(is_choice["value"], str(self.income_statement_fs.pk))

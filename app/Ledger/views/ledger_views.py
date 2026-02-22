@@ -5,7 +5,7 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, ListView
 
 from app.core.Utilities.mixins import BreadcrumbItem
-from app.Ledger.models import Ledger, FinancialStatement
+from app.Ledger.models import FinancialStatement, Ledger
 
 from ..mixins import UserHasCompanyRoleMixin
 
@@ -30,10 +30,21 @@ class LedgerListView(UserHasCompanyRoleMixin, ListView):
 
         # Apply filters
         if financial_statement:
-            financial_statement = FinancialStatement.objects.get(
-                name=financial_statement
-            )
-            queryset = queryset.filter(financial_statement=financial_statement)
+            try:
+                # Try to get by ID first (if it's numeric)
+                if financial_statement.isdigit():
+                    financial_statement_obj = FinancialStatement.objects.get(
+                        pk=financial_statement
+                    )
+                else:
+                    # Fall back to name lookup
+                    financial_statement_obj = FinancialStatement.objects.get(
+                        name=financial_statement
+                    )
+                queryset = queryset.filter(financial_statement=financial_statement_obj)
+            except FinancialStatement.DoesNotExist:
+                # If financial statement doesn't exist, return empty queryset
+                queryset = queryset.none()
 
         if code:
             queryset = queryset.filter(code__icontains=code)
@@ -57,7 +68,7 @@ class LedgerListView(UserHasCompanyRoleMixin, ListView):
 
         # Add financial statement choices for filter
         context["financial_statement_choices"] = [{"value": "", "label": "All"}] + [
-            {"value": statement.name, "label": statement.name}
+            {"value": str(statement.pk), "label": statement.name}
             for statement in FinancialStatement.objects.all()
         ]
 
