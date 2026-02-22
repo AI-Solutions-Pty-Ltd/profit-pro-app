@@ -141,13 +141,14 @@
       "label": "deploy-main",
       "type": "shell",
       "command": "git push && git checkout main && git pull && git merge staging && git push && git checkout develop",
+      "dependsOn": ["preflight"],
       "problemMatcher": []
     },
     {
       "label": "full-deploy",
       "type": "shell",
       "command": "echo starting",
-      "dependsOn": ["deploy-staging", "deploy-main"],
+      "dependsOn": ["preflight", "deploy-staging", "deploy-main"],
       "dependsOrder": "sequence",
       "problemMatcher": [],
       "presentation": {
