@@ -135,6 +135,7 @@
       "label": "deploy-staging",
       "type": "shell",
       "command": "git push && git checkout staging && git pull && git merge develop && git push && git checkout develop",
+      "dependsOn": ["checks"],
       "problemMatcher": []
     },
     {

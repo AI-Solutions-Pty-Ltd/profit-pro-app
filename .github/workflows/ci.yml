@@ -42,7 +42,7 @@ jobs:
           python -m ty check . --python $(python -c 'import sys; print(sys.executable)')
 
       - name: Run tests
-        run: pytest -v -n auto --durations=10
+        run: pytest -v -n auto --reuse-db --durations=10
 
       - name: Clean up
         run: |
