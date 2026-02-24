@@ -2,6 +2,7 @@
 
 from django import forms
 from django.contrib import messages
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.generic import View
@@ -74,8 +75,6 @@ class ProjectAllocateExistingClientView(
 
         # Don't call super().form_valid() since form is not a ModelForm
         # Instead, redirect directly to success URL
-        from django.http import HttpResponseRedirect
-
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):

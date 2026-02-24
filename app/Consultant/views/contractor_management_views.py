@@ -37,18 +37,16 @@ class ContractorListView(ContractorMixin, ListView):
     def get_queryset(self) -> QuerySet[Company]:
         user: Account = self.request.user  # type: ignore
         projects = user.get_projects
-        return (
-            Company.objects.filter(
-                contractor_projects__in=projects, type=Company.Type.CONTRACTOR
-            )
-            .exclude(
-                pk=self.get_project().contractor.pk
-                if self.get_project().contractor
-                else None
-            )
-            .distinct()
-            .order_by("name")
+        queryset = Company.objects.filter(
+            contractor_projects__in=projects, type=Company.Type.CONTRACTOR
         )
+
+        # Exclude the currently assigned contractor if it exists
+        contractor = self.get_project().contractor
+        if contractor:
+            queryset = queryset.exclude(pk=contractor.pk)
+
+        return queryset.distinct().order_by("name")
 
 
 class ContractorCreateView(ContractorMixin, CreateView):
@@ -149,7 +147,9 @@ class ContractorDeleteView(ContractorMixin, DeleteView):
         return [
             BreadcrumbItem(
                 title=self.get_project().name,
-                url=reverse("project:portfolio-dashboard"),
+                url=reverse(
+                    "project:project-setup", kwargs={"pk": self.get_project().pk}
+                ),
             ),
             BreadcrumbItem(
                 title="Contractors",
