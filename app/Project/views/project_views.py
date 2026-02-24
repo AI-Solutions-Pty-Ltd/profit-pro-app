@@ -1,7 +1,5 @@
 """Views for Project app."""
 
-from app.Project.forms.forms import BasicProjectCreateForm
-
 import json
 from datetime import datetime
 
@@ -31,6 +29,7 @@ from app.core.Utilities.permissions import (
     UserHasProjectRoleGenericMixin,
 )
 from app.Project.forms import FilterForm, ProjectForm
+from app.Project.forms.forms import BasicProjectCreateForm
 from app.Project.models import PlannedValue, Project, ProjectRole, Role
 
 
@@ -354,7 +353,7 @@ class ProjectWBSDetailView(ProjectMixin, DetailView):
         """Add line items total and filter options to context."""
         from django.db.models import Sum
 
-        from app.BillOfQuantities.models import Bill, Package, Structure
+        from app.BillOfQuantities.models import Bill, Package
 
         context = super().get_context_data(**kwargs)
         project: Project = self.get_object()

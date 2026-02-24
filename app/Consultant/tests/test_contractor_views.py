@@ -6,9 +6,9 @@ from django.test import RequestFactory, TestCase
 
 from app.Account.models import Account
 from app.Account.tests.factories import AccountFactory
+from app.Consultant.views.contractor_management_views import ContractorListView
 from app.Project.models import Company, Project
 from app.Project.tests.factories import ClientFactory, ProjectFactory
-from app.Consultant.views.contractor_management_views import ContractorListView
 
 
 class TestContractorListView(TestCase):

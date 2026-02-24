@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0039_alter_project_description'),
+        ("Project", "0039_alter_project_description"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='project',
-            name='end_date',
+            model_name="project",
+            name="end_date",
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='project',
-            name='start_date',
+            model_name="project",
+            name="start_date",
             field=models.DateField(blank=True, null=True),
         ),
     ]

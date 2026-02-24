@@ -43,13 +43,12 @@ class TestProjectContractorForm(TestCase):
         """Test that the form requires a user parameter."""
         with self.assertRaises(AttributeError):
             # This should fail because user is None
-            form = ProjectContractorForm(user=None)
-            form.fields["contractor"].queryset
+            ProjectContractorForm(user=None)
 
     def test_form_filters_by_user_projects(self):
         """Test that the form filters contractors by user's projects."""
         form = ProjectContractorForm(user=self.user, project=self.project)
-        queryset = form.fields["contractor"].queryset
+        queryset = form.fields["contractor"].queryset  # type: ignore
 
         # Should only return contractors associated with user's projects
         self.assertEqual(queryset.count(), 1)
@@ -62,7 +61,7 @@ class TestProjectContractorForm(TestCase):
     def test_form_without_project_shows_all_contractors(self):
         """Test that the form shows all contractors when no project is provided."""
         form = ProjectContractorForm(user=self.user)
-        queryset = form.fields["contractor"].queryset
+        queryset = form.fields["contractor"].queryset  # type: ignore
 
         # Should return all contractors associated with user's projects
         self.assertEqual(queryset.count(), 2)
