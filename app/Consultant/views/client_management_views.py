@@ -32,7 +32,7 @@ class ClientListView(ClientMixin, ListView):
             BreadcrumbItem(
                 title=self.get_project().name,
                 url=reverse(
-                    "project:project-edit", kwargs={"pk": self.get_project().pk}
+                    "project:project-setup", kwargs={"pk": self.get_project().pk}
                 ),
             ),
             BreadcrumbItem(title="Clients", url=None),
@@ -41,13 +41,20 @@ class ClientListView(ClientMixin, ListView):
     def get_queryset(self) -> QuerySet[Company]:
         user: Account = self.request.user  # type: ignore
         projects = user.get_projects
-        return (
+        project = self.get_project()
+        queryset = (
             Company.objects.filter(
                 client_projects__in=projects, type=Company.Type.CLIENT
             )
             .distinct()
             .order_by("name")
         )
+
+        # Exclude the currently assigned client
+        if project.client:
+            queryset = queryset.exclude(pk=project.client.pk)
+
+        return queryset
 
 
 class ClientCreateView(ClientMixin, CreateView):
@@ -62,7 +69,7 @@ class ClientCreateView(ClientMixin, CreateView):
             BreadcrumbItem(
                 title=self.get_project().name,
                 url=reverse(
-                    "project:project-edit", kwargs={"pk": self.get_project().pk}
+                    "project:project-setup", kwargs={"pk": self.get_project().pk}
                 ),
             ),
             BreadcrumbItem(
@@ -104,7 +111,7 @@ class ClientUpdateView(ClientMixin, UpdateView):
             BreadcrumbItem(
                 title=self.get_project().name,
                 url=reverse(
-                    "project:project-edit",
+                    "project:project-setup",
                     kwargs={"pk": self.get_project().pk},
                 ),
             ),

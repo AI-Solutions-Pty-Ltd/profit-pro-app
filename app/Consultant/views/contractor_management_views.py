@@ -28,7 +28,7 @@ class ContractorListView(ContractorMixin, ListView):
             BreadcrumbItem(
                 title=self.get_project().name,
                 url=reverse(
-                    "project:project-edit", kwargs={"pk": self.get_project().pk}
+                    "project:project-setup", kwargs={"pk": self.get_project().pk}
                 ),
             ),
             BreadcrumbItem(title="Contractors", url=None),
@@ -37,9 +37,18 @@ class ContractorListView(ContractorMixin, ListView):
     def get_queryset(self) -> QuerySet[Company]:
         user: Account = self.request.user  # type: ignore
         projects = user.get_projects
-        return Company.objects.filter(
-            contractor_projects__in=projects, type=Company.Type.CONTRACTOR
-        ).order_by("name")
+        return (
+            Company.objects.filter(
+                contractor_projects__in=projects, type=Company.Type.CONTRACTOR
+            )
+            .exclude(
+                pk=self.get_project().contractor.pk
+                if self.get_project().contractor
+                else None
+            )
+            .distinct()
+            .order_by("name")
+        )
 
 
 class ContractorCreateView(ContractorMixin, CreateView):
@@ -54,7 +63,7 @@ class ContractorCreateView(ContractorMixin, CreateView):
             BreadcrumbItem(
                 title=self.get_project().name,
                 url=reverse(
-                    "project:project-edit", kwargs={"pk": self.get_project().pk}
+                    "project:project-setup", kwargs={"pk": self.get_project().pk}
                 ),
             ),
             BreadcrumbItem(
@@ -96,7 +105,7 @@ class ContractorUpdateView(ContractorMixin, UpdateView):
             BreadcrumbItem(
                 title=self.get_project().name,
                 url=reverse(
-                    "project:project-edit",
+                    "project:project-setup",
                     kwargs={"pk": self.get_project().pk},
                 ),
             ),

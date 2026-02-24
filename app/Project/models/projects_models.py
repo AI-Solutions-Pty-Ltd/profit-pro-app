@@ -62,7 +62,7 @@ class Project(BaseModel):
         help_text="Users who have access to this project",
     )
     name = models.CharField(max_length=255)
-    description = models.TextField()
+    description = models.TextField(blank=True)
     logo = models.ImageField(
         upload_to="project_logos/",
         null=True,
@@ -72,8 +72,8 @@ class Project(BaseModel):
     status = models.CharField(
         max_length=255, choices=Status.choices, default=Status.SETUP
     )
-    start_date = models.DateField(null=True)
-    end_date = models.DateField(null=True)
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
     contract_number = models.CharField(max_length=255, blank=True)
     contract_clause = models.CharField(max_length=255, blank=True)
     vat = models.BooleanField(default=False)

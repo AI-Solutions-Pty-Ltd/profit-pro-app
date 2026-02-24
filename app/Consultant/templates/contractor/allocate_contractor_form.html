@@ -5,7 +5,7 @@
     Update Contractor - {{ project.name }}
 {% endblock title %}
 {% block content %}
-    <div class="min-h-screen bg-gray-50 py-8">
+    <div class="min-h-screen py-8">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Page Header -->
             <div class="bg-white shadow-sm rounded-lg mb-6">
@@ -37,16 +37,7 @@
                             </div>
                         </div>
                     {% endif %}
-                    <div class="grid grid-cols-1 gap-6">
-                        <div>
-                            {{ form.contractor.label_tag }}
-                            {% if form.contractor.help_text %}<p class="mt-1 text-sm text-gray-500">{{ form.contractor.help_text }}</p>{% endif %}
-                            {{ form.contractor }}
-                            {% if form.contractor.errors %}
-                                <p class="mt-2 text-sm text-red-600">{{ form.contractor.errors|join:", " }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
+                    <div class="grid grid-cols-1 gap-6">{{ form.contractor|as_crispy_field }}</div>
                     <!-- Current Contractor Info -->
                     {% if project.contractor %}
                         <div class="mt-6 p-4 bg-gray-50 rounded-lg">
@@ -60,7 +51,7 @@
                     {% endif %}
                     <!-- Form Actions -->
                     <div class="mt-6 flex justify-end space-x-3">
-                        <a href="{% url 'project:project-edit' project.pk %}"
+                        <a href="{% url 'project:project-setup' project.pk %}"
                            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "x-mark" class="w-4 h-4 mr-1" %}
                             Cancel

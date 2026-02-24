@@ -57,8 +57,12 @@ class ProjectRoleAdmin(SoftDeleteAdmin):
 
 @admin.register(Company)
 class CompanyAdmin(SoftDeleteAdmin):
-    list_display = ["name", "deleted", "created_at"]
-    list_filter = ["deleted", "created_at"]
+    list_display = ["name", "type", "vat_registered", "deleted", "created_at"]
+    list_filter = [
+        "deleted",
+        "created_at",
+        "type",
+    ]
     search_fields = ["name"]
     readonly_fields = ["created_at", "updated_at"]
 

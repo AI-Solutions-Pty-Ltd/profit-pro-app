@@ -39,7 +39,7 @@ class ProjectAllocateExistingContractorView(
         return [
             BreadcrumbItem(
                 title=self.project.name,
-                url=reverse("project:project-edit", kwargs={"pk": self.project.pk}),
+                url=reverse("project:project-setup", kwargs={"pk": self.project.pk}),
             ),
             BreadcrumbItem(
                 title="Contractors",
@@ -50,6 +50,13 @@ class ProjectAllocateExistingContractorView(
             ),
             BreadcrumbItem(title="Allocate Contractor", url=None),
         ]
+
+    def get_form_kwargs(self):
+        """Pass the project to the form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        kwargs["user"] = self.request.user
+        return kwargs
 
     def form_valid(self, form):
         """Save the selected contractor to the project."""
@@ -88,7 +95,7 @@ class ProjectContractorRemoveView(ContractorMixin, View):
         return [
             BreadcrumbItem(
                 title=self.project.name,
-                url=reverse("project:project-edit", kwargs={"pk": self.project.pk}),
+                url=reverse("project:project-setup", kwargs={"pk": self.project.pk}),
             ),
             BreadcrumbItem(
                 title="Contractors",

@@ -21,8 +21,8 @@ urlpatterns = [
     ),
     path(
         "<int:pk>/edit/",
-        project_views.ProjectEditView.as_view(),
-        name="project-edit",
+        project_views.ProjectSetupView.as_view(),
+        name="project-setup",
     ),
     path(
         "<int:pk>/wbs/",

@@ -48,7 +48,7 @@ class SignatoryListView(SignatoryMixin, ListView):
             BreadcrumbItem(
                 title=self.get_project().name,
                 url=reverse(
-                    "project:project-edit", kwargs={"pk": self.get_project().pk}
+                    "project:project-setup", kwargs={"pk": self.get_project().pk}
                 ),
             ),
             BreadcrumbItem(title="Signatories", url=None),

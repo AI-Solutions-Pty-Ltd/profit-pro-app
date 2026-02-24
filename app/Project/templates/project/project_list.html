@@ -49,52 +49,15 @@
         </div>
         <!-- Filter Form -->
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
-            <form id="filterForm" method="get" class="flex flex-wrap items-end gap-4">
+            <form id="filterForm" method="get" class="left-content gap-4">
                 <!-- Search -->
-                <div class="flex-1 min-w-[200px] max-w-xs">
-                    <label for="id_search" class="block text-xs font-medium text-gray-500 mb-1">Search</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            {% heroicon_outline "magnifying-glass" class="h-4 w-4 text-gray-400" %}
-                        </div>
-                        <input type="text"
-                               name="search"
-                               id="id_search"
-                               value="{{ filter_form.search.value|default:'' }}"
-                               class="block w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                               placeholder="Search projects...">
-                    </div>
-                </div>
+                <div class="flex-1 min-w-[200px] max-w-xs">{{ filter_form.search|as_crispy_field }}</div>
                 <!-- Category Filter -->
-                <div class="min-w-[150px]">
-                    <label for="id_category"
-                           class="block text-xs font-medium text-gray-500 mb-1">Category</label>
-                    <select name="category"
-                            id="id_category"
-                            class="block w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
-                        <option value="">All Categories</option>
-                        {% for category in filter_form.category.field.queryset %}
-                            <option value="{{ category.pk }}"
-                                    {% if filter_form.category.value|stringformat:"s" == category.pk|stringformat:"s" %}selected{% endif %}>
-                                {{ category.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
+                <div class="min-w-[150px]">{{ filter_form.category|as_crispy_field }}</div>
                 <!-- Status Filter -->
-                <div class="min-w-[150px]">
-                    <label for="id_status" class="block text-xs font-medium text-gray-500 mb-1">Status</label>
-                    <select name="status"
-                            id="id_status"
-                            class="block w-full py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
-                        {% for value, label in filter_form.status.field.choices %}
-                            <option value="{{ value }}"
-                                    {% if filter_form.status.value == value %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+                <div class="min-w-[150px]">{{ filter_form.status|as_crispy_field }}</div>
                 <!-- Filter Actions -->
-                <div class="flex items-center gap-2">
+                <div class="centered-content-horizontal">
                     <button type="submit"
                             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                         {% heroicon_outline "funnel" class="w-4 h-4 mr-1.5" %}
@@ -206,50 +169,26 @@
             const statusSelect = document.getElementById('id_status');
             const projectsTable = document.getElementById('projectsTable');
             const loading = document.getElementById('loading');
+        
             
-            // Auto-submit on select change
-            [categorySelect, statusSelect].forEach(select => {
-                if (select) {
-                    select.addEventListener('change', function() {
-                        submitForm();
-                    });
-                }
-            });
-            
-            // Debounced search
+            // Debounced search - only submit if more than 3 characters
             let searchTimeout;
             if (searchInput) {
                 searchInput.addEventListener('input', function() {
                     clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(submitForm, 300);
+                    const searchValue = this.value.trim();
+                    
+                    if (searchValue.length >= 3) {
+                        searchTimeout = setTimeout(submitForm, 200);
+                    } else if (searchValue.length === 0) {
+                        // Submit immediately if cleared to show all results
+                        submitForm();
+                    }
                 });
             }
             
             function submitForm() {
-                if (loading) loading.hidden = false;
-                
-                // Create form data
-                const formData = new FormData(filterForm);
-                const params = new URLSearchParams(formData);
-                
-                // Fetch filtered data
-                fetch(`${window.location.pathname}?${params.toString()}`, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (projectsTable) {
-                        projectsTable.innerHTML = html;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                })
-                .finally(() => {
-                    if (loading) loading.hidden = true;
-                });
+                filterForm.submit();
             }
         });
     </script>

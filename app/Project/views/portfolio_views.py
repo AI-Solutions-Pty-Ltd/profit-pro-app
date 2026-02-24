@@ -9,6 +9,7 @@ from typing import Any, cast
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q, QuerySet, Sum
 from django.db.models.functions import Coalesce
+from django.shortcuts import redirect
 from django.views.generic import (
     ListView,
     TemplateView,
@@ -470,6 +471,28 @@ class PortfolioDashboardView(LoginRequiredMixin, BreadcrumbMixin, ListView):
             {"title": "Portfolio", "url": None},
             {"title": "Dashboard", "url": None},
         ]
+
+    def get(self, request, *args, **kwargs):
+        """Handle GET request and check for project redirect."""
+        # Initialize filter form with user's projects
+        user: Account = self.request.user  # type: ignore
+        projects = user.get_projects.order_by("-created_at")
+
+        # Initialize filter form with the base queryset
+        filter_form = FilterForm(
+            self.request.GET or {}, user=user, projects_queryset=projects
+        )
+
+        if filter_form.is_valid():
+            selected_project = filter_form.cleaned_data.get("projects")
+            if selected_project:
+                return redirect(
+                    "project:project-management",
+                    pk=selected_project.pk,
+                )
+
+        # Continue with normal GET processing
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self: "PortfolioDashboardView") -> QuerySet[Project]:
         """Get filtered projects for dashboard view."""

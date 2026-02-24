@@ -27,8 +27,48 @@
                 </div>
             </div>
         </div>
-        <!-- Clients List -->
+        <!-- Current Client -->
+        {% if project.client %}
+            <div class="bg-white shadow rounded-lg mb-6">
+                <div class="px-6 py-4 bg-green-50 border-b border-green-200">
+                    <h2 class="text-lg font-semibold text-green-900 flex items-center">
+                        {% heroicon_outline "check-circle" class="w-5 h-5 mr-2" %}
+                        Current Client
+                    </h2>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                {% heroicon_outline "building-office" class="w-6 h-6 text-green-600" %}
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg font-medium text-gray-900">{{ project.client.name }}</h3>
+                                <p class="text-sm text-gray-500">Reg: {{ project.client.registration_number }}</p>
+                                {% if project.client.vat_number %}<p class="text-sm text-gray-500">VAT: {{ project.client.vat_number }}</p>{% endif %}
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                {% heroicon_outline "check" class="w-4 h-4 mr-1" %}
+                                Assigned
+                            </span>
+                            <a href="{% url 'client:project-client:project-client-remove' project.pk project.client.pk %}"
+                               class="inline-flex items-center px-3 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                                {% heroicon_outline "x-mark" size="16" %}
+                                Remove
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        <!-- Available Clients List -->
         <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Available Clients</h2>
+                <p class="text-sm text-gray-600 mt-1">Select a client to assign to this project</p>
+            </div>
             {% if clients %}
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -43,25 +83,11 @@
                             {% for client in clients %}
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div class="text-sm font-medium text-gray-900">{{ client.name }}</div>
-                                            {% if project.client == client %}
-                                                <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                    Current
-                                                </span>
-                                            {% endif %}
-                                        </div>
+                                        <div class="text-sm font-medium text-gray-900">{{ client.name }}</div>
                                         <div class="text-sm text-gray-500">{{ client.tax_number }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ client.registration_number }}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        {% if project.client == client %}
-                                            <a href="{% url 'client:project-client:project-client-remove' project.pk client.pk %}"
-                                               class="text-orange-600 hover:text-orange-900 mr-3">
-                                                {% heroicon_outline "x-mark" class="w-4 h-4 inline" %}
-                                                Remove
-                                            </a>
-                                        {% endif %}
                                         <a href="{% url 'client:client-management:client-update' project.pk client.pk %}"
                                            class="text-indigo-600 hover:text-indigo-900 mr-3">
                                             {% heroicon_outline "pencil" class="w-4 h-4 inline" %}
@@ -98,7 +124,7 @@
         <!-- Footer -->
         <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
             <div class="flex justify-between items-center">
-                <a href="{% url 'project:project-edit' project.pk %}"
+                <a href="{% url 'project:project-setup' project.pk %}"
                    class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
                     {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
                     Back to Project Edit

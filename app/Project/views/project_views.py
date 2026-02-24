@@ -1,5 +1,7 @@
 """Views for Project app."""
 
+from app.Project.forms.forms import BasicProjectCreateForm
+
 import json
 from datetime import datetime
 
@@ -75,7 +77,7 @@ class ProjectListView(LoginRequiredMixin, BreadcrumbMixin, ListView):
 
         self.filter_form = FilterForm(
             form_data,
-            user=request.user if request.user.is_authenticated else None,
+            user=self.request.user,  # type: ignore
             projects_queryset=projects_queryset,
             consultant_queryset=consultant_queryset,
         )
@@ -271,11 +273,11 @@ class ProjectDashboardView(ProjectMixin, DetailView):
         }
 
 
-class ProjectEditView(ProjectMixin, DetailView):
-    """Display project edit page with all management options."""
+class ProjectSetupView(ProjectMixin, DetailView):
+    """Display project setup page with all management options."""
 
     model = Project
-    template_name = "project/project_edit.html"
+    template_name = "project/project_setup.html"
     context_object_name = "project"
     roles = [Role.USER]
     project_slug = "pk"
@@ -402,7 +404,7 @@ class ProjectCreateView(LoginRequiredMixin, BreadcrumbMixin, CreateView):
     """Create a new project."""
 
     model = Project
-    form_class = ProjectForm
+    form_class = BasicProjectCreateForm
     template_name = "project/project_form.html"
     permissions = ["contractor"]
 
@@ -427,7 +429,7 @@ class ProjectCreateView(LoginRequiredMixin, BreadcrumbMixin, CreateView):
     def get_success_url(self: "ProjectCreateView"):
         """Redirect to the project dashboard."""
         if self.object and self.object.pk:
-            url = Structure.upload_wbs_csv(self.object)
+            url = reverse("project:project-setup", kwargs={"pk": self.object.pk})
             return url
         return reverse_lazy("project:portfolio-dashboard")
 

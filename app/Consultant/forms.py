@@ -1,5 +1,6 @@
 from django import forms
 
+from app.Account.models import Account
 from app.BillOfQuantities.models import PaymentCertificate
 from app.Project.models import Company
 
@@ -45,7 +46,25 @@ class ProjectClientForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        project = kwargs.pop("project", None)
+        user: Account = kwargs.pop("user", None)
+        projects = user.get_projects
+
         # Pop instance before calling super() to avoid passing it to Form
         self.instance = kwargs.pop("instance", None)
         super().__init__(*args, **kwargs)
         self.fields["client"].label = "Client Company"
+
+        # Filter to only show client companies
+        queryset = Company.objects.filter(
+            client_projects__in=projects, type=Company.Type.CLIENT
+        ).order_by("name")
+
+        # Exclude the currently assigned client if project is provided
+        if project and project.client:
+            queryset = queryset.exclude(pk=project.client.pk)
+
+        # Type: ModelChoiceField has queryset attribute
+        client_field = self.fields["client"]
+        if hasattr(client_field, "queryset"):
+            client_field.queryset = queryset.distinct()  # type: ignore[attr-defined]

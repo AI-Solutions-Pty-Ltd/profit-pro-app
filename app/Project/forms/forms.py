@@ -23,26 +23,58 @@ from app.Project.models import (
 class FilterForm(forms.Form):
     """Form for filtering projects."""
 
-    search = forms.CharField(required=False)
+    search = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Search projects...",
+            }
+        ),
+    )
     category = forms.ModelChoiceField(
         queryset=ProjectCategory.objects.all(),
         required=False,
+        label="Filter by Category",
         empty_label="All Categories",
+        widget=forms.Select(
+            attrs={
+                "onchange": "this.form.submit()",
+            }
+        ),
     )
     status = forms.ChoiceField(
         choices=[("ALL", "All Statuses")] + list(Project.Status.choices),
         required=False,
         initial="ALL",
+        widget=forms.Select(
+            attrs={
+                "onchange": "this.form.submit()",
+            }
+        ),
     )
-    active_projects = forms.BooleanField(required=False)
+    active_projects = forms.BooleanField(
+        required=False,
+        label="Active Projects",
+    )
     projects = forms.ModelChoiceField(
         queryset=Project.objects.none(),
         required=False,
+        label="Jump to Project",
+        widget=forms.Select(
+            attrs={
+                "onchange": "this.form.submit()",
+            }
+        ),
     )
     consultant = forms.ModelChoiceField(
         queryset=Account.objects.none(),
         required=False,
         empty_label="All Consultants",
+        widget=forms.Select(
+            attrs={
+                "onchange": "this.form.submit()",
+            }
+        ),
     )
 
     def __init__(
@@ -61,25 +93,6 @@ class FilterForm(forms.Form):
             self.fields["projects"].queryset = projects_queryset  # type: ignore
         if consultant_queryset is not None:
             self.fields["consultant"].queryset = consultant_queryset  # type: ignore
-
-        # Set widget attributes
-        self.fields["active_projects"].label = "Active Projects"
-        self.fields["search"].widget = forms.TextInput(
-            attrs={
-                "class": "block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors",
-                "placeholder": "Search projects...",
-            }
-        )
-        self.fields["category"].widget = forms.Select(
-            attrs={
-                "class": "block w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors",
-            }
-        )
-        self.fields["status"].widget = forms.Select(
-            attrs={
-                "class": "block w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-colors",
-            }
-        )
 
 
 class ProjectCategoryForm(forms.ModelForm):
@@ -109,6 +122,19 @@ class ProjectCategoryForm(forms.ModelForm):
         }
 
 
+class BasicProjectCreateForm(forms.ModelForm):
+    class Meta:
+        model = Project
+        fields = ["name"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "placeholder": "Enter project name",
+                }
+            ),
+        }
+
+
 class ProjectForm(forms.ModelForm):
     """Form for creating and updating projects."""
 
@@ -130,78 +156,55 @@ class ProjectForm(forms.ModelForm):
         widgets = {
             "name": forms.TextInput(
                 attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                     "placeholder": "Enter project name",
                 }
             ),
             "description": forms.Textarea(
                 attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Enter project description",
+                    "placeholder": "Enter project description (optional)",
+                    "rows": 3,
                 }
             ),
             "start_date": forms.DateInput(
                 attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                     "type": "date",
                 }
             ),
             "end_date": forms.DateInput(
                 attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                     "type": "date",
                 }
             ),
             "contract_number": forms.TextInput(
                 attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                     "placeholder": "Enter contract number",
                 }
             ),
             "contract_clause": forms.Textarea(
                 attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                     "placeholder": "Enter contract clause",
                     "rows": 3,
                 }
             ),
             "logo": forms.FileInput(
                 attrs={
-                    "class": "mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100",
                     "accept": ".jpg,.jpeg,.png,.gif,.svg",
                 }
             ),
-            "category": forms.Select(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
-            ),
-            "vat": forms.CheckboxInput(
-                attrs={
-                    "class": "w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500",
-                }
-            ),
-            "payment_terms": forms.Select(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
-            ),
+            "category": forms.Select(),
+            "vat": forms.CheckboxInput(),
+            "payment_terms": forms.Select(),
         }
         labels = {
             "name": "Project Name",
-            "description": "Description",
             "logo": "Project Logo",
-            "start_date": "Start Date",
-            "end_date": "End Date",
             "contract_number": "Payment Certificate Contract Number",
             "contract_clause": "Payment Certificate Contract Clause",
-            "bank_name": "Bank Name",
             "bank_account_name": "Account Name",
             "bank_account_number": "Account Number",
             "bank_branch_code": "Branch Code",
             "bank_swift_code": "SWIFT Code",
             "vat_number": "VAT/Tax Number",
-            "payment_terms": "Payment Terms",
         }
         help_texts = {
             "logo": "Upload a logo for invoices and documents (JPG, PNG, GIF, SVG). Recommended size: 900x600px",
@@ -241,11 +244,25 @@ class ProjectContractorForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        project = kwargs.pop("project", None)
+        user: Account = kwargs.pop("user", None)
+        projects = user.get_projects
+
         super().__init__(*args, **kwargs)
+
         # Filter to only show contractor companies
-        self.fields["contractor"].queryset = Company.objects.filter(  # type: ignore
-            type="CONTRACTOR"
+        queryset = Company.objects.filter(
+            contractor_projects__in=projects, type=Company.Type.CONTRACTOR
         ).order_by("name")
+
+        # Exclude the currently assigned contractor if project is provided
+        if project and project.contractor:
+            queryset = queryset.exclude(pk=project.contractor.pk)
+
+        # Type: ModelChoiceField has queryset attribute
+        contractor_field = self.fields["contractor"]
+        if hasattr(contractor_field, "queryset"):
+            contractor_field.queryset = queryset.distinct()  # type: ignore[attr-defined]
 
 
 class ClientCreateUpdateForm(forms.ModelForm):
