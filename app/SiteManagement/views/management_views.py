@@ -1,5 +1,7 @@
 """Views for Site Management."""
 
+from django.urls import reverse_lazy
+
 from django.views.generic import TemplateView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
@@ -17,7 +19,7 @@ class SiteManagementView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Templa
 
     def get_project(self) -> Project:
         """Get the project instance."""
-        return Project.objects.get(pk=self.kwargs["pk"])
+        return Project.objects.get(pk=self.kwargs["project_pk"])
 
     def get_context_data(self, **kwargs):
         """Add project to context."""
@@ -29,10 +31,14 @@ class SiteManagementView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Templa
         """Get breadcrumb navigation."""
         project = self.get_project()
         return [
-            {"title": "Projects", "url": "/project/list/"},
-            {
-                "title": project.name,
-                "url": f"/project/project/{project.pk}/dashboard/",
-            },
-            {"title": "Site Management", "url": ""},
+            BreadcrumbItem(
+                title="Projects", url=str(reverse_lazy("project:project-list"))
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=str(
+                    reverse_lazy("project:project-dashboard", kwargs={"pk": project.pk})
+                ),
+            ),
+            BreadcrumbItem(title="Site Management", url=None),
         ]
