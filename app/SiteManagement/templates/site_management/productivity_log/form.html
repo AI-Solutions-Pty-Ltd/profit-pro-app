@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load heroicons %}
+{% block title %}
+    {% if object %}
+        Edit
+    {% else %}
+        Add
+    {% endif %}
+    Productivity Log - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <h1 class="text-2xl font-bold text-gray-900">
+                {% if object %}
+                    Edit
+                {% else %}
+                    Add
+                {% endif %}
+                Productivity Log
+            </h1>
+            <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+        </div>
+    </div>
+    <div class="bg-white shadow-sm rounded-lg">
+        <form method="post" class="px-6 py-6">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <div class="flex justify-end space-x-3 mt-6 pt-6 border-t">
+                <a href="{% url 'site_management:productivity-log-list' project.pk %}"
+                   class="px-4 py-2 border rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</a>
+                <button type="submit"
+                        class="px-4 py-2 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                    {% if object %}
+                        Update
+                    {% else %}
+                        Create
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock content %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% block title %}
+    Productivity Log - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Productivity Log</h1>
+                    <p class="text-sm text-gray-600 mt-1">Track work output for {{ project.name }}</p>
+                </div>
+                <a href="{% url 'site_management:productivity-log-create' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                    {% heroicon_outline "plus" class="w-5 h-5 mr-2" %}
+                    Add Productivity Entry
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Task</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Crew Size</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hours</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Output</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Productivity</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for log in productivity_logs %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ log.date }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900">{{ log.task|truncatewords:8 }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ log.crew_size }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ log.hours_worked }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ log.output }} {{ log.output_unit }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ log.productivity|floatformat:2|default:"-" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                <a href="{% url 'site_management:productivity-log-update' project.pk log.pk %}"
+                                   class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                <a href="{% url 'site_management:productivity-log-delete' project.pk log.pk %}"
+                                   class="text-red-600 hover:text-red-900">Delete</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center text-sm text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    {% heroicon_outline "chart-bar" class="w-12 h-12 text-gray-400 mb-3" %}
+                                    <p class="font-medium">No productivity logs yet</p>
+                                    <p class="mt-1">Start tracking your team's productivity.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+        <div class="flex justify-between items-center">
+            <a href="{% url 'site_management:site-management' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                Back to Site Management
+            </a>
+        </div>
+    </div>
+{% endblock content %}
