@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load crispy_forms_tags %}
 {% load heroicons %}
 {% load static %}
 {% block title %}
@@ -11,22 +12,13 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
-                    <p class="mt-2 text-gray-600">
-                        Project:
-                        <a href="{{ project.get_absolute_url }}"
-                           class="text-indigo-600 hover:text-indigo-800">{{ project.name }}</a>
-                    </p>
+                    <p class="mt-2 text-gray-600">Project: {{ project.name }}</p>
                 </div>
-                <a href="{% url 'bill_of_quantities:claim-list' project.pk %}"
-                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    {% heroicon_outline "arrow-left" size="20" class="mr-2" %}
-                    Back to Claims
-                </a>
             </div>
         </div>
     </div>
     <!-- Form -->
-    <div class="bg-white shadow sm:rounded-lg">
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
         <form method="post" class="space-y-6">
             {% csrf_token %}
             <div class="px-4 py-5 sm:p-6">
@@ -46,60 +38,10 @@
                     </div>
                 {% endif %}
                 <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <!-- Period -->
-                    <div>
-                        {{ form.period.label_tag }}
-                        {% if form.period.errors %}
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                {{ form.period|add_class:"block w-full pr-10 border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md" }}
-                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                    {% heroicon_outline "exclamation-circle" size="20" class="h-5 w-5 text-red-500" %}
-                                </div>
-                            </div>
-                            <p class="mt-2 text-sm text-red-600">{{ form.period.errors.0 }}</p>
-                        {% else %}
-                            {{ form.period|add_class:"mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" }}
-                        {% endif %}
-                        <p class="mt-2 text-sm text-gray-500">Select the month for this claim</p>
-                    </div>
-                    <!-- Estimated Claim -->
-                    <div>
-                        {{ form.estimated_claim.label_tag }}
-                        {% if form.estimated_claim.errors %}
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500 sm:text-sm">R</span>
-                                </div>
-                                {{ form.estimated_claim|add_class:"block w-full pl-7 pr-10 border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md" }}
-                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                    {% heroicon_outline "exclamation-circle" size="20" class="h-5 w-5 text-red-500" %}
-                                </div>
-                            </div>
-                            <p class="mt-2 text-sm text-red-600">{{ form.estimated_claim.errors.0 }}</p>
-                        {% else %}
-                            <div class="mt-1 relative rounded-md shadow-sm">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500 sm:text-sm">R</span>
-                                </div>
-                                {{ form.estimated_claim|add_class:"block w-full pl-7 border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" }}
-                            </div>
-                        {% endif %}
-                        <p class="mt-2 text-sm text-gray-500">Enter the estimated claim amount</p>
-                    </div>
+                    {{ form.period|as_crispy_field }}
+                    {{ form.estimated_claim|as_crispy_field }}
                 </div>
-                <!-- Notes -->
-                <div>
-                    {{ form.notes.label_tag }}
-                    {% if form.notes.errors %}
-                        <div class="mt-1 relative rounded-md shadow-sm">
-                            {{ form.notes|add_class:"block w-full border-red-300 text-red-900 placeholder-red-300 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm rounded-md" }}
-                            <p class="mt-2 text-sm text-red-600">{{ form.notes.errors.0 }}</p>
-                        </div>
-                    {% else %}
-                        {{ form.notes|add_class:"mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" }}
-                    {% endif %}
-                    <p class="mt-2 text-sm text-gray-500">Additional notes or comments (optional)</p>
-                </div>
+                {{ form.notes|as_crispy_field }}
             </div>
             <!-- Actions -->
             <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">

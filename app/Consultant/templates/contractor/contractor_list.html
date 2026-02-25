@@ -42,7 +42,12 @@
                                 {% heroicon_outline "building-office" class="w-6 h-6 text-green-600" %}
                             </div>
                             <div class="ml-4">
-                                <h3 class="text-lg font-medium text-gray-900">{{ project.contractor.name }}</h3>
+                                <h3 class="text-lg font-medium text-gray-900">
+                                    <a href="{% url 'client:contractor-management:contractor-update' project.pk project.contractor.pk %}"
+                                       class="hover:text-indigo-600 transition-colors">
+                                        {{ project.contractor.name }}
+                                    </a>
+                                </h3>
                                 <p class="text-sm text-gray-500">Reg: {{ project.contractor.registration_number }}</p>
                                 {% if project.contractor.vat_number %}
                                     <p class="text-sm text-gray-500">VAT: {{ project.contractor.vat_number }}</p>
@@ -67,8 +72,17 @@
         <!-- Available Contractors List -->
         <div class="bg-white shadow rounded-lg">
             <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Available Contractors</h2>
-                <p class="text-sm text-gray-600 mt-1">Select a contractor to assign to this project</p>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold text-gray-900">Available Contractors</h2>
+                        <p class="text-sm text-gray-600 mt-1">Select a contractor to assign to this project</p>
+                    </div>
+                    <a href="{% url 'client:contractor-management:contractor-list' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "cog-6-tooth" class="w-4 h-4 mr-1" %}
+                        Manage Contractors
+                    </a>
+                </div>
             </div>
             {% if contractors %}
                 <div class="overflow-x-auto">

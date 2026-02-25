@@ -1,6 +1,7 @@
 """Views for Claim management."""
 
 from django.contrib import messages
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
@@ -54,6 +55,17 @@ class ClaimCreateView(ClaimMixin, CreateView):
     form_class = ClaimForm
     success_url = None
 
+    def dispatch(self, request, *args, **kwargs):
+        """Check if project has required dates before proceeding."""
+        project = self.get_project()
+        if not project.start_date or not project.end_date:
+            messages.error(
+                self.request,
+                "Project must have both start date and end date before creating claims.",
+            )
+            return redirect("project:project-management", pk=project.pk)
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         """Add project to context."""
         context = super().get_context_data(**kwargs)
@@ -92,6 +104,17 @@ class ClaimUpdateView(ClaimMixin, UpdateView):
 
     template_name = "claims/claim_form.html"
     form_class = ClaimForm
+
+    def dispatch(self, request, *args, **kwargs):
+        """Check if project has required dates before proceeding."""
+        project = self.get_project()
+        if not project.start_date or not project.end_date:
+            messages.error(
+                self.request,
+                "Project must have both start date and end date before updating claims.",
+            )
+            return redirect("project:project-detail", pk=project.pk)
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         """Add project to context."""

@@ -332,7 +332,7 @@ class ClaimForm(forms.ModelForm):
             self.instance.project = self.project
 
         # Set min and max dates based on project dates
-        if self.project:
+        if self.project and self.project.start_date and self.project.end_date:
             self.fields["period"].widget.attrs.update(
                 {
                     "min": self.project.start_date.strftime("%Y-%m"),

@@ -10,95 +10,38 @@
                 <a href="{% url 'project:company-dashboard' %}"
                    class="border-b-2 border-indigo-500 py-4 px-1 text-sm font-medium text-indigo-600">
                     {% heroicon_outline "building-office" class="w-5 h-5 inline mr-2" %}
-                    Company Dashboard
+                    Business Dashboard
                 </a>
-                <a href="{% url 'project:portfolio-trend-report' %}"
-                   class="border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">
-                    {% heroicon_outline "chart-bar-square" class="w-5 h-5 inline mr-2" %}
-                    Trend Analysis
-                </a>
-                <a href="{% url 'project:portfolio-dashboard' %}"
-                   class="border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">
-                    {% heroicon_outline "chart-bar" class="w-5 h-5 inline mr-2" %}
-                    Portfolio Dashboard
-                </a>
-                <a href="{% url 'project:portfolio-financial-report' %}"
-                   class="border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">
-                    {% heroicon_outline "banknotes" class="w-5 h-5 inline mr-2" %}
+                <a href="#"
+                   class="border-b-2 border-indigo-500 py-4 px-1 text-sm font-medium text-indigo-600">
+                    {% heroicon_outline "document-text" class="w-5 h-5 inline mr-2" %}
                     Financial Report
-                </a>
-                <a href="{% url 'project:portfolio-schedule-report' %}"
-                   class="border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">
-                    {% heroicon_outline "clock" class="w-5 h-5 inline mr-2" %}
-                    Schedule Report
-                </a>
-                <a href="{% url 'project:portfolio-cashflow-report' %}"
-                   class="border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 transition-colors">
-                    {% heroicon_outline "currency-dollar" class="w-5 h-5 inline mr-2" %}
-                    Cashflow Report
                 </a>
             </nav>
         </div>
     </div>
-    <!-- Header -->
-    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">Portfolio Dashboard</h1>
-            <p class="mt-2 text-gray-600">Financial overview as of {{ current_date|date:"F d, Y" }}</p>
+    <!-- Page Header -->
+    <header class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <!-- Page Title and Description -->
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Business Dashboard</h1>
+                    <p class="mt-1 text-sm text-gray-600">Financial overview as of {{ current_date|date:"F d, Y" }}</p>
+                </div>
+            </div>
         </div>
-        <div class="flex items-center gap-3">
-            <!-- Filters -->
-            <form id="categoryFilterForm" method="get" class="flex items-center gap-2">
-                <label for="id_category"
-                       class="text-sm font-medium text-gray-600 whitespace-nowrap">Filter by:</label>
-                <select name="category"
-                        id="id_category"
-                        onchange="this.form.submit()"
-                        class="block w-40 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
-                    <option value="">All Categories</option>
-                    {% for category in filter_form.category.field.queryset %}
-                        <option value="{{ category.pk }}"
-                                {% if filter_form.category.value|stringformat:"s" == category.pk|stringformat:"s" %}selected{% endif %}>
-                            {{ category.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-                <!-- Go to Project -->
-                <select name="go_to_project"
-                        id="id_go_to_project"
-                        onchange="if(this.value) window.location.href='{% url 'project:project-dashboard' 0 %}'.replace('0', this.value);"
-                        class="block w-40 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
-                    <option value="">Go to Project</option>
-                    {% for project in filter_form.projects.field.queryset %}
-                        <option value="{{ project.pk }}">{{ project.name }}</option>
-                    {% endfor %}
-                </select>
-                <!-- Consultant Filter -->
-                <select name="consultant"
-                        id="id_consultant"
-                        onchange="this.form.submit()"
-                        class="block w-40 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
-                    <option value="">All Consultants</option>
-                    {% for consultant in filter_form.consultant.field.queryset %}
-                        <option value="{{ consultant.pk }}"
-                                {% if filter_form.consultant.value|stringformat:"s" == consultant.pk|stringformat:"s" %}selected{% endif %}>
-                            {{ consultant.get_full_name|default:consultant.email }}
-                        </option>
-                    {% endfor %}
-                </select>
-                {% if filter_form.category.value or filter_form.consultant.value %}
-                    <a href="{% url 'project:portfolio-dashboard' %}"
-                       class="inline-flex items-center px-2 py-2 text-gray-500 hover:text-gray-700 transition-colors"
-                       title="Clear filter">{% heroicon_outline "x-mark" size="18" %}</a>
-                {% endif %}
-            </form>
-            <a href="{% url 'project:project-create' %}"
-               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                {% heroicon_outline "plus" size="20" class="mr-2" %}
-                Create Project
-            </a>
+        <!-- Navigation Footer -->
+        <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
+            <div class="flex items-center justify-end space-x-3">
+                <a href="{% url 'project:company-list' %}"
+                   class="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors">
+                    {% heroicon_outline "building-office" size="20" class="mr-2" %}
+                    View All Companies
+                </a>
+            </div>
         </div>
-    </div>
+    </header>
     <!-- ==========================================
              Group 1 - Project Stats
              ========================================== -->
@@ -111,14 +54,14 @@
         </div>
         <div class="p-4">
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                <!-- Active Projects -->
-                <a href="{% url 'project:project-list' %}"
+                <!-- Active Companies -->
+                <a href="{% url 'project:company-list' %}"
                    class="bg-blue-50 rounded-lg p-3 text-center border border-blue-100 hover:bg-blue-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
                     <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-blue-600 transition-colors">
-                        {% heroicon_outline "folder-open" size="16" class="text-white" %}
+                        {% heroicon_outline "building-office" size="16" class="text-white" %}
                     </div>
-                    <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Active Projects</p>
-                    <p class="text-xl font-bold text-blue-700 mt-1">{{ active_projects_count }}</p>
+                    <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Active Companies</p>
+                    <p class="text-xl font-bold text-blue-700 mt-1">{{ active_companies_count|default:active_projects_count }}</p>
                 </a>
                 <!-- Profits -->
                 <a class="bg-rose-50 rounded-lg p-3 text-center border border-rose-100 hover:bg-rose-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
@@ -240,12 +183,12 @@
     </div>
     <!-- Footer -->
     <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-4">
-        <div class="flex justify-between items-center max-w-7xl mx-auto">
+        <div class="flex row ">
             <span class="text-sm text-gray-500">Company Dashboard</span>
-            <a href="{% url 'project:project-list' %}"
-               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+            <a href="{% url 'project:company-list' %}"
+               class="ml-auto inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                 {% heroicon_outline "list-bullet" size="16" class="mr-2" %}
-                View All Projects
+                View All Companies
                 {% heroicon_outline "arrow-right" class="w-4 h-4 ml-2" %}
             </a>
         </div>
@@ -414,33 +357,3 @@
         });
     </script>
 {% endblock content %}
-{% block extra_css %}
-    <style>
-        #id_active_projects {  /* container */
-            appearance: none;  /* Hide default checkbox */
-            width: 44px;
-            height: 24px;
-            background: #dae7fbff;
-            border-radius: 12px;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        #id_active_projects::before {  /* false position */
-            content: '';
-            position: absolute;
-            background-color: #d33737ff;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            top: 4px;
-            left: 5px;
-            transition: all 0.3s ease;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        #id_active_projects:checked::before {
-            transform: translateX(19px);  /* Slide thumb to right */
-            background-color: rgb(0, 201, 80);
-        }
-    </style>
-{% endblock extra_css %}

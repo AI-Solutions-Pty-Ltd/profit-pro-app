@@ -1,5 +1,7 @@
 """Views for Company model."""
 
+from app.Account.models import Account
+
 from typing import Any
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -22,7 +24,8 @@ class CompanyListView(LoginRequiredMixin, BreadcrumbMixin, ListView):
 
     def get_queryset(self) -> QuerySet:
         """Filter companies to show only those the user has access to."""
-        return self.request.user.get_contractors  # type: ignore
+        user: Account = self.request.user  # type: ignore
+        return user.get_contractors
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         """Get breadcrumb navigation."""
