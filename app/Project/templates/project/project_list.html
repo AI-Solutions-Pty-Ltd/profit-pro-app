@@ -118,6 +118,16 @@
                                     <a href="{% url 'project:project-management' project.id %}"
                                        class="inline-flex items-center p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
                                        title="Manage">{% heroicon_outline "cog-6-tooth" size="18" %}</a>
+                                    <!-- Site Management -->
+                                    <a href="{% url 'site_management:site-management' project.pk %}"
+                                       class="inline-flex items-center p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                                       title="Site Management">{% heroicon_outline "clipboard-document-list" size="18" %}</a>
+                                    {% if project.contractor %}
+                                        <!-- Company Management -->
+                                        <a href="{% url 'project:company-detail' project.contractor.pk %}"
+                                           class="inline-flex items-center p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                                           title="Company Management">{% heroicon_outline "building-office" size="18" %}</a>
+                                    {% endif %}
                                 </div>
                             </td>
                         </tr>

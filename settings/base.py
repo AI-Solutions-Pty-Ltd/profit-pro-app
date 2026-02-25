@@ -59,6 +59,7 @@ SHARED_APPS = [
     "app.Ledger",
     "app.Inventories",
     "app.Project",
+    "app.SiteManagement",
 ]
 
 CLEANUP_APPS = [

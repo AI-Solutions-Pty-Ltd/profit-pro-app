@@ -30,6 +30,10 @@ urlpatterns = (
         ),
         path("client/", include("app.Consultant.urls", namespace="client")),
         path("ledger/", include("app.Ledger.urls", namespace="ledger")),
+        path(
+            "site-management/",
+            include("app.SiteManagement.urls", namespace="site_management"),
+        ),
     ]
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
