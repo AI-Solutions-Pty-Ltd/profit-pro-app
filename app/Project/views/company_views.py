@@ -1,7 +1,5 @@
 """Views for Company model."""
 
-from app.Account.models import Account
-
 from typing import Any
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -9,6 +7,7 @@ from django.db.models import QuerySet
 from django.urls import reverse_lazy
 from django.views.generic import DetailView, ListView, UpdateView
 
+from app.Account.models import Account
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.Project.forms import CompanyForm
 from app.Project.models import Company
