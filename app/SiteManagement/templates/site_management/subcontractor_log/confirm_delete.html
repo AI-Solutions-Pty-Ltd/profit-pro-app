@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% block title %}
+    Delete Subcontractor - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <h1 class="text-2xl font-bold text-gray-900">Delete Subcontractor</h1>
+        </div>
+    </div>
+    <div class="bg-white shadow-sm rounded-lg">
+        <div class="px-6 py-6">
+            <div class="flex items-center mb-4">
+                {% heroicon_outline "exclamation-triangle" class="w-12 h-12 text-red-500 mr-4" %}
+                <div>
+                    <h3 class="text-lg font-medium">Confirm Deletion</h3>
+                </div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <p class="text-sm">
+                    <strong>Name:</strong> {{ object.name }}
+                </p>
+                <p class="text-sm">
+                    <strong>Trade:</strong> {{ object.trade }}
+                </p>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="flex justify-end space-x-3">
+                    <a href="{% url 'site_management:subcontractor-log-list' project.pk %}"
+                       class="px-4 py-2 border rounded-md text-sm">Cancel</a>
+                    <button type="submit"
+                            class="px-4 py-2 rounded-md text-sm text-white bg-red-600 hover:bg-red-700">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock content %}
