@@ -37,7 +37,7 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <a href="#"
+                <a href="{% url 'site_management:materials-log-list' project.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "clipboard-document-list" class="w-4 h-4 text-blue-500 mr-2" %}
@@ -59,7 +59,7 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <a href="#"
+                <a href="{% url 'site_management:daily-diary-list' project.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "calendar-days" class="w-4 h-4 text-emerald-500 mr-2" %}
@@ -81,7 +81,7 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <a href="#"
+                <a href="{% url 'site_management:productivity-log-list' project.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "arrow-trending-up" class="w-4 h-4 text-purple-500 mr-2" %}
@@ -106,7 +106,7 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <a href="#"
+                <a href="{% url 'site_management:subcontractor-log-list' project.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "users" class="w-4 h-4 text-orange-500 mr-2" %}
@@ -128,7 +128,7 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <a href="#"
+                <a href="{% url 'site_management:snag-list-list' project.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "clipboard-document-check" class="w-4 h-4 text-red-500 mr-2" %}
@@ -150,7 +150,7 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <a href="#"
+                <a href="{% url 'site_management:progress-tracker-list' project.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "clipboard-document-list" class="w-4 h-4 text-cyan-500 mr-2" %}
@@ -175,7 +175,7 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <a href="#"
+                <a href="{% url 'site_management:delay-log-list' project.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-yellow-200 hover:bg-yellow-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "exclamation-triangle" class="w-4 h-4 text-yellow-500 mr-2" %}
@@ -197,7 +197,7 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <a href="#"
+                <a href="{% url 'site_management:photo-log-list' project.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-pink-200 hover:bg-pink-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "photo" class="w-4 h-4 text-pink-500 mr-2" %}
@@ -219,7 +219,7 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <a href="#"
+                <a href="{% url 'site_management:procurement-tracker-list' project.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "clipboard-document-list" class="w-4 h-4 text-indigo-500 mr-2" %}
@@ -244,7 +244,7 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <a href="#"
+                <a href="{% url 'site_management:delivery-tracker-list' project.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "clipboard-document-check" class="w-4 h-4 text-green-500 mr-2" %}
@@ -266,7 +266,7 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <a href="#"
+                <a href="{% url 'site_management:plant-equipment-list' project.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "wrench-screwdriver" class="w-4 h-4 text-slate-500 mr-2" %}
@@ -288,7 +288,7 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <a href="#"
+                <a href="{% url 'site_management:quality-control-list' project.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-teal-200 hover:bg-teal-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "clipboard-document-check" class="w-4 h-4 text-teal-500 mr-2" %}
@@ -313,7 +313,7 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <a href="#"
+                <a href="{% url 'site_management:labour-log-list' project.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "identification" class="w-4 h-4 text-violet-500 mr-2" %}
@@ -335,7 +335,7 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <a href="#"
+                <a href="{% url 'site_management:offsite-log-list' project.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-lime-200 hover:bg-lime-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "clipboard-document-list" class="w-4 h-4 text-lime-500 mr-2" %}
@@ -357,7 +357,7 @@
                 </div>
             </div>
             <div class="space-y-2">
-                <a href="#"
+                <a href="{% url 'site_management:safety-observation-list' project.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "clipboard-document-check" class="w-4 h-4 text-red-500 mr-2" %}
