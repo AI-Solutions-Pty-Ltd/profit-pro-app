@@ -3,9 +3,6 @@
 import django.db.models.deletion
 from django.db import migrations, models
 
-import app.Inventories.models
-import app.Inventories.models_suppliers
-
 
 class Migration(migrations.Migration):
     initial = True
@@ -214,7 +211,7 @@ class Migration(migrations.Migration):
                     models.FileField(
                         blank=True,
                         null=True,
-                        upload_to=app.Inventories.models.quote_upload_path,
+                        upload_to="",
                     ),
                 ),
                 ("note", models.ManyToManyField(to="Inventories.note")),
@@ -321,7 +318,7 @@ class Migration(migrations.Migration):
                     models.FileField(
                         blank=True,
                         null=True,
-                        upload_to=app.Inventories.models_suppliers.supplier_invoice_upload_path,
+                        upload_to="",
                     ),
                 ),
                 (
@@ -385,7 +382,7 @@ class Migration(migrations.Migration):
                     models.FileField(
                         blank=True,
                         null=True,
-                        upload_to=app.Inventories.models.delivery_note_upload_path,
+                        upload_to="",
                     ),
                 ),
                 (
