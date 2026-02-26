@@ -80,6 +80,7 @@ class DailyDiaryCreateView(DailyDiaryMixin, CreateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         form.fields["date"].widget = self.widgets["date"]
+        form.fields["issues_delays"].label = "Issues or Delays"
         return form
 
     def form_valid(self, form):
@@ -117,6 +118,7 @@ class DailyDiaryUpdateView(DailyDiaryMixin, UpdateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         form.fields["date"].widget = self.widgets["date"]
+        form.fields["issues_delays"].label = "Issues or Delays"
         return form
 
     def form_valid(self, form):
