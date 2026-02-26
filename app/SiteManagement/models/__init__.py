@@ -3,6 +3,7 @@
 from .daily_diary import DailyDiary
 from .delay_log import DelayLog
 from .delivery_tracker import DeliveryTracker
+from .early_warning import EarlyWarning, EarlyWarningStatus
 from .labour_log import LabourLog
 from .materials_log import MaterialsLog
 from .offsite_log import OffsiteLog
@@ -20,6 +21,8 @@ __all__ = [
     "DailyDiary",
     "DelayLog",
     "DeliveryTracker",
+    "EarlyWarning",
+    "EarlyWarningStatus",
     "LabourLog",
     "MaterialsLog",
     "OffsiteLog",

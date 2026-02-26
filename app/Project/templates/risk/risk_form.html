@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
+{% load heroicons %}
 {% block title %}
     {% if form.instance.pk %}
         Edit Risk - {{ project.name }}
@@ -8,53 +9,82 @@
     {% endif %}
 {% endblock title %}
 {% block content %}
-    <!-- Form Card -->
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
-        <!-- Header -->
-        <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+    <!-- Page Banner -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
             <h1 class="text-2xl font-bold text-gray-900">
                 {% if form.instance.pk %}
                     Edit Risk
                 {% else %}
-                    Add New Risk
+                    Add Risk
                 {% endif %}
             </h1>
-            <p class="mt-1 text-sm text-gray-600">
-                {% if form.instance.pk %}
-                    Update the risk details below.
-                {% else %}
-                    Add a new risk to track for {{ project.name }}.
-                {% endif %}
-            </p>
+            <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
         </div>
-        <!-- Form -->
+    </div>
+    <div class="bg-white shadow-sm rounded-lg">
         <form method="post" class="px-6 py-6">
             {% csrf_token %}
-            {{ form|crispy }}
-            <!-- Form Actions -->
-            <div class="mt-6 flex items-center justify-end space-x-3">
-                <a id="cancel-btn"
-                   href="{% url 'project:risk-list' project.pk %}"
-                   class="loading-btn inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                   data-loading-text="Canceling..."
-                   data-disable-elements="#save-btn">
-                    {% heroicon_outline "chevron-left" size="20" %}
+            {% if form.instance.pk %}
+                <!-- Auto-generated info (read-only) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 pb-6 border-b border-gray-200">
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Reference Number</p>
+                        <p class="mt-1 text-sm font-semibold text-indigo-700">{{ form.instance.reference_number }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Date Raised</p>
+                        <p class="mt-1 text-sm text-gray-900">{{ form.instance.date }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Raised By</p>
+                        <p class="mt-1 text-sm text-gray-900">
+                            {% if form.instance.raised_by %}
+                                {{ form.instance.raised_by.get_full_name|default:form.instance.raised_by.email }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            {% endif %}
+            <div class="space-y-4">
+                {{ form.description|as_crispy_field }}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {{ form.time_impact_days|as_crispy_field }}
+                    {{ form.cost_impact|as_crispy_field }}
+                    {{ form.probability|as_crispy_field }}
+                </div>
+                {{ form.mitigation_action|as_crispy_field }}
+                {{ form.status|as_crispy_field }}
+                {% if form.instance.pk and form.instance.date_closed %}
+                    <p class="text-xs text-gray-500">Closed on {{ form.instance.date_closed }}</p>
+                {% endif %}
+            </div>
+            <div class="flex justify-end space-x-3 mt-8 pt-6 border-t border-gray-200">
+                <a href="{% url 'project:risk-list' project.pk %}"
+                   class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                     Cancel
                 </a>
-                <button id="save-btn"
-                        type="submit"
-                        class="loading-btn inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                        data-loading-text="Saving..."
-                        data-disable-elements="#cancel-btn">
+                <button type="submit"
+                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
                     {% if form.instance.pk %}
-                        {% heroicon_outline "pencil" size="20" %}
-                        Update Risk
+                        Save Changes
                     {% else %}
-                        {% heroicon_outline "plus" size="20" %}
                         Add Risk
                     {% endif %}
                 </button>
             </div>
         </form>
+    </div>
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+        <div class="flex justify-between items-center">
+            <a href="{% url 'project:risk-list' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                Back to Risk Register
+            </a>
+        </div>
     </div>
 {% endblock content %}

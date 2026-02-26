@@ -6,7 +6,6 @@ from django.contrib import messages
 from django.db.models import QuerySet, Sum
 from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
-from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
@@ -49,21 +48,11 @@ class RiskListView(RiskMixin, ListView):
         ]
 
     def get_queryset(self) -> QuerySet[Risk]:
-        """Filter risks, optionally by active status."""
+        """Filter risks, optionally by status."""
         qs = super().get_queryset()
-        show_resolved = self.request.GET.get("show_resolved", "false") == "true"
-        filter_current = self.request.GET.get("filter_current", "false") == "true"
-
-        if not show_resolved:
-            qs = qs.filter(is_active=True)
-
-        if filter_current:
-            today = timezone.now().date()
-            qs = qs.filter(
-                time_impact_start__lte=today,
-                time_impact_end__gte=today,
-            )
-
+        show_closed = self.request.GET.get("show_closed", "false") == "true"
+        if not show_closed:
+            qs = qs.filter(status="OPEN")
         return qs
 
     def get_context_data(self, **kwargs):
@@ -71,30 +60,23 @@ class RiskListView(RiskMixin, ListView):
         context = super().get_context_data(**kwargs)
         project = self.get_project()
         context["project"] = project
-        context["show_resolved"] = (
-            self.request.GET.get("show_resolved", "false") == "true"
-        )
-        context["filter_current"] = (
-            self.request.GET.get("filter_current", "false") == "true"
-        )
+        context["show_closed"] = self.request.GET.get("show_closed", "false") == "true"
 
-        # Calculate summary statistics
-        active_risks = Risk.objects.filter(project=project, is_active=True)
-        context["total_risks"] = active_risks.count()
+        open_risks = Risk.objects.filter(project=project, status="OPEN")
+        closed_risks = Risk.objects.filter(project=project, status="CLOSED")
+        context["open_count"] = open_risks.count()
+        context["closed_count"] = closed_risks.count()
 
-        # Total estimated cost impact
         total_estimated_cost = Decimal("0.00")
         total_estimated_days = Decimal("0.00")
-        for risk in active_risks:
+        for risk in open_risks:
             total_estimated_cost += risk.estimated_cost_impact
             if risk.estimated_time_impact_days:
                 total_estimated_days += risk.estimated_time_impact_days
 
         context["total_estimated_cost_impact"] = total_estimated_cost
         context["total_estimated_time_impact"] = total_estimated_days
-
-        # Raw totals
-        context["total_cost_impact"] = active_risks.aggregate(total=Sum("cost_impact"))[
+        context["total_cost_impact"] = open_risks.aggregate(total=Sum("cost_impact"))[
             "total"
         ] or Decimal("0.00")
 
@@ -136,13 +118,11 @@ class RiskCreateView(RiskMixin, CreateView):
         return context
 
     def form_valid(self, form):
-        """Set project and created_by before saving."""
+        """Set project, raised_by and created_by before saving."""
         form.instance.project = self.get_project()
+        form.instance.raised_by = self.request.user
         form.instance.created_by = self.request.user
-        messages.success(
-            self.request,
-            f"Risk '{form.instance.risk_name}' has been created successfully.",
-        )
+        messages.success(self.request, "Risk has been created successfully.")
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -187,7 +167,7 @@ class RiskUpdateView(RiskMixin, UpdateView):
                     kwargs={"project_pk": self.get_project().pk},
                 ),
             ),
-            BreadcrumbItem(title=f"Edit: {risk.risk_name}", url=None),
+            BreadcrumbItem(title=f"Edit: {risk.reference_number}", url=None),
         ]
 
     def get_context_data(self, **kwargs):
@@ -197,17 +177,8 @@ class RiskUpdateView(RiskMixin, UpdateView):
         return context
 
     def form_valid(self, form):
-        """Handle resolution status."""
-        risk = form.instance
-        # Check if risk is being resolved
-        if not risk.is_active and not risk.resolved_date:
-            risk.resolved_date = timezone.now().date()
-            risk.resolved_by = self.request.user
-
-        messages.success(
-            self.request,
-            f"Risk '{risk.risk_name}' has been updated successfully.",
-        )
+        """Handle status/date_closed on save."""
+        messages.success(self.request, "Risk has been updated successfully.")
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -251,7 +222,7 @@ class RiskDeleteView(RiskMixin, DeleteView):
                     kwargs={"project_pk": self.get_project().pk},
                 ),
             ),
-            BreadcrumbItem(title=f"Delete: {risk.risk_name}", url=None),
+            BreadcrumbItem(title=f"Delete: {risk.reference_number}", url=None),
         ]
 
     def get_context_data(self, **kwargs):
@@ -265,7 +236,8 @@ class RiskDeleteView(RiskMixin, DeleteView):
         risk = self.get_object()
         risk.soft_delete()
         messages.success(
-            self.request, f"Risk '{risk.risk_name}' has been deleted successfully."
+            self.request,
+            f"Risk '{risk.reference_number}' has been deleted successfully.",
         )
         return self.get_success_url()
 

@@ -18,7 +18,7 @@ from .planned_value_models import PlannedValue
 from .portfolio_models import Portfolio
 from .project_roles_models import ProjectRole, Role
 from .projects_models import Project
-from .risk_models import Risk
+from .risk_models import Risk, RiskStatus
 from .signatories_models import Signatories
 
 __all__ = [
@@ -42,5 +42,6 @@ __all__ = [
     "ProjectRole",
     "Role",
     "Risk",
+    "RiskStatus",
     "Signatories",
 ]

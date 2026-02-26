@@ -15,6 +15,11 @@ from app.SiteManagement.views import (
     DeliveryTrackerDeleteView,
     DeliveryTrackerListView,
     DeliveryTrackerUpdateView,
+    EarlyWarningCreateView,
+    EarlyWarningDeleteView,
+    EarlyWarningDetailView,
+    EarlyWarningListView,
+    EarlyWarningUpdateView,
     LabourLogCreateView,
     LabourLogDeleteView,
     LabourLogListView,
@@ -74,6 +79,32 @@ urlpatterns = [
         "project/<int:project_pk>/site-management/",
         SiteManagementView.as_view(),
         name="site-management",
+    ),
+    # Early Warnings
+    path(
+        "project/<int:project_pk>/early-warnings/",
+        EarlyWarningListView.as_view(),
+        name="early-warning-list",
+    ),
+    path(
+        "project/<int:project_pk>/early-warnings/create/",
+        EarlyWarningCreateView.as_view(),
+        name="early-warning-create",
+    ),
+    path(
+        "project/<int:project_pk>/early-warnings/<int:pk>/",
+        EarlyWarningDetailView.as_view(),
+        name="early-warning-detail",
+    ),
+    path(
+        "project/<int:project_pk>/early-warnings/<int:pk>/update/",
+        EarlyWarningUpdateView.as_view(),
+        name="early-warning-update",
+    ),
+    path(
+        "project/<int:project_pk>/early-warnings/<int:pk>/delete/",
+        EarlyWarningDeleteView.as_view(),
+        name="early-warning-delete",
     ),
     # Materials Log
     path(

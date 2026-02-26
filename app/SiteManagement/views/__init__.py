@@ -18,6 +18,13 @@ from .delivery_tracker_views import (
     DeliveryTrackerListView,
     DeliveryTrackerUpdateView,
 )
+from .early_warning_views import (
+    EarlyWarningCreateView,
+    EarlyWarningDeleteView,
+    EarlyWarningDetailView,
+    EarlyWarningListView,
+    EarlyWarningUpdateView,
+)
 from .labour_log_views import (
     LabourLogCreateView,
     LabourLogDeleteView,
@@ -154,4 +161,9 @@ __all__ = [
     "SafetyObservationCreateView",
     "SafetyObservationUpdateView",
     "SafetyObservationDeleteView",
+    "EarlyWarningListView",
+    "EarlyWarningCreateView",
+    "EarlyWarningDetailView",
+    "EarlyWarningUpdateView",
+    "EarlyWarningDeleteView",
 ]

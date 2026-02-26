@@ -4,121 +4,120 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Inventories', '0001_initial'),
+        ("Inventories", "0001_initial"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='bankingdetail',
-            name='bank',
+            model_name="bankingdetail",
+            name="bank",
         ),
         migrations.RemoveField(
-            model_name='bankingdetail',
-            name='supplier',
+            model_name="bankingdetail",
+            name="supplier",
         ),
         migrations.RemoveField(
-            model_name='inventory',
-            name='type',
+            model_name="inventory",
+            name="type",
         ),
         migrations.RemoveField(
-            model_name='ordercomposition',
-            name='inventory',
+            model_name="ordercomposition",
+            name="inventory",
         ),
         migrations.RemoveField(
-            model_name='inventorytransaction',
-            name='inventory',
+            model_name="inventorytransaction",
+            name="inventory",
         ),
         migrations.RemoveField(
-            model_name='inventorytransaction',
-            name='bookings',
+            model_name="inventorytransaction",
+            name="bookings",
         ),
         migrations.RemoveField(
-            model_name='inventorytransaction',
-            name='order_composition',
+            model_name="inventorytransaction",
+            name="order_composition",
         ),
         migrations.RemoveField(
-            model_name='inventorytransaction',
-            name='supplier_invoice',
+            model_name="inventorytransaction",
+            name="supplier_invoice",
         ),
         migrations.RemoveField(
-            model_name='inventorytransaction',
-            name='warehouse',
+            model_name="inventorytransaction",
+            name="warehouse",
         ),
         migrations.RemoveField(
-            model_name='invoice',
-            name='order',
+            model_name="invoice",
+            name="order",
         ),
         migrations.RemoveField(
-            model_name='invoice',
-            name='supplier',
+            model_name="invoice",
+            name="supplier",
         ),
         migrations.RemoveField(
-            model_name='invoice',
-            name='tx',
+            model_name="invoice",
+            name="tx",
         ),
         migrations.RemoveField(
-            model_name='order',
-            name='note',
+            model_name="order",
+            name="note",
         ),
         migrations.RemoveField(
-            model_name='order',
-            name='order',
+            model_name="order",
+            name="order",
         ),
         migrations.RemoveField(
-            model_name='order',
-            name='supplier',
+            model_name="order",
+            name="supplier",
         ),
         migrations.RemoveField(
-            model_name='ordercomposition',
-            name='vat',
+            model_name="ordercomposition",
+            name="vat",
         ),
         migrations.RemoveField(
-            model_name='ordercomposition',
-            name='warehouse',
+            model_name="ordercomposition",
+            name="warehouse",
         ),
         migrations.RemoveField(
-            model_name='transaction',
-            name='supplier',
+            model_name="transaction",
+            name="supplier",
         ),
         migrations.DeleteModel(
-            name='Bank',
+            name="Bank",
         ),
         migrations.DeleteModel(
-            name='BankingDetail',
+            name="BankingDetail",
         ),
         migrations.DeleteModel(
-            name='Type',
+            name="Type",
         ),
         migrations.DeleteModel(
-            name='Inventory',
+            name="Inventory",
         ),
         migrations.DeleteModel(
-            name='InventoryTransaction',
+            name="InventoryTransaction",
         ),
         migrations.DeleteModel(
-            name='Invoice',
+            name="Invoice",
         ),
         migrations.DeleteModel(
-            name='Note',
+            name="Note",
         ),
         migrations.DeleteModel(
-            name='Order',
+            name="Order",
         ),
         migrations.DeleteModel(
-            name='VAT',
+            name="VAT",
         ),
         migrations.DeleteModel(
-            name='OrderComposition',
+            name="OrderComposition",
         ),
         migrations.DeleteModel(
-            name='Warehouse',
+            name="Warehouse",
         ),
         migrations.DeleteModel(
-            name='Supplier',
+            name="Supplier",
         ),
         migrations.DeleteModel(
-            name='Transaction',
+            name="Transaction",
         ),
     ]

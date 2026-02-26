@@ -26,6 +26,7 @@ class ContractVariationMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
     """Mixin for contract variation views."""
 
     project_slug = "project_pk"
+    roles = [Role.CONTRACT_VARIATIONS, Role.ADMIN, Role.USER]
 
 
 class ContractVariationListView(ContractVariationMixin, ListView):
@@ -34,8 +35,6 @@ class ContractVariationListView(ContractVariationMixin, ListView):
     model = ContractVariation
     template_name = "contract/variation_list.html"
     context_object_name = "variations"
-    roles = [Role.CONTRACT_VARIATIONS, Role.ADMIN, Role.USER]
-    project_slug = "project_pk"
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [

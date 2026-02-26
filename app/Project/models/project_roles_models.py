@@ -52,6 +52,9 @@ class Role(models.TextChoices):
     ESCALATION = "Escalation", "Escalation"
     SPECIAL_ITEMS = "Special Items", "Special Items"
 
+    # CONTRACTS MANAGEMENT (additional)
+    EARLY_WARNINGS = "Early Warnings", "Early Warnings"
+
     # OTHER
     # COMPLIANCE
     COMPLIANCE = "Compliance", "Compliance"
