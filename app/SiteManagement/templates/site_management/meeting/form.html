@@ -2,7 +2,11 @@
 {% load crispy_forms_tags %}
 {% load heroicons %}
 {% block title %}
-    {% if object %}Edit Meeting - {{ project.name }}{% else %}New Meeting - {{ project.name }}{% endif %}
+    {% if object %}
+        Edit Meeting - {{ project.name }}
+    {% else %}
+        New Meeting - {{ project.name }}
+    {% endif %}
 {% endblock title %}
 {% block content %}
     <!-- Page Banner -->
@@ -11,7 +15,11 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">
-                        {% if object %}Edit Meeting{% else %}New Meeting{% endif %}
+                        {% if object %}
+                            Edit Meeting
+                        {% else %}
+                            New Meeting
+                        {% endif %}
                     </h1>
                     <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
                 </div>
@@ -37,7 +45,11 @@
                         </a>
                         <button type="submit"
                                 class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
-                            {% if object %}Save Changes{% else %}Create Meeting{% endif %}
+                            {% if object %}
+                                Save Changes
+                            {% else %}
+                                Create Meeting
+                            {% endif %}
                         </button>
                     </div>
                 </form>
@@ -51,11 +63,15 @@
                     <dl class="space-y-2 text-sm">
                         <div class="flex justify-between">
                             <dt class="text-gray-500">Type</dt>
-                            <dd class="font-medium text-gray-900">{{ object.get_meeting_type_display }}</dd>
+                            <dd class="font-medium text-gray-900">
+                                {{ object.get_meeting_type_display }}
+                            </dd>
                         </div>
                         <div class="flex justify-between">
                             <dt class="text-gray-500">Date</dt>
-                            <dd class="text-gray-900">{{ object.date }}</dd>
+                            <dd class="text-gray-900">
+                                {{ object.date }}
+                            </dd>
                         </div>
                         <div class="flex justify-between">
                             <dt class="text-gray-500">Status</dt>
@@ -70,7 +86,9 @@
                         {% if object.date_closed %}
                             <div class="flex justify-between">
                                 <dt class="text-gray-500">Date Closed</dt>
-                                <dd class="text-gray-900">{{ object.date_closed }}</dd>
+                                <dd class="text-gray-900">
+                                    {{ object.date_closed }}
+                                </dd>
                             </div>
                         {% endif %}
                     </dl>

@@ -6,44 +6,186 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0041_alter_projectrole_role'),
-        ('SiteManagement', '0001_initial'),
+        ("Project", "0041_alter_projectrole_role"),
+        ("SiteManagement", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='EarlyWarning',
+            name="EarlyWarning",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last modified')),
-                ('deleted', models.BooleanField(default=False, help_text='Soft delete flag')),
-                ('reference_number', models.CharField(editable=False, help_text='Auto-generated reference number', max_length=50, unique=True)),
-                ('date', models.DateField(auto_now_add=True, help_text='Date this early warning was raised')),
-                ('submitted_by_role', models.CharField(blank=True, editable=False, help_text='Role of the submitter at time of submission', max_length=255)),
-                ('subject', models.CharField(help_text='Subject of the early warning', max_length=255)),
-                ('message', models.TextField(help_text='Detailed description of the early warning')),
-                ('impact_time', models.BooleanField(default=False, help_text='This warning impacts time')),
-                ('impact_cost', models.BooleanField(default=False, help_text='This warning impacts cost')),
-                ('impact_quality', models.BooleanField(default=False, help_text='This warning impacts quality')),
-                ('respond_by_date', models.DateField(help_text='Date by which a response is required')),
-                ('attachment', models.FileField(blank=True, help_text='Supporting attachment from submitter', null=True, upload_to='early_warnings/attachments/')),
-                ('response', models.TextField(blank=True, help_text='Response to this early warning')),
-                ('response_attachment', models.FileField(blank=True, help_text='Supporting attachment for response', null=True, upload_to='early_warnings/responses/')),
-                ('response_date', models.DateField(blank=True, editable=False, help_text='Date the response was submitted (auto-set)', null=True)),
-                ('status', models.CharField(choices=[('OPEN', 'Open'), ('CLOSED', 'Closed')], default='OPEN', help_text='Current status of this early warning', max_length=10)),
-                ('date_closed', models.DateField(blank=True, editable=False, help_text='Date this early warning was closed (auto-set)', null=True)),
-                ('project', models.ForeignKey(help_text='Project this early warning belongs to', on_delete=django.db.models.deletion.CASCADE, related_name='early_warnings', to='Project.project')),
-                ('submitted_by', models.ForeignKey(editable=False, help_text='User who submitted this early warning', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='early_warnings_submitted', to=settings.AUTH_USER_MODEL)),
-                ('to_user', models.ForeignKey(help_text='User this early warning is addressed to', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='early_warnings_received', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last modified"
+                    ),
+                ),
+                (
+                    "deleted",
+                    models.BooleanField(default=False, help_text="Soft delete flag"),
+                ),
+                (
+                    "reference_number",
+                    models.CharField(
+                        editable=False,
+                        help_text="Auto-generated reference number",
+                        max_length=50,
+                        unique=True,
+                    ),
+                ),
+                (
+                    "date",
+                    models.DateField(
+                        auto_now_add=True,
+                        help_text="Date this early warning was raised",
+                    ),
+                ),
+                (
+                    "submitted_by_role",
+                    models.CharField(
+                        blank=True,
+                        editable=False,
+                        help_text="Role of the submitter at time of submission",
+                        max_length=255,
+                    ),
+                ),
+                (
+                    "subject",
+                    models.CharField(
+                        help_text="Subject of the early warning", max_length=255
+                    ),
+                ),
+                (
+                    "message",
+                    models.TextField(
+                        help_text="Detailed description of the early warning"
+                    ),
+                ),
+                (
+                    "impact_time",
+                    models.BooleanField(
+                        default=False, help_text="This warning impacts time"
+                    ),
+                ),
+                (
+                    "impact_cost",
+                    models.BooleanField(
+                        default=False, help_text="This warning impacts cost"
+                    ),
+                ),
+                (
+                    "impact_quality",
+                    models.BooleanField(
+                        default=False, help_text="This warning impacts quality"
+                    ),
+                ),
+                (
+                    "respond_by_date",
+                    models.DateField(help_text="Date by which a response is required"),
+                ),
+                (
+                    "attachment",
+                    models.FileField(
+                        blank=True,
+                        help_text="Supporting attachment from submitter",
+                        null=True,
+                        upload_to="early_warnings/attachments/",
+                    ),
+                ),
+                (
+                    "response",
+                    models.TextField(
+                        blank=True, help_text="Response to this early warning"
+                    ),
+                ),
+                (
+                    "response_attachment",
+                    models.FileField(
+                        blank=True,
+                        help_text="Supporting attachment for response",
+                        null=True,
+                        upload_to="early_warnings/responses/",
+                    ),
+                ),
+                (
+                    "response_date",
+                    models.DateField(
+                        blank=True,
+                        editable=False,
+                        help_text="Date the response was submitted (auto-set)",
+                        null=True,
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[("OPEN", "Open"), ("CLOSED", "Closed")],
+                        default="OPEN",
+                        help_text="Current status of this early warning",
+                        max_length=10,
+                    ),
+                ),
+                (
+                    "date_closed",
+                    models.DateField(
+                        blank=True,
+                        editable=False,
+                        help_text="Date this early warning was closed (auto-set)",
+                        null=True,
+                    ),
+                ),
+                (
+                    "project",
+                    models.ForeignKey(
+                        help_text="Project this early warning belongs to",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="early_warnings",
+                        to="Project.project",
+                    ),
+                ),
+                (
+                    "submitted_by",
+                    models.ForeignKey(
+                        editable=False,
+                        help_text="User who submitted this early warning",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="early_warnings_submitted",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "to_user",
+                    models.ForeignKey(
+                        help_text="User this early warning is addressed to",
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="early_warnings_received",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Early Warning',
-                'verbose_name_plural': 'Early Warnings',
-                'ordering': ['-created_at'],
+                "verbose_name": "Early Warning",
+                "verbose_name_plural": "Early Warnings",
+                "ordering": ["-created_at"],
             },
         ),
     ]

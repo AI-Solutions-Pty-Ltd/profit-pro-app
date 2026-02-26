@@ -15,7 +15,11 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">
-                        {% if object %}Edit Site Instruction{% else %}New Site Instruction{% endif %}
+                        {% if object %}
+                            Edit Site Instruction
+                        {% else %}
+                            New Site Instruction
+                        {% endif %}
                     </h1>
                     <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
                 </div>
@@ -41,7 +45,11 @@
                         </a>
                         <button type="submit"
                                 class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
-                            {% if object %}Save Changes{% else %}Create Instruction{% endif %}
+                            {% if object %}
+                                Save Changes
+                            {% else %}
+                                Create Instruction
+                            {% endif %}
                         </button>
                     </div>
                 </form>
@@ -55,11 +63,15 @@
                     <dl class="space-y-2 text-sm">
                         <div class="flex justify-between">
                             <dt class="text-gray-500">Reference</dt>
-                            <dd class="font-semibold text-indigo-700">{{ object.reference_number }}</dd>
+                            <dd class="font-semibold text-indigo-700">
+                                {{ object.reference_number }}
+                            </dd>
                         </div>
                         <div class="flex justify-between">
                             <dt class="text-gray-500">Date Notified</dt>
-                            <dd class="text-gray-900">{{ object.date_notified }}</dd>
+                            <dd class="text-gray-900">
+                                {{ object.date_notified }}
+                            </dd>
                         </div>
                         <div class="flex justify-between">
                             <dt class="text-gray-500">Issued By</dt>
@@ -84,7 +96,9 @@
                         {% if object.date_closed %}
                             <div class="flex justify-between">
                                 <dt class="text-gray-500">Date Closed</dt>
-                                <dd class="text-gray-900">{{ object.date_closed }}</dd>
+                                <dd class="text-gray-900">
+                                    {{ object.date_closed }}
+                                </dd>
                             </div>
                         {% endif %}
                     </dl>
@@ -105,7 +119,9 @@
                         {% heroicon_outline "information-circle" class="w-5 h-5 text-blue-400 mr-2 flex-shrink-0 mt-0.5" %}
                         <div class="text-sm text-blue-700">
                             <p class="font-medium mb-1">Auto-generated fields</p>
-                            <p>The reference number, date notified, and issued by fields will be set automatically when this instruction is created.</p>
+                            <p>
+                                The reference number, date notified, and issued by fields will be set automatically when this instruction is created.
+                            </p>
                         </div>
                     </div>
                 </div>

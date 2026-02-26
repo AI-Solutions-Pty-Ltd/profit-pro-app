@@ -44,11 +44,15 @@
                 <div class="grid grid-cols-3 gap-4">
                     <div>
                         <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</dt>
-                        <dd class="mt-1 text-sm font-semibold text-indigo-700">{{ object.reference_number }}</dd>
+                        <dd class="mt-1 text-sm font-semibold text-indigo-700">
+                            {{ object.reference_number }}
+                        </dd>
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Date Notified</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ object.date_notified }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{ object.date_notified }}
+                        </dd>
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Issued By</dt>
@@ -85,11 +89,15 @@
                 </div>
                 <div>
                     <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</dt>
-                    <dd class="mt-1 text-sm font-medium text-gray-900">{{ object.subject }}</dd>
+                    <dd class="mt-1 text-sm font-medium text-gray-900">
+                        {{ object.subject }}
+                    </dd>
                 </div>
                 <div>
                     <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Instruction</dt>
-                    <dd class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ object.instruction }}</dd>
+                    <dd class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
+                        {{ object.instruction }}
+                    </dd>
                 </div>
                 {% if object.attachment %}
                     <div>

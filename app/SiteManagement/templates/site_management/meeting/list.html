@@ -32,9 +32,7 @@
         </div>
         <div class="bg-white rounded-lg shadow p-4 border-l-4 border-indigo-500">
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total</p>
-            <p class="mt-1 text-2xl font-bold text-indigo-600">
-                {{ meetings.paginator.count|default:meetings|length }}
-            </p>
+            <p class="mt-1 text-2xl font-bold text-indigo-600">{{ meetings.paginator.count|default:meetings|length }}</p>
         </div>
     </div>
     <!-- Table -->

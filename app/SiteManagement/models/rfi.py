@@ -106,9 +106,7 @@ class RFI(BaseModel):
         """Auto-generate reference number and handle status timestamps."""
         if not self.reference_number:
             last = (
-                RFI.objects.filter(project=self.project)
-                .order_by("-created_at")
-                .first()
+                RFI.objects.filter(project=self.project).order_by("-created_at").first()
             )
             count = (last.pk if last else 0) + 1 if last else 1
             self.reference_number = f"RFI-{self.project.pk:04d}-{count:04d}"

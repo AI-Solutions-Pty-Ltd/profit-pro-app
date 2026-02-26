@@ -30,9 +30,9 @@ class RFIMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
         return Project.objects.get(pk=self.kwargs["project_pk"])
 
     def get_queryset(self):
-        return RFI.objects.filter(
-            project=self.get_project()
-        ).select_related("issued_by", "to_user")
+        return RFI.objects.filter(project=self.get_project()).select_related(
+            "issued_by", "to_user"
+        )
 
 
 class RFIListView(RFIMixin, ListView):
@@ -207,9 +207,7 @@ class RFIUpdateView(RFIMixin, UpdateView):
         form.fields["message"].widget.attrs["placeholder"] = (
             "Detailed description or question requiring a response"
         )
-        form.fields["response"].widget.attrs["placeholder"] = (
-            "Response to this RFI"
-        )
+        form.fields["response"].widget.attrs["placeholder"] = "Response to this RFI"
         return form
 
     def form_valid(self, form):

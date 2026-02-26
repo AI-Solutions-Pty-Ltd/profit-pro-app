@@ -15,7 +15,11 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">
-                        {% if object %}Edit Request for Information{% else %}New Request for Information{% endif %}
+                        {% if object %}
+                            Edit Request for Information
+                        {% else %}
+                            New Request for Information
+                        {% endif %}
                     </h1>
                     <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
                 </div>
@@ -41,7 +45,11 @@
                         </a>
                         <button type="submit"
                                 class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
-                            {% if object %}Save Changes{% else %}Submit RFI{% endif %}
+                            {% if object %}
+                                Save Changes
+                            {% else %}
+                                Submit RFI
+                            {% endif %}
                         </button>
                     </div>
                 </form>
@@ -55,11 +63,15 @@
                     <dl class="space-y-2 text-sm">
                         <div class="flex justify-between">
                             <dt class="text-gray-500">Reference</dt>
-                            <dd class="font-semibold text-indigo-700">{{ object.reference_number }}</dd>
+                            <dd class="font-semibold text-indigo-700">
+                                {{ object.reference_number }}
+                            </dd>
                         </div>
                         <div class="flex justify-between">
                             <dt class="text-gray-500">Date Issued</dt>
-                            <dd class="text-gray-900">{{ object.date_issued }}</dd>
+                            <dd class="text-gray-900">
+                                {{ object.date_issued }}
+                            </dd>
                         </div>
                         <div class="flex justify-between">
                             <dt class="text-gray-500">Issued By</dt>
@@ -74,7 +86,9 @@
                         {% if object.response_date %}
                             <div class="flex justify-between">
                                 <dt class="text-gray-500">Response Date</dt>
-                                <dd class="text-gray-900">{{ object.response_date }}</dd>
+                                <dd class="text-gray-900">
+                                    {{ object.response_date }}
+                                </dd>
                             </div>
                         {% endif %}
                         <div class="flex justify-between">
@@ -90,7 +104,9 @@
                         {% if object.date_closed %}
                             <div class="flex justify-between">
                                 <dt class="text-gray-500">Date Closed</dt>
-                                <dd class="text-gray-900">{{ object.date_closed }}</dd>
+                                <dd class="text-gray-900">
+                                    {{ object.date_closed }}
+                                </dd>
                             </div>
                         {% endif %}
                     </dl>

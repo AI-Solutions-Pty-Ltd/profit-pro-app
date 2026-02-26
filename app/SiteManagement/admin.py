@@ -1,9 +1,9 @@
 from django.contrib import admin
 
 from app.SiteManagement.models import (
+    RFI,
     EarlyWarning,
     Meeting,
-    RFI,
     SiteInstruction,
 )
 

@@ -46,11 +46,15 @@
                     <div class="grid grid-cols-3 gap-4">
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</dt>
-                            <dd class="mt-1 text-sm font-semibold text-indigo-700">{{ object.reference_number }}</dd>
+                            <dd class="mt-1 text-sm font-semibold text-indigo-700">
+                                {{ object.reference_number }}
+                            </dd>
                         </div>
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Date Issued</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ object.date_issued }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                {{ object.date_issued }}
+                            </dd>
                         </div>
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Respond By</dt>
@@ -83,11 +87,15 @@
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</dt>
-                        <dd class="mt-1 text-sm font-medium text-gray-900">{{ object.subject }}</dd>
+                        <dd class="mt-1 text-sm font-medium text-gray-900">
+                            {{ object.subject }}
+                        </dd>
                     </div>
                     <div>
                         <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Message</dt>
-                        <dd class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ object.message }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
+                            {{ object.message }}
+                        </dd>
                     </div>
                     {% if object.attachment %}
                         <div>
@@ -113,7 +121,9 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Response Date</dt>
-                                <dd class="mt-1 text-sm text-gray-900">{{ object.response_date|default:"-" }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900">
+                                    {{ object.response_date|default:"-" }}
+                                </dd>
                             </div>
                             <div>
                                 <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Status</dt>
@@ -128,7 +138,9 @@
                         </div>
                         <div>
                             <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Response</dt>
-                            <dd class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{{ object.response }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
+                                {{ object.response }}
+                            </dd>
                         </div>
                         {% if object.response_attachment %}
                             <div>
