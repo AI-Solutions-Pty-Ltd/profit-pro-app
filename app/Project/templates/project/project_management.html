@@ -89,15 +89,21 @@
                                 </a>
                             {% endif %}
                             <!-- Request for Information -->
-                            <div class="w-full flex items-center justify-between px-3 py-2 bg-white/50 rounded-lg border border-gray-300 opacity-60">
-                                <span class="text-sm font-medium text-gray-600">Request for Information</span>
-                                <span class="text-xs text-gray-500">Coming soon</span>
-                            </div>
+                            {% if request.user|projectroles:project|userhasrole:'ADMIN,User' %}
+                                <a href="{% url 'site_management:rfi-list' project.pk %}"
+                                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors group/btn">
+                                    <span class="text-sm font-medium text-purple-700">Request for Information</span>
+                                    {% heroicon_outline "arrow-right" size="16" class="text-purple-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                                </a>
+                            {% endif %}
                             <!-- Meetings -->
-                            <div class="w-full flex items-center justify-between px-3 py-2 bg-white/50 rounded-lg border border-gray-300 opacity-60">
-                                <span class="text-sm font-medium text-gray-600">Meetings</span>
-                                <span class="text-xs text-gray-500">Coming soon</span>
-                            </div>
+                            {% if request.user|projectroles:project|userhasrole:'ADMIN,User' %}
+                                <a href="{% url 'site_management:meeting-list' project.pk %}"
+                                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors group/btn">
+                                    <span class="text-sm font-medium text-cyan-700">Meetings</span>
+                                    {% heroicon_outline "arrow-right" size="16" class="text-cyan-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                                </a>
+                            {% endif %}
                         </div>
                     </div>
                 {% endif %}

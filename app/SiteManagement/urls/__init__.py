@@ -28,6 +28,11 @@ from app.SiteManagement.views import (
     MaterialsLogDeleteView,
     MaterialsLogListView,
     MaterialsLogUpdateView,
+    MeetingCreateView,
+    MeetingDeleteView,
+    MeetingDetailView,
+    MeetingListView,
+    MeetingUpdateView,
     OffsiteLogCreateView,
     OffsiteLogDeleteView,
     OffsiteLogListView,
@@ -56,6 +61,11 @@ from app.SiteManagement.views import (
     QualityControlDeleteView,
     QualityControlListView,
     QualityControlUpdateView,
+    RFICreateView,
+    RFIDeleteView,
+    RFIDetailView,
+    RFIListView,
+    RFIUpdateView,
     SafetyObservationCreateView,
     SafetyObservationDeleteView,
     SafetyObservationListView,
@@ -110,6 +120,58 @@ urlpatterns = [
         "project/<int:project_pk>/early-warnings/<int:pk>/delete/",
         EarlyWarningDeleteView.as_view(),
         name="early-warning-delete",
+    ),
+    # Meetings
+    path(
+        "project/<int:project_pk>/meetings/",
+        MeetingListView.as_view(),
+        name="meeting-list",
+    ),
+    path(
+        "project/<int:project_pk>/meetings/create/",
+        MeetingCreateView.as_view(),
+        name="meeting-create",
+    ),
+    path(
+        "project/<int:project_pk>/meetings/<int:pk>/",
+        MeetingDetailView.as_view(),
+        name="meeting-detail",
+    ),
+    path(
+        "project/<int:project_pk>/meetings/<int:pk>/update/",
+        MeetingUpdateView.as_view(),
+        name="meeting-update",
+    ),
+    path(
+        "project/<int:project_pk>/meetings/<int:pk>/delete/",
+        MeetingDeleteView.as_view(),
+        name="meeting-delete",
+    ),
+    # Requests for Information
+    path(
+        "project/<int:project_pk>/rfis/",
+        RFIListView.as_view(),
+        name="rfi-list",
+    ),
+    path(
+        "project/<int:project_pk>/rfis/create/",
+        RFICreateView.as_view(),
+        name="rfi-create",
+    ),
+    path(
+        "project/<int:project_pk>/rfis/<int:pk>/",
+        RFIDetailView.as_view(),
+        name="rfi-detail",
+    ),
+    path(
+        "project/<int:project_pk>/rfis/<int:pk>/update/",
+        RFIUpdateView.as_view(),
+        name="rfi-update",
+    ),
+    path(
+        "project/<int:project_pk>/rfis/<int:pk>/delete/",
+        RFIDeleteView.as_view(),
+        name="rfi-delete",
     ),
     # Site Instructions
     path(
