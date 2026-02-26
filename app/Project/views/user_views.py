@@ -259,6 +259,7 @@ class ProjectUserCreateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, For
 
     form_class = ProjectUserCreateForm
     template_name = "portfolio/registers/project_user_create.html"
+    project_slug = "pk"
     roles = [Role.ADMIN]
 
     def get_project(self) -> Project:
@@ -362,6 +363,7 @@ class ProjectUserRemoveView(
     model = Account
     template_name = "portfolio/registers/project_user_confirm_remove.html"
     context_object_name = "user_to_remove"
+    project_slug = "pk"
     roles = [Role.ADMIN]
 
     def dispatch(self: "ProjectUserRemoveView", request, *args, **kwargs):

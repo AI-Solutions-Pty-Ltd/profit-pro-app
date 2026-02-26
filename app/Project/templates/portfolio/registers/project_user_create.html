@@ -34,31 +34,11 @@
                 {% endif %}
                 <div class="space-y-6">
                     <div>
-                        <label for="id_email" class="block text-sm font-medium text-gray-700">
-                            Email Address <span class="text-red-500">*</span>
-                        </label>
-                        {{ form.email }}
-                        {% if form.email.errors %}
-                            <p class="mt-2 text-sm text-red-600" id="email-error">{{ form.email.errors|join:", " }}</p>
-                        {% endif %}
+                        {{ form.email|as_crispy_field }}
                         <p class="mt-2 text-sm text-gray-500">The user will receive a welcome email at this address.</p>
                     </div>
-                    <div>
-                        <label for="id_first_name" class="block text-sm font-medium text-gray-700">
-                            First Name <span class="text-red-500">*</span>
-                        </label>
-                        {{ form.first_name }}
-                        {% if form.first_name.errors %}
-                            <p class="mt-2 text-sm text-red-600" id="first_name-error">{{ form.first_name.errors|join:", " }}</p>
-                        {% endif %}
-                    </div>
-                    <div>
-                        <label for="id_last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
-                        {{ form.last_name }}
-                        {% if form.last_name.errors %}
-                            <p class="mt-2 text-sm text-red-600" id="last_name-error">{{ form.last_name.errors|join:", " }}</p>
-                        {% endif %}
-                    </div>
+                    <div>{{ form.first_name|as_crispy_field }}</div>
+                    <div>{{ form.last_name|as_crispy_field }}</div>
                 </div>
                 <div class="mt-8 flex justify-end space-x-3">
                     <a href="{% url 'project:project-user-add' project.pk %}"
