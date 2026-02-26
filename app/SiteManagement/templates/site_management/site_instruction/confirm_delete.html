@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% block title %}
+    Delete {{ object.reference_number }} - Site Instructions
+{% endblock title %}
+{% block content %}
+    <div class="max-w-md mx-auto mt-12">
+        <div class="bg-white shadow-sm rounded-lg p-6">
+            <div class="flex items-center mb-4">
+                {% heroicon_outline "exclamation-triangle" class="w-6 h-6 text-red-500 mr-2" %}
+                <h2 class="text-lg font-medium text-gray-900">Delete Site Instruction</h2>
+            </div>
+            <p class="text-sm text-gray-500 mb-6">
+                Are you sure you want to delete <strong>{{ object.reference_number }}</strong>? This action cannot be undone.
+            </p>
+            <div class="flex justify-end space-x-3">
+                <a href="{% url 'site_management:site-instruction-detail' project.pk object.pk %}"
+                   class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Cancel
+                </a>
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                        Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

@@ -60,6 +60,11 @@ from app.SiteManagement.views import (
     SafetyObservationDeleteView,
     SafetyObservationListView,
     SafetyObservationUpdateView,
+    SiteInstructionCreateView,
+    SiteInstructionDeleteView,
+    SiteInstructionDetailView,
+    SiteInstructionListView,
+    SiteInstructionUpdateView,
     SiteManagementView,
     SnagListCreateView,
     SnagListDeleteView,
@@ -105,6 +110,32 @@ urlpatterns = [
         "project/<int:project_pk>/early-warnings/<int:pk>/delete/",
         EarlyWarningDeleteView.as_view(),
         name="early-warning-delete",
+    ),
+    # Site Instructions
+    path(
+        "project/<int:project_pk>/site-instructions/",
+        SiteInstructionListView.as_view(),
+        name="site-instruction-list",
+    ),
+    path(
+        "project/<int:project_pk>/site-instructions/create/",
+        SiteInstructionCreateView.as_view(),
+        name="site-instruction-create",
+    ),
+    path(
+        "project/<int:project_pk>/site-instructions/<int:pk>/",
+        SiteInstructionDetailView.as_view(),
+        name="site-instruction-detail",
+    ),
+    path(
+        "project/<int:project_pk>/site-instructions/<int:pk>/update/",
+        SiteInstructionUpdateView.as_view(),
+        name="site-instruction-update",
+    ),
+    path(
+        "project/<int:project_pk>/site-instructions/<int:pk>/delete/",
+        SiteInstructionDeleteView.as_view(),
+        name="site-instruction-delete",
     ),
     # Materials Log
     path(

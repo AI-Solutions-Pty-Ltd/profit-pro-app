@@ -86,6 +86,13 @@ from .safety_observation_views import (
     SafetyObservationListView,
     SafetyObservationUpdateView,
 )
+from .site_instruction_views import (
+    SiteInstructionCreateView,
+    SiteInstructionDeleteView,
+    SiteInstructionDetailView,
+    SiteInstructionListView,
+    SiteInstructionUpdateView,
+)
 from .snag_list_views import (
     SnagListCreateView,
     SnagListDeleteView,
@@ -166,4 +173,9 @@ __all__ = [
     "EarlyWarningDetailView",
     "EarlyWarningUpdateView",
     "EarlyWarningDeleteView",
+    "SiteInstructionListView",
+    "SiteInstructionCreateView",
+    "SiteInstructionDetailView",
+    "SiteInstructionUpdateView",
+    "SiteInstructionDeleteView",
 ]

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from app.SiteManagement.models import EarlyWarning
+from app.SiteManagement.models import EarlyWarning, SiteInstruction
 
 
 @admin.register(EarlyWarning)
@@ -23,5 +23,26 @@ class EarlyWarningAdmin(admin.ModelAdmin):
         "submitted_by",
         "submitted_by_role",
         "response_date",
+        "date_closed",
+    ]
+
+
+@admin.register(SiteInstruction)
+class SiteInstructionAdmin(admin.ModelAdmin):
+    list_display = [
+        "reference_number",
+        "project",
+        "subject",
+        "issued_by",
+        "to_user",
+        "status",
+        "date_notified",
+    ]
+    list_filter = ["status", "project"]
+    search_fields = ["reference_number", "subject", "instruction"]
+    readonly_fields = [
+        "reference_number",
+        "date_notified",
+        "issued_by",
         "date_closed",
     ]

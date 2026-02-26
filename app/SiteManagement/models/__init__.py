@@ -14,6 +14,7 @@ from .productivity_log import ProductivityLog
 from .progress_tracker import ProgressTracker
 from .quality_control import QualityControl
 from .safety_observation import SafetyObservation
+from .site_instruction import SiteInstruction, SiteInstructionStatus
 from .snag_list import SnagList
 from .subcontractor_log import SubcontractorLog
 
@@ -33,6 +34,8 @@ __all__ = [
     "ProgressTracker",
     "QualityControl",
     "SafetyObservation",
+    "SiteInstruction",
+    "SiteInstructionStatus",
     "SnagList",
     "SubcontractorLog",
 ]
