@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 
+from app.Account.subscription_config import Subscription, SubscriptionConfig
 from app.core.Utilities.models import BaseModel
 
 if TYPE_CHECKING:
@@ -79,6 +80,8 @@ class Town(BaseModel):
 
 
 class Account(AbstractUser, BaseModel):
+    username = None  # override username field from AbstractUser, we are not using username as unique field, but email override email field from AbstractUser to make it required
+
     class Type(models.TextChoices):
         CONTRACTOR = "Contractor", "Contractor"
         CLIENT = "Client", "Client"
@@ -94,7 +97,12 @@ class Account(AbstractUser, BaseModel):
         SMS = "SMS", "SMS"
         BOTH = "Both", "Both"
 
-    username = None  # override username field from AbstractUser, we are not using username as unique field, but email override email field from AbstractUser to make it required
+    subscription = models.CharField(
+        max_length=50,
+        choices=Subscription.choices,
+        help_text="Subscription tier",
+        default=Subscription.FREE_TIER,
+    )
     email = models.EmailField(_("email address"), unique=True)
     first_name = models.CharField(
         _("first name"), max_length=150, blank=False
@@ -226,3 +234,37 @@ class Account(AbstractUser, BaseModel):
     @property
     def edit_url(self: "Account") -> str:
         return reverse("users:account:user_edit")
+
+    # Subscription limit methods
+    def get_subscription_limit(self, limit_name: str) -> int:
+        """Get a specific limit for the user's subscription tier."""
+        return SubscriptionConfig.get_limit(self.subscription, limit_name)
+
+    def can_create_project(self) -> bool:
+        """Check if user can create more projects based on their subscription."""
+        if self.is_superuser:
+            return True
+
+        max_projects = self.get_subscription_limit("max_projects")
+        current_projects = self.get_projects.count()
+        return current_projects < max_projects
+
+    def can_add_user_to_project(self, project) -> bool:
+        """Check if user can add more users to a project."""
+        if self.is_superuser:
+            return True
+
+        max_users = self.get_subscription_limit("max_users_per_project")
+        current_users = project.users.count()
+        return current_users < max_users
+
+    def has_subscription_feature(self, feature: str) -> bool:
+        """Check if user's subscription includes a specific feature."""
+        if self.is_superuser:
+            return True
+        return SubscriptionConfig.has_feature(self.subscription, feature)
+
+    @property
+    def subscription_limits(self) -> dict:
+        """Get all limits for the user's subscription tier."""
+        return SubscriptionConfig.get_all_limits(self.subscription)

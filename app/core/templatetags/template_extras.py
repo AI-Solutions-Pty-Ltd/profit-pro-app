@@ -1,6 +1,7 @@
 from django import template
 from django.db.models import QuerySet
 
+from app.Account.models import Account
 from app.Project.models import ProjectRole, Role
 
 register = template.Library()
@@ -28,6 +29,13 @@ def define(val=None):
 def varadd(val1, val2):
     """Add two values."""
     return val1 + val2
+
+
+@register.filter(name="userhassubscription")
+def user_has_subscription(user: Account, subscriptions):
+    """Check if the user has a subscription."""
+    subscriptions = subscriptions.split(",")
+    return user.subscription in subscriptions
 
 
 @register.filter(name="useringroup")

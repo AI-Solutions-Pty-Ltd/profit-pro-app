@@ -5,6 +5,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from app.Account.models import Account
+from app.Account.subscription_config import Subscription
 
 
 @receiver(post_save, sender=Account)
@@ -25,3 +26,6 @@ def assign_default_group(sender, instance, created, **kwargs):
             contractor_group, _ = Group.objects.get_or_create(name="contractor")
             # Add user to the contractor group
             instance.groups.add(contractor_group)
+
+    if instance.subscription is None:
+        instance.subscription = Subscription.FREE_TIER

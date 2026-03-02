@@ -6,28 +6,28 @@ from app.Project.views import (
 
 urlpatterns = [
     path(
-        "portfolio/dashboard/",
+        "dashboard/",
         portfolio_views.PortfolioDashboardView.as_view(),
         name="portfolio-dashboard",
     ),
     path(
-        "portfolio/company-dashboard/",
+        "company-dashboard/",
         portfolio_views.CompanyDashboardView.as_view(),
         name="company-dashboard",
     ),
     # New Portfolio Reports
     path(
-        "portfolio/reports/compliance/",
+        "reports/compliance/",
         portfolio_views.ComplianceReportView.as_view(),
         name="compliance-report",
     ),
     path(
-        "portfolio/reports/impact/",
+        "reports/impact/",
         portfolio_views.ImpactReportView.as_view(),
         name="impact-report",
     ),
     path(
-        "portfolio/reports/risk/",
+        "reports/risk/",
         portfolio_views.RiskReportView.as_view(),
         name="risk-report",
     ),
