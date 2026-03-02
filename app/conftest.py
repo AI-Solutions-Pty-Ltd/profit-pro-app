@@ -1,5 +1,7 @@
 """Conftest file for pytest."""
 
+from unittest.mock import patch
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.test import Client
@@ -21,6 +23,12 @@ User = get_user_model()
 def enable_db_access_for_all_tests(db):
     """Enable database access for all tests."""
     pass
+
+
+@pytest.fixture(autouse=True)
+def disable_subscription_check():
+    """Disable subscription check for all tests."""
+    patch.object(Account, "has_subscription_tier", return_value=True).start()
 
 
 @pytest.fixture()
