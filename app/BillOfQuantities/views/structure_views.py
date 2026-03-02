@@ -13,6 +13,7 @@ from django.views.generic import (
 )
 from django.views.generic.edit import FormView
 
+from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.forms import (
     LineItemExcelUploadForm,
     StructureExcelUploadForm,
@@ -21,10 +22,13 @@ from app.BillOfQuantities.forms import (
 from app.BillOfQuantities.models import Bill, LineItem, Package, Structure
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Role
 
 
-class StructureListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
+class StructureListView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView
+):
     """List all structures for a project."""
 
     model = Structure
@@ -32,6 +36,7 @@ class StructureListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListVie
     context_object_name = "structures"
     roles = [Role.CONTRACT_BOQ]
     project_slug = "project_pk"
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def get_queryset(self):
         """Filter structures by the current project."""
@@ -57,7 +62,12 @@ class StructureListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListVie
         ]
 
 
-class StructureDetailView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, DetailView):
+class StructureDetailView(
+    SubscriptionRequiredMixin,
+    UserHasProjectRoleGenericMixin,
+    BreadcrumbMixin,
+    DetailView,
+):
     """Display a single structure."""
 
     model = Structure
@@ -65,6 +75,7 @@ class StructureDetailView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Detai
     context_object_name = "structure"
     roles = [Role.CONTRACT_BOQ]
     project_slug = "project_pk"
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def get_queryset(self):
         """Filter structures by the current project."""
@@ -86,7 +97,12 @@ class StructureDetailView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Detai
         ]
 
 
-class StructureUpdateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, UpdateView):
+class StructureUpdateView(
+    SubscriptionRequiredMixin,
+    UserHasProjectRoleGenericMixin,
+    BreadcrumbMixin,
+    UpdateView,
+):
     """Update an existing structure."""
 
     model = Structure
@@ -94,6 +110,7 @@ class StructureUpdateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Updat
     template_name = "structure/structure_form.html"
     roles = [Role.CONTRACT_BOQ]
     project_slug = "project_pk"
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def form_valid(self, form):
         """Add success message."""
@@ -127,13 +144,19 @@ class StructureUpdateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Updat
         ]
 
 
-class StructureDeleteView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, DeleteView):
+class StructureDeleteView(
+    SubscriptionRequiredMixin,
+    UserHasProjectRoleGenericMixin,
+    BreadcrumbMixin,
+    DeleteView,
+):
     """Delete a structure."""
 
     model = Structure
     template_name = "structure/structure_confirm_delete.html"
     roles = [Role.CONTRACT_BOQ]
     project_slug = "project_pk"
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def get_queryset(self):
         """Filter structures by the current project."""
@@ -168,7 +191,7 @@ class StructureDeleteView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Delet
 
 
 class StructureExcelUploadView(
-    UserHasProjectRoleGenericMixin, BreadcrumbMixin, FormView
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin, FormView
 ):
     """Upload structures from Excel file."""
 
@@ -176,6 +199,7 @@ class StructureExcelUploadView(
     template_name = "structure/structure_excel_upload.html"
     roles = [Role.CONTRACT_BOQ]
     project_slug = "project_pk"
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def get_form_kwargs(self):
         """Pass user and project to form."""

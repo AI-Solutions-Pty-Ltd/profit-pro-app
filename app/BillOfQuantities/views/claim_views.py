@@ -5,18 +5,23 @@ from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
+from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.forms import ClaimForm
 from app.BillOfQuantities.models import Claim
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Role
 
 
-class ClaimMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+class ClaimMixin(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
+):
     """Base mixin for claim views."""
 
     roles = [Role.CLAIMS]
     project_slug = "project_pk"
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     model = Claim
 
     def get_queryset(self):

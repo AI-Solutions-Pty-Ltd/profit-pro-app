@@ -8,18 +8,23 @@ from django.urls import reverse_lazy
 from django.views.generic import DetailView, ListView, UpdateView
 
 from app.Account.models import Account
+from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.forms import CompanyForm
 from app.Project.models import Company
 
 
-class CompanyListView(LoginRequiredMixin, BreadcrumbMixin, ListView):
+class CompanyListView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, ListView
+):
     """List all companies for the current user."""
 
     model: Any = None  # Will be set dynamically
     template_name = "company/company_list.html"
     context_object_name = "companies"
     paginate_by = 25
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_queryset(self) -> QuerySet:
         """Filter companies to show only those the user has access to."""
@@ -37,12 +42,15 @@ class CompanyListView(LoginRequiredMixin, BreadcrumbMixin, ListView):
         ]
 
 
-class CompanyDetailView(LoginRequiredMixin, BreadcrumbMixin, DetailView):
+class CompanyDetailView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, DetailView
+):
     """Display company details and management options."""
 
     model = Company
     template_name = "company/company_detail.html"
     context_object_name = "company"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_queryset(self) -> QuerySet:
         """Filter companies to show only those the user has access to."""
@@ -69,13 +77,16 @@ class CompanyDetailView(LoginRequiredMixin, BreadcrumbMixin, DetailView):
         ]
 
 
-class CompanyUpdateView(LoginRequiredMixin, BreadcrumbMixin, UpdateView):
+class CompanyUpdateView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, UpdateView
+):
     """Update a company."""
 
     model = Company
     form_class = CompanyForm
     template_name = "company/company_update.html"
     success_url = reverse_lazy("project:company-list")
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_queryset(self) -> QuerySet:
         """Filter companies to show only those the user has access to."""

@@ -12,16 +12,21 @@ from django.views.generic import (
 )
 
 from app.Account.models import Account
+from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project, Role
 from app.SiteManagement.models.site_instruction import SiteInstruction
 
 
-class SiteInstructionMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+class SiteInstructionMixin(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
+):
     """Mixin for Site Instruction views."""
 
     model = SiteInstruction
+    required_tiers = [Subscription.SITE_MANAGEMENT]
     roles = [Role.ADMIN, Role.USER]
     project_slug = "project_pk"
 

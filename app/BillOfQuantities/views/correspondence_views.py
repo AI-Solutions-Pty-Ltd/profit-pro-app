@@ -13,12 +13,16 @@ from django.views.generic import (
     UpdateView,
 )
 
-from app.BillOfQuantities.forms.correspondence_forms import CorrespondenceDialogForm
-from app.BillOfQuantities.models import ContractualCorrespondence
-from app.BillOfQuantities.models.contract_models import CorrespondenceDialogFile
+from app.Account.subscription_config import Subscription
+from app.BillOfQuantities.forms import CorrespondenceDialogForm
+from app.BillOfQuantities.models import (
+    ContractualCorrespondence,
+    CorrespondenceDialogFile,
+)
 from app.core.Utilities.forms import styled_attachment_input, styled_date_input
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Role
 
 # =============================================================================
@@ -26,11 +30,14 @@ from app.Project.models import Role
 # =============================================================================
 
 
-class CorrespondenceMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+class CorrespondenceMixin(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
+):
     """Mixin for correspondence views."""
 
     roles = [Role.CORRESPONDENCE, Role.ADMIN, Role.USER]
     project_slug = "project_pk"
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
 
 class CorrespondenceListView(CorrespondenceMixin, ListView):

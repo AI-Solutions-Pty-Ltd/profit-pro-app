@@ -1,0 +1,42 @@
+<nav class="-mb-px flex space-x-8 px-6" aria-label="Dashboard tabs">
+    <a href="{% url 'project:portfolio-trend-report' %}"
+       class="border-b-2 {% if tab == 'trend' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 text-sm font-medium transition-colors">
+        {% heroicon_outline "chart-bar-square" class="w-5 h-5 inline mr-2" %}
+        Trend Analysis
+    </a>
+    <a href="{% url 'project:portfolio-dashboard' %}"
+       class="border-b-2 {% if tab == 'dashboard' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 text-sm font-medium transition-colors">
+        {% heroicon_outline "chart-bar" class="w-5 h-5 inline mr-2" %}
+        Portfolio Dashboard
+    </a>
+    <a href="{% url 'project:portfolio-financial-report' %}"
+       class="border-b-2 {% if tab == 'financial' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 text-sm font-medium transition-colors">
+        {% heroicon_outline "banknotes" class="w-5 h-5 inline mr-2" %}
+        Financial Report
+    </a>
+    <a href="{% url 'project:portfolio-schedule-report' %}"
+       class="border-b-2 {% if tab == 'schedule' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 text-sm font-medium transition-colors">
+        {% heroicon_outline "clock" class="w-5 h-5 inline mr-2" %}
+        Schedule Report
+    </a>
+    <a href="{% url 'project:portfolio-cashflow-report' %}"
+       class="border-b-2 {% if tab == 'cashflow' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 text-sm font-medium transition-colors">
+        {% heroicon_outline "currency-dollar" class="w-5 h-5 inline mr-2" %}
+        Cashflow Report
+    </a>
+    <a href="{% url 'project:compliance-report' %}"
+       class="border-b-2 {% if tab == 'compliance' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 text-sm font-medium transition-colors">
+        {% heroicon_outline "shield-check" class="w-5 h-5 inline mr-2" %}
+        Compliance Report
+    </a>
+    <a href="{% url 'project:impact-report' %}"
+       class="border-b-2 {% if tab == 'impact' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 text-sm font-medium transition-colors">
+        {% heroicon_outline "chart-bar" class="w-5 h-5 inline mr-2" %}
+        Impact Report
+    </a>
+    <a href="{% url 'project:risk-report' %}"
+       class="border-b-2 {% if tab == 'risk' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 text-sm font-medium transition-colors">
+        {% heroicon_outline "exclamation-triangle" class="w-5 h-5 inline mr-2" %}
+        Risk Report
+    </a>
+</nav>

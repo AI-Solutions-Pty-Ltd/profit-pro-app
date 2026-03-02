@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.views.generic import ListView, TemplateView
 
 from app.Account.models import Account
+from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.models import Forecast, PaymentCertificate
 from app.core.Utilities.dates import get_end_of_month
 from app.core.Utilities.mixins import (
@@ -18,6 +19,7 @@ from app.core.Utilities.mixins import (
     BreadcrumbMixin,
 )
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.forms import FilterForm
 from app.Project.models import Portfolio, Project
 from app.Project.models.planned_value_models import PlannedValue
@@ -35,20 +37,21 @@ class ProjectAccessMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
         )
 
 
-class FinancialReportView(ProjectAccessMixin, ListView):
+class FinancialReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView):
     """Financial Report - Project List with Budget, Forecast, Variances, Certified, CPI & SPI."""
 
     model = Project
     template_name = "portfolio/reports/financial_report.html"
     context_object_name = "projects"
     permissions = ["contractor"]
+    required_tiers = [Subscription.FREE_TIER]
 
     filter_form: FilterForm | None = None
 
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        self.filter_form = FilterForm(request.GET or {}, user=request.user)
+        self.filter_form = FilterForm(request.GET or {}, user=self.request.user)  # type: ignore[arg-type]
 
     def get_breadcrumbs(self: "FinancialReportView") -> list[BreadcrumbItem]:
         """Return breadcrumbs for financial report."""
@@ -234,20 +237,21 @@ class FinancialReportView(ProjectAccessMixin, ListView):
         return context
 
 
-class ScheduleReportView(ProjectAccessMixin, ListView):
+class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView):
     """Schedule Report - Project List with Start/End Dates, Durations, Progress & SPI."""
 
     model = Project
     template_name = "portfolio/reports/schedule_report.html"
     context_object_name = "projects"
     permissions = ["contractor"]
+    required_tiers = [Subscription.FREE_TIER]
 
     filter_form: FilterForm | None = None
 
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        self.filter_form = FilterForm(request.GET or {}, user=request.user)
+        self.filter_form = FilterForm(request.GET or {}, user=self.request.user)  # type: ignore[arg-type]
 
     def get_breadcrumbs(self: "ScheduleReportView") -> list[BreadcrumbItem]:
         """Return breadcrumbs for schedule report."""
@@ -387,20 +391,21 @@ class ScheduleReportView(ProjectAccessMixin, ListView):
         return context
 
 
-class CashflowReportView(ProjectAccessMixin, ListView):
+class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView):
     """Cashflow Report - Project List with Monthly Cashflow Projections."""
 
     model = Project
     template_name = "portfolio/reports/cashflow_report.html"
     context_object_name = "projects"
     permissions = ["contractor"]
+    required_tiers = [Subscription.FREE_TIER]
 
     filter_form: FilterForm | None = None
 
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        self.filter_form = FilterForm(request.GET or {}, user=request.user)
+        self.filter_form = FilterForm(request.GET or {}, user=self.request.user)  # type: ignore[arg-type]
 
     def get_breadcrumbs(self: "CashflowReportView") -> list[BreadcrumbItem]:
         """Return breadcrumbs for cashflow report."""
@@ -544,18 +549,19 @@ class CashflowReportView(ProjectAccessMixin, ListView):
         return Decimal("0.00")
 
 
-class TrendReportView(ProjectAccessMixin, TemplateView):
+class TrendReportView(SubscriptionRequiredMixin, ProjectAccessMixin, TemplateView):
     """Trend Report - Portfolio-level trends over time."""
 
     template_name = "portfolio/reports/trend_report.html"
     permissions = ["contractor"]
+    required_tiers = [Subscription.FREE_TIER]
 
     filter_form: FilterForm | None = None
 
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        self.filter_form = FilterForm(request.GET or {}, user=request.user)
+        self.filter_form = FilterForm(request.GET or {}, user=self.request.user)  # type: ignore[arg-type]
 
     def get_breadcrumbs(self: "TrendReportView") -> list[BreadcrumbItem]:
         """Return breadcrumbs for trend report."""

@@ -13,16 +13,21 @@ from django.views.generic import (
 )
 
 from app.Account.models import Account
+from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project, Role
 from app.SiteManagement.models.early_warning import EarlyWarning
 
 
-class EarlyWarningMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+class EarlyWarningMixin(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
+):
     """Mixin for Early Warning views."""
 
     model = EarlyWarning
+    required_tiers = [Subscription.SITE_MANAGEMENT]
     roles = [Role.ADMIN, Role.USER]
     project_slug = "project_pk"
 

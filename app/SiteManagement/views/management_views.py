@@ -3,18 +3,26 @@
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView
 
+from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project, Role
 
 
-class SiteManagementView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, TemplateView):
+class SiteManagementView(
+    SubscriptionRequiredMixin,
+    UserHasProjectRoleGenericMixin,
+    BreadcrumbMixin,
+    TemplateView,
+):
     """Site management logs and tracking view."""
 
     template_name = "site_management/site_management.html"
     model = Project
     project_slug = "pk"
     roles = [Role.ADMIN, Role.USER]
+    required_tiers = [Subscription.SITE_MANAGEMENT]
 
     def get_project(self) -> Project:
         """Get the project instance."""

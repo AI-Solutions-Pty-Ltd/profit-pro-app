@@ -33,9 +33,13 @@ def varadd(val1, val2):
 
 @register.filter(name="userhassubscription")
 def user_has_subscription(user: Account, subscriptions):
-    """Check if the user has a subscription."""
-    subscriptions = subscriptions.split(",")
-    return user.subscription in subscriptions
+    """Check if the user has a subscription, including inherited parent tiers."""
+    requested_tiers = [
+        subscription.strip()
+        for subscription in subscriptions.split(",")
+        if subscription.strip()
+    ]
+    return user.has_subscription_tier(requested_tiers)
 
 
 @register.filter(name="useringroup")

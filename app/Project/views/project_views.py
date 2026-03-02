@@ -16,6 +16,7 @@ from django.views.generic import (
 )
 
 from app.Account.models import Account
+from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.models import (
     ActualTransaction,
     Forecast,
@@ -28,12 +29,17 @@ from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import (
     UserHasProjectRoleGenericMixin,
 )
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.forms import FilterForm, ProjectForm
 from app.Project.forms.forms import BasicProjectCreateForm
 from app.Project.models import PlannedValue, Project, ProjectRole, Role
 
 
-class ProjectMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+class ProjectMixin(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
+):
+    required_tiers = [Subscription.FREE_TIER]
+
     def get_queryset(self: "ProjectMixin") -> QuerySet[Project]:
         return Project.objects.filter(users=self.request.user).order_by("-created_at")
 
@@ -41,12 +47,15 @@ class ProjectMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
         return self.get_project()
 
 
-class ProjectListView(LoginRequiredMixin, BreadcrumbMixin, ListView):
+class ProjectListView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, ListView
+):
     """Project list view that reuses dashboard filtering logic."""
 
     template_name = "project/project_list.html"
     filter_form: FilterForm | None = None
     context_object_name = "projects"
+    required_tiers = [Subscription.FREE_TIER]
 
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
@@ -399,12 +408,15 @@ class ProjectWBSDetailView(ProjectMixin, DetailView):
         return context
 
 
-class ProjectCreateView(LoginRequiredMixin, BreadcrumbMixin, CreateView):
+class ProjectCreateView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, CreateView
+):
     """Create a new project."""
 
     model = Project
     form_class = BasicProjectCreateForm
     template_name = "project/project_form.html"
+    required_tiers = [Subscription.FREE_TIER]
     permissions = ["contractor"]
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:

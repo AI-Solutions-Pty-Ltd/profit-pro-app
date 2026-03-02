@@ -11,14 +11,18 @@ from django.urls import reverse, reverse_lazy
 from django.views import View
 
 from app.Account.models import Account
+from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.models import Structure
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Ledger.forms import ProjectFilterForm, TransactionForm
 from app.Ledger.models import Transaction, Vat
 from app.Project.models import Company
 
 
-class UserHasCompanyRoleMixin(LoginRequiredMixin, BreadcrumbMixin):
+class UserHasCompanyRoleMixin(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin
+):
     """
     Mixin to check if user has access to a company.
 
@@ -31,6 +35,7 @@ class UserHasCompanyRoleMixin(LoginRequiredMixin, BreadcrumbMixin):
     company: Company
     transaction: Transaction | None
     vat_view: bool = False
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_company(self) -> Company:
         """Get the company from URL parameters."""

@@ -6,17 +6,22 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
-from app.BillOfQuantities.models import Bill, LineItem, Structure
+from app.Account.subscription_config import Subscription
+from app.BillOfQuantities.models import Bill, LineItem, Package, Structure
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Role
 
 
-class AddendumMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+class AddendumMixin(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
+):
     """Mixin for addendum views."""
 
     roles = [Role.ADDITIONAL_LINE_ITEMS, Role.ADMIN, Role.USER]
     project_slug = "project_pk"
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
 
 class AddendumListView(AddendumMixin, ListView):
@@ -205,7 +210,6 @@ class AddendumUpdateView(AddendumMixin, UpdateView):
         form.fields["bill"].required = True
 
         # Filter package to current project's bills
-        from app.BillOfQuantities.models import Package
 
         form.fields["package"].queryset = Package.objects.filter(
             bill__structure__project=project

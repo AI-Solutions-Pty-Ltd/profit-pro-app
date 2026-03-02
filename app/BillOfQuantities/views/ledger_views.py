@@ -13,6 +13,7 @@ from django.views.generic import (
     UpdateView,
 )
 
+from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.models import (
     AdvancePayment,
     Escalation,
@@ -22,6 +23,7 @@ from app.BillOfQuantities.models import (
 )
 from app.core.Utilities.forms import styled_date_input
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project, Role
 
 # =============================================================================
@@ -29,13 +31,16 @@ from app.Project.models import Project, Role
 # =============================================================================
 
 
-class AdvancePaymentListView(UserHasProjectRoleGenericMixin, ListView):
+class AdvancePaymentListView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, ListView
+):
     """List all advance payments for a project."""
 
     model = AdvancePayment
     template_name = "ledger/advance_payment_list.html"
     context_object_name = "transactions"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -95,7 +100,9 @@ class AdvancePaymentListView(UserHasProjectRoleGenericMixin, ListView):
         return context
 
 
-class AdvancePaymentCreateView(UserHasProjectRoleGenericMixin, CreateView):
+class AdvancePaymentCreateView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, CreateView
+):
     """Create a new advance payment transaction."""
 
     class CreateForm(forms.ModelForm):
@@ -130,6 +137,7 @@ class AdvancePaymentCreateView(UserHasProjectRoleGenericMixin, CreateView):
     model = AdvancePayment
     template_name = "ledger/advance_payment_form.html"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     form_class = CreateForm
 
     def get_project(self):
@@ -169,7 +177,9 @@ class AdvancePaymentCreateView(UserHasProjectRoleGenericMixin, CreateView):
         return context
 
 
-class AdvancePaymentUpdateView(UserHasProjectRoleGenericMixin, UpdateView):
+class AdvancePaymentUpdateView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, UpdateView
+):
     """Update an advance payment transaction."""
 
     class UpdateForm(forms.ModelForm):
@@ -204,6 +214,7 @@ class AdvancePaymentUpdateView(UserHasProjectRoleGenericMixin, UpdateView):
     model = AdvancePayment
     template_name = "ledger/advance_payment_form.html"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     form_class = UpdateForm
 
     def get_project(self):
@@ -248,12 +259,15 @@ class AdvancePaymentUpdateView(UserHasProjectRoleGenericMixin, UpdateView):
         return context
 
 
-class AdvancePaymentDeleteView(UserHasProjectRoleGenericMixin, DeleteView):
+class AdvancePaymentDeleteView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, DeleteView
+):
     """Delete an advance payment transaction."""
 
     model = AdvancePayment
     template_name = "ledger/advance_payment_confirm_delete.html"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -297,13 +311,16 @@ class AdvancePaymentDeleteView(UserHasProjectRoleGenericMixin, DeleteView):
 # =============================================================================
 
 
-class RetentionListView(UserHasProjectRoleGenericMixin, ListView):
+class RetentionListView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, ListView
+):
     """List all retention transactions for a project."""
 
     model = Retention
     template_name = "ledger/retention_list.html"
     context_object_name = "transactions"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -361,7 +378,9 @@ class RetentionListView(UserHasProjectRoleGenericMixin, ListView):
         return context
 
 
-class RetentionCreateView(UserHasProjectRoleGenericMixin, CreateView):
+class RetentionCreateView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, CreateView
+):
     """Create a new retention transaction."""
 
     class CreateForm(forms.ModelForm):
@@ -393,6 +412,7 @@ class RetentionCreateView(UserHasProjectRoleGenericMixin, CreateView):
     model = Retention
     template_name = "ledger/retention_form.html"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     form_class = CreateForm
 
     def get_project(self):
@@ -430,7 +450,9 @@ class RetentionCreateView(UserHasProjectRoleGenericMixin, CreateView):
         return context
 
 
-class RetentionUpdateView(UserHasProjectRoleGenericMixin, UpdateView):
+class RetentionUpdateView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, UpdateView
+):
     """Update a retention transaction."""
 
     class UpdateForm(forms.ModelForm):
@@ -462,6 +484,7 @@ class RetentionUpdateView(UserHasProjectRoleGenericMixin, UpdateView):
     model = Retention
     template_name = "ledger/retention_form.html"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     form_class = UpdateForm
 
     def get_project(self):
@@ -504,12 +527,15 @@ class RetentionUpdateView(UserHasProjectRoleGenericMixin, UpdateView):
         return context
 
 
-class RetentionDeleteView(UserHasProjectRoleGenericMixin, DeleteView):
+class RetentionDeleteView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, DeleteView
+):
     """Delete a retention transaction."""
 
     model = Retention
     template_name = "ledger/retention_confirm_delete.html"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -550,13 +576,16 @@ class RetentionDeleteView(UserHasProjectRoleGenericMixin, DeleteView):
 # =============================================================================
 
 
-class MaterialsOnSiteListView(UserHasProjectRoleGenericMixin, ListView):
+class MaterialsOnSiteListView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, ListView
+):
     """List all materials on site transactions."""
 
     model = MaterialsOnSite
     template_name = "ledger/materials_list.html"
     context_object_name = "transactions"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -615,7 +644,9 @@ class MaterialsOnSiteListView(UserHasProjectRoleGenericMixin, ListView):
         return context
 
 
-class MaterialsOnSiteCreateView(UserHasProjectRoleGenericMixin, CreateView):
+class MaterialsOnSiteCreateView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, CreateView
+):
     """Create a new materials on site transaction."""
 
     class CreateForm(forms.ModelForm):
@@ -652,6 +683,7 @@ class MaterialsOnSiteCreateView(UserHasProjectRoleGenericMixin, CreateView):
     model = MaterialsOnSite
     template_name = "ledger/materials_form.html"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     form_class = CreateForm
 
     def get_project(self):
@@ -691,7 +723,9 @@ class MaterialsOnSiteCreateView(UserHasProjectRoleGenericMixin, CreateView):
         return context
 
 
-class MaterialsOnSiteUpdateView(UserHasProjectRoleGenericMixin, UpdateView):
+class MaterialsOnSiteUpdateView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, UpdateView
+):
     """Update a materials on site transaction."""
 
     class UpdateForm(forms.ModelForm):
@@ -728,6 +762,7 @@ class MaterialsOnSiteUpdateView(UserHasProjectRoleGenericMixin, UpdateView):
     model = MaterialsOnSite
     template_name = "ledger/materials_form.html"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     form_class = UpdateForm
 
     def get_project(self):
@@ -772,12 +807,15 @@ class MaterialsOnSiteUpdateView(UserHasProjectRoleGenericMixin, UpdateView):
         return context
 
 
-class MaterialsOnSiteDeleteView(UserHasProjectRoleGenericMixin, DeleteView):
+class MaterialsOnSiteDeleteView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, DeleteView
+):
     """Delete a materials on site transaction."""
 
     model = MaterialsOnSite
     template_name = "ledger/materials_confirm_delete.html"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -821,13 +859,16 @@ class MaterialsOnSiteDeleteView(UserHasProjectRoleGenericMixin, DeleteView):
 # =============================================================================
 
 
-class EscalationListView(UserHasProjectRoleGenericMixin, ListView):
+class EscalationListView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, ListView
+):
     """List all escalation transactions."""
 
     model = Escalation
     template_name = "ledger/escalation_list.html"
     context_object_name = "transactions"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -886,7 +927,9 @@ class EscalationListView(UserHasProjectRoleGenericMixin, ListView):
         return context
 
 
-class EscalationCreateView(UserHasProjectRoleGenericMixin, CreateView):
+class EscalationCreateView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, CreateView
+):
     """Create a new escalation transaction."""
 
     class CreateForm(forms.ModelForm):
@@ -925,6 +968,7 @@ class EscalationCreateView(UserHasProjectRoleGenericMixin, CreateView):
     model = Escalation
     template_name = "ledger/escalation_form.html"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     form_class = CreateForm
 
     def get_project(self):
@@ -962,7 +1006,9 @@ class EscalationCreateView(UserHasProjectRoleGenericMixin, CreateView):
         return context
 
 
-class EscalationUpdateView(UserHasProjectRoleGenericMixin, UpdateView):
+class EscalationUpdateView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, UpdateView
+):
     """Update an escalation transaction."""
 
     class UpdateForm(forms.ModelForm):
@@ -1001,6 +1047,7 @@ class EscalationUpdateView(UserHasProjectRoleGenericMixin, UpdateView):
     model = Escalation
     template_name = "ledger/escalation_form.html"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     form_class = UpdateForm
 
     def get_project(self):
@@ -1043,12 +1090,15 @@ class EscalationUpdateView(UserHasProjectRoleGenericMixin, UpdateView):
         return context
 
 
-class EscalationDeleteView(UserHasProjectRoleGenericMixin, DeleteView):
+class EscalationDeleteView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, DeleteView
+):
     """Delete an escalation transaction."""
 
     model = Escalation
     template_name = "ledger/escalation_confirm_delete.html"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -1090,13 +1140,16 @@ class EscalationDeleteView(UserHasProjectRoleGenericMixin, DeleteView):
 # =============================================================================
 
 
-class SpecialItemTransactionListView(UserHasProjectRoleGenericMixin, ListView):
+class SpecialItemTransactionListView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, ListView
+):
     """List all special item transactions."""
 
     model = SpecialItemTransaction
     template_name = "ledger/special_item_list.html"
     context_object_name = "transactions"
     roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def get_project(self):
         """Get the project from URL and verify ownership."""

@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import DetailView, ListView, TemplateView, UpdateView, View
 
+from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.forms import (
     PaymentCertificatePhotoForm,
     PaymentCertificateWorkingForm,
@@ -29,12 +30,16 @@ from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import (
     UserHasProjectRoleGenericMixin,
 )
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import PlannedValue, Project, Role
 
 
-class PaymentCertificateMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+class PaymentCertificateMixin(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
+):
     roles = [Role.PAYMENT_CERTIFICATES]
     project_slug = "project_pk"
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def dispatch(self, request, *args, **kwargs):
         """Check if project has line items before allowing any view access."""

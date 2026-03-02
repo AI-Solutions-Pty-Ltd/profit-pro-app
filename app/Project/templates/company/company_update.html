@@ -141,18 +141,20 @@
                 <div class="sm:col-span-2">
                     <label for="{{ form.users.id_for_label }}"
                            class="block text-sm font-medium text-gray-700">Company Users</label>
-                    {{ form.users }}
+                    <div class="mt-2 max-h-56 overflow-y-auto rounded-md border border-gray-300 p-3">{{ form.users }}</div>
                     {% if form.users.errors %}<p class="mt-2 text-sm text-red-600">{{ form.users.errors.0 }}</p>{% endif %}
-                    <p class="mt-2 text-sm text-gray-500">Select users who should have access to this company.</p>
+                    <p class="mt-2 text-sm text-gray-500">Tick users to grant access, untick to remove access.</p>
                 </div>
                 <!-- Consultants -->
-                <div class="sm:col-span-2">
-                    <label for="{{ form.consultants.id_for_label }}"
-                           class="block text-sm font-medium text-gray-700">Company Consultants</label>
-                    {{ form.consultants }}
-                    {% if form.consultants.errors %}<p class="mt-2 text-sm text-red-600">{{ form.consultants.errors.0 }}</p>{% endif %}
-                    <p class="mt-2 text-sm text-gray-500">Select consultants who should have access to this company.</p>
-                </div>
+                {% if form.consultants %}
+                    <div class="sm:col-span-2">
+                        <label for="{{ form.consultants.id_for_label }}"
+                               class="block text-sm font-medium text-gray-700">Company Consultants</label>
+                        <div class="mt-2 max-h-56 overflow-y-auto rounded-md border border-gray-300 p-3">{{ form.consultants }}</div>
+                        {% if form.consultants.errors %}<p class="mt-2 text-sm text-red-600">{{ form.consultants.errors.0 }}</p>{% endif %}
+                        <p class="mt-2 text-sm text-gray-500">Tick consultants to grant access, untick to remove access.</p>
+                    </div>
+                {% endif %}
             </div>
             <div class="mt-6 flex justify-end">
                 {% if object %}

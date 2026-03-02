@@ -5,16 +5,21 @@ from django.forms import DateInput
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
+from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project, Role
 from app.SiteManagement.models import ProductivityLog
 
 
-class ProductivityLogMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+class ProductivityLogMixin(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
+):
     """Mixin for Productivity Log views."""
 
     model = ProductivityLog
+    required_tiers = [Subscription.SITE_MANAGEMENT]
     roles = [Role.ADMIN, Role.USER]
     project_slug = "project_pk"
 

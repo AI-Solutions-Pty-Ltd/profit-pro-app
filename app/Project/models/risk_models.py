@@ -41,6 +41,12 @@ class Risk(BaseModel):
         related_name="risks",
         help_text="Project this risk belongs to",
     )
+    category = models.CharField(
+        max_length=20,
+        choices=RiskCategory.choices,
+        default=RiskCategory.OTHER,
+        help_text="Category identifying the source of the risk",
+    )
     reference_number = models.CharField(
         max_length=50,
         editable=False,

@@ -12,6 +12,7 @@ from django.views.generic import (
     UpdateView,
 )
 
+from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.models import (
     ContractVariation,
 )
@@ -19,13 +20,17 @@ from app.core.Utilities.forms import styled_attachment_input, styled_date_input
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Role
 
 
-class ContractVariationMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+class ContractVariationMixin(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
+):
     """Mixin for contract variation views."""
 
     project_slug = "project_pk"
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     roles = [Role.CONTRACT_VARIATIONS, Role.ADMIN, Role.USER]
 
 

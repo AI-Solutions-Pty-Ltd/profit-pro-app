@@ -1,9 +1,13 @@
-{% extends "base.html" %}
+{% extends "base_full.html" %}
 {% load humanize heroicons %}
 {% block title %}
     Impact Report - Portfolio
 {% endblock title %}
 {% block content %}
+    <!-- Dashboard Navigation Tabs -->
+    <div class="bg-white rounded-lg shadow-sm mb-6 sticky top-0 z-10">
+        <div class="border-b border-gray-200">{% include "portfolio/reports_nav.html" with tab="impact" %}</div>
+    </div>
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
         <!-- Header -->
         <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">

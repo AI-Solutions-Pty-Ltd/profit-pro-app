@@ -4,16 +4,21 @@ from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.views import View
 
+from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.models import Bill, Package
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Role
 
 
-class GetBillsByStructureView(UserHasProjectRoleGenericMixin, View):
+class GetBillsByStructureView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, View
+):
     """Get bills filtered by structure."""
 
     roles = [Role.USER, Role.CONTRACT_BOQ]
     project_slug = "project_pk"
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def dispatch(self, request, *args, **kwargs):
         """Override dispatch to handle permission failures as JSON."""
@@ -36,11 +41,14 @@ class GetBillsByStructureView(UserHasProjectRoleGenericMixin, View):
         return JsonResponse({"bills": list(bills)})
 
 
-class GetPackagesByBillView(UserHasProjectRoleGenericMixin, View):
+class GetPackagesByBillView(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, View
+):
     """Get packages filtered by bill."""
 
     roles = [Role.USER, Role.CONTRACT_BOQ]
     project_slug = "project_pk"
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def dispatch(self, request, *args, **kwargs):
         """Override dispatch to handle permission failures as JSON."""

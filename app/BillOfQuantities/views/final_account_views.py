@@ -5,20 +5,26 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.generic import DetailView
 
+from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.models import LineItem, PaymentCertificate
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project, Role
 
 
 class FinalAccountDetailView(
-    UserHasProjectRoleGenericMixin, BreadcrumbMixin, DetailView
+    SubscriptionRequiredMixin,
+    UserHasProjectRoleGenericMixin,
+    BreadcrumbMixin,
+    DetailView,
 ):
     model = PaymentCertificate
     template_name = "final_account/final_account_detail.html"
     context_object_name = "final_account"
     roles = [Role.CONTRACT_BOQ]
     project_slug = "project_pk"
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     pk = "pk"
 
     def get_project(self: Any) -> Project:

@@ -8,21 +8,26 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import CreateView, DetailView, ListView, UpdateView, View
 
+from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.models import Bill, Structure
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Cost.models import Cost
 from app.Project.models import Project, Role
 
 from .forms import CostForm, CostFormSet
 
 
-class CostMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+class CostMixin(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
+):
     """Mixin for cost views."""
 
     roles = [Role.USER]
     project_slug = "project_pk"
+    required_tiers = [Subscription.BUSINESS_MANAGEMENT]
     bill = None
 
     def get_bill(self) -> Bill:

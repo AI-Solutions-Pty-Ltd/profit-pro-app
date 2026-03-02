@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.generic import DetailView, ListView, TemplateView
 
+from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.models import (
     Bill,
     Forecast,
@@ -22,14 +23,18 @@ from app.BillOfQuantities.models import (
 )
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project, Role
 
 
-class ForecastMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+class ForecastMixin(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
+):
     """Mixin for forecast views."""
 
     roles = [Role.COST_FORECASTS, Role.ADMIN, Role.USER]
     project_slug = "project_pk"
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
 
 class ForecastCreateView(ForecastMixin, TemplateView):

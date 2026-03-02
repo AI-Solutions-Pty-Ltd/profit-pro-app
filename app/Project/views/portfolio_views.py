@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Any, cast
 
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count, Q, QuerySet, Sum
 from django.db.models.functions import Coalesce
 from django.shortcuts import redirect
@@ -16,10 +15,12 @@ from django.views.generic import (
 )
 
 from app.Account.models import Account
+from app.Account.subscription_config import Subscription
 from app.core.Utilities.dates import get_previous_n_months
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.forms import FilterForm
 from app.Project.models import (
     AdministrativeCompliance,
@@ -32,12 +33,13 @@ from app.Project.models import (
 )
 
 
-class CompanyDashboardView(LoginRequiredMixin, BreadcrumbMixin, ListView):
+class CompanyDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListView):
     """Projects dashboard showing financial metrics for Portfolio."""
 
     model = Project
     template_name = "portfolio/company_dashboard.html"
     context_object_name = "projects"
+    required_tiers = [Subscription.FREE_TIER, Subscription.BUSINESS_MANAGEMENT]
 
     filter_form: FilterForm | None = None
 
@@ -449,12 +451,13 @@ class CompanyDashboardView(LoginRequiredMixin, BreadcrumbMixin, ListView):
         }
 
 
-class PortfolioDashboardView(LoginRequiredMixin, BreadcrumbMixin, ListView):
+class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListView):
     """Projects dashboard showing financial metrics for Portfolio."""
 
     model = Project
     template_name = "portfolio/portfolio_dashboard.html"
     context_object_name = "projects"
+    required_tiers = [Subscription.FREE_TIER]
 
     filter_form: FilterForm | None = None
 
@@ -882,10 +885,13 @@ class PortfolioDashboardView(LoginRequiredMixin, BreadcrumbMixin, ListView):
         }
 
 
-class PortfolioReportMixin(UserHasGroupGenericMixin, BreadcrumbMixin, TemplateView):
+class PortfolioReportMixin(
+    SubscriptionRequiredMixin, UserHasGroupGenericMixin, BreadcrumbMixin, TemplateView
+):
     """Base mixin for portfolio reports."""
 
     permissions = ["consultant", "contractor"]
+    required_tiers = [Subscription.FREE_TIER]
 
     def get_portfolio(self) -> Portfolio:
         """Get the current user's portfolio."""

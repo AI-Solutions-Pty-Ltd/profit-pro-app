@@ -9,9 +9,7 @@ from app.Project.views.company_views import (
 )
 
 urlpatterns = [
-    path("company/list/", CompanyListView.as_view(), name="company-list"),
-    path("company/<int:pk>/", CompanyDetailView.as_view(), name="company-detail"),
-    path(
-        "company/<int:pk>/update/", CompanyUpdateView.as_view(), name="company-update"
-    ),
+    path("<int:pk>/", CompanyDetailView.as_view(), name="company-detail"),
+    path("<int:pk>/update/", CompanyUpdateView.as_view(), name="company-update"),
+    path("list/", CompanyListView.as_view(), name="company-list"),
 ]

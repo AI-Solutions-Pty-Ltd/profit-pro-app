@@ -16,23 +16,24 @@ from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, UpdateView, View
 
-from app.BillOfQuantities.models.payment_certificate_models import PaymentCertificate
-from app.BillOfQuantities.models.payment_certificate_payment_models import (
-    PaymentCertificatePayment,
-)
+from app.Account.subscription_config import Subscription
+from app.BillOfQuantities.models import PaymentCertificate, PaymentCertificatePayment
 from app.core.Utilities.django_email_service import django_email_service
+from app.core.Utilities.generate_pdf import generate_pdf
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import (
-    UserHasProjectRoleGenericMixin,
-)
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project, Role
 
 
-class PaymentCertificatePaymentMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+class PaymentCertificatePaymentMixin(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
+):
     """Mixin to ensure user has project role for payment management."""
 
     roles = [Role.PAYMENT_CERTIFICATES, Role.ADMIN, Role.USER]
     project_slug = "project_pk"
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
 
     def get_project(self) -> Project:
         if not hasattr(self, "project"):
@@ -417,7 +418,6 @@ class EmailPaymentStatementView(PaymentCertificatePaymentMixin, View):
             }
 
             # Generate PDF
-            from app.core.Utilities.generate_pdf import generate_pdf
 
             html_content = render_to_string(
                 "payments/payment_statement_pdf.html", context
@@ -570,9 +570,6 @@ class PaymentCertificateInvoiceView(PaymentCertificatePaymentMixin, DetailView):
         """Check if PDF download is requested."""
         if self.request.GET.get("format") == "pdf":
             # Generate PDF using the template
-            from django.template.loader import render_to_string
-
-            from app.core.Utilities.generate_pdf import generate_pdf
 
             context["pdf"] = True
 
@@ -695,7 +692,6 @@ class EmailPaymentCertificateView(PaymentCertificatePaymentMixin, View):
             }
 
             # Generate PDF
-            from app.core.Utilities.generate_pdf import generate_pdf
 
             html_content = render_to_string("payments/invoice_html.html", context)
             pdf_file = generate_pdf(html_content)

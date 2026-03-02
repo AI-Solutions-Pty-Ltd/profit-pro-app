@@ -87,6 +87,7 @@ from app.SiteManagement.views import (
 )
 
 app_name = "site_management"
+_prefix = "site-management/"
 
 urlpatterns = [
     # Site Management

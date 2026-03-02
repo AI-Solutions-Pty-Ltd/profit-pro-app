@@ -31,6 +31,9 @@ from .payment_certificate_models import (
     PaymentCertificatePhoto,
     PaymentCertificateWorking,
 )
+from .payment_certificate_payment_models import (
+    PaymentCertificatePayment,
+)
 from .schedule_models import (
     ScheduleForecast,
     ScheduleForecastSection,
@@ -54,6 +57,7 @@ __all__ = [
     "PaymentCertificate",
     "PaymentCertificatePhoto",
     "PaymentCertificateWorking",
+    "PaymentCertificatePayment",
     # Claim models
     "Claim",
     # Forecast models

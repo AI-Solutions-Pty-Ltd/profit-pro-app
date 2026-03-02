@@ -8,9 +8,9 @@
     <section class="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white py-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center">
-                <h1 class="text-4xl md:text-6xl font-bold mb-6">Contractor Management System</h1>
+                <h1 class="text-4xl md:text-6xl font-bold mb-6">Business Management Module</h1>
                 <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-90">
-                    Complete project lifecycle management from estimation to final account for construction contractors.
+                    Complete project lifecycle management with specialized modules for construction contractors.
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
                     <a href="{% url 'users:auth:register' %}"
@@ -29,21 +29,246 @@
     <section id="features" class="py-20 bg-gray-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Contractor Module System</h2>
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Subscription Modules</h2>
                 <p class="text-xl text-gray-600 max-w-2xl mx-auto">
-                    Comprehensive tools for project estimation, risk assessment, profit management, and contract administration.
+                    Flexible subscription options tailored to your business needs. Start with our free tier and upgrade as you grow.
                 </p>
             </div>
-            <!-- Main Modules -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            <!-- Free Tier -->
+            <div class="bg-gradient-to-r from-gray-600 to-gray-700 rounded-xl shadow-xl p-8 mb-12">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold mb-2">Free Tier</h3>
+                        <p class="text-gray-200">Get started with essential project management features</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-3xl font-bold">Free</div>
+                        <div class="text-sm text-gray-300">Forever</div>
+                    </div>
+                </div>
+                <ul class="space-y-3">
+                    <li class="flex items-center">
+                        {% heroicon_outline "check" size="20" class="text-green-400 mr-3" %}
+                        <span>1 Project</span>
+                    </li>
+                    <li class="flex items-center">
+                        {% heroicon_outline "check" size="20" class="text-green-400 mr-3" %}
+                        <span>3 Users per Project</span>
+                    </li>
+                    <li class="flex items-center">
+                        {% heroicon_outline "check" size="20" class="text-green-400 mr-3" %}
+                        <span>Basic Project Dashboard</span>
+                    </li>
+                    <li class="flex items-center">
+                        {% heroicon_outline "check" size="20" class="text-green-400 mr-3" %}
+                        <span>Project Reports</span>
+                    </li>
+                </ul>
+            </div>
+            <!-- Subscription Modules -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+                <!-- Payments and Invoices -->
+                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-indigo-200">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="w-12 h-12 bg-indigo-500 rounded-lg flex items-center justify-center">
+                            {% heroicon_outline "currency-dollar" size="24" class="text-white" %}
+                        </div>
+                        <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-3 py-1 rounded-full">Subscription 1</span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Payments and Invoices</h3>
+                    <p class="text-gray-600 mb-4">Complete payment certificate and invoicing management system.</p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Claims Management
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Invoice Generation
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Statements of Accounts
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Cashflow Forecast
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Order Amendments
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Retention Management
+                        </li>
+                    </ul>
+                </div>
+                <!-- Profit and Loss -->
+                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-green-200">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+                            {% heroicon_outline "chart-bar" size="24" class="text-white" %}
+                        </div>
+                        <span class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">Subscription 2</span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Profit and Loss Management</h3>
+                    <p class="text-gray-600 mb-4">Comprehensive financial tracking and profit analysis tools.</p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Journal Entries
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Materials Cost Tracker
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Subcontractor Cost Tracker
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Labour Cost Tracker
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Overheads Cost Tracker
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Baseline Assumptions
+                        </li>
+                    </ul>
+                </div>
+                <!-- Site Management -->
+                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-orange-200">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
+                            {% heroicon_outline "clipboard-document-list" size="24" class="text-white" %}
+                        </div>
+                        <span class="bg-orange-100 text-orange-800 text-xs font-semibold px-3 py-1 rounded-full">Subscription 3</span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Site Management</h3>
+                    <p class="text-gray-600 mb-4">Complete on-site project management and tracking system.</p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Daily Logs & Diaries
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Progress Tracking
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Photo Documentation
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Stores Management
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Procurement Management
+                        </li>
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Safety & Quality Control
+                        </li>
+                    </ul>
+                </div>
                 <!-- Project Estimator -->
-                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-all duration-300">
-                    <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mb-6">
-                        {% heroicon_outline "calculator" size="24" class="text-white" %}
+                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-purple-200">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                            {% heroicon_outline "calculator" size="24" class="text-white" %}
+                        </div>
+                        <span class="bg-purple-100 text-purple-800 text-xs font-semibold px-3 py-1 rounded-full">Subscription 4</span>
                     </div>
                     <h3 class="text-xl font-semibold text-gray-900 mb-3">Project Estimator</h3>
-                    <p class="text-gray-600 mb-4">Advanced tools for accurate project estimation and cost calculation.</p>
+                    <p class="text-gray-600 mb-4">Advanced project estimation and resource planning tools.</p>
                     <ul class="space-y-2 text-sm text-gray-600">
+                        <li class="flex items-center">
+                            <svg class="w-4 h-4 text-green-500 mr-2"
+                                 fill="currentColor"
+                                 viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Project Assumptions
+                        </li>
                         <li class="flex items-center">
                             <svg class="w-4 h-4 text-green-500 mr-2"
                                  fill="currentColor"
@@ -66,7 +291,7 @@
                                  viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            Materials Calculator
+                            Resources Specifications
                         </li>
                         <li class="flex items-center">
                             <svg class="w-4 h-4 text-green-500 mr-2"
@@ -76,257 +301,110 @@
                             </svg>
                             Rate Builder
                         </li>
-                    </ul>
-                </div>
-                <!-- Baseline Risk Assessment -->
-                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-all duration-300">
-                    <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mb-6">
-                        {% heroicon_outline "exclamation-triangle" size="24" class="text-white" %}
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Baseline Risk Assessment</h3>
-                    <p class="text-gray-600 mb-4">Comprehensive risk analysis and baseline reporting tools.</p>
-                    <ul class="space-y-2 text-sm text-gray-600">
                         <li class="flex items-center">
                             <svg class="w-4 h-4 text-green-500 mr-2"
                                  fill="currentColor"
                                  viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            Quantity Analysis Report
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Rates Analysis
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Baseline Project Forecast
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Contract Analysis Report
-                        </li>
-                    </ul>
-                </div>
-                <!-- Profit Management -->
-                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-all duration-300">
-                    <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mb-6">
-                        {% heroicon_outline "currency-dollar" size="24" class="text-white" %}
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Profit Management</h3>
-                    <p class="text-gray-600 mb-4">Track and analyze project and company profitability.</p>
-                    <ul class="space-y-2 text-sm text-gray-600">
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Journal Entries
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Project Income Statement
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Profit & Loss by Trade
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Company Balance Sheet
-                        </li>
-                    </ul>
-                </div>
-                <!-- Contracts Management -->
-                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-all duration-300">
-                    <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center mb-6">
-                        {% heroicon_outline "document-text" size="24" class="text-white" %}
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Contracts Management</h3>
-                    <p class="text-gray-600 mb-4">Streamlined contract administration and tracking.</p>
-                    <ul class="space-y-2 text-sm text-gray-600">
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Contract Creation
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Amendment Tracking
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Compliance Monitoring
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Digital Signatures
-                        </li>
-                    </ul>
-                </div>
-                <!-- Certificates and Invoicing -->
-                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-all duration-300">
-                    <div class="w-12 h-12 bg-teal-500 rounded-lg flex items-center justify-center mb-6">
-                        {% heroicon_outline "document-currency-dollar" size="24" class="text-white" %}
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Certificates & Invoicing</h3>
-                    <p class="text-gray-600 mb-4">Automated certificate generation and invoicing system.</p>
-                    <ul class="space-y-2 text-sm text-gray-600">
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Payment Certificates
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Invoice Generation
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Tax Calculations
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Payment Tracking
-                        </li>
-                    </ul>
-                </div>
-                <!-- Project Setup -->
-                <div class="bg-white rounded-xl shadow-lg p-8 hover:shadow-xl transition-all duration-300">
-                    <div class="w-12 h-12 bg-indigo-500 rounded-lg flex items-center justify-center mb-6">
-                        {% heroicon_outline "cog" size="24" class="text-white" %}
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Project Setup</h3>
-                    <p class="text-gray-600 mb-4">Configure and initialize new projects efficiently.</p>
-                    <ul class="space-y-2 text-sm text-gray-600">
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Project Templates
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Team Assignment
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Milestone Configuration
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-4 h-4 text-green-500 mr-2"
-                                 fill="currentColor"
-                                 viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Document Management
+                            Financial Risk Reports
                         </li>
                     </ul>
                 </div>
             </div>
-            <!-- Detailed Features Section -->
-            <div class="bg-white rounded-xl shadow-lg p-8">
-                <h3 class="text-2xl font-bold text-gray-900 mb-8 text-center">Advanced Features</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- Estimator Tools -->
+            <!-- Dashboard Reports Section -->
+            <div class="bg-white rounded-xl shadow-lg p-8 mb-12">
+                <h3 class="text-2xl font-bold text-gray-900 mb-8 text-center">Business Dashboard Reports</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            {% heroicon_outline "document-text" size="32" class="text-blue-600" %}
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">Income Statement</h4>
+                        <p class="text-sm text-gray-600">Track revenue, expenses, and profitability across all projects</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            {% heroicon_outline "currency-dollar" size="32" class="text-green-600" %}
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">Cashflow Statement</h4>
+                        <p class="text-sm text-gray-600">Monitor cash inflows and outflows for better financial management</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            {% heroicon_outline "users" size="32" class="text-purple-600" %}
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">Debtors & Creditors</h4>
+                        <p class="text-sm text-gray-600">Manage accounts receivable and payable efficiently</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Business Systems Settings -->
+            <div class="bg-gray-100 rounded-xl p-8">
+                <h3 class="text-2xl font-bold text-gray-900 mb-8 text-center">Business Systems Settings</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
                         <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                            {% heroicon_outline "calculator" size="20" class="text-blue-500 mr-2" %}
-                            Estimator Tools
+                            {% heroicon_outline "cog" size="20" class="text-gray-600 mr-2" %}
+                            Included in Subscription 2
                         </h4>
                         <ul class="space-y-2 text-sm text-gray-600">
-                            <li>• New Quantity vs Old Rate Analysis</li>
-                            <li>• Trade Cost Estimator</li>
-                            <li>• Trade Cost Forecast with Remeasured Drawings</li>
+                            <li class="flex items-center">
+                                <svg class="w-4 h-4 text-green-500 mr-2"
+                                     fill="currentColor"
+                                     viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                Journal Accounts Management
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-4 h-4 text-green-500 mr-2"
+                                     fill="currentColor"
+                                     viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                Ledger Accounts Configuration
+                            </li>
                         </ul>
                     </div>
-                    <!-- Risk Analysis -->
                     <div>
                         <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                            {% heroicon_outline "chart-bar" size="20" class="text-orange-500 mr-2" %}
-                            Risk Analysis
+                            {% heroicon_outline "building-office" size="20" class="text-gray-600 mr-2" %}
+                            Available for All Subscriptions
                         </h4>
                         <ul class="space-y-2 text-sm text-gray-600">
-                            <li>• BoQ Priced by New Quantities</li>
-                            <li>• Trade-by-Trade Comparison</li>
-                            <li>• BoQ Analysis Reports</li>
-                        </ul>
-                    </div>
-                    <!-- Financial Reports -->
-                    <div>
-                        <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                            {% heroicon_outline "clipboard-document-list" size="20" class="text-green-500 mr-2" %}
-                            Financial Reports
-                        </h4>
-                        <ul class="space-y-2 text-sm text-gray-600">
-                            <li>• Project Analysis by Trade</li>
-                            <li>• Company Income Statements</li>
-                            <li>• Balance Sheet Generation</li>
+                            <li class="flex items-center">
+                                <svg class="w-4 h-4 text-green-500 mr-2"
+                                     fill="currentColor"
+                                     viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                Company Details Management
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-4 h-4 text-green-500 mr-2"
+                                     fill="currentColor"
+                                     viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                Invoicing Details Setup
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-4 h-4 text-green-500 mr-2"
+                                     fill="currentColor"
+                                     viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                Reporting Templates
+                            </li>
+                            <li class="flex items-center">
+                                <svg class="w-4 h-4 text-green-500 mr-2"
+                                     fill="currentColor"
+                                     viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                User Management & Permissions
+                            </li>
                         </ul>
                     </div>
                 </div>

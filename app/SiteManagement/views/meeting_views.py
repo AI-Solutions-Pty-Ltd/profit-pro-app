@@ -12,16 +12,21 @@ from django.views.generic import (
     UpdateView,
 )
 
+from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project, Role
 from app.SiteManagement.models.meeting import Meeting
 
 
-class MeetingMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+class MeetingMixin(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
+):
     """Mixin for Meeting views."""
 
     model = Meeting
+    required_tiers = [Subscription.SITE_MANAGEMENT]
     roles = [Role.ADMIN, Role.USER]
     project_slug = "project_pk"
 

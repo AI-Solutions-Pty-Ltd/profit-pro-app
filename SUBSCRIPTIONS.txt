@@ -1,0 +1,58 @@
+BUSINESS MANAGEMENT MODULE - SUBSCRIPTIONS
+Note that the first four subscriptions are linked to the Business Management Module:
+
+1. Payments and Invoices – Subscription 1
+2. Profit and Loss – Subscription 2
+3. Site Management – Subscription 3
+4. Project Estimator – Subscription 4
+5. Dashboards and Reports
+6. Company Settings - Internal
+7. Business Systems Settings - Internal
+
+PAYMENTS MANAGEMENT – SUBSCRIPTION 1
+8. Claims
+9. Invoices
+10. Statements of Accounts
+11. Cashflow Forecast
+12. Order Amendments
+13. Retention Management
+
+PROFIT AND LOSS MANAGEMENT – SUBSCRIPTION 2
+14. Journal Entries
+15. Materials Cost Tracker
+16. Subcontractor Cost Tracker
+17. Labour Cost Tracker
+18. Overheads Cost Tracker
+19. Baseline Assumptions
+
+SITE MANAGEMENT – SUBSCRIPTION 3
+20. Various Logs
+21. Stores Management
+22. Procurement Management
+
+PROJECT ESTIMATOR – SUBSCRIPTION 4 (KATEKANI MODULE)
+
+1. Project Assumptions
+2. Project Estimator
+3. Resources Specifications
+4. Financial Risk Reports
+
+REPORTS ON DASHBOARD
+These reports should be added to the business dashboard.
+5. Income Statement
+6. Cashflow Statement
+7. Debtors & Creditors
+
+BUSINESS SYSTEMS SETTINGS
+These form part of Subscription 2.
+
+1. Journal Accounts
+2. Ledger Accounts
+
+COMPANY SETTINGS
+These apply to all Subscriptions.
+
+3. Company details
+4. Invoicing Details
+5. Reporting Templates
+6. User Management

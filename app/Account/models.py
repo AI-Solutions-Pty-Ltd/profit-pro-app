@@ -1,5 +1,6 @@
 """Account models."""
 
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Any, Optional
 
 from django.contrib.auth.base_user import BaseUserManager
@@ -184,6 +185,36 @@ class Account(AbstractUser, BaseModel):
             return True
         return False
 
+    def has_subscription_tier(
+        self: "Account", required_tiers: Iterable[Subscription | str] | None
+    ) -> bool:
+        """Check whether account satisfies any required subscription tier.
+
+        Supports parent-tier inheritance, superuser bypass, and FREE_TIER bypass.
+        """
+        if not required_tiers:
+            return True
+
+        normalized_required_tiers = {
+            str(tier).strip() for tier in required_tiers if str(tier).strip()
+        }
+        if not normalized_required_tiers:
+            return True
+
+        if (
+            self.is_superuser
+            or self.subscription == Subscription.ADMINISTRATION
+            or str(Subscription.FREE_TIER) in normalized_required_tiers
+        ):
+            return True
+
+        current_tier = str(self.subscription)
+        available_tiers: set[str] = set()
+        while current_tier and current_tier not in available_tiers:
+            available_tiers.add(current_tier)
+
+        return bool(available_tiers & normalized_required_tiers)
+
     @property
     def get_projects(self: "Account") -> QuerySet["Project"]:
         if self.is_superuser:
@@ -238,7 +269,12 @@ class Account(AbstractUser, BaseModel):
     # Subscription limit methods
     def get_subscription_limit(self, limit_name: str) -> int:
         """Get a specific limit for the user's subscription tier."""
-        return SubscriptionConfig.get_limit(self.subscription, limit_name)
+        # Convert string subscription to Subscription enum
+        try:
+            subscription_tier = Subscription(self.subscription)
+        except ValueError:
+            subscription_tier = Subscription.FREE_TIER
+        return SubscriptionConfig.get_limit(subscription_tier, limit_name)
 
     def can_create_project(self) -> bool:
         """Check if user can create more projects based on their subscription."""
@@ -262,9 +298,19 @@ class Account(AbstractUser, BaseModel):
         """Check if user's subscription includes a specific feature."""
         if self.is_superuser:
             return True
-        return SubscriptionConfig.has_feature(self.subscription, feature)
+        # Convert string subscription to Subscription enum
+        try:
+            subscription_tier = Subscription(self.subscription)
+        except ValueError:
+            subscription_tier = Subscription.FREE_TIER
+        return SubscriptionConfig.has_feature(subscription_tier, feature)
 
     @property
     def subscription_limits(self) -> dict:
         """Get all limits for the user's subscription tier."""
-        return SubscriptionConfig.get_all_limits(self.subscription)
+        # Convert string subscription to Subscription enum
+        try:
+            subscription_tier = Subscription(self.subscription)
+        except ValueError:
+            subscription_tier = Subscription.FREE_TIER
+        return SubscriptionConfig.get_all_limits(subscription_tier)

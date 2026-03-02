@@ -3,6 +3,7 @@
 from django.urls import include, path
 
 app_name = "project"
+_prefix = "project/"
 
 # Combine all URL patterns
 urlpatterns = [
@@ -15,7 +16,7 @@ urlpatterns = [
     path("planned-value/", include("app.Project.urls.planned_value_urls")),
     path("portfolio/", include("app.Project.urls.portfolio_urls")),
     path("project-role/", include("app.Project.urls.project_role_urls")),
-    path("project/", include("app.Project.urls.project_urls")),
+    path("", include("app.Project.urls.project_urls")),
     path("report/", include("app.Project.urls.report_urls")),
     path("risk/", include("app.Project.urls.risk_urls")),
     path("signatory/", include("app.Project.urls.signatory_urls")),
