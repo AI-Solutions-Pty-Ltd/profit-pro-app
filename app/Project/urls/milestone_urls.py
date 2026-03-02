@@ -4,25 +4,27 @@ from django.urls import path
 
 from app.Project.views import milestone_views
 
+_prefix = "milestones/"
+
 urlpatterns = [
     # Milestone CRUD
     path(
-        "project/<int:project_pk>/milestones/create/",
+        "<int:project_pk>/create/",
         milestone_views.MilestoneCreateView.as_view(),
         name="milestone-create",
     ),
     path(
-        "project/<int:project_pk>/milestones/<int:pk>/edit/",
+        "<int:project_pk>/edit/",
         milestone_views.MilestoneUpdateView.as_view(),
         name="milestone-update",
     ),
     path(
-        "project/<int:project_pk>/milestones/<int:pk>/delete/",
+        "<int:project_pk>/<int:pk>/delete/",
         milestone_views.MilestoneDeleteView.as_view(),
         name="milestone-delete",
     ),
     path(
-        "project/<int:project_pk>/milestones/<int:pk>/complete/",
+        "<int:project_pk>/<int:pk>/complete/",
         milestone_views.MilestoneCompleteView.as_view(),
         name="milestone-complete",
     ),

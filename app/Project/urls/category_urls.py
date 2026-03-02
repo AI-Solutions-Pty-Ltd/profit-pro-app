@@ -4,19 +4,21 @@ from django.urls import path
 
 from app.Project.views import category_views
 
+_prefix = "categories/"
+
 urlpatterns = [
     path(
-        "categories/",
+        "",
         category_views.ProjectCategoryListView.as_view(),
         name="category-list",
     ),
     path(
-        "categories/create/",
+        "create/",
         category_views.ProjectCategoryCreateView.as_view(),
         name="category-create",
     ),
     path(
-        "categories/<int:pk>/delete/",
+        "<int:pk>/delete/",
         category_views.ProjectCategoryDeleteView.as_view(),
         name="category-delete",
     ),

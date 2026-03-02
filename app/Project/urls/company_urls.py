@@ -8,6 +8,8 @@ from app.Project.views.company_views import (
     CompanyUpdateView,
 )
 
+_prefix = "company/"
+
 urlpatterns = [
     path("<int:pk>/", CompanyDetailView.as_view(), name="company-detail"),
     path("<int:pk>/update/", CompanyUpdateView.as_view(), name="company-update"),
