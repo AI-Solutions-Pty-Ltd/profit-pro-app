@@ -139,9 +139,7 @@
                 </div>
                 <!-- Users -->
                 <div class="sm:col-span-2">
-                    <label for="{{ form.users.id_for_label }}"
-                           class="block text-sm font-medium text-gray-700">Company Users</label>
-                    <div class="mt-2 max-h-56 overflow-y-auto rounded-md border border-gray-300 p-3">{{ form.users }}</div>
+                    <div class="mt-2 max-h-56 overflow-y-auto rounded-md">{{ form.users|as_crispy_field }}</div>
                     {% if form.users.errors %}<p class="mt-2 text-sm text-red-600">{{ form.users.errors.0 }}</p>{% endif %}
                     <p class="mt-2 text-sm text-gray-500">Tick users to grant access, untick to remove access.</p>
                 </div>

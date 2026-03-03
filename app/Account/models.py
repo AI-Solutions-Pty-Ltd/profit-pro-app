@@ -210,8 +210,13 @@ class Account(AbstractUser, BaseModel):
 
         current_tier = str(self.subscription)
         available_tiers: set[str] = set()
+        parent_lookup = {
+            str(tier): str(limits.parent) if limits.parent else None
+            for tier, limits in SubscriptionConfig.LIMITS.items()
+        }
         while current_tier and current_tier not in available_tiers:
             available_tiers.add(current_tier)
+            current_tier = parent_lookup.get(current_tier)
 
         return bool(available_tiers & normalized_required_tiers)
 

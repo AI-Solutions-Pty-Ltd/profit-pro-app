@@ -21,14 +21,13 @@ from app.BillOfQuantities.models import PaymentCertificate, PaymentCertificatePa
 from app.core.Utilities.django_email_service import django_email_service
 from app.core.Utilities.generate_pdf import generate_pdf
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
+from app.core.Utilities.subscription_and_role_mixin import (
+    SubscriptionAndRoleRequiredMixin,
+)
 from app.Project.models import Project, Role
 
 
-class PaymentCertificatePaymentMixin(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
-):
+class PaymentCertificatePaymentMixin(SubscriptionAndRoleRequiredMixin, BreadcrumbMixin):
     """Mixin to ensure user has project role for payment management."""
 
     roles = [Role.PAYMENT_CERTIFICATES, Role.ADMIN, Role.USER]

@@ -69,12 +69,16 @@ class UserHasProjectRoleGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
         return user
 
     def test_func(self: "UserHasProjectRoleGenericMixin") -> bool:
+        try:
+            parent_result = super().test_func()
+        except Exception as _:
+            parent_result = True
+        if not parent_result:
+            return False
         project = self.get_project()
         user = self.get_user()
         if user.is_superuser:
             return True
-        if not self.roles:
-            raise ValueError("Role must be specified.")
         if not self.project_slug:
             raise ValueError("Project slug must be specified.")
         return user.has_project_role(project, self.roles)

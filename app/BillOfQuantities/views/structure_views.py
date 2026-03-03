@@ -21,14 +21,13 @@ from app.BillOfQuantities.forms import (
 )
 from app.BillOfQuantities.models import Bill, LineItem, Package, Structure
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
+from app.core.Utilities.subscription_and_role_mixin import (
+    SubscriptionAndRoleRequiredMixin,
+)
 from app.Project.models import Role
 
 
-class StructureListView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView
-):
+class StructureListView(SubscriptionAndRoleRequiredMixin, BreadcrumbMixin, ListView):
     """List all structures for a project."""
 
     model = Structure
@@ -63,8 +62,7 @@ class StructureListView(
 
 
 class StructureDetailView(
-    SubscriptionRequiredMixin,
-    UserHasProjectRoleGenericMixin,
+    SubscriptionAndRoleRequiredMixin,
     BreadcrumbMixin,
     DetailView,
 ):
@@ -85,12 +83,13 @@ class StructureDetailView(
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         """Get breadcrumb navigation."""
+        project = self.get_project()
         return [
             {
                 "title": "Sections",
                 "url": reverse(
                     "bill_of_quantities:structure-list",
-                    kwargs={"project_pk": self.project.pk},
+                    kwargs={"project_pk": project.pk},
                 ),
             },
             {"title": self.object.name, "url": None},
@@ -98,8 +97,7 @@ class StructureDetailView(
 
 
 class StructureUpdateView(
-    SubscriptionRequiredMixin,
-    UserHasProjectRoleGenericMixin,
+    SubscriptionAndRoleRequiredMixin,
     BreadcrumbMixin,
     UpdateView,
 ):
@@ -126,18 +124,20 @@ class StructureUpdateView(
 
     def get_success_url(self):
         """Redirect to project's structure list."""
+        project = self.get_project()
         return reverse(
-            "bill_of_quantities:structure-list", kwargs={"project_pk": self.project.pk}
+            "bill_of_quantities:structure-list", kwargs={"project_pk": project.pk}
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         """Get breadcrumb navigation."""
+        project = self.get_project()
         return [
             {
                 "title": "Sections",
                 "url": reverse(
                     "bill_of_quantities:structure-list",
-                    kwargs={"project_pk": self.project.pk},
+                    kwargs={"project_pk": project.pk},
                 ),
             },
             {"title": f"Edit {self.object.name}", "url": None},
@@ -145,8 +145,7 @@ class StructureUpdateView(
 
 
 class StructureDeleteView(
-    SubscriptionRequiredMixin,
-    UserHasProjectRoleGenericMixin,
+    SubscriptionAndRoleRequiredMixin,
     BreadcrumbMixin,
     DeleteView,
 ):
@@ -172,18 +171,20 @@ class StructureDeleteView(
 
     def get_success_url(self):
         """Redirect to project's structure list."""
+        project = self.get_project()
         return reverse(
-            "bill_of_quantities:structure-list", kwargs={"project_pk": self.project.pk}
+            "bill_of_quantities:structure-list", kwargs={"project_pk": project.pk}
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         """Get breadcrumb navigation."""
+        project = self.get_project()
         return [
             {
                 "title": "Sections",
                 "url": reverse(
                     "bill_of_quantities:structure-list",
-                    kwargs={"project_pk": self.project.pk},
+                    kwargs={"project_pk": project.pk},
                 ),
             },
             {"title": f"Delete {self.object.name}", "url": None},
@@ -191,7 +192,7 @@ class StructureDeleteView(
 
 
 class StructureExcelUploadView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin, FormView
+    SubscriptionAndRoleRequiredMixin, BreadcrumbMixin, FormView
 ):
     """Upload structures from Excel file."""
 

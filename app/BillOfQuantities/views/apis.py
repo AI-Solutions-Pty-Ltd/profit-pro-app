@@ -6,14 +6,13 @@ from django.views import View
 
 from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.models import Bill, Package
-from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
+from app.core.Utilities.subscription_and_role_mixin import (
+    SubscriptionAndRoleRequiredMixin,
+)
 from app.Project.models import Role
 
 
-class GetBillsByStructureView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, View
-):
+class GetBillsByStructureView(SubscriptionAndRoleRequiredMixin, View):
     """Get bills filtered by structure."""
 
     roles = [Role.USER, Role.CONTRACT_BOQ]
@@ -41,9 +40,7 @@ class GetBillsByStructureView(
         return JsonResponse({"bills": list(bills)})
 
 
-class GetPackagesByBillView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, View
-):
+class GetPackagesByBillView(SubscriptionAndRoleRequiredMixin, View):
     """Get packages filtered by bill."""
 
     roles = [Role.USER, Role.CONTRACT_BOQ]

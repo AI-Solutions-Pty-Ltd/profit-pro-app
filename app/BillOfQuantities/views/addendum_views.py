@@ -9,14 +9,13 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.models import Bill, LineItem, Package, Structure
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
+from app.core.Utilities.subscription_and_role_mixin import (
+    SubscriptionAndRoleRequiredMixin,
+)
 from app.Project.models import Role
 
 
-class AddendumMixin(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
-):
+class AddendumMixin(SubscriptionAndRoleRequiredMixin, BreadcrumbMixin):
     """Mixin for addendum views."""
 
     roles = [Role.ADDITIONAL_LINE_ITEMS, Role.ADMIN, Role.USER]

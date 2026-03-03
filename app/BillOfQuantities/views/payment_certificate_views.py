@@ -27,16 +27,13 @@ from app.BillOfQuantities.tasks import (
 )
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
-from app.core.Utilities.permissions import (
-    UserHasProjectRoleGenericMixin,
+from app.core.Utilities.subscription_and_role_mixin import (
+    SubscriptionAndRoleRequiredMixin,
 )
-from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import PlannedValue, Project, Role
 
 
-class PaymentCertificateMixin(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
-):
+class PaymentCertificateMixin(SubscriptionAndRoleRequiredMixin, BreadcrumbMixin):
     roles = [Role.PAYMENT_CERTIFICATES]
     project_slug = "project_pk"
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]

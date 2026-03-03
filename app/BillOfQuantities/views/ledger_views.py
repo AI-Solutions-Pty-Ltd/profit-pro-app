@@ -22,8 +22,9 @@ from app.BillOfQuantities.models import (
     SpecialItemTransaction,
 )
 from app.core.Utilities.forms import styled_date_input
-from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
+from app.core.Utilities.subscription_and_role_mixin import (
+    SubscriptionAndRoleRequiredMixin,
+)
 from app.Project.models import Project, Role
 
 # =============================================================================
@@ -31,9 +32,7 @@ from app.Project.models import Project, Role
 # =============================================================================
 
 
-class AdvancePaymentListView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, ListView
-):
+class AdvancePaymentListView(SubscriptionAndRoleRequiredMixin, ListView):
     """List all advance payments for a project."""
 
     model = AdvancePayment
@@ -100,9 +99,7 @@ class AdvancePaymentListView(
         return context
 
 
-class AdvancePaymentCreateView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, CreateView
-):
+class AdvancePaymentCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
     """Create a new advance payment transaction."""
 
     class CreateForm(forms.ModelForm):
@@ -177,9 +174,7 @@ class AdvancePaymentCreateView(
         return context
 
 
-class AdvancePaymentUpdateView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, UpdateView
-):
+class AdvancePaymentUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
     """Update an advance payment transaction."""
 
     class UpdateForm(forms.ModelForm):
@@ -259,9 +254,7 @@ class AdvancePaymentUpdateView(
         return context
 
 
-class AdvancePaymentDeleteView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, DeleteView
-):
+class AdvancePaymentDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
     """Delete an advance payment transaction."""
 
     model = AdvancePayment
@@ -311,9 +304,7 @@ class AdvancePaymentDeleteView(
 # =============================================================================
 
 
-class RetentionListView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, ListView
-):
+class RetentionListView(SubscriptionAndRoleRequiredMixin, ListView):
     """List all retention transactions for a project."""
 
     model = Retention
@@ -378,9 +369,7 @@ class RetentionListView(
         return context
 
 
-class RetentionCreateView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, CreateView
-):
+class RetentionCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
     """Create a new retention transaction."""
 
     class CreateForm(forms.ModelForm):
@@ -450,9 +439,7 @@ class RetentionCreateView(
         return context
 
 
-class RetentionUpdateView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, UpdateView
-):
+class RetentionUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
     """Update a retention transaction."""
 
     class UpdateForm(forms.ModelForm):
@@ -527,9 +514,7 @@ class RetentionUpdateView(
         return context
 
 
-class RetentionDeleteView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, DeleteView
-):
+class RetentionDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
     """Delete a retention transaction."""
 
     model = Retention
@@ -576,9 +561,7 @@ class RetentionDeleteView(
 # =============================================================================
 
 
-class MaterialsOnSiteListView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, ListView
-):
+class MaterialsOnSiteListView(SubscriptionAndRoleRequiredMixin, ListView):
     """List all materials on site transactions."""
 
     model = MaterialsOnSite
@@ -644,9 +627,7 @@ class MaterialsOnSiteListView(
         return context
 
 
-class MaterialsOnSiteCreateView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, CreateView
-):
+class MaterialsOnSiteCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
     """Create a new materials on site transaction."""
 
     class CreateForm(forms.ModelForm):
@@ -723,9 +704,7 @@ class MaterialsOnSiteCreateView(
         return context
 
 
-class MaterialsOnSiteUpdateView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, UpdateView
-):
+class MaterialsOnSiteUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
     """Update a materials on site transaction."""
 
     class UpdateForm(forms.ModelForm):
@@ -807,9 +786,7 @@ class MaterialsOnSiteUpdateView(
         return context
 
 
-class MaterialsOnSiteDeleteView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, DeleteView
-):
+class MaterialsOnSiteDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
     """Delete a materials on site transaction."""
 
     model = MaterialsOnSite
@@ -859,9 +836,7 @@ class MaterialsOnSiteDeleteView(
 # =============================================================================
 
 
-class EscalationListView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, ListView
-):
+class EscalationListView(SubscriptionAndRoleRequiredMixin, ListView):
     """List all escalation transactions."""
 
     model = Escalation
@@ -927,9 +902,7 @@ class EscalationListView(
         return context
 
 
-class EscalationCreateView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, CreateView
-):
+class EscalationCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
     """Create a new escalation transaction."""
 
     class CreateForm(forms.ModelForm):
@@ -1006,9 +979,7 @@ class EscalationCreateView(
         return context
 
 
-class EscalationUpdateView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, UpdateView
-):
+class EscalationUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
     """Update an escalation transaction."""
 
     class UpdateForm(forms.ModelForm):
@@ -1090,9 +1061,7 @@ class EscalationUpdateView(
         return context
 
 
-class EscalationDeleteView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, DeleteView
-):
+class EscalationDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
     """Delete an escalation transaction."""
 
     model = Escalation
@@ -1140,9 +1109,7 @@ class EscalationDeleteView(
 # =============================================================================
 
 
-class SpecialItemTransactionListView(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, ListView
-):
+class SpecialItemTransactionListView(SubscriptionAndRoleRequiredMixin, ListView):
     """List all special item transactions."""
 
     model = SpecialItemTransaction

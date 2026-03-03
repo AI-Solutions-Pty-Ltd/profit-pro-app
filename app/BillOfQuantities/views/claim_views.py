@@ -9,14 +9,13 @@ from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.forms import ClaimForm
 from app.BillOfQuantities.models import Claim
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
+from app.core.Utilities.subscription_and_role_mixin import (
+    SubscriptionAndRoleRequiredMixin,
+)
 from app.Project.models import Role
 
 
-class ClaimMixin(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
-):
+class ClaimMixin(SubscriptionAndRoleRequiredMixin, BreadcrumbMixin):
     """Base mixin for claim views."""
 
     roles = [Role.CLAIMS]

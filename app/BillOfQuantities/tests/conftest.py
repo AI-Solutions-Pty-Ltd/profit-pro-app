@@ -1,5 +1,6 @@
 import pytest
 
+from app.Account.subscription_config import Subscription
 from app.Account.tests.factories import UserFactory, UserGroupFactory
 from app.BillOfQuantities.tests.factories import (
     LineItemFactory,
@@ -14,7 +15,7 @@ def consultant_user_group():
 
 @pytest.fixture
 def consultant_user(consultant_user_group):
-    user = UserFactory.create()
+    user = UserFactory.create(subscription=Subscription.ADMINISTRATION)
     user.groups.add(consultant_user_group)
     return user
 

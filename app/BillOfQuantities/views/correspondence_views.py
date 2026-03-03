@@ -21,8 +21,9 @@ from app.BillOfQuantities.models import (
 )
 from app.core.Utilities.forms import styled_attachment_input, styled_date_input
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
+from app.core.Utilities.subscription_and_role_mixin import (
+    SubscriptionAndRoleRequiredMixin,
+)
 from app.Project.models import Role
 
 # =============================================================================
@@ -30,9 +31,7 @@ from app.Project.models import Role
 # =============================================================================
 
 
-class CorrespondenceMixin(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
-):
+class CorrespondenceMixin(SubscriptionAndRoleRequiredMixin, BreadcrumbMixin):
     """Mixin for correspondence views."""
 
     roles = [Role.CORRESPONDENCE, Role.ADMIN, Role.USER]

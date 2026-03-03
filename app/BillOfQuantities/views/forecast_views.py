@@ -22,14 +22,13 @@ from app.BillOfQuantities.models import (
     Structure,
 )
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
+from app.core.Utilities.subscription_and_role_mixin import (
+    SubscriptionAndRoleRequiredMixin,
+)
 from app.Project.models import Project, Role
 
 
-class ForecastMixin(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
-):
+class ForecastMixin(SubscriptionAndRoleRequiredMixin, BreadcrumbMixin):
     """Mixin for forecast views."""
 
     roles = [Role.COST_FORECASTS, Role.ADMIN, Role.USER]

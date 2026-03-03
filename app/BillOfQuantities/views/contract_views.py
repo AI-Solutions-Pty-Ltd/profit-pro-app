@@ -19,14 +19,13 @@ from app.BillOfQuantities.models import (
 from app.core.Utilities.forms import styled_attachment_input, styled_date_input
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
-from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
+from app.core.Utilities.subscription_and_role_mixin import (
+    SubscriptionAndRoleRequiredMixin,
+)
 from app.Project.models import Role
 
 
-class ContractVariationMixin(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
-):
+class ContractVariationMixin(SubscriptionAndRoleRequiredMixin, BreadcrumbMixin):
     """Mixin for contract variation views."""
 
     project_slug = "project_pk"

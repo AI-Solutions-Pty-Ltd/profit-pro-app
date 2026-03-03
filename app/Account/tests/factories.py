@@ -7,6 +7,7 @@ from factory.django import DjangoModelFactory
 from factory.faker import Faker
 
 from app.Account.models import Account, Suburb, Town
+from app.Account.subscription_config import Subscription
 
 User = get_user_model()
 
@@ -26,6 +27,7 @@ class AdminUserFactory(DjangoModelFactory):
 class UserFactory(AdminUserFactory):
     is_staff = False
     is_superuser = False
+    subscription = Subscription.ADMINISTRATION
 
 
 class UserGroupFactory(DjangoModelFactory):
@@ -65,7 +67,7 @@ class AccountFactory(DjangoModelFactory):
     class Meta:
         model = Account
 
-    email = Faker("email")
+    email = Sequence(lambda n: f"user{n:04d}@example.com")
     first_name = Faker("first_name")
     last_name = Faker("last_name")
     primary_contact = Sequence(lambda n: f"+2782{n:07d}")
@@ -82,6 +84,7 @@ class AccountFactory(DjangoModelFactory):
     is_active = True
     is_staff = False
     is_superuser = False
+    subscription = Subscription.ADMINISTRATION
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
@@ -104,6 +107,13 @@ class SuperuserFactory(AccountFactory):
     last_name = Faker("last_name")
     is_staff = True
     is_superuser = True
+    subscription = Subscription.ADMINISTRATION
+
+
+class AdminSubscriptionFactory(AccountFactory):
+    """Factory for users with ADMINISTRATION subscription."""
+
+    subscription = Subscription.ADMINISTRATION
 
 
 class ContractorAccountFactory(AccountFactory):
