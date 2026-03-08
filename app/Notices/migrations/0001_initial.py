@@ -4,26 +4,45 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Notice',
+            name="Notice",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last modified')),
-                ('deleted', models.BooleanField(default=False, help_text='Soft delete flag')),
-                ('text', models.TextField()),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last modified"
+                    ),
+                ),
+                (
+                    "deleted",
+                    models.BooleanField(default=False, help_text="Soft delete flag"),
+                ),
+                ("text", models.TextField()),
             ],
             options={
-                'verbose_name': 'Notice',
-                'verbose_name_plural': 'Notices',
-                'ordering': ['-created_at'],
+                "verbose_name": "Notice",
+                "verbose_name_plural": "Notices",
+                "ordering": ["-created_at"],
             },
         ),
     ]

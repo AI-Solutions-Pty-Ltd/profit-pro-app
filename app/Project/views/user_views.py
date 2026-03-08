@@ -314,11 +314,12 @@ class ProjectUserCreateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, For
         last_name = form.cleaned_data.get("last_name", "")
 
         # Create user account with unusable password
+        user: Account = self.request.user  # type: ignore
         user = Account.objects.create_user(
             email=email,
             first_name=first_name,
             last_name=last_name,
-            subscription=self.request.user.subscription,
+            subscription=user.subscription,
         )
         user.set_unusable_password()
         user.save()
