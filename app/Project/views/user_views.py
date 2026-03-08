@@ -318,6 +318,7 @@ class ProjectUserCreateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, For
             email=email,
             first_name=first_name,
             last_name=last_name,
+            subscription=self.request.user.subscription,
         )
         user.set_unusable_password()
         user.save()

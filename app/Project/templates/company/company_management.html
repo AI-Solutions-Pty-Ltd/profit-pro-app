@@ -202,7 +202,7 @@
                 </a>
             </div>
         </div>
-        <!-- Matarials Management -->
+        <!-- Materials Management -->
         <div class="group relative bg-gradient-to-br from-cyan-50 to-sky-50 rounded-xl p-5 border border-cyan-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
             <div class="flex items-center mb-4">
                 <div class="w-12 h-12 bg-cyan-500 rounded-lg flex items-center justify-center mr-3">
@@ -266,7 +266,7 @@
         </div>
     </div>
     <!-- Row 2 -->
-    <!-- Financial Reports -->
+    <!-- Site Management -->
     <div class="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-5 border border-orange-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
         <div class="flex items-center mb-4">
             <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-3">
@@ -279,124 +279,79 @@
         <!-- Site Management Buttons -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <a href="#"
-               class="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
-                <div class="flex items-center">
-                    {% heroicon_outline "cube" class="w-5 h-5 text-blue-500 mr-3" %}
-                    <span class="text-sm font-medium text-blue-700">Materials Log</span>
-                </div>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+               class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-blue-200 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                {% heroicon_outline "cube" class="w-6 h-6 text-blue-500 mb-2 group-hover:scale-110 transition-transform" %}
+                <span class="text-sm font-medium text-gray-700 group-hover:text-blue-700 transition-colors">Materials Log</span>
             </a>
             <a href="#"
-               class="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
-                <div class="flex items-center">
-                    {% heroicon_outline "book-open" class="w-5 h-5 text-emerald-500 mr-3" %}
-                    <span class="text-sm font-medium text-emerald-700">Daily Diaries</span>
-                </div>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+               class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-emerald-200 hover:border-emerald-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                {% heroicon_outline "book-open" class="w-6 h-6 text-emerald-500 mb-2 group-hover:scale-110 transition-transform" %}
+                <span class="text-sm font-medium text-gray-700 group-hover:text-emerald-700 transition-colors">Daily Diaries</span>
             </a>
             <a href="#"
-               class="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors group/btn">
-                <div class="flex items-center">
-                    {% heroicon_outline "chart-bar" class="w-5 h-5 text-purple-500 mr-3" %}
-                    <span class="text-sm font-medium text-purple-700">Productivity Log</span>
-                </div>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-purple-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+               class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-purple-200 hover:border-purple-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                {% heroicon_outline "chart-bar" class="w-6 h-6 text-purple-500 mb-2 group-hover:scale-110 transition-transform" %}
+                <span class="text-sm font-medium text-gray-700 group-hover:text-purple-700 transition-colors">Productivity Log</span>
             </a>
             <a href="#"
-               class="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
-                <div class="flex items-center">
-                    {% heroicon_outline "briefcase" class="w-5 h-5 text-orange-500 mr-3" %}
-                    <span class="text-sm font-medium text-orange-700">Subcontractor Log</span>
-                </div>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+               class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-orange-200 hover:border-orange-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                {% heroicon_outline "briefcase" class="w-6 h-6 text-orange-500 mb-2 group-hover:scale-110 transition-transform" %}
+                <span class="text-sm font-medium text-gray-700 group-hover:text-orange-700 transition-colors">Subcontractor Log</span>
             </a>
             <a href="#"
-               class="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
-                <div class="flex items-center">
-                    {% heroicon_outline "exclamation-circle" class="w-5 h-5 text-red-500 mr-3" %}
-                    <span class="text-sm font-medium text-red-700">Snag List</span>
-                </div>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-red-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+               class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-red-200 hover:border-red-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                {% heroicon_outline "exclamation-circle" class="w-6 h-6 text-red-500 mb-2 group-hover:scale-110 transition-transform" %}
+                <span class="text-sm font-medium text-gray-700 group-hover:text-red-700 transition-colors">Snag List</span>
             </a>
             <a href="#"
-               class="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors group/btn">
-                <div class="flex items-center">
-                    {% heroicon_outline "chart-pie" class="w-5 h-5 text-cyan-500 mr-3" %}
-                    <span class="text-sm font-medium text-cyan-700">Progress Tracker</span>
-                </div>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-cyan-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+               class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-cyan-200 hover:border-cyan-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                {% heroicon_outline "chart-pie" class="w-6 h-6 text-cyan-500 mb-2 group-hover:scale-110 transition-transform" %}
+                <span class="text-sm font-medium text-gray-700 group-hover:text-cyan-700 transition-colors">Progress Tracker</span>
             </a>
             <a href="#"
-               class="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-yellow-200 hover:bg-yellow-50 transition-colors group/btn">
-                <div class="flex items-center">
-                    {% heroicon_outline "clock" class="w-5 h-5 text-yellow-500 mr-3" %}
-                    <span class="text-sm font-medium text-yellow-700">Delays Log</span>
-                </div>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-yellow-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+               class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-yellow-200 hover:border-yellow-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                {% heroicon_outline "clock" class="w-6 h-6 text-yellow-500 mb-2 group-hover:scale-110 transition-transform" %}
+                <span class="text-sm font-medium text-gray-700 group-hover:text-yellow-700 transition-colors">Delays Log</span>
             </a>
             <a href="#"
-               class="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-pink-200 hover:bg-pink-50 transition-colors group/btn">
-                <div class="flex items-center">
-                    {% heroicon_outline "camera" class="w-5 h-5 text-pink-500 mr-3" %}
-                    <span class="text-sm font-medium text-pink-700">Photo Log</span>
-                </div>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-pink-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+               class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-pink-200 hover:border-pink-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                {% heroicon_outline "camera" class="w-6 h-6 text-pink-500 mb-2 group-hover:scale-110 transition-transform" %}
+                <span class="text-sm font-medium text-gray-700 group-hover:text-pink-700 transition-colors">Photo Log</span>
             </a>
             <a href="#"
-               class="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
-                <div class="flex items-center">
-                    {% heroicon_outline "shopping-cart" class="w-5 h-5 text-indigo-500 mr-3" %}
-                    <span class="text-sm font-medium text-indigo-700">Procurement Tracker</span>
-                </div>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-indigo-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+               class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-indigo-200 hover:border-indigo-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                {% heroicon_outline "shopping-cart" class="w-6 h-6 text-indigo-500 mb-2 group-hover:scale-110 transition-transform" %}
+                <span class="text-sm font-medium text-gray-700 group-hover:text-indigo-700 transition-colors">Procurement Tracker</span>
             </a>
             <a href="#"
-               class="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
-                <div class="flex items-center">
-                    {% heroicon_outline "truck" class="w-5 h-5 text-green-500 mr-3" %}
-                    <span class="text-sm font-medium text-green-700">Delivery Tracker</span>
-                </div>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+               class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-green-200 hover:border-green-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                {% heroicon_outline "truck" class="w-6 h-6 text-green-500 mb-2 group-hover:scale-110 transition-transform" %}
+                <span class="text-sm font-medium text-gray-700 group-hover:text-green-700 transition-colors">Delivery Tracker</span>
             </a>
             <a href="#"
-               class="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors group/btn">
-                <div class="flex items-center">
-                    {% heroicon_outline "cog-6-tooth" class="w-5 h-5 text-slate-500 mr-3" %}
-                    <span class="text-sm font-medium text-slate-700">Plant & Equipment</span>
-                </div>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-slate-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+               class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                {% heroicon_outline "cog-6-tooth" class="w-6 h-6 text-slate-500 mb-2 group-hover:scale-110 transition-transform" %}
+                <span class="text-sm font-medium text-gray-700 group-hover:text-slate-700 transition-colors">Plant & Equipment</span>
             </a>
             <a href="#"
-               class="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-teal-200 hover:bg-teal-50 transition-colors group/btn">
-                <div class="flex items-center">
-                    {% heroicon_outline "shield-check" class="w-5 h-5 text-teal-500 mr-3" %}
-                    <span class="text-sm font-medium text-teal-700">Quality Control</span>
-                </div>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-teal-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+               class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-teal-200 hover:border-teal-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                {% heroicon_outline "shield-check" class="w-6 h-6 text-teal-500 mb-2 group-hover:scale-110 transition-transform" %}
+                <span class="text-sm font-medium text-gray-700 group-hover:text-teal-700 transition-colors">Quality Control</span>
             </a>
             <a href="#"
-               class="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
-                <div class="flex items-center">
-                    {% heroicon_outline "user-group" class="w-5 h-5 text-violet-500 mr-3" %}
-                    <span class="text-sm font-medium text-violet-700">Labour Log</span>
-                </div>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-violet-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+               class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-violet-200 hover:border-violet-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                {% heroicon_outline "user-group" class="w-6 h-6 text-violet-500 mb-2 group-hover:scale-110 transition-transform" %}
+                <span class="text-sm font-medium text-gray-700 group-hover:text-violet-700 transition-colors">Labour Log</span>
             </a>
             <a href="#"
-               class="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-lime-200 hover:bg-lime-50 transition-colors group/btn">
-                <div class="flex items-center">
-                    {% heroicon_outline "arrow-right-on-rectangle" class="w-5 h-5 text-lime-500 mr-3" %}
-                    <span class="text-sm font-medium text-lime-700">Off-Site Log</span>
-                </div>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-lime-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+               class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-lime-200 hover:border-lime-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                {% heroicon_outline "arrow-right-on-rectangle" class="w-6 h-6 text-lime-500 mb-2 group-hover:scale-110 transition-transform" %}
+                <span class="text-sm font-medium text-gray-700 group-hover:text-lime-700 transition-colors">Off-Site Log</span>
             </a>
             <a href="#"
-               class="flex items-center justify-between px-4 py-3 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
-                <div class="flex items-center">
-                    {% heroicon_outline "shield-exclamation" class="w-5 h-5 text-red-500 mr-3" %}
-                    <span class="text-sm font-medium text-red-700">Safety Observations</span>
-                </div>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-red-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+               class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-red-200 hover:border-red-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                {% heroicon_outline "shield-exclamation" class="w-6 h-6 text-red-500 mb-2 group-hover:scale-110 transition-transform" %}
+                <span class="text-sm font-medium text-gray-700 group-hover:text-red-700 transition-colors">Safety Observations</span>
             </a>
         </div>
     </div>

@@ -17,6 +17,9 @@ from django.contrib.auth.views import (
     LogoutView as BaseLogoutView,
 )
 from django.contrib.auth.views import (
+    PasswordResetConfirmView as BasePasswordResetConfirmView,
+)
+from django.contrib.auth.views import (
     PasswordResetView as BasePasswordResetView,
 )
 from django.contrib.sites.shortcuts import get_current_site
@@ -302,3 +305,41 @@ class LogoutView(BaseLogoutView):
                 f"You have been successfully logged out. Goodbye, {user.get_full_name() or user.email}!",
             )
         return super().dispatch(request, *args, **kwargs)
+
+
+class PasswordResetConfirmView(BasePasswordResetConfirmView):
+    """Custom password reset confirm view that verifies email and logs in user."""
+
+    template_name = "auth/password_reset_confirm.html"
+    success_url = reverse_lazy("home")
+
+    def form_valid(self, form):
+        """Save the user, verify email, and log them in."""
+        # Save the new password
+        response = super().form_valid(form)
+
+        # Get the user object
+        user = self.user
+
+        # Verify the user's email
+        if not user.email_verified:
+            user.email_verified = True
+            user.save()
+            messages.success(
+                self.request,
+                "Your email has been verified and your password has been reset successfully!",
+            )
+        else:
+            messages.success(
+                self.request,
+                "Your password has been reset successfully!",
+            )
+
+        # Log the user in
+        login(self.request, user)
+        messages.info(
+            self.request,
+            f"You have been logged in as {user.get_full_name() or user.email}.",
+        )
+
+        return response
