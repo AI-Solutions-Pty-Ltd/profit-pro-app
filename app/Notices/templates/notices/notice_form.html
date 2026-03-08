@@ -1,11 +1,20 @@
 {% extends "base_full.html" %}
 {% block title %}
-    {% if object %}Edit Notice{% else %}Create Notice{% endif %} - {{ block.super }}
+    {% if object %}
+        Edit Notice
+    {% else %}
+        Create Notice
+    {% endif %}
+    - {{ block.super }}
 {% endblock title %}
 {% block content %}
     <div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg border border-gray-200 p-6">
         <h1 class="text-xl font-bold text-gray-900 mb-4">
-            {% if object %}Edit Notice{% else %}Create Notice{% endif %}
+            {% if object %}
+                Edit Notice
+            {% else %}
+                Create Notice
+            {% endif %}
         </h1>
         <form method="post" class="space-y-4">
             {% csrf_token %}
@@ -15,16 +24,15 @@
                           id="id_text"
                           rows="6"
                           class="w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">{% if form.text.value %}{{ form.text.value }}{% endif %}</textarea>
-                {% if form.text.errors %}
-                    <p class="text-xs text-red-600 mt-1">{{ form.text.errors|join:", " }}</p>
-                {% endif %}
+                {% if form.text.errors %}<p class="text-xs text-red-600 mt-1">{{ form.text.errors|join:", " }}</p>{% endif %}
             </div>
             <div class="flex items-center gap-3">
                 <button type="submit"
                         class="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
                     Save
                 </button>
-                <a href="{% url 'notices:list' %}" class="text-sm text-gray-600 hover:text-gray-800">Cancel</a>
+                <a href="{% url 'notices:list' %}"
+                   class="text-sm text-gray-600 hover:text-gray-800">Cancel</a>
             </div>
         </form>
     </div>
