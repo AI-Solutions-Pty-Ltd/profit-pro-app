@@ -6,7 +6,7 @@
 {% block content %}
     <!-- Page Banner -->
     <div class="bg-white shadow-sm rounded-lg mb-6">
-        <div class="px-6 py-4">
+        <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
@@ -19,13 +19,6 @@
                         {% heroicon_outline "chart-bar" size="16" %}
                         Dashboard
                     </a>
-                    {% if request.user|userhassubscription:'SITE_MANAGEMENT' %}
-                        <a href="{% url 'site_management:site-management' project.pk %}"
-                           class="inline-flex items-center p-2 border border-green-600 rounded-md shadow-sm font-medium text-green-600 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
-                            {% heroicon_outline "clipboard-document-list" size="16" %}
-                            Site Management
-                        </a>
-                    {% endif %}
                     {% if request.user|projectroles:project|userhasrole:'ADMIN' %}
                         <a href="{% url 'project:project-setup' project.pk %}"
                            class="inline-flex items-center p-2 border border-gray-600 rounded-md shadow-sm font-medium text-gray-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
@@ -36,11 +29,12 @@
                 </div>
             </div>
         </div>
+        {% include "project/reports_nav.html" %}
     </div>
     <!-- Project Management Section -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Project Documents Panel -->
         {% if request.user|projectroles:project|userhasrole:'Contractor BOQ,ADDITIONAL_LINE_ITEMS,CONTRACT_VARIATIONS,CORRESPONDENCE,CONTRACT_DOCUMENTS,STAGE_GATE_APPROVALS,OTHER_DOCUMENTS,CONTRACT_DOCUMENTS,BOQ_DOCUMENTS,DRAWINGS,SPECIFICATIONS,HISTORIC_DOCUMENTS,REPORTS,ADMIN,User' %}
-            <!-- Combined Contracts & Documents Panel -->
             <div id="contracts-documents"
                  class="group relative bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl p-4 border border-slate-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                 <!-- Header -->
@@ -49,14 +43,89 @@
                         {% heroicon_outline "clipboard-document-check" size="20" class="text-white" %}
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold text-slate-900">Contracts & Documents</h3>
+                        <h3 class="text-sm font-bold text-slate-900">Project Documents</h3>
                         <p class="text-xs text-slate-600">Management, Documents & Correspondence</p>
+                    </div>
+                </div>
+                <!-- Project Documents Section -->
+                {% if request.user|projectroles:project|userhasrole:'CONTRACT_DOCUMENTS,BOQ_DOCUMENTS,DRAWINGS,SPECIFICATIONS,HISTORIC_DOCUMENTS,REPORTS,ADMIN,User' %}
+                    <div>
+                        <div class="space-y-2">
+                            <!-- Contract -->
+                            {% if request.user|projectroles:project|userhasrole:'CONTRACT_DOCUMENTS,ADMIN,User' %}
+                                <a href="{% url 'project:document-list' project.pk 'CONTRACT_DOCUMENTS' %}"
+                                   class="w-full flex items-center justify-between px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-colors group/btn">
+                                    <span class="text-sm font-medium text-emerald-700">Contract</span>
+                                    {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                                </a>
+                            {% endif %}
+                            <!-- BoQ -->
+                            {% if project.line_items.exists and request.user|projectroles:project|userhasrole:'BOQ_DOCUMENTS,ADMIN,User' %}
+                                <a href="{% url 'project:project-wbs-detail' project.pk %}"
+                                   class="w-full flex items-center justify-between px-3 py-2 bg-teal-50 rounded-lg border border-teal-200 hover:bg-teal-100 transition-colors group/btn">
+                                    <span class="text-sm font-medium text-teal-700">BoQ</span>
+                                    {% heroicon_outline "arrow-right" size="16" class="text-teal-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                                </a>
+                            {% endif %}
+                            <!-- Drawings -->
+                            {% if request.user|projectroles:project|userhasrole:'DRAWINGS,ADMIN,User' %}
+                                <a href="{% url 'project:document-list' project.pk 'DRAWINGS' %}"
+                                   class="w-full flex items-center justify-between px-3 py-2 bg-green-50 rounded-lg border border-green-200 hover:bg-green-100 transition-colors group/btn">
+                                    <span class="text-sm font-medium text-green-700">Drawings</span>
+                                    {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                                </a>
+                            {% endif %}
+                            <!-- Historic Documents -->
+                            {% if request.user|projectroles:project|userhasrole:'HISTORIC_DOCUMENTS,ADMIN,User' %}
+                                <!-- Specifications -->
+                                {% if request.user|projectroles:project|userhasrole:'SPECIFICATIONS,ADMIN,User' %}
+                                    <a href="{% url 'project:document-list' project.pk 'SPECIFICATIONS' %}"
+                                       class="w-full flex items-center justify-between px-3 py-2 bg-cyan-50 rounded-lg border border-cyan-200 hover:bg-cyan-100 transition-colors group/btn">
+                                        <span class="text-sm font-medium text-cyan-700">Specifications</span>
+                                        {% heroicon_outline "arrow-right" size="16" class="text-cyan-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                                    </a>
+                                {% endif %}
+                                <!-- Contractual Programme -->
+                                {% if request.user|projectroles:project|userhasrole:'HISTORIC_DOCUMENTS,ADMIN,User' %}
+                                    <a href="#"
+                                       class="w-full flex items-center justify-between px-3 py-2 bg-amber-50 rounded-lg border border-amber-200 hover:bg-amber-100 transition-colors group/btn">
+                                        <span class="text-sm font-medium text-amber-700">Contractual Programme</span>
+                                        {% heroicon_outline "arrow-right" size="16" class="text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                                    </a>
+                                    <a href="#"
+                                       class="w-full flex items-center justify-between px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-colors group/btn">
+                                        <span class="text-sm font-medium text-emerald-700">Historic Documents</span>
+                                        {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                                    </a>
+                                    <a href="#"
+                                       class="w-full flex items-center justify-between px-3 py-2 bg-rose-50 rounded-lg border border-rose-200 hover:bg-rose-100 transition-colors group/btn">
+                                        <span class="text-sm font-medium text-rose-700">Photos</span>
+                                        {% heroicon_outline "arrow-right" size="16" class="text-rose-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                                    </a>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+        <!-- Combined Contracts & Documents Panel -->
+        {% if request.user|projectroles:project|userhasrole:'Contractor BOQ,ADDITIONAL_LINE_ITEMS,CONTRACT_VARIATIONS,CORRESPONDENCE,CONTRACT_DOCUMENTS,STAGE_GATE_APPROVALS,OTHER_DOCUMENTS,CONTRACT_DOCUMENTS,BOQ_DOCUMENTS,DRAWINGS,SPECIFICATIONS,HISTORIC_DOCUMENTS,REPORTS,ADMIN,User' %}
+            <div id="contracts-documents"
+                 class="group relative bg-gradient-to-br from-slate-50 to-gray-100 rounded-xl p-4 border border-slate-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                <!-- Header -->
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                        {% heroicon_outline "clipboard-document-check" size="20" class="text-white" %}
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900">Contracts Management</h3>
+                        <p class="text-xs text-slate-600">Management contractual requirements</p>
                     </div>
                 </div>
                 <!-- Contracts Management Section -->
                 {% if request.user|projectroles:project|userhasrole:'Contractor BOQ,ADDITIONAL_LINE_ITEMS,CONTRACT_VARIATIONS,CORRESPONDENCE,CONTRACT_DOCUMENTS,STAGE_GATE_APPROVALS,OTHER_DOCUMENTS,ADMIN,User' %}
                     <div class="mb-4">
-                        <span class="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-2 block">Contracts Management</span>
                         <div class="space-y-2">
                             <!-- Early Warnings -->
                             {% if request.user|projectroles:project|userhasrole:'EARLY_WARNINGS,ADMIN,User' %}
@@ -66,12 +135,11 @@
                                     {% heroicon_outline "arrow-right" size="16" class="text-yellow-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                                 </a>
                             {% endif %}
-                            <!-- Risk Register -->
-                            {% if request.user|projectroles:project|userhasrole:'Risk Management,ADMIN,User' %}
+                            {% if request.user|projectroles:project|userhasrole:'RISK_MANAGEMENT,ADMIN,User' %}
                                 <a href="{% url 'project:risk-list' project.pk %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-orange-700">Risk Register</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                                   class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
+                                    <span class="text-sm font-medium text-red-700">Risk Register</span>
+                                    {% heroicon_outline "arrow-right" size="16" class="text-red-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                                 </a>
                             {% endif %}
                             <!-- Variations -->
@@ -109,62 +177,6 @@
                         </div>
                     </div>
                 {% endif %}
-                <!-- Project Documents Section -->
-                {% if request.user|projectroles:project|userhasrole:'CONTRACT_DOCUMENTS,BOQ_DOCUMENTS,DRAWINGS,SPECIFICATIONS,HISTORIC_DOCUMENTS,REPORTS,ADMIN,User' %}
-                    <div>
-                        <span class="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-2 block">Project Documents</span>
-                        <div class="space-y-2">
-                            <!-- Contract -->
-                            {% if request.user|projectroles:project|userhasrole:'CONTRACT_DOCUMENTS,ADMIN,User' %}
-                                <a href="{% url 'project:document-list' project.pk 'CONTRACT_DOCUMENTS' %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-purple-700">Contract</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-purple-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                </a>
-                            {% endif %}
-                            <!-- BoQ -->
-                            {% if project.line_items.exists and request.user|projectroles:project|userhasrole:'BOQ_DOCUMENTS,ADMIN,User' %}
-                                <a href="{% url 'project:project-wbs-detail' project.pk %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-indigo-700">BoQ</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-indigo-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                </a>
-                            {% endif %}
-                            <!-- Drawings -->
-                            {% if request.user|projectroles:project|userhasrole:'DRAWINGS,ADMIN,User' %}
-                                <a href="{% url 'project:document-list' project.pk 'DRAWINGS' %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-blue-700">Drawings</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                </a>
-                            {% endif %}
-                            <!-- Specifications -->
-                            {% if request.user|projectroles:project|userhasrole:'SPECIFICATIONS,ADMIN,User' %}
-                                <a href="{% url 'project:document-list' project.pk 'SPECIFICATIONS' %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-cyan-700">Specifications</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-cyan-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                </a>
-                            {% endif %}
-                            <!-- Historic Documents -->
-                            {% if request.user|projectroles:project|userhasrole:'HISTORIC_DOCUMENTS,ADMIN,User' %}
-                                <a href="{% url 'project:document-list' project.pk 'HISTORIC' %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-amber-700">Historic Documents</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                </a>
-                            {% endif %}
-                            <!-- Reports -->
-                            {% if request.user|projectroles:project|userhasrole:'REPORTS,ADMIN,User' %}
-                                <a href="{% url 'project:document-list' project.pk 'REPORTS' %}"
-                                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-rose-200 hover:bg-rose-50 transition-colors group/btn">
-                                    <span class="text-sm font-medium text-rose-700">Reports</span>
-                                    {% heroicon_outline "arrow-right" size="16" class="text-rose-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endif %}
             </div>
         {% endif %}
         <!-- Forecasts Section (Unified) -->
@@ -180,13 +192,6 @@
             </div>
             {% if request.user|userhassubscription:"PAYMENTS_AND_INVOICES" %}
                 <div class="space-y-2">
-                    {% if request.user|projectroles:project|userhasrole:'FORECAST_HUB,ADMIN,User' %}
-                        <a href="{% url 'project:forecast-hub' project.pk %}"
-                           class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
-                            <span class="text-sm font-medium text-emerald-700">Forecasts Hub</span>
-                            {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                        </a>
-                    {% endif %}
                     {% if project.line_items.exists %}
                         {% if request.user|projectroles:project|userhasrole:'COST_FORECASTS,ADMIN,User' %}
                             <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
@@ -199,7 +204,7 @@
                     {% if request.user|projectroles:project|userhasrole:'TIME_FORECASTS,ADMIN,User' %}
                         <a href="{% url 'project:time-forecast' project.pk %}"
                            class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
-                            <span class="text-sm font-medium text-blue-700">Time Forecast</span>
+                            <span class="text-sm font-medium text-blue-700">Schedule Forecast</span>
                             {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                         </a>
                     {% endif %}
@@ -212,18 +217,16 @@
                             </a>
                         {% endif %}
                     {% endif %}
+                    <a href="#"
+                       class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
+                        <span class="text-sm font-medium text-violet-700">SROI Forecast</span>
+                        {% heroicon_outline "arrow-right" size="16" class="text-violet-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                    </a>
                     {% if request.user|projectroles:project|userhasrole:'EARNED_VALUES,ADMIN,User' %}
                         <a href="{% url 'project:earned-value' project.pk %}"
                            class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
                             <span class="text-sm font-medium text-violet-700">Earned Value</span>
                             {% heroicon_outline "arrow-right" size="16" class="text-violet-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                        </a>
-                    {% endif %}
-                    {% if request.user|projectroles:project|userhasrole:'RISK_MANAGEMENT,ADMIN,User' %}
-                        <a href="{% url 'project:risk-list' project.pk %}"
-                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
-                            <span class="text-sm font-medium text-red-700">Risk Management</span>
-                            {% heroicon_outline "arrow-right" size="16" class="text-red-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                         </a>
                     {% endif %}
                 </div>
@@ -264,23 +267,28 @@
                                 {% heroicon_outline "arrow-right" size="16" class="text-purple-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                         {% endif %}
-                        {% if request.user|projectroles:project|userhasrole:'ADDITIONAL_LINE_ITEMS,ADMIN,USER' %}
-                            <a href="{% url 'bill_of_quantities:addendum-list' project.pk %}"
-                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-blue-700">Additional Items</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                            </a>
-                            <a href="{% url 'bill_of_quantities:special-item-list' project.pk %}"
-                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-orange-700">Special Items</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                            </a>
-                        {% endif %}
                         {% if request.user|projectroles:project|userhasrole:'CLAIMS,ADMIN,USER' %}
                             <a href="{% url 'bill_of_quantities:claim-list' project.pk %}"
                                class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
                                 <span class="text-sm font-medium text-green-700">Claims</span>
                                 {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% endif %}
+                        {% if request.user|projectroles:project|userhasrole:'ADDITIONAL_LINE_ITEMS,ADMIN,USER' %}
+                            <a href="#"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-blue-700">Invoices</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                            <a href="#"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-orange-700">Retention</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                            <a href="#"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-orange-700">Order Amendments</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                         {% endif %}
                     {% else %}
@@ -297,35 +305,49 @@
                 </div>
             {% endif %}
         </div>
-        {% if request.user|projectroles:project|userhasrole:'COMPLIANCE,ADMIN,User' %}
-            <!-- Compliance & Correspondence Section -->
-            <div class="group relative bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-4 border border-indigo-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                <div class="flex items-center mb-3">
-                    <div class="w-10 h-10 bg-indigo-500 rounded-lg flex items-center justify-center mr-3">
-                        {% heroicon_outline "shield-check" size="20" class="text-white" %}
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-bold text-gray-900">Compliance & Correspondence</h3>
-                        <p class="text-xs text-gray-600">Manage compliance requirements</p>
-                    </div>
+    </div>
+    <!-- Compliance & Correspondence Section -->
+    {% if request.user|projectroles:project|userhasrole:'COMPLIANCE,ADMIN,User' %}
+        <div class="group relative mt-3 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-4 border border-indigo-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+            <div class="flex items-center mb-3">
+                <div class="w-10 h-10 bg-indigo-500 rounded-lg flex items-center justify-center mr-3">
+                    {% heroicon_outline "shield-check" size="20" class="text-white" %}
                 </div>
-                <div class="space-y-2">
-                    <a href="{% url 'project:compliance-dashboard' project.pk %}"
-                       class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
-                        <span class="text-sm font-medium text-indigo-700">Compliance</span>
-                        {% heroicon_outline "arrow-right" size="16" class="text-indigo-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                    </a>
-                    {% if request.user|projectroles:project|userhasrole:'COMPLIANCE,ADMIN,User' %}
-                        <a href="{% url 'bill_of_quantities:correspondence-list' project.pk %}"
-                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
-                            <span class="text-sm font-medium text-indigo-700">Correspondence</span>
-                            {% heroicon_outline "arrow-right" size="16" class="text-indigo-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                        </a>
-                    {% endif %}
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900">Compliance Tracker</h3>
+                    <p class="text-xs text-gray-600">Manage compliance requirements</p>
                 </div>
             </div>
-        {% endif %}
-    </div>
+            <div class="left-content gap-2">
+                <a href="{% url 'project:compliance-dashboard' project.pk %}"
+                   class="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
+                    <span class="text-sm font-medium text-indigo-700">Contractual</span>
+                </a>
+                <a href="{% url 'project:compliance-dashboard' project.pk %}"
+                   class="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
+                    <span class="text-sm font-medium text-indigo-700">Administrative</span>
+                </a>
+                <a href="{% url 'project:compliance-dashboard' project.pk %}"
+                   class="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
+                    <span class="text-sm font-medium text-indigo-700">Final Account</span>
+                </a>
+                <a href="{% url 'project:compliance-dashboard' project.pk %}"
+                   class="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
+                    <span class="text-sm font-medium text-indigo-700">Quality</span>
+                </a>
+                {% if request.user|projectroles:project|userhasrole:'COMPLIANCE,ADMIN,User' %}
+                    <a href="#"
+                       class="flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
+                        <span class="text-sm font-medium text-indigo-700">Safety</span>
+                    </a>
+                {% endif %}
+                <a href="#"
+                   class="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
+                    <span class="text-sm font-medium text-indigo-700">Social Facilitation</span>
+                </a>
+            </div>
+        </div>
+    {% endif %}
     <!-- Footer -->
     <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
         <div class="flex justify-between items-center">

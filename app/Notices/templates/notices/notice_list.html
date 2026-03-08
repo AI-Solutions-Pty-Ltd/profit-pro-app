@@ -1,0 +1,97 @@
+{% extends "base_full.html" %}
+{% block title %}
+    Notices - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="space-y-6">
+        <div class="bg-white shadow-md rounded-lg p-6 border border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Notices</h1>
+                    <p class="text-sm text-gray-500 mt-1">Updates and alerts for your account.</p>
+                </div>
+                {% if request.user.is_superuser %}
+                    <a href="{% url 'notices:create' %}"
+                       class="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                        {% heroicon_outline "plus" class="w-4 h-4 mr-1" %}
+                        New Notice
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="bg-white shadow-md rounded-lg border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h2 class="text-sm font-semibold text-gray-700">Project Matters Requiring Attention</h2>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {% for item in attention_items %}
+                    <a href="{{ item.url }}"
+                       class="block px-6 py-4 hover:bg-gray-50 transition-colors">
+                        <p class="text-sm font-medium text-gray-800">{{ item.title }}</p>
+                        <p class="text-xs text-gray-500 mt-1">{{ item.project }} • {{ item.age }}</p>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="bg-white shadow-md rounded-lg border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h2 class="text-sm font-semibold text-gray-700">System Notices</h2>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {% for notice in notices %}
+                    <div class="px-6 py-4">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <p class="text-sm text-gray-800">{{ notice.text }}</p>
+                                <p class="text-xs text-gray-500 mt-2">{{ notice.created_at|date:"M d, Y H:i" }}</p>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <a href="{% url 'notices:detail' notice.pk %}"
+                                   class="text-sm text-indigo-600 hover:text-indigo-800">View</a>
+                                {% if request.user.is_superuser %}
+                                    <a href="{% url 'notices:edit' notice.pk %}"
+                                       class="text-sm text-amber-600 hover:text-amber-800">Edit</a>
+                                    <a href="{% url 'notices:delete' notice.pk %}"
+                                       class="text-sm text-red-600 hover:text-red-800">Delete</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="px-6 py-6 text-sm text-gray-500">No notices available.</div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="bg-white shadow-md rounded-lg border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h2 class="text-sm font-semibold text-gray-700">Site Notices</h2>
+            </div>
+            <div class="divide-y divide-gray-200">
+                <div class="px-6 py-4">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-sm text-gray-800">Site inspection scheduled for Block A on Monday.</p>
+                            <p class="text-xs text-gray-500 mt-2">Site Manager • 2 hours ago</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-sm text-gray-800">Material delivery delayed - new ETA Thursday.</p>
+                            <p class="text-xs text-gray-500 mt-2">Procurement • Yesterday</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-sm text-gray-800">Safety briefing completed for all subcontractors.</p>
+                            <p class="text-xs text-gray-500 mt-2">HSE Officer • 3 days ago</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

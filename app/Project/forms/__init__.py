@@ -11,7 +11,6 @@ from .forms import (
     ClientCreateUpdateForm,
     ClientForm,
     ClientUserInviteForm,
-    CompanyForm,
     ContractualComplianceForm,
     FilterForm,
     FinalAccountComplianceForm,

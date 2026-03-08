@@ -30,6 +30,7 @@ urlpatterns = (
         ),
         path("client/", include("app.Consultant.urls", namespace="client")),
         path("ledger/", include("app.Ledger.urls", namespace="ledger")),
+        path("notices/", include("app.Notices.urls", namespace="notices")),
         path(
             "site-management/",
             include("app.SiteManagement.urls", namespace="site_management"),

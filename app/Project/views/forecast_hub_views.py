@@ -34,27 +34,6 @@ class ForecastHubMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
         ]
 
 
-class ForecastHubView(ForecastHubMixin, TemplateView):
-    """Main Forecasts hub view with tabs for different forecast types."""
-
-    template_name = "forecasts/forecast_hub.html"
-
-    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        project = self.get_project()
-        active_tab = self.kwargs.get("tab", "cost")
-
-        context.update(
-            {
-                "project": project,
-                "active_tab": active_tab,
-                "has_boq": project.line_items.exists(),
-                "has_dates": bool(project.start_date and project.end_date),
-            }
-        )
-        return context
-
-
 class TimeForecastView(ForecastHubMixin, TemplateView):
     """Time Forecast tab - displays project milestones."""
 

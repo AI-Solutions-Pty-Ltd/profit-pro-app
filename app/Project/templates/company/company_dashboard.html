@@ -29,91 +29,35 @@
                     <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Business Dashboard</h1>
                     <p class="mt-1 text-sm text-gray-600">Financial overview as of {{ current_date|date:"F d, Y" }}</p>
                 </div>
+                <!-- Filter Actions -->
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <!-- Company Jump -->
+                    <form method="get" class="centered-content">
+                        <div class="min-w-[200px]">{{ filter_form.company|as_crispy_field }}</div>
+                    </form>
+                </div>
             </div>
         </div>
         <!-- Navigation Footer -->
         <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
-            <div class="flex items-center justify-end space-x-3">
-                <a href="{% url 'project:company-list' %}"
-                   class="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors">
-                    {% heroicon_outline "building-office" size="20" class="mr-2" %}
-                    View All Companies
-                </a>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:portfolio-dashboard' %}"
+                       class="inline-flex items-center px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+                        {% heroicon_outline "arrow-left" size="16" class="mr-2" %}
+                        Back to Portfolio
+                    </a>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:company-list' %}"
+                       class="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors">
+                        {% heroicon_outline "building-office" size="20" class="mr-2" %}
+                        View All Companies
+                    </a>
+                </div>
             </div>
         </div>
     </header>
-    <!-- ==========================================
-             Group 1 - Project Stats
-             ========================================== -->
-    <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-4">
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2">
-            <h5 class="text-sm font-semibold text-white flex items-center">
-                {% heroicon_outline "briefcase" size="16" class="mr-2" %}
-                Company Status
-            </h5>
-        </div>
-        <div class="p-4">
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                <!-- Active Companies -->
-                <a href="{% url 'project:company-list' %}"
-                   class="bg-blue-50 rounded-lg p-3 text-center border border-blue-100 hover:bg-blue-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-blue-600 transition-colors">
-                        {% heroicon_outline "building-office" size="16" class="text-white" %}
-                    </div>
-                    <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Active Companies</p>
-                    <p class="text-xl font-bold text-blue-700 mt-1">{{ active_companies_count|default:active_projects_count }}</p>
-                </a>
-                <!-- Profits -->
-                <a class="bg-rose-50 rounded-lg p-3 text-center border border-rose-100 hover:bg-rose-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <div class="w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-rose-600 transition-colors">
-                        {% heroicon_outline "currency-dollar" size="16" class="text-white" %}
-                    </div>
-                    <p class="text-xs font-medium text-rose-600 uppercase tracking-wider">Profits</p>
-                    <p class="text-xl font-bold text-rose-700 mt-1">R {{ profits|default:0|floatformat:0|intcomma }}</p>
-                </a>
-                <!-- Urgent Intervention -->
-                <a href="{% url 'project:portfolio-financial-report' %}?sort=cpi_asc"
-                   class="bg-red-50 rounded-lg p-3 text-center border border-red-100 hover:bg-red-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-red-600 transition-colors">
-                        {% heroicon_outline "exclamation-triangle" size="16" class="text-white" %}
-                    </div>
-                    <p class="text-xs font-medium text-red-600 uppercase tracking-wider">Urgent Intervention</p>
-                    <p class="text-xl font-bold text-red-700 mt-1">{{ urgent_projects_count }}</p>
-                    <p class="text-xs text-red-500">({{ urgent_projects_percentage|floatformat:0 }}%)</p>
-                </a>
-                <!-- Requiring Attention -->
-                <a href="{% url 'project:portfolio-financial-report' %}?sort=cpi_asc"
-                   class="bg-orange-50 rounded-lg p-3 text-center border border-orange-200 hover:bg-orange-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-orange-600 transition-colors">
-                        {% heroicon_outline "eye" size="16" class="text-white" %}
-                    </div>
-                    <p class="text-xs font-medium text-orange-700 uppercase tracking-wider">Requiring Attention</p>
-                    <p class="text-xl font-bold text-orange-800 mt-1">{{ attention_projects_count }}</p>
-                    <p class="text-xs text-orange-600">({{ attention_projects_percentage|floatformat:0 }}%)</p>
-                </a>
-                <!-- Compliance % -->
-                <a href="{% url 'project:compliance-report' %}"
-                   class="bg-emerald-50 rounded-lg p-3 text-center border border-emerald-100 hover:bg-emerald-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-emerald-600 transition-colors">
-                        {% heroicon_outline "shield-check" size="16" class="text-white" %}
-                    </div>
-                    <p class="text-xs font-medium text-emerald-600 uppercase tracking-wider">Compliance %</p>
-                    <p class="text-xl font-bold text-emerald-700 mt-1">{{ compliance_percentage|floatformat:1 }}%</p>
-                    <p class="text-xs text-emerald-500">{{ total_compliance_items }} items</p>
-                </a>
-                <!-- Urgent Compliance Matters -->
-                <a href="{% url 'project:compliance-report' %}?party=overdue"
-                   class="bg-indigo-50 rounded-lg p-3 text-center border border-indigo-100 hover:bg-indigo-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-indigo-600 transition-colors">
-                        {% heroicon_outline "shield-exclamation" size="16" class="text-white" %}
-                    </div>
-                    <p class="text-xs font-medium text-indigo-600 uppercase tracking-wider">Urgent Compliance</p>
-                    <p class="text-xl font-bold text-indigo-700 mt-1">{{ urgent_compliance_count }}</p>
-                    <p class="text-xs text-indigo-500">overdue items</p>
-                </a>
-            </div>
-        </div>
-    </div>
     <!-- ==========================================
              Group 2 - Income Statement
              ========================================== -->
@@ -121,7 +65,11 @@
         <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-2">
             <h5 class="text-sm font-semibold text-white flex items-center">
                 {% heroicon_outline "banknotes" size="16" class="mr-2" %}
-                Income Statement
+                {% if active_companies > 1 %}
+                    Income Statement across {{ active_companies }} companies
+                {% else %}
+                    Income Statement
+                {% endif %}
             </h5>
         </div>
         <div class="p-4">
@@ -129,19 +77,19 @@
             <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
                 <!-- Revenue -->
                 <div class="bg-green-50 rounded-lg p-2 text-center border border-green-100">
-                    <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Revenue</p>
+                    <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Total Profits</p>
                     <p class="text-lg font-bold text-green-700 mt-1">R {{ revenue|default:0|floatformat:0|intcomma }}</p>
-                </div>
-                <!-- Variable Costs -->
-                <div class="bg-orange-50 rounded-lg p-2 text-center border border-orange-100">
-                    <p class="text-xs font-medium text-orange-600 uppercase tracking-wider">Variable Costs</p>
-                    <p class="text-lg font-bold text-orange-700 mt-1">R {{ variable_costs|default:0|floatformat:0|intcomma }}</p>
                 </div>
                 <!-- Gross Profit -->
                 <div class="bg-blue-50 rounded-lg p-2 text-center border border-blue-100">
                     <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Gross Profit</p>
                     <p class="text-lg font-bold text-blue-700 mt-1">R {{ gross_profit|default:0|floatformat:0|intcomma }}</p>
                     <p class="text-xs text-blue-500">({{ gross_profit_margin|default:0|floatformat:1 }}%)</p>
+                </div>
+                <!-- Variable Costs -->
+                <div class="bg-orange-50 rounded-lg p-2 text-center border border-orange-100">
+                    <p class="text-xs font-medium text-orange-600 uppercase tracking-wider">Variable Costs</p>
+                    <p class="text-lg font-bold text-orange-700 mt-1">R {{ variable_costs|default:0|floatformat:0|intcomma }}</p>
                 </div>
                 <!-- Net Profit -->
                 <div class="bg-purple-50 rounded-lg p-2 text-center border border-purple-100">
@@ -197,45 +145,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Performance Index Charts (6 months)
-            const labels = {{ performance_labels|safe }};
 
-            // Common chart options for performance indices
-            const commonOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        padding: 10,
-                        titleFont: { size: 11 },
-                        bodyFont: { size: 10 },
-                        callbacks: {
-                            label: function(context) {
-                                const value = context.parsed.y;
-                                if (value === null) return 'No data';
-                                return `Value: ${value.toFixed(2)}`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { font: { size: 9 }, maxRotation: 45, minRotation: 45 }
-                    },
-                    y: {
-                        grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                        ticks: { font: { size: 9 } },
-                        suggestedMin: 0,
-                        suggestedMax: 2
-                    }
-                },
-                elements: {
-                    point: { radius: 3, hoverRadius: 5 },
-                    line: { tension: 0.3 }
-                }
-            };
 
             // Profit Trend Charts (6 months)
             const profitLabels = {{ profit_labels|safe }};

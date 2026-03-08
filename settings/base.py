@@ -58,6 +58,7 @@ SHARED_APPS = [
     "app.Cost",
     "app.Ledger",
     "app.Inventories",
+    "app.Notices",
     "app.Project",
     "app.SiteManagement",
 ]

@@ -8,7 +8,7 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from app.Account.models import Account
 from app.Consultant.views.mixins import ContractorMixin
 from app.core.Utilities.mixins import BreadcrumbItem
-from app.Project.forms import CompanyForm
+from app.Project.company.company_forms import CompanyForm
 from app.Project.models import Company
 
 

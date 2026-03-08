@@ -1,0 +1,14 @@
+{% extends "base_full.html" %}
+{% block title %}
+    Notice Detail - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="max-w-3xl mx-auto bg-white shadow-md rounded-lg border border-gray-200 p-6">
+        <div class="flex justify-between items-start mb-4">
+            <h1 class="text-xl font-bold text-gray-900">Notice</h1>
+            <a href="{% url 'notices:list' %}" class="text-sm text-indigo-600 hover:text-indigo-800">Back to Notices</a>
+        </div>
+        <p class="text-gray-800 leading-relaxed">{{ notice.text }}</p>
+        <p class="text-xs text-gray-500 mt-4">Published {{ notice.created_at|date:"M d, Y H:i" }}</p>
+    </div>
+{% endblock content %}

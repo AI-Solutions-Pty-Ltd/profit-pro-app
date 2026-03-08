@@ -10,11 +10,6 @@ urlpatterns = [
         portfolio_views.PortfolioDashboardView.as_view(),
         name="portfolio-dashboard",
     ),
-    path(
-        "company-dashboard/",
-        portfolio_views.CompanyDashboardView.as_view(),
-        name="company-dashboard",
-    ),
     # New Portfolio Reports
     path(
         "reports/compliance/",

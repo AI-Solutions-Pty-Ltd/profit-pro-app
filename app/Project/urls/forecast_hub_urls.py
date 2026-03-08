@@ -7,12 +7,6 @@ from app.Project.views import forecast_hub_views
 _prefix = "forecast-hub/"
 
 urlpatterns = [
-    # Main forecast hub
-    path(
-        "<int:project_pk>/",
-        forecast_hub_views.ForecastHubView.as_view(),
-        name="forecast-hub",
-    ),
     # Time Forecast tab
     path(
         "<int:project_pk>/time/",
