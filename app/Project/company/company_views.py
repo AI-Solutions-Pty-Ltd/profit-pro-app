@@ -3,7 +3,6 @@
 import json
 import random
 from datetime import datetime
-from typing import Any
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import QuerySet
@@ -16,7 +15,7 @@ from app.Account.subscription_config import Subscription
 from app.core.Utilities.dates import get_previous_n_months
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Project.models import Company, Portfolio, ContractualCompliance, Project
+from app.Project.models import Company, ContractualCompliance, Portfolio, Project
 
 from .company_forms import CompanyFilterForm, CompanyForm
 
