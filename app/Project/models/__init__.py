@@ -1,3 +1,5 @@
+from app.Project.documents.document_models import ProjectDocument
+
 from .category_models import ProjectCategory
 from .company_models import Company
 from .compliance_models import (
@@ -11,7 +13,6 @@ from .compliance_models import (
     FinalAccountComplianceDialog,
     FinalAccountComplianceDialogFile,
 )
-from app.Project.documents.document_models import ProjectDocument
 from .impact_models import ProjectImpact
 from .milestone_models import Milestone
 from .planned_value_models import PlannedValue

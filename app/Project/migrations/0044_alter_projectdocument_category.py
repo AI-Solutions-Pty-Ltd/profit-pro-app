@@ -4,15 +4,32 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0043_risk_category'),
+        ("Project", "0043_risk_category"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='projectdocument',
-            name='category',
-            field=models.CharField(choices=[('CONTRACT_DOCUMENTS', 'Contract Documents & Appointment Letters'), ('STAGE_GATE_APPROVAL', 'Stage Gate Approval Documentation'), ('TECHNICAL_SPECIFICATIONS', 'Technical Specifications'), ('BILL_OF_QUANTITIES', 'Bill of Quantities'), ('APPOINTMENT_LETTER', 'Appointment Letter'), ('FINANCIAL_DOCUMENTS', 'Financial Documents'), ('MEETING_MINUTES', 'Meeting Minutes'), ('GENERAL_CORRESPONDENCE', 'General Correspondence'), ('REPORTS', 'Reports'), ('PERMITS_APPROVALS', 'Permits & Approvals'), ('PHOTOS_IMAGES', 'Photos & Images'), ('OTHER', 'Other'), ('DRAWINGS', 'Drawings')], help_text='Category of the document', max_length=30),
+            model_name="projectdocument",
+            name="category",
+            field=models.CharField(
+                choices=[
+                    ("CONTRACT_DOCUMENTS", "Contract Documents & Appointment Letters"),
+                    ("STAGE_GATE_APPROVAL", "Stage Gate Approval Documentation"),
+                    ("TECHNICAL_SPECIFICATIONS", "Technical Specifications"),
+                    ("BILL_OF_QUANTITIES", "Bill of Quantities"),
+                    ("APPOINTMENT_LETTER", "Appointment Letter"),
+                    ("FINANCIAL_DOCUMENTS", "Financial Documents"),
+                    ("MEETING_MINUTES", "Meeting Minutes"),
+                    ("GENERAL_CORRESPONDENCE", "General Correspondence"),
+                    ("REPORTS", "Reports"),
+                    ("PERMITS_APPROVALS", "Permits & Approvals"),
+                    ("PHOTOS_IMAGES", "Photos & Images"),
+                    ("OTHER", "Other"),
+                    ("DRAWINGS", "Drawings"),
+                ],
+                help_text="Category of the document",
+                max_length=30,
+            ),
         ),
     ]

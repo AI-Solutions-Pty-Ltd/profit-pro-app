@@ -15,7 +15,6 @@ from app.BillOfQuantities.models import (
     BaselineCashflow,
     Bill,
     CashflowForecast,
-    Claim,
     ContractualCorrespondence,
     ContractVariation,
     CorrespondenceDialog,
@@ -425,15 +424,3 @@ class ScheduleForecastSectionFactory(DjangoModelFactory):
     schedule_forecast = SubFactory(ScheduleForecastFactory)
     sectional_completion = SubFactory(SectionalCompletionDateFactory)
     forecast_completion_date = LazyFunction(lambda: date.today() + timedelta(days=90))
-
-
-class ClaimFactory(DjangoModelFactory):
-    """Factory for Claim model."""
-
-    class Meta:
-        model = Claim
-
-    project = SubFactory(ProjectFactory)
-    period = LazyFunction(lambda: date.today().replace(day=1, year=2024, month=1))
-    estimated_claim = LazyFunction(lambda: Decimal("100000.00"))
-    notes = fake.text(max_nb_chars=200)

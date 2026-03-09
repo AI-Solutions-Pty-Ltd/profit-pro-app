@@ -4,13 +4,12 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('BillOfQuantities', '0021_clear_receivers_senders'),
+        ("BillOfQuantities", "0021_clear_receivers_senders"),
     ]
 
     operations = [
         migrations.DeleteModel(
-            name='Claim',
+            name="Claim",
         ),
     ]

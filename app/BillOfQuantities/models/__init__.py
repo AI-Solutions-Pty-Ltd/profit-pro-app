@@ -4,7 +4,6 @@ from .cashflow_models import (
     RevisedBaseline,
     RevisedBaselineDetail,
 )
-
 from .contract_models import (
     ContractualCorrespondence,
     ContractVariation,

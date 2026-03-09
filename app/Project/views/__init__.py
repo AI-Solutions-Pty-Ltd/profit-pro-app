@@ -1,7 +1,5 @@
 from app.Project.documents import document_views
 
-
-document_views
 from . import (
     category_views,
     compliance_views,

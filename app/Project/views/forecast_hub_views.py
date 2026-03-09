@@ -177,7 +177,7 @@ class EarnedValueView(ForecastHubMixin, TemplateView):
             {
                 "title": project.name,
                 "url": reverse("project:project-management", kwargs={"pk": project.pk}),
-            },\
+            },
             {"title": "Earned Value Predictions", "url": None},
         ]
 
