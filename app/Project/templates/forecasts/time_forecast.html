@@ -214,10 +214,10 @@
     <!-- Footer -->
     <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6 rounded-lg">
         <div class="flex justify-between items-center">
-            <a href="{% url 'project:forecast-hub' project.pk %}"
+            <a href="{% url 'project:project-management' project.pk %}"
                class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
                 {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
-                Back to Forecasts
+                Back to Project Management
             </a>
             <a href="{% url 'project:earned-value' project.pk %}"
                class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">

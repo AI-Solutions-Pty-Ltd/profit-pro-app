@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% load humanize %}
 {% block title %}
     {{ category_display }} - {{ project.name }}
 {% endblock title %}
@@ -37,7 +36,7 @@
                         Upload signed contracts and appointment letters for contractors and consultants for records and audit purposes.
                     {% elif category == 'STAGE_GATE_APPROVAL' %}
                         Upload pre-contract approval documents required for audit purposes.
-                    {% elif category == 'OTHER' %}
+                    {% else %}
                         Upload documents from any category. Choose the appropriate category when uploading your file.
                     {% endif %}
                 </p>

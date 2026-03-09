@@ -35,6 +35,10 @@ class ProjectDocument(BaseModel):
         PERMITS_APPROVALS = "PERMITS_APPROVALS", "Permits & Approvals"
         PHOTOS_IMAGES = "PHOTOS_IMAGES", "Photos & Images"
         OTHER = "OTHER", "Other"
+        DRAWINGS = "DRAWINGS", "Drawings"
+        SPECIFICATIONS = "SPECIFICATIONS", "Specifications"
+        HISTORIC_DOCUMENTS = "HISTORIC_DOCUMENTS", "Historic Documents"
+        CONTRACTUAL_PROGRAMME = "CONTRACTUAL_PROGRAMME", "Contractual Programme"
 
     def upload_to(self, filename: str) -> str:
         """Generate upload path for document files."""

@@ -11,7 +11,7 @@ from .compliance_models import (
     FinalAccountComplianceDialog,
     FinalAccountComplianceDialogFile,
 )
-from .document_models import ProjectDocument
+from app.Project.documents.document_models import ProjectDocument
 from .impact_models import ProjectImpact
 from .milestone_models import Milestone
 from .planned_value_models import PlannedValue

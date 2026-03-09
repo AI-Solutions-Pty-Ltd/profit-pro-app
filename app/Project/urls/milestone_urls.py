@@ -14,7 +14,7 @@ urlpatterns = [
         name="milestone-create",
     ),
     path(
-        "<int:project_pk>/edit/",
+        "<int:project_pk>/<int:pk>/edit/",
         milestone_views.MilestoneUpdateView.as_view(),
         name="milestone-update",
     ),

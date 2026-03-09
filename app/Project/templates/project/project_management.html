@@ -87,17 +87,17 @@
                                 {% endif %}
                                 <!-- Contractual Programme -->
                                 {% if request.user|projectroles:project|userhasrole:'HISTORIC_DOCUMENTS,ADMIN,User' %}
-                                    <a href="#"
+                                    <a href="{% url 'project:document-list' project.pk 'CONTRACTUAL_PROGRAMME' %}"
                                        class="w-full flex items-center justify-between px-3 py-2 bg-amber-50 rounded-lg border border-amber-200 hover:bg-amber-100 transition-colors group/btn">
                                         <span class="text-sm font-medium text-amber-700">Contractual Programme</span>
                                         {% heroicon_outline "arrow-right" size="16" class="text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                                     </a>
-                                    <a href="#"
+                                    <a href="{% url 'project:document-list' project.pk 'HISTORIC_DOCUMENTS' %}"
                                        class="w-full flex items-center justify-between px-3 py-2 bg-emerald-50 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-colors group/btn">
                                         <span class="text-sm font-medium text-emerald-700">Historic Documents</span>
                                         {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                                     </a>
-                                    <a href="#"
+                                    <a href="{% url 'project:document-list' project.pk 'PHOTOS_IMAGES' %}"
                                        class="w-full flex items-center justify-between px-3 py-2 bg-rose-50 rounded-lg border border-rose-200 hover:bg-rose-100 transition-colors group/btn">
                                         <span class="text-sm font-medium text-rose-700">Photos</span>
                                         {% heroicon_outline "arrow-right" size="16" class="text-rose-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
@@ -217,11 +217,10 @@
                             </a>
                         {% endif %}
                     {% endif %}
-                    <a href="#"
-                       class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
-                        <span class="text-sm font-medium text-violet-700">SROI Forecast</span>
-                        {% heroicon_outline "arrow-right" size="16" class="text-violet-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                    </a>
+                    <span class="w-full flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed opacity-50">
+                        <span class="text-sm font-medium text-gray-400">SROI Forecast</span>
+                        {% heroicon_outline "arrow-right" size="16" class="text-gray-400" %}
+                    </span>
                     {% if request.user|projectroles:project|userhasrole:'EARNED_VALUES,ADMIN,User' %}
                         <a href="{% url 'project:earned-value' project.pk %}"
                            class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
@@ -268,28 +267,27 @@
                             </a>
                         {% endif %}
                         {% if request.user|projectroles:project|userhasrole:'CLAIMS,ADMIN,USER' %}
-                            <a href="{% url 'bill_of_quantities:claim-list' project.pk %}"
+                            <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
                                class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
                                 <span class="text-sm font-medium text-green-700">Claims</span>
                                 {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                         {% endif %}
                         {% if request.user|projectroles:project|userhasrole:'ADDITIONAL_LINE_ITEMS,ADMIN,USER' %}
-                            <a href="#"
+                            <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
                                class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
                                 <span class="text-sm font-medium text-blue-700">Invoices</span>
                                 {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
-                            <a href="#"
+                            <a href="{% url 'bill_of_quantities:retention-list' project.pk %}"
                                class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
                                 <span class="text-sm font-medium text-orange-700">Retention</span>
                                 {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
-                            <a href="#"
-                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-orange-700">Order Amendments</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                            </a>
+                            <span class="w-full flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed opacity-50">
+                                <span class="text-sm font-medium text-gray-400">Order Amendments</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-gray-400" %}
+                            </span>
                         {% endif %}
                     {% else %}
                         <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
@@ -331,20 +329,15 @@
                    class="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
                     <span class="text-sm font-medium text-indigo-700">Final Account</span>
                 </a>
-                <a href="{% url 'project:compliance-dashboard' project.pk %}"
-                   class="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
-                    <span class="text-sm font-medium text-indigo-700">Quality</span>
-                </a>
-                {% if request.user|projectroles:project|userhasrole:'COMPLIANCE,ADMIN,User' %}
-                    <a href="#"
-                       class="flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
-                        <span class="text-sm font-medium text-indigo-700">Safety</span>
-                    </a>
-                {% endif %}
-                <a href="#"
-                   class="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
-                    <span class="text-sm font-medium text-indigo-700">Social Facilitation</span>
-                </a>
+                <span class="flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed opacity-50">
+                    <span class="text-sm font-medium text-gray-400">Quality</span>
+                </span>
+                <span class="flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed opacity-50">
+                    <span class="text-sm font-medium text-gray-400">Safety</span>
+                </span>
+                <span class="flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed opacity-50">
+                    <span class="text-sm font-medium text-gray-400">Social Facilitation</span>
+                </span>
             </div>
         </div>
     {% endif %}

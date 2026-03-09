@@ -42,12 +42,6 @@ class MilestoneDetailView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Detai
                 "url": reverse("project:project-management", kwargs={"pk": project.pk}),
             },
             {
-                "title": "Forecasts",
-                "url": reverse(
-                    "project:forecast-hub", kwargs={"project_pk": project.pk}
-                ),
-            },
-            {
                 "title": "Time Forecast",
                 "url": reverse(
                     "project:time-forecast", kwargs={"project_pk": project.pk}
@@ -93,12 +87,6 @@ class MilestoneCreateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Creat
             {
                 "title": project.name,
                 "url": reverse("project:project-management", kwargs={"pk": project.pk}),
-            },
-            {
-                "title": "Forecasts",
-                "url": reverse(
-                    "project:forecast-hub", kwargs={"project_pk": project.pk}
-                ),
             },
             {
                 "title": "Time Forecast",
@@ -152,12 +140,6 @@ class MilestoneUpdateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Updat
                 "url": reverse("project:project-management", kwargs={"pk": project.pk}),
             },
             {
-                "title": "Forecasts",
-                "url": reverse(
-                    "project:forecast-hub", kwargs={"project_pk": project.pk}
-                ),
-            },
-            {
                 "title": "Time Forecast",
                 "url": reverse(
                     "project:time-forecast", kwargs={"project_pk": project.pk}
@@ -202,12 +184,6 @@ class MilestoneDeleteView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Delet
             {
                 "title": project.name,
                 "url": reverse("project:project-management", kwargs={"pk": project.pk}),
-            },
-            {
-                "title": "Forecasts",
-                "url": reverse(
-                    "project:forecast-hub", kwargs={"project_pk": project.pk}
-                ),
             },
             {
                 "title": "Time Forecast",

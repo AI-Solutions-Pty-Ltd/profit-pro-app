@@ -40,13 +40,8 @@ class DocumentMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
         documents = ProjectDocument.objects.filter(
             project=project,
         ).order_by("-created_at")
-        if category and category == "OTHER":
-            documents = documents.exclude(
-                category__in=[
-                    ProjectDocument.Category.CONTRACT_DOCUMENTS,
-                    ProjectDocument.Category.STAGE_GATE_APPROVAL,
-                ],
-            )
+        if category:
+            documents = documents.filter(category=category)
         return documents
 
 
@@ -54,7 +49,7 @@ class DocumentListView(DocumentMixin, ListView):
     """List all documents for a project in a specific category."""
 
     model = ProjectDocument
-    template_name = "document/document_list.html"
+    template_name = "documents/document_list.html"
     context_object_name = "documents"
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
@@ -83,7 +78,7 @@ class DocumentCreateView(DocumentMixin, CreateView):
 
     model = ProjectDocument
     form_class = ProjectDocumentForm
-    template_name = "document/document_form.html"
+    template_name = "documents/document_form.html"
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
@@ -165,7 +160,7 @@ class DocumentDeleteView(DocumentMixin, DeleteView):
     """Delete a document."""
 
     model = ProjectDocument
-    template_name = "document/document_confirm_delete.html"
+    template_name = "documents/document_confirm_delete.html"
 
     def get_object(self: "DocumentDeleteView", queryset=None) -> ProjectDocument:
         """Get document and verify project ownership."""

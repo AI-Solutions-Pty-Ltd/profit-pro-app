@@ -4,7 +4,6 @@ from django.urls import path
 
 from .addendum_urls import addendum_urls
 from .api_urls import api_urls
-from .claim_urls import claim_urls
 from .contract_urls import contract_urls
 from .correspondence_urls import correspondence_urls
 from .final_account_urls import final_account_urls
@@ -21,12 +20,11 @@ urlpatterns = (
     structure_urls
     + addendum_urls
     + api_urls
-    + claim_urls
     + contract_urls
     + correspondence_urls
     + forecast_urls
     + final_account_urls
-    # + ledger_urls  # escalation, special, materials, retention, advance payments
+    + ledger_urls  # escalation, special, materials, retention, advance payments
     + payment_certificate_payment_urls
     + payment_certificate_urls
     + special_item_urls

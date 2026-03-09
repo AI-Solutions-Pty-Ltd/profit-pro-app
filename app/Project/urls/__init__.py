@@ -10,7 +10,7 @@ urlpatterns = [
     path("categories/", include("app.Project.urls.category_urls")),
     path("company/", include("app.Project.company.company_urls")),
     path("compliance/", include("app.Project.urls.compliance_urls")),
-    path("document/", include("app.Project.urls.document_urls")),
+    path("document/", include("app.Project.documents.document_urls")),
     path("forecast-hub/", include("app.Project.urls.forecast_hub_urls")),
     path("milestones/", include("app.Project.urls.milestone_urls")),
     path("planned-value/", include("app.Project.urls.planned_value_urls")),

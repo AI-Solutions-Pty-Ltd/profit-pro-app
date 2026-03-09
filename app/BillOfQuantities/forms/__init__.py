@@ -1,6 +1,5 @@
 from .correspondence_forms import CorrespondenceDialogForm
 from .forms import (
-    ClaimForm,
     LineItemExcelUploadForm,
     PaymentCertificateFinalApprovalForm,
     PaymentCertificatePhotoForm,
@@ -16,6 +15,5 @@ __all__ = [
     "PaymentCertificateFinalApprovalForm",
     "PaymentCertificatePhotoForm",
     "PaymentCertificateWorkingForm",
-    "ClaimForm",
     "CorrespondenceDialogForm",
 ]

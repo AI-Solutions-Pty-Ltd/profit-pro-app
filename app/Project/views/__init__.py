@@ -1,7 +1,10 @@
+from app.Project.documents import document_views
+
+
+document_views
 from . import (
     category_views,
     compliance_views,
-    document_views,
     forecast_hub_views,
     milestone_views,
     planned_value_views,

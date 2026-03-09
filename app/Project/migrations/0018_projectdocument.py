@@ -4,7 +4,7 @@ import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
 
-import app.Project.models.document_models
+import app.Project.documents.document_models
 
 
 class Migration(migrations.Migration):
@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
                     "file",
                     models.FileField(
                         help_text="The uploaded document file",
-                        upload_to=app.Project.models.document_models.ProjectDocument.upload_to,
+                        upload_to=app.Project.documents.document_models.ProjectDocument.upload_to,
                     ),
                 ),
                 (
