@@ -44,7 +44,7 @@ class TransactionListView(UserHasCompanyRoleMixin, ListView):
             },
             {
                 "title": company.name,
-                "url": reverse("project:company-detail", kwargs={"pk": company.pk}),
+                "url": reverse("project:company-management", kwargs={"pk": company.pk}),
             },
             {"title": "Transactions", "url": None},
         ]
@@ -80,7 +80,7 @@ class TransactionDetailView(UserHasCompanyRoleMixin, DetailView):
             },
             {
                 "title": company.name,
-                "url": reverse("project:company-detail", kwargs={"pk": company.pk}),
+                "url": reverse("project:company-management", kwargs={"pk": company.pk}),
             },
             {
                 "title": "Transactions",

@@ -16,7 +16,7 @@ from app.Account.subscription_config import Subscription
 from app.core.Utilities.dates import get_previous_n_months
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Project.models import Company
+from app.Project.models import Company, Portfolio, ContractualCompliance, Project
 
 from .company_forms import CompanyFilterForm, CompanyForm
 
@@ -26,7 +26,7 @@ class CompanyListView(
 ):
     """List all companies for the current user."""
 
-    model: Any = None  # Will be set dynamically
+    model: Project
     template_name = "company/company_list.html"
     context_object_name = "companies"
     paginate_by = 25
@@ -35,7 +35,7 @@ class CompanyListView(
     def get_queryset(self) -> QuerySet:
         """Filter companies to show only those the user has access to."""
         user: Account = self.request.user  # type: ignore
-        return user.get_contractors
+        return user.get_projects
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         """Get breadcrumb navigation."""
@@ -72,9 +72,9 @@ class CompanyManagementView(
             {"title": self.object.name, "url": None},
         ]
 
-    def get_queryset(self) -> QuerySet:
+    def get_queryset(self) -> QuerySet["Project"]:
         """Filter companies to show only those the user has access to."""
-        return self.request.user.get_contractors  # type: ignore
+        return self.request.user.get_projects  # type: ignore
 
 
 class CompanyUpdateView(
@@ -116,7 +116,7 @@ class CompanyUpdateView(
 class CompanyDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListView):
     """Projects dashboard showing financial metrics for Portfolio."""
 
-    model = Company
+    model = Project
     template_name = "company/company_dashboard.html"
     context_object_name = "projects"
     required_tiers = [Subscription.BUSINESS_MANAGEMENT]
@@ -126,11 +126,11 @@ class CompanyDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListView)
             {"title": "Business Dashboard", "url": None},
         ]
 
-    def get_queryset(self: "CompanyDashboardView") -> QuerySet[Company]:
+    def get_queryset(self: "CompanyDashboardView") -> QuerySet[Project]:
         """Get filtered projects for dashboard view."""
         # Initialize filter form with user's projects
         user: Account = self.request.user  # type: ignore
-        return user.get_contractors
+        return user.get_projects
 
     def get(self, request, *args, **kwargs):
         """Handle GET request and check for project redirect."""
@@ -144,7 +144,7 @@ class CompanyDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListView)
             company = filter_form.cleaned_data.get("company")
             if company:
                 return redirect(
-                    "project:company-detail",
+                    "project:company-management",
                     pk=company.pk,
                 )
 
@@ -154,6 +154,14 @@ class CompanyDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListView)
     def get_context_data(self: "CompanyDashboardView", **kwargs):
         """Add financial metrics to context."""
         context = super().get_context_data(**kwargs)
+        user: Account = self.request.user  # type: ignore
+        active_projects = user.get_projects
+        if user.portfolio:
+            portfolio = user.portfolio
+        else:
+            portfolio = Portfolio.objects.create()
+            portfolio.users.add(user)
+            user.get_projects.update(portfolio=portfolio)
 
         filter_form = CompanyFilterForm(
             self.request.GET or None, user=self.request.user
@@ -161,10 +169,41 @@ class CompanyDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListView)
 
         # Add the already-validated form to context
         context["filter_form"] = filter_form
-        context["current_date"] = datetime.now()
+        current_date = datetime.now()
+        context["current_date"] = current_date
 
         # highlights
         context["active_companies"] = self.get_queryset().count()
+        context["urgent_projects_count"] = len(
+            portfolio.get_projects_requiring_urgent_intervention(current_date)
+        )
+        context["attention_projects_count"] = len(
+            portfolio.get_projects_requiring_attention(
+                current_date,
+            )
+        )
+        # ==========================================
+        # Compliance Stats
+        # ==========================================
+        total_compliance_items = ContractualCompliance.objects.filter(
+            project__in=active_projects
+        ).count()
+        completed_compliance_items = ContractualCompliance.objects.filter(
+            project__in=active_projects,
+            status=ContractualCompliance.Status.COMPLETED,
+        ).count()
+        overdue_compliance_items = ContractualCompliance.objects.filter(
+            project__in=active_projects,
+            status=ContractualCompliance.Status.OVERDUE,
+        ).count()
+
+        context["compliance_percentage"] = (
+            round((completed_compliance_items / total_compliance_items * 100), 1)
+            if total_compliance_items > 0
+            else 0
+        )
+        context["urgent_compliance_count"] = overdue_compliance_items
+        context["total_compliance_items"] = total_compliance_items
 
         # Income Statement Summary (dummy data for now)
         context["revenue"] = 100_000_000
@@ -229,7 +268,9 @@ class BusinessSetupView(
             },
             {
                 "title": self.object.name,
-                "url": reverse("project:company-detail", kwargs={"pk": self.object.pk}),
+                "url": reverse(
+                    "project:company-management", kwargs={"pk": self.object.pk}
+                ),
             },
             {"title": "Business Setup", "url": None},
         ]

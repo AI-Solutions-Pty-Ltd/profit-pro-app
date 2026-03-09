@@ -12,7 +12,7 @@
                     <p class="text-sm text-gray-600 mt-1">{{ object.name }}</p>
                 </div>
                 {% if object %}
-                    <a href="{% url 'project:company-detail' object.id %}"
+                    <a href="{% url 'project:company-management' object.id %}"
                        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                         Back to Company Detail
                     </a>
@@ -156,7 +156,7 @@
             </div>
             <div class="mt-6 flex justify-end">
                 {% if object %}
-                    <a href="{% url 'project:company-detail' object.id %}"
+                    <a href="{% url 'project:company-management' object.id %}"
                        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                         Cancel
                     </a>

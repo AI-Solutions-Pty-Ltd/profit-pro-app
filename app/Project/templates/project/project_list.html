@@ -129,7 +129,7 @@
                                     {% endif %}
                                     {% if request.user|userhassubscription:'PROFIT_AND_LOSS' %}
                                         {% if project.contractor and project.contractor in request.user.get_contractors %}
-                                            <a href="{% url 'project:company-detail' project.contractor.pk %}"
+                                            <a href="{% url 'project:company-management' project.contractor.pk %}"
                                                class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
                                                 {% heroicon_outline "building-office" size="16" %}
                                                 <span class="ml-1">Company</span>

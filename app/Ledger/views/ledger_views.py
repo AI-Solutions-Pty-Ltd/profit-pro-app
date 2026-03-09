@@ -90,7 +90,7 @@ class LedgerListView(UserHasCompanyRoleMixin, ListView):
             },
             {
                 "title": company.name,
-                "url": reverse("project:company-detail", kwargs={"pk": company.pk}),
+                "url": reverse("project:company-management", kwargs={"pk": company.pk}),
             },
             {"title": "Ledgers", "url": None},
         ]
@@ -135,7 +135,7 @@ class LedgerCreateView(UserHasCompanyRoleMixin, CreateView):
             },
             {
                 "title": company.name,
-                "url": reverse("project:company-detail", kwargs={"pk": company.pk}),
+                "url": reverse("project:company-management", kwargs={"pk": company.pk}),
             },
             {
                 "title": "Ledgers",

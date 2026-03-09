@@ -202,7 +202,7 @@ class TransactionFormViewMixin(UserHasCompanyRoleMixin, BreadcrumbMixin, View):
             {
                 "title": company.name,
                 "url": str(
-                    reverse("project:company-detail", kwargs={"pk": company.pk})
+                    reverse("project:company-management", kwargs={"pk": company.pk})
                 ),
             },
             {

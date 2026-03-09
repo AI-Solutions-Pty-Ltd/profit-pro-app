@@ -7,7 +7,7 @@ from . import company_views as cvs
 _prefix = "company/"
 
 urlpatterns = [
-    path("<int:pk>/", cvs.CompanyManagementView.as_view(), name="company-detail"),
+    path("<int:pk>/", cvs.CompanyManagementView.as_view(), name="company-management"),
     path(
         "<int:pk>/update/",
         cvs.CompanyUpdateView.as_view(),

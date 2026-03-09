@@ -3,12 +3,12 @@ from typing import cast
 from django import forms
 
 from app.Account.models import Account
-from app.Project.models import Company
+from app.Project.models import Company, Project
 
 
 class CompanyFilterForm(forms.Form):
     company = forms.ModelChoiceField(
-        queryset=Company.objects.none(),
+        queryset=Project.objects.none(),
         required=False,
         label="Jump to Company",
         widget=forms.Select(
@@ -22,7 +22,7 @@ class CompanyFilterForm(forms.Form):
         user: Account = kwargs.pop("user")
         super().__init__(*args, **kwargs)
         if user:
-            self.fields["company"].queryset = user.get_contractors.order_by("name")  # type: ignore
+            self.fields["company"].queryset = user.get_projects.order_by("name")  # type: ignore
 
 
 class CompanyForm(forms.ModelForm):

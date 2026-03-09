@@ -40,6 +40,7 @@ class AdvancePaymentListView(SubscriptionAndRoleRequiredMixin, ListView):
     context_object_name = "transactions"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -136,6 +137,7 @@ class AdvancePaymentCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     form_class = CreateForm
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -211,6 +213,7 @@ class AdvancePaymentUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     form_class = UpdateForm
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -261,6 +264,7 @@ class AdvancePaymentDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
     template_name = "ledger/advance_payment_confirm_delete.html"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -312,6 +316,7 @@ class RetentionListView(SubscriptionAndRoleRequiredMixin, ListView):
     context_object_name = "transactions"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -403,6 +408,7 @@ class RetentionCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     form_class = CreateForm
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -473,6 +479,7 @@ class RetentionUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     form_class = UpdateForm
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -521,6 +528,7 @@ class RetentionDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
     template_name = "ledger/retention_confirm_delete.html"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -569,6 +577,7 @@ class MaterialsOnSiteListView(SubscriptionAndRoleRequiredMixin, ListView):
     context_object_name = "transactions"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -666,6 +675,7 @@ class MaterialsOnSiteCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     form_class = CreateForm
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -743,6 +753,7 @@ class MaterialsOnSiteUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     form_class = UpdateForm
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -793,6 +804,7 @@ class MaterialsOnSiteDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
     template_name = "ledger/materials_confirm_delete.html"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -844,6 +856,7 @@ class EscalationListView(SubscriptionAndRoleRequiredMixin, ListView):
     context_object_name = "transactions"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -943,6 +956,7 @@ class EscalationCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     form_class = CreateForm
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -1020,6 +1034,7 @@ class EscalationUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
     form_class = UpdateForm
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -1068,6 +1083,7 @@ class EscalationDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
     template_name = "ledger/escalation_confirm_delete.html"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
@@ -1117,6 +1133,7 @@ class SpecialItemTransactionListView(SubscriptionAndRoleRequiredMixin, ListView)
     context_object_name = "transactions"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
+    project_slug = "project_pk"
 
     def get_project(self):
         """Get the project from URL and verify ownership."""
