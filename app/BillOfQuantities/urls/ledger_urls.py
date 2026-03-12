@@ -95,4 +95,19 @@ ledger_urls = [
         ledger_views.SpecialItemTransactionListView.as_view(),
         name="special-item-ledger-list",
     ),
+    path(
+        "project/<int:project_pk>/special-items-ledger/new/",
+        ledger_views.SpecialItemTransactionCreateView.as_view(),
+        name="special-item-ledger-create",
+    ),
+    path(
+        "project/<int:project_pk>/special-items-ledger/<int:pk>/edit/",
+        ledger_views.SpecialItemTransactionUpdateView.as_view(),
+        name="special-item-ledger-edit",
+    ),
+    path(
+        "project/<int:project_pk>/special-items-ledger/<int:pk>/delete/",
+        ledger_views.SpecialItemTransactionDeleteView.as_view(),
+        name="special-item-ledger-delete",
+    ),
 ]

@@ -31,6 +31,21 @@ from app.core.Utilities.subscription_and_role_mixin import (
     SubscriptionAndRoleRequiredMixin,
 )
 from app.Project.models import PlannedValue, Project, Role
+from app.BillOfQuantities.forms import (
+    AdvancedPaymentCreateUpdateForm,
+    EscalationCreateUpdateForm,
+    MaterialsOnSiteCreateUpdateForm,
+    RetentionCreateUpdateCreateForm,
+)
+from app.BillOfQuantities.models.ledger_models import (
+    AdvancePayment,
+    Escalation,
+    MaterialsOnSite,
+    Retention,
+)
+from app.BillOfQuantities.views.ledger_views import (
+    get_ledger_transactions_with_balance,
+)
 
 
 class PaymentCertificateMixin(SubscriptionAndRoleRequiredMixin, BreadcrumbMixin):
@@ -440,6 +455,26 @@ class PaymentCertificateEditView(PaymentCertificateMixin, TemplateView):
         if description:
             line_items = line_items.filter(description__icontains=description)
 
+        # Get ledger forms
+        advanced_payment_form = AdvancedPaymentCreateUpdateForm(project=project)
+        materials_on_site_form = MaterialsOnSiteCreateUpdateForm(project=project)
+        retention_form = RetentionCreateUpdateCreateForm(project=project)
+        escalation_form = EscalationCreateUpdateForm(project=project)
+
+        # Get ledger transactions with running balances
+        advance_payment_transactions, advance_payment_balance = (
+            get_ledger_transactions_with_balance(AdvancePayment, project)
+        )
+        retention_transactions, retention_balance = (
+            get_ledger_transactions_with_balance(Retention, project)
+        )
+        materials_transactions, materials_balance = (
+            get_ledger_transactions_with_balance(MaterialsOnSite, project)
+        )
+        escalation_transactions, escalation_balance = (
+            get_ledger_transactions_with_balance(Escalation, project)
+        )
+
         context = {
             "project": project,
             "payment_certificate": payment_certificate,
@@ -454,6 +489,20 @@ class PaymentCertificateEditView(PaymentCertificateMixin, TemplateView):
             "workings": payment_certificate.workings.all().order_by("-created_at"),
             "photo_form": PaymentCertificatePhotoForm(),
             "working_form": PaymentCertificateWorkingForm(),
+            # Ledger forms
+            "advanced_payment_form": advanced_payment_form,
+            "materials_on_site_form": materials_on_site_form,
+            "retention_form": retention_form,
+            "escalation_form": escalation_form,
+            # Ledger transactions
+            "advance_payment_transactions": advance_payment_transactions,
+            "advance_payment_balance": advance_payment_balance,
+            "retention_transactions": retention_transactions,
+            "retention_balance": retention_balance,
+            "materials_transactions": materials_transactions,
+            "materials_balance": materials_balance,
+            "escalation_transactions": escalation_transactions,
+            "escalation_balance": escalation_balance,
         }
         return render(request, str(self.template_name), context)
 

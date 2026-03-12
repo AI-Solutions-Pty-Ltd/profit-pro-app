@@ -1,0 +1,54 @@
+<div class="bg-white shadow-sm rounded-lg overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <h1 class="text-2xl font-bold text-gray-900">
+            {% if is_create %}
+                New Escalation Transaction
+            {% else %}
+                Edit Transaction
+            {% endif %}
+        </h1>
+        <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+    </div>
+    <form method="post"
+          class="px-6 py-6"
+          {% if object %}
+          action="{% url 'bill_of_quantities:escalation-edit' project.pk object.pk %}">
+    {% else %}
+        action="{% url 'bill_of_quantities:escalation-create' project.pk %}">
+    {% endif %}
+    {% csrf_token %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>{{ escalation_form.escalation_type|as_crispy_field }}</div>
+        <div>{{ escalation_form.transaction_type|as_crispy_field }}</div>
+        <div>{{ escalation_form.amount|as_crispy_field }}</div>
+    </div>
+    <div class="mt-4">{{ escalation_form.description|as_crispy_field }}</div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+        <div>{{ escalation_form.date|as_crispy_field }}</div>
+        <div>{{ escalation_form.payment_certificate|as_crispy_field }}</div>
+        <div>{{ escalation_form.escalation_factor|as_crispy_field }}</div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+        <div>{{ escalation_form.base_date|as_crispy_field }}</div>
+        <div>{{ escalation_form.current_date|as_crispy_field }}</div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+        <div>{{ escalation_form.base_index|as_crispy_field }}</div>
+        <div>{{ escalation_form.current_index|as_crispy_field }}</div>
+        <div>{{ escalation_form.formula_reference|as_crispy_field }}</div>
+    </div>
+    <div class="mt-6 pt-6 border-t border-gray-200 flex justify-end space-x-3">
+        <a href="{% url 'bill_of_quantities:escalation-list' project.pk %}"
+           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Cancel</a>
+        <button type="submit"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+            {% heroicon_outline "check" class="w-4 h-4 mr-2" %}
+            {% if is_create %}
+                Create
+            {% else %}
+                Save
+            {% endif %}
+        </button>
+    </div>
+</form>
+</div>

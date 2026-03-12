@@ -1,8 +1,13 @@
-{% extends "base_full.html" %}
-{% block title %}
-    {{ project.name }} - {{ block.super }}
-{% endblock title %}
+{% extends "base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load heroicons %}
 {% load humanize %}
+{% block title %}
+    Edit Payment Certificate - {{ payment_certificate.certificate_number }}
+{% endblock title %}
+<!-- Add project PK for JavaScript -->
+<div style="display: none;" data-project-pk="{{ project.pk }}"></div>
 {% block content %}
     <style>
       .header {
@@ -154,6 +159,38 @@
                     </div>
                 {% endif %}
             </form>
+        </div>
+    </div>
+    <!-- Ledger Modals -->
+    <div class="mt-6">
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-medium text-gray-900 mb-3">Quick Ledger Access</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {% include "ledger/modals/advance_payment_list_modal.html" with transactions=advance_payment_transactions current_balance=advance_payment_balance %}
+                {% include "ledger/modals/retention_list_modal.html" with transactions=retention_transactions current_balance=retention_balance %}
+                {% include "ledger/modals/materials_list_modal.html" with transactions=materials_transactions current_balance=materials_balance %}
+                {% include "ledger/modals/escalation_list_modal.html" with transactions=escalation_transactions current_balance=escalation_balance %}
+                <button onclick="openAdvancePaymentListModal()"
+                        class="inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    {% heroicon_outline "currency-dollar" class="w-4 h-4 mr-2" %}
+                    Advance Payments
+                </button>
+                <button onclick="openRetentionListModal()"
+                        class="inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    {% heroicon_outline "shield-check" class="w-4 h-4 mr-2" %}
+                    Retention
+                </button>
+                <button onclick="openMaterialsListModal()"
+                        class="inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    {% heroicon_outline "cube" class="w-4 h-4 mr-2" %}
+                    Materials
+                </button>
+                <button onclick="openEscalationListModal()"
+                        class="inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    {% heroicon_outline "document-chart-bar" class="w-4 h-4 mr-2" %}
+                    Escalation
+                </button>
+            </div>
         </div>
     </div>
     <!-- Photos and Workings Section -->
@@ -614,4 +651,5 @@
     }
     
     </script>
+    <!-- Ledger Modals JavaScript -->
 {% endblock content %}

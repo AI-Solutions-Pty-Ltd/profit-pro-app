@@ -14,6 +14,12 @@ from django.views.generic import (
 )
 
 from app.Account.subscription_config import Subscription
+from app.BillOfQuantities.forms import (
+    AdvancedPaymentCreateUpdateForm,
+    EscalationCreateUpdateForm,
+    MaterialsOnSiteCreateUpdateForm,
+    RetentionCreateUpdateCreateForm,
+)
 from app.BillOfQuantities.models import (
     AdvancePayment,
     Escalation,
@@ -30,6 +36,96 @@ from app.Project.models import Project, Role
 # =============================================================================
 # Advance Payment Views
 # =============================================================================
+
+
+def get_ledger_transactions_with_balance(model_class, project):
+    """
+    Get ledger transactions with running balance for a given model and project.
+
+    Args:
+        model_class: The ledger model class (AdvancePayment, Retention, MaterialsOnSite, Escalation)
+        project: The project instance
+
+    Returns:
+        tuple: (transactions_list, current_balance)
+    """
+    # Get balance using the model's class method
+    current_balance = model_class.get_balance_for_project(project)
+
+    # Get transactions ordered by date
+    transactions = list(
+        model_class.objects.filter(
+            project=project,
+            deleted=False,
+        ).order_by("-date", "-created_at")
+    )
+
+    # Calculate running balances
+    running_balance = Decimal("0.00")
+    transactions_with_balance = []
+
+    for txn in reversed(transactions):
+        running_balance += txn.signed_amount
+        # Create a dict with transaction data and running balance
+        txn_data = {
+            "id": txn.pk,
+            "transaction_type": txn.transaction_type,
+            "amount": txn.amount,
+            "description": txn.description,
+            "date": txn.date,
+            "payment_certificate": txn.payment_certificate,
+            "captured_by": txn.captured_by,
+            "created_at": txn.created_at,
+            "signed_amount": txn.signed_amount,
+            "running_balance": running_balance,
+            "instance": txn,  # Keep reference to original instance for template access
+        }
+
+        # Add model-specific fields
+        if hasattr(txn, "recovery_method"):  # AdvancePayment
+            txn_data.update(
+                {
+                    "recovery_method": txn.recovery_method,
+                    "recovery_percentage": txn.recovery_percentage,
+                    "guarantee_reference": txn.guarantee_reference,
+                    "guarantee_expiry": txn.guarantee_expiry,
+                }
+            )
+        elif hasattr(txn, "retention_type"):  # Retention
+            txn_data.update(
+                {
+                    "retention_type": txn.retention_type,
+                    "retention_percentage": txn.retention_percentage,
+                }
+            )
+        elif hasattr(txn, "material_status"):  # MaterialsOnSite
+            txn_data.update(
+                {
+                    "material_status": txn.material_status,
+                    "material_description": txn.material_description,
+                    "quantity": txn.quantity,
+                    "unit": txn.unit,
+                    "unit_price": txn.unit_price,
+                    "delivery_note_reference": txn.delivery_note_reference,
+                    "storage_location": txn.storage_location,
+                }
+            )
+        elif hasattr(txn, "escalation_type"):  # Escalation
+            txn_data.update(
+                {
+                    "escalation_type": txn.escalation_type,
+                    "base_date": txn.base_date,
+                    "current_date": txn.current_date,
+                    "base_index": txn.base_index,
+                    "current_index": txn.current_index,
+                    "escalation_factor": txn.escalation_factor,
+                    "formula_reference": txn.formula_reference,
+                }
+            )
+
+        transactions_with_balance.append(txn_data)
+
+    return transactions_with_balance, current_balance
 
 
 class AdvancePaymentListView(SubscriptionAndRoleRequiredMixin, ListView):
@@ -62,40 +158,19 @@ class AdvancePaymentListView(SubscriptionAndRoleRequiredMixin, ListView):
         project = self.get_project()
         context["project"] = project
 
-        # Calculate running balance
-        balance = AdvancePayment.get_balance_for_project(project)
-        context["current_balance"] = balance
-
-        # Get ledger with running balances
-        transactions = list(self.get_queryset())
-        running_balance = Decimal("0.00")
-        transactions_with_balance = []
-        for txn in reversed(transactions):
-            running_balance += txn.signed_amount
-            # Create a dict with transaction data and running balance
-            txn_data = {
-                "id": txn.pk,
-                "transaction_type": txn.transaction_type,
-                "amount": txn.amount,
-                "description": txn.description,
-                "date": txn.date,
-                "payment_certificate": txn.payment_certificate,
-                "recovery_method": txn.recovery_method,
-                "recovery_percentage": txn.recovery_percentage,
-                "guarantee_reference": txn.guarantee_reference,
-                "guarantee_expiry": txn.guarantee_expiry,
-                "captured_by": txn.captured_by,
-                "created_at": txn.created_at,
-                "signed_amount": txn.signed_amount,
-                "running_balance": running_balance,
-                "instance": txn,  # Keep reference to original instance for template access
-            }
-            transactions_with_balance.append(txn_data)
+        # Get transactions with running balance using reusable function
+        transactions_with_balance, current_balance = (
+            get_ledger_transactions_with_balance(AdvancePayment, project)
+        )
         context["transactions"] = transactions_with_balance
+        context["current_balance"] = current_balance
 
         # Project advance payment settings
         context["advance_percentage"] = project.advance_payment_percentage
         context["recovery_percentage"] = project.advance_recovery_percentage
+        context["advanced_payment_form"] = AdvancedPaymentCreateUpdateForm(
+            project=project
+        )
 
         return context
 
@@ -103,40 +178,11 @@ class AdvancePaymentListView(SubscriptionAndRoleRequiredMixin, ListView):
 class AdvancePaymentCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
     """Create a new advance payment transaction."""
 
-    class CreateForm(forms.ModelForm):
-        def __init__(self, *args, **kwargs):
-            self.project = kwargs.pop("project", None)
-            super().__init__(*args, **kwargs)
-            self.fields["date"].widget = styled_date_input
-            self.fields["guarantee_expiry"].widget = styled_date_input
-
-            # Filter payment certificates to current project
-            if self.project:
-                self.fields[
-                    "payment_certificate"
-                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
-                    "-created_at"
-                )
-
-        class Meta:
-            model = AdvancePayment
-            fields = [
-                "transaction_type",
-                "amount",
-                "description",
-                "date",
-                "payment_certificate",
-                "recovery_method",
-                "recovery_percentage",
-                "guarantee_reference",
-                "guarantee_expiry",
-            ]
-
     model = AdvancePayment
     template_name = "ledger/advance_payment_form.html"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
-    form_class = CreateForm
+    form_class = AdvancedPaymentCreateUpdateForm
     project_slug = "project_pk"
 
     def get_project(self):
@@ -173,46 +219,18 @@ class AdvancePaymentCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         context["is_create"] = True
+        context["advanced_payment_form"] = context["form"]
         return context
 
 
 class AdvancePaymentUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
     """Update an advance payment transaction."""
 
-    class UpdateForm(forms.ModelForm):
-        def __init__(self, *args, **kwargs):
-            self.project = kwargs.pop("project", None)
-            super().__init__(*args, **kwargs)
-            self.fields["date"].widget = styled_date_input
-            self.fields["guarantee_expiry"].widget = styled_date_input
-
-            # Filter payment certificates to current project
-            if self.project:
-                self.fields[
-                    "payment_certificate"
-                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
-                    "-created_at"
-                )
-
-        class Meta:
-            model = AdvancePayment
-            fields = [
-                "transaction_type",
-                "amount",
-                "description",
-                "date",
-                "payment_certificate",
-                "recovery_method",
-                "recovery_percentage",
-                "guarantee_reference",
-                "guarantee_expiry",
-            ]
-
     model = AdvancePayment
     template_name = "ledger/advance_payment_form.html"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
-    form_class = UpdateForm
+    form_class = AdvancedPaymentCreateUpdateForm
     project_slug = "project_pk"
 
     def get_project(self):
@@ -254,6 +272,7 @@ class AdvancePaymentUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         context["is_create"] = False
+        context["advanced_payment_form"] = context["form"]
         return context
 
 
@@ -338,76 +357,28 @@ class RetentionListView(SubscriptionAndRoleRequiredMixin, ListView):
         project = self.get_project()
         context["project"] = project
 
-        # Calculate running balance
-        balance = Retention.get_balance_for_project(project)
-        context["current_balance"] = balance
-
-        # Get ledger with running balances
-        transactions = list(self.get_queryset())
-        running_balance = Decimal("0.00")
-        transactions_with_balance = []
-        for txn in reversed(transactions):
-            running_balance += txn.signed_amount
-            # Create a dict with transaction data and running balance
-            txn_data = {
-                "id": txn.pk,
-                "retention_type": txn.retention_type,
-                "transaction_type": txn.transaction_type,
-                "amount": txn.amount,
-                "description": txn.description,
-                "date": txn.date,
-                "payment_certificate": txn.payment_certificate,
-                "retention_percentage": txn.retention_percentage,
-                "captured_by": txn.captured_by,
-                "created_at": txn.created_at,
-                "signed_amount": txn.signed_amount,
-                "running_balance": running_balance,
-                "instance": txn,  # Keep reference to original instance for template access
-            }
-            transactions_with_balance.append(txn_data)
+        # Get transactions with running balance using reusable function
+        transactions_with_balance, current_balance = (
+            get_ledger_transactions_with_balance(Retention, project)
+        )
         context["transactions"] = transactions_with_balance
+        context["current_balance"] = current_balance
 
         # Project retention settings
         context["retention_percentage"] = project.retention_percentage
         context["retention_limit"] = project.retention_limit_percentage
-
+        context["retention_form"] = RetentionCreateUpdateCreateForm(project=project)
         return context
 
 
 class RetentionCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
     """Create a new retention transaction."""
 
-    class CreateForm(forms.ModelForm):
-        def __init__(self, *args, **kwargs):
-            self.project = kwargs.pop("project", None)
-            super().__init__(*args, **kwargs)
-            self.fields["date"].widget = styled_date_input
-
-            # Filter payment certificates to current project
-            if self.project:
-                self.fields[
-                    "payment_certificate"
-                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
-                    "-created_at"
-                )
-
-        class Meta:
-            model = Retention
-            fields = [
-                "retention_type",
-                "transaction_type",
-                "amount",
-                "description",
-                "date",
-                "payment_certificate",
-                "retention_percentage",
-            ]
-
     model = Retention
     template_name = "ledger/retention_form.html"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
-    form_class = CreateForm
+    form_class = RetentionCreateUpdateCreateForm
     project_slug = "project_pk"
 
     def get_project(self):
@@ -442,43 +413,18 @@ class RetentionCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         context["is_create"] = True
+        context["retention_form"] = context["form"]
         return context
 
 
 class RetentionUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
     """Update a retention transaction."""
 
-    class UpdateForm(forms.ModelForm):
-        def __init__(self, *args, **kwargs):
-            self.project = kwargs.pop("project", None)
-            super().__init__(*args, **kwargs)
-            self.fields["date"].widget = styled_date_input
-
-            # Filter payment certificates to current project
-            if self.project:
-                self.fields[
-                    "payment_certificate"
-                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
-                    "-created_at"
-                )
-
-        class Meta:
-            model = Retention
-            fields = [
-                "retention_type",
-                "transaction_type",
-                "amount",
-                "description",
-                "date",
-                "payment_certificate",
-                "retention_percentage",
-            ]
-
     model = Retention
     template_name = "ledger/retention_form.html"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
-    form_class = UpdateForm
+    form_class = RetentionCreateUpdateCreateForm
     project_slug = "project_pk"
 
     def get_project(self):
@@ -518,6 +464,7 @@ class RetentionUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         context["is_create"] = False
+        context["retention_form"] = context["form"]
         return context
 
 
@@ -599,82 +546,27 @@ class MaterialsOnSiteListView(SubscriptionAndRoleRequiredMixin, ListView):
         project = self.get_project()
         context["project"] = project
 
-        # Calculate running balance
-        balance = MaterialsOnSite.get_balance_for_project(project)
-        context["current_balance"] = balance
-
-        # Get ledger with running balances
-        transactions = list(self.get_queryset())
-        running_balance = Decimal("0.00")
-        transactions_with_balance = []
-        for txn in reversed(transactions):
-            running_balance += txn.signed_amount
-            # Create a dict with transaction data and running balance
-            txn_data = {
-                "id": txn.pk,
-                "transaction_type": txn.transaction_type,
-                "amount": txn.amount,
-                "description": txn.description,
-                "date": txn.date,
-                "payment_certificate": txn.payment_certificate,
-                "material_status": txn.material_status,
-                "material_description": txn.material_description,
-                "quantity": txn.quantity,
-                "unit": txn.unit,
-                "unit_price": txn.unit_price,
-                "delivery_note_reference": txn.delivery_note_reference,
-                "storage_location": txn.storage_location,
-                "captured_by": txn.captured_by,
-                "created_at": txn.created_at,
-                "signed_amount": txn.signed_amount,
-                "running_balance": running_balance,
-                "instance": txn,  # Keep reference to original instance for template access
-            }
-            transactions_with_balance.append(txn_data)
+        # Get transactions with running balance using reusable function
+        transactions_with_balance, current_balance = (
+            get_ledger_transactions_with_balance(MaterialsOnSite, project)
+        )
         context["transactions"] = transactions_with_balance
+        context["current_balance"] = current_balance
 
+        context["materials_on_site_form"] = MaterialsOnSiteCreateUpdateForm(
+            project=project
+        )
         return context
 
 
 class MaterialsOnSiteCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
     """Create a new materials on site transaction."""
 
-    class CreateForm(forms.ModelForm):
-        def __init__(self, *args, **kwargs):
-            self.project = kwargs.pop("project", None)
-            super().__init__(*args, **kwargs)
-            self.fields["date"].widget = styled_date_input
-
-            # Filter payment certificates to current project
-            if self.project:
-                self.fields[
-                    "payment_certificate"
-                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
-                    "-created_at"
-                )
-
-        class Meta:
-            model = MaterialsOnSite
-            fields = [
-                "material_status",
-                "transaction_type",
-                "amount",
-                "description",
-                "date",
-                "payment_certificate",
-                "material_description",
-                "quantity",
-                "unit",
-                "unit_price",
-                "delivery_note_reference",
-                "storage_location",
-            ]
-
     model = MaterialsOnSite
     template_name = "ledger/materials_form.html"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
-    form_class = CreateForm
+    form_class = MaterialsOnSiteCreateUpdateForm
     project_slug = "project_pk"
 
     def get_project(self):
@@ -711,48 +603,18 @@ class MaterialsOnSiteCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         context["is_create"] = True
+        context["materials_on_site_form"] = context["form"]
         return context
 
 
 class MaterialsOnSiteUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
     """Update a materials on site transaction."""
 
-    class UpdateForm(forms.ModelForm):
-        def __init__(self, *args, **kwargs):
-            self.project = kwargs.pop("project", None)
-            super().__init__(*args, **kwargs)
-            self.fields["date"].widget = styled_date_input
-
-            # Filter payment certificates to current project
-            if self.project:
-                self.fields[
-                    "payment_certificate"
-                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
-                    "-created_at"
-                )
-
-        class Meta:
-            model = MaterialsOnSite
-            fields = [
-                "material_status",
-                "transaction_type",
-                "amount",
-                "description",
-                "date",
-                "payment_certificate",
-                "material_description",
-                "quantity",
-                "unit",
-                "unit_price",
-                "delivery_note_reference",
-                "storage_location",
-            ]
-
     model = MaterialsOnSite
     template_name = "ledger/materials_form.html"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
-    form_class = UpdateForm
+    form_class = MaterialsOnSiteCreateUpdateForm
     project_slug = "project_pk"
 
     def get_project(self):
@@ -794,6 +656,7 @@ class MaterialsOnSiteUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         context["is_create"] = False
+        context["materials_on_site_form"] = context["form"]
         return context
 
 
@@ -878,84 +741,25 @@ class EscalationListView(SubscriptionAndRoleRequiredMixin, ListView):
         project = self.get_project()
         context["project"] = project
 
-        # Calculate running balance
-        balance = Escalation.get_balance_for_project(project)
-        context["current_balance"] = balance
-
-        # Get ledger with running balances
-        transactions = list(self.get_queryset())
-        running_balance = Decimal("0.00")
-        transactions_with_balance = []
-        for txn in reversed(transactions):
-            running_balance += txn.signed_amount
-            # Create a dict with transaction data and running balance
-            txn_data = {
-                "id": txn.pk,
-                "escalation_type": txn.escalation_type,
-                "transaction_type": txn.transaction_type,
-                "amount": txn.amount,
-                "description": txn.description,
-                "date": txn.date,
-                "payment_certificate": txn.payment_certificate,
-                "base_date": txn.base_date,
-                "current_date": txn.current_date,
-                "base_index": txn.base_index,
-                "current_index": txn.current_index,
-                "escalation_factor": txn.escalation_factor,
-                "formula_reference": txn.formula_reference,
-                "captured_by": txn.captured_by,
-                "created_at": txn.created_at,
-                "signed_amount": txn.signed_amount,
-                "running_balance": running_balance,
-                "instance": txn,  # Keep reference to original instance for template access
-            }
-            transactions_with_balance.append(txn_data)
+        # Get transactions with running balance using reusable function
+        transactions_with_balance, current_balance = (
+            get_ledger_transactions_with_balance(Escalation, project)
+        )
         context["transactions"] = transactions_with_balance
+        context["current_balance"] = current_balance
 
+        context["escalation_form"] = EscalationCreateUpdateForm(project=project)
         return context
 
 
 class EscalationCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
     """Create a new escalation transaction."""
 
-    class CreateForm(forms.ModelForm):
-        def __init__(self, *args, **kwargs):
-            self.project = kwargs.pop("project", None)
-            super().__init__(*args, **kwargs)
-            self.fields["date"].widget = styled_date_input
-            self.fields["base_date"].widget = styled_date_input
-            self.fields["current_date"].widget = styled_date_input
-
-            # Filter payment certificates to current project
-            if self.project:
-                self.fields[
-                    "payment_certificate"
-                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
-                    "-created_at"
-                )
-
-        class Meta:
-            model = Escalation
-            fields = [
-                "escalation_type",
-                "transaction_type",
-                "amount",
-                "description",
-                "date",
-                "payment_certificate",
-                "base_date",
-                "current_date",
-                "base_index",
-                "current_index",
-                "escalation_factor",
-                "formula_reference",
-            ]
-
     model = Escalation
     template_name = "ledger/escalation_form.html"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
-    form_class = CreateForm
+    form_class = EscalationCreateUpdateForm
     project_slug = "project_pk"
 
     def get_project(self):
@@ -990,50 +794,18 @@ class EscalationCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         context["is_create"] = True
+        context["escalation_form"] = context["form"]
         return context
 
 
 class EscalationUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
     """Update an escalation transaction."""
 
-    class UpdateForm(forms.ModelForm):
-        def __init__(self, *args, **kwargs):
-            self.project = kwargs.pop("project", None)
-            super().__init__(*args, **kwargs)
-            self.fields["date"].widget = styled_date_input
-            self.fields["base_date"].widget = styled_date_input
-            self.fields["current_date"].widget = styled_date_input
-
-            # Filter payment certificates to current project
-            if self.project:
-                self.fields[
-                    "payment_certificate"
-                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
-                    "-created_at"
-                )
-
-        class Meta:
-            model = Escalation
-            fields = [
-                "escalation_type",
-                "transaction_type",
-                "amount",
-                "description",
-                "date",
-                "payment_certificate",
-                "base_date",
-                "current_date",
-                "base_index",
-                "current_index",
-                "escalation_factor",
-                "formula_reference",
-            ]
-
     model = Escalation
     template_name = "ledger/escalation_form.html"
     roles = [Role.USER]
     required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
-    form_class = UpdateForm
+    form_class = EscalationCreateUpdateForm
     project_slug = "project_pk"
 
     def get_project(self):
@@ -1073,6 +845,7 @@ class EscalationUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         context["is_create"] = False
+        context["escalation_form"] = context["form"]
         return context
 
 
@@ -1182,4 +955,191 @@ class SpecialItemTransactionListView(SubscriptionAndRoleRequiredMixin, ListView)
             transactions_with_balance.append(txn_data)
         context["transactions"] = transactions_with_balance
 
+        return context
+
+
+class SpecialItemTransactionCreateView(SubscriptionAndRoleRequiredMixin, CreateView):
+    """Create a new special item transaction."""
+
+    class CreateForm(forms.ModelForm):
+        def __init__(self, *args, **kwargs):
+            self.project = kwargs.pop("project", None)
+            super().__init__(*args, **kwargs)
+            self.fields["date"].widget = styled_date_input
+
+            # Filter payment certificates to current project
+            if self.project:
+                self.fields[
+                    "payment_certificate"
+                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
+                    "-created_at"
+                )
+
+        class Meta:
+            model = SpecialItemTransaction
+            fields = [
+                "transaction_type",
+                "amount",
+                "description",
+                "date",
+                "payment_certificate",
+            ]
+
+    model = SpecialItemTransaction
+    template_name = "ledger/special_item_form.html"
+    roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
+    form_class = CreateForm
+    project_slug = "project_pk"
+
+    def get_project(self):
+        """Get the project from URL and verify ownership."""
+        return get_object_or_404(
+            Project,
+            pk=self.kwargs["project_pk"],
+        )
+
+    def get_form_kwargs(self):
+        """Pass project to form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
+
+    def form_valid(self, form):
+        """Set project and captured_by before saving."""
+        form.instance.project = self.get_project()
+        form.instance.captured_by = self.request.user
+        messages.success(self.request, "Special item transaction created successfully!")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        """Redirect to special item list."""
+        return reverse(
+            "bill_of_quantities:special-item-ledger-list",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+    def get_context_data(self, **kwargs):
+        """Add project to context."""
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        context["is_create"] = True
+        return context
+
+
+class SpecialItemTransactionUpdateView(SubscriptionAndRoleRequiredMixin, UpdateView):
+    """Update a special item transaction."""
+
+    class UpdateForm(forms.ModelForm):
+        def __init__(self, *args, **kwargs):
+            self.project = kwargs.pop("project", None)
+            super().__init__(*args, **kwargs)
+            self.fields["date"].widget = styled_date_input
+
+            # Filter payment certificates to current project
+            if self.project:
+                self.fields[
+                    "payment_certificate"
+                ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
+                    "-created_at"
+                )
+
+        class Meta:
+            model = SpecialItemTransaction
+            fields = [
+                "transaction_type",
+                "amount",
+                "description",
+                "date",
+                "payment_certificate",
+            ]
+
+    model = SpecialItemTransaction
+    template_name = "ledger/special_item_form.html"
+    roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
+    form_class = UpdateForm
+    project_slug = "project_pk"
+
+    def get_project(self):
+        """Get the project from URL and verify ownership."""
+        return get_object_or_404(
+            Project,
+            pk=self.kwargs["project_pk"],
+        )
+
+    def get_form_kwargs(self):
+        """Pass project to form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
+
+    def get_queryset(self):
+        """Filter by project."""
+        return SpecialItemTransaction.objects.filter(
+            project=self.get_project(),
+            deleted=False,
+        )
+
+    def form_valid(self, form):
+        """Add success message."""
+        messages.success(self.request, "Special item transaction updated successfully!")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        """Redirect to special item list."""
+        return reverse(
+            "bill_of_quantities:special-item-ledger-list",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+    def get_context_data(self, **kwargs):
+        """Add project to context."""
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        context["is_create"] = False
+        return context
+
+
+class SpecialItemTransactionDeleteView(SubscriptionAndRoleRequiredMixin, DeleteView):
+    """Delete a special item transaction."""
+
+    model = SpecialItemTransaction
+    template_name = "ledger/special_item_confirm_delete.html"
+    roles = [Role.USER]
+    required_tiers = [Subscription.PAYMENTS_AND_INVOICES]
+    project_slug = "project_pk"
+
+    def get_project(self):
+        """Get the project from URL and verify ownership."""
+        return get_object_or_404(
+            Project,
+            pk=self.kwargs["project_pk"],
+        )
+
+    def get_queryset(self):
+        """Filter by project."""
+        return SpecialItemTransaction.objects.filter(
+            project=self.get_project(),
+            deleted=False,
+        )
+
+    def form_valid(self, form):
+        """Soft delete the transaction."""
+        self.object = self.get_object()
+        self.object.soft_delete()
+        messages.success(self.request, "Special item transaction deleted successfully!")
+        return redirect(self.get_success_url())
+
+    def get_success_url(self):
+        """Redirect to special item list."""
+        return reverse(
+            "bill_of_quantities:special-item-ledger-list",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+    def get_context_data(self, **kwargs):
+        """Add project to context."""
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
         return context
