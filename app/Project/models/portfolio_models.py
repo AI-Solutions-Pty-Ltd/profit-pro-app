@@ -11,7 +11,7 @@ from app.core.Utilities.models import BaseModel, sum_queryset
 from app.Project.models import Project
 
 if TYPE_CHECKING:
-    from app.Project.models.category_models import ProjectCategory
+    from app.Project.models import ProjectCategory
 
 
 class Portfolio(BaseModel):

@@ -12,8 +12,11 @@ from app.BillOfQuantities.models.payment_certificate_models import PaymentCertif
 from app.BillOfQuantities.models.structure_models import LineItem
 from app.core.Utilities.image_resize import ImageResize
 from app.core.Utilities.models import BaseModel, sum_queryset
-from app.Project.models.category_models import ProjectCategory, ProjectSubCategory
-from app.Project.models.company_models import Company
+from app.Project.categories.category_models import (
+    ProjectCategory,
+    ProjectSubCategory,
+)
+from app.Project.company.company_models import Company
 
 if TYPE_CHECKING:
     from app.Account.models import Account

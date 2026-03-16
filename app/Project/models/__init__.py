@@ -1,8 +1,8 @@
+from app.Project.categories.category_models import ProjectCategory, ProjectSubCategory
+from app.Project.company.company_models import Company
 from app.Project.documents.document_models import ProjectDocument
 from app.Project.projects.projects_models import Project
 
-from .category_models import ProjectCategory, ProjectSubCategory
-from .company_models import Company
 from .compliance_models import (
     AdministrativeCompliance,
     AdministrativeComplianceDialog,

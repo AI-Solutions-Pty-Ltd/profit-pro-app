@@ -2,7 +2,7 @@
 
 from django.db import migrations, models
 
-import app.Project.models.company_models
+import app.Project.company.company_models
 
 
 class Migration(migrations.Migration):
@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 help_text="Company logo (recommended size: 200x200px)",
                 null=True,
-                upload_to=app.Project.models.company_models.company_logo_upload_path,
+                upload_to=app.Project.company.company_models.company_logo_upload_path,
             ),
         ),
     ]
