@@ -5,7 +5,7 @@ from typing import Any
 from django.contrib import messages
 from django.db import models
 from django.db.models import QuerySet
-from django.http import Http404, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.generic import DeleteView, DetailView, FormView, ListView
@@ -16,7 +16,7 @@ from app.core.Utilities.permissions import (
     UserHasProjectRoleGenericMixin,
 )
 from app.Project.forms import ProjectUserCreateForm
-from app.Project.models import Project, ProjectRole, Role
+from app.Project.models import ProjectRole, Role
 
 # Import the task
 from app.Project.tasks import send_project_user_welcome_email
