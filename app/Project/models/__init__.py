@@ -1,7 +1,7 @@
 from app.Project.documents.document_models import ProjectDocument
 from app.Project.projects.projects_models import Project
 
-from .category_models import ProjectCategory
+from .category_models import ProjectCategory, ProjectSubCategory
 from .company_models import Company
 from .compliance_models import (
     AdministrativeCompliance,
@@ -29,7 +29,7 @@ __all__ = [
     "Company",
     "ContractualCompliance",
     "ContractualComplianceDialog",
-    "ContractualComplianceFile",
+    "ContractualComplianceDialogFile",
     "FinalAccountCompliance",
     "FinalAccountComplianceDialog",
     "FinalAccountComplianceDialogFile",
@@ -38,6 +38,7 @@ __all__ = [
     "Portfolio",
     "Project",
     "ProjectCategory",
+    "ProjectSubCategory",
     "ProjectDocument",
     "ProjectImpact",
     "ProjectRole",

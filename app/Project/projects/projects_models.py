@@ -12,7 +12,7 @@ from app.BillOfQuantities.models.payment_certificate_models import PaymentCertif
 from app.BillOfQuantities.models.structure_models import LineItem
 from app.core.Utilities.image_resize import ImageResize
 from app.core.Utilities.models import BaseModel, sum_queryset
-from app.Project.models.category_models import ProjectCategory
+from app.Project.models.category_models import ProjectCategory, ProjectSubCategory
 from app.Project.models.company_models import Company
 
 if TYPE_CHECKING:
@@ -165,7 +165,6 @@ class Project(BaseModel):
         blank=True,
         related_name="final_account_project",
     )
-    discipline = models.ForeignKey
     client = models.ForeignKey(
         Company,
         on_delete=models.SET_NULL,
@@ -182,6 +181,14 @@ class Project(BaseModel):
     )
     category = models.ForeignKey(
         ProjectCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="projects",
+        help_text="Project category (e.g., Education, Health, Roads)",
+    )
+    sub_category = models.ForeignKey(
+        ProjectSubCategory,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

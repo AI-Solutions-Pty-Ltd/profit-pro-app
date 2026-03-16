@@ -30,9 +30,9 @@ from app.core.Utilities.permissions import (
     UserHasProjectRoleGenericMixin,
 )
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Project.forms import FilterForm, ProjectForm
-from app.Project.forms.forms import BasicProjectCreateForm
 from app.Project.models import PlannedValue, Project, ProjectRole, Role
+
+from .project_forms import BasicProjectCreateForm, FilterForm, ProjectForm
 
 
 class ProjectMixin(

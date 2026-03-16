@@ -2,7 +2,6 @@
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.db.models import QuerySet
 
 from app.Account.models import Account
 from app.Project.models import (
@@ -15,84 +14,10 @@ from app.Project.models import (
     Project,
     ProjectCategory,
     ProjectDocument,
+    ProjectSubCategory,
     Risk,
     Signatories,
 )
-
-
-class FilterForm(forms.Form):
-    """Form for filtering projects."""
-
-    search = forms.CharField(
-        required=False,
-        widget=forms.TextInput(
-            attrs={
-                "placeholder": "Search projects...",
-            }
-        ),
-    )
-    category = forms.ModelChoiceField(
-        queryset=ProjectCategory.objects.all(),
-        required=False,
-        label="Filter by Category",
-        empty_label="All Categories",
-        widget=forms.Select(
-            attrs={
-                "onchange": "this.form.submit()",
-            }
-        ),
-    )
-    status = forms.ChoiceField(
-        choices=[("ALL", "All Statuses")] + list(Project.Status.choices),
-        required=False,
-        initial="ALL",
-        widget=forms.Select(
-            attrs={
-                "onchange": "this.form.submit()",
-            }
-        ),
-    )
-    active_projects = forms.BooleanField(
-        required=False,
-        label="Active Projects",
-    )
-    projects = forms.ModelChoiceField(
-        queryset=Project.objects.none(),
-        required=False,
-        label="Jump to Project",
-        widget=forms.Select(
-            attrs={
-                "onchange": "this.form.submit()",
-            }
-        ),
-    )
-    consultant = forms.ModelChoiceField(
-        queryset=Account.objects.none(),
-        required=False,
-        empty_label="All Consultants",
-        widget=forms.Select(
-            attrs={
-                "onchange": "this.form.submit()",
-            }
-        ),
-    )
-
-    def __init__(
-        self,
-        *args,
-        user: Account | None = None,
-        projects_queryset: QuerySet[Project] | None = None,
-        consultant_queryset: QuerySet[Account] | None = None,
-        **kwargs,
-    ):
-        """Initialize filter form with user-specific querysets."""
-        super().__init__(*args, **kwargs)
-
-        # Set custom querysets if provided
-        if projects_queryset is not None:
-            self.fields["projects"].queryset = projects_queryset  # type: ignore
-        if consultant_queryset is not None:
-            self.fields["consultant"].queryset = consultant_queryset  # type: ignore
 
 
 class ProjectCategoryForm(forms.ModelForm):
@@ -122,105 +47,31 @@ class ProjectCategoryForm(forms.ModelForm):
         }
 
 
-class BasicProjectCreateForm(forms.ModelForm):
+class ProjectSubCategoryForm(forms.ModelForm):
+    """Form for creating and updating project subcategories."""
+
     class Meta:
-        model = Project
-        fields = ["name"]
+        model = ProjectSubCategory
+        fields = ["name", "description"]
         widgets = {
             "name": forms.TextInput(
                 attrs={
-                    "placeholder": "Enter project name",
-                }
-            ),
-        }
-
-
-class ProjectForm(forms.ModelForm):
-    """Form for creating and updating projects."""
-
-    class Meta:
-        model = Project
-        fields = [
-            "name",
-            "description",
-            "logo",
-            "category",
-            "start_date",
-            "end_date",
-            "contract_number",
-            "contract_clause",
-            "status",
-            "vat",
-            "payment_terms",
-        ]
-        widgets = {
-            "name": forms.TextInput(
-                attrs={
-                    "placeholder": "Enter project name",
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter subcategory name (e.g., Top Structures, Drawings)",
                 }
             ),
             "description": forms.Textarea(
                 attrs={
-                    "placeholder": "Enter project description (optional)",
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Optional description of this subcategory",
                     "rows": 3,
                 }
             ),
-            "start_date": forms.DateInput(
-                attrs={
-                    "type": "date",
-                }
-            ),
-            "end_date": forms.DateInput(
-                attrs={
-                    "type": "date",
-                }
-            ),
-            "contract_number": forms.TextInput(
-                attrs={
-                    "placeholder": "Enter contract number",
-                }
-            ),
-            "contract_clause": forms.Textarea(
-                attrs={
-                    "placeholder": "Enter contract clause",
-                    "rows": 3,
-                }
-            ),
-            "logo": forms.FileInput(
-                attrs={
-                    "accept": ".jpg,.jpeg,.png,.gif,.svg",
-                }
-            ),
-            "category": forms.Select(),
-            "vat": forms.CheckboxInput(),
-            "payment_terms": forms.Select(),
         }
         labels = {
-            "name": "Project Name",
-            "logo": "Project Logo",
-            "contract_number": "Payment Certificate Contract Number",
-            "contract_clause": "Payment Certificate Contract Clause",
-            "bank_account_name": "Account Name",
-            "bank_account_number": "Account Number",
-            "bank_branch_code": "Branch Code",
-            "bank_swift_code": "SWIFT Code",
-            "vat_number": "VAT/Tax Number",
+            "name": "Subcategory Name",
+            "description": "Description (Optional)",
         }
-        help_texts = {
-            "logo": "Upload a logo for invoices and documents (JPG, PNG, GIF, SVG). Recommended size: 900x600px",
-            "category": "Select the project category",
-        }
-
-    def clean(self):
-        """Validate that end_date is after start_date."""
-        cleaned_data = super().clean() or {}
-        start_date = cleaned_data.get("start_date")
-        end_date = cleaned_data.get("end_date")
-
-        if start_date and end_date and end_date < start_date:
-            raise forms.ValidationError("End date must be after start date.")
-
-        return cleaned_data
 
 
 class ProjectContractorForm(forms.ModelForm):

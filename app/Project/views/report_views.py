@@ -20,9 +20,9 @@ from app.core.Utilities.mixins import (
 )
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Project.forms import FilterForm
 from app.Project.models import Portfolio, Project
 from app.Project.models.planned_value_models import PlannedValue
+from app.Project.projects.project_forms import FilterForm
 
 
 class ProjectAccessMixin(UserHasGroupGenericMixin, BreadcrumbMixin):

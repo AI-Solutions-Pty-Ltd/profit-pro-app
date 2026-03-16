@@ -29,3 +29,28 @@ class ProjectCategory(BaseModel):
         verbose_name = "Project Category"
         verbose_name_plural = "Project Categories"
         ordering = ["name"]
+
+
+class ProjectSubCategory(BaseModel):
+    """Category for classifying projects.
+
+    Examples: Top structures, drawings, etc etc
+    """
+
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Category name (e.g., Education, Health, Roads)",
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Optional description of the category",
+    )
+
+    def __str__(self) -> str:
+        return self.name
+
+    class Meta:
+        verbose_name = "Project Sub Category"
+        verbose_name_plural = "Project Sub Categories"
+        ordering = ["name"]
