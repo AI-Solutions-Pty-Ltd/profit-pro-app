@@ -18,10 +18,9 @@ from app.Project.models.company_models import Company
 if TYPE_CHECKING:
     from app.Account.models import Account
     from app.BillOfQuantities.models import Structure
-
-    from .planned_value_models import PlannedValue
-    from .project_roles_models import ProjectRole
-    from .signatories_models import Signatories
+    from app.Project.models.planned_value_models import PlannedValue
+    from app.Project.models.project_roles_models import ProjectRole
+    from app.Project.models.signatories_models import Signatories
 
 
 def get_months_between(start_date: date, end_date: date) -> list[date]:
@@ -166,7 +165,7 @@ class Project(BaseModel):
         blank=True,
         related_name="final_account_project",
     )
-
+    discipline = models.ForeignKey
     client = models.ForeignKey(
         Company,
         on_delete=models.SET_NULL,

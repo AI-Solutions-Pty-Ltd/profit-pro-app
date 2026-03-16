@@ -8,7 +8,7 @@ from django.db.models import QuerySet
 from app.Account.models import Account
 from app.BillOfQuantities.models.forecast_models import Forecast
 from app.core.Utilities.models import BaseModel, sum_queryset
-from app.Project.models.projects_models import Project
+from app.Project.models import Project
 
 if TYPE_CHECKING:
     from app.Project.models.category_models import ProjectCategory

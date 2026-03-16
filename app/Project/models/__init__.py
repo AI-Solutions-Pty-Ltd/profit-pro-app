@@ -1,4 +1,5 @@
 from app.Project.documents.document_models import ProjectDocument
+from app.Project.projects.projects_models import Project
 
 from .category_models import ProjectCategory
 from .company_models import Company
@@ -18,7 +19,6 @@ from .milestone_models import Milestone
 from .planned_value_models import PlannedValue
 from .portfolio_models import Portfolio
 from .project_roles_models import ProjectRole, Role
-from .projects_models import Project
 from .risk_models import Risk, RiskStatus
 from .signatories_models import Signatories
 

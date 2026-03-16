@@ -2,7 +2,7 @@ from django.db import models
 
 from app.Account.models import Account
 from app.core.Utilities.models import BaseModel
-from app.Project.models.projects_models import Project
+from app.Project.models import Project
 
 
 class Signatories(BaseModel):

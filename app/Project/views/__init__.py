@@ -1,4 +1,5 @@
 from app.Project.documents import document_views
+from app.Project.projects import project_views
 
 from . import (
     category_views,
@@ -8,7 +9,6 @@ from . import (
     planned_value_views,
     portfolio_views,
     project_role_views,
-    project_views,
     report_views,
     risk_views,
     signatory_views,
