@@ -226,6 +226,8 @@ class ProjectFilterForm(forms.Form):
         consultant_queryset: QuerySet[Account] | None = None,
         client_queryset: QuerySet[Company] | None = None,
         contractor_queryset: QuerySet[Company] | None = None,
+        subcategory_queryset: QuerySet[ProjectSubCategory] | None = None,
+        discipline_queryset: QuerySet[ProjectDiscipline] | None = None,
         **kwargs,
     ):
         """Initialize filter form with user-specific querysets."""
@@ -240,3 +242,7 @@ class ProjectFilterForm(forms.Form):
             self.fields["client"].queryset = client_queryset  # type: ignore
         if contractor_queryset is not None:
             self.fields["contractor"].queryset = contractor_queryset  # type: ignore
+        if subcategory_queryset is not None:
+            self.fields["subcategory"].queryset = subcategory_queryset  # type: ignore
+        if discipline_queryset is not None:
+            self.fields["discipline"].queryset = discipline_queryset  # type: ignore

@@ -35,10 +35,6 @@ class ProjectUserListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListV
     roles = [Role.ADMIN]
     project_slug = "pk"
 
-    def get_project(self) -> Project:
-        """Get the project and verify access."""
-        return get_object_or_404(Project, pk=self.kwargs["pk"], users=self.request.user)
-
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
         return [
@@ -91,10 +87,6 @@ class ProjectUserDetailView(
     context_object_name = "user"
     roles = [Role.ADMIN]
     project_slug = "pk"
-
-    def get_project(self) -> Project:
-        """Get the project and verify access."""
-        return get_object_or_404(Project, pk=self.kwargs["pk"], users=self.request.user)
 
     def get_object(self, queryset: QuerySet[Account] | None = None) -> Account:
         """Get the user."""
@@ -171,15 +163,6 @@ class ProjectUserAddView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListVi
     context_object_name = "available_users"
     roles = [Role.ADMIN]
     project_slug = "pk"
-
-    def get_project(self) -> Project:
-        """Get the project and verify access."""
-        user: Account = self.request.user  # type: ignore
-        project = Project.objects.get(pk=self.kwargs["pk"])
-        if not project.users.filter(pk=user.pk).exists():
-            messages.error(self.request, "User does not have access to this project")
-            raise Http404("User does not have access to this project")
-        return project
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
@@ -261,15 +244,6 @@ class ProjectUserCreateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, For
     template_name = "portfolio/registers/project_user_create.html"
     project_slug = "pk"
     roles = [Role.ADMIN]
-
-    def get_project(self) -> Project:
-        """Get the project and verify access."""
-        user: Account = self.request.user  # type: ignore
-        project = Project.objects.get(pk=self.kwargs["pk"])
-        if not project.users.filter(pk=user.pk).exists():
-            messages.error(self.request, "User does not have access to this project")
-            raise Http404("User does not have access to this project")
-        return project
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
@@ -374,10 +348,6 @@ class ProjectUserRemoveView(
             messages.error(request, "You cannot remove yourself from this project.")
             return redirect("project:project-users", pk=self.get_project().pk)
         return super().dispatch(request, *args, **kwargs)
-
-    def get_project(self) -> Project:
-        """Get the project and verify access."""
-        return get_object_or_404(Project, pk=self.kwargs["pk"], users=self.request.user)
 
     def get_object(
         self, queryset: models.query.QuerySet[Account] | None = None
