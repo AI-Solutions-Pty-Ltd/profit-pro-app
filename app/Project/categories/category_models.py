@@ -54,3 +54,28 @@ class ProjectSubCategory(BaseModel):
         verbose_name = "Project Sub Category"
         verbose_name_plural = "Project Sub Categories"
         ordering = ["name"]
+
+
+class ProjectDiscipline(BaseModel):
+    """Discipline for classifying projects.
+
+    Examples: Civil, Electrical, Mechanical, Structural, Architectural, etc.
+    """
+
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Discipline name (e.g., Civil, Electrical, Mechanical)",
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Optional description of the discipline",
+    )
+
+    def __str__(self) -> str:
+        return self.name
+
+    class Meta:
+        verbose_name = "Project Discipline"
+        verbose_name_plural = "Project Disciplines"
+        ordering = ["name"]

@@ -1,4 +1,4 @@
-"""Views for Project Category management."""
+"""Views for Project Discipline management."""
 
 from django.contrib import messages
 from django.http import JsonResponse
@@ -7,17 +7,17 @@ from django.views.generic import CreateView, DeleteView, ListView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
-from app.Project.models import ProjectCategory
+from app.Project.models import ProjectDiscipline
 
-from .category_forms import ProjectCategoryForm
+from .category_forms import ProjectDisciplineForm
 
 
-class ProjectCategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
-    """List all project categories."""
+class ProjectDisciplineListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
+    """List all project disciplines."""
 
-    model = ProjectCategory
-    template_name = "categories/category_list.html"
-    context_object_name = "categories"
+    model = ProjectDiscipline
+    template_name = "categories/discipline_list.html"
+    context_object_name = "disciplines"
     permissions = ["contractor", "consultant"]
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
@@ -25,49 +25,46 @@ class ProjectCategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListVie
             BreadcrumbItem(
                 title="Portfolio", url=reverse("project:portfolio-dashboard")
             ),
-            BreadcrumbItem(title="Project Categories", url=None),
+            BreadcrumbItem(title="Project Disciplines", url=None),
         ]
 
     def get_queryset(self):
-        """Return categories ordered by name."""
-        return ProjectCategory.objects.all().order_by("name")
+        """Return disciplines ordered by name."""
+        return ProjectDiscipline.objects.all().order_by("name")
 
     def get_context_data(self, **kwargs):
         """Add form for inline creation."""
         context = super().get_context_data(**kwargs)
-        context["form"] = ProjectCategoryForm()
+        context["form"] = ProjectDisciplineForm()
         return context
 
 
-class ProjectCategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
-    """Create a new project category."""
+class ProjectDisciplineCreateView(
+    UserHasGroupGenericMixin, BreadcrumbMixin, CreateView
+):
+    """Create a new project discipline."""
 
-    model = ProjectCategory
-    form_class = ProjectCategoryForm
-    template_name = "categories/category_form.html"
+    model = ProjectDiscipline
+    form_class = ProjectDisciplineForm
+    template_name = "categories/discipline_form.html"
     permissions = ["contractor", "consultant"]
-    success_url = reverse_lazy("project:category-list")
+    success_url = reverse_lazy("project:discipline-list")
 
-    def get_breadcrumbs(self: "ProjectCategoryCreateView") -> list[BreadcrumbItem]:
+    def get_breadcrumbs(self: "ProjectDisciplineCreateView") -> list[BreadcrumbItem]:
         return [
             {"title": "Portfolio", "url": reverse("project:portfolio-dashboard")},
-            {"title": "Project Categories", "url": reverse("project:category-list")},
-            {"title": "Add Category", "url": None},
+            {"title": "Project Disciplines", "url": reverse("project:discipline-list")},
+            {"title": "Add Discipline", "url": None},
         ]
 
-    def form_valid(self: "ProjectCategoryCreateView", form):
+    def form_valid(self: "ProjectDisciplineCreateView", form):
         """Handle successful form submission."""
-        # Save the form manually to get the object
-        self.object: ProjectCategory = (
-            form.save()
-        )  # This creates and returns the object
+        self.object: ProjectDiscipline = form.save()
 
-        # Now you can use self.object immediately
         messages.success(
-            self.request, f"Category '{self.object.name}' created successfully."
+            self.request, f"Discipline '{self.object.name}' created successfully."
         )
 
-        # Handle AJAX requests
         if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse(
                 {
@@ -78,7 +75,6 @@ class ProjectCategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, Creat
                 }
             )
 
-        # For non-AJAX, call super() to handle the redirect
         return super().form_valid(form)
 
     def form_invalid(self, form):
@@ -88,13 +84,15 @@ class ProjectCategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, Creat
         return super().form_invalid(form)
 
 
-class ProjectCategoryDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView):
-    """Delete a project category."""
+class ProjectDisciplineDeleteView(
+    UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView
+):
+    """Delete a project discipline."""
 
-    model = ProjectCategory
-    template_name = "categories/category_confirm_delete.html"
+    model = ProjectDiscipline
+    template_name = "categories/discipline_confirm_delete.html"
     permissions = ["contractor", "consultant"]
-    success_url = reverse_lazy("project:category-list")
+    success_url = reverse_lazy("project:discipline-list")
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
@@ -102,18 +100,17 @@ class ProjectCategoryDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, Delet
                 title="Portfolio", url=reverse("project:portfolio-dashboard")
             ),
             BreadcrumbItem(
-                title="Project Categories", url=reverse("project:category-list")
+                title="Project Disciplines", url=reverse("project:discipline-list")
             ),
-            BreadcrumbItem(title="Delete Category", url=None),
+            BreadcrumbItem(title="Delete Discipline", url=None),
         ]
 
     def form_valid(self, form):
         """Handle successful deletion."""
-        category_name = self.object.name
+        discipline_name = self.object.name
         response = super().form_valid(form)
-        messages.success(self.request, f"Category '{category_name}' deleted.")
+        messages.success(self.request, f"Discipline '{discipline_name}' deleted.")
 
-        # Handle AJAX requests
         if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse({"success": True})
         return response
@@ -121,11 +118,10 @@ class ProjectCategoryDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, Delet
     def delete(self, request, *args, **kwargs):
         """Handle DELETE request (soft delete)."""
         self.object = self.get_object()
-        category_name = self.object.name
+        discipline_name = self.object.name
 
-        # Use soft delete
         self.object.soft_delete()
-        messages.success(request, f"Category '{category_name}' deleted.")
+        messages.success(request, f"Discipline '{discipline_name}' deleted.")
 
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse({"success": True})
@@ -135,15 +131,14 @@ class ProjectCategoryDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, Delet
     def post(self, request, *args, **kwargs):
         """Handle POST request for deletion."""
         self.object = self.get_object()
-        category_name = self.object.name
+        discipline_name = self.object.name
 
-        # Use soft delete
         self.object.soft_delete()
-        messages.success(request, f"Category '{category_name}' deleted.")
+        messages.success(request, f"Discipline '{discipline_name}' deleted.")
 
         if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse({"success": True})
 
         from django.shortcuts import redirect
 
-        return redirect("project:category-list")
+        return redirect("project:discipline-list")

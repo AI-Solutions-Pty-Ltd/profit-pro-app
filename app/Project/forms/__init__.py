@@ -1,5 +1,10 @@
 """Project forms."""
 
+from app.Project.categories.category_forms import (
+    ProjectCategoryForm,
+    ProjectDisciplineForm,
+    ProjectSubCategoryForm,
+)
 from app.Project.projects.project_forms import FilterForm, ProjectForm
 
 from .compliance_forms import (
@@ -17,10 +22,8 @@ from .forms import (
     FinalAccountComplianceForm,
     MilestoneForm,
     PlannedValueForm,
-    ProjectCategoryForm,
     ProjectContractorForm,
     ProjectDocumentForm,
-    ProjectSubCategoryForm,
     ProjectUserCreateForm,
     RiskForm,
     SignatoryForm,
@@ -35,6 +38,7 @@ __all__ = [
     "FilterForm",
     "ProjectCategoryForm",
     "ProjectSubCategoryForm",
+    "ProjectDisciplineForm",
     "ProjectForm",
     "ProjectContractorForm",
     "ClientCreateUpdateForm",

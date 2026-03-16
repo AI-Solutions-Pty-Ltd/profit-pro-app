@@ -1,4 +1,4 @@
-from app.Project.categories import category_views, subcategory_views
+from app.Project.categories import category_views, discipline_views, subcategory_views
 from app.Project.documents import document_views
 from app.Project.projects import project_views
 
@@ -18,6 +18,7 @@ from . import (
 __all__ = [
     "category_views",
     "subcategory_views",
+    "discipline_views",
     "compliance_views",
     "document_views",
     "forecast_hub_views",

@@ -13,7 +13,7 @@ from app.Project.models import (
 class BasicProjectCreateForm(forms.ModelForm):
     class Meta:
         model = Project
-        fields = ["name"]
+        fields = ["name", "category", "sub_category", "discipline"]
         widgets = {
             "name": forms.TextInput(
                 attrs={

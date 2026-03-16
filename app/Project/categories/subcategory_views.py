@@ -7,15 +7,16 @@ from django.views.generic import CreateView, DeleteView, ListView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
-from app.Project.forms import ProjectSubCategoryForm
 from app.Project.models import ProjectSubCategory
+
+from .category_forms import ProjectSubCategoryForm
 
 
 class ProjectSubCategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     """List all project subcategories."""
 
     model = ProjectSubCategory
-    template_name = "portfolio/subcategory_list.html"
+    template_name = "categories/subcategory_list.html"
     context_object_name = "subcategories"
     permissions = ["contractor", "consultant"]
 
@@ -45,7 +46,7 @@ class ProjectSubCategoryCreateView(
 
     model = ProjectSubCategory
     form_class = ProjectSubCategoryForm
-    template_name = "portfolio/subcategory_form.html"
+    template_name = "categories/subcategory_form.html"
     permissions = ["contractor", "consultant"]
     success_url = reverse_lazy("project:subcategory-list")
 
@@ -92,7 +93,7 @@ class ProjectSubCategoryDeleteView(
     """Delete a project subcategory."""
 
     model = ProjectSubCategory
-    template_name = "portfolio/subcategory_confirm_delete.html"
+    template_name = "categories/subcategory_confirm_delete.html"
     permissions = ["contractor", "consultant"]
     success_url = reverse_lazy("project:subcategory-list")
 

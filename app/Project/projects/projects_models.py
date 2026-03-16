@@ -16,7 +16,7 @@ from app.Project.categories.category_models import (
     ProjectCategory,
     ProjectSubCategory,
 )
-from app.Project.company.company_models import Company
+from app.Project.models import Company, ProjectDiscipline
 
 if TYPE_CHECKING:
     from app.Account.models import Account
@@ -197,6 +197,14 @@ class Project(BaseModel):
         blank=True,
         related_name="projects",
         help_text="Project category (e.g., Education, Health, Roads)",
+    )
+    discipline = models.ForeignKey(
+        ProjectDiscipline,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="projects",
+        help_text="Project discipline",
     )
 
     # Payment Terms

@@ -9,6 +9,7 @@ _prefix = "project/"
 urlpatterns = [
     path("categories/", include("app.Project.categories.category_urls")),
     path("subcategories/", include("app.Project.categories.subcategory_urls")),
+    path("discipline/", include("app.Project.categories.discipline_urls")),
     path("company/", include("app.Project.company.company_urls")),
     path("compliance/", include("app.Project.urls.compliance_urls")),
     path("document/", include("app.Project.documents.document_urls")),
