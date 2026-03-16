@@ -5,8 +5,11 @@ from django.db.models import QuerySet
 
 from app.Account.models import Account
 from app.Project.models import (
+    Company,
     Project,
     ProjectCategory,
+    ProjectDiscipline,
+    ProjectSubCategory,
 )
 
 
@@ -33,6 +36,8 @@ class ProjectForm(forms.ModelForm):
             "description",
             "logo",
             "category",
+            "sub_category",
+            "discipline",
             "start_date",
             "end_date",
             "contract_number",
@@ -111,7 +116,7 @@ class ProjectForm(forms.ModelForm):
         return cleaned_data
 
 
-class FilterForm(forms.Form):
+class ProjectFilterForm(forms.Form):
     """Form for filtering projects."""
 
     search = forms.CharField(
@@ -125,8 +130,30 @@ class FilterForm(forms.Form):
     category = forms.ModelChoiceField(
         queryset=ProjectCategory.objects.all(),
         required=False,
-        label="Filter by Category",
+        label="Categories",
         empty_label="All Categories",
+        widget=forms.Select(
+            attrs={
+                "onchange": "this.form.submit()",
+            }
+        ),
+    )
+    subcategory = forms.ModelChoiceField(
+        queryset=ProjectSubCategory.objects.all(),
+        required=False,
+        label="Subcategories",
+        empty_label="All Subcategories",
+        widget=forms.Select(
+            attrs={
+                "onchange": "this.form.submit()",
+            }
+        ),
+    )
+    discipline = forms.ModelChoiceField(
+        queryset=ProjectDiscipline.objects.all(),
+        required=False,
+        label="Disciplines",
+        empty_label="All Disciplines",
         widget=forms.Select(
             attrs={
                 "onchange": "this.form.submit()",
@@ -161,6 +188,29 @@ class FilterForm(forms.Form):
         queryset=Account.objects.none(),
         required=False,
         empty_label="All Consultants",
+        label="Consultants",
+        widget=forms.Select(
+            attrs={
+                "onchange": "this.form.submit()",
+            }
+        ),
+    )
+    client = forms.ModelChoiceField(
+        queryset=Company.objects.none(),
+        required=False,
+        empty_label="All Clients",
+        label="Clients",
+        widget=forms.Select(
+            attrs={
+                "onchange": "this.form.submit()",
+            }
+        ),
+    )
+    contractor = forms.ModelChoiceField(
+        queryset=Company.objects.none(),
+        required=False,
+        empty_label="All Contractors",
+        label="Contractors",
         widget=forms.Select(
             attrs={
                 "onchange": "this.form.submit()",
@@ -174,6 +224,8 @@ class FilterForm(forms.Form):
         user: Account | None = None,
         projects_queryset: QuerySet[Project] | None = None,
         consultant_queryset: QuerySet[Account] | None = None,
+        client_queryset: QuerySet[Company] | None = None,
+        contractor_queryset: QuerySet[Company] | None = None,
         **kwargs,
     ):
         """Initialize filter form with user-specific querysets."""
@@ -184,3 +236,7 @@ class FilterForm(forms.Form):
             self.fields["projects"].queryset = projects_queryset  # type: ignore
         if consultant_queryset is not None:
             self.fields["consultant"].queryset = consultant_queryset  # type: ignore
+        if client_queryset is not None:
+            self.fields["client"].queryset = client_queryset  # type: ignore
+        if contractor_queryset is not None:
+            self.fields["contractor"].queryset = contractor_queryset  # type: ignore

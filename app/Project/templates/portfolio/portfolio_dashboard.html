@@ -21,42 +21,187 @@
                     <!-- Filter Form -->
                     <form id="categoryFilterForm"
                           method="get"
-                          class="flex flex-wrap items-center gap-3"
+                          class="centered-content"
                           aria-label="Filter portfolio projects">
-                        <!-- Category Filter -->
-                        <div class="min-w-[150px]">{{ filter_form.category|as_crispy_field }}</div>
-                        <!-- Project Jump -->
-                        <div class="min-w-[200px]">{{ filter_form.projects|as_crispy_field }}</div>
-                        <!-- Consultant Filter -->
-                        <div class="min-w-[150px]">{{ filter_form.consultant|as_crispy_field }}</div>
-                        <!-- Clear Filters Button -->
-                        {% if filter_form.category.value or filter_form.consultant.value %}
-                            <button type="button"
-                                    onclick="window.location.href='{% url 'project:portfolio-dashboard' %}'"
-                                    class="inline-flex items-center px-3 py-2 text-sm text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors"
-                                    title="Clear all filters"
-                                    aria-label="Clear filters">
-                                {% heroicon_outline "x-mark" size="16" class="mr-1" %}
-                                Clear
-                            </button>
-                        {% endif %}
+                        <!-- Filter Section -->
+                        <div class="flex items-center gap-3">
+                            <!-- Filter Icon and Label -->
+                            <div class="flex items-center gap-2">
+                                {% heroicon_outline "funnel" size="18" class="text-gray-500" %}
+                                <label class="text-sm font-semibold text-gray-700">Filters</label>
+                            </div>
+                            <!-- Filter Dropdowns -->
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <!-- Classification Filters -->
+                                <div class="flex items-center gap-2 pr-3 border-r border-gray-300">
+                                    <!-- Category Filter -->
+                                    <div class="relative">
+                                        <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-white px-1">Category</span>
+                                        <select name="category"
+                                                onchange="this.form.submit()"
+                                                class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                            <option value="">All</option>
+                                            {% for category in filter_form.category.field.queryset %}
+                                                <option value="{{ category.pk }}"
+                                                        {% if filter_form.category.value|stringformat:"s" == category.pk|stringformat:"s" %}selected{% endif %}>
+                                                    {{ category.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                                    </div>
+                                    <!-- Subcategory Filter -->
+                                    <div class="relative">
+                                        <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-white px-1">Subcategory</span>
+                                        <select name="subcategory"
+                                                onchange="this.form.submit()"
+                                                class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                            <option value="">All</option>
+                                            {% for subcategory in filter_form.subcategory.field.queryset %}
+                                                <option value="{{ subcategory.pk }}"
+                                                        {% if filter_form.subcategory.value|stringformat:"s" == subcategory.pk|stringformat:"s" %}selected{% endif %}>
+                                                    {{ subcategory.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                                    </div>
+                                    <!-- Discipline Filter -->
+                                    <div class="relative">
+                                        <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-white px-1">Discipline</span>
+                                        <select name="discipline"
+                                                onchange="this.form.submit()"
+                                                class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                            <option value="">All</option>
+                                            {% for discipline in filter_form.discipline.field.queryset %}
+                                                <option value="{{ discipline.pk }}"
+                                                        {% if filter_form.discipline.value|stringformat:"s" == discipline.pk|stringformat:"s" %}selected{% endif %}>
+                                                    {{ discipline.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                                    </div>
+                                </div>
+                                <!-- People Filters -->
+                                <div class="flex items-center gap-2">
+                                    <!-- Client Filter -->
+                                    <div class="relative">
+                                        <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-white px-1">Client</span>
+                                        <select name="client"
+                                                onchange="this.form.submit()"
+                                                class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                            <option value="">All</option>
+                                            {% for client in filter_form.client.field.queryset %}
+                                                <option value="{{ client.pk }}"
+                                                        {% if filter_form.client.value|stringformat:"s" == client.pk|stringformat:"s" %}selected{% endif %}>
+                                                    {{ client.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                                    </div>
+                                    <!-- Contractor Filter -->
+                                    <div class="relative">
+                                        <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-white px-1">Contractor</span>
+                                        <select name="contractor"
+                                                onchange="this.form.submit()"
+                                                class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                            <option value="">All</option>
+                                            {% for contractor in filter_form.contractor.field.queryset %}
+                                                <option value="{{ contractor.pk }}"
+                                                        {% if filter_form.contractor.value|stringformat:"s" == contractor.pk|stringformat:"s" %}selected{% endif %}>
+                                                    {{ contractor.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                                    </div>
+                                    <!-- Consultant Filter -->
+                                    <div class="relative">
+                                        <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-white px-1">Consultant</span>
+                                        <select name="consultant"
+                                                onchange="this.form.submit()"
+                                                class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                            <option value="">All</option>
+                                            {% for consultant in filter_form.consultant.field.queryset %}
+                                                <option value="{{ consultant.pk }}"
+                                                        {% if filter_form.consultant.value|stringformat:"s" == consultant.pk|stringformat:"s" %}selected{% endif %}>
+                                                    {{ consultant.get_full_name|default:consultant.email }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Clear Filters Button -->
+                            {% if filter_form.category.value or filter_form.subcategory.value or filter_form.discipline.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
+                                <button type="button"
+                                        onclick="window.location.href='{% url 'project:portfolio-dashboard' %}'"
+                                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 hover:text-indigo-700 transition-all duration-200"
+                                        title="Clear all filters"
+                                        aria-label="Clear filters">
+                                    {% heroicon_outline "x-mark" size="14" class="mr-1" %}
+                                    Clear
+                                </button>
+                            {% endif %}
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
         <!-- Navigation Footer -->
         <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
-            <div class="flex items-center justify-end space-x-3">
-                <a href="{% url 'project:project-create' %}"
-                   class="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors">
-                    {% heroicon_outline "plus" size="20" class="mr-2" %}
-                    Create Project
-                </a>
-                <a href="{% url 'project:project-list' %}"
-                   class="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors">
-                    {% heroicon_outline "list-bullet" size="20" class="mr-2" %}
-                    View All Projects
-                </a>
+            <div class="flex items-center justify-between">
+                <!-- Project Jump -->
+                <form method="get" class="flex items-center gap-2">
+                    <label for="footerProjectJump" class="text-sm font-medium text-gray-600">Jump to Project:</label>
+                    <select name="projects"
+                            id="footerProjectJump"
+                            onchange="this.form.submit()"
+                            class="block w-64 px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">Select a project...</option>
+                        {% for project in filter_form.projects.field.queryset %}
+                            <option value="{{ project.pk }}"
+                                    {% if filter_form.projects.value|stringformat:"s" == project.pk|stringformat:"s" %}selected{% endif %}>
+                                {{ project.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <!-- Hidden fields to maintain filters -->
+                    <input type="hidden"
+                           name="category"
+                           value="{{ filter_form.category.value|default:'' }}">
+                    <input type="hidden"
+                           name="subcategory"
+                           value="{{ filter_form.subcategory.value|default:'' }}">
+                    <input type="hidden"
+                           name="discipline"
+                           value="{{ filter_form.discipline.value|default:'' }}">
+                    <input type="hidden"
+                           name="client"
+                           value="{{ filter_form.client.value|default:'' }}">
+                    <input type="hidden"
+                           name="contractor"
+                           value="{{ filter_form.contractor.value|default:'' }}">
+                    <input type="hidden"
+                           name="consultant"
+                           value="{{ filter_form.consultant.value|default:'' }}">
+                </form>
+                <!-- Action Buttons -->
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:project-create' %}"
+                       class="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors">
+                        {% heroicon_outline "plus" size="20" class="mr-2" %}
+                        Create Project
+                    </a>
+                    <a href="{% url 'project:project-list' %}"
+                       class="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors">
+                        {% heroicon_outline "list-bullet" size="20" class="mr-2" %}
+                        View All Projects
+                    </a>
+                </div>
             </div>
         </div>
     </header>

@@ -25,14 +25,18 @@ from app.BillOfQuantities.models import (
 )
 from app.core.Utilities.dates import get_end_of_month, get_previous_n_months
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import (
     UserHasProjectRoleGenericMixin,
 )
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Project.models import PlannedValue, Project, ProjectRole, Role
+from app.Project.models import (
+    PlannedValue,
+    Project,
+    ProjectRole,
+    Role,
+)
 
-from .project_forms import BasicProjectCreateForm, FilterForm, ProjectForm
+from .project_forms import BasicProjectCreateForm, ProjectFilterForm, ProjectForm
 
 
 class ProjectMixin(
@@ -53,7 +57,7 @@ class ProjectListView(
     """Project list view that reuses dashboard filtering logic."""
 
     template_name = "project/project_list.html"
-    filter_form: FilterForm | None = None
+    filter_form: ProjectFilterForm | None = None
     context_object_name = "projects"
     required_tiers = [Subscription.FREE_TIER]
 
@@ -65,8 +69,18 @@ class ProjectListView(
         form_data = request.GET or {}
         projects_queryset = None
         consultant_queryset = None
+        client_queryset = None
+        contractor_queryset = None
+        subcategory_queryset = None
+        discipline_queryset = None
 
         if request.user.is_authenticated:
+            from app.Project.models import (
+                Company,
+                ProjectDiscipline,
+                ProjectSubCategory,
+            )
+
             # Get user's projects
             projects_queryset = Project.objects.filter(
                 users=request.user,
@@ -75,19 +89,37 @@ class ProjectListView(
 
             # Get unique lead consultants from user's projects
             consultant_ids = (
-                projects_queryset.filter(lead_consultants__isnull=False)
-                .values_list("lead_consultants", flat=True)
+                Project.objects.filter(users=request.user)
+                .values_list("lead_consultant", flat=True)
                 .distinct()
             )
-            consultant_queryset = Account.objects.filter(
-                pk__in=consultant_ids
-            ).order_by("first_name", "last_name")
+            consultant_queryset = Account.objects.filter(id__in=consultant_ids)
 
-        self.filter_form = FilterForm(
+            # Get unique clients and contractors from user's projects
+            client_queryset = Company.objects.filter(
+                client_projects__in=projects_queryset
+            ).distinct()
+            contractor_queryset = Company.objects.filter(
+                contractor_projects__in=projects_queryset
+            ).distinct()
+
+            # Get unique subcategories and disciplines from user's projects
+            subcategory_queryset = ProjectSubCategory.objects.filter(
+                projects__in=projects_queryset
+            ).distinct()
+            discipline_queryset = ProjectDiscipline.objects.filter(
+                projects__in=projects_queryset
+            ).distinct()
+
+        self.filter_form = ProjectFilterForm(
             form_data,
             user=self.request.user,  # type: ignore
             projects_queryset=projects_queryset,
             consultant_queryset=consultant_queryset,
+            client_queryset=client_queryset,
+            contractor_queryset=contractor_queryset,
+            subcategory_queryset=subcategory_queryset,
+            discipline_queryset=discipline_queryset,
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
@@ -110,6 +142,8 @@ class ProjectListView(
         search = self.filter_form.cleaned_data.get("search")
         active_only = self.filter_form.cleaned_data.get("active_projects")
         category = self.filter_form.cleaned_data.get("category")
+        subcategory = self.filter_form.cleaned_data.get("subcategory")
+        discipline = self.filter_form.cleaned_data.get("discipline")
         status = self.filter_form.cleaned_data.get("status")
 
         if search:
@@ -118,6 +152,12 @@ class ProjectListView(
         if category:
             projects = projects.filter(category=category)
 
+        if subcategory:
+            projects = projects.filter(sub_category=subcategory)
+
+        if discipline:
+            projects = projects.filter(discipline=discipline)
+
         selected_project = self.filter_form.cleaned_data.get("projects")
         if selected_project:
             projects = projects.filter(pk=selected_project.pk)
@@ -125,6 +165,14 @@ class ProjectListView(
         consultant = self.filter_form.cleaned_data.get("consultant")
         if consultant:
             projects = projects.filter(lead_consultant=consultant)
+
+        client = self.filter_form.cleaned_data.get("client")
+        if client:
+            projects = projects.filter(client=client)
+
+        contractor = self.filter_form.cleaned_data.get("contractor")
+        if contractor:
+            projects = projects.filter(contractor=contractor)
 
         if status and status != "ALL":
             projects = projects.filter(status=status)
@@ -330,7 +378,7 @@ class ProjectManagementView(ProjectMixin, DetailView):
         context = super().get_context_data(**kwargs)
         line_items = self.object.line_items.all()
         # Calculate total
-        total = sum_queryset(line_items, "total_price")
+        total = line_items.aggregate(total=Sum("total_price"))["total"] or 0
         context["line_items_total"] = total
         context["current_date"] = datetime.now()
 

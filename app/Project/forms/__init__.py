@@ -5,7 +5,7 @@ from app.Project.categories.category_forms import (
     ProjectDisciplineForm,
     ProjectSubCategoryForm,
 )
-from app.Project.projects.project_forms import FilterForm, ProjectForm
+from app.Project.projects.project_forms import ProjectFilterForm, ProjectForm
 
 from .compliance_forms import (
     AdministrativeComplianceDialogForm,
@@ -35,7 +35,7 @@ __all__ = [
     "ContractualComplianceDialogForm",
     "AdministrativeComplianceDialogForm",
     "FinalAccountComplianceDialogForm",
-    "FilterForm",
+    "ProjectFilterForm",
     "ProjectCategoryForm",
     "ProjectSubCategoryForm",
     "ProjectDisciplineForm",
