@@ -90,7 +90,7 @@ class ProjectListView(
             # Get unique lead consultants from user's projects
             consultant_ids = (
                 Project.objects.filter(users=request.user)
-                .values_list("lead_consultant", flat=True)
+                .values_list("lead_consultants", flat=True)
                 .distinct()
             )
             consultant_queryset = Account.objects.filter(id__in=consultant_ids)
