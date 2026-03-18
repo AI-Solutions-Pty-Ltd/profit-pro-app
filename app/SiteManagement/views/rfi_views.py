@@ -1,7 +1,6 @@
 """CRUD views for Request for Information (RFI)."""
 
 from django.contrib import messages
-from django.forms import DateInput
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import (
@@ -18,6 +17,7 @@ from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project, Role
+from app.SiteManagement.forms.rfi_forms import RFIForm
 from app.SiteManagement.models.rfi import RFI
 
 
@@ -115,27 +115,20 @@ class RFICreateView(RFIMixin, CreateView):
     """Create a new RFI."""
 
     template_name = "site_management/rfi/form.html"
-    fields = [
-        "to_user",
-        "subject",
-        "message",
-        "respond_by_date",
-        "attachment",
-    ]
+    form_class = RFIForm
+
+    def get_form_kwargs(self):
+        """Pass project to form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
-        form.fields["respond_by_date"].widget = DateInput(attrs={"type": "date"})
+        # Filter to_user field to show only project users
         form.fields["to_user"].queryset = Account.objects.filter(
             project_roles__project=self.get_project()
         ).distinct()
-        form.fields["to_user"].label = "To"
-        form.fields["subject"].widget.attrs["placeholder"] = (
-            "Brief subject of this request"
-        )
-        form.fields["message"].widget.attrs["placeholder"] = (
-            "Detailed description or question requiring a response"
-        )
         return form
 
     def form_valid(self, form):
@@ -188,31 +181,20 @@ class RFIUpdateView(RFIMixin, UpdateView):
     """Update an RFI (edit details or add response)."""
 
     template_name = "site_management/rfi/form.html"
-    fields = [
-        "to_user",
-        "subject",
-        "message",
-        "respond_by_date",
-        "attachment",
-        "response",
-        "response_attachment",
-        "status",
-    ]
+    form_class = RFIForm
+
+    def get_form_kwargs(self):
+        """Pass project to form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
-        form.fields["respond_by_date"].widget = DateInput(attrs={"type": "date"})
+        # Filter to_user field to show only project users
         form.fields["to_user"].queryset = Account.objects.filter(
             project_roles__project=self.get_project()
         ).distinct()
-        form.fields["to_user"].label = "To"
-        form.fields["subject"].widget.attrs["placeholder"] = (
-            "Brief subject of this request"
-        )
-        form.fields["message"].widget.attrs["placeholder"] = (
-            "Detailed description or question requiring a response"
-        )
-        form.fields["response"].widget.attrs["placeholder"] = "Response to this RFI"
         return form
 
     def form_valid(self, form):

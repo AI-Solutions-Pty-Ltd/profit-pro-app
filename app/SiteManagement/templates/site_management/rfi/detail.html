@@ -92,6 +92,37 @@
                         </dd>
                     </div>
                     <div>
+                        <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">WBS Classification</dt>
+                        <dd class="mt-1">
+                            <div class="space-y-2">
+                                {% if object.project_category %}
+                                    <div class="flex items-center">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-blue-100 text-blue-800">
+                                            L1: {{ object.project_category.name }}
+                                        </span>
+                                    </div>
+                                {% endif %}
+                                {% if object.project_sub_category %}
+                                    <div class="flex items-center">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-green-100 text-green-800">
+                                            L2: {{ object.project_sub_category.name }}
+                                        </span>
+                                    </div>
+                                {% endif %}
+                                {% if object.project_discipline %}
+                                    <div class="flex items-center">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-purple-100 text-purple-800">
+                                            L3: {{ object.project_discipline.name }}
+                                        </span>
+                                    </div>
+                                {% endif %}
+                                {% if not object.project_category and not object.project_sub_category and not object.project_discipline %}
+                                    <span class="text-gray-400">—</span>
+                                {% endif %}
+                            </div>
+                        </dd>
+                    </div>
+                    <div>
                         <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Message</dt>
                         <dd class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
                             {{ object.message }}

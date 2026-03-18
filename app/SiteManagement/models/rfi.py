@@ -7,7 +7,12 @@ from django.utils import timezone
 
 from app.Account.models import Account
 from app.core.Utilities.models import BaseModel
-from app.Project.models import Project
+from app.Project.models import (
+    Category,
+    Discipline,
+    Project,
+    SubCategory,
+)
 
 
 class RFIStatus(models.TextChoices):
@@ -100,6 +105,31 @@ class RFI(BaseModel):
         blank=True,
         editable=False,
         help_text="Date this RFI was closed (auto-set)",
+    )
+
+    project_category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rfis",
+        help_text="WBS Level 1 classification",
+    )
+    project_sub_category = models.ForeignKey(
+        SubCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rfis",
+        help_text="WBS Level 2 classification",
+    )
+    project_discipline = models.ForeignKey(
+        Discipline,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rfis",
+        help_text="WBS Level 3 classification",
     )
 
     def save(self, *args, **kwargs):
