@@ -4,6 +4,7 @@ from django.db import models
 
 from app.Account.models import Account
 from app.core.Utilities.models import BaseModel
+from app.Project.models import ProjectCategory, ProjectDiscipline, ProjectSubCategory
 
 
 class ProjectDocument(BaseModel):
@@ -88,6 +89,31 @@ class ProjectDocument(BaseModel):
             models.Index(fields=["project", "category"]),
             models.Index(fields=["category"]),
         ]
+
+    project_category = models.ForeignKey(
+        ProjectCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="documents",
+        help_text="Project category (e.g., Education, Health, Roads)",
+    )
+    project_sub_category = models.ForeignKey(
+        ProjectSubCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="documents",
+        help_text="Project category (e.g., Education, Health, Roads)",
+    )
+    project_discipline = models.ForeignKey(
+        ProjectDiscipline,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="documents",
+        help_text="Project discipline",
+    )
 
     def __str__(self) -> str:
         return f"{self.title} ({self.get_category_display()})"  # type: ignore

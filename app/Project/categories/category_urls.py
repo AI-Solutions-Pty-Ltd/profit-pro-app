@@ -18,6 +18,11 @@ urlpatterns = [
         name="category-create",
     ),
     path(
+        "<int:pk>/update/",
+        category_views.ProjectCategoryUpdateView.as_view(),
+        name="category-update",
+    ),
+    path(
         "<int:pk>/delete/",
         category_views.ProjectCategoryDeleteView.as_view(),
         name="category-delete",

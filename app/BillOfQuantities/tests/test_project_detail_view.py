@@ -68,7 +68,7 @@ class TestProjectPaymentCertificateDetailView:
         """Test view only shows certificates for correct project."""
         user = project.users.first()
         client.force_login(user)
-        other_project = ProjectFactory(users=user)
+        other_project = ProjectFactory.create(users=user)
         LineItemFactory.create(project=other_project)
         PaymentCertificateFactory.create(
             project=other_project, status=PaymentCertificate.Status.SUBMITTED

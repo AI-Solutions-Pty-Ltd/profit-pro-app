@@ -3,7 +3,7 @@
 from django.contrib import messages
 from django.http import JsonResponse
 from django.urls import reverse, reverse_lazy
-from django.views.generic import CreateView, DeleteView, ListView
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
@@ -16,7 +16,7 @@ class ProjectCategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListVie
     """List all project categories."""
 
     model = ProjectCategory
-    template_name = "categories/category_list.html"
+    template_name = "categories/category_manage.html"
     context_object_name = "categories"
     permissions = ["contractor", "consultant"]
 
@@ -88,6 +88,53 @@ class ProjectCategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, Creat
         return super().form_invalid(form)
 
 
+class ProjectCategoryUpdateView(UserHasGroupGenericMixin, BreadcrumbMixin, UpdateView):
+    """Update a project category."""
+
+    model = ProjectCategory
+    form_class = ProjectCategoryForm
+    template_name = "categories/category_form.html"
+    permissions = ["contractor", "consultant"]
+    success_url = reverse_lazy("project:category-list")
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        return [
+            BreadcrumbItem(
+                title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title="Project Categories", url=reverse("project:category-list")
+            ),
+            BreadcrumbItem(title="Edit Category", url=None),
+        ]
+
+    def form_valid(self, form):
+        """Handle successful form submission."""
+        self.object = form.save()
+        messages.success(
+            self.request, f"Category '{self.object.name}' updated successfully."
+        )
+
+        # Handle AJAX requests
+        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JsonResponse(
+                {
+                    "success": True,
+                    "id": self.object.pk,
+                    "name": self.object.name,
+                    "description": self.object.description,
+                }
+            )
+
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        """Handle form validation errors."""
+        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JsonResponse({"success": False, "errors": form.errors}, status=400)
+        return super().form_invalid(form)
+
+
 class ProjectCategoryDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView):
     """Delete a project category."""
 
@@ -141,7 +188,7 @@ class ProjectCategoryDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, Delet
         self.object.soft_delete()
         messages.success(request, f"Category '{category_name}' deleted.")
 
-        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse({"success": True})
 
         from django.shortcuts import redirect

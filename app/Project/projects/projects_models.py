@@ -75,6 +75,7 @@ class Project(BaseModel):
         max_length=255, choices=Status.choices, default=Status.SETUP
     )
     start_date = models.DateField(null=True, blank=True)
+
     end_date = models.DateField(null=True, blank=True)
     contract_number = models.CharField(max_length=255, blank=True)
     contract_clause = models.CharField(max_length=255, blank=True)
@@ -182,7 +183,7 @@ class Project(BaseModel):
         blank=True,
         related_name="contractor_projects",
     )
-    category = models.ForeignKey(
+    project_category = models.ForeignKey(
         ProjectCategory,
         on_delete=models.SET_NULL,
         null=True,
@@ -190,7 +191,7 @@ class Project(BaseModel):
         related_name="projects",
         help_text="Project category (e.g., Education, Health, Roads)",
     )
-    sub_category = models.ForeignKey(
+    project_sub_category = models.ForeignKey(
         ProjectSubCategory,
         on_delete=models.SET_NULL,
         null=True,
@@ -198,7 +199,7 @@ class Project(BaseModel):
         related_name="projects",
         help_text="Project category (e.g., Education, Health, Roads)",
     )
-    discipline = models.ForeignKey(
+    project_discipline = models.ForeignKey(
         ProjectDiscipline,
         on_delete=models.SET_NULL,
         null=True,
@@ -250,6 +251,9 @@ class Project(BaseModel):
         users: models.ManyToManyField["Account", "Account"]
         project_roles: QuerySet["ProjectRole"]
         structures: QuerySet["Structure"]
+        categories: QuerySet["Category"]
+        subcategories: QuerySet["SubCategory"]
+        disciplines: QuerySet["Discipline"]
 
     def __str__(self):
         return self.name
@@ -721,3 +725,87 @@ class Project(BaseModel):
             return days_difference > 90
 
         return False
+
+
+class Category(BaseModel):
+    """Category for classifying projects."""
+
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Category name (e.g., Construction, Engineering)",
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Optional description of the category",
+    )
+    projects = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        blank=True,
+        related_name="categories",
+    )
+
+    class Meta:
+        verbose_name = "Project Category"
+        verbose_name_plural = "Project Categories"
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class SubCategory(BaseModel):
+    """Subcategory for further classifying projects."""
+
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Subcategory name (e.g., Top Structures, Drawings)",
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Optional description of the subcategory",
+    )
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        blank=True,
+        related_name="subcategories",
+    )
+
+    class Meta:
+        verbose_name = "Project Sub Category"
+        verbose_name_plural = "Project Sub Categories"
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class Discipline(BaseModel):
+    """Discipline for classifying project expertise areas."""
+
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Discipline name (e.g., Civil, Electrical, Mechanical)",
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Optional description of the discipline",
+    )
+    projects = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        blank=True,
+        related_name="disciplines",
+    )
+
+    class Meta:
+        verbose_name = "Project Discipline"
+        verbose_name_plural = "Project Disciplines"
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name

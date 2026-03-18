@@ -20,7 +20,7 @@ from app.core.Utilities.mixins import (
 )
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Project.models import Portfolio, Project
+from app.Project.models import Portfolio, Project, ProjectCategory
 from app.Project.models.planned_value_models import PlannedValue
 from app.Project.projects.project_forms import ProjectFilterForm
 
@@ -51,7 +51,11 @@ class FinancialReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListVie
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        from app.Project.models import Company, ProjectDiscipline, ProjectSubCategory
+        from app.Project.models import (
+            Company,
+            ProjectDiscipline,
+            ProjectSubCategory,
+        )
 
         # Get user's projects
         user: Account = self.request.user  # type: ignore
@@ -65,7 +69,10 @@ class FinancialReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListVie
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique subcategories and disciplines from user's projects
+        # Get unique categories, subcategories and disciplines from user's projects
+        category_queryset = ProjectCategory.objects.filter(
+            projects__in=projects
+        ).distinct()
         subcategory_queryset = ProjectSubCategory.objects.filter(
             projects__in=projects
         ).distinct()
@@ -79,6 +86,7 @@ class FinancialReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListVie
             projects_queryset=projects,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
+            category_queryset=category_queryset,
             subcategory_queryset=subcategory_queryset,
             discipline_queryset=discipline_queryset,
         )
@@ -108,15 +116,15 @@ class FinancialReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListVie
 
         # Apply filters if valid
         if self.filter_form and self.filter_form.is_valid():
-            category = self.filter_form.cleaned_data.get("category")
+            category = self.filter_form.cleaned_data.get("project_category")
             if category:
-                projects = projects.filter(category=category)
-            subcategory = self.filter_form.cleaned_data.get("subcategory")
+                projects = projects.filter(project_category=category)
+            subcategory = self.filter_form.cleaned_data.get("project_subcategory")
             if subcategory:
-                projects = projects.filter(sub_category=subcategory)
-            discipline = self.filter_form.cleaned_data.get("discipline")
+                projects = projects.filter(project_sub_category=subcategory)
+            discipline = self.filter_form.cleaned_data.get("project_discipline")
             if discipline:
-                projects = projects.filter(discipline=discipline)
+                projects = projects.filter(project_discipline=discipline)
             selected_project = self.filter_form.cleaned_data.get("projects")
             if selected_project:
                 projects = projects.filter(pk=selected_project.pk)
@@ -295,7 +303,11 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        from app.Project.models import Company, ProjectDiscipline, ProjectSubCategory
+        from app.Project.models import (
+            Company,
+            ProjectDiscipline,
+            ProjectSubCategory,
+        )
 
         # Get user's projects
         user: Account = self.request.user  # type: ignore
@@ -309,7 +321,10 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique subcategories and disciplines from user's projects
+        # Get unique categories, subcategories and disciplines from user's projects
+        category_queryset = ProjectCategory.objects.filter(
+            projects__in=projects
+        ).distinct()
         subcategory_queryset = ProjectSubCategory.objects.filter(
             projects__in=projects
         ).distinct()
@@ -323,6 +338,7 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             projects_queryset=projects,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
+            category_queryset=category_queryset,
             subcategory_queryset=subcategory_queryset,
             discipline_queryset=discipline_queryset,
         )
@@ -350,15 +366,15 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
 
         # Apply filters if valid
         if self.filter_form and self.filter_form.is_valid():
-            category = self.filter_form.cleaned_data.get("category")
+            category = self.filter_form.cleaned_data.get("project_category")
             if category:
-                projects = projects.filter(category=category)
-            subcategory = self.filter_form.cleaned_data.get("subcategory")
+                projects = projects.filter(project_category=category)
+            subcategory = self.filter_form.cleaned_data.get("project_subcategory")
             if subcategory:
-                projects = projects.filter(sub_category=subcategory)
-            discipline = self.filter_form.cleaned_data.get("discipline")
+                projects = projects.filter(project_sub_category=subcategory)
+            discipline = self.filter_form.cleaned_data.get("project_discipline")
             if discipline:
-                projects = projects.filter(discipline=discipline)
+                projects = projects.filter(project_discipline=discipline)
             selected_project = self.filter_form.cleaned_data.get("projects")
             if selected_project:
                 projects = projects.filter(pk=selected_project.pk)
@@ -491,7 +507,11 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        from app.Project.models import Company, ProjectDiscipline, ProjectSubCategory
+        from app.Project.models import (
+            Company,
+            ProjectDiscipline,
+            ProjectSubCategory,
+        )
 
         # Get user's projects
         user: Account = self.request.user  # type: ignore
@@ -505,7 +525,10 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique subcategories and disciplines from user's projects
+        # Get unique categories, subcategories and disciplines from user's projects
+        category_queryset = ProjectCategory.objects.filter(
+            projects__in=projects
+        ).distinct()
         subcategory_queryset = ProjectSubCategory.objects.filter(
             projects__in=projects
         ).distinct()
@@ -519,6 +542,7 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             projects_queryset=projects,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
+            category_queryset=category_queryset,
             subcategory_queryset=subcategory_queryset,
             discipline_queryset=discipline_queryset,
         )
@@ -546,15 +570,15 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
 
         # Apply filters if valid
         if self.filter_form and self.filter_form.is_valid():
-            category = self.filter_form.cleaned_data.get("category")
+            category = self.filter_form.cleaned_data.get("project_category")
             if category:
-                projects = projects.filter(category=category)
-            subcategory = self.filter_form.cleaned_data.get("subcategory")
+                projects = projects.filter(project_category=category)
+            subcategory = self.filter_form.cleaned_data.get("project_subcategory")
             if subcategory:
-                projects = projects.filter(sub_category=subcategory)
-            discipline = self.filter_form.cleaned_data.get("discipline")
+                projects = projects.filter(project_sub_category=subcategory)
+            discipline = self.filter_form.cleaned_data.get("project_discipline")
             if discipline:
-                projects = projects.filter(discipline=discipline)
+                projects = projects.filter(project_discipline=discipline)
             selected_project = self.filter_form.cleaned_data.get("projects")
             if selected_project:
                 projects = projects.filter(pk=selected_project.pk)
@@ -689,7 +713,11 @@ class TrendReportView(SubscriptionRequiredMixin, ProjectAccessMixin, TemplateVie
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        from app.Project.models import Company, ProjectDiscipline, ProjectSubCategory
+        from app.Project.models import (
+            Company,
+            ProjectDiscipline,
+            ProjectSubCategory,
+        )
 
         # Get user's projects
         user: Account = self.request.user  # type: ignore
@@ -703,7 +731,10 @@ class TrendReportView(SubscriptionRequiredMixin, ProjectAccessMixin, TemplateVie
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique subcategories and disciplines from user's projects
+        # Get unique categories, subcategories and disciplines from user's projects
+        category_queryset = ProjectCategory.objects.filter(
+            projects__in=projects
+        ).distinct()
         subcategory_queryset = ProjectSubCategory.objects.filter(
             projects__in=projects
         ).distinct()
@@ -717,6 +748,7 @@ class TrendReportView(SubscriptionRequiredMixin, ProjectAccessMixin, TemplateVie
             projects_queryset=projects,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
+            category_queryset=category_queryset,
             subcategory_queryset=subcategory_queryset,
             discipline_queryset=discipline_queryset,
         )
@@ -761,7 +793,7 @@ class TrendReportView(SubscriptionRequiredMixin, ProjectAccessMixin, TemplateVie
         project_filter = None
         consultant_filter = None
         if self.filter_form and self.filter_form.is_valid():
-            category_filter = self.filter_form.cleaned_data.get("category")
+            category_filter = self.filter_form.cleaned_data.get("project_category")
             project_filter = self.filter_form.cleaned_data.get("projects")
             consultant_filter = self.filter_form.cleaned_data.get("consultant")
 

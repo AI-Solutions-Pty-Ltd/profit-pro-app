@@ -35,8 +35,15 @@ class ProjectCategoryAdmin(SoftDeleteAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(SoftDeleteAdmin):
-    list_display = ["name", "client", "status", "category", "deleted", "created_at"]
-    list_filter = ["deleted", "created_at", "vat", "category", "status"]
+    list_display = [
+        "name",
+        "client",
+        "status",
+        "project_category",
+        "deleted",
+        "created_at",
+    ]
+    list_filter = ["deleted", "created_at", "vat", "project_category", "status"]
     search_fields = ["name", "description", "account__email"]
     readonly_fields = ["created_at", "updated_at"]
 

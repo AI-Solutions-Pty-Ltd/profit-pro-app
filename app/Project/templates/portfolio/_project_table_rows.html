@@ -9,9 +9,9 @@
             <div class="text-xs text-gray-500">{{ data.project.client.name|default:"No Client" }}</div>
         </td>
         <td class="px-6 py-4 whitespace-nowrap">
-            {% if data.project.category %}
+            {% if data.project.project_category %}
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                    {{ data.project.category.name }}
+                    {{ data.project.project_category.name }}
                 </span>
             {% else %}
                 <span class="text-sm text-gray-400">--</span>

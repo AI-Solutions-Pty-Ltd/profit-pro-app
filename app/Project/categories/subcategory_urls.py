@@ -18,6 +18,11 @@ urlpatterns = [
         name="subcategory-create",
     ),
     path(
+        "<int:pk>/update/",
+        subcategory_views.ProjectSubCategoryUpdateView.as_view(),
+        name="subcategory-update",
+    ),
+    path(
         "<int:pk>/delete/",
         subcategory_views.ProjectSubCategoryDeleteView.as_view(),
         name="subcategory-delete",

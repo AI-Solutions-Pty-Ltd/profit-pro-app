@@ -58,11 +58,11 @@ class Portfolio(BaseModel):
         """
         projects = self.active_projects
         if category:
-            projects = projects.filter(category=category)
+            projects = projects.filter(project_category=category)
         if subcategory:
-            projects = projects.filter(sub_category=subcategory)
+            projects = projects.filter(project_sub_category=subcategory)
         if discipline:
-            projects = projects.filter(discipline=discipline)
+            projects = projects.filter(project_discipline=discipline)
         return projects
 
     # projects_requiring_urgent_intervention

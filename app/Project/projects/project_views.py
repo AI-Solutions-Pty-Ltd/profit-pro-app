@@ -6,10 +6,11 @@ from datetime import datetime
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import QuerySet, Sum
-from django.http import JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
     CreateView,
+    DeleteView,
     DetailView,
     ListView,
     UpdateView,
@@ -32,6 +33,7 @@ from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import (
     PlannedValue,
     Project,
+    ProjectCategory,
     ProjectRole,
     Role,
 )
@@ -103,7 +105,10 @@ class ProjectListView(
                 contractor_projects__in=projects_queryset
             ).distinct()
 
-            # Get unique subcategories and disciplines from user's projects
+            # Get unique categories, subcategories and disciplines from user's projects
+            category_queryset = ProjectCategory.objects.filter(
+                projects__in=projects_queryset
+            ).distinct()
             subcategory_queryset = ProjectSubCategory.objects.filter(
                 projects__in=projects_queryset
             ).distinct()
@@ -118,6 +123,7 @@ class ProjectListView(
             consultant_queryset=consultant_queryset,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
+            category_queryset=category_queryset,
             subcategory_queryset=subcategory_queryset,
             discipline_queryset=discipline_queryset,
         )
@@ -141,22 +147,21 @@ class ProjectListView(
         # Apply filters from form
         search = self.filter_form.cleaned_data.get("search")
         active_only = self.filter_form.cleaned_data.get("active_projects")
-        category = self.filter_form.cleaned_data.get("category")
-        subcategory = self.filter_form.cleaned_data.get("subcategory")
-        discipline = self.filter_form.cleaned_data.get("discipline")
-        status = self.filter_form.cleaned_data.get("status")
+        category = self.filter_form.cleaned_data.get("project_category")
+        subcategory = self.filter_form.cleaned_data.get("project_subcategory")
+        discipline = self.filter_form.cleaned_data.get("project_discipline")
 
         if search:
             projects = projects.filter(name__icontains=search)
 
         if category:
-            projects = projects.filter(category=category)
+            projects = projects.filter(project_category=category)
 
         if subcategory:
-            projects = projects.filter(sub_category=subcategory)
+            projects = projects.filter(project_sub_category=subcategory)
 
         if discipline:
-            projects = projects.filter(discipline=discipline)
+            projects = projects.filter(project_discipline=discipline)
 
         selected_project = self.filter_form.cleaned_data.get("projects")
         if selected_project:
@@ -174,6 +179,7 @@ class ProjectListView(
         if contractor:
             projects = projects.filter(contractor=contractor)
 
+        status = self.filter_form.cleaned_data.get("status")
         if status and status != "ALL":
             projects = projects.filter(status=status)
         elif active_only:
@@ -558,10 +564,60 @@ class ProjectResetFinalAccountView(ProjectMixin, DetailView):
 
         messages.success(
             request,
-            f"Project '{project.name}' has been reset to Active status.",
+            "Final account reset successfully. Project status set to ACTIVE.",
         )
 
         return redirect("project:project-management", pk=project.pk)
+
+    def get(self, request, *args, **kwargs):
+        """Redirect GET requests to project management."""
+        from django.shortcuts import redirect
+
+        return redirect("project:project-management", pk=self.kwargs["pk"])
+
+
+class ProjectDeleteView(ProjectMixin, DeleteView):
+    """Delete a project (soft delete)."""
+
+    model = Project
+    template_name = "project/project_confirm_delete.html"
+    success_url = reverse_lazy("project:portfolio-dashboard")
+    roles = [Role.ADMIN]
+
+    def get_context_data(self, **kwargs):
+        """Add project context to delete confirmation."""
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.object
+        return context
+
+    def delete(self, request, *args, **kwargs):
+        """Perform soft delete of the project."""
+        self.object = self.get_object()
+        project_name = self.object.name
+
+        # Perform soft delete
+        self.object.soft_delete()
+
+        messages.success(
+            request,
+            f"Project '{project_name}' has been deleted successfully.",
+        )
+
+        return HttpResponseRedirect(self.get_success_url())
+
+    def post(self, request, *args, **kwargs):
+        """Handle POST request for deletion with confirmation."""
+        self.object = self.get_object()
+        confirm_name = request.POST.get("confirm_name", "")
+
+        if confirm_name != self.object.name:
+            messages.error(
+                request,
+                "Project name confirmation does not match. Please try again.",
+            )
+            return self.get(request, *args, **kwargs)
+
+        return self.delete(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         """Redirect GET requests to project management."""

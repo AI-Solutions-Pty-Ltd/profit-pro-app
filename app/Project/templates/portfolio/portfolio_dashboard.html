@@ -37,13 +37,13 @@
                                     <!-- Category Filter -->
                                     <div class="relative">
                                         <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-white px-1">Category</span>
-                                        <select name="category"
+                                        <select name="project_category"
                                                 onchange="this.form.submit()"
                                                 class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
                                             <option value="">All</option>
-                                            {% for category in filter_form.category.field.queryset %}
+                                            {% for category in filter_form.project_category.field.queryset %}
                                                 <option value="{{ category.pk }}"
-                                                        {% if filter_form.category.value|stringformat:"s" == category.pk|stringformat:"s" %}selected{% endif %}>
+                                                        {% if filter_form.project_category.value|stringformat:"s" == category.pk|stringformat:"s" %}selected{% endif %}>
                                                     {{ category.name }}
                                                 </option>
                                             {% endfor %}
@@ -53,13 +53,13 @@
                                     <!-- Subcategory Filter -->
                                     <div class="relative">
                                         <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-white px-1">Subcategory</span>
-                                        <select name="subcategory"
+                                        <select name="project_subcategory"
                                                 onchange="this.form.submit()"
                                                 class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
                                             <option value="">All</option>
-                                            {% for subcategory in filter_form.subcategory.field.queryset %}
+                                            {% for subcategory in filter_form.project_subcategory.field.queryset %}
                                                 <option value="{{ subcategory.pk }}"
-                                                        {% if filter_form.subcategory.value|stringformat:"s" == subcategory.pk|stringformat:"s" %}selected{% endif %}>
+                                                        {% if filter_form.project_subcategory.value|stringformat:"s" == subcategory.pk|stringformat:"s" %}selected{% endif %}>
                                                     {{ subcategory.name }}
                                                 </option>
                                             {% endfor %}
@@ -69,13 +69,13 @@
                                     <!-- Discipline Filter -->
                                     <div class="relative">
                                         <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-white px-1">Discipline</span>
-                                        <select name="discipline"
+                                        <select name="project_discipline"
                                                 onchange="this.form.submit()"
                                                 class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
                                             <option value="">All</option>
-                                            {% for discipline in filter_form.discipline.field.queryset %}
+                                            {% for discipline in filter_form.project_discipline.field.queryset %}
                                                 <option value="{{ discipline.pk }}"
-                                                        {% if filter_form.discipline.value|stringformat:"s" == discipline.pk|stringformat:"s" %}selected{% endif %}>
+                                                        {% if filter_form.project_discipline.value|stringformat:"s" == discipline.pk|stringformat:"s" %}selected{% endif %}>
                                                     {{ discipline.name }}
                                                 </option>
                                             {% endfor %}
@@ -136,7 +136,7 @@
                                 </div>
                             </div>
                             <!-- Clear Filters Button -->
-                            {% if filter_form.category.value or filter_form.subcategory.value or filter_form.discipline.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
+                            {% if filter_form.project_category.value or filter_form.project_subcategory.value or filter_form.project_discipline.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
                                 <button type="button"
                                         onclick="window.location.href='{% url 'project:portfolio-dashboard' %}'"
                                         class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 hover:text-indigo-700 transition-all duration-200"
@@ -171,14 +171,14 @@
                     </select>
                     <!-- Hidden fields to maintain filters -->
                     <input type="hidden"
-                           name="category"
-                           value="{{ filter_form.category.value|default:'' }}">
+                           name="project_category"
+                           value="{{ filter_form.project_category.value|default:'' }}">
                     <input type="hidden"
-                           name="subcategory"
-                           value="{{ filter_form.subcategory.value|default:'' }}">
+                           name="project_subcategory"
+                           value="{{ filter_form.project_subcategory.value|default:'' }}">
                     <input type="hidden"
-                           name="discipline"
-                           value="{{ filter_form.discipline.value|default:'' }}">
+                           name="project_discipline"
+                           value="{{ filter_form.project_discipline.value|default:'' }}">
                     <input type="hidden"
                            name="client"
                            value="{{ filter_form.client.value|default:'' }}">

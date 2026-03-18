@@ -3,7 +3,7 @@
 from django.contrib import messages
 from django.http import JsonResponse
 from django.urls import reverse, reverse_lazy
-from django.views.generic import CreateView, DeleteView, ListView
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
@@ -16,7 +16,7 @@ class ProjectSubCategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, List
     """List all project subcategories."""
 
     model = ProjectSubCategory
-    template_name = "categories/subcategory_list.html"
+    template_name = "categories/subcategory_manage.html"
     context_object_name = "subcategories"
     permissions = ["contractor", "consultant"]
 
@@ -66,6 +66,54 @@ class ProjectSubCategoryCreateView(
 
         messages.success(
             self.request, f"Subcategory '{self.object.name}' created successfully."
+        )
+
+        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JsonResponse(
+                {
+                    "success": True,
+                    "id": self.object.pk,
+                    "name": self.object.name,
+                    "description": self.object.description,
+                }
+            )
+
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        """Handle form validation errors."""
+        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JsonResponse({"success": False, "errors": form.errors}, status=400)
+        return super().form_invalid(form)
+
+
+class ProjectSubCategoryUpdateView(
+    UserHasGroupGenericMixin, BreadcrumbMixin, UpdateView
+):
+    """Update a project subcategory."""
+
+    model = ProjectSubCategory
+    form_class = ProjectSubCategoryForm
+    template_name = "categories/subcategory_form.html"
+    permissions = ["contractor", "consultant"]
+    success_url = reverse_lazy("project:subcategory-list")
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        return [
+            BreadcrumbItem(
+                title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title="Project Subcategories", url=reverse("project:subcategory-list")
+            ),
+            BreadcrumbItem(title="Edit Subcategory", url=None),
+        ]
+
+    def form_valid(self, form):
+        """Handle successful form submission."""
+        self.object = form.save()
+        messages.success(
+            self.request, f"Subcategory '{self.object.name}' updated successfully."
         )
 
         if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
