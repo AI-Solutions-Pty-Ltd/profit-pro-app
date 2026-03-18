@@ -732,7 +732,6 @@ class Category(BaseModel):
 
     name = models.CharField(
         max_length=100,
-        unique=True,
         help_text="Category name (e.g., Construction, Engineering)",
     )
     description = models.TextField(
@@ -760,7 +759,6 @@ class SubCategory(BaseModel):
 
     name = models.CharField(
         max_length=100,
-        unique=True,
         help_text="Subcategory name (e.g., Top Structures, Drawings)",
     )
     description = models.TextField(
@@ -788,7 +786,6 @@ class Discipline(BaseModel):
 
     name = models.CharField(
         max_length=100,
-        unique=True,
         help_text="Discipline name (e.g., Civil, Electrical, Mechanical)",
     )
     description = models.TextField(

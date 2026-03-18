@@ -30,9 +30,14 @@ class CategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     permissions = ["contractor", "consultant"]
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
                 title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(title="Categories", url=None),
         ]
@@ -66,9 +71,14 @@ class CategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
                 title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Categories",
@@ -104,7 +114,13 @@ class CategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
         """Handle form validation errors."""
         if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse({"success": False, "errors": form.errors}, status=400)
-        return super().form_invalid(form)
+        messages.error(self.request, "Please correct the errors below.")
+        return redirect(
+            reverse(
+                "project:project-category-list",
+                kwargs={"project_pk": self.kwargs["project_pk"]},
+            )
+        )
 
 
 class CategoryUpdateView(UserHasGroupGenericMixin, BreadcrumbMixin, UpdateView):
@@ -122,9 +138,14 @@ class CategoryUpdateView(UserHasGroupGenericMixin, BreadcrumbMixin, UpdateView):
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
                 title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Categories",
@@ -177,9 +198,14 @@ class CategoryDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView):
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
                 title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Categories",
@@ -216,9 +242,14 @@ class SubCategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     permissions = ["contractor", "consultant"]
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
                 title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(title="Sub Categories", url=None),
         ]
@@ -252,9 +283,14 @@ class SubCategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateVie
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
                 title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Sub Categories",
@@ -308,9 +344,14 @@ class SubCategoryUpdateView(UserHasGroupGenericMixin, BreadcrumbMixin, UpdateVie
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
                 title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Sub Categories",
@@ -363,9 +404,14 @@ class SubCategoryDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteVie
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
                 title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Sub Categories",
@@ -402,9 +448,14 @@ class DisciplineListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     permissions = ["contractor", "consultant"]
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
                 title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(title="Disciplines", url=None),
         ]
@@ -438,9 +489,14 @@ class DisciplineCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
                 title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Disciplines",
@@ -494,9 +550,14 @@ class DisciplineUpdateView(UserHasGroupGenericMixin, BreadcrumbMixin, UpdateView
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
                 title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Disciplines",
@@ -549,9 +610,14 @@ class DisciplineDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
                 title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Disciplines",
