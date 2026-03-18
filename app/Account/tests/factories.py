@@ -78,7 +78,7 @@ class AccountFactory(DjangoModelFactory):
     )
     type = Account.Type.CLIENT
     identification_type = Account.IdentificationType.SOUTH_AFRICA_ID
-    identification_number = Faker("numerify", text="##########")
+    identification_number = Sequence(lambda n: f"{n:010d}")
     address = Faker("address")
     notification_preferences = Account.NotificationType.EMAIL
     is_active = True
