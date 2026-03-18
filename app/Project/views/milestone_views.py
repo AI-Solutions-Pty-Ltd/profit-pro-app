@@ -60,6 +60,12 @@ class MilestoneCreateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Creat
     roles = [Role.USER]
     project_slug = "project_pk"
 
+    def get_form_kwargs(self):
+        """Pass project to form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
+
     def form_valid(self, form: MilestoneForm) -> HttpResponse:
         form.instance.project = self.get_project()
         messages.success(self.request, "Milestone created successfully.")
@@ -110,6 +116,12 @@ class MilestoneUpdateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, Updat
     def get_queryset(self):
         """Filter milestones by project."""
         return Milestone.objects.filter(project=self.get_project())
+
+    def get_form_kwargs(self):
+        """Pass project to form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
 
     def form_valid(self, form: MilestoneForm) -> HttpResponse:
         messages.success(self.request, "Milestone updated successfully.")

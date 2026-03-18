@@ -182,7 +182,7 @@ class ProjectFilterForm(forms.Form):
     projects = forms.ModelChoiceField(
         queryset=Project.objects.none(),
         required=False,
-        label="Jump to Project",
+        label="Go to Project",
         widget=forms.Select(
             attrs={
                 "onchange": "this.form.submit()",

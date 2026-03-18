@@ -155,12 +155,13 @@
         <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
             <div class="flex items-center justify-between">
                 <!-- Project Jump -->
-                <form method="get" class="flex items-center gap-2">
-                    <label for="footerProjectJump" class="text-sm font-medium text-gray-600">Jump to Project:</label>
+                <form method="get"
+                      class="flex items-center gap-2 bg-indigo-600 px-4 py-3 rounded-lg">
+                    <label for="footerProjectJump" class="text-sm font-medium text-white">Go to Project:</label>
                     <select name="projects"
                             id="footerProjectJump"
                             onchange="this.form.submit()"
-                            class="block w-64 px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            class="block w-64 px-3 py-1.5 text-sm border border-blue-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="">Select a project...</option>
                         {% for project in filter_form.projects.field.queryset %}
                             <option value="{{ project.pk }}"
