@@ -16,7 +16,12 @@ from app.Project.models import (
 class BasicProjectCreateForm(forms.ModelForm):
     class Meta:
         model = Project
-        fields = ["name", "category", "sub_category", "discipline"]
+        fields = [
+            "name",
+            "project_category",
+            "project_sub_category",
+            "project_discipline",
+        ]
         widgets = {
             "name": forms.TextInput(
                 attrs={
@@ -35,9 +40,9 @@ class ProjectForm(forms.ModelForm):
             "name",
             "description",
             "logo",
-            "category",
-            "sub_category",
-            "discipline",
+            "project_category",
+            "project_sub_category",
+            "project_discipline",
             "start_date",
             "end_date",
             "contract_number",
@@ -127,7 +132,7 @@ class ProjectFilterForm(forms.Form):
             }
         ),
     )
-    category = forms.ModelChoiceField(
+    project_category = forms.ModelChoiceField(
         queryset=ProjectCategory.objects.all(),
         required=False,
         label="Categories",
@@ -138,7 +143,7 @@ class ProjectFilterForm(forms.Form):
             }
         ),
     )
-    subcategory = forms.ModelChoiceField(
+    project_subcategory = forms.ModelChoiceField(
         queryset=ProjectSubCategory.objects.all(),
         required=False,
         label="Subcategories",
@@ -149,7 +154,7 @@ class ProjectFilterForm(forms.Form):
             }
         ),
     )
-    discipline = forms.ModelChoiceField(
+    project_discipline = forms.ModelChoiceField(
         queryset=ProjectDiscipline.objects.all(),
         required=False,
         label="Disciplines",
@@ -226,6 +231,7 @@ class ProjectFilterForm(forms.Form):
         consultant_queryset: QuerySet[Account] | None = None,
         client_queryset: QuerySet[Company] | None = None,
         contractor_queryset: QuerySet[Company] | None = None,
+        category_queryset: QuerySet[ProjectCategory] | None = None,
         subcategory_queryset: QuerySet[ProjectSubCategory] | None = None,
         discipline_queryset: QuerySet[ProjectDiscipline] | None = None,
         **kwargs,
@@ -242,7 +248,9 @@ class ProjectFilterForm(forms.Form):
             self.fields["client"].queryset = client_queryset  # type: ignore
         if contractor_queryset is not None:
             self.fields["contractor"].queryset = contractor_queryset  # type: ignore
+        if category_queryset is not None:
+            self.fields["project_category"].queryset = category_queryset  # type: ignore
         if subcategory_queryset is not None:
-            self.fields["subcategory"].queryset = subcategory_queryset  # type: ignore
+            self.fields["project_subcategory"].queryset = subcategory_queryset  # type: ignore
         if discipline_queryset is not None:
-            self.fields["discipline"].queryset = discipline_queryset  # type: ignore
+            self.fields["project_discipline"].queryset = discipline_queryset  # type: ignore

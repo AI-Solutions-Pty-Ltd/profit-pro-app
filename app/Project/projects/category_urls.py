@@ -1,0 +1,68 @@
+"""URL configuration for Category, SubCategory, and Discipline management."""
+
+from django.urls import path
+
+from app.Project.projects import category_views
+
+urlpatterns = [
+    path(
+        "<int:project_pk>/categories/",
+        category_views.CategoryListView.as_view(),
+        name="project-category-list",
+    ),
+    path(
+        "<int:project_pk>/categories/create/",
+        category_views.CategoryCreateView.as_view(),
+        name="project-category-create",
+    ),
+    path(
+        "<int:project_pk>/categories/<int:pk>/update/",
+        category_views.CategoryUpdateView.as_view(),
+        name="project-category-update",
+    ),
+    path(
+        "<int:project_pk>/categories/<int:pk>/delete/",
+        category_views.CategoryDeleteView.as_view(),
+        name="project-category-delete",
+    ),
+    path(
+        "<int:project_pk>/subcategories/",
+        category_views.SubCategoryListView.as_view(),
+        name="project-subcategory-list",
+    ),
+    path(
+        "<int:project_pk>/subcategories/create/",
+        category_views.SubCategoryCreateView.as_view(),
+        name="project-subcategory-create",
+    ),
+    path(
+        "<int:project_pk>/subcategories/<int:pk>/update/",
+        category_views.SubCategoryUpdateView.as_view(),
+        name="project-subcategory-update",
+    ),
+    path(
+        "<int:project_pk>/subcategories/<int:pk>/delete/",
+        category_views.SubCategoryDeleteView.as_view(),
+        name="project-subcategory-delete",
+    ),
+    path(
+        "<int:project_pk>/disciplines/",
+        category_views.DisciplineListView.as_view(),
+        name="project-discipline-list",
+    ),
+    path(
+        "<int:project_pk>/disciplines/create/",
+        category_views.DisciplineCreateView.as_view(),
+        name="project-discipline-create",
+    ),
+    path(
+        "<int:project_pk>/disciplines/<int:pk>/update/",
+        category_views.DisciplineUpdateView.as_view(),
+        name="project-discipline-update",
+    ),
+    path(
+        "<int:project_pk>/disciplines/<int:pk>/delete/",
+        category_views.DisciplineDeleteView.as_view(),
+        name="project-discipline-delete",
+    ),
+]

@@ -61,7 +61,12 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         user: Account = self.request.user  # type: ignore
         projects = user.get_projects.order_by("-created_at")
 
-        from app.Project.models import Company, ProjectDiscipline, ProjectSubCategory
+        from app.Project.models import (
+            Company,
+            ProjectCategory,
+            ProjectDiscipline,
+            ProjectSubCategory,
+        )
 
         # Get unique clients and contractors from user's projects
         client_queryset = Company.objects.filter(
@@ -71,7 +76,10 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique subcategories and disciplines from user's projects
+        # Get unique categories, subcategories and disciplines from user's projects
+        category_queryset = ProjectCategory.objects.filter(
+            projects__in=projects
+        ).distinct()
         subcategory_queryset = ProjectSubCategory.objects.filter(
             projects__in=projects
         ).distinct()
@@ -86,6 +94,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             projects_queryset=projects,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
+            category_queryset=category_queryset,
             subcategory_queryset=subcategory_queryset,
             discipline_queryset=discipline_queryset,
         )
@@ -108,7 +117,12 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         projects = user.get_projects.order_by("-created_at")
 
         # Initialize filter form with the base queryset
-        from app.Project.models import Company, ProjectDiscipline, ProjectSubCategory
+        from app.Project.models import (
+            Company,
+            ProjectCategory,
+            ProjectDiscipline,
+            ProjectSubCategory,
+        )
 
         # Get unique clients and contractors from user's projects
         client_queryset = Company.objects.filter(
@@ -118,7 +132,10 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique subcategories and disciplines from user's projects
+        # Get unique categories, subcategories and disciplines from user's projects
+        category_queryset = ProjectCategory.objects.filter(
+            projects__in=projects
+        ).distinct()
         subcategory_queryset = ProjectSubCategory.objects.filter(
             projects__in=projects
         ).distinct()
@@ -132,6 +149,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             projects_queryset=projects,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
+            category_queryset=category_queryset,
             subcategory_queryset=subcategory_queryset,
             discipline_queryset=discipline_queryset,
         )
@@ -142,15 +160,21 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
 
         # Apply filters from form
         search = self.filter_form.cleaned_data.get("search")
-        active_only = self.filter_form.cleaned_data.get("active_projects")
-        category = self.filter_form.cleaned_data.get("category")
-        status = self.filter_form.cleaned_data.get("status")
+        category = self.filter_form.cleaned_data.get("project_category")
+        subcategory = self.filter_form.cleaned_data.get("project_subcategory")
+        discipline = self.filter_form.cleaned_data.get("project_discipline")
 
         if search:
             projects = projects.filter(name__icontains=search)
 
         if category:
-            projects = projects.filter(category=category)
+            projects = projects.filter(project_category=category)
+
+        if subcategory:
+            projects = projects.filter(project_sub_category=subcategory)
+
+        if discipline:
+            projects = projects.filter(project_discipline=discipline)
 
         selected_project = self.filter_form.cleaned_data.get("projects")
         if selected_project:
@@ -168,9 +192,10 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         if contractor:
             projects = projects.filter(contractor=contractor)
 
+        status = self.filter_form.cleaned_data.get("status")
         if status and status != "ALL":
             projects = projects.filter(status=status)
-        elif active_only:
+        elif self.filter_form.cleaned_data.get("active_only"):
             # Legacy support for active_only toggle
             projects = projects.filter(status=Project.Status.ACTIVE)
 
@@ -187,6 +212,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         if not self.filter_form:
             from app.Project.models import (
                 Company,
+                ProjectCategory,
                 ProjectDiscipline,
                 ProjectSubCategory,
             )
@@ -199,7 +225,10 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
                 contractor_projects__in=projects
             ).distinct()
 
-            # Get unique subcategories and disciplines from user's projects
+            # Get unique categories, subcategories and disciplines from user's projects
+            category_queryset = ProjectCategory.objects.filter(
+                projects__in=projects
+            ).distinct()
             subcategory_queryset = ProjectSubCategory.objects.filter(
                 projects__in=projects
             ).distinct()
@@ -213,6 +242,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
                 projects_queryset=projects,
                 client_queryset=client_queryset,
                 contractor_queryset=contractor_queryset,
+                category_queryset=category_queryset,
                 subcategory_queryset=subcategory_queryset,
                 discipline_queryset=discipline_queryset,
             )
@@ -286,9 +316,11 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
 
         # Get filters for portfolio-level calculations
         if self.filter_form and self.filter_form.is_valid():
-            category_filter = self.filter_form.cleaned_data.get("category")
-            subcategory_filter = self.filter_form.cleaned_data.get("subcategory")
-            discipline_filter = self.filter_form.cleaned_data.get("discipline")
+            category_filter = self.filter_form.cleaned_data.get("project_category")
+            subcategory_filter = self.filter_form.cleaned_data.get(
+                "project_subcategory"
+            )
+            discipline_filter = self.filter_form.cleaned_data.get("project_discipline")
         else:
             category_filter = None
             subcategory_filter = None

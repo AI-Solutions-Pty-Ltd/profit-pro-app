@@ -18,6 +18,11 @@ urlpatterns = [
         name="discipline-create",
     ),
     path(
+        "<int:pk>/update/",
+        discipline_views.ProjectDisciplineUpdateView.as_view(),
+        name="discipline-update",
+    ),
+    path(
         "<int:pk>/delete/",
         discipline_views.ProjectDisciplineDeleteView.as_view(),
         name="discipline-delete",

@@ -12,7 +12,7 @@ from django.views.generic import CreateView, DeleteView, ListView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.Project.forms import ProjectDocumentForm
+from app.Project.documents.document_forms import ProjectDocumentForm
 from app.Project.models import ProjectDocument, Role
 
 
@@ -101,6 +101,12 @@ class DocumentCreateView(DocumentMixin, CreateView):
             },
             {"title": "Upload Document", "url": None},
         ]
+
+    def get_form_kwargs(self):
+        """Pass project to form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
 
     def get_initial(self):
         """Set initial category value from URL."""

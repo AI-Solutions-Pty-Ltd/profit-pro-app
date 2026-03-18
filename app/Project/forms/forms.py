@@ -12,7 +12,6 @@ from app.Project.models import (
     Milestone,
     PlannedValue,
     Project,
-    ProjectDocument,
     Risk,
     Signatories,
 )
@@ -401,49 +400,6 @@ class MilestoneForm(forms.ModelForm):
             )
 
         return cleaned_data
-
-
-class ProjectDocumentForm(forms.ModelForm):
-    """Form for uploading project documents."""
-
-    class Meta:
-        model = ProjectDocument
-        fields = ["category", "title", "file", "notes"]
-        widgets = {
-            "category": forms.Select(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
-            ),
-            "title": forms.TextInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Enter document title",
-                }
-            ),
-            "file": forms.FileInput(
-                attrs={
-                    "class": "mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100",
-                    "accept": ".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip",
-                }
-            ),
-            "notes": forms.Textarea(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Optional notes about this document",
-                    "rows": 3,
-                }
-            ),
-        }
-        labels = {
-            "category": "Document Category",
-            "title": "Document Title",
-            "file": "File",
-            "notes": "Notes (Optional)",
-        }
-        help_texts = {
-            "file": "Accepted formats: PDF, Word, Excel, Images, ZIP",
-        }
 
 
 class RiskForm(forms.ModelForm):

@@ -81,13 +81,13 @@
                         <!-- Category Filter -->
                         <div class="relative">
                             <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Category</span>
-                            <select name="category"
+                            <select name="project_category"
                                     onchange="this.form.submit()"
                                     class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
                                 <option value="">All</option>
-                                {% for category in filter_form.category.field.queryset %}
+                                {% for category in filter_form.project_category.field.queryset %}
                                     <option value="{{ category.pk }}"
-                                            {% if filter_form.category.value|stringformat:"s" == category.pk|stringformat:"s" %}selected{% endif %}>
+                                            {% if filter_form.project_category.value|stringformat:"s" == category.pk|stringformat:"s" %}selected{% endif %}>
                                         {{ category.name }}
                                     </option>
                                 {% endfor %}
@@ -97,13 +97,13 @@
                         <!-- Subcategory Filter -->
                         <div class="relative">
                             <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Subcategory</span>
-                            <select name="subcategory"
+                            <select name="project_subcategory"
                                     onchange="this.form.submit()"
                                     class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
                                 <option value="">All</option>
-                                {% for subcategory in filter_form.subcategory.field.queryset %}
+                                {% for subcategory in filter_form.project_subcategory.field.queryset %}
                                     <option value="{{ subcategory.pk }}"
-                                            {% if filter_form.subcategory.value|stringformat:"s" == subcategory.pk|stringformat:"s" %}selected{% endif %}>
+                                            {% if filter_form.project_subcategory.value|stringformat:"s" == subcategory.pk|stringformat:"s" %}selected{% endif %}>
                                         {{ subcategory.name }}
                                     </option>
                                 {% endfor %}
@@ -113,13 +113,13 @@
                         <!-- Discipline Filter -->
                         <div class="relative">
                             <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Discipline</span>
-                            <select name="discipline"
+                            <select name="project_discipline"
                                     onchange="this.form.submit()"
                                     class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
                                 <option value="">All</option>
-                                {% for discipline in filter_form.discipline.field.queryset %}
+                                {% for discipline in filter_form.project_discipline.field.queryset %}
                                     <option value="{{ discipline.pk }}"
-                                            {% if filter_form.discipline.value|stringformat:"s" == discipline.pk|stringformat:"s" %}selected{% endif %}>
+                                            {% if filter_form.project_discipline.value|stringformat:"s" == discipline.pk|stringformat:"s" %}selected{% endif %}>
                                         {{ discipline.name }}
                                     </option>
                                 {% endfor %}
@@ -185,7 +185,7 @@
                         {% heroicon_outline "funnel" class="w-4 h-4 mr-1.5" %}
                         Filter
                     </button>
-                    {% if filter_form.search.value or filter_form.category.value or filter_form.subcategory.value or filter_form.discipline.value or filter_form.client.value or filter_form.contractor.value or filter_form.status.value and filter_form.status.value != 'ALL' %}
+                    {% if filter_form.search.value or filter_form.project_category.value or filter_form.project_subcategory.value or filter_form.project_discipline.value or filter_form.client.value or filter_form.contractor.value or filter_form.status.value and filter_form.status.value != 'ALL' %}
                         <button type="button"
                                 onclick="window.location.href='{% url 'project:project-list' %}'"
                                 class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 hover:text-indigo-700 transition-all duration-200"
@@ -220,9 +220,9 @@
                                 <div class="text-xs text-gray-500">{{ project.client.name|default:"No Client" }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                {% if project.category %}
+                                {% if project.project_category %}
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                        {{ project.category.name }}
+                                        {{ project.project_category.name }}
                                     </span>
                                 {% else %}
                                     <span class="text-sm text-gray-400">--</span>

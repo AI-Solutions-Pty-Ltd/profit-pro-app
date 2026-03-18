@@ -132,7 +132,6 @@ class ProjectFactory(DjangoModelFactory):
     description = Faker("text")
     name = Sequence(lambda n: f"Project {n}")
     client = SubFactory(ClientFactory)
-    category = SubFactory(ProjectCategoryFactory)
     start_date = Faker("date_between", start_date="-2y", end_date="today")
     end_date = LazyAttribute(
         lambda o: (

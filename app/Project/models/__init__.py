@@ -5,7 +5,12 @@ from app.Project.categories.category_models import (
 )
 from app.Project.company.company_models import Company
 from app.Project.documents.document_models import ProjectDocument
-from app.Project.projects.projects_models import Project
+from app.Project.projects.projects_models import (
+    Category,
+    Discipline,
+    Project,
+    SubCategory,
+)
 
 from .compliance_models import (
     AdministrativeCompliance,
@@ -41,6 +46,9 @@ __all__ = [
     "PlannedValue",
     "Portfolio",
     "Project",
+    "Category",
+    "SubCategory",
+    "Discipline",
     "ProjectCategory",
     "ProjectDiscipline",
     "ProjectSubCategory",

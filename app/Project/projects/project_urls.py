@@ -39,4 +39,9 @@ urlpatterns = [
         project_views.ProjectResetFinalAccountView.as_view(),
         name="project-reset-final-account",
     ),
+    path(
+        "<int:pk>/delete/",
+        project_views.ProjectDeleteView.as_view(),
+        name="project-delete",
+    ),
 ]

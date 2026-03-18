@@ -5,6 +5,7 @@ from app.Project.categories.category_forms import (
     ProjectDisciplineForm,
     ProjectSubCategoryForm,
 )
+from app.Project.documents.document_forms import ProjectDocumentForm
 from app.Project.projects.project_forms import ProjectFilterForm, ProjectForm
 
 from .compliance_forms import (
@@ -23,7 +24,6 @@ from .forms import (
     MilestoneForm,
     PlannedValueForm,
     ProjectContractorForm,
-    ProjectDocumentForm,
     ProjectUserCreateForm,
     RiskForm,
     SignatoryForm,
