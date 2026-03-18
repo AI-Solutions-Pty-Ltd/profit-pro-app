@@ -374,9 +374,9 @@ class FinalAccountCompliance(BaseModel):
     @property
     def filename(self) -> str:
         """Return just the filename without the path."""
-        if self.file:
+        if self.file and self.file.name:
             return self.file.name.split("/")[-1]
-        return ""
+        return self.pk
 
 
 class BaseDialog(BaseModel):
@@ -458,7 +458,9 @@ class ContractualComplianceDialogFile(BaseModel):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return self.file.name.split("/")[-1] if self.file else ""
+        if self.file and self.file.name:
+            return self.file.name.split("/")[-1]
+        return self.pk
 
 
 class AdministrativeComplianceDialogFile(BaseModel):
@@ -486,7 +488,9 @@ class AdministrativeComplianceDialogFile(BaseModel):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return self.file.name.split("/")[-1] if self.file else ""
+        if self.file and self.file.name:
+            return self.file.name.split("/")[-1]
+        return self.pk
 
 
 class FinalAccountComplianceDialogFile(BaseModel):
@@ -512,4 +516,6 @@ class FinalAccountComplianceDialogFile(BaseModel):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return self.file.name.split("/")[-1] if self.file else ""
+        if self.file and self.file.name:
+            return self.file.name.split("/")[-1]
+        return self.pk

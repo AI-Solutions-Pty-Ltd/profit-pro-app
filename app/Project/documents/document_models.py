@@ -121,6 +121,6 @@ class ProjectDocument(BaseModel):
     @property
     def filename(self) -> str:
         """Return just the filename without the path."""
-        if self.file:
+        if self.file and self.file.name:
             return self.file.name.split("/")[-1]
-        return ""
+        return self.pk

@@ -480,4 +480,6 @@ class CorrespondenceDialogFile(BaseModel):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return self.file.name.split("/")[-1] if self.file else ""
+        if self.file and self.file.name:
+            return self.file.name.split("/")[-1]
+        return self.pk
