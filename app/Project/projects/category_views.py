@@ -33,11 +33,8 @@ class CategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title=project.name,
-                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+                title=f"Setup: {project.name}",
+                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(title="Categories", url=None),
         ]
@@ -74,11 +71,8 @@ class CategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
         project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title=project.name,
-                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+                title=f"Setup: {project.name}",
+                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Categories",
@@ -141,11 +135,8 @@ class CategoryUpdateView(UserHasGroupGenericMixin, BreadcrumbMixin, UpdateView):
         project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title=project.name,
-                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+                title=f"Setup: {project.name}",
+                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Categories",
@@ -201,11 +192,8 @@ class CategoryDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView):
         project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title=project.name,
-                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+                title=f"Setup: {project.name}",
+                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Categories",
@@ -245,11 +233,8 @@ class SubCategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title=project.name,
-                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+                title=f"Setup: {project.name}",
+                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(title="Sub Categories", url=None),
         ]
@@ -286,11 +271,8 @@ class SubCategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateVie
         project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title=project.name,
-                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+                title=f"Setup: {project.name}",
+                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Sub Categories",
@@ -347,11 +329,8 @@ class SubCategoryUpdateView(UserHasGroupGenericMixin, BreadcrumbMixin, UpdateVie
         project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title=project.name,
-                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+                title=f"Setup: {project.name}",
+                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Sub Categories",
@@ -407,11 +386,8 @@ class SubCategoryDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteVie
         project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title=project.name,
-                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+                title=f"Setup: {project.name}",
+                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Sub Categories",
@@ -451,11 +427,8 @@ class DisciplineListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
         project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title=project.name,
-                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+                title=f"Setup: {project.name}",
+                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(title="Disciplines", url=None),
         ]
@@ -492,11 +465,8 @@ class DisciplineCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView
         project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title=project.name,
-                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+                title=f"Setup: {project.name}",
+                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Disciplines",
@@ -553,11 +523,8 @@ class DisciplineUpdateView(UserHasGroupGenericMixin, BreadcrumbMixin, UpdateView
         project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title=project.name,
-                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+                title=f"Setup: {project.name}",
+                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Disciplines",
@@ -613,11 +580,8 @@ class DisciplineDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView
         project = Project.objects.get(pk=self.kwargs["project_pk"])
         return [
             BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(
-                title=project.name,
-                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+                title=f"Setup: {project.name}",
+                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
             ),
             BreadcrumbItem(
                 title="Disciplines",

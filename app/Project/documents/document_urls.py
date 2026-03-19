@@ -18,6 +18,11 @@ urlpatterns = [
         name="document-upload",
     ),
     path(
+        "<int:project_pk>/<str:category>/<int:pk>/edit/",
+        document_views.DocumentEditView.as_view(),
+        name="document-edit",
+    ),
+    path(
         "<int:project_pk>/<str:category>/<int:pk>/delete/",
         document_views.DocumentDeleteView.as_view(),
         name="document-delete",

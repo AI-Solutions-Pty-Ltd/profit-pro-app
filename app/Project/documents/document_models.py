@@ -4,7 +4,11 @@ from django.db import models
 
 from app.Account.models import Account
 from app.core.Utilities.models import BaseModel
-from app.Project.models import ProjectCategory, ProjectDiscipline, ProjectSubCategory
+from app.Project.projects.projects_models import (
+    Category,
+    Discipline,
+    SubCategory,
+)
 
 
 class ProjectDocument(BaseModel):
@@ -15,7 +19,7 @@ class ProjectDocument(BaseModel):
     stage gate approvals, and other audit-required documentation.
     """
 
-    class Category(models.TextChoices):
+    class DocumentCategory(models.TextChoices):
         """Categories of project documents."""
 
         CONTRACT_DOCUMENTS = (
@@ -56,7 +60,7 @@ class ProjectDocument(BaseModel):
     )
     category = models.CharField(
         max_length=30,
-        choices=Category.choices,
+        choices=DocumentCategory.choices,
         help_text="Category of the document",
     )
     title = models.CharField(
@@ -91,7 +95,7 @@ class ProjectDocument(BaseModel):
         ]
 
     project_category = models.ForeignKey(
-        ProjectCategory,
+        Category,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -99,7 +103,7 @@ class ProjectDocument(BaseModel):
         help_text="Project category (e.g., Education, Health, Roads)",
     )
     project_sub_category = models.ForeignKey(
-        ProjectSubCategory,
+        SubCategory,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -107,7 +111,7 @@ class ProjectDocument(BaseModel):
         help_text="Project category (e.g., Education, Health, Roads)",
     )
     project_discipline = models.ForeignKey(
-        ProjectDiscipline,
+        Discipline,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
