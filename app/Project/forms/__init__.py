@@ -8,6 +8,7 @@ from app.Project.categories.category_forms import (
 from app.Project.documents.document_forms import ProjectDocumentForm
 from app.Project.projects.project_forms import ProjectFilterForm, ProjectForm
 
+from ..milestone_schedules.milestone_forms import MilestoneForm
 from .compliance_forms import (
     AdministrativeComplianceDialogForm,
     ContractualComplianceDialogForm,
@@ -21,7 +22,6 @@ from .forms import (
     ClientUserInviteForm,
     ContractualComplianceForm,
     FinalAccountComplianceForm,
-    MilestoneForm,
     PlannedValueForm,
     ProjectContractorForm,
     ProjectUserCreateForm,
