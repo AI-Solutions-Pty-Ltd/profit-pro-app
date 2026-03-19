@@ -249,7 +249,7 @@ class ProjectDocumentFactory(DjangoModelFactory):
         model = ProjectDocument
 
     project = SubFactory(ProjectFactory)
-    category = ProjectDocument.Category.CONTRACT_DOCUMENTS
+    category = ProjectDocument.DocumentCategory.CONTRACT_DOCUMENTS
     title = Sequence(lambda n: f"Document {n}")
     file = factory.django.FileField(filename="test_document.pdf")
     uploaded_by = SubFactory(UserFactory)

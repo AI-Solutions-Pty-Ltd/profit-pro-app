@@ -86,7 +86,13 @@ class ProjectDocumentForm(forms.ModelForm):
         )
 
         project = kwargs.pop("project", None)
+        is_edit = kwargs.pop("is_edit", False)
         super().__init__(*args, **kwargs)
+
+        # Make file field optional when editing
+        if is_edit and self.instance and self.instance.pk:
+            self.fields["file"].required = False
+            self.fields["file"].help_text = "Leave empty to keep the current file"
 
         if project:
             # Filter categories, subcategories, and disciplines by project

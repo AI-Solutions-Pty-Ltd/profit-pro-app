@@ -3,7 +3,7 @@
 from django.db import models
 
 from app.core.Utilities.models import BaseModel
-from app.Project.models import Project, Category, SubCategory, Discipline
+from app.Project.models import Category, Discipline, Project, SubCategory
 
 
 class Milestone(BaseModel):

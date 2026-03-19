@@ -5,55 +5,87 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0050_projectdocument_project_category_and_more'),
+        ("Project", "0050_projectdocument_project_category_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='milestone',
-            name='project_category',
-            field=models.ForeignKey(blank=True, help_text='WBS Level 1 classification', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='milestones', to='Project.category'),
+            model_name="milestone",
+            name="project_category",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="WBS Level 1 classification",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="milestones",
+                to="Project.category",
+            ),
         ),
         migrations.AddField(
-            model_name='milestone',
-            name='project_category_end_date',
-            field=models.DateField(blank=True, help_text='End date for WBS Level 1', null=True),
+            model_name="milestone",
+            name="project_category_end_date",
+            field=models.DateField(
+                blank=True, help_text="End date for WBS Level 1", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='milestone',
-            name='project_category_start_date',
-            field=models.DateField(blank=True, help_text='Start date for WBS Level 1', null=True),
+            model_name="milestone",
+            name="project_category_start_date",
+            field=models.DateField(
+                blank=True, help_text="Start date for WBS Level 1", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='milestone',
-            name='project_discipline',
-            field=models.ForeignKey(blank=True, help_text='WBS Level 3 classification', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='milestones', to='Project.discipline'),
+            model_name="milestone",
+            name="project_discipline",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="WBS Level 3 classification",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="milestones",
+                to="Project.discipline",
+            ),
         ),
         migrations.AddField(
-            model_name='milestone',
-            name='project_discipline_end_date',
-            field=models.DateField(blank=True, help_text='End date for WBS Level 3', null=True),
+            model_name="milestone",
+            name="project_discipline_end_date",
+            field=models.DateField(
+                blank=True, help_text="End date for WBS Level 3", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='milestone',
-            name='project_discipline_start_date',
-            field=models.DateField(blank=True, help_text='Start date for WBS Level 3', null=True),
+            model_name="milestone",
+            name="project_discipline_start_date",
+            field=models.DateField(
+                blank=True, help_text="Start date for WBS Level 3", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='milestone',
-            name='project_sub_category',
-            field=models.ForeignKey(blank=True, help_text='WBS Level 2 classification', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='milestones', to='Project.subcategory'),
+            model_name="milestone",
+            name="project_sub_category",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="WBS Level 2 classification",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="milestones",
+                to="Project.subcategory",
+            ),
         ),
         migrations.AddField(
-            model_name='milestone',
-            name='project_sub_category_end_date',
-            field=models.DateField(blank=True, help_text='End date for WBS Level 2', null=True),
+            model_name="milestone",
+            name="project_sub_category_end_date",
+            field=models.DateField(
+                blank=True, help_text="End date for WBS Level 2", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='milestone',
-            name='project_sub_category_start_date',
-            field=models.DateField(blank=True, help_text='Start date for WBS Level 2', null=True),
+            model_name="milestone",
+            name="project_sub_category_start_date",
+            field=models.DateField(
+                blank=True, help_text="Start date for WBS Level 2", null=True
+            ),
         ),
     ]

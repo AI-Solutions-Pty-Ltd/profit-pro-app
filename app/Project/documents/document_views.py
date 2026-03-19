@@ -8,7 +8,7 @@ from django.db.models import QuerySet
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
-from django.views.generic import CreateView, DeleteView, ListView
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
@@ -25,13 +25,15 @@ class DocumentMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
     def get_category(self) -> str:
         """Get the document category from URL kwargs."""
         category = self.kwargs.get("category", "")
-        if category and category not in dict(ProjectDocument.Category.choices):
+        if category and category not in dict(ProjectDocument.DocumentCategory.choices):
             raise Http404("Invalid document category.")
         return category
 
     def get_category_display(self) -> Any:
         """Get the human-readable category name."""
-        return dict(ProjectDocument.Category.choices).get(self.get_category(), "")
+        return dict(ProjectDocument.DocumentCategory.choices).get(
+            self.get_category(), ""
+        )
 
     def get_queryset(self) -> QuerySet[ProjectDocument]:
         """Filter documents by project and category."""
@@ -54,11 +56,10 @@ class DocumentListView(DocumentMixin, ListView):
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": self.get_project().name,
                 "url": reverse(
-                    "project:project-management", kwargs={"pk": self.get_project().pk}
+                    "project:project-setup", kwargs={"pk": self.get_project().pk}
                 ),
             },
             {"title": self.get_category_display(), "url": None},
@@ -82,11 +83,10 @@ class DocumentCreateView(DocumentMixin, CreateView):
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": self.get_project().name,
                 "url": reverse(
-                    "project:project-management", kwargs={"pk": self.get_project().pk}
+                    "project:project-setup", kwargs={"pk": self.get_project().pk}
                 ),
             },
             {
@@ -128,12 +128,12 @@ class DocumentCreateView(DocumentMixin, CreateView):
         else:
             # In OTHER view, exclude CONTRACT_DOCUMENTS and STAGE_GATE_APPROVAL
             excluded_categories = [
-                ProjectDocument.Category.CONTRACT_DOCUMENTS,
-                ProjectDocument.Category.STAGE_GATE_APPROVAL,
+                ProjectDocument.DocumentCategory.CONTRACT_DOCUMENTS,
+                ProjectDocument.DocumentCategory.STAGE_GATE_APPROVAL,
             ]
             context["form"].fields["category"].choices = [
                 (value, label)
-                for value, label in ProjectDocument.Category.choices
+                for value, label in ProjectDocument.DocumentCategory.choices
                 if value not in excluded_categories
             ]
         return context
@@ -148,6 +148,94 @@ class DocumentCreateView(DocumentMixin, CreateView):
         messages.success(
             self.request,
             f"Document '{form.instance.title}' has been uploaded successfully.",
+        )
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        """Redirect to the document list."""
+        return reverse_lazy(
+            "project:document-list",
+            kwargs={
+                "project_pk": self.kwargs["project_pk"],
+                "category": self.get_category(),
+            },
+        )
+
+
+class DocumentEditView(DocumentMixin, UpdateView):
+    """Edit an existing document."""
+
+    model = ProjectDocument
+    form_class = ProjectDocumentForm
+    template_name = "documents/document_form.html"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        return [
+            {
+                "title": self.get_project().name,
+                "url": reverse(
+                    "project:project-setup", kwargs={"pk": self.get_project().pk}
+                ),
+            },
+            {
+                "title": self.get_category_display(),
+                "url": reverse(
+                    "project:document-list",
+                    kwargs={
+                        "project_pk": self.get_project().pk,
+                        "category": self.get_category(),
+                    },
+                ),
+            },
+            {"title": "Edit Document", "url": None},
+        ]
+
+    def get_object(self, queryset=None) -> ProjectDocument:
+        """Get document and verify project ownership."""
+        self.get_queryset() if not queryset else None
+        document = get_object_or_404(
+            ProjectDocument,
+            pk=self.kwargs["pk"],
+            project=self.get_project(),
+            category=self.get_category(),
+        )
+        return document
+
+    def get_form_kwargs(self):
+        """Pass project to form."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        kwargs["is_edit"] = True
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        """Add project and category to context."""
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        context["category"] = self.get_category()
+        context["category_display"] = self.get_category_display()
+        context["is_edit"] = True
+        return context
+
+    def form_valid(self, form):
+        """Set project and uploaded_by before saving."""
+        # Get the original document
+        original_doc = self.get_object()
+
+        # If no new file is uploaded, keep the existing file
+        if not form.cleaned_data.get("file"):
+            form.instance.file = original_doc.file
+
+        form.instance.project = self.get_project()
+        # Don't change category if it was set from URL
+        if self.get_category() != "OTHER":
+            form.instance.category = self.get_category()
+        # Keep the original uploader if not changed
+        if not form.instance.uploaded_by:
+            form.instance.uploaded_by = self.request.user
+        messages.success(
+            self.request,
+            f"Document '{form.instance.title}' has been updated successfully.",
         )
         return super().form_valid(form)
 
@@ -182,11 +270,10 @@ class DocumentDeleteView(DocumentMixin, DeleteView):
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         document = self.get_object()
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": self.get_project().name,
                 "url": reverse(
-                    "project:project-management", kwargs={"pk": self.get_project().pk}
+                    "project:project-setup", kwargs={"pk": self.get_project().pk}
                 ),
             },
             {

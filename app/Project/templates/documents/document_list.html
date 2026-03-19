@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_full.html" %}
 {% block title %}
     {{ category_display }} - {{ project.name }}
 {% endblock title %}
@@ -12,7 +12,7 @@
                     <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <a href="{% url 'project:project-management' project.pk %}"
+                    <a href="{% url 'project:project-setup' project.pk %}"
                        class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900">
                         {% heroicon_outline "arrow-left" class="w-4 h-4 mr-1" %}
                         Back
@@ -118,9 +118,14 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <a href="{{ document.file.url }}"
                                        target="_blank"
-                                       class="text-indigo-600 hover:text-indigo-900 mr-4">
+                                       class="text-indigo-600 hover:text-indigo-900 mr-3">
                                         {% heroicon_outline "arrow-down-tray" class="w-5 h-5 inline" %}
                                         Download
+                                    </a>
+                                    <a href="{% url 'project:document-edit' project.pk document.category document.pk %}"
+                                       class="text-blue-600 hover:text-blue-900 mr-3">
+                                        {% heroicon_outline "pencil" class="w-5 h-5 inline" %}
+                                        Edit
                                     </a>
                                     <a href="{% url 'project:document-delete' project.pk document.category document.pk %}"
                                        class="text-red-600 hover:text-red-900">
