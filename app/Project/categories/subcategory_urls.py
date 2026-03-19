@@ -4,7 +4,7 @@ from django.urls import path
 
 from app.Project.views import subcategory_views
 
-_prefix = "subcategories/"
+_path_prefix = "subcategories/"
 
 urlpatterns = [
     path(

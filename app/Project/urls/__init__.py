@@ -22,7 +22,7 @@ from .signatory_urls import urlpatterns as signatory_urls
 from .user_urls import urlpatterns as user_urls
 
 app_name = "project"
-_prefix = "project/"
+_path_prefix = "project/"
 
 
 # Combine all URL patterns

@@ -4,7 +4,7 @@ from django.urls import path
 
 from app.Project.views import document_views
 
-_prefix = "document/"
+_path_prefix = "document/"
 
 urlpatterns = [
     path(

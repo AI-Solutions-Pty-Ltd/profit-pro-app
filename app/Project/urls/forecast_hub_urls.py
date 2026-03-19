@@ -4,7 +4,7 @@ from django.urls import path
 
 from app.Project.views import forecast_hub_views
 
-_prefix = "forecast-hub/"
+_path_prefix = "forecast-hub/"
 
 urlpatterns = [
     # Time Forecast tab

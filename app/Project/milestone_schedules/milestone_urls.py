@@ -4,7 +4,7 @@ from django.urls import path
 
 from app.Project.views import milestone_views
 
-_prefix = "milestones/"
+_path_prefix = "milestones/"
 
 urlpatterns = [
     # Milestone CRUD

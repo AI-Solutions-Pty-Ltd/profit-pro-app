@@ -4,7 +4,7 @@ from django.urls import path
 
 from . import company_views as cvs
 
-_prefix = "company/"
+_path_prefix = "company/"
 
 urlpatterns = [
     path("<int:pk>/", cvs.CompanyManagementView.as_view(), name="company-management"),
