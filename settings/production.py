@@ -13,6 +13,8 @@ DB_USER = os.getenv("DB_USER")
 if not all([DB, DB_HOST, DB_USER_PWD, DB_USER]):
     raise ValueError("DB, DB_HOST, DB_USER_PWD, DB_USER are not set")
 
+ADMINS = [os.getenv("ADMINS", [])]
+
 DEBUG = False
 
 SECRET_KEY = os.getenv("SECRET_KEY", None)
