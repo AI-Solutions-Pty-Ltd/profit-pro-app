@@ -42,10 +42,9 @@ class TimeForecastView(ForecastHubMixin, TemplateView):
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
         return [
-            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": project.name,
-                "url": reverse("project:project-management", kwargs={"pk": project.pk}),
+                "url": reverse("project:project-setup", kwargs={"pk": project.pk}),
             },
             {"title": "Time Forecast", "url": None},
         ]
@@ -56,6 +55,86 @@ class TimeForecastView(ForecastHubMixin, TemplateView):
         milestones = Milestone.objects.filter(project=project).order_by(
             "sequence", "planned_date"
         )
+
+        # Group milestones by WBS hierarchy
+        grouped_milestones: dict[str, dict[str, Any]] = {}
+
+        # Get all unique categories, subcategories, and disciplines
+        categories: dict[int, Any] = {}
+        subcategories: dict[int, Any] = {}
+        disciplines: dict[int, Any] = {}
+
+        for milestone in milestones:
+            # Track categories
+            if milestone.project_category:
+                cat_key = milestone.project_category.pk
+                if cat_key not in categories:
+                    categories[cat_key] = milestone.project_category
+                    grouped_milestones[cat_key] = {
+                        "type": "category",
+                        "name": milestone.project_category.name,
+                        "object": milestone.project_category,
+                        "start_date": milestone.project_category_start_date,
+                        "end_date": milestone.project_category_end_date,
+                        "children": {},
+                        "milestones": [],
+                    }
+
+                # Track subcategories within category
+                if milestone.project_sub_category:
+                    sub_key = milestone.project_sub_category.pk
+                    if sub_key not in subcategories:
+                        subcategories[sub_key] = milestone.project_sub_category
+                        grouped_milestones[cat_key]["children"][sub_key] = {
+                            "type": "subcategory",
+                            "name": milestone.project_sub_category.name,
+                            "object": milestone.project_sub_category,
+                            "start_date": milestone.project_sub_category_start_date,
+                            "end_date": milestone.project_sub_category_end_date,
+                            "children": {},
+                            "milestones": [],
+                        }
+
+                    # Track disciplines within subcategory
+                    if milestone.project_discipline:
+                        disc_key = milestone.project_discipline.pk
+                        if disc_key not in disciplines:
+                            disciplines[disc_key] = milestone.project_discipline
+                            grouped_milestones[cat_key]["children"][sub_key][
+                                "children"
+                            ][disc_key] = {
+                                "type": "discipline",
+                                "name": milestone.project_discipline.name,
+                                "object": milestone.project_discipline,
+                                "start_date": milestone.project_discipline_start_date,
+                                "end_date": milestone.project_discipline_end_date,
+                                "milestones": [],
+                            }
+
+                        # Add milestone to discipline
+                        grouped_milestones[cat_key]["children"][sub_key]["children"][
+                            disc_key
+                        ]["milestones"].append(milestone)
+                    else:
+                        # Add milestone directly to subcategory
+                        grouped_milestones[cat_key]["children"][sub_key][
+                            "milestones"
+                        ].append(milestone)
+                else:
+                    # Add milestone directly to category
+                    grouped_milestones[cat_key]["milestones"].append(milestone)
+            else:
+                # Milestone without any classification - add to uncategorized
+                if "uncategorized" not in grouped_milestones:
+                    grouped_milestones["uncategorized"] = {
+                        "type": "uncategorized",
+                        "name": "Uncategorized",
+                        "object": None,
+                        "start_date": None,
+                        "end_date": None,
+                        "milestones": [],
+                    }
+                grouped_milestones["uncategorized"]["milestones"].append(milestone)
 
         # Calculate summary stats
         total_milestones = milestones.count()
@@ -68,6 +147,7 @@ class TimeForecastView(ForecastHubMixin, TemplateView):
                 "project": project,
                 "active_tab": "time",
                 "milestones": milestones,
+                "grouped_milestones": grouped_milestones,
                 "total_milestones": total_milestones,
                 "completed_milestones": completed,
                 "delayed_milestones": delayed,

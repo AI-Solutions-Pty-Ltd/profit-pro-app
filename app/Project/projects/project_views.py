@@ -58,6 +58,8 @@ class ProjectListView(
 ):
     """Project list view that reuses dashboard filtering logic."""
 
+    route = "list/"
+    name = "project-list"
     template_name = "project/project_list.html"
     filter_form: ProjectFilterForm | None = None
     context_object_name = "projects"

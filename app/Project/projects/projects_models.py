@@ -738,7 +738,7 @@ class Category(BaseModel):
         blank=True,
         help_text="Optional description of the category",
     )
-    projects = models.ForeignKey(
+    project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,
         blank=True,
@@ -757,6 +757,7 @@ class Category(BaseModel):
 class SubCategory(BaseModel):
     """Subcategory for further classifying projects."""
 
+    category = models.ForeignKey(to=Category, on_delete=models.SET_NULL, null=True)
     name = models.CharField(
         max_length=100,
         help_text="Subcategory name (e.g., Top Structures, Drawings)",
@@ -781,6 +782,36 @@ class SubCategory(BaseModel):
         return self.name
 
 
+class Group(BaseModel):
+    """Group for further classifying projects."""
+
+    sub_category = models.ForeignKey(
+        to=SubCategory, on_delete=models.SET_NULL, null=True
+    )
+    name = models.CharField(
+        max_length=100,
+        help_text="Group name (e.g., Top Structures, Drawings)",
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Optional description of the Group",
+    )
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        blank=True,
+        related_name="groups",
+    )
+
+    class Meta:
+        verbose_name = "Project Group"
+        verbose_name_plural = "Project Group"
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Discipline(BaseModel):
     """Discipline for classifying project expertise areas."""
 
@@ -792,7 +823,7 @@ class Discipline(BaseModel):
         blank=True,
         help_text="Optional description of the discipline",
     )
-    projects = models.ForeignKey(
+    project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,
         blank=True,

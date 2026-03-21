@@ -4,9 +4,9 @@ from app.Project.views import project_views
 
 urlpatterns = [
     path(
-        "list/",
+        project_views.ProjectListView.route,
         project_views.ProjectListView.as_view(),
-        name="project-list",
+        name=project_views.ProjectListView.name,
     ),
     path("create/", project_views.ProjectCreateView.as_view(), name="project-create"),
     path(

@@ -1,4 +1,4 @@
-"""URL configuration for Category, SubCategory, and Discipline management."""
+"""URL configuration for Category, SubCategory, Discipline, and Group management."""
 
 from django.urls import path
 
@@ -44,6 +44,26 @@ urlpatterns = [
         "<int:project_pk>/subcategories/<int:pk>/delete/",
         category_views.SubCategoryDeleteView.as_view(),
         name="project-subcategory-delete",
+    ),
+    path(
+        "<int:project_pk>/groups/",
+        category_views.GroupListView.as_view(),
+        name="project-group-list",
+    ),
+    path(
+        "<int:project_pk>/groups/create/",
+        category_views.GroupCreateView.as_view(),
+        name="project-group-create",
+    ),
+    path(
+        "<int:project_pk>/groups/<int:pk>/update/",
+        category_views.GroupUpdateView.as_view(),
+        name="project-group-update",
+    ),
+    path(
+        "<int:project_pk>/groups/<int:pk>/delete/",
+        category_views.GroupDeleteView.as_view(),
+        name="project-group-delete",
     ),
     path(
         "<int:project_pk>/disciplines/",

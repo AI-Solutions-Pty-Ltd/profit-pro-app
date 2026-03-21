@@ -1,12 +1,15 @@
 {% extends "base_full.html" %}
 {% load heroicons %}
 {% block content %}
+    {% include "./categories/subcategory_create.html" with project=project form=subcategory_form %}
+    {% include "./categories/subcategory_edit.html" with project=project form=subcategory_form %}
+    {% include "./categories/subcategory_delete.html" with project=project %}
     <!-- Header -->
     <div class="bg-white shadow-sm rounded-lg mb-6">
         <div class="px-6 py-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Project Sub Categories</h1>
+                    <h1 class="text-2xl font-bold text-gray-900">Work Breakdown Structure</h1>
                     <p class="text-sm text-gray-600 mt-1">Manage project sub-categories for detailed classification</p>
                 </div>
                 <div class="flex items-center gap-3">
@@ -38,6 +41,11 @@
                    class="border-indigo-500 text-indigo-600 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
                     {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
                     Sub Categories
+                </a>
+                <a href="{% url 'project:project-group-list' project.pk %}"
+                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
+                    {% heroicon_outline "folder" size="16" class="inline mr-1.5" %}
+                    Groups
                 </a>
                 <a href="{% url 'project:project-discipline-list' project.pk %}"
                    class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
@@ -86,7 +94,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end gap-2">
                                     <button type="button"
-                                            onclick="openEditModal({{ subcategory.pk }}, '{{ subcategory.name|escapejs }}', '{{ subcategory.description|escapejs }}')"
+                                            onclick="openEditModal({{ subcategory.pk }}, '{{ subcategory.name|escapejs }}', '{{ subcategory.description|escapejs }}', '{{ subcategory.category_id|escapejs }}')"
                                             class="text-indigo-600 hover:text-indigo-900 transition-colors"
                                             title="Edit sub category">
                                         {% heroicon_outline "pencil" size="18" %}
@@ -115,230 +123,4 @@
             </table>
         </div>
     </div>
-    <!-- Create Modal -->
-    <div id="createModal"
-         class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900">Add New Sub Category</h3>
-                        <button type="button"
-                                onclick="closeCreateModal()"
-                                class="text-gray-400 hover:text-gray-500">
-                            {% heroicon_outline "x-mark" size="20" %}
-                        </button>
-                    </div>
-                </div>
-                <form method="post"
-                      action="{% url 'project:project-subcategory-create' project.pk %}"
-                      id="createForm">
-                    {% csrf_token %}
-                    <div class="px-6 py-4 space-y-4">
-                        <div>
-                            <label for="create_name" class="block text-sm font-medium text-gray-700">Sub Category Name *</label>
-                            <input type="text"
-                                   name="name"
-                                   id="create_name"
-                                   required
-                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                   placeholder="e.g., Top Structures, Drawings, Specifications">
-                            <p id="create_name_error" class="mt-1 text-sm text-red-600 hidden"></p>
-                        </div>
-                        <div>
-                            <label for="create_description"
-                                   class="block text-sm font-medium text-gray-700">Description (Optional)</label>
-                            <textarea name="description"
-                                      id="create_description"
-                                      rows="3"
-                                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                      placeholder="Brief description of this sub category"></textarea>
-                            <p id="create_description_error"
-                               class="mt-1 text-sm text-red-600 hidden"></p>
-                        </div>
-                    </div>
-                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
-                        <button type="button"
-                                onclick="closeCreateModal()"
-                                class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                                class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {% heroicon_outline "plus" size="16" class="inline mr-1" %}
-                            Create Sub Category
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <!-- Edit Modal -->
-    <div id="editModal"
-         class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900">Edit Sub Category</h3>
-                        <button type="button"
-                                onclick="closeEditModal()"
-                                class="text-gray-400 hover:text-gray-500">
-                            {% heroicon_outline "x-mark" size="20" %}
-                        </button>
-                    </div>
-                </div>
-                <form method="post" id="editForm">
-                    {% csrf_token %}
-                    <div class="px-6 py-4 space-y-4">
-                        <div>
-                            <label for="edit_name" class="block text-sm font-medium text-gray-700">Sub Category Name *</label>
-                            <input type="text"
-                                   name="name"
-                                   id="edit_name"
-                                   required
-                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                            <p id="edit_name_error" class="mt-1 text-sm text-red-600 hidden"></p>
-                        </div>
-                        <div>
-                            <label for="edit_description"
-                                   class="block text-sm font-medium text-gray-700">Description (Optional)</label>
-                            <textarea name="description"
-                                      id="edit_description"
-                                      rows="3"
-                                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
-                            <p id="edit_description_error" class="mt-1 text-sm text-red-600 hidden"></p>
-                        </div>
-                    </div>
-                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
-                        <button type="button"
-                                onclick="closeEditModal()"
-                                class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                                class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            {% heroicon_outline "check" size="16" class="inline mr-1" %}
-                            Update Sub Category
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <!-- Delete Modal -->
-    <div id="deleteModal"
-         class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900">Delete Sub Category</h3>
-                        <button type="button"
-                                onclick="closeDeleteModal()"
-                                class="text-gray-400 hover:text-gray-500">
-                            {% heroicon_outline "x-mark" size="20" %}
-                        </button>
-                    </div>
-                </div>
-                <form method="post" id="deleteForm">
-                    {% csrf_token %}
-                    <div class="px-6 py-4">
-                        <div class="flex items-start">
-                            <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" size="24" class="text-red-600" %}</div>
-                            <div class="ml-3">
-                                <p class="text-sm text-gray-700">
-                                    Are you sure you want to delete the sub category <strong id="delete_subcategory_name"></strong>?
-                                </p>
-                                <p class="text-sm text-gray-500 mt-2" id="delete_warning"></p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
-                        <button type="button"
-                                onclick="closeDeleteModal()"
-                                class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            Cancel
-                        </button>
-                        <button type="submit"
-                                class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                            {% heroicon_outline "trash" size="16" class="inline mr-1" %}
-                            Delete Sub Category
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <script>
-        // Project PK for URL construction
-        const project_pk = {{ project.pk }};
-        
-        // Create Modal Functions
-        function openCreateModal() {
-            document.getElementById('createModal').classList.remove('hidden');
-            document.getElementById('create_name').focus();
-        }
-
-        function closeCreateModal() {
-            document.getElementById('createModal').classList.add('hidden');
-            document.getElementById('createForm').reset();
-            document.getElementById('create_name_error').classList.add('hidden');
-            document.getElementById('create_description_error').classList.add('hidden');
-        }
-
-        // Edit Modal Functions
-        function openEditModal(id, name, description) {
-            document.getElementById('editModal').classList.remove('hidden');
-            document.getElementById('edit_name').value = name;
-            document.getElementById('edit_description').value = description;
-            document.getElementById('editForm').action = `/project/${project_pk}/subcategories/${id}/update/`;
-            document.getElementById('edit_name').focus();
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal').classList.add('hidden');
-            document.getElementById('editForm').reset();
-            document.getElementById('edit_name_error').classList.add('hidden');
-            document.getElementById('edit_description_error').classList.add('hidden');
-        }
-
-        // Delete Modal Functions
-        function openDeleteModal(id, name, projectCount) {
-            document.getElementById('deleteModal').classList.remove('hidden');
-            document.getElementById('delete_subcategory_name').textContent = name;
-            document.getElementById('deleteForm').action = `/project/${project_pk}/subcategories/${id}/delete/`;
-            
-            const warning = document.getElementById('delete_warning');
-            if (projectCount > 0) {
-                warning.textContent = `This sub category is currently used by ${projectCount} project${projectCount > 1 ? 's' : ''}. Projects will not be deleted, but they will no longer have this sub category assigned.`;
-            } else {
-                warning.textContent = 'This sub category is not currently used by any projects.';
-            }
-        }
-
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').classList.add('hidden');
-        }
-
-        // Close modals on escape key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeCreateModal();
-                closeEditModal();
-                closeDeleteModal();
-            }
-        });
-
-        // Close modals when clicking outside
-        document.getElementById('createModal').addEventListener('click', function(event) {
-            if (event.target === this) closeCreateModal();
-        });
-        document.getElementById('editModal').addEventListener('click', function(event) {
-            if (event.target === this) closeEditModal();
-        });
-        document.getElementById('deleteModal').addEventListener('click', function(event) {
-            if (event.target === this) closeDeleteModal();
-        });
-    </script>
 {% endblock content %}

@@ -39,6 +39,11 @@
                     {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
                     Sub Categories
                 </a>
+                <a href="{% url 'project:project-group-list' project.pk %}"
+                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
+                    {% heroicon_outline "folder" size="16" class="inline mr-1.5" %}
+                    Groups
+                </a>
                 <a href="{% url 'project:project-discipline-list' project.pk %}"
                    class="border-indigo-500 text-indigo-600 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
                     {% heroicon_outline "academic-cap" size="16" class="inline mr-1.5" %}
@@ -113,7 +118,7 @@
         </div>
     </div>
     <!-- Create Modal -->
-    <div id="createModal"
+    <div id="createDisciplineModal"
          class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
@@ -171,7 +176,7 @@
         </div>
     </div>
     <!-- Edit Modal -->
-    <div id="editModal"
+    <div id="editDisciplineModal"
          class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
@@ -224,7 +229,7 @@
         </div>
     </div>
     <!-- Delete Modal -->
-    <div id="deleteModal"
+    <div id="deleteDisciplineModal"
          class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50">
         <div class="flex items-center justify-center min-h-screen p-4">
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
@@ -273,12 +278,12 @@
         
         // Create Modal Functions
         function openCreateModal() {
-            document.getElementById('createModal').classList.remove('hidden');
+            document.getElementById('createDisciplineModal').classList.remove('hidden');
             document.getElementById('create_name').focus();
         }
 
         function closeCreateModal() {
-            document.getElementById('createModal').classList.add('hidden');
+            document.getElementById('createDisciplineModal').classList.add('hidden');
             document.getElementById('createForm').reset();
             document.getElementById('create_name_error').classList.add('hidden');
             document.getElementById('create_description_error').classList.add('hidden');
@@ -286,7 +291,7 @@
 
         // Edit Modal Functions
         function openEditModal(id, name, description) {
-            document.getElementById('editModal').classList.remove('hidden');
+            document.getElementById('editDisciplineModal').classList.remove('hidden');
             document.getElementById('edit_name').value = name;
             document.getElementById('edit_description').value = description;
             document.getElementById('editForm').action = `/project/${project_pk}/disciplines/${id}/update/`;
@@ -294,7 +299,7 @@
         }
 
         function closeEditModal() {
-            document.getElementById('editModal').classList.add('hidden');
+            document.getElementById('editDisciplineModal').classList.add('hidden');
             document.getElementById('editForm').reset();
             document.getElementById('edit_name_error').classList.add('hidden');
             document.getElementById('edit_description_error').classList.add('hidden');
@@ -302,7 +307,7 @@
 
         // Delete Modal Functions
         function openDeleteModal(id, name, projectCount) {
-            document.getElementById('deleteModal').classList.remove('hidden');
+            document.getElementById('deleteDisciplineModal').classList.remove('hidden');
             document.getElementById('delete_discipline_name').textContent = name;
             document.getElementById('deleteForm').action = `/project/${project_pk}/disciplines/${id}/delete/`;
             
@@ -315,7 +320,7 @@
         }
 
         function closeDeleteModal() {
-            document.getElementById('deleteModal').classList.add('hidden');
+            document.getElementById('deleteDisciplineModal').classList.add('hidden');
         }
 
         // Close modals on escape key
@@ -328,13 +333,13 @@
         });
 
         // Close modals when clicking outside
-        document.getElementById('createModal').addEventListener('click', function(event) {
+        document.getElementById('createDisciplineModal').addEventListener('click', function(event) {
             if (event.target === this) closeCreateModal();
         });
-        document.getElementById('editModal').addEventListener('click', function(event) {
+        document.getElementById('editDisciplineModal').addEventListener('click', function(event) {
             if (event.target === this) closeEditModal();
         });
-        document.getElementById('deleteModal').addEventListener('click', function(event) {
+        document.getElementById('deleteDisciplineModal').addEventListener('click', function(event) {
             if (event.target === this) closeDeleteModal();
         });
     </script>

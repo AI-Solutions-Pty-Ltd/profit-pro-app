@@ -2,35 +2,41 @@
 
 from django.contrib import messages
 from django.http import JsonResponse
-from django.shortcuts import redirect
-from django.urls import reverse, reverse_lazy
-from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
+from django.views import View
+from django.views.generic import ListView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
-from app.core.Utilities.permissions import UserHasGroupGenericMixin
+from app.core.Utilities.permissions import (
+    UserHasProjectRoleGenericMixin,
+)
+from app.Project.models.project_roles_models import Role
 from app.Project.projects.category_forms import (
     CategoryForm,
     DisciplineForm,
+    GroupForm,
     SubCategoryForm,
 )
 from app.Project.projects.projects_models import (
     Category,
     Discipline,
-    Project,
+    Group,
     SubCategory,
 )
 
 
-class CategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
+class CategoryListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
     """List all categories."""
 
     model = Category
     template_name = "project/category_manage.html"
     context_object_name = "categories"
-    permissions = ["contractor", "consultant"]
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        project = Project.objects.get(pk=self.kwargs["project_pk"])
+        project = self.get_project()
         return [
             BreadcrumbItem(
                 title=f"Setup: {project.name}",
@@ -42,195 +48,136 @@ class CategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     def get_queryset(self):
         """Return categories ordered by name."""
         return Category.objects.filter(
-            projects_id=self.kwargs["project_pk"], deleted=False
+            project=self.get_project(), deleted=False
         ).order_by("name")
 
     def get_context_data(self, **kwargs):
-        """Add form for inline creation."""
         context = super().get_context_data(**kwargs)
-        context["form"] = CategoryForm()
-        context["project"] = Project.objects.get(pk=self.kwargs["project_pk"])
+        context["category_form"] = CategoryForm()
         return context
 
 
-class CategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
+class CategoryCreateView(
+    UserHasProjectRoleGenericMixin,
+    View,
+):
     """Create a new category."""
 
     model = Category
     form_class = CategoryForm
-    template_name = "project/category_form.html"
-    permissions = ["contractor", "consultant"]
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
 
-    def get_success_url(self):
-        return reverse_lazy(
-            "project:project-category-list",
-            kwargs={"project_pk": self.kwargs["project_pk"]},
-        )
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        project = Project.objects.get(pk=self.kwargs["project_pk"])
-        return [
-            BreadcrumbItem(
-                title=f"Setup: {project.name}",
-                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
-            ),
-            BreadcrumbItem(
-                title="Categories",
-                url=reverse(
-                    "project:project-category-list",
-                    kwargs={"project_pk": self.kwargs["project_pk"]},
-                ),
-            ),
-            BreadcrumbItem(title="Add Category", url=None),
-        ]
-
-    def form_valid(self, form):
-        """Handle successful form submission."""
-        form.instance.projects_id = self.kwargs["project_pk"]
-        self.object = form.save()
-        messages.success(
-            self.request, f"Category '{self.object.name}' created successfully."
-        )
-
-        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse(
-                {
-                    "success": True,
-                    "id": self.object.pk,
-                    "name": self.object.name,
-                    "description": self.object.description,
-                }
+    def post(self, request, *args, **kwargs):
+        """Handle POST request for category creation."""
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            form.instance.project = self.get_project()
+            category = form.save()
+            messages.success(
+                request, f"Category '{category.name}' created successfully."
             )
 
-        return super().form_valid(form)
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "id": category.pk,
+                        "name": category.name,
+                        "description": category.description,
+                    }
+                )
+        else:
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {"success": False, "errors": form.errors}, status=400
+                )
 
-    def form_invalid(self, form):
-        """Handle form validation errors."""
-        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse({"success": False, "errors": form.errors}, status=400)
-        messages.error(self.request, "Please correct the errors below.")
         return redirect(
-            reverse(
-                "project:project-category-list",
-                kwargs={"project_pk": self.kwargs["project_pk"]},
-            )
+            "project:project-category-list", project_pk=self.get_project().pk
         )
 
 
-class CategoryUpdateView(UserHasGroupGenericMixin, BreadcrumbMixin, UpdateView):
+class CategoryUpdateView(
+    UserHasProjectRoleGenericMixin,
+    View,
+):
     """Update a category."""
 
     model = Category
     form_class = CategoryForm
-    template_name = "project/category_form.html"
-    permissions = ["contractor", "consultant"]
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
 
-    def get_success_url(self):
-        return reverse_lazy(
-            "project:project-category-list",
-            kwargs={"project_pk": self.kwargs["project_pk"]},
-        )
+    def post(self, request, pk, *args, **kwargs):
+        """Handle POST request for category update."""
+        category = get_object_or_404(Category, project=self.get_project(), pk=pk)
+        form = CategoryForm(request.POST, instance=category)
 
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        project = Project.objects.get(pk=self.kwargs["project_pk"])
-        return [
-            BreadcrumbItem(
-                title=f"Setup: {project.name}",
-                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
-            ),
-            BreadcrumbItem(
-                title="Categories",
-                url=reverse(
-                    "project:project-category-list",
-                    kwargs={"project_pk": self.kwargs["project_pk"]},
-                ),
-            ),
-            BreadcrumbItem(title="Edit Category", url=None),
-        ]
-
-    def form_valid(self, form):
-        """Handle successful form submission."""
-        form.instance.projects_id = self.kwargs["project_pk"]
-        self.object = form.save()
-        messages.success(
-            self.request, f"Category '{self.object.name}' updated successfully."
-        )
-
-        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse(
-                {
-                    "success": True,
-                    "id": self.object.pk,
-                    "name": self.object.name,
-                    "description": self.object.description,
-                }
+        if form.is_valid():
+            form.instance.project = self.get_project()
+            category = form.save()
+            messages.success(
+                request, f"Category '{category.name}' updated successfully."
             )
 
-        return super().form_valid(form)
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "id": category.pk,
+                        "name": category.name,
+                        "description": category.description,
+                    }
+                )
+        else:
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {"success": False, "errors": form.errors}, status=400
+                )
 
-    def form_invalid(self, form):
-        """Handle form validation errors."""
-        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse({"success": False, "errors": form.errors}, status=400)
-        return super().form_invalid(form)
+        return redirect(
+            "project:project-category-list", project_pk=self.get_project().pk
+        )
 
 
-class CategoryDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView):
+class CategoryDeleteView(
+    UserHasProjectRoleGenericMixin,
+    View,
+):
     """Delete a category."""
 
     model = Category
-    template_name = "project/category_confirm_delete.html"
-    permissions = ["contractor", "consultant"]
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
 
-    def get_success_url(self):
-        return reverse_lazy(
-            "project:project-category-list",
-            kwargs={"project_pk": self.kwargs["project_pk"]},
-        )
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        project = Project.objects.get(pk=self.kwargs["project_pk"])
-        return [
-            BreadcrumbItem(
-                title=f"Setup: {project.name}",
-                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
-            ),
-            BreadcrumbItem(
-                title="Categories",
-                url=reverse(
-                    "project:project-category-list",
-                    kwargs={"project_pk": self.kwargs["project_pk"]},
-                ),
-            ),
-            BreadcrumbItem(title="Delete Category", url=None),
-        ]
-
-    def post(self, request, *args, **kwargs):
+    def post(self, request, pk, *args, **kwargs):
         """Handle POST request for deletion."""
-        self.object = self.get_object()
-        category_name = self.object.name
+        category = get_object_or_404(Category, project=self.get_project(), pk=pk)
+        category_name = category.name
 
-        self.object.soft_delete()
+        category.soft_delete()
         messages.success(request, f"Category '{category_name}' deleted.")
 
-        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse({"success": True})
 
         return redirect(
-            "project:project-category-list", project_pk=self.kwargs["project_pk"]
+            "project:project-category-list", project_pk=self.get_project().pk
         )
 
 
-class SubCategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
+class SubCategoryListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
     """List all subcategories."""
 
     model = SubCategory
     template_name = "project/subcategory_manage.html"
     context_object_name = "subcategories"
-    permissions = ["contractor", "consultant"]
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        project = Project.objects.get(pk=self.kwargs["project_pk"])
+        project = self.get_project()
         return [
             BreadcrumbItem(
                 title=f"Setup: {project.name}",
@@ -242,189 +189,130 @@ class SubCategoryListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     def get_queryset(self):
         """Return subcategories ordered by name."""
         return SubCategory.objects.filter(
-            project_id=self.kwargs["project_pk"], deleted=False
+            project=self.get_project(), deleted=False
         ).order_by("name")
 
     def get_context_data(self, **kwargs):
-        """Add form for inline creation."""
         context = super().get_context_data(**kwargs)
-        context["form"] = SubCategoryForm()
-        context["project"] = Project.objects.get(pk=self.kwargs["project_pk"])
+        context["subcategory_form"] = SubCategoryForm(project=self.get_project())
         return context
 
 
-class SubCategoryCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
-    """Create a new subcategory."""
+class SubCategoryCreateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, View):
+    """Handle subcategory creation via POST."""
 
     model = SubCategory
-    form_class = SubCategoryForm
-    template_name = "project/subcategory_form.html"
-    permissions = ["contractor", "consultant"]
+    template_name = "project/subcategory_manage.html"
+    context_object_name = "subcategories"
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
 
-    def get_success_url(self):
-        return reverse_lazy(
-            "project:project-subcategory-list",
-            kwargs={"project_pk": self.kwargs["project_pk"]},
-        )
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        project = Project.objects.get(pk=self.kwargs["project_pk"])
-        return [
-            BreadcrumbItem(
-                title=f"Setup: {project.name}",
-                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
-            ),
-            BreadcrumbItem(
-                title="Sub Categories",
-                url=reverse(
-                    "project:project-subcategory-list",
-                    kwargs={"project_pk": self.kwargs["project_pk"]},
-                ),
-            ),
-            BreadcrumbItem(title="Add Sub Category", url=None),
-        ]
-
-    def form_valid(self, form):
-        """Handle successful form submission."""
-        form.instance.project_id = self.kwargs["project_pk"]
-        self.object = form.save()
-        messages.success(
-            self.request, f"Sub category '{self.object.name}' created successfully."
-        )
-
-        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse(
-                {
-                    "success": True,
-                    "id": self.object.pk,
-                    "name": self.object.name,
-                    "description": self.object.description,
-                }
+    def post(self, request, *args, **kwargs):
+        """Handle POST request for subcategory creation."""
+        form = SubCategoryForm(request.POST, project=self.get_project())
+        if form.is_valid():
+            form.instance.project = self.get_project()
+            subcategory = form.save()
+            messages.success(
+                request, f"Sub category '{subcategory.name}' created successfully."
             )
 
-        return super().form_valid(form)
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "id": subcategory.pk,
+                        "name": subcategory.name,
+                        "description": subcategory.description,
+                    }
+                )
+        else:
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {"success": False, "errors": form.errors}, status=400
+                )
 
-    def form_invalid(self, form):
-        """Handle form validation errors."""
-        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse({"success": False, "errors": form.errors}, status=400)
-        return super().form_invalid(form)
+        return redirect(
+            "project:project-subcategory-list", project_pk=self.get_project().pk
+        )
 
 
-class SubCategoryUpdateView(UserHasGroupGenericMixin, BreadcrumbMixin, UpdateView):
-    """Update a subcategory."""
+class SubCategoryUpdateView(UserHasProjectRoleGenericMixin, View):
+    """Handle subcategory update via POST."""
 
     model = SubCategory
-    form_class = SubCategoryForm
-    template_name = "project/subcategory_form.html"
-    permissions = ["contractor", "consultant"]
+    context_object_name = "subcategories"
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
 
-    def get_success_url(self):
-        return reverse_lazy(
-            "project:project-subcategory-list",
-            kwargs={"project_pk": self.kwargs["project_pk"]},
+    def post(self, request, pk, *args, **kwargs):
+        """Handle POST request for subcategory update."""
+        subcategory = get_object_or_404(SubCategory, project=self.get_project(), pk=pk)
+        form = SubCategoryForm(
+            request.POST, instance=subcategory, project=self.get_project()
         )
 
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        project = Project.objects.get(pk=self.kwargs["project_pk"])
-        return [
-            BreadcrumbItem(
-                title=f"Setup: {project.name}",
-                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
-            ),
-            BreadcrumbItem(
-                title="Sub Categories",
-                url=reverse(
-                    "project:project-subcategory-list",
-                    kwargs={"project_pk": self.kwargs["project_pk"]},
-                ),
-            ),
-            BreadcrumbItem(title="Edit Sub Category", url=None),
-        ]
-
-    def form_valid(self, form):
-        """Handle successful form submission."""
-        form.instance.project_id = self.kwargs["project_pk"]
-        self.object = form.save()
-        messages.success(
-            self.request, f"Sub category '{self.object.name}' updated successfully."
-        )
-
-        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse(
-                {
-                    "success": True,
-                    "id": self.object.pk,
-                    "name": self.object.name,
-                    "description": self.object.description,
-                }
+        if form.is_valid():
+            form.instance.project = self.get_project()
+            subcategory = form.save()
+            messages.success(
+                request, f"Sub category '{subcategory.name}' updated successfully."
             )
 
-        return super().form_valid(form)
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "id": subcategory.pk,
+                        "name": subcategory.name,
+                        "description": subcategory.description,
+                    }
+                )
+        else:
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {"success": False, "errors": form.errors}, status=400
+                )
 
-    def form_invalid(self, form):
-        """Handle form validation errors."""
-        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse({"success": False, "errors": form.errors}, status=400)
-        return super().form_invalid(form)
+        return redirect(
+            "project:project-subcategory-list", project_pk=self.get_project().pk
+        )
 
 
-class SubCategoryDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView):
+class SubCategoryDeleteView(UserHasProjectRoleGenericMixin, View):
     """Delete a subcategory."""
 
     model = SubCategory
-    template_name = "project/subcategory_confirm_delete.html"
-    permissions = ["contractor", "consultant"]
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
 
-    def get_success_url(self):
-        return reverse_lazy(
-            "project:project-subcategory-list",
-            kwargs={"project_pk": self.kwargs["project_pk"]},
-        )
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        project = Project.objects.get(pk=self.kwargs["project_pk"])
-        return [
-            BreadcrumbItem(
-                title=f"Setup: {project.name}",
-                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
-            ),
-            BreadcrumbItem(
-                title="Sub Categories",
-                url=reverse(
-                    "project:project-subcategory-list",
-                    kwargs={"project_pk": self.kwargs["project_pk"]},
-                ),
-            ),
-            BreadcrumbItem(title="Delete Sub Category", url=None),
-        ]
-
-    def post(self, request, *args, **kwargs):
+    def post(self, request, pk, *args, **kwargs):
         """Handle POST request for deletion."""
-        self.object = self.get_object()
-        subcategory_name = self.object.name
+        subcategory = get_object_or_404(SubCategory, project=self.get_project(), pk=pk)
+        subcategory_name = subcategory.name
 
-        self.object.soft_delete()
+        subcategory.soft_delete()
         messages.success(request, f"Sub category '{subcategory_name}' deleted.")
 
         if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse({"success": True})
 
         return redirect(
-            "project:project-subcategory-list", project_pk=self.kwargs["project_pk"]
+            "project:project-subcategory-list", project_pk=self.get_project().pk
         )
 
 
-class DisciplineListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
+class DisciplineListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
     """List all disciplines."""
 
     model = Discipline
     template_name = "project/discipline_manage.html"
     context_object_name = "disciplines"
-    permissions = ["contractor", "consultant"]
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        project = Project.objects.get(pk=self.kwargs["project_pk"])
+        project = self.get_project()
         return [
             BreadcrumbItem(
                 title=f"Setup: {project.name}",
@@ -436,174 +324,248 @@ class DisciplineListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     def get_queryset(self):
         """Return disciplines ordered by name."""
         return Discipline.objects.filter(
-            projects=self.kwargs["project_pk"], deleted=False
+            project=self.get_project(), deleted=False
         ).order_by("name")
 
-    def get_context_data(self, **kwargs):
-        """Add form for inline creation."""
-        context = super().get_context_data(**kwargs)
-        context["form"] = DisciplineForm()
-        context["project"] = Project.objects.get(pk=self.kwargs["project_pk"])
-        return context
 
-
-class DisciplineCreateView(UserHasGroupGenericMixin, BreadcrumbMixin, CreateView):
+class DisciplineCreateView(
+    UserHasProjectRoleGenericMixin,
+    View,
+):
     """Create a new discipline."""
 
     model = Discipline
     form_class = DisciplineForm
-    template_name = "project/discipline_form.html"
-    permissions = ["contractor", "consultant"]
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
 
-    def get_success_url(self):
-        return reverse_lazy(
-            "project:project-discipline-list",
-            kwargs={"project_pk": self.kwargs["project_pk"]},
-        )
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        project = Project.objects.get(pk=self.kwargs["project_pk"])
-        return [
-            BreadcrumbItem(
-                title=f"Setup: {project.name}",
-                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
-            ),
-            BreadcrumbItem(
-                title="Disciplines",
-                url=reverse(
-                    "project:project-discipline-list",
-                    kwargs={"project_pk": self.kwargs["project_pk"]},
-                ),
-            ),
-            BreadcrumbItem(title="Add Discipline", url=None),
-        ]
-
-    def form_valid(self, form):
-        """Handle successful form submission."""
-        form.instance.projects_id = self.kwargs["project_pk"]
-        self.object = form.save()
-        messages.success(
-            self.request, f"Discipline '{self.object.name}' created successfully."
-        )
-
-        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse(
-                {
-                    "success": True,
-                    "id": self.object.pk,
-                    "name": self.object.name,
-                    "description": self.object.description,
-                }
+    def post(self, request, *args, **kwargs):
+        """Handle POST request for discipline creation."""
+        form = DisciplineForm(request.POST)
+        if form.is_valid():
+            form.instance.project = self.get_project()
+            discipline = form.save()
+            messages.success(
+                request, f"Discipline '{discipline.name}' created successfully."
             )
 
-        return super().form_valid(form)
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "id": discipline.pk,
+                        "name": discipline.name,
+                        "description": discipline.description,
+                    }
+                )
+        else:
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {"success": False, "errors": form.errors}, status=400
+                )
 
-    def form_invalid(self, form):
-        """Handle form validation errors."""
-        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse({"success": False, "errors": form.errors}, status=400)
-        return super().form_invalid(form)
+        return redirect(
+            "project:project-discipline-list", project_pk=self.get_project().pk
+        )
 
 
-class DisciplineUpdateView(UserHasGroupGenericMixin, BreadcrumbMixin, UpdateView):
+class DisciplineUpdateView(
+    UserHasProjectRoleGenericMixin,
+    View,
+):
     """Update a discipline."""
 
     model = Discipline
     form_class = DisciplineForm
-    template_name = "project/discipline_form.html"
-    permissions = ["contractor", "consultant"]
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
 
-    def get_success_url(self):
-        return reverse_lazy(
-            "project:project-discipline-list",
-            kwargs={"project_pk": self.kwargs["project_pk"]},
-        )
+    def post(self, request, pk, *args, **kwargs):
+        """Handle POST request for discipline update."""
+        discipline = get_object_or_404(Discipline, project=self.get_project(), pk=pk)
+        form = DisciplineForm(request.POST, instance=discipline)
 
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        project = Project.objects.get(pk=self.kwargs["project_pk"])
-        return [
-            BreadcrumbItem(
-                title=f"Setup: {project.name}",
-                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
-            ),
-            BreadcrumbItem(
-                title="Disciplines",
-                url=reverse(
-                    "project:project-discipline-list",
-                    kwargs={"project_pk": self.kwargs["project_pk"]},
-                ),
-            ),
-            BreadcrumbItem(title="Edit Discipline", url=None),
-        ]
-
-    def form_valid(self, form):
-        """Handle successful form submission."""
-        form.instance.projects_id = self.kwargs["project_pk"]
-        self.object = form.save()
-        messages.success(
-            self.request, f"Discipline '{self.object.name}' updated successfully."
-        )
-
-        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse(
-                {
-                    "success": True,
-                    "id": self.object.pk,
-                    "name": self.object.name,
-                    "description": self.object.description,
-                }
+        if form.is_valid():
+            form.instance.project = self.get_project()
+            discipline = form.save()
+            messages.success(
+                request, f"Discipline '{discipline.name}' updated successfully."
             )
 
-        return super().form_valid(form)
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "id": discipline.pk,
+                        "name": discipline.name,
+                        "description": discipline.description,
+                    }
+                )
+        else:
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {"success": False, "errors": form.errors}, status=400
+                )
 
-    def form_invalid(self, form):
-        """Handle form validation errors."""
-        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse({"success": False, "errors": form.errors}, status=400)
-        return super().form_invalid(form)
+        return redirect(
+            "project:project-discipline-list", project_pk=self.get_project().pk
+        )
 
 
-class DisciplineDeleteView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView):
+class DisciplineDeleteView(
+    UserHasProjectRoleGenericMixin,
+    View,
+):
     """Delete a discipline."""
 
     model = Discipline
-    template_name = "project/discipline_confirm_delete.html"
-    permissions = ["contractor", "consultant"]
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
 
-    def get_success_url(self):
-        return reverse_lazy(
-            "project:project-discipline-list",
-            kwargs={"project_pk": self.kwargs["project_pk"]},
+    def post(self, request, pk, *args, **kwargs):
+        """Handle POST request for deletion."""
+        discipline = get_object_or_404(Discipline, project=self.get_project(), pk=pk)
+        discipline_name = discipline.name
+
+        discipline.soft_delete()
+        messages.success(request, f"Discipline '{discipline_name}' deleted.")
+
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return JsonResponse({"success": True})
+
+        return redirect(
+            "project:project-discipline-list", project_pk=self.get_project().pk
         )
 
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        project = Project.objects.get(pk=self.kwargs["project_pk"])
+
+# Group Views
+class GroupListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
+    """List all groups."""
+
+    model = Group
+    template_name = "project/group_manage.html"
+    context_object_name = "groups"
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def get_breadcrumbs(self):
+        """Return breadcrumbs for the view."""
+        project = self.get_project()
         return [
             BreadcrumbItem(
                 title=f"Setup: {project.name}",
                 url=reverse("project:project-setup", kwargs={"pk": project.pk}),
             ),
-            BreadcrumbItem(
-                title="Disciplines",
-                url=reverse(
-                    "project:project-discipline-list",
-                    kwargs={"project_pk": self.kwargs["project_pk"]},
-                ),
-            ),
-            BreadcrumbItem(title="Delete Discipline", url=None),
+            BreadcrumbItem(title="Groups", url=None),
         ]
 
+    def get_queryset(self):
+        """Return groups ordered by name."""
+        return Group.objects.filter(project=self.get_project(), deleted=False).order_by(
+            "name"
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["group_form"] = GroupForm(project=self.get_project())
+        return context
+
+
+class GroupCreateView(
+    UserHasProjectRoleGenericMixin,
+    View,
+):
+    """Create a new group."""
+
+    model = Group
+    form_class = GroupForm
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
     def post(self, request, *args, **kwargs):
+        """Handle POST request for group creation."""
+        form = GroupForm(request.POST, project=self.get_project())
+        if form.is_valid():
+            form.instance.project = self.get_project()
+            group = form.save()
+            messages.success(request, f"Group '{group.name}' created successfully.")
+
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "id": group.pk,
+                        "name": group.name,
+                        "description": group.description,
+                    }
+                )
+        else:
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {"success": False, "errors": form.errors}, status=400
+                )
+
+        return redirect("project:project-group-list", project_pk=self.get_project().pk)
+
+
+class GroupUpdateView(
+    UserHasProjectRoleGenericMixin,
+    View,
+):
+    """Update a group."""
+
+    model = Group
+    form_class = GroupForm
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, pk, *args, **kwargs):
+        """Handle POST request for group update."""
+        group = get_object_or_404(Group, project=self.get_project(), pk=pk)
+        form = GroupForm(request.POST, instance=group, project=self.get_project())
+
+        if form.is_valid():
+            form.instance.project = self.get_project()
+            group = form.save()
+            messages.success(request, f"Group '{group.name}' updated successfully.")
+
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {
+                        "success": True,
+                        "id": group.pk,
+                        "name": group.name,
+                        "description": group.description,
+                    }
+                )
+        else:
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return JsonResponse(
+                    {"success": False, "errors": form.errors}, status=400
+                )
+
+        return redirect("project:project-group-list", project_pk=self.get_project().pk)
+
+
+class GroupDeleteView(
+    UserHasProjectRoleGenericMixin,
+    View,
+):
+    """Delete a group."""
+
+    model = Group
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, pk, *args, **kwargs):
         """Handle POST request for deletion."""
-        self.object = self.get_object()
-        discipline_name = self.object.name
+        group = get_object_or_404(Group, project=self.get_project(), pk=pk)
+        group_name = group.name
 
-        self.object.soft_delete()
-        messages.success(request, f"Discipline '{discipline_name}' deleted.")
+        group.soft_delete()
+        messages.success(request, f"Group '{group_name}' deleted.")
 
-        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return JsonResponse({"success": True})
 
-        return redirect(
-            "project:project-discipline-list", project_pk=self.kwargs["project_pk"]
-        )
+        return redirect("project:project-group-list", project_pk=self.get_project().pk)
