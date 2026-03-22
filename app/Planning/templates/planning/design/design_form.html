@@ -25,32 +25,20 @@
             {% csrf_token %}
             {% if form.non_field_errors %}
                 <div class="bg-red-50 border border-red-200 rounded-md p-4">
-                    {% for error in form.non_field_errors %}
-                        <p class="text-sm text-red-600">{{ error }}</p>
-                    {% endfor %}
+                    {% for error in form.non_field_errors %}<p class="text-sm text-red-600">{{ error }}</p>{% endfor %}
                 </div>
             {% endif %}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {% if level == "L1 - Category" %}
-                    <div>
-                        {{ form.category|as_crispy_field }}
-                    </div>
+                    <div>{{ form.category|as_crispy_field }}</div>
                 {% elif level == "L2 - SubCategory" %}
-                    <div>
-                        {{ form.sub_category|as_crispy_field }}
-                    </div>
+                    <div>{{ form.sub_category|as_crispy_field }}</div>
                 {% elif level == "L3 - Group" %}
-                    <div>
-                        {{ form.group|as_crispy_field }}
-                    </div>
+                    <div>{{ form.group|as_crispy_field }}</div>
                 {% elif level == "L4 - Discipline" %}
-                    <div>
-                        {{ form.discipline|as_crispy_field }}
-                    </div>
+                    <div>{{ form.discipline|as_crispy_field }}</div>
                 {% endif %}
-                <div>
-                    {{ form.stage|as_crispy_field }}
-                </div>
+                <div>{{ form.stage|as_crispy_field }}</div>
             </div>
             <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
                 <a href="{% url 'planning:design-list' project.pk work_package.pk %}"

@@ -262,7 +262,7 @@ class DesignCategory(BaseModel):
     )
 
     def __str__(self) -> str:
-        return f"{self.category.name} - {self.get_stage_display()}"
+        return f"{self.category.name} - {self.get_stage_display()}"  # type: ignore
 
     class Meta:
         verbose_name = "Design Category (L1)"
@@ -335,7 +335,7 @@ class DesignSubCategory(BaseModel):
     )
 
     def __str__(self) -> str:
-        return f"{self.sub_category.name} - {self.get_stage_display()}"
+        return f"{self.sub_category.name} - {self.get_stage_display()}"  # type: ignore
 
     class Meta:
         verbose_name = "Design SubCategory (L2)"
@@ -408,7 +408,7 @@ class DesignGroup(BaseModel):
     )
 
     def __str__(self) -> str:
-        return f"{self.group.name} - {self.get_stage_display()}"
+        return f"{self.group.name} - {self.get_stage_display()}"  # type: ignore
 
     class Meta:
         verbose_name = "Design Group (L3)"
@@ -481,7 +481,7 @@ class DesignDiscipline(BaseModel):
     )
 
     def __str__(self) -> str:
-        return f"{self.discipline.name} - {self.get_stage_display()}"
+        return f"{self.discipline.name} - {self.get_stage_display()}"  # type: ignore
 
     class Meta:
         verbose_name = "Design Discipline (L4)"

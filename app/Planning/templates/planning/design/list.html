@@ -56,7 +56,9 @@
                             <div class="mt-3 space-y-2">
                                 {% for file in design_cat.files.all %}
                                     <div class="flex items-center justify-between text-sm">
-                                        <a href="{{ file.file.url }}" target="_blank" class="text-emerald-600 hover:text-emerald-700 transition-colors flex items-center">
+                                        <a href="{{ file.file.url }}"
+                                           target="_blank"
+                                           class="text-emerald-600 hover:text-emerald-700 transition-colors flex items-center">
                                             {% heroicon_outline "document-arrow-down" size="14" class="mr-1" %}
                                             {{ file.file.name|slice:"20:" }}
                                         </a>
@@ -115,7 +117,9 @@
                             <div class="mt-3 space-y-2">
                                 {% for file in design_subcat.files.all %}
                                     <div class="flex items-center justify-between text-sm">
-                                        <a href="{{ file.file.url }}" target="_blank" class="text-emerald-600 hover:text-emerald-700 transition-colors flex items-center">
+                                        <a href="{{ file.file.url }}"
+                                           target="_blank"
+                                           class="text-emerald-600 hover:text-emerald-700 transition-colors flex items-center">
                                             {% heroicon_outline "document-arrow-down" size="14" class="mr-1" %}
                                             {{ file.file.name|slice:"20:" }}
                                         </a>
@@ -174,7 +178,9 @@
                             <div class="mt-3 space-y-2">
                                 {% for file in design_group.files.all %}
                                     <div class="flex items-center justify-between text-sm">
-                                        <a href="{{ file.file.url }}" target="_blank" class="text-emerald-600 hover:text-emerald-700 transition-colors flex items-center">
+                                        <a href="{{ file.file.url }}"
+                                           target="_blank"
+                                           class="text-emerald-600 hover:text-emerald-700 transition-colors flex items-center">
                                             {% heroicon_outline "document-arrow-down" size="14" class="mr-1" %}
                                             {{ file.file.name|slice:"20:" }}
                                         </a>
@@ -190,9 +196,7 @@
             <div class="text-center py-8 text-gray-500">
                 <p class="text-sm">No groups added yet</p>
                 <a href="{% url 'planning:design-group-create' project.pk work_package.pk %}"
-                   class="text-sm text-emerald-600 hover:text-emerald-700 transition-colors">
-                    Add your first group
-                </a>
+                   class="text-sm text-emerald-600 hover:text-emerald-700 transition-colors">Add your first group</a>
             </div>
         {% endif %}
     </div>
@@ -233,7 +237,9 @@
                             <div class="mt-3 space-y-2">
                                 {% for file in design_discipline.files.all %}
                                     <div class="flex items-center justify-between text-sm">
-                                        <a href="{{ file.file.url }}" target="_blank" class="text-emerald-600 hover:text-emerald-700 transition-colors flex items-center">
+                                        <a href="{{ file.file.url }}"
+                                           target="_blank"
+                                           class="text-emerald-600 hover:text-emerald-700 transition-colors flex items-center">
                                             {% heroicon_outline "document-arrow-down" size="14" class="mr-1" %}
                                             {{ file.file.name|slice:"20:" }}
                                         </a>

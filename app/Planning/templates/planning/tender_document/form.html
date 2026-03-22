@@ -2,14 +2,26 @@
 {% load heroicons %}
 {% load crispy_forms_tags %}
 {% block title %}
-    {% if action == "Add" %}Add{% else %}Edit{% endif %} Tender Document - {{ work_package.name }} - {{ project.name }} - {{ block.super }}
+    {% if action == "Add" %}
+        Add
+    {% else %}
+        Edit
+    {% endif %}
+    Tender Document - {{ work_package.name }} - {{ project.name }} - {{ block.super }}
 {% endblock title %}
 {% block content %}
     <div class="bg-white shadow-sm rounded-lg mb-6">
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">{% if action == "Add" %}Add{% else %}Edit{% endif %} Tender Document</h1>
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        {% if action == "Add" %}
+                            Add
+                        {% else %}
+                            Edit
+                        {% endif %}
+                        Tender Document
+                    </h1>
                     <p class="text-sm text-gray-600 mt-1">{{ project.name }} - {{ work_package.name }}</p>
                 </div>
                 <a href="{% url 'planning:work-package-detail' project.pk work_package.pk %}"
@@ -25,27 +37,15 @@
             {% csrf_token %}
             {% if form.non_field_errors %}
                 <div class="bg-red-50 border border-red-200 rounded-md p-4">
-                    {% for error in form.non_field_errors %}
-                        <p class="text-sm text-red-600">{{ error }}</p>
-                    {% endfor %}
+                    {% for error in form.non_field_errors %}<p class="text-sm text-red-600">{{ error }}</p>{% endfor %}
                 </div>
             {% endif %}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="md:col-span-2">
-                    {{ form.name|as_crispy_field }}
-                </div>
-                <div>
-                    {{ form.planned_date|as_crispy_field }}
-                </div>
-                <div>
-                    {{ form.actual_date|as_crispy_field }}
-                </div>
-                <div>
-                    {{ form.percentage_completed|as_crispy_field }}
-                </div>
-                <div class="md:col-span-2">
-                    {{ form.file|as_crispy_field }}
-                </div>
+                <div class="md:col-span-2">{{ form.name|as_crispy_field }}</div>
+                <div>{{ form.planned_date|as_crispy_field }}</div>
+                <div>{{ form.actual_date|as_crispy_field }}</div>
+                <div>{{ form.percentage_completed|as_crispy_field }}</div>
+                <div class="md:col-span-2">{{ form.file|as_crispy_field }}</div>
             </div>
             <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
                 <a href="{% url 'planning:work-package-detail' project.pk work_package.pk %}"
@@ -54,7 +54,12 @@
                 </a>
                 <button type="submit"
                         class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium bg-emerald-600 hover:bg-emerald-700 transition-colors">
-                    {% if action == "Add" %}Add{% else %}Update{% endif %} Tender Document
+                    {% if action == "Add" %}
+                        Add
+                    {% else %}
+                        Update
+                    {% endif %}
+                    Tender Document
                 </button>
             </div>
         </form>
