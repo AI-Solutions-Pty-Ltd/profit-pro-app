@@ -4,6 +4,7 @@ from django.db import models
 
 from app.core.Utilities.models import BaseModel
 from app.Project.models import Category, Discipline, Project, SubCategory
+from app.Project.projects.projects_models import Group
 
 
 class Milestone(BaseModel):
@@ -83,13 +84,31 @@ class Milestone(BaseModel):
         blank=True,
         help_text="End date for WBS Level 2",
     )
+    project_group = models.ForeignKey(
+        Group,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="milestones",
+        help_text="WBS Level 3 classification",
+    )
+    project_group_start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Start date for WBS Level 3",
+    )
+    project_group_end_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="End date for WBS Level 3",
+    )
     project_discipline = models.ForeignKey(
         Discipline,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="milestones",
-        help_text="WBS Level 3 classification",
+        help_text="Discipline classification",
     )
     project_discipline_start_date = models.DateField(
         null=True,

@@ -32,6 +32,7 @@ CORE_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "django.contrib.sites",
+    "rest_framework",
     "app.core",
     "app.utils",
 ]
@@ -81,6 +82,17 @@ MIDDLEWARE = [
     "django.middleware.locale.LocaleMiddleware",
     "app.core.middleware.timer_middleware.RequestTimerMiddleware",
 ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.MultiPartParser",
+    ],
+}
 
 ROOT_URLCONF = "app.core.urls"
 

@@ -14,10 +14,8 @@
                 </div>
             </div>
             <form method="post" id="editForm">
-                {% csrf_token %}
                 <div class="px-6 py-4 space-y-4">
                     <div class="space-y-4">
-                        <div>{{ form.sub_category|as_crispy_field }}</div>
                         <div>{{ form.name|as_crispy_field }}</div>
                         <div>{{ form.description|as_crispy_field }}</div>
                     </div>
@@ -40,20 +38,17 @@
 </div>
 <script>
     // Edit Modal Functions
-    function openEditModal(id, name, description, subCategoryId) {
+    function openEditModal(id, name, description) {
         const modal = document.getElementById("editGroupModal");
         const project_pk = {{ project.pk }};
+        const subcategory_pk = {{ subcategory.pk }};
         const nameInput = modal.querySelector('#id_name');
         const descriptionInput = modal.querySelector('#id_description');
-        const subCategoryInput = modal.querySelector('#id_sub_category');
         
         // Set values
         nameInput.value = name;
         descriptionInput.value = description;
-        if (subCategoryId) {
-            subCategoryInput.value = subCategoryId;
-        }
-        document.getElementById('editForm').action = "/project/" + project_pk + "/groups/" + id + "/update/";
+        document.getElementById('editForm').action = `/project/${project_pk}/subcategories/${subcategory_pk}/groups/${id}/update/`;
         
         // Show modal
         modal.classList.remove('hidden');
@@ -75,6 +70,38 @@
     document.getElementById("editGroupModal").addEventListener('click', function(event) {
         if (event.target === this) {
             closeEditModal();
+        }
+    });
+
+    // Form submission
+    document.getElementById('editForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        const formAction = this.action;
+        
+        try {
+            const response = await fetch(formAction, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ CSRF_TOKEN }}'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert('Group could not be updated');
+                console.error('Errors:', result.errors);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while updating the group');
         }
     });
 </script>

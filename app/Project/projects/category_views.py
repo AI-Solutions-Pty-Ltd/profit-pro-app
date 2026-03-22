@@ -1,10 +1,11 @@
 """Views for Category, SubCategory, and Discipline management."""
 
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from django.contrib import messages
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from django.views import View
 from django.views.generic import ListView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
@@ -59,7 +60,7 @@ class CategoryListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView
 
 class CategoryCreateView(
     UserHasProjectRoleGenericMixin,
-    View,
+    APIView,
 ):
     """Create a new category."""
 
@@ -70,37 +71,33 @@ class CategoryCreateView(
 
     def post(self, request, *args, **kwargs):
         """Handle POST request for category creation."""
-        form = CategoryForm(request.POST)
+        form = CategoryForm(request.data)
+
         if form.is_valid():
             form.instance.project = self.get_project()
             category = form.save()
             messages.success(
                 request, f"Category '{category.name}' created successfully."
             )
+            response_data = {
+                "success": True,
+                "id": category.pk,
+                "name": category.name,
+                "description": category.description,
+            }
+            # Include return_url in AJAX response if present
+            return_url = request.data.get("return_url")
+            if return_url:
+                response_data["return_url"] = return_url
+            return Response(response_data, status=200)
 
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse(
-                    {
-                        "success": True,
-                        "id": category.pk,
-                        "name": category.name,
-                        "description": category.description,
-                    }
-                )
-        else:
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse(
-                    {"success": False, "errors": form.errors}, status=400
-                )
-
-        return redirect(
-            "project:project-category-list", project_pk=self.get_project().pk
-        )
+        # Format errors properly for JSON serialization
+        return Response(dict(form.errors), status=400)
 
 
 class CategoryUpdateView(
     UserHasProjectRoleGenericMixin,
-    View,
+    APIView,
 ):
     """Update a category."""
 
@@ -112,7 +109,7 @@ class CategoryUpdateView(
     def post(self, request, pk, *args, **kwargs):
         """Handle POST request for category update."""
         category = get_object_or_404(Category, project=self.get_project(), pk=pk)
-        form = CategoryForm(request.POST, instance=category)
+        form = CategoryForm(request.data, instance=category)
 
         if form.is_valid():
             form.instance.project = self.get_project()
@@ -120,30 +117,20 @@ class CategoryUpdateView(
             messages.success(
                 request, f"Category '{category.name}' updated successfully."
             )
+            response_data = {
+                "success": True,
+                "id": category.pk,
+                "name": category.name,
+                "description": category.description,
+            }
+            return Response(response_data, status=200)
 
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse(
-                    {
-                        "success": True,
-                        "id": category.pk,
-                        "name": category.name,
-                        "description": category.description,
-                    }
-                )
-        else:
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse(
-                    {"success": False, "errors": form.errors}, status=400
-                )
-
-        return redirect(
-            "project:project-category-list", project_pk=self.get_project().pk
-        )
+        return Response(dict(form.errors), status=400)
 
 
 class CategoryDeleteView(
     UserHasProjectRoleGenericMixin,
-    View,
+    APIView,
 ):
     """Delete a category."""
 
@@ -159,16 +146,11 @@ class CategoryDeleteView(
         category.soft_delete()
         messages.success(request, f"Category '{category_name}' deleted.")
 
-        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse({"success": True})
-
-        return redirect(
-            "project:project-category-list", project_pk=self.get_project().pk
-        )
+        return Response({"success": True}, status=200)
 
 
 class SubCategoryListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
-    """List all subcategories."""
+    """List all subcategories for a specific category."""
 
     model = SubCategory
     template_name = "project/subcategory_manage.html"
@@ -176,130 +158,152 @@ class SubCategoryListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListV
     roles = [Role.ADMIN]
     project_slug = "project_pk"
 
+    def get_category(self):
+        """Get the parent category from URL."""
+        category_pk = self.kwargs.get("category_pk")
+        return get_object_or_404(
+            Category, pk=category_pk, project=self.get_project(), deleted=False
+        )
+
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
+        category = self.get_category()
         return [
             BreadcrumbItem(
-                title=f"Setup: {project.name}",
+                title=project.name,
+                url=reverse("project:project-management", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(
+                title="Setup",
                 url=reverse("project:project-setup", kwargs={"pk": project.pk}),
             ),
-            BreadcrumbItem(title="Sub Categories", url=None),
+            BreadcrumbItem(
+                title="Categories",
+                url=reverse(
+                    "project:project-category-list", kwargs={"project_pk": project.pk}
+                ),
+            ),
+            BreadcrumbItem(title=f"{category.name} - Sub Categories", url=None),
         ]
 
     def get_queryset(self):
-        """Return subcategories ordered by name."""
+        """Return subcategories for the parent category."""
+        category = self.get_category()
         return SubCategory.objects.filter(
-            project=self.get_project(), deleted=False
+            category=category, project=self.get_project(), deleted=False
         ).order_by("name")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        category = self.get_category()
+        context["category"] = category
         context["subcategory_form"] = SubCategoryForm(project=self.get_project())
         return context
 
 
-class SubCategoryCreateView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, View):
+class SubCategoryCreateView(UserHasProjectRoleGenericMixin, APIView):
     """Handle subcategory creation via POST."""
 
     model = SubCategory
-    template_name = "project/subcategory_manage.html"
-    context_object_name = "subcategories"
     roles = [Role.ADMIN]
     project_slug = "project_pk"
 
+    def get_category(self):
+        """Get the parent category from URL."""
+        category_pk = self.kwargs.get("category_pk")
+        return get_object_or_404(
+            Category, pk=category_pk, project=self.get_project(), deleted=False
+        )
+
     def post(self, request, *args, **kwargs):
         """Handle POST request for subcategory creation."""
-        form = SubCategoryForm(request.POST, project=self.get_project())
+        form = SubCategoryForm(request.data, project=self.get_project())
         if form.is_valid():
             form.instance.project = self.get_project()
+            form.instance.category = self.get_category()  # Auto-fill parent category
             subcategory = form.save()
             messages.success(
                 request, f"Sub category '{subcategory.name}' created successfully."
             )
+            response_data = {
+                "success": True,
+                "id": subcategory.pk,
+                "name": subcategory.name,
+                "description": subcategory.description,
+            }
+            return Response(response_data, status=200)
 
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse(
-                    {
-                        "success": True,
-                        "id": subcategory.pk,
-                        "name": subcategory.name,
-                        "description": subcategory.description,
-                    }
-                )
-        else:
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse(
-                    {"success": False, "errors": form.errors}, status=400
-                )
-
-        return redirect(
-            "project:project-subcategory-list", project_pk=self.get_project().pk
-        )
+        return Response(dict(form.errors), status=400)
 
 
-class SubCategoryUpdateView(UserHasProjectRoleGenericMixin, View):
+class SubCategoryUpdateView(UserHasProjectRoleGenericMixin, APIView):
     """Handle subcategory update via POST."""
 
     model = SubCategory
-    context_object_name = "subcategories"
     roles = [Role.ADMIN]
     project_slug = "project_pk"
 
+    def get_category(self):
+        """Get the parent category from URL."""
+        category_pk = self.kwargs.get("category_pk")
+        return get_object_or_404(
+            Category, pk=category_pk, project=self.get_project(), deleted=False
+        )
+
     def post(self, request, pk, *args, **kwargs):
         """Handle POST request for subcategory update."""
-        subcategory = get_object_or_404(SubCategory, project=self.get_project(), pk=pk)
+        category = self.get_category()
+        subcategory = get_object_or_404(
+            SubCategory, project=self.get_project(), pk=pk, category=category
+        )
         form = SubCategoryForm(
-            request.POST, instance=subcategory, project=self.get_project()
+            request.data, instance=subcategory, project=self.get_project()
         )
 
         if form.is_valid():
             form.instance.project = self.get_project()
+            form.instance.category = category  # Ensure parent category stays the same
             subcategory = form.save()
             messages.success(
                 request, f"Sub category '{subcategory.name}' updated successfully."
             )
+            response_data = {
+                "success": True,
+                "id": subcategory.pk,
+                "name": subcategory.name,
+                "description": subcategory.description,
+            }
+            return Response(response_data, status=200)
 
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse(
-                    {
-                        "success": True,
-                        "id": subcategory.pk,
-                        "name": subcategory.name,
-                        "description": subcategory.description,
-                    }
-                )
-        else:
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse(
-                    {"success": False, "errors": form.errors}, status=400
-                )
-
-        return redirect(
-            "project:project-subcategory-list", project_pk=self.get_project().pk
-        )
+        return Response(dict(form.errors), status=400)
 
 
-class SubCategoryDeleteView(UserHasProjectRoleGenericMixin, View):
+class SubCategoryDeleteView(UserHasProjectRoleGenericMixin, APIView):
     """Delete a subcategory."""
 
     model = SubCategory
     roles = [Role.ADMIN]
     project_slug = "project_pk"
 
+    def get_category(self):
+        """Get the parent category from URL."""
+        category_pk = self.kwargs.get("category_pk")
+        return get_object_or_404(
+            Category, pk=category_pk, project=self.get_project(), deleted=False
+        )
+
     def post(self, request, pk, *args, **kwargs):
         """Handle POST request for deletion."""
-        subcategory = get_object_or_404(SubCategory, project=self.get_project(), pk=pk)
+        category = self.get_category()
+        subcategory = get_object_or_404(
+            SubCategory, project=self.get_project(), pk=pk, category=category
+        )
         subcategory_name = subcategory.name
 
         subcategory.soft_delete()
         messages.success(request, f"Sub category '{subcategory_name}' deleted.")
 
-        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse({"success": True})
-
-        return redirect(
-            "project:project-subcategory-list", project_pk=self.get_project().pk
-        )
+        return Response({"success": True}, status=200)
 
 
 class DisciplineListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
@@ -330,7 +334,7 @@ class DisciplineListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListVi
 
 class DisciplineCreateView(
     UserHasProjectRoleGenericMixin,
-    View,
+    APIView,
 ):
     """Create a new discipline."""
 
@@ -341,37 +345,27 @@ class DisciplineCreateView(
 
     def post(self, request, *args, **kwargs):
         """Handle POST request for discipline creation."""
-        form = DisciplineForm(request.POST)
+        form = DisciplineForm(request.data)
         if form.is_valid():
             form.instance.project = self.get_project()
             discipline = form.save()
             messages.success(
                 request, f"Discipline '{discipline.name}' created successfully."
             )
+            response_data = {
+                "success": True,
+                "id": discipline.pk,
+                "name": discipline.name,
+                "description": discipline.description,
+            }
+            return Response(response_data, status=200)
 
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse(
-                    {
-                        "success": True,
-                        "id": discipline.pk,
-                        "name": discipline.name,
-                        "description": discipline.description,
-                    }
-                )
-        else:
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse(
-                    {"success": False, "errors": form.errors}, status=400
-                )
-
-        return redirect(
-            "project:project-discipline-list", project_pk=self.get_project().pk
-        )
+        return Response(dict(form.errors), status=400)
 
 
 class DisciplineUpdateView(
     UserHasProjectRoleGenericMixin,
-    View,
+    APIView,
 ):
     """Update a discipline."""
 
@@ -383,7 +377,7 @@ class DisciplineUpdateView(
     def post(self, request, pk, *args, **kwargs):
         """Handle POST request for discipline update."""
         discipline = get_object_or_404(Discipline, project=self.get_project(), pk=pk)
-        form = DisciplineForm(request.POST, instance=discipline)
+        form = DisciplineForm(request.data, instance=discipline)
 
         if form.is_valid():
             form.instance.project = self.get_project()
@@ -391,30 +385,20 @@ class DisciplineUpdateView(
             messages.success(
                 request, f"Discipline '{discipline.name}' updated successfully."
             )
+            response_data = {
+                "success": True,
+                "id": discipline.pk,
+                "name": discipline.name,
+                "description": discipline.description,
+            }
+            return Response(response_data, status=200)
 
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse(
-                    {
-                        "success": True,
-                        "id": discipline.pk,
-                        "name": discipline.name,
-                        "description": discipline.description,
-                    }
-                )
-        else:
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse(
-                    {"success": False, "errors": form.errors}, status=400
-                )
-
-        return redirect(
-            "project:project-discipline-list", project_pk=self.get_project().pk
-        )
+        return Response(dict(form.errors), status=400)
 
 
 class DisciplineDeleteView(
     UserHasProjectRoleGenericMixin,
-    View,
+    APIView,
 ):
     """Delete a discipline."""
 
@@ -430,17 +414,12 @@ class DisciplineDeleteView(
         discipline.soft_delete()
         messages.success(request, f"Discipline '{discipline_name}' deleted.")
 
-        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse({"success": True})
-
-        return redirect(
-            "project:project-discipline-list", project_pk=self.get_project().pk
-        )
+        return Response({"success": True}, status=200)
 
 
 # Group Views
 class GroupListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
-    """List all groups."""
+    """List all groups for a specific subcategory."""
 
     model = Group
     template_name = "project/group_manage.html"
@@ -448,32 +427,57 @@ class GroupListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
     roles = [Role.ADMIN]
     project_slug = "project_pk"
 
+    def get_subcategory(self):
+        """Get the parent subcategory from URL."""
+        subcategory_pk = self.kwargs.get("subcategory_pk")
+        return get_object_or_404(
+            SubCategory, pk=subcategory_pk, project=self.get_project(), deleted=False
+        )
+
     def get_breadcrumbs(self):
         """Return breadcrumbs for the view."""
         project = self.get_project()
+        subcategory = self.get_subcategory()
+        category = subcategory.category
         return [
             BreadcrumbItem(
                 title=f"Setup: {project.name}",
                 url=reverse("project:project-setup", kwargs={"pk": project.pk}),
             ),
-            BreadcrumbItem(title="Groups", url=None),
+            BreadcrumbItem(
+                title="Categories",
+                url=reverse(
+                    "project:project-category-list", kwargs={"project_pk": project.pk}
+                ),
+            ),
+            BreadcrumbItem(
+                title=f"{category.name} - Sub Categories",
+                url=reverse(
+                    "project:project-subcategory-list",
+                    kwargs={"project_pk": project.pk, "category_pk": category.pk},
+                ),
+            ),
+            BreadcrumbItem(title=f"{subcategory.name} - Groups", url=None),
         ]
 
     def get_queryset(self):
-        """Return groups ordered by name."""
-        return Group.objects.filter(project=self.get_project(), deleted=False).order_by(
-            "name"
-        )
+        """Return groups for the parent subcategory."""
+        subcategory = self.get_subcategory()
+        return Group.objects.filter(
+            sub_category=subcategory, project=self.get_project(), deleted=False
+        ).order_by("name")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        subcategory = self.get_subcategory()
+        context["subcategory"] = subcategory
         context["group_form"] = GroupForm(project=self.get_project())
         return context
 
 
 class GroupCreateView(
     UserHasProjectRoleGenericMixin,
-    View,
+    APIView,
 ):
     """Create a new group."""
 
@@ -482,35 +486,37 @@ class GroupCreateView(
     roles = [Role.ADMIN]
     project_slug = "project_pk"
 
+    def get_subcategory(self):
+        """Get the parent subcategory from URL."""
+        subcategory_pk = self.kwargs.get("subcategory_pk")
+        return get_object_or_404(
+            SubCategory, pk=subcategory_pk, project=self.get_project(), deleted=False
+        )
+
     def post(self, request, *args, **kwargs):
         """Handle POST request for group creation."""
-        form = GroupForm(request.POST, project=self.get_project())
+        form = GroupForm(request.data, project=self.get_project())
         if form.is_valid():
             form.instance.project = self.get_project()
+            form.instance.sub_category = (
+                self.get_subcategory()
+            )  # Auto-fill parent subcategory
             group = form.save()
             messages.success(request, f"Group '{group.name}' created successfully.")
+            response_data = {
+                "success": True,
+                "id": group.pk,
+                "name": group.name,
+                "description": group.description,
+            }
+            return Response(response_data, status=200)
 
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse(
-                    {
-                        "success": True,
-                        "id": group.pk,
-                        "name": group.name,
-                        "description": group.description,
-                    }
-                )
-        else:
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse(
-                    {"success": False, "errors": form.errors}, status=400
-                )
-
-        return redirect("project:project-group-list", project_pk=self.get_project().pk)
+        return Response(dict(form.errors), status=400)
 
 
 class GroupUpdateView(
     UserHasProjectRoleGenericMixin,
-    View,
+    APIView,
 ):
     """Update a group."""
 
@@ -519,37 +525,42 @@ class GroupUpdateView(
     roles = [Role.ADMIN]
     project_slug = "project_pk"
 
+    def get_subcategory(self):
+        """Get the parent subcategory from URL."""
+        subcategory_pk = self.kwargs.get("subcategory_pk")
+        return get_object_or_404(
+            SubCategory, pk=subcategory_pk, project=self.get_project(), deleted=False
+        )
+
     def post(self, request, pk, *args, **kwargs):
         """Handle POST request for group update."""
-        group = get_object_or_404(Group, project=self.get_project(), pk=pk)
-        form = GroupForm(request.POST, instance=group, project=self.get_project())
+        subcategory = self.get_subcategory()
+        group = get_object_or_404(
+            Group, project=self.get_project(), pk=pk, sub_category=subcategory
+        )
+        form = GroupForm(request.data, instance=group, project=self.get_project())
 
         if form.is_valid():
             form.instance.project = self.get_project()
+            form.instance.sub_category = (
+                subcategory  # Ensure parent subcategory stays the same
+            )
             group = form.save()
             messages.success(request, f"Group '{group.name}' updated successfully.")
+            response_data = {
+                "success": True,
+                "id": group.pk,
+                "name": group.name,
+                "description": group.description,
+            }
+            return Response(response_data, status=200)
 
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse(
-                    {
-                        "success": True,
-                        "id": group.pk,
-                        "name": group.name,
-                        "description": group.description,
-                    }
-                )
-        else:
-            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-                return JsonResponse(
-                    {"success": False, "errors": form.errors}, status=400
-                )
-
-        return redirect("project:project-group-list", project_pk=self.get_project().pk)
+        return Response(dict(form.errors), status=400)
 
 
 class GroupDeleteView(
     UserHasProjectRoleGenericMixin,
-    View,
+    APIView,
 ):
     """Delete a group."""
 
@@ -557,15 +568,22 @@ class GroupDeleteView(
     roles = [Role.ADMIN]
     project_slug = "project_pk"
 
+    def get_subcategory(self):
+        """Get the parent subcategory from URL."""
+        subcategory_pk = self.kwargs.get("subcategory_pk")
+        return get_object_or_404(
+            SubCategory, pk=subcategory_pk, project=self.get_project(), deleted=False
+        )
+
     def post(self, request, pk, *args, **kwargs):
         """Handle POST request for deletion."""
-        group = get_object_or_404(Group, project=self.get_project(), pk=pk)
+        subcategory = self.get_subcategory()
+        group = get_object_or_404(
+            Group, project=self.get_project(), pk=pk, sub_category=subcategory
+        )
         group_name = group.name
 
         group.soft_delete()
         messages.success(request, f"Group '{group_name}' deleted.")
 
-        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return JsonResponse({"success": True})
-
-        return redirect("project:project-group-list", project_pk=self.get_project().pk)
+        return Response({"success": True}, status=200)

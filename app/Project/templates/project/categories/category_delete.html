@@ -13,8 +13,7 @@
                     </button>
                 </div>
             </div>
-            <form method="post" id="deleteForm" act>
-                {% csrf_token %}
+            <form method="post" id="deleteForm">
                 <div class="px-6 py-4">
                     <div class="flex items-start">
                         <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" size="24" class="text-red-600" %}</div>
@@ -62,13 +61,42 @@
         document.getElementById('deleteCategoryModal').classList.add('hidden');
     }
 
+    // Form submission
+    document.getElementById('deleteForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const formAction = this.action;
+        
+        try {
+            const response = await fetch(formAction, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ CSRF_TOKEN }}'
+                },
+                body: JSON.stringify({})
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert('Category could not be deleted');
+                console.error('Errors:', result);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the category');
+        }
+    });
+
     // Close modals on escape key
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             closeDeleteModal();
         }
     });
-
 
     document.getElementById('deleteCategoryModal').addEventListener('click', function(event) {
         if (event.target === this) closeDeleteModal();

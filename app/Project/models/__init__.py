@@ -10,6 +10,7 @@ from app.Project.projects.projects_models import (
     Discipline,
     Project,
     SubCategory,
+    Group,
 )
 
 from ..milestone_schedules.milestone_models import Milestone
@@ -48,6 +49,7 @@ __all__ = [
     "Project",
     "Category",
     "SubCategory",
+    "Group",
     "Discipline",
     "ProjectCategory",
     "ProjectDiscipline",

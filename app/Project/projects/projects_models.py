@@ -745,9 +745,12 @@ class Category(BaseModel):
         related_name="categories",
     )
 
+    if TYPE_CHECKING:
+        subcategories: QuerySet["SubCategory"]
+
     class Meta:
-        verbose_name = "Project Category"
-        verbose_name_plural = "Project Categories"
+        verbose_name = "Level 1"
+        verbose_name_plural = "Level 1"
         ordering = ["name"]
 
     def __str__(self) -> str:
@@ -757,7 +760,9 @@ class Category(BaseModel):
 class SubCategory(BaseModel):
     """Subcategory for further classifying projects."""
 
-    category = models.ForeignKey(to=Category, on_delete=models.SET_NULL, null=True)
+    category = models.ForeignKey(
+        to=Category, on_delete=models.SET_NULL, null=True, related_name="subcategories"
+    )
     name = models.CharField(
         max_length=100,
         help_text="Subcategory name (e.g., Top Structures, Drawings)",
@@ -773,9 +778,12 @@ class SubCategory(BaseModel):
         related_name="subcategories",
     )
 
+    if TYPE_CHECKING:
+        groups: QuerySet["Group"]
+
     class Meta:
-        verbose_name = "Project Sub Category"
-        verbose_name_plural = "Project Sub Categories"
+        verbose_name = "Level 2"
+        verbose_name_plural = "Level 2"
         ordering = ["name"]
 
     def __str__(self) -> str:
@@ -786,7 +794,7 @@ class Group(BaseModel):
     """Group for further classifying projects."""
 
     sub_category = models.ForeignKey(
-        to=SubCategory, on_delete=models.SET_NULL, null=True
+        to=SubCategory, on_delete=models.SET_NULL, null=True, related_name="groups"
     )
     name = models.CharField(
         max_length=100,
@@ -804,8 +812,8 @@ class Group(BaseModel):
     )
 
     class Meta:
-        verbose_name = "Project Group"
-        verbose_name_plural = "Project Group"
+        verbose_name = "Level 3"
+        verbose_name_plural = "Level 3"
         ordering = ["name"]
 
     def __str__(self) -> str:
@@ -831,8 +839,8 @@ class Discipline(BaseModel):
     )
 
     class Meta:
-        verbose_name = "Project Discipline"
-        verbose_name_plural = "Project Disciplines"
+        verbose_name = "Level 4"
+        verbose_name_plural = "Level 4"
         ordering = ["name"]
 
     def __str__(self) -> str:

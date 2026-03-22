@@ -13,9 +13,7 @@
                     </button>
                 </div>
             </div>
-            <form method="post"
-                  action="{% url 'project:project-category-create' project.pk %}"
-                  id="createForm">
+            <form method="post" id="createCategoryForm">
                 {% csrf_token %}
                 <div class="px-6 py-4 space-y-4">
                     <div>{{ form.name|as_crispy_field }}</div>
@@ -39,10 +37,20 @@
 </div>
 <script>
     // Create Modal Functions
-    function openCreateModal() {
+    const categoryCreateForm = document.getElementById("createCategoryForm");
+
+    function openCreateModal(context, returnUrl = null) {
         const modal = document.getElementById("createCategoryModal");
         modal.classList.remove('hidden');
         modal.querySelector('#id_name').focus();
+        
+        // Update form action with return_url if provided
+        if (returnUrl) {
+            
+            const currentAction = categoryCreateForm.getAttribute('action');
+            const separator = currentAction.includes('?') ? '&' : '?';
+            form.setAttribute('action', currentAction + separator + returnUrl.substring(1));
+        }
     }
 
     function closeCreateModal() {
@@ -58,6 +66,42 @@
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             closeCreateModal();
+        }
+    });
+
+    categoryCreateForm.addEventListener('submit', async (e) => {
+        e.preventDefault(); // Stop page refresh
+
+        // Extract data from the form
+        const formData = new FormData(categoryCreateForm);
+        const data = Object.fromEntries(formData.entries());
+        
+        // Get the current form action to extract return_url
+        const formAction = categoryCreateForm.getAttribute('action') || '';
+        try {
+            const response = await fetch("{% url 'project:project-category-create' project.pk %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ CSRF_TOKEN }}'
+            },
+            body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            console.log('Success:', result);
+            
+            // Handle success
+            if (result.success) {
+                // Close modal
+                window.location.reload();
+            } else {
+                // Show errors
+                alert("Category could not be created")
+                console.error('Errors:', result.errors);
+            }
+        } catch (error) {
+            console.error('Error:', error);
         }
     });
 </script>

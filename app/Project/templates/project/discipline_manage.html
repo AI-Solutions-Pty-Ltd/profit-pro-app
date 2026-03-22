@@ -34,16 +34,14 @@
                     {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
                     Categories
                 </a>
-                <a href="{% url 'project:project-subcategory-list' project.pk %}"
-                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
+                <span class="border-transparent text-gray-400 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium cursor-not-allowed">
                     {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Sub Categories
-                </a>
-                <a href="{% url 'project:project-group-list' project.pk %}"
-                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
+                    Sub Categories (select a category)
+                </span>
+                <span class="border-transparent text-gray-400 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium cursor-not-allowed">
                     {% heroicon_outline "folder" size="16" class="inline mr-1.5" %}
-                    Groups
-                </a>
+                    Groups (select a subcategory)
+                </span>
                 <a href="{% url 'project:project-discipline-list' project.pk %}"
                    class="border-indigo-500 text-indigo-600 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
                     {% heroicon_outline "academic-cap" size="16" class="inline mr-1.5" %}

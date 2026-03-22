@@ -10,6 +10,9 @@ django-filter
 django-mathfilters
 django-widget-tweaks
 
+# rest
+djangorestframework
+
 # database tools
 phonenumberslite
 

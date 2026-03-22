@@ -37,21 +37,6 @@
                     {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
                     Categories
                 </a>
-                <a href="{% url 'project:project-subcategory-list' project.pk %}"
-                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
-                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Sub Categories
-                </a>
-                <a href="{% url 'project:project-group-list' project.pk %}"
-                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
-                    {% heroicon_outline "folder" size="16" class="inline mr-1.5" %}
-                    Groups
-                </a>
-                <a href="{% url 'project:project-discipline-list' project.pk %}"
-                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
-                    {% heroicon_outline "academic-cap" size="16" class="inline mr-1.5" %}
-                    Disciplines
-                </a>
             </nav>
         </div>
     </div>
@@ -93,6 +78,9 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end gap-2">
+                                    <a href="{% url 'project:project-subcategory-list' project.pk category.pk %}"
+                                       class="text-indigo-600 hover:text-indigo-900 transition-colors"
+                                       title="View subcategories">{% heroicon_outline "folder-open" size="18" %}</a>
                                     <button type="button"
                                             onclick="openEditModal({{ category.pk }}, '{{ category.name|escapejs }}', '{{ category.description|escapejs }}' )"
                                             class="text-indigo-600 hover:text-indigo-900 transition-colors"

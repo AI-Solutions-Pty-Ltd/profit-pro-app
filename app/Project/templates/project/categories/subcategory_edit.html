@@ -14,10 +14,8 @@
                 </div>
             </div>
             <form method="post" id="editForm">
-                {% csrf_token %}
                 <div class="px-6 py-4 space-y-4">
                     <div class="space-y-4">
-                        <div>{{ form.category|as_crispy_field }}</div>
                         <div>{{ form.name|as_crispy_field }}</div>
                         <div>{{ form.description|as_crispy_field }}</div>
                     </div>
@@ -44,22 +42,17 @@
         
         
         // Edit Modal Functions
-        function openEditModal(id, name, description, categoryId) {
+        function openEditModal(id, name, description) {
         const modal = document.getElementById("editSubCategoryModal");
         const project_pk = {{ project.pk }};
+        const category_pk = {{ category.pk }};
         const nameInput = modal.querySelector('#id_name');
         const descriptionInput = modal.querySelector('#id_description');
-        const categoryInput = modal.querySelector('#id_category');
         
         // Set values
         nameInput.value = name;
         descriptionInput.value = description;
-        console.log("test", categoryId)
-        if (categoryId) {
-            alert(categoryId)
-            categoryInput.value = categoryId;
-        }
-        document.getElementById('editForm').action = `/project/${project_pk}/subcategories/${id}/update/`;
+        document.getElementById('editForm').action = `/project/${project_pk}/categories/${category_pk}/subcategories/${id}/update/`;
         
         // Show modal
         modal.classList.remove('hidden');
@@ -82,6 +75,38 @@
 
         document.getElementById("editSubCategoryModal").addEventListener('click', function(event) {
         if (event.target === this) closeEditModal();
+    });
+
+    // Form submission
+    document.getElementById('editForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        const formAction = this.action;
+        
+        try {
+            const response = await fetch(formAction, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ CSRF_TOKEN }}'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert('Sub category could not be updated');
+                console.error('Errors:', result.errors);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while updating the sub category');
+        }
     });
         
 </script>

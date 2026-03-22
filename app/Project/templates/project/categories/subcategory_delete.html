@@ -14,7 +14,6 @@
                 </div>
             </div>
             <form method="post" id="deleteForm">
-                {% csrf_token %}
                 <div class="px-6 py-4">
                     <div class="flex items-start">
                         <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" size="24" class="text-red-600" %}</div>
@@ -46,9 +45,10 @@
     // Delete Modal Functions
     function openDeleteModal(id, name, projectCount) {
         project_pk = {{project.pk}}
+        category_pk = {{category.pk}}
         document.getElementById('deleteSubCategoryModal').classList.remove('hidden');
         document.getElementById('delete_subcategory_name').textContent = name;
-        document.getElementById('deleteForm').action = "/project/" + project_pk + "/subcategories/" + id + "/delete/";
+        document.getElementById('deleteForm').action = `/project/${project_pk}/categories/${category_pk}/subcategories/${id}/delete/`;
         
         const warning = document.getElementById('delete_warning');
         if (projectCount > 0) {
@@ -72,5 +72,35 @@
 
     document.getElementById('deleteSubCategoryModal').addEventListener('click', function(event) {
         if (event.target === this) closeDeleteModal();
+    });
+
+    // Form submission
+    document.getElementById('deleteForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const formAction = this.action;
+        
+        try {
+            const response = await fetch(formAction, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ CSRF_TOKEN }}'
+                },
+                body: JSON.stringify({})
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert('Sub category could not be deleted');
+                console.error('Errors:', result);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the sub category');
+        }
     });
 </script>

@@ -1,5 +1,7 @@
 """Views for the unified Forecasts hub with tabs."""
 
+from app.Project.projects.category_forms import CategoryForm, SubCategoryForm, GroupForm
+
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
@@ -56,85 +58,147 @@ class TimeForecastView(ForecastHubMixin, TemplateView):
             "sequence", "planned_date"
         )
 
-        # Group milestones by WBS hierarchy
+        # Build hierarchy using ORM
         grouped_milestones: dict[str, dict[str, Any]] = {}
+        discipline_milestones: dict[str, dict[str, Any]] = {}
 
-        # Get all unique categories, subcategories, and disciplines
-        categories: dict[int, Any] = {}
-        subcategories: dict[int, Any] = {}
-        disciplines: dict[int, Any] = {}
+        # Get all categories for the project
+        categories = project.categories.filter(deleted=False).prefetch_related(
+            "subcategories__groups__milestones",
+            "subcategories__milestones",
+            "milestones",
+        )
 
-        for milestone in milestones:
-            # Track categories
-            if milestone.project_category:
-                cat_key = milestone.project_category.pk
-                if cat_key not in categories:
-                    categories[cat_key] = milestone.project_category
-                    grouped_milestones[cat_key] = {
-                        "type": "category",
-                        "name": milestone.project_category.name,
-                        "object": milestone.project_category,
-                        "start_date": milestone.project_category_start_date,
-                        "end_date": milestone.project_category_end_date,
-                        "children": {},
-                        "milestones": [],
-                    }
+        for category in categories:
+            # Initialize category node
+            cat_key = str(category.pk)
+            grouped_milestones[cat_key] = {
+                "type": "category",
+                "name": category.name,
+                "object": category,
+                "start_date": None,
+                "end_date": None,
+                "children": {},
+                "milestones": [],
+            }
 
-                # Track subcategories within category
-                if milestone.project_sub_category:
-                    sub_key = milestone.project_sub_category.pk
-                    if sub_key not in subcategories:
-                        subcategories[sub_key] = milestone.project_sub_category
-                        grouped_milestones[cat_key]["children"][sub_key] = {
-                            "type": "subcategory",
-                            "name": milestone.project_sub_category.name,
-                            "object": milestone.project_sub_category,
-                            "start_date": milestone.project_sub_category_start_date,
-                            "end_date": milestone.project_sub_category_end_date,
-                            "children": {},
-                            "milestones": [],
-                        }
+            # Get milestones directly under category
+            cat_milestones = milestones.filter(
+                project_category=category, project_sub_category__isnull=True
+            )
+            for ms in cat_milestones:
+                grouped_milestones[cat_key]["milestones"].append(ms)
+                # Update dates if needed
+                if ms.project_category_start_date:
+                    grouped_milestones[cat_key]["start_date"] = (
+                        ms.project_category_start_date
+                    )
+                if ms.project_category_end_date:
+                    grouped_milestones[cat_key]["end_date"] = (
+                        ms.project_category_end_date
+                    )
 
-                    # Track disciplines within subcategory
-                    if milestone.project_discipline:
-                        disc_key = milestone.project_discipline.pk
-                        if disc_key not in disciplines:
-                            disciplines[disc_key] = milestone.project_discipline
-                            grouped_milestones[cat_key]["children"][sub_key][
-                                "children"
-                            ][disc_key] = {
-                                "type": "discipline",
-                                "name": milestone.project_discipline.name,
-                                "object": milestone.project_discipline,
-                                "start_date": milestone.project_discipline_start_date,
-                                "end_date": milestone.project_discipline_end_date,
-                                "milestones": [],
-                            }
+            # Process subcategories
+            for subcategory in category.subcategories.filter(deleted=False):
+                sub_key = str(subcategory.pk)
+                grouped_milestones[cat_key]["children"][sub_key] = {
+                    "type": "subcategory",
+                    "name": subcategory.name,
+                    "object": subcategory,
+                    "start_date": None,
+                    "end_date": None,
+                    "children": {},
+                    "milestones": [],
+                }
 
-                        # Add milestone to discipline
-                        grouped_milestones[cat_key]["children"][sub_key]["children"][
-                            disc_key
-                        ]["milestones"].append(milestone)
-                    else:
-                        # Add milestone directly to subcategory
+                # Get milestones directly under subcategory
+                sub_milestones = milestones.filter(
+                    project_sub_category=subcategory, project_group__isnull=True
+                )
+                for ms in sub_milestones:
+                    grouped_milestones[cat_key]["children"][sub_key][
+                        "milestones"
+                    ].append(ms)
+                    # Update dates if needed
+                    if ms.project_sub_category_start_date:
                         grouped_milestones[cat_key]["children"][sub_key][
-                            "milestones"
-                        ].append(milestone)
-                else:
-                    # Add milestone directly to category
-                    grouped_milestones[cat_key]["milestones"].append(milestone)
-            else:
-                # Milestone without any classification - add to uncategorized
-                if "uncategorized" not in grouped_milestones:
-                    grouped_milestones["uncategorized"] = {
-                        "type": "uncategorized",
-                        "name": "Uncategorized",
-                        "object": None,
+                            "start_date"
+                        ] = ms.project_sub_category_start_date
+                    if ms.project_sub_category_end_date:
+                        grouped_milestones[cat_key]["children"][sub_key]["end_date"] = (
+                            ms.project_sub_category_end_date
+                        )
+
+                # Process groups
+                for group in subcategory.groups.filter(deleted=False):
+                    group_key = str(group.pk)
+                    grouped_milestones[cat_key]["children"][sub_key]["children"][
+                        group_key
+                    ] = {
+                        "type": "group",
+                        "name": group.name,
+                        "object": group,
                         "start_date": None,
                         "end_date": None,
                         "milestones": [],
                     }
-                grouped_milestones["uncategorized"]["milestones"].append(milestone)
+
+                    # Get milestones for this group
+                    group_milestones = milestones.filter(project_group=group)
+                    for ms in group_milestones:
+                        grouped_milestones[cat_key]["children"][sub_key]["children"][
+                            group_key
+                        ]["milestones"].append(ms)
+                        # Update dates if needed
+                        if ms.project_group_start_date:
+                            grouped_milestones[cat_key]["children"][sub_key][
+                                "children"
+                            ][group_key]["start_date"] = ms.project_group_start_date
+                        if ms.project_group_end_date:
+                            grouped_milestones[cat_key]["children"][sub_key][
+                                "children"
+                            ][group_key]["end_date"] = ms.project_group_end_date
+
+        # Handle uncategorized milestones
+        uncategorized_milestones = milestones.filter(
+            project_category__isnull=True, project_discipline__isnull=True
+        )
+        if uncategorized_milestones.exists():
+            grouped_milestones["uncategorized"] = {
+                "type": "uncategorized",
+                "name": "Uncategorized",
+                "object": None,
+                "start_date": None,
+                "end_date": None,
+                "milestones": list(uncategorized_milestones),
+            }
+
+        # Handle discipline milestones (standalone)
+        disciplines = project.disciplines.filter(deleted=False)
+        for discipline in disciplines:
+            disc_key = str(discipline.pk)
+            disc_milestones = milestones.filter(project_discipline=discipline)
+
+            if disc_milestones.exists():
+                discipline_milestones[disc_key] = {
+                    "type": "discipline",
+                    "name": discipline.name,
+                    "object": discipline,
+                    "start_date": None,
+                    "end_date": None,
+                    "milestones": list(disc_milestones),
+                }
+                # Update dates from first milestone
+                first_ms = disc_milestones.first()
+                if first_ms:
+                    if first_ms.project_discipline_start_date:
+                        discipline_milestones[disc_key]["start_date"] = (
+                            first_ms.project_discipline_start_date
+                        )
+                    if first_ms.project_discipline_end_date:
+                        discipline_milestones[disc_key]["end_date"] = (
+                            first_ms.project_discipline_end_date
+                        )
 
         # Calculate summary stats
         total_milestones = milestones.count()
@@ -148,10 +212,14 @@ class TimeForecastView(ForecastHubMixin, TemplateView):
                 "active_tab": "time",
                 "milestones": milestones,
                 "grouped_milestones": grouped_milestones,
+                "discipline_milestones": discipline_milestones,
                 "total_milestones": total_milestones,
                 "completed_milestones": completed,
                 "delayed_milestones": delayed,
                 "on_schedule_milestones": on_schedule,
+                "category_form": CategoryForm,
+                "subcategory_form": SubCategoryForm,
+                "group_form": GroupForm,
             }
         )
         return context

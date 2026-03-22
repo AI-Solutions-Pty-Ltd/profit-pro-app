@@ -5,6 +5,9 @@
     Time Forecast - {{ project.name }}
 {% endblock title %}
 {% block content %}
+    {% include "project/categories/category_create.html" with project=project form=category_form %}
+    {% include "project/categories/category_edit.html" with project=project form=category_form %}
+    {% include "project/categories/category_delete.html" with project=project %}
     <!-- Header -->
     <div class="bg-white shadow-sm rounded-lg mb-6">
         <div class="px-6 py-4">
@@ -69,11 +72,21 @@
             <p class="mt-1 text-2xl font-bold text-red-600">{{ delayed_milestones }}</p>
         </div>
     </div>
-    <!-- Milestones Table -->
-    <div class="bg-white shadow-sm rounded-lg">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-medium text-gray-900">Project Milestones</h2>
-            <p class="text-sm text-gray-600">Track planned vs forecast completion dates by WBS classification</p>
+    <!-- WBS Hierarchy Section -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200 flex flex-row justify-between">
+            <div>
+                <h2 class="text-lg font-medium text-gray-900">WBS Hierarchy</h2>
+                <p class="text-sm text-gray-600">Category → SubCategory → Group</p>
+            </div>
+            <div>
+                <button type="button"
+                        onclick="openCreateModal()"
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    {% heroicon_outline "plus" size="16" %}
+                    <span class="ml-2">Add Category</span>
+                </button>
+            </div>
         </div>
         {% if grouped_milestones %}
             <div class="divide-y divide-gray-200">
@@ -131,31 +144,33 @@
                                         {% endfor %}
                                     </div>
                                 {% endif %}
-                                <!-- Disciplines -->
-                                {% for disc_key, disc_data in subcat_data.children.items %}
+                                <!-- Groups -->
+                                {% for group_key, group_data in subcat_data.children.items %}
                                     <div class="border-l-4 border-purple-500 ml-4">
                                         <div class="px-6 py-3 bg-purple-50">
                                             <div class="flex items-center justify-between">
                                                 <div class="flex items-center">
-                                                    {% heroicon_outline "academic-cap" size="16" class="text-purple-600 mr-2" %}
-                                                    <h5 class="text-sm font-medium text-purple-900">{{ disc_data.name }}</h5>
-                                                    {% if disc_data.start_date and disc_data.end_date %}
+                                                    {% heroicon_outline "folder" size="16" class="text-purple-600 mr-2" %}
+                                                    <h5 class="text-sm font-medium text-purple-900">{{ group_data.name }}</h5>
+                                                    {% if group_data.start_date and group_data.end_date %}
                                                         <span class="ml-4 text-sm text-purple-600">
-                                                            {{ disc_data.start_date|date:"d M Y" }} - {{ disc_data.end_date|date:"d M Y" }}
+                                                            {{ group_data.start_date|date:"d M Y" }} - {{ group_data.end_date|date:"d M Y" }}
                                                         </span>
                                                     {% endif %}
                                                 </div>
                                                 <span class="text-sm text-purple-600">
-                                                    {{ disc_data.milestones|length }} milestone{{ disc_data.milestones|length|pluralize }}
+                                                    {{ group_data.milestones|length }} milestone{{ group_data.milestones|length|pluralize }}
                                                 </span>
                                             </div>
                                         </div>
-                                        <!-- Discipline Milestones -->
-                                        <div class="px-6 py-2 bg-gray-50">
-                                            {% for milestone in disc_data.milestones %}
-                                                {% include "forecasts/partials/milestone_row.html" with milestone=milestone level=3 %}
-                                            {% endfor %}
-                                        </div>
+                                        <!-- Group Milestones -->
+                                        {% if group_data.milestones %}
+                                            <div class="px-6 py-2 bg-gray-50">
+                                                {% for milestone in group_data.milestones %}
+                                                    {% include "forecasts/partials/milestone_row.html" with milestone=milestone level=3 %}
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
                                     </div>
                                 {% endfor %}
                             </div>
@@ -164,16 +179,59 @@
                 {% endfor %}
             </div>
         {% else %}
-            <div class="flex flex-col items-center py-12">
-                {% heroicon_outline "clock" class="mx-auto h-16 w-16 text-gray-300" %}
-                <h3 class="mt-4 text-lg font-medium text-gray-900">No Milestones Yet</h3>
-                <p class="mt-2 text-sm text-gray-500">Get started by adding your first project milestone.</p>
-                <div class="mt-6">
-                    <a href="{% url 'project:milestone-create' project.pk %}"
-                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        {% heroicon_outline "plus" size="16" class="mr-1" %}
-                        Add First Milestone
-                    </a>
+            <div class="px-6 py-12 text-center">
+                <div class="text-gray-400">
+                    {% heroicon_outline "flag" size="48" class="mx-auto mb-3" %}
+                    <p class="text-sm font-medium text-gray-900">No milestones found</p>
+                    <p class="text-xs text-gray-400 mt-1">Create your first milestone to start tracking</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    <!-- Disciplines Section -->
+    <div class="bg-white shadow-sm rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Disciplines</h2>
+            <p class="text-sm text-gray-600">Standalone discipline milestones</p>
+        </div>
+        {% if discipline_milestones %}
+            <div class="divide-y divide-gray-200">
+                {% for disc_key, disc_data in discipline_milestones.items %}
+                    <!-- Discipline Level -->
+                    <div class="border-l-4 border-amber-500">
+                        <div class="px-6 py-4 bg-amber-50">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    {% heroicon_outline "academic-cap" size="20" class="text-amber-600 mr-2" %}
+                                    <h3 class="text-lg font-medium text-amber-900">{{ disc_data.name }}</h3>
+                                    {% if disc_data.start_date and disc_data.end_date %}
+                                        <span class="ml-4 text-sm text-amber-600">
+                                            {{ disc_data.start_date|date:"d M Y" }} - {{ disc_data.end_date|date:"d M Y" }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <span class="text-sm text-amber-600">
+                                    {{ disc_data.milestones|length }} milestone{{ disc_data.milestones|length|pluralize }}
+                                </span>
+                            </div>
+                        </div>
+                        <!-- Discipline Milestones -->
+                        {% if disc_data.milestones %}
+                            <div class="px-6 py-2 bg-gray-50">
+                                {% for milestone in disc_data.milestones %}
+                                    {% include "forecasts/partials/milestone_row.html" with milestone=milestone level=1 %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="px-6 py-12 text-center">
+                <div class="text-gray-400">
+                    {% heroicon_outline "academic-cap" size="48" class="mx-auto mb-3" %}
+                    <p class="text-sm font-medium text-gray-900">No discipline milestones found</p>
+                    <p class="text-xs text-gray-400 mt-1">Discipline milestones will appear here</p>
                 </div>
             </div>
         {% endif %}
@@ -194,3 +252,84 @@
         </div>
     </div>
 {% endblock content %}
+{% block extra_js %}
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle form submission for create form
+    const createForm = document.getElementById('createForm');
+    if (createForm) {
+        createForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '{% heroicon_outline "arrow-path" size="16" class="inline mr-1 animate-spin" %} Creating...';
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal
+                    closeCreateModal();
+                    
+                    // Show success message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'fixed top-4 right-4 bg-green-50 border border-green-200 rounded-md p-4 z-50';
+                    alertDiv.innerHTML = `
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                {% heroicon_outline "check-circle" size="20" class="text-green-400" %}
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-green-800">Category created successfully!</p>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(alertDiv);
+                    
+                    // Remove alert after 3 seconds
+                    setTimeout(() => {
+                        alertDiv.remove();
+                    }, 3000);
+                    
+                    // Redirect if return_url is provided
+                    if (data.return_url) {
+                        setTimeout(() => {
+                            window.location.href = data.return_url;
+                        }, 1000);
+                    } else {
+                        // Otherwise reload the page to show the new category
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    }
+                } else {
+                    // Show errors
+                    console.error('Errors:', data.errors);
+                    // You can display errors in the form as needed
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                // Reset button state
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+        });
+    }
+});
+    </script>
+{% endblock extra_js %}

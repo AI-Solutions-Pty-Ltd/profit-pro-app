@@ -36,17 +36,14 @@
                    class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                     Categories
                 </a>
-                <a href="{% url 'project:project-subcategory-list' project.pk %}"
+                <a href="{% url 'project:project-subcategory-list' project.pk subcategory.category.pk %}"
                    class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
                     Sub Categories
                 </a>
-                <a href="{% url 'project:project-group-list' project.pk %}"
+                <a href="{% url 'project:project-group-list' project.pk subcategory.pk %}"
                    class="border-indigo-500 text-indigo-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                     Groups
-                </a>
-                <a href="{% url 'project:project-discipline-list' project.pk %}"
-                   class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
-                    Disciplines
                 </a>
             </nav>
         </div>
@@ -91,15 +88,11 @@
                                     <button type="button"
                                             onclick="openEditModal({{ group.pk }}, '{{ group.name|escapejs }}', '{{ group.description|escapejs }}', '{{ group.sub_category_id|escapejs }}')"
                                             class="text-indigo-600 hover:text-indigo-900 transition-colors"
-                                            title="Edit group">
-                                        {% heroicon_outline "pencil" size="18" %}
-                                    </button>
+                                            title="Edit group">{% heroicon_outline "pencil" size="18" %}</button>
                                     <button type="button"
                                             onclick="openDeleteModal({{ group.pk }}, '{{ group.name|escapejs }}', 0)"
                                             class="text-red-600 hover:text-red-900 transition-colors"
-                                            title="Delete group">
-                                        {% heroicon_outline "trash" size="18" %}
-                                    </button>
+                                            title="Delete group">{% heroicon_outline "trash" size="18" %}</button>
                                 </div>
                             </td>
                         </tr>
