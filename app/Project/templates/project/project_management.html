@@ -40,6 +40,25 @@
     </div>
     <!-- Project Management Section -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Planning & Procurement Section -->
+        <div class="group relative bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+            <div class="flex items-center mb-3">
+                <div class="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center mr-3">
+                    {% heroicon_outline "clipboard-document-list" size="20" class="text-white" %}
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-emerald-900">Planning & Procurement</h3>
+                    <p class="text-xs text-emerald-600">Work Packages & Tender Tracking</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <a href="{% url 'planning:work-package-list' project.pk %}"
+                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
+                    <span class="text-sm font-medium text-emerald-700">Work Packages</span>
+                    {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                </a>
+            </div>
+        </div>
         <!-- Project Documents Panel -->
         {% if request.user|projectroles:project|userhasrole:'Contractor BOQ,ADDITIONAL_LINE_ITEMS,CONTRACT_VARIATIONS,CORRESPONDENCE,CONTRACT_DOCUMENTS,STAGE_GATE_APPROVALS,OTHER_DOCUMENTS,CONTRACT_DOCUMENTS,BOQ_DOCUMENTS,DRAWINGS,SPECIFICATIONS,HISTORIC_DOCUMENTS,REPORTS,ADMIN,User' %}
             <div id="contracts-documents"
@@ -181,74 +200,15 @@
                                     {% heroicon_outline "arrow-right" size="16" class="text-cyan-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                                 </a>
                             {% endif %}
+                            <span class="w-full flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed opacity-50">
+                                <span class="text-sm font-medium text-gray-400">Order Amendments</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-gray-400" %}
+                            </span>
                         </div>
                     </div>
                 {% endif %}
             </div>
         {% endif %}
-        <!-- Forecasts Section (Unified) -->
-        <div class="group relative bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-            <div class="flex items-center mb-3">
-                <div class="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center mr-3">
-                    {% heroicon_outline "chart-bar" size="20" class="text-white" %}
-                </div>
-                <div>
-                    <h3 class="text-sm font-bold text-emerald-900">Forecasts</h3>
-                    <p class="text-xs text-emerald-600">Cost, Time, Cashflow & EVM</p>
-                </div>
-            </div>
-            {% if request.user|userhassubscription:"PAYMENTS_AND_INVOICES" %}
-                <div class="space-y-2">
-                    {% if project.line_items.exists %}
-                        {% if request.user|projectroles:project|userhasrole:'COST_FORECASTS,ADMIN,User' %}
-                            <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
-                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-green-700">Cost Forecast</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                            </a>
-                        {% endif %}
-                    {% endif %}
-                    {% if request.user|projectroles:project|userhasrole:'TIME_FORECASTS,ADMIN,User' %}
-                        <a href="{% url 'project:time-forecast' project.pk %}"
-                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
-                            <span class="text-sm font-medium text-blue-700">Schedule Forecast</span>
-                            {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                        </a>
-                    {% endif %}
-                    {% if request.user|projectroles:project|userhasrole:'TIME_FORECASTS,ADMIN,User' %}
-                        <a href="{% url 'project:budget-forecast' project.pk %}"
-                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
-                            <span class="text-sm font-medium text-blue-700">Budget Forecast</span>
-                            {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                        </a>
-                    {% endif %}
-                    {% if project.start_date and project.end_date %}
-                        {% if request.user|projectroles:project|userhasrole:'CASHFLOW_FORECASTS,ADMIN,User' %}
-                            <a href="{% url 'project:cashflow-forecast-tab' project.pk %}"
-                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-amber-700">Cashflow Forecast</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                            </a>
-                        {% endif %}
-                    {% endif %}
-                    <span class="w-full flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed opacity-50">
-                        <span class="text-sm font-medium text-gray-400">SROI Forecast</span>
-                        {% heroicon_outline "arrow-right" size="16" class="text-gray-400" %}
-                    </span>
-                    {% if request.user|projectroles:project|userhasrole:'EARNED_VALUES,ADMIN,User' %}
-                        <a href="{% url 'project:earned-value' project.pk %}"
-                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
-                            <span class="text-sm font-medium text-violet-700">Earned Value</span>
-                            {% heroicon_outline "arrow-right" size="16" class="text-violet-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                        </a>
-                    {% endif %}
-                </div>
-            {% else %}
-                <div class="p-4 text-center">
-                    <span class="text-sm text-gray-500">Only available in Profit and Loss module</span>
-                </div>
-            {% endif %}
-        </div>
         <!-- Payment Certificates Section -->
         <div class="group relative bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
             <div class="flex items-center mb-3">
@@ -280,34 +240,52 @@
                                 {% heroicon_outline "arrow-right" size="16" class="text-purple-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                         {% endif %}
-                        {% if request.user|projectroles:project|userhasrole:'CLAIMS,ADMIN,USER' %}
-                            <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
+                        {% if request.user|projectroles:project|userhasrole:'COST_FORECASTS,ADMIN,User' %}
+                            <a href="{% url 'bill_of_quantities:forecast-list' project.pk %}"
                                class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-green-700">Claims</span>
+                                <span class="text-sm font-medium text-green-700">Cost Forecast</span>
                                 {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
-                        {% endif %}
-                        {% if request.user|projectroles:project|userhasrole:'ADDITIONAL_LINE_ITEMS,ADMIN,USER' %}
-                            <a href="{% url 'bill_of_quantities:payment-certificate-list' project.pk %}"
-                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-blue-700">Invoices</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                            </a>
-                            <a href="{% url 'bill_of_quantities:retention-list' project.pk %}"
-                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
-                                <span class="text-sm font-medium text-orange-700">Retention</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-orange-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                            </a>
-                            <span class="w-full flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed opacity-50">
-                                <span class="text-sm font-medium text-gray-400">Order Amendments</span>
-                                {% heroicon_outline "arrow-right" size="16" class="text-gray-400" %}
-                            </span>
                         {% endif %}
                     {% else %}
                         <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
                            class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
                             <span class="text-sm font-medium text-red-700">Upload BOQ first</span>
                             {% heroicon_outline "arrow-right" size="16" class="text-red-500 transition-opacity" %}
+                        </a>
+                    {% endif %}
+                    {% if request.user|projectroles:project|userhasrole:'TIME_FORECASTS,ADMIN,User' %}
+                        <a href="{% url 'project:time-forecast' project.pk %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-blue-700">Schedule Forecast</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
+                    {% endif %}
+                    {% if project.start_date and project.end_date %}
+                        {% if request.user|projectroles:project|userhasrole:'CASHFLOW_FORECASTS,ADMIN,User' %}
+                            <a href="{% url 'project:cashflow-forecast-tab' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-amber-700">Cashflow Forecast</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                    <span class="w-full flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed opacity-50">
+                        <span class="text-sm font-medium text-gray-400">SROI Forecast</span>
+                        {% heroicon_outline "arrow-right" size="16" class="text-gray-400" %}
+                    </span>
+                    {% if request.user|projectroles:project|userhasrole:'EARNED_VALUES,ADMIN,User' %}
+                        <a href="{% url 'project:earned-value' project.pk %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-violet-700">Earned Value</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-violet-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
+                    {% endif %}
+                    {% if request.user|projectroles:project|userhasrole:'TIME_FORECASTS,ADMIN,User' %}
+                        <a href="{% url 'project:budget-forecast' project.pk %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-blue-700">Budget Forecast</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                         </a>
                     {% endif %}
                 </div>

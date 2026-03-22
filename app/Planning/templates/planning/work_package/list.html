@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% block title %}
+    Work Packages - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Work Packages</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }} - Tender Tracking</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'planning:work-package-create' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium bg-emerald-600 hover:bg-emerald-700 transition-colors">
+                        {% heroicon_outline "plus" size="16" class="mr-1" %}
+                        New Work Package
+                    </a>
+                    <a href="{% url 'project:project-management' project.pk %}"
+                       class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        {% heroicon_outline "arrow-left" size="16" class="mr-1" %}
+                        Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if work_packages %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for wp in work_packages %}
+                <div class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-bold text-gray-900 truncate">{{ wp.name }}</h3>
+                        <span class="text-xs font-medium px-2 py-1 rounded-full {% if wp.overall_percentage >= 100 %}bg-green-100 text-green-700 {% elif wp.overall_percentage > 0 %}bg-amber-100 text-amber-700 {% else %}bg-gray-100 text-gray-500{% endif %}">
+                            {{ wp.overall_percentage|floatformat:0 }}%
+                        </span>
+                    </div>
+                    {% if wp.description %}<p class="text-sm text-gray-600 mb-3 line-clamp-2">{{ wp.description }}</p>{% endif %}
+                    {% if wp.advert_start_date %}
+                        <div class="text-xs text-gray-500 mb-3">
+                            <span>Advert: {{ wp.advert_start_date }} - {{ wp.advert_end_date|default:"TBD" }}</span>
+                        </div>
+                    {% endif %}
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-gray-600">Site Inspection</span>
+                            <div class="flex items-center gap-1">
+                                <div class="w-16 bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-emerald-500 h-1.5 rounded-full"
+                                         style="width: {{ wp.site_inspection_percentage }}%"></div>
+                                </div>
+                                {% if wp.site_inspection_complete %}
+                                    {% heroicon_outline "check-circle" size="14" class="text-green-500" %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-gray-600">Tender Close</span>
+                            <div class="flex items-center gap-1">
+                                <div class="w-16 bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-emerald-500 h-1.5 rounded-full"
+                                         style="width: {{ wp.tender_close_percentage }}%"></div>
+                                </div>
+                                {% if wp.tender_close_complete %}
+                                    {% heroicon_outline "check-circle" size="14" class="text-green-500" %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-gray-600">Evaluation</span>
+                            <div class="flex items-center gap-1">
+                                <div class="w-16 bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-emerald-500 h-1.5 rounded-full"
+                                         style="width: {{ wp.tender_evaluation_percentage }}%"></div>
+                                </div>
+                                {% if wp.tender_evaluation_complete %}
+                                    {% heroicon_outline "check-circle" size="14" class="text-green-500" %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-gray-600">Award & Signing</span>
+                            <div class="flex items-center gap-1">
+                                <div class="w-16 bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-emerald-500 h-1.5 rounded-full"
+                                         style="width: {{ wp.award_signing_percentage }}%"></div>
+                                </div>
+                                {% if wp.award_signing_complete %}
+                                    {% heroicon_outline "check-circle" size="14" class="text-green-500" %}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-gray-600">Mobilization</span>
+                            <div class="flex items-center gap-1">
+                                <div class="w-16 bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-emerald-500 h-1.5 rounded-full"
+                                         style="width: {{ wp.mobilization_percentage }}%"></div>
+                                </div>
+                                {% if wp.mobilization_complete %}
+                                    {% heroicon_outline "check-circle" size="14" class="text-green-500" %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+                        <a href="{% url 'planning:work-package-detail' project.pk wp.pk %}"
+                           class="text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors">
+                            View Details
+                            {% heroicon_outline "arrow-right" size="14" class="inline" %}
+                        </a>
+                        <a href="{% url 'planning:work-package-update' project.pk wp.pk %}"
+                           class="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                            {% heroicon_outline "pencil" size="14" %}
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="bg-white rounded-xl border border-gray-200 centered-content mt-4">
+            <div class="w-16 h-16 bg-emerald-100 rounded-full centered-content mt-8">
+                {% heroicon_outline "clipboard-document-list" size="32" class="text-emerald-500" %}
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No Work Packages Yet</h3>
+            <p class="text-sm text-gray-500 mb-4">Create your first work package to start tracking tenders.</p>
+            <a href="{% url 'planning:work-package-create' project.pk %}"
+               class="inline-flex items-center px-4 py-2 bg-emerald-600 rounded-md hover:bg-emerald-700 transition-colors text-sm font-medium">
+                {% heroicon_outline "plus" size="16" class="mr-1" %}
+                Create Work Package
+            </a>
+        </div>
+    {% endif %}
+{% endblock content %}

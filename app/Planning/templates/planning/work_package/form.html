@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% load crispy_forms_tags %}
+{% block title %}
+    {{ action }} Work Package - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ action }} Work Package</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }} - Tender Tracking</p>
+                </div>
+                <a href="{% url 'planning:work-package-list' project.pk %}"
+                   class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    {% heroicon_outline "arrow-left" size="16" class="mr-1" %}
+                    Back to Work Packages
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                    {% for error in form.non_field_errors %}<p class="text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+            {% endif %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">{{ form.name|as_crispy_field }}</div>
+                <div class="md:col-span-2">{{ form.description|as_crispy_field }}</div>
+                <div>{{ form.advert_start_date|as_crispy_field }}</div>
+                <div>{{ form.advert_end_date|as_crispy_field }}</div>
+            </div>
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Tender Stages</h3>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                        <div>{{ form.site_inspection_percentage|as_crispy_field }}</div>
+                        <div class="flex items-center">
+                            {{ form.site_inspection_complete }}
+                            <label for="{{ form.site_inspection_complete.id_for_label }}"
+                                   class="ml-2 text-sm text-gray-700">{{ form.site_inspection_complete.label }}</label>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                        <div>{{ form.tender_close_percentage|as_crispy_field }}</div>
+                        <div class="flex items-center">
+                            {{ form.tender_close_complete }}
+                            <label for="{{ form.tender_close_complete.id_for_label }}"
+                                   class="ml-2 text-sm text-gray-700">{{ form.tender_close_complete.label }}</label>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                        <div>{{ form.tender_evaluation_percentage|as_crispy_field }}</div>
+                        <div class="flex items-center">
+                            {{ form.tender_evaluation_complete }}
+                            <label for="{{ form.tender_evaluation_complete.id_for_label }}"
+                                   class="ml-2 text-sm text-gray-700">
+                                {{ form.tender_evaluation_complete.label }}
+                            </label>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                        <div>{{ form.award_signing_percentage|as_crispy_field }}</div>
+                        <div class="flex items-center">
+                            {{ form.award_signing_complete }}
+                            <label for="{{ form.award_signing_complete.id_for_label }}"
+                                   class="ml-2 text-sm text-gray-700">{{ form.award_signing_complete.label }}</label>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                        <div>{{ form.mobilization_percentage|as_crispy_field }}</div>
+                        <div class="flex items-center">
+                            {{ form.mobilization_complete }}
+                            <label for="{{ form.mobilization_complete.id_for_label }}"
+                                   class="ml-2 text-sm text-gray-700">{{ form.mobilization_complete.label }}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
+                <a href="{% url 'planning:work-package-list' project.pk %}"
+                   class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium bg-emerald-600 hover:bg-emerald-700 transition-colors">
+                    {{ action }} Work Package
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock content %}

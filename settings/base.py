@@ -60,6 +60,7 @@ SHARED_APPS = [
     "app.Ledger",
     "app.Inventories",
     "app.Notices",
+    "app.Planning",
     "app.Project",
     "app.SiteManagement",
 ]

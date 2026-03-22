@@ -338,3 +338,51 @@ class FinalAccountComplianceFactory(DjangoModelFactory):
     file = None
     notes = ""
     created_by = SubFactory(UserFactory)
+
+
+class CategoryFactory(DjangoModelFactory):
+    """Factory for Category (L1) model."""
+
+    class Meta:
+        model = "Project.Category"
+
+    project = SubFactory(ProjectFactory)
+    name = Sequence(lambda n: f"Category {n}")
+    start_date = Faker("date_between", start_date="-1y", end_date="today")
+    end_date = Faker("date_between", start_date="today", end_date="+1y")
+
+
+class SubCategoryFactory(DjangoModelFactory):
+    """Factory for SubCategory (L2) model."""
+
+    class Meta:
+        model = "Project.SubCategory"
+
+    category = SubFactory(CategoryFactory)
+    project = LazyAttribute(lambda o: o.category.project)
+    name = Sequence(lambda n: f"SubCategory {n}")
+    start_date = Faker("date_between", start_date="-1y", end_date="today")
+    end_date = Faker("date_between", start_date="today", end_date="+1y")
+
+
+class GroupFactory(DjangoModelFactory):
+    """Factory for Group (L3) model."""
+
+    class Meta:
+        model = "Project.Group"
+
+    sub_category = SubFactory(SubCategoryFactory)
+    project = LazyAttribute(lambda o: o.sub_category.project)
+    name = Sequence(lambda n: f"Group {n}")
+    start_date = Faker("date_between", start_date="-1y", end_date="today")
+    end_date = Faker("date_between", start_date="today", end_date="+1y")
+
+
+class DisciplineFactory(DjangoModelFactory):
+    """Factory for Discipline (L4) model."""
+
+    class Meta:
+        model = "Project.Discipline"
+
+    project = SubFactory(ProjectFactory)
+    name = Sequence(lambda n: f"Discipline {n}")
