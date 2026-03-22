@@ -1,12 +1,11 @@
 """Views for Category, SubCategory, and Discipline management."""
 
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.generic import ListView
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import (
@@ -31,7 +30,7 @@ class CategoryListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView
     """List all categories."""
 
     model = Category
-    template_name = "project/category_manage.html"
+    template_name = "project/categories/category_manage.html"
     context_object_name = "categories"
     roles = [Role.ADMIN]
     project_slug = "project_pk"
@@ -153,7 +152,7 @@ class SubCategoryListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListV
     """List all subcategories for a specific category."""
 
     model = SubCategory
-    template_name = "project/subcategory_manage.html"
+    template_name = "project/sub_categories/subcategory_manage.html"
     context_object_name = "subcategories"
     roles = [Role.ADMIN]
     project_slug = "project_pk"
@@ -306,123 +305,12 @@ class SubCategoryDeleteView(UserHasProjectRoleGenericMixin, APIView):
         return Response({"success": True}, status=200)
 
 
-class DisciplineListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
-    """List all disciplines."""
-
-    model = Discipline
-    template_name = "project/discipline_manage.html"
-    context_object_name = "disciplines"
-    roles = [Role.ADMIN]
-    project_slug = "project_pk"
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        project = self.get_project()
-        return [
-            BreadcrumbItem(
-                title=f"Setup: {project.name}",
-                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
-            ),
-            BreadcrumbItem(title="Disciplines", url=None),
-        ]
-
-    def get_queryset(self):
-        """Return disciplines ordered by name."""
-        return Discipline.objects.filter(
-            project=self.get_project(), deleted=False
-        ).order_by("name")
-
-
-class DisciplineCreateView(
-    UserHasProjectRoleGenericMixin,
-    APIView,
-):
-    """Create a new discipline."""
-
-    model = Discipline
-    form_class = DisciplineForm
-    roles = [Role.ADMIN]
-    project_slug = "project_pk"
-
-    def post(self, request, *args, **kwargs):
-        """Handle POST request for discipline creation."""
-        form = DisciplineForm(request.data)
-        if form.is_valid():
-            form.instance.project = self.get_project()
-            discipline = form.save()
-            messages.success(
-                request, f"Discipline '{discipline.name}' created successfully."
-            )
-            response_data = {
-                "success": True,
-                "id": discipline.pk,
-                "name": discipline.name,
-                "description": discipline.description,
-            }
-            return Response(response_data, status=200)
-
-        return Response(dict(form.errors), status=400)
-
-
-class DisciplineUpdateView(
-    UserHasProjectRoleGenericMixin,
-    APIView,
-):
-    """Update a discipline."""
-
-    model = Discipline
-    form_class = DisciplineForm
-    roles = [Role.ADMIN]
-    project_slug = "project_pk"
-
-    def post(self, request, pk, *args, **kwargs):
-        """Handle POST request for discipline update."""
-        discipline = get_object_or_404(Discipline, project=self.get_project(), pk=pk)
-        form = DisciplineForm(request.data, instance=discipline)
-
-        if form.is_valid():
-            form.instance.project = self.get_project()
-            discipline = form.save()
-            messages.success(
-                request, f"Discipline '{discipline.name}' updated successfully."
-            )
-            response_data = {
-                "success": True,
-                "id": discipline.pk,
-                "name": discipline.name,
-                "description": discipline.description,
-            }
-            return Response(response_data, status=200)
-
-        return Response(dict(form.errors), status=400)
-
-
-class DisciplineDeleteView(
-    UserHasProjectRoleGenericMixin,
-    APIView,
-):
-    """Delete a discipline."""
-
-    model = Discipline
-    roles = [Role.ADMIN]
-    project_slug = "project_pk"
-
-    def post(self, request, pk, *args, **kwargs):
-        """Handle POST request for deletion."""
-        discipline = get_object_or_404(Discipline, project=self.get_project(), pk=pk)
-        discipline_name = discipline.name
-
-        discipline.soft_delete()
-        messages.success(request, f"Discipline '{discipline_name}' deleted.")
-
-        return Response({"success": True}, status=200)
-
-
 # Group Views
 class GroupListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
     """List all groups for a specific subcategory."""
 
     model = Group
-    template_name = "project/group_manage.html"
+    template_name = "project/groups/group_manage.html"
     context_object_name = "groups"
     roles = [Role.ADMIN]
     project_slug = "project_pk"
@@ -587,3 +475,303 @@ class GroupDeleteView(
         messages.success(request, f"Group '{group_name}' deleted.")
 
         return Response({"success": True}, status=200)
+
+
+class DisciplineListView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, ListView):
+    """List all disciplines."""
+
+    model = Discipline
+    template_name = "project/disciplines/discipline_manage.html"
+    context_object_name = "disciplines"
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        return [
+            BreadcrumbItem(
+                title=f"Setup: {project.name}",
+                url=reverse("project:project-setup", kwargs={"pk": project.pk}),
+            ),
+            BreadcrumbItem(title="Disciplines", url=None),
+        ]
+
+    def get_queryset(self):
+        """Return disciplines ordered by name."""
+        return Discipline.objects.filter(
+            project=self.get_project(), deleted=False
+        ).order_by("name")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["discipline_form"] = DisciplineForm()
+        return context
+
+
+class DisciplineCreateView(
+    UserHasProjectRoleGenericMixin,
+    APIView,
+):
+    """Create a new discipline."""
+
+    model = Discipline
+    form_class = DisciplineForm
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, *args, **kwargs):
+        """Handle POST request for discipline creation."""
+        form = DisciplineForm(request.data)
+        if form.is_valid():
+            form.instance.project = self.get_project()
+            discipline = form.save()
+            messages.success(
+                request, f"Discipline '{discipline.name}' created successfully."
+            )
+            response_data = {
+                "success": True,
+                "id": discipline.pk,
+                "name": discipline.name,
+                "description": discipline.description,
+            }
+            return Response(response_data, status=200)
+
+        return Response(dict(form.errors), status=400)
+
+
+class DisciplineUpdateView(
+    UserHasProjectRoleGenericMixin,
+    APIView,
+):
+    """Update a discipline."""
+
+    model = Discipline
+    form_class = DisciplineForm
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, pk, *args, **kwargs):
+        """Handle POST request for discipline update."""
+        discipline = get_object_or_404(Discipline, project=self.get_project(), pk=pk)
+        form = DisciplineForm(request.data, instance=discipline)
+
+        if form.is_valid():
+            form.instance.project = self.get_project()
+            discipline = form.save()
+            messages.success(
+                request, f"Discipline '{discipline.name}' updated successfully."
+            )
+            response_data = {
+                "success": True,
+                "id": discipline.pk,
+                "name": discipline.name,
+                "description": discipline.description,
+            }
+            return Response(response_data, status=200)
+
+        return Response(dict(form.errors), status=400)
+
+
+class DisciplineDeleteView(
+    UserHasProjectRoleGenericMixin,
+    APIView,
+):
+    """Delete a discipline."""
+
+    model = Discipline
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, pk, *args, **kwargs):
+        """Handle POST request for deletion."""
+        discipline = get_object_or_404(Discipline, project=self.get_project(), pk=pk)
+        discipline_name = discipline.name
+
+        discipline.soft_delete()
+        messages.success(request, f"Discipline '{discipline_name}' deleted.")
+
+        return Response({"success": True}, status=200)
+
+
+class CategoryDateUpdateView(UserHasProjectRoleGenericMixin, APIView):
+    """Update category start and end dates."""
+
+    model = Category
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, pk, *args, **kwargs):
+        """Handle POST request for date updates."""
+        category = get_object_or_404(Category, project=self.get_project(), pk=pk)
+
+        start_date = request.data.get("start_date") or None
+        end_date = request.data.get("end_date") or None
+
+        category.start_date = start_date
+        category.end_date = end_date
+
+        category.save()
+        messages.success(
+            request, f"Category '{category.name}' dates updated successfully."
+        )
+
+        return Response(
+            {
+                "success": True,
+                "start_date": category.start_date,
+                "end_date": category.end_date,
+            },
+            status=200,
+        )
+
+
+class SubCategoryDateUpdateView(UserHasProjectRoleGenericMixin, APIView):
+    """Update subcategory start and end dates."""
+
+    model = SubCategory
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, pk, category_pk, *args, **kwargs):
+        """Handle POST request for date updates."""
+        subcategory = get_object_or_404(
+            SubCategory, category__project=self.get_project(), pk=pk
+        )
+
+        start_date = request.data.get("start_date") or None
+        end_date = request.data.get("end_date") or None
+
+        subcategory.start_date = start_date
+        subcategory.end_date = end_date
+
+        subcategory.save()
+        messages.success(
+            request, f"Subcategory '{subcategory.name}' dates updated successfully."
+        )
+
+        return Response(
+            {
+                "success": True,
+                "start_date": subcategory.start_date,
+                "end_date": subcategory.end_date,
+            },
+            status=200,
+        )
+
+
+class GroupDateUpdateView(UserHasProjectRoleGenericMixin, APIView):
+    """Update group start and end dates."""
+
+    model = Group
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, pk, subcategory_pk, *args, **kwargs):
+        """Handle POST request for date updates."""
+        group = get_object_or_404(
+            Group, sub_category__project=self.get_project(), pk=pk
+        )
+
+        start_date = request.data.get("start_date") or None
+        end_date = request.data.get("end_date") or None
+
+        group.start_date = start_date
+        group.end_date = end_date
+
+        group.save()
+        messages.success(request, f"Group '{group.name}' dates updated successfully.")
+
+        return Response(
+            {
+                "success": True,
+                "start_date": group.start_date,
+                "end_date": group.end_date,
+            },
+            status=200,
+        )
+
+
+class CategoryBudgetUpdateView(UserHasProjectRoleGenericMixin, APIView):
+    """Update category budget."""
+
+    model = Category
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, pk, *args, **kwargs):
+        """Handle POST request for budget updates."""
+        category = get_object_or_404(Category, project=self.get_project(), pk=pk)
+
+        budget = request.data.get("budget") or None
+
+        category.budget = budget
+        category.save()
+        messages.success(
+            request, f"Category '{category.name}' budget updated successfully."
+        )
+
+        return Response(
+            {
+                "success": True,
+                "budget": category.budget,
+            },
+            status=200,
+        )
+
+
+class SubCategoryBudgetUpdateView(UserHasProjectRoleGenericMixin, APIView):
+    """Update subcategory budget."""
+
+    model = SubCategory
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, pk, category_pk, *args, **kwargs):
+        """Handle POST request for budget updates."""
+        subcategory = get_object_or_404(
+            SubCategory, category__project=self.get_project(), pk=pk
+        )
+
+        budget = request.data.get("budget") or None
+
+        subcategory.budget = budget
+        subcategory.save()
+        messages.success(
+            request, f"Subcategory '{subcategory.name}' budget updated successfully."
+        )
+
+        return Response(
+            {
+                "success": True,
+                "budget": subcategory.budget,
+            },
+            status=200,
+        )
+
+
+class GroupBudgetUpdateView(UserHasProjectRoleGenericMixin, APIView):
+    """Update group budget."""
+
+    model = Group
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def post(self, request, pk, subcategory_pk, *args, **kwargs):
+        """Handle POST request for budget updates."""
+        group = get_object_or_404(
+            Group, sub_category__project=self.get_project(), pk=pk
+        )
+
+        budget = request.data.get("budget") or None
+
+        group.budget = budget
+        group.save()
+        messages.success(request, f"Group '{group.name}' budget updated successfully.")
+
+        return Response(
+            {
+                "success": True,
+                "budget": group.budget,
+            },
+            status=200,
+        )

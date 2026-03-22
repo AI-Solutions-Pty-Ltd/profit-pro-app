@@ -14,7 +14,8 @@
                     {% endif %}
                     {% if milestone.variance_days is not None %}
                         <span class="{% if milestone.variance_days > 0 %}text-red-600 font-medium{% elif milestone.variance_days < 0 %}text-green-600 font-medium{% else %}text-gray-600{% endif %}">
-                            {% if milestone.variance_days > 0 %}+{% endif %}{{ milestone.variance_days }} days
+                            {% if milestone.variance_days > 0 %}+{% endif %}
+                            {{ milestone.variance_days }} days
                         </span>
                     {% endif %}
                 </div>
@@ -41,7 +42,6 @@
                         Pending
                     </span>
                 {% endif %}
-                
                 <!-- Actions -->
                 <div class="flex items-center space-x-1">
                     {% if not milestone.is_completed %}
@@ -51,9 +51,7 @@
                             {% csrf_token %}
                             <button type="submit"
                                     class="text-green-600 hover:text-green-900 p-1"
-                                    title="Mark Complete">
-                                {% heroicon_mini "check" size="14" %}
-                            </button>
+                                    title="Mark Complete">{% heroicon_mini "check" size="14" %}</button>
                         </form>
                     {% endif %}
                     <a href="{% url 'project:milestone-update' project.pk milestone.pk %}"

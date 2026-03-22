@@ -8,9 +8,9 @@ from app.Project.documents.document_models import ProjectDocument
 from app.Project.projects.projects_models import (
     Category,
     Discipline,
+    Group,
     Project,
     SubCategory,
-    Group,
 )
 
 from ..milestone_schedules.milestone_models import Milestone

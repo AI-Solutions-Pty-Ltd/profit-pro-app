@@ -1,7 +1,5 @@
 """Views for the unified Forecasts hub with tabs."""
 
-from app.Project.projects.category_forms import CategoryForm, SubCategoryForm, GroupForm
-
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
@@ -15,6 +13,12 @@ from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.models import Milestone, PlannedValue, Project, Role
+from app.Project.projects.category_forms import (
+    CategoryForm,
+    DisciplineForm,
+    GroupForm,
+    SubCategoryForm,
+)
 
 
 class ForecastHubMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
@@ -46,6 +50,10 @@ class TimeForecastView(ForecastHubMixin, TemplateView):
         return [
             {
                 "title": project.name,
+                "url": reverse("project:project-management", kwargs={"pk": project.pk}),
+            },
+            {
+                "title": "Setup",
                 "url": reverse("project:project-setup", kwargs={"pk": project.pk}),
             },
             {"title": "Time Forecast", "url": None},
@@ -59,112 +67,20 @@ class TimeForecastView(ForecastHubMixin, TemplateView):
         )
 
         # Build hierarchy using ORM
-        grouped_milestones: dict[str, dict[str, Any]] = {}
-        discipline_milestones: dict[str, dict[str, Any]] = {}
-
         # Get all categories for the project
-        categories = project.categories.filter(deleted=False).prefetch_related(
-            "subcategories__groups__milestones",
-            "subcategories__milestones",
+        categories = project.categories.all().prefetch_related(
             "milestones",
+            "subcategories__milestones",
+            "subcategories__groups",
+            "subcategories__groups__milestones",
         )
-
-        for category in categories:
-            # Initialize category node
-            cat_key = str(category.pk)
-            grouped_milestones[cat_key] = {
-                "type": "category",
-                "name": category.name,
-                "object": category,
-                "start_date": None,
-                "end_date": None,
-                "children": {},
-                "milestones": [],
-            }
-
-            # Get milestones directly under category
-            cat_milestones = milestones.filter(
-                project_category=category, project_sub_category__isnull=True
-            )
-            for ms in cat_milestones:
-                grouped_milestones[cat_key]["milestones"].append(ms)
-                # Update dates if needed
-                if ms.project_category_start_date:
-                    grouped_milestones[cat_key]["start_date"] = (
-                        ms.project_category_start_date
-                    )
-                if ms.project_category_end_date:
-                    grouped_milestones[cat_key]["end_date"] = (
-                        ms.project_category_end_date
-                    )
-
-            # Process subcategories
-            for subcategory in category.subcategories.filter(deleted=False):
-                sub_key = str(subcategory.pk)
-                grouped_milestones[cat_key]["children"][sub_key] = {
-                    "type": "subcategory",
-                    "name": subcategory.name,
-                    "object": subcategory,
-                    "start_date": None,
-                    "end_date": None,
-                    "children": {},
-                    "milestones": [],
-                }
-
-                # Get milestones directly under subcategory
-                sub_milestones = milestones.filter(
-                    project_sub_category=subcategory, project_group__isnull=True
-                )
-                for ms in sub_milestones:
-                    grouped_milestones[cat_key]["children"][sub_key][
-                        "milestones"
-                    ].append(ms)
-                    # Update dates if needed
-                    if ms.project_sub_category_start_date:
-                        grouped_milestones[cat_key]["children"][sub_key][
-                            "start_date"
-                        ] = ms.project_sub_category_start_date
-                    if ms.project_sub_category_end_date:
-                        grouped_milestones[cat_key]["children"][sub_key]["end_date"] = (
-                            ms.project_sub_category_end_date
-                        )
-
-                # Process groups
-                for group in subcategory.groups.filter(deleted=False):
-                    group_key = str(group.pk)
-                    grouped_milestones[cat_key]["children"][sub_key]["children"][
-                        group_key
-                    ] = {
-                        "type": "group",
-                        "name": group.name,
-                        "object": group,
-                        "start_date": None,
-                        "end_date": None,
-                        "milestones": [],
-                    }
-
-                    # Get milestones for this group
-                    group_milestones = milestones.filter(project_group=group)
-                    for ms in group_milestones:
-                        grouped_milestones[cat_key]["children"][sub_key]["children"][
-                            group_key
-                        ]["milestones"].append(ms)
-                        # Update dates if needed
-                        if ms.project_group_start_date:
-                            grouped_milestones[cat_key]["children"][sub_key][
-                                "children"
-                            ][group_key]["start_date"] = ms.project_group_start_date
-                        if ms.project_group_end_date:
-                            grouped_milestones[cat_key]["children"][sub_key][
-                                "children"
-                            ][group_key]["end_date"] = ms.project_group_end_date
 
         # Handle uncategorized milestones
         uncategorized_milestones = milestones.filter(
             project_category__isnull=True, project_discipline__isnull=True
         )
         if uncategorized_milestones.exists():
-            grouped_milestones["uncategorized"] = {
+            uncategorized_milestones = {
                 "type": "uncategorized",
                 "name": "Uncategorized",
                 "object": None,
@@ -173,56 +89,23 @@ class TimeForecastView(ForecastHubMixin, TemplateView):
                 "milestones": list(uncategorized_milestones),
             }
 
-        # Handle discipline milestones (standalone)
-        disciplines = project.disciplines.filter(deleted=False)
-        for discipline in disciplines:
-            disc_key = str(discipline.pk)
-            disc_milestones = milestones.filter(project_discipline=discipline)
-
-            if disc_milestones.exists():
-                discipline_milestones[disc_key] = {
-                    "type": "discipline",
-                    "name": discipline.name,
-                    "object": discipline,
-                    "start_date": None,
-                    "end_date": None,
-                    "milestones": list(disc_milestones),
-                }
-                # Update dates from first milestone
-                first_ms = disc_milestones.first()
-                if first_ms:
-                    if first_ms.project_discipline_start_date:
-                        discipline_milestones[disc_key]["start_date"] = (
-                            first_ms.project_discipline_start_date
-                        )
-                    if first_ms.project_discipline_end_date:
-                        discipline_milestones[disc_key]["end_date"] = (
-                            first_ms.project_discipline_end_date
-                        )
-
-        # Calculate summary stats
-        total_milestones = milestones.count()
-        completed = milestones.filter(is_completed=True).count()
-        delayed = sum(1 for m in milestones if m.is_delayed)
-        on_schedule = total_milestones - delayed - completed
-
         context.update(
             {
                 "project": project,
                 "active_tab": "time",
-                "milestones": milestones,
-                "grouped_milestones": grouped_milestones,
-                "discipline_milestones": discipline_milestones,
-                "total_milestones": total_milestones,
-                "completed_milestones": completed,
-                "delayed_milestones": delayed,
-                "on_schedule_milestones": on_schedule,
-                "category_form": CategoryForm,
-                "subcategory_form": SubCategoryForm,
-                "group_form": GroupForm,
+                "categories": categories,
+                "uncategorized_milestones": uncategorized_milestones,
+                "category_form": CategoryForm(),
+                "subcategory_form": SubCategoryForm(project=project),
+                "group_form": GroupForm(project=project),
+                "discipline_form": DisciplineForm(),
             }
         )
         return context
+
+
+class BudgetForecastView(TimeForecastView):
+    template_name = "forecasts/budget_forecast.html"
 
 
 class CashflowForecastView(ForecastHubMixin, TemplateView):

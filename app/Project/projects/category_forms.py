@@ -45,11 +45,13 @@ class SubCategoryForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
-        if project:
-            category_field = cast(forms.ModelChoiceField, self.fields["category"])
-            category_field.queryset = Category.objects.filter(
-                project=project, deleted=False
-            )
+        if not project:
+            raise ValueError("Project is required")
+        category_field = cast(forms.ModelChoiceField, self.fields["category"])
+        category_field.queryset = Category.objects.filter(
+            project=project, deleted=False
+        )
+        category_field.widget = category_field.hidden_widget()
 
     class Meta:
         model = SubCategory
@@ -81,50 +83,27 @@ class SubCategoryForm(forms.ModelForm):
         }
 
 
-class DisciplineForm(forms.ModelForm):
-    """Form for creating and updating disciplines."""
-
-    class Meta:
-        model = Discipline
-        fields = ["name", "description"]
-        widgets = {
-            "name": forms.TextInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Enter discipline name (e.g., Civil, Electrical, Mechanical)",
-                }
-            ),
-            "description": forms.Textarea(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Optional description of this discipline",
-                    "rows": 3,
-                }
-            ),
-        }
-        labels = {
-            "name": "Discipline Name",
-            "description": "Description (Optional)",
-        }
-
-
 class GroupForm(forms.ModelForm):
     """Form for creating and updating groups."""
 
     def __init__(self, *args, **kwargs):
         project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
-        if project:
-            subcategory_field = cast(
-                forms.ModelChoiceField, self.fields["sub_category"]
-            )
-            subcategory_field.queryset = SubCategory.objects.filter(
-                project=project, deleted=False
-            )
+        if not project:
+            raise ValueError("Project is required")
+        subcategory_field = cast(forms.ModelChoiceField, self.fields["sub_category"])
+        subcategory_field.queryset = SubCategory.objects.filter(
+            project=project, deleted=False
+        )
+        subcategory_field.widget = subcategory_field.hidden_widget()
 
     class Meta:
         model = Group
-        fields = ["sub_category", "name", "description"]
+        fields = [
+            "name",
+            "description",
+            "sub_category",
+        ]
         widgets = {
             "sub_category": forms.Select(
                 attrs={
@@ -148,5 +127,32 @@ class GroupForm(forms.ModelForm):
         labels = {
             "sub_category": "Sub Category",
             "name": "Group Name",
+            "description": "Description (Optional)",
+        }
+
+
+class DisciplineForm(forms.ModelForm):
+    """Form for creating and updating disciplines."""
+
+    class Meta:
+        model = Discipline
+        fields = ["name", "description"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter discipline name (e.g., Civil, Electrical, Mechanical)",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Optional description of this discipline",
+                    "rows": 3,
+                }
+            ),
+        }
+        labels = {
+            "name": "Discipline Name",
             "description": "Description (Optional)",
         }

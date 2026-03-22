@@ -26,6 +26,16 @@ urlpatterns = [
         name="project-category-delete",
     ),
     path(
+        "<int:project_pk>/categories/<int:pk>/update-dates/",
+        category_views.CategoryDateUpdateView.as_view(),
+        name="project-category-update-dates",
+    ),
+    path(
+        "<int:project_pk>/categories/<int:pk>/update-budget/",
+        category_views.CategoryBudgetUpdateView.as_view(),
+        name="project-category-update-budget",
+    ),
+    path(
         "<int:project_pk>/categories/<int:category_pk>/subcategories/",
         category_views.SubCategoryListView.as_view(),
         name="project-subcategory-list",
@@ -46,6 +56,16 @@ urlpatterns = [
         name="project-subcategory-delete",
     ),
     path(
+        "<int:project_pk>/categories/<int:category_pk>/subcategories/<int:pk>/update-dates/",
+        category_views.SubCategoryDateUpdateView.as_view(),
+        name="project-subcategory-update-dates",
+    ),
+    path(
+        "<int:project_pk>/categories/<int:category_pk>/subcategories/<int:pk>/update-budget/",
+        category_views.SubCategoryBudgetUpdateView.as_view(),
+        name="project-subcategory-update-budget",
+    ),
+    path(
         "<int:project_pk>/subcategories/<int:subcategory_pk>/groups/",
         category_views.GroupListView.as_view(),
         name="project-group-list",
@@ -64,6 +84,16 @@ urlpatterns = [
         "<int:project_pk>/subcategories/<int:subcategory_pk>/groups/<int:pk>/delete/",
         category_views.GroupDeleteView.as_view(),
         name="project-group-delete",
+    ),
+    path(
+        "<int:project_pk>/subcategories/<int:subcategory_pk>/groups/<int:pk>/update-dates/",
+        category_views.GroupDateUpdateView.as_view(),
+        name="project-group-update-dates",
+    ),
+    path(
+        "<int:project_pk>/subcategories/<int:subcategory_pk>/groups/<int:pk>/update-budget/",
+        category_views.GroupBudgetUpdateView.as_view(),
+        name="project-group-update-budget",
     ),
     path(
         "<int:project_pk>/disciplines/",

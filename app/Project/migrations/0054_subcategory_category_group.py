@@ -5,33 +5,83 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0053_alter_projectdocument_project_category_and_more'),
+        ("Project", "0053_alter_projectdocument_project_category_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='subcategory',
-            name='category',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='Project.category'),
+            model_name="subcategory",
+            name="category",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                to="Project.category",
+            ),
         ),
         migrations.CreateModel(
-            name='Group',
+            name="Group",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last modified')),
-                ('deleted', models.BooleanField(default=False, help_text='Soft delete flag')),
-                ('name', models.CharField(help_text='Group name (e.g., Top Structures, Drawings)', max_length=100)),
-                ('description', models.TextField(blank=True, help_text='Optional description of the Group')),
-                ('project', models.ForeignKey(blank=True, on_delete=django.db.models.deletion.CASCADE, related_name='groups', to='Project.project')),
-                ('sub_category', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='Project.subcategory')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last modified"
+                    ),
+                ),
+                (
+                    "deleted",
+                    models.BooleanField(default=False, help_text="Soft delete flag"),
+                ),
+                (
+                    "name",
+                    models.CharField(
+                        help_text="Group name (e.g., Top Structures, Drawings)",
+                        max_length=100,
+                    ),
+                ),
+                (
+                    "description",
+                    models.TextField(
+                        blank=True, help_text="Optional description of the Group"
+                    ),
+                ),
+                (
+                    "project",
+                    models.ForeignKey(
+                        blank=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="groups",
+                        to="Project.project",
+                    ),
+                ),
+                (
+                    "sub_category",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="Project.subcategory",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Project Group',
-                'verbose_name_plural': 'Project Group',
-                'ordering': ['name'],
+                "verbose_name": "Project Group",
+                "verbose_name_plural": "Project Group",
+                "ordering": ["name"],
             },
         ),
     ]

@@ -5,30 +5,47 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0055_rename_projects_category_project_and_more'),
+        ("Project", "0055_rename_projects_category_project_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='milestone',
-            name='project_group',
-            field=models.ForeignKey(blank=True, help_text='WBS Level 3 classification', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='milestones', to='Project.group'),
+            model_name="milestone",
+            name="project_group",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="WBS Level 3 classification",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="milestones",
+                to="Project.group",
+            ),
         ),
         migrations.AddField(
-            model_name='milestone',
-            name='project_group_end_date',
-            field=models.DateField(blank=True, help_text='End date for WBS Level 3', null=True),
+            model_name="milestone",
+            name="project_group_end_date",
+            field=models.DateField(
+                blank=True, help_text="End date for WBS Level 3", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='milestone',
-            name='project_group_start_date',
-            field=models.DateField(blank=True, help_text='Start date for WBS Level 3', null=True),
+            model_name="milestone",
+            name="project_group_start_date",
+            field=models.DateField(
+                blank=True, help_text="Start date for WBS Level 3", null=True
+            ),
         ),
         migrations.AlterField(
-            model_name='milestone',
-            name='project_discipline',
-            field=models.ForeignKey(blank=True, help_text='Discipline classification', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='milestones', to='Project.discipline'),
+            model_name="milestone",
+            name="project_discipline",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Discipline classification",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="milestones",
+                to="Project.discipline",
+            ),
         ),
     ]

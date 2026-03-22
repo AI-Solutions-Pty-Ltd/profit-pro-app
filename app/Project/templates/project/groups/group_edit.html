@@ -1,13 +1,13 @@
 <!-- Edit Modal -->
-<div id="editCategoryModal"
+<div id="editGroupModal"
      class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div class="px-6 py-4 border-b border-gray-200">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">Edit Category</h3>
+                    <h3 class="text-lg font-semibold text-gray-900">Edit Group</h3>
                     <button type="button"
-                            onclick="closeEditCategoryModal()"
+                            onclick="closeEditModal()"
                             class="text-gray-400 hover:text-gray-500">
                         {% heroicon_outline "x-mark" size="20" %}
                     </button>
@@ -17,20 +17,21 @@
                 {% csrf_token %}
                 <div class="px-6 py-4 space-y-4">
                     <div class="space-y-4">
+                        {{ form.sub_category }}
                         <div>{{ form.name|as_crispy_field }}</div>
                         <div>{{ form.description|as_crispy_field }}</div>
                     </div>
                 </div>
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
                     <button type="button"
-                            onclick="closeEditCategoryModal()"
+                            onclick="closeEditModal()"
                             class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Cancel
                     </button>
                     <button type="submit"
                             class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         {% heroicon_outline "check" size="16" class="inline mr-1" %}
-                        Update Category
+                        Update Group
                     </button>
                 </div>
             </form>
@@ -38,42 +39,53 @@
     </div>
 </div>
 <script>
-    // Project PK for URL construction
     // Edit Modal Functions
-    const editCategoryModal = document.getElementById("editCategoryModal");
-    const editCategoryForm = editCategoryModal.querySelector("#editForm");
-    
-    
-    function openEditCategoryModal(id, name, description) {
-        const project_pk = {{ project.pk }};
-        const nameInput = editCategoryForm.querySelector('#id_name');
-        const descriptionInput = editCategoryForm.querySelector('#id_description');
+    const editGroupModal = document.getElementById("editGroupModal");
+    const editGroupForm = editGroupModal.querySelector("#editForm")
+
+    function openEditGroupModal(id, name, description, subcategoryId) {
+        editGroupModal.classList.remove('hidden');
+        editGroupForm.querySelector('#id_name').value = name;
+        editGroupForm.querySelector('#id_description').value = description;
+        editGroupForm.querySelector('#id_sub_category').value = subcategoryId;
+        editGroupForm.querySelector('#id_name').focus();
         
-        
-        // Set values
-        nameInput.value = name;
-        descriptionInput.value = description;
-        editCategoryForm.action = `/project/${project_pk}/categories/${id}/update/`;
-        
-        // Show modal
-        editCategoryModal.classList.remove('hidden');
-        nameInput.focus();
+        // Store the IDs for form submission
+        editGroupModal.dataset.id = id;
+        editGroupModal.dataset.subcategoryId = subcategoryId;
     }
 
-    function closeEditCategoryModal() {
-        editCategoryModal.classList.add('hidden');
+    function closeEditModal() {
+        editGroupModal.classList.add('hidden');
+        editGroupForm.reset();
     }
+
+    // Close modals on escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeEditModal();
+        }
+    });
+
+    // Close modals when clicking outside
+    editGroupModal.addEventListener('click', function(event) {
+        if (event.target === this) closeEditModal();
+    });
 
     // Form submission
-    editCategoryForm.addEventListener('submit', async function(event) {
+    editGroupForm.addEventListener('submit', async function(event) {
         event.preventDefault();
+        
+        const id = editGroupModal.dataset.id;
+        const subcategoryId = editGroupModal.dataset.subcategoryId;
         
         const formData = new FormData(this);
         const data = Object.fromEntries(formData.entries());
-        const formAction = this.action;
         
         try {
-            const response = await fetch(formAction, {
+            const url = `/project/{{ project.pk }}/subcategories/${subcategoryId}/groups/${id}/update/`;
+            
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -87,27 +99,12 @@
             if (result.success) {
                 window.location.reload();
             } else {
-                alert('Category could not be updated');
+                alert('Group could not be updated');
                 console.error('Errors:', result.errors);
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('An error occurred while updating the category');
+            alert('An error occurred while updating the group');
         }
     });
-
-    // Close modals on escape key
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            closeEditCategoryModal();
-        }
-    });
-
-    // Close modal when clicking outside
-    editCategoryModal.addEventListener('click', function(event) {
-        if (event.target === this) {
-            closeEditCategoryModal();
-        }
-    });
-
 </script>

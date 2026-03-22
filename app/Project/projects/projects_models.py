@@ -21,6 +21,7 @@ from app.Project.models import Company, ProjectDiscipline
 if TYPE_CHECKING:
     from app.Account.models import Account
     from app.BillOfQuantities.models import Structure
+    from app.Project.models import Milestone
     from app.Project.models.planned_value_models import PlannedValue
     from app.Project.models.project_roles_models import ProjectRole
     from app.Project.models.signatories_models import Signatories
@@ -744,9 +745,13 @@ class Category(BaseModel):
         blank=True,
         related_name="categories",
     )
+    start_date = models.DateField(null=True)
+    end_date = models.DateField(null=True)
+    budget = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
     if TYPE_CHECKING:
         subcategories: QuerySet["SubCategory"]
+        milestones: QuerySet["Milestone"]
 
     class Meta:
         verbose_name = "Level 1"
@@ -777,9 +782,13 @@ class SubCategory(BaseModel):
         blank=True,
         related_name="subcategories",
     )
+    start_date = models.DateField(null=True)
+    end_date = models.DateField(null=True)
+    budget = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
     if TYPE_CHECKING:
         groups: QuerySet["Group"]
+        milestones: QuerySet["Milestone"]
 
     class Meta:
         verbose_name = "Level 2"
@@ -810,6 +819,12 @@ class Group(BaseModel):
         blank=True,
         related_name="groups",
     )
+    start_date = models.DateField(null=True)
+    end_date = models.DateField(null=True)
+    budget = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    if TYPE_CHECKING:
+        milestones: QuerySet["Milestone"]
 
     class Meta:
         verbose_name = "Level 3"

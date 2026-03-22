@@ -2,7 +2,7 @@
 {% load humanize %}
 {% load heroicons %}
 {% block title %}
-    Time Forecast - {{ project.name }}
+    Budget Forecast - {{ project.name }}
 {% endblock title %}
 {% block content %}
     {% include "project/categories/category_create.html" with project=project form=category_form %}
@@ -22,18 +22,19 @@
         <div class="px-8 py-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-white">Time Forecast</h1>
+                    <h1 class="text-3xl font-bold text-white">Budget Forecast</h1>
                     <p class="text-sm text-indigo-100 mt-2 flex items-center">
                         {% heroicon_outline "briefcase" size="16" class="mr-1.5" %}
-                        {{ project.name }} - Milestone Tracking
+                        {{ project.name }} - Budget Management
                     </p>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <a href="{% url 'project:milestone-create' project.pk %}"
-                       class="inline-flex items-center px-5 py-2.5 border border-white/20 text-sm font-semibold rounded-lg text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200 shadow-lg">
+                    <button type="button"
+                            onclick="openCreateCategoryModal()"
+                            class="inline-flex items-center px-5 py-2.5 border border-white/20 text-sm font-semibold rounded-lg text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200 shadow-lg">
                         {% heroicon_outline "plus" size="18" class="mr-2" %}
-                        Add Milestone
-                    </a>
+                        Add Category
+                    </button>
                 </div>
             </div>
         </div>
@@ -112,9 +113,9 @@
             <div>
                 <h2 class="text-xl font-bold text-gray-900 flex items-center">
                     {% heroicon_outline "squares-2x2" size="24" class="mr-2 text-indigo-600" %}
-                    WBS Hierarchy
+                    Budget Breakdown Structure
                 </h2>
-                <p class="text-sm text-gray-600 mt-1">Organize milestones by category, subcategory, and group</p>
+                <p class="text-sm text-gray-600 mt-1">Manage budgets by category, subcategory, and group</p>
             </div>
             <div>
                 <button type="button"
@@ -136,9 +137,7 @@
                                     <div class="p-2 bg-blue-100 rounded-lg">{% heroicon_outline "rectangle-stack" size="20" class="text-blue-600" %}</div>
                                     <div>
                                         <h3 class="text-lg font-bold text-blue-900">{{ category.name }}</h3>
-                                        <div class="mt-0.5">
-                                            {% include "project/components/date_input.html" with field_id="category_"|addstr:category.pk entity_type="category" entity_id=category.pk start_date=category.start_date end_date=category.end_date %}
-                                        </div>
+                                        {% include "project/components/budget_input.html" with field_id="category_"|addstr:category.pk entity_type="category" entity_id=category.pk budget=category.budget %}
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-3">
@@ -182,9 +181,7 @@
                                             <div class="p-1.5 bg-green-100 rounded-lg">{% heroicon_outline "tag" size="18" class="text-green-600" %}</div>
                                             <div>
                                                 <h4 class="text-md font-bold text-green-900">{{ subcategory.name }}</h4>
-                                                <div class="mt-0.5">
-                                                    {% include "project/components/date_input.html" with field_id="subcategory_"|addstr:subcategory.pk entity_type="subcategory" entity_id=subcategory.pk start_date=subcategory.start_date end_date=subcategory.end_date parent_id=category.pk %}
-                                                </div>
+                                                {% include "project/components/budget_input.html" with field_id="subcategory_"|addstr:subcategory.pk entity_type="subcategory" entity_id=subcategory.pk budget=subcategory.budget parent_id=category.pk %}
                                             </div>
                                         </div>
                                         <div class="flex items-center space-x-2">
@@ -232,9 +229,7 @@
                                                     <div class="p-1.5 bg-purple-100 rounded-lg">{% heroicon_outline "folder" size="16" class="text-purple-600" %}</div>
                                                     <div>
                                                         <h5 class="text-sm font-bold text-purple-900">{{ group.name }}</h5>
-                                                        <div class="mt-0.5">
-                                                            {% include "project/components/date_input.html" with field_id="group_"|addstr:group.pk entity_type="group" entity_id=group.pk start_date=group.start_date end_date=group.end_date parent_id=subcategory.pk %}
-                                                        </div>
+                                                        {% include "project/components/budget_input.html" with field_id="group_"|addstr:group.pk entity_type="group" entity_id=group.pk budget=group.budget parent_id=subcategory.pk %}
                                                     </div>
                                                 </div>
                                                 <div class="flex items-center space-x-2">

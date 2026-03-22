@@ -13,6 +13,12 @@ urlpatterns = [
         forecast_hub_views.TimeForecastView.as_view(),
         name="time-forecast",
     ),
+    # Budget Forecast tab
+    path(
+        "<int:project_pk>/budget/",
+        forecast_hub_views.BudgetForecastView.as_view(),
+        name="budget-forecast",
+    ),
     # Cashflow Forecast tab
     path(
         "<int:project_pk>/cashflow/",

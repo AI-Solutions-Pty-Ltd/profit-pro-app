@@ -5,15 +5,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0057_alter_group_sub_category'),
+        ("Project", "0057_alter_group_sub_category"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='subcategory',
-            name='category',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='subcategories', to='Project.category'),
+            model_name="subcategory",
+            name="category",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="subcategories",
+                to="Project.category",
+            ),
         ),
     ]

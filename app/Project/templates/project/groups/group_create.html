@@ -1,35 +1,37 @@
-<!-- Edit Modal -->
-<div id="editSubCategoryModal"
+<!-- Create Modal -->
+<div id="createGroupModal"
      class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div class="px-6 py-4 border-b border-gray-200">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">Edit Sub Category</h3>
+                    <h3 class="text-lg font-semibold text-gray-900">Add New Group</h3>
                     <button type="button"
-                            onclick="closeEditModal()"
+                            onclick="closeCreateModal()"
                             class="text-gray-400 hover:text-gray-500">
                         {% heroicon_outline "x-mark" size="20" %}
                     </button>
                 </div>
             </div>
-            <form method="post" id="editForm">
+            <form method="post" id="createForm">
+                {% csrf_token %}
                 <div class="px-6 py-4 space-y-4">
                     <div class="space-y-4">
+                        <input type="hidden" name="sub_category" id="id_sub_category" value="">
                         <div>{{ form.name|as_crispy_field }}</div>
                         <div>{{ form.description|as_crispy_field }}</div>
                     </div>
                 </div>
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
                     <button type="button"
-                            onclick="closeEditModal()"
+                            onclick="closeCreateModal()"
                             class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Cancel
                     </button>
                     <button type="submit"
                             class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        {% heroicon_outline "check" size="16" class="inline mr-1" %}
-                        Update Sub Category
+                        {% heroicon_outline "plus" size="16" class="inline mr-1" %}
+                        Create Group
                     </button>
                 </div>
             </form>
@@ -37,56 +39,44 @@
     </div>
 </div>
 <script>
-        // Project PK for URL construction
-        
-        
-        
-        // Edit Modal Functions
-        function openEditModal(id, name, description) {
-        const modal = document.getElementById("editSubCategoryModal");
-        const project_pk = {{ project.pk }};
-        const category_pk = {{ category.pk }};
-        const nameInput = modal.querySelector('#id_name');
-        const descriptionInput = modal.querySelector('#id_description');
-        
-        // Set values
-        nameInput.value = name;
-        descriptionInput.value = description;
-        document.getElementById('editForm').action = `/project/${project_pk}/categories/${category_pk}/subcategories/${id}/update/`;
-        
-        // Show modal
-        modal.classList.remove('hidden');
-        nameInput.focus();
+    // Create Modal Functions
+    const createGroupModal = document.getElementById("createGroupModal");
+    const createGroupForm = createGroupModal.querySelector('#createForm')
+
+    function openCreateGroupModal(subcategoryId) {
+        createGroupModal.classList.remove('hidden');
+        createGroupForm.querySelector('#id_name').focus();
+        createGroupForm.querySelector('#id_sub_category').value = subcategoryId;
     }
 
-        function closeEditModal() {
-        document.getElementById("editSubCategoryModal").classList.add('hidden');
-        document.getElementById('editForm').reset();
-        document.getElementById('id_name_error').classList.add('hidden');
-        document.getElementById('id_description_error').classList.add('hidden');
+    function closeCreateModal() {
+        createGroupModal.classList.add('hidden');
     }
 
-        // Close modals on escape key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeEditModal();
-            }
-        });
+    // Close modals when clicking outside
+    createGroupModal.addEventListener('click', function(event) {
+        if (event.target === this) closeCreateModal();
+    });
 
-        document.getElementById("editSubCategoryModal").addEventListener('click', function(event) {
-        if (event.target === this) closeEditModal();
+    // Close modals on escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeCreateModal();
+        }
     });
 
     // Form submission
-    document.getElementById('editForm').addEventListener('submit', async function(event) {
+    createGroupForm.addEventListener('submit', async function(event) {
         event.preventDefault();
         
         const formData = new FormData(this);
         const data = Object.fromEntries(formData.entries());
-        const formAction = this.action;
         
         try {
-            const response = await fetch(formAction, {
+           
+            const url = `/project/{{ project.pk }}/subcategories/${data.sub_category}/groups/create/`;
+            
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -100,13 +90,12 @@
             if (result.success) {
                 window.location.reload();
             } else {
-                alert('Sub category could not be updated');
+                alert('Group could not be created');
                 console.error('Errors:', result.errors);
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('An error occurred while updating the sub category');
+            alert('An error occurred while creating the group');
         }
     });
-        
 </script>

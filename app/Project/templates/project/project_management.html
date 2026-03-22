@@ -215,6 +215,13 @@
                             {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                         </a>
                     {% endif %}
+                    {% if request.user|projectroles:project|userhasrole:'TIME_FORECASTS,ADMIN,User' %}
+                        <a href="{% url 'project:budget-forecast' project.pk %}"
+                           class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
+                            <span class="text-sm font-medium text-blue-700">Budget Forecast</span>
+                            {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                        </a>
+                    {% endif %}
                     {% if project.start_date and project.end_date %}
                         {% if request.user|projectroles:project|userhasrole:'CASHFLOW_FORECASTS,ADMIN,User' %}
                             <a href="{% url 'project:cashflow-forecast-tab' project.pk %}"

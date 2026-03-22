@@ -1,25 +1,26 @@
 <!-- Delete Modal -->
-<div id="deleteSubCategoryModal"
+<div id="deleteDisciplineModal"
      class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50">
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
             <div class="px-6 py-4 border-b border-gray-200">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-semibold text-gray-900">Delete Sub Category</h3>
+                    <h3 class="text-lg font-semibold text-gray-900">Delete Discipline</h3>
                     <button type="button"
-                            onclick="closeDeleteModal()"
+                            onclick="closeDeleteDisciplineModal()"
                             class="text-gray-400 hover:text-gray-500">
                         {% heroicon_outline "x-mark" size="20" %}
                     </button>
                 </div>
             </div>
             <form method="post" id="deleteForm">
+                {% csrf_token %}
                 <div class="px-6 py-4">
                     <div class="flex items-start">
                         <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" size="24" class="text-red-600" %}</div>
                         <div class="ml-3">
                             <p class="text-sm text-gray-700">
-                                Are you sure you want to delete the sub category <strong id="delete_subcategory_name"></strong>?
+                                Are you sure you want to delete the discipline <strong id="delete_discipline_name"></strong>?
                             </p>
                             <p class="text-sm text-gray-500 mt-2" id="delete_warning"></p>
                         </div>
@@ -27,14 +28,14 @@
                 </div>
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
                     <button type="button"
-                            onclick="closeDeleteModal()"
+                            onclick="closeDeleteDisciplineModal()"
                             class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Cancel
                     </button>
                     <button type="submit"
                             class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                         {% heroicon_outline "trash" size="16" class="inline mr-1" %}
-                        Delete Sub Category
+                        Delete Discipline
                     </button>
                 </div>
             </form>
@@ -42,46 +43,49 @@
     </div>
 </div>
 <script>
+    const deleteDisciplineModal =  document.getElementById("deleteDisciplineModal")
+    const deleteDisciplineForm = deleteDisciplineModal.querySelector('#deleteForm')
+
     // Delete Modal Functions
-    function openDeleteModal(id, name, projectCount) {
-        project_pk = {{project.pk}}
-        category_pk = {{category.pk}}
-        document.getElementById('deleteSubCategoryModal').classList.remove('hidden');
-        document.getElementById('delete_subcategory_name').textContent = name;
-        document.getElementById('deleteForm').action = `/project/${project_pk}/categories/${category_pk}/subcategories/${id}/delete/`;
+    function openDeleteDisciplineModal(id, name, projectCount) {
+        deleteDisciplineModal.classList.remove('hidden');
+        deleteDisciplineModal.querySelector('#delete_discipline_name').textContent = name;
         
-        const warning = document.getElementById('delete_warning');
+        // Store the ID for form submission
+        deleteDisciplineModal.dataset.disciplineId = id;
+        
+        const warning = deleteDisciplineModal.querySelector('#delete_warning');
         if (projectCount > 0) {
-            warning.textContent = `This sub category is currently used by ${projectCount} project${projectCount > 1 ? 's' : ''}. Projects will not be deleted, but they will no longer have this sub category assigned.`;
+            warning.textContent = `This discipline is currently used by ${projectCount} project${projectCount > 1 ? 's' : ''}. Projects will not be deleted, but they will no longer have this discipline assigned.`;
         } else {
-            warning.textContent = 'This sub category is not currently used by any projects.';
+            warning.textContent = 'This discipline is not currently used by any projects.';
         }
     }
 
-    function closeDeleteModal() {
-        document.getElementById('deleteSubCategoryModal').classList.add('hidden');
+    function closeDeleteDisciplineModal() {
+        deleteDisciplineModal.classList.add('hidden');
     }
 
     // Close modals on escape key
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
-            closeDeleteModal();
+            closeDeleteDisciplineModal();
         }
     });
 
-
-    document.getElementById('deleteSubCategoryModal').addEventListener('click', function(event) {
-        if (event.target === this) closeDeleteModal();
+    // Close modals when clicking outside
+    deleteDisciplineModal.addEventListener('click', function(event) {
+        if (event.target === this) closeDeleteDisciplineModal();
     });
 
     // Form submission
-    document.getElementById('deleteForm').addEventListener('submit', async function(event) {
+    deleteDisciplineForm.addEventListener('submit', async function(event) {
         event.preventDefault();
         
-        const formAction = this.action;
+        const disciplineId = deleteDisciplineModal.dataset.disciplineId;
         
         try {
-            const response = await fetch(formAction, {
+            const response = await fetch(`/project/{{ project.pk }}/disciplines/${disciplineId}/delete/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -95,12 +99,12 @@
             if (result.success) {
                 window.location.reload();
             } else {
-                alert('Sub category could not be deleted');
-                console.error('Errors:', result);
+                alert('Discipline could not be deleted');
+                console.error('Errors:', result.errors);
             }
         } catch (error) {
             console.error('Error:', error);
-            alert('An error occurred while deleting the sub category');
+            alert('An error occurred while deleting the discipline');
         }
     });
 </script>

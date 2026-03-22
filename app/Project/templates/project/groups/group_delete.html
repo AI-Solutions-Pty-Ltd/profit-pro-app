@@ -7,13 +7,14 @@
                 <div class="flex items-center justify-between">
                     <h3 class="text-lg font-semibold text-gray-900">Delete Group</h3>
                     <button type="button"
-                            onclick="closeDeleteModal()"
+                            onclick="closeDeleteGroupModal()"
                             class="text-gray-400 hover:text-gray-500">
                         {% heroicon_outline "x-mark" size="20" %}
                     </button>
                 </div>
             </div>
             <form method="post" id="deleteForm">
+                {% csrf_token %}
                 <div class="px-6 py-4">
                     <div class="flex items-start">
                         <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" size="24" class="text-red-600" %}</div>
@@ -28,7 +29,7 @@
                 </div>
                 <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
                     <button type="button"
-                            onclick="closeDeleteModal()"
+                            onclick="closeDeleteGroupModal()"
                             class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Cancel
                     </button>
@@ -44,12 +45,15 @@
 </div>
 <script>
     // Delete Modal Functions
-    function openDeleteModal(id, name, projectCount) {
-        project_id = {{project.pk}}
-        subcategory_pk = {{subcategory.pk}}
-        document.getElementById('deleteGroupModal').classList.remove('hidden');
+    const deleteGroupModal = document.getElementById('deleteGroupModal')
+    const deleteGroupForm = deleteGroupModal.querySelector("#deleteForm")
+
+    function openDeleteGroupModal(id, name, subcategoryId, projectCount = 0) {
+        deleteGroupModal.classList.remove('hidden');
+        deleteGroupModal.dataset.id = id;
+        deleteGroupModal.dataset.subcategoryId = subcategoryId;
         document.getElementById('delete_group_name').textContent = name;
-        document.getElementById('deleteForm').action = `/project/${project_id}/subcategories/${subcategory_pk}/groups/${id}/delete/`;
+
         
         const warning = document.getElementById('delete_warning');
         if (projectCount > 0) {
@@ -59,36 +63,36 @@
         }
     }
 
-    function closeDeleteModal() {
-        document.getElementById('deleteGroupModal').classList.add('hidden');
+    function closeDeleteGroupModal() {
+        deleteGroupModal.classList.add('hidden');
     }
 
     // Close modals on escape key
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
-            closeDeleteModal();
+            closeDeleteGroupModal();
         }
     });
 
 
-    document.getElementById('deleteGroupModal').addEventListener('click', function(event) {
-        if (event.target === this) closeDeleteModal();
+    deleteGroupModal.addEventListener('click', function(event) {
+        if (event.target === this) closeDeleteGroupModal();
     });
 
     // Form submission
-    document.getElementById('deleteForm').addEventListener('submit', async function(event) {
+    deleteGroupForm.addEventListener('submit', async function(event) {
         event.preventDefault();
-        
-        const formAction = this.action;
+        id = deleteGroupModal.dataset.id;
+        subcategoryId = deleteGroupModal.dataset.subcategoryId;
+        const url = `/project/{{project.pk}}/subcategories/${subcategoryId}/groups/${id}/delete/`;
         
         try {
-            const response = await fetch(formAction, {
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': '{{ CSRF_TOKEN }}'
                 },
-                body: JSON.stringify({})
             });
             
             const result = await response.json();

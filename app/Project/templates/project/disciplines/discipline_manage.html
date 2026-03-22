@@ -1,23 +1,24 @@
 {% extends "base_full.html" %}
 {% load heroicons %}
 {% block content %}
-    {% include "./categories/category_create.html" with project=project form=category_form %}
-    {% include "./categories/category_edit.html" with project=project form=category_form %}
-    {% include "./categories/category_delete.html" with project=project %}
+    <!-- Include Modals -->
+    {% include "./discipline_create.html" with project=project form=discipline_form %}
+    {% include "./discipline_edit.html" with project=project form=discipline_form %}
+    {% include "./discipline_delete.html" with project=project %}
     <!-- Header -->
     <div class="bg-white shadow-sm rounded-lg mb-6">
         <div class="px-6 py-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Project Categories</h1>
-                    <p class="text-sm text-gray-600 mt-1">Manage project categories for classification</p>
+                    <h1 class="text-2xl font-bold text-gray-900">Project Disciplines</h1>
+                    <p class="text-sm text-gray-600 mt-1">Manage project disciplines for expertise classification</p>
                 </div>
                 <div class="flex items-center gap-3">
                     <button type="button"
-                            onclick="openCreateModal()"
+                            onclick="openCreateDisciplineModal()"
                             class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                         {% heroicon_outline "plus" size="16" %}
-                        <span class="ml-2">Add Category</span>
+                        <span class="ml-2">Add Discipline</span>
                     </button>
                     <a href="{% url 'project:project-setup' project.pk %}"
                        class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
@@ -33,22 +34,25 @@
         <div class="border-b border-gray-200">
             <nav class="flex -mb-px" aria-label="Tabs">
                 <a href="{% url 'project:project-category-list' project.pk %}"
-                   class="border-indigo-500 text-indigo-600 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
+                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
                     {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
                     Categories
+                </a>
+                <a href="{% url 'project:project-discipline-list' project.pk %}"
+                   class="border-indigo-500 text-indigo-600 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
+                    {% heroicon_outline "academic-cap" size="16" class="inline mr-1.5" %}
+                    Disciplines
                 </a>
             </nav>
         </div>
     </div>
-    <!-- Categories List -->
+    <!-- Disciplines List -->
     <div class="bg-white shadow-sm rounded-lg">
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-lg font-semibold text-gray-900">All Categories</h2>
-                    <p class="text-sm text-gray-500 mt-1">
-                        {{ categories.count }} categor{{ categories.count|pluralize:"y,ies" }} available
-                    </p>
+                    <h2 class="text-lg font-semibold text-gray-900">All Disciplines</h2>
+                    <p class="text-sm text-gray-500 mt-1">{{ disciplines.count }} discipline{{ disciplines.count|pluralize }} available</p>
                 </div>
             </div>
         </div>
@@ -63,32 +67,32 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    {% for category in categories %}
+                    {% for discipline in disciplines %}
                         <tr class="hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">{{ category.name }}</div>
+                                <div class="flex items-center">
+                                    {% heroicon_outline "academic-cap" size="16" class="text-indigo-500 mr-2" %}
+                                    <div class="text-sm font-medium text-gray-900">{{ discipline.name }}</div>
+                                </div>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="text-sm text-gray-500 max-w-md">{{ category.description|default:"-" }}</div>
+                                <div class="text-sm text-gray-500 max-w-md">{{ discipline.description|default:"-" }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                    {{ category.projects.count }} project{{ category.projects.count|pluralize }}
+                                    {{ discipline.projects.count }} project{{ discipline.projects.count|pluralize }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end gap-2">
-                                    <a href="{% url 'project:project-subcategory-list' project.pk category.pk %}"
-                                       class="text-indigo-600 hover:text-indigo-900 transition-colors"
-                                       title="View subcategories">{% heroicon_outline "folder-open" size="18" %}</a>
                                     <button type="button"
-                                            onclick="openEditModal({{ category.pk }}, '{{ category.name|escapejs }}', '{{ category.description|escapejs }}' )"
+                                            onclick="openEditDisciplineModal({{ discipline.pk }}, '{{ discipline.name|escapejs }}', '{{ discipline.description|escapejs }}')"
                                             class="text-indigo-600 hover:text-indigo-900 transition-colors"
-                                            title="Edit category">{% heroicon_outline "pencil" size="18" %}</button>
+                                            title="Edit discipline">{% heroicon_outline "pencil" size="18" %}</button>
                                     <button type="button"
-                                            onclick="openDeleteModal({{ category.pk }}, '{{ category.name|escapejs }}', {{ category.projects.count }})"
+                                            onclick="openDeleteDisciplineModal({{ discipline.pk }}, '{{ discipline.name|escapejs }}', {{ discipline.projects.count }})"
                                             class="text-red-600 hover:text-red-900 transition-colors"
-                                            title="Delete category">{% heroicon_outline "trash" size="18" %}</button>
+                                            title="Delete discipline">{% heroicon_outline "trash" size="18" %}</button>
                                 </div>
                             </td>
                         </tr>
@@ -96,14 +100,9 @@
                         <tr>
                             <td colspan="4" class="px-6 py-12 text-center">
                                 <div class="flex flex-col items-center">
-                                    {% heroicon_outline "tag" size="48" class="text-gray-300 mb-4" %}
-                                    <p class="text-sm text-gray-500 font-medium">No categories yet</p>
-                                    <button type="button"
-                                            onclick="openCreateModal()"
-                                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                                        {% heroicon_outline "plus" size="16" %}
-                                        <span class="ml-2">Add Category</span>
-                                    </button>
+                                    {% heroicon_outline "academic-cap" size="48" class="text-gray-300 mb-4" %}
+                                    <p class="text-sm text-gray-500 font-medium">No disciplines yet</p>
+                                    <p class="text-xs text-gray-400 mt-1">Click "Add Discipline" to create your first discipline</p>
                                 </div>
                             </td>
                         </tr>
