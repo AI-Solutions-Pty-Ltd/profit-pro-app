@@ -2,10 +2,10 @@ from app.Project.categories import category_views, discipline_views, subcategory
 from app.Project.documents import document_views
 from app.Project.projects import project_views
 
+from ..milestone_schedules import milestone_views
 from . import (
     compliance_views,
     forecast_hub_views,
-    milestone_views,
     planned_value_views,
     portfolio_views,
     project_role_views,

@@ -21,6 +21,7 @@ from app.Project.models import Company, ProjectDiscipline
 if TYPE_CHECKING:
     from app.Account.models import Account
     from app.BillOfQuantities.models import Structure
+    from app.Project.models import Milestone
     from app.Project.models.planned_value_models import PlannedValue
     from app.Project.models.project_roles_models import ProjectRole
     from app.Project.models.signatories_models import Signatories
@@ -738,16 +739,23 @@ class Category(BaseModel):
         blank=True,
         help_text="Optional description of the category",
     )
-    projects = models.ForeignKey(
+    project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,
         blank=True,
         related_name="categories",
     )
+    start_date = models.DateField(null=True)
+    end_date = models.DateField(null=True)
+    budget = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    if TYPE_CHECKING:
+        subcategories: QuerySet["SubCategory"]
+        milestones: QuerySet["Milestone"]
 
     class Meta:
-        verbose_name = "Project Category"
-        verbose_name_plural = "Project Categories"
+        verbose_name = "Level 1"
+        verbose_name_plural = "Level 1"
         ordering = ["name"]
 
     def __str__(self) -> str:
@@ -757,6 +765,9 @@ class Category(BaseModel):
 class SubCategory(BaseModel):
     """Subcategory for further classifying projects."""
 
+    category = models.ForeignKey(
+        to=Category, on_delete=models.SET_NULL, null=True, related_name="subcategories"
+    )
     name = models.CharField(
         max_length=100,
         help_text="Subcategory name (e.g., Top Structures, Drawings)",
@@ -771,10 +782,53 @@ class SubCategory(BaseModel):
         blank=True,
         related_name="subcategories",
     )
+    start_date = models.DateField(null=True)
+    end_date = models.DateField(null=True)
+    budget = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    if TYPE_CHECKING:
+        groups: QuerySet["Group"]
+        milestones: QuerySet["Milestone"]
 
     class Meta:
-        verbose_name = "Project Sub Category"
-        verbose_name_plural = "Project Sub Categories"
+        verbose_name = "Level 2"
+        verbose_name_plural = "Level 2"
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class Group(BaseModel):
+    """Group for further classifying projects."""
+
+    sub_category = models.ForeignKey(
+        to=SubCategory, on_delete=models.SET_NULL, null=True, related_name="groups"
+    )
+    name = models.CharField(
+        max_length=100,
+        help_text="Group name (e.g., Top Structures, Drawings)",
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Optional description of the Group",
+    )
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        blank=True,
+        related_name="groups",
+    )
+    start_date = models.DateField(null=True)
+    end_date = models.DateField(null=True)
+    budget = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    if TYPE_CHECKING:
+        milestones: QuerySet["Milestone"]
+
+    class Meta:
+        verbose_name = "Level 3"
+        verbose_name_plural = "Level 3"
         ordering = ["name"]
 
     def __str__(self) -> str:
@@ -792,7 +846,7 @@ class Discipline(BaseModel):
         blank=True,
         help_text="Optional description of the discipline",
     )
-    projects = models.ForeignKey(
+    project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,
         blank=True,
@@ -800,8 +854,8 @@ class Discipline(BaseModel):
     )
 
     class Meta:
-        verbose_name = "Project Discipline"
-        verbose_name_plural = "Project Disciplines"
+        verbose_name = "Level 4"
+        verbose_name_plural = "Level 4"
         ordering = ["name"]
 
     def __str__(self) -> str:

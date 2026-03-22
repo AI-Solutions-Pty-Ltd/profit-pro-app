@@ -1,0 +1,102 @@
+<!-- Edit Modal -->
+<div id="editDisciplineModal"
+     class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">Edit Discipline</h3>
+                    <button type="button"
+                            onclick="closeEditDisciplineModal()"
+                            class="text-gray-400 hover:text-gray-500">
+                        {% heroicon_outline "x-mark" size="20" %}
+                    </button>
+                </div>
+            </div>
+            <form method="post" id="editForm">
+                {% csrf_token %}
+                <div class="px-6 py-4 space-y-4">
+                    <div>{{ discipline_form.name|as_crispy_field }}</div>
+                    <div>{{ discipline_form.description|as_crispy_field }}</div>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+                    <button type="button"
+                            onclick="closeEditDisciplineModal()"
+                            class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "check" size="16" class="inline mr-1" %}
+                        Update Discipline
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    // Edit Modal Functions
+    const editDisciplineModal =  document.getElementById("editDisciplineModal")
+    const editDisciplineForm = editDisciplineModal.querySelector('#editForm')
+
+    function openEditDisciplineModal(id, name, description) {
+        editDisciplineModal.classList.remove('hidden');
+        editDisciplineForm.querySelector('#id_name').value = name;
+        editDisciplineForm.querySelector('#id_description').value = description;
+        editDisciplineForm.querySelector('#id_name').focus();
+        
+        // Store the ID for form submission
+        editDisciplineModal.dataset.disciplineId = id;
+    }
+
+    function closeEditDisciplineModal() {
+        editDisciplineModal.classList.add('hidden');
+    }
+
+    // Close modals on escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeEditDisciplineModal();
+        }
+    });
+
+    // Close modals when clicking outside
+    editDisciplineModal.addEventListener('click', function(event) {
+        if (event.target === this) closeEditDisciplineModal();
+    });
+
+    // Form submission
+    editDisciplineForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        
+        const disciplineId = editDisciplineModal.dataset.disciplineId;
+        
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        
+        try {
+            const response = await fetch(`/project/{{ project.pk }}/disciplines/${disciplineId}/update/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ CSRF_TOKEN }}'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert('Discipline could not be updated');
+                console.error('Errors:', result.errors);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while updating the discipline');
+        }
+    });
+</script>

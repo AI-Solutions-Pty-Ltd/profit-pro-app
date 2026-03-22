@@ -10,8 +10,9 @@ from django.views.generic import CreateView, DeleteView, DetailView, UpdateView
 
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
-from app.Project.forms import MilestoneForm
 from app.Project.models import Milestone, Role
+
+from .milestone_forms import MilestoneForm
 
 
 class MilestoneDetailView(UserHasProjectRoleGenericMixin, BreadcrumbMixin, DetailView):

@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% block title %}
+    {{ work_package.name }} - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ work_package.name }}</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }} - Work Package Details</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'planning:work-package-update' project.pk work_package.pk %}"
+                       class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        {% heroicon_outline "pencil" size="16" class="mr-1" %}
+                        Edit
+                    </a>
+                    <a href="{% url 'planning:work-package-list' project.pk %}"
+                       class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        {% heroicon_outline "arrow-left" size="16" class="mr-1" %}
+                        Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if work_package.description %}
+        <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-2">Description</h2>
+            <p class="text-gray-600">{{ work_package.description }}</p>
+        </div>
+    {% endif %}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Tender Stages Progress -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl border border-gray-200 p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Tender Stages Progress</h2>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                {% heroicon_outline "calendar" size="20" class="text-blue-600" %}
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-gray-900">Applied to Advert</h3>
+                                <p class="text-sm text-gray-500">
+                                    {% if work_package.advert_start_date %}
+                                        {{ work_package.advert_start_date }} - {{ work_package.advert_end_date|default:"TBD" }}
+                                    {% else %}
+                                        Not set
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center flex-1">
+                            <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mr-3">
+                                {% heroicon_outline "eye" size="20" class="text-emerald-600" %}
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-medium text-gray-900">Site Inspection</h3>
+                                <div class="flex items-center mt-1">
+                                    <div class="w-32 bg-gray-200 rounded-full h-2 mr-2">
+                                        <div class="bg-emerald-500 h-2 rounded-full"
+                                             style="width: {{ work_package.site_inspection_percentage }}%"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-500">{{ work_package.site_inspection_percentage|floatformat:0 }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% if work_package.site_inspection_complete %}
+                            <div class="ml-3">{% heroicon_outline "check-circle" size="20" class="text-green-500" %}</div>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center flex-1">
+                            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mr-3">
+                                {% heroicon_outline "document-text" size="20" class="text-amber-600" %}
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-medium text-gray-900">Tender Close</h3>
+                                <div class="flex items-center mt-1">
+                                    <div class="w-32 bg-gray-200 rounded-full h-2 mr-2">
+                                        <div class="bg-amber-500 h-2 rounded-full"
+                                             style="width: {{ work_package.tender_close_percentage }}%"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-500">{{ work_package.tender_close_percentage|floatformat:0 }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% if work_package.tender_close_complete %}
+                            <div class="ml-3">{% heroicon_outline "check-circle" size="20" class="text-green-500" %}</div>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center flex-1">
+                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                {% heroicon_outline "clipboard-document-check" size="20" class="text-purple-600" %}
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-medium text-gray-900">Tender Evaluation</h3>
+                                <div class="flex items-center mt-1">
+                                    <div class="w-32 bg-gray-200 rounded-full h-2 mr-2">
+                                        <div class="bg-purple-500 h-2 rounded-full"
+                                             style="width: {{ work_package.tender_evaluation_percentage }}%"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-500">{{ work_package.tender_evaluation_percentage|floatformat:0 }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% if work_package.tender_evaluation_complete %}
+                            <div class="ml-3">{% heroicon_outline "check-circle" size="20" class="text-green-500" %}</div>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center flex-1">
+                            <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                                {% heroicon_outline "hand-thumb-up" size="20" class="text-indigo-600" %}
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-medium text-gray-900">Award & Contract Signing</h3>
+                                <div class="flex items-center mt-1">
+                                    <div class="w-32 bg-gray-200 rounded-full h-2 mr-2">
+                                        <div class="bg-indigo-500 h-2 rounded-full"
+                                             style="width: {{ work_package.award_signing_percentage }}%"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-500">{{ work_package.award_signing_percentage|floatformat:0 }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% if work_package.award_signing_complete %}
+                            <div class="ml-3">{% heroicon_outline "check-circle" size="20" class="text-green-500" %}</div>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center flex-1">
+                            <div class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center mr-3">
+                                {% heroicon_outline "truck" size="20" class="text-rose-600" %}
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-medium text-gray-900">Mobilization</h3>
+                                <div class="flex items-center mt-1">
+                                    <div class="w-32 bg-gray-200 rounded-full h-2 mr-2">
+                                        <div class="bg-rose-500 h-2 rounded-full"
+                                             style="width: {{ work_package.mobilization_percentage }}%"></div>
+                                    </div>
+                                    <span class="text-sm text-gray-500">{{ work_package.mobilization_percentage|floatformat:0 }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% if work_package.mobilization_complete %}
+                            <div class="ml-3">{% heroicon_outline "check-circle" size="20" class="text-green-500" %}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Overall Progress -->
+        <div>
+            <div class="bg-white rounded-xl border border-gray-200 p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Overall Progress</h2>
+                <div class="text-center">
+                    <div class="relative inline-flex items-center justify-center">
+                        <div class="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center">
+                            <div class="text-center">
+                                <span class="text-3xl font-bold text-gray-900">{{ work_package.overall_percentage|floatformat:0 }}%</span>
+                                <p class="text-sm text-gray-500">Complete</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 space-y-3">
+                        <a href="{% url 'planning:tender-document-create' project.pk work_package.pk %}"
+                           class="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium bg-emerald-600 hover:bg-emerald-700 transition-colors">
+                            {% heroicon_outline "document-plus" size="16" class="mr-1" %}
+                            Add Tender Document
+                        </a>
+                        <a href="{% url 'planning:design-list' project.pk work_package.pk %}"
+                           class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            {% heroicon_outline "pencil-square" size="16" class="mr-1" %}
+                            Design Development
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Tender Documents -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6 mt-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-medium text-gray-900">Tender Documents</h2>
+            <a href="{% url 'planning:tender-document-create' project.pk work_package.pk %}"
+               class="inline-flex items-center px-3 py-1 border border-transparent rounded-md text-xs font-medium bg-emerald-600 hover:bg-emerald-700 transition-colors">
+                {% heroicon_outline "plus" size="12" class="mr-1" %}
+                Add Document
+            </a>
+        </div>
+        {% if tender_documents %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for doc in tender_documents %}
+                    <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-medium text-gray-900 truncate">{{ doc.name }}</h3>
+                            {% if doc.is_complete %}
+                                {% heroicon_outline "check-circle" size="16" class="text-green-500" %}
+                            {% endif %}
+                        </div>
+                        {% if doc.file %}
+                            <a href="{{ doc.file.url }}"
+                               target="_blank"
+                               class="text-sm text-emerald-600 hover:text-emerald-700 transition-colors flex items-center">
+                                {% heroicon_outline "document-arrow-down" size="14" class="mr-1" %}
+                                Download
+                            </a>
+                        {% else %}
+                            <p class="text-sm text-gray-500">No file uploaded</p>
+                        {% endif %}
+                        <div class="mt-2 flex items-center justify-between">
+                            <span class="text-xs text-gray-500">{{ doc.percentage_completed|floatformat:0 }}%</span>
+                            <div class="flex items-center space-x-1">
+                                <a href="{% url 'planning:tender-document-update' project.pk work_package.pk doc.pk %}"
+                                   class="text-xs text-gray-500 hover:text-gray-700">
+                                    {% heroicon_outline "pencil" size="12" %}
+                                </a>
+                                <a href="{% url 'planning:tender-document-delete' project.pk work_package.pk doc.pk %}"
+                                   class="text-xs text-red-500 hover:text-red-700">
+                                    {% heroicon_outline "trash" size="12" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <p class="text-sm">No tender documents yet</p>
+                <a href="{% url 'planning:tender-document-create' project.pk work_package.pk %}"
+                   class="text-sm text-emerald-600 hover:text-emerald-700 transition-colors">
+                    Add your first document
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    <!-- Design Development -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6 mt-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-medium text-gray-900">Design Development</h2>
+            <a href="{% url 'planning:design-list' project.pk work_package.pk %}"
+               class="inline-flex items-center px-3 py-1 border border-transparent rounded-md text-xs font-medium bg-emerald-600 hover:bg-emerald-700 transition-colors">
+                {% heroicon_outline "pencil-square" size="12" class="mr-1" %}
+                Manage Design
+            </a>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="text-center p-4 border border-gray-200 rounded-lg">
+                <div class="text-2xl font-bold text-gray-900">{{ design_categories.count }}</div>
+                <p class="text-sm text-gray-500">L1 Categories</p>
+            </div>
+            <div class="text-center p-4 border border-gray-200 rounded-lg">
+                <div class="text-2xl font-bold text-gray-900">{{ design_subcategories.count }}</div>
+                <p class="text-sm text-gray-500">L2 SubCategories</p>
+            </div>
+            <div class="text-center p-4 border border-gray-200 rounded-lg">
+                <div class="text-2xl font-bold text-gray-900">{{ design_groups.count }}</div>
+                <p class="text-sm text-gray-500">L3 Groups</p>
+            </div>
+            <div class="text-center p-4 border border-gray-200 rounded-lg">
+                <div class="text-2xl font-bold text-gray-900">{{ design_disciplines.count }}</div>
+                <p class="text-sm text-gray-500">L4 Disciplines</p>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

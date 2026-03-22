@@ -1,4 +1,4 @@
-"""URL configuration for Category, SubCategory, and Discipline management."""
+"""URL configuration for Category, SubCategory, Discipline, and Group management."""
 
 from django.urls import path
 
@@ -26,24 +26,74 @@ urlpatterns = [
         name="project-category-delete",
     ),
     path(
-        "<int:project_pk>/subcategories/",
+        "<int:project_pk>/categories/<int:pk>/update-dates/",
+        category_views.CategoryDateUpdateView.as_view(),
+        name="project-category-update-dates",
+    ),
+    path(
+        "<int:project_pk>/categories/<int:pk>/update-budget/",
+        category_views.CategoryBudgetUpdateView.as_view(),
+        name="project-category-update-budget",
+    ),
+    path(
+        "<int:project_pk>/categories/<int:category_pk>/subcategories/",
         category_views.SubCategoryListView.as_view(),
         name="project-subcategory-list",
     ),
     path(
-        "<int:project_pk>/subcategories/create/",
+        "<int:project_pk>/categories/<int:category_pk>/subcategories/create/",
         category_views.SubCategoryCreateView.as_view(),
         name="project-subcategory-create",
     ),
     path(
-        "<int:project_pk>/subcategories/<int:pk>/update/",
+        "<int:project_pk>/categories/<int:category_pk>/subcategories/<int:pk>/update/",
         category_views.SubCategoryUpdateView.as_view(),
         name="project-subcategory-update",
     ),
     path(
-        "<int:project_pk>/subcategories/<int:pk>/delete/",
+        "<int:project_pk>/categories/<int:category_pk>/subcategories/<int:pk>/delete/",
         category_views.SubCategoryDeleteView.as_view(),
         name="project-subcategory-delete",
+    ),
+    path(
+        "<int:project_pk>/categories/<int:category_pk>/subcategories/<int:pk>/update-dates/",
+        category_views.SubCategoryDateUpdateView.as_view(),
+        name="project-subcategory-update-dates",
+    ),
+    path(
+        "<int:project_pk>/categories/<int:category_pk>/subcategories/<int:pk>/update-budget/",
+        category_views.SubCategoryBudgetUpdateView.as_view(),
+        name="project-subcategory-update-budget",
+    ),
+    path(
+        "<int:project_pk>/subcategories/<int:subcategory_pk>/groups/",
+        category_views.GroupListView.as_view(),
+        name="project-group-list",
+    ),
+    path(
+        "<int:project_pk>/subcategories/<int:subcategory_pk>/groups/create/",
+        category_views.GroupCreateView.as_view(),
+        name="project-group-create",
+    ),
+    path(
+        "<int:project_pk>/subcategories/<int:subcategory_pk>/groups/<int:pk>/update/",
+        category_views.GroupUpdateView.as_view(),
+        name="project-group-update",
+    ),
+    path(
+        "<int:project_pk>/subcategories/<int:subcategory_pk>/groups/<int:pk>/delete/",
+        category_views.GroupDeleteView.as_view(),
+        name="project-group-delete",
+    ),
+    path(
+        "<int:project_pk>/subcategories/<int:subcategory_pk>/groups/<int:pk>/update-dates/",
+        category_views.GroupDateUpdateView.as_view(),
+        name="project-group-update-dates",
+    ),
+    path(
+        "<int:project_pk>/subcategories/<int:subcategory_pk>/groups/<int:pk>/update-budget/",
+        category_views.GroupBudgetUpdateView.as_view(),
+        name="project-group-update-budget",
     ),
     path(
         "<int:project_pk>/disciplines/",

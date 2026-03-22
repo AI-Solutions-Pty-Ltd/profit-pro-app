@@ -8,10 +8,12 @@ from app.Project.documents.document_models import ProjectDocument
 from app.Project.projects.projects_models import (
     Category,
     Discipline,
+    Group,
     Project,
     SubCategory,
 )
 
+from ..milestone_schedules.milestone_models import Milestone
 from .compliance_models import (
     AdministrativeCompliance,
     AdministrativeComplianceDialog,
@@ -24,7 +26,6 @@ from .compliance_models import (
     FinalAccountComplianceDialogFile,
 )
 from .impact_models import ProjectImpact
-from .milestone_models import Milestone
 from .planned_value_models import PlannedValue
 from .portfolio_models import Portfolio
 from .project_roles_models import ProjectRole, Role
@@ -48,6 +49,7 @@ __all__ = [
     "Project",
     "Category",
     "SubCategory",
+    "Group",
     "Discipline",
     "ProjectCategory",
     "ProjectDiscipline",

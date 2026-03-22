@@ -4,7 +4,7 @@ from django.urls import path
 
 from app.Project.views import compliance_views
 
-_prefix = "compliance/"
+_path_prefix = "compliance/"
 
 urlpatterns = [
     # Dashboard

@@ -1,0 +1,109 @@
+<!-- Delete Modal -->
+<div id="deleteSubCategoryModal"
+     class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">Delete Sub Category</h3>
+                    <button type="button"
+                            onclick="closeDeleteSubCategoryModal()"
+                            class="text-gray-400 hover:text-gray-500">
+                        {% heroicon_outline "x-mark" size="20" %}
+                    </button>
+                </div>
+            </div>
+            <form method="post" id="deleteForm">
+                {% csrf_token %}
+                <div class="px-6 py-4">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" size="24" class="text-red-600" %}</div>
+                        <div class="ml-3">
+                            <p class="text-sm text-gray-700">
+                                Are you sure you want to delete the sub category <strong id="delete_subcategory_name"></strong>?
+                            </p>
+                            <p class="text-sm text-gray-500 mt-2" id="delete_warning"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+                    <button type="button"
+                            onclick="closeDeleteSubCategoryModal()"
+                            class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        {% heroicon_outline "trash" size="16" class="inline mr-1" %}
+                        Delete Sub Category
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    // Delete Modal Functions
+    const subcategoryDeleteModal = document.getElementById('deleteSubCategoryModal')
+    const subcategoryDeleteForm = subcategoryDeleteModal.querySelector("#deleteForm")
+
+    function openDeleteSubcategoryModal(id, name, projectCount) {
+        project_pk = {{project.pk}}
+        category_pk = {{category.pk}}
+        subcategoryDeleteModal.classList.remove('hidden');
+        subcategoryDeleteModal.querySelector('#delete_subcategory_name').textContent = name;
+        subcategoryDeleteForm.action = `/project/${project_pk}/categories/${category_pk}/subcategories/${id}/delete/`;
+        
+        const warning = subcategoryDeleteModal.querySelector('#delete_warning');
+        if (projectCount > 0) {
+            warning.textContent = `This sub category is currently used by ${projectCount} project${projectCount > 1 ? 's' : ''}. Projects will not be deleted, but they will no longer have this sub category assigned.`;
+        } else {
+            warning.textContent = 'This sub category is not currently used by any projects.';
+        }
+    }
+
+    function closeDeleteSubCategoryModal() {
+        subcategoryDeleteModal.classList.add('hidden');
+    }
+
+    // Close modals on escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeDeleteSubCategoryModal();
+        }
+    });
+
+
+    subcategoryDeleteModal.addEventListener('click', function(event) {
+        if (event.target === this) closeDeleteSubCategoryModal();
+    });
+
+    // Form submission
+    subcategoryDeleteForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const formAction = this.action;
+        
+        try {
+            const response = await fetch(formAction, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ CSRF_TOKEN }}'
+                },
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert('Sub category could not be deleted');
+                console.error('Errors:', result);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the sub category');
+        }
+    });
+</script>

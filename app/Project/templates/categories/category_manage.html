@@ -11,7 +11,7 @@
                 </div>
                 <div class="flex items-center gap-3">
                     <button type="button"
-                            onclick="openCreateModal()"
+                            onclick="openCreateCategoryModal()"
                             class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                         {% heroicon_outline "plus" size="16" %}
                         <span class="ml-2">Add Category</span>
@@ -91,7 +91,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end gap-2">
                                     <button type="button"
-                                            onclick="openEditModal({{ category.pk }}, '{{ category.name|escapejs }}', '{{ category.description|escapejs }}')"
+                                            onclick="openEditCategoryModal({{ category.pk }}, '{{ category.name|escapejs }}', '{{ category.description|escapejs }}')"
                                             class="text-indigo-600 hover:text-indigo-900 transition-colors"
                                             title="Edit category">{% heroicon_outline "pencil" size="18" %}</button>
                                     <button type="button"
@@ -273,7 +273,7 @@
     </div>
     <script>
         // Create Modal Functions
-        function openCreateModal() {
+        function openCreateCategoryModal() {
             document.getElementById('createModal').classList.remove('hidden');
             document.getElementById('create_name').focus();
         }
@@ -286,7 +286,7 @@
         }
 
         // Edit Modal Functions
-        function openEditModal(id, name, description) {
+        function openEditCategoryModal(id, name, description) {
             document.getElementById('editModal').classList.remove('hidden');
             document.getElementById('edit_name').value = name;
             document.getElementById('edit_description').value = description;

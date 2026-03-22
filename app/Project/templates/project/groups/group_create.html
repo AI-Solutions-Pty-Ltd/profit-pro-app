@@ -1,0 +1,101 @@
+<!-- Create Modal -->
+<div id="createGroupModal"
+     class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">Add New Group</h3>
+                    <button type="button"
+                            onclick="closeCreateModal()"
+                            class="text-gray-400 hover:text-gray-500">
+                        {% heroicon_outline "x-mark" size="20" %}
+                    </button>
+                </div>
+            </div>
+            <form method="post" id="createForm">
+                {% csrf_token %}
+                <div class="px-6 py-4 space-y-4">
+                    <div class="space-y-4">
+                        <input type="hidden" name="sub_category" id="id_sub_category" value="">
+                        <div>{{ form.name|as_crispy_field }}</div>
+                        <div>{{ form.description|as_crispy_field }}</div>
+                    </div>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+                    <button type="button"
+                            onclick="closeCreateModal()"
+                            class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "plus" size="16" class="inline mr-1" %}
+                        Create Group
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    // Create Modal Functions
+    const createGroupModal = document.getElementById("createGroupModal");
+    const createGroupForm = createGroupModal.querySelector('#createForm')
+
+    function openCreateGroupModal(subcategoryId) {
+        createGroupModal.classList.remove('hidden');
+        createGroupForm.querySelector('#id_name').focus();
+        createGroupForm.querySelector('#id_sub_category').value = subcategoryId;
+    }
+
+    function closeCreateModal() {
+        createGroupModal.classList.add('hidden');
+    }
+
+    // Close modals when clicking outside
+    createGroupModal.addEventListener('click', function(event) {
+        if (event.target === this) closeCreateModal();
+    });
+
+    // Close modals on escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeCreateModal();
+        }
+    });
+
+    // Form submission
+    createGroupForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        
+        try {
+           
+            const url = `/project/{{ project.pk }}/subcategories/${data.sub_category}/groups/create/`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ CSRF_TOKEN }}'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert('Group could not be created');
+                console.error('Errors:', result.errors);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while creating the group');
+        }
+    });
+</script>
