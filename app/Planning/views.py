@@ -125,7 +125,7 @@ class WorkPackageCreateView(PlanningMixin, CreateView):
     def form_valid(self, form):
         form.instance.project = self.get_project()
         response = super().form_valid(form)
-        self.object.create_default_tender_documents()
+        self.object.create_default_tender_documents()  # type: ignore
         messages.success(self.request, "Work package created successfully.")
         return response
 
@@ -134,7 +134,7 @@ class WorkPackageCreateView(PlanningMixin, CreateView):
             "planning:work-package-detail",
             kwargs={
                 "project_pk": self.kwargs["project_pk"],
-                "pk": self.object.pk,
+                "pk": self.object.pk,  # type: ignore
             },
         )
 
@@ -608,7 +608,7 @@ class DesignGroupCreateView(PlanningMixin, CreateView):
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         project = self.get_project()
-        form.fields["group"].queryset = project.groups.all()
+        form.fields["group"].queryset = project.groups.all()  # type: ignore
         return form
 
     def form_valid(self, form):
