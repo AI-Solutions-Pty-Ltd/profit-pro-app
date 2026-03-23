@@ -4,123 +4,155 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('planning', '0001_initial'),
+        ("planning", "0001_initial"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='workpackage',
-            name='advert_end_date',
+            model_name="workpackage",
+            name="advert_end_date",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='advert_start_date',
+            model_name="workpackage",
+            name="advert_start_date",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='award_signing_complete',
+            model_name="workpackage",
+            name="award_signing_complete",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='award_signing_percentage',
+            model_name="workpackage",
+            name="award_signing_percentage",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='mobilization_complete',
+            model_name="workpackage",
+            name="mobilization_complete",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='mobilization_percentage',
+            model_name="workpackage",
+            name="mobilization_percentage",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='site_inspection_complete',
+            model_name="workpackage",
+            name="site_inspection_complete",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='site_inspection_percentage',
+            model_name="workpackage",
+            name="site_inspection_percentage",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='tender_close_complete',
+            model_name="workpackage",
+            name="tender_close_complete",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='tender_close_percentage',
+            model_name="workpackage",
+            name="tender_close_percentage",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='tender_evaluation_complete',
+            model_name="workpackage",
+            name="tender_evaluation_complete",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='tender_evaluation_percentage',
+            model_name="workpackage",
+            name="tender_evaluation_percentage",
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='budget_structure_file',
-            field=models.FileField(blank=True, help_text='Cost budget structure (sources of funds)', null=True, upload_to='planning/budget_structures/%Y/%m/'),
+            model_name="workpackage",
+            name="budget_structure_file",
+            field=models.FileField(
+                blank=True,
+                help_text="Cost budget structure (sources of funds)",
+                null=True,
+                upload_to="planning/budget_structures/%Y/%m/",
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='design_finish_date',
-            field=models.DateField(blank=True, help_text='Design development finish date', null=True),
+            model_name="workpackage",
+            name="design_finish_date",
+            field=models.DateField(
+                blank=True, help_text="Design development finish date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='design_start_date',
-            field=models.DateField(blank=True, help_text='Design development start date', null=True),
+            model_name="workpackage",
+            name="design_start_date",
+            field=models.DateField(
+                blank=True, help_text="Design development start date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='documentation_finish_date',
-            field=models.DateField(blank=True, help_text='Documentation stage finish date', null=True),
+            model_name="workpackage",
+            name="documentation_finish_date",
+            field=models.DateField(
+                blank=True, help_text="Documentation stage finish date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='documentation_start_date',
-            field=models.DateField(blank=True, help_text='Documentation stage start date', null=True),
+            model_name="workpackage",
+            name="documentation_start_date",
+            field=models.DateField(
+                blank=True, help_text="Documentation stage start date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='execution_finish_date',
-            field=models.DateField(blank=True, help_text='Execution finish date', null=True),
+            model_name="workpackage",
+            name="execution_finish_date",
+            field=models.DateField(
+                blank=True, help_text="Execution finish date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='execution_start_date',
-            field=models.DateField(blank=True, help_text='Execution start date', null=True),
+            model_name="workpackage",
+            name="execution_start_date",
+            field=models.DateField(
+                blank=True, help_text="Execution start date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='package_budget',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Total package budget', max_digits=15, null=True),
+            model_name="workpackage",
+            name="package_budget",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Total package budget",
+                max_digits=15,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='package_finish_date',
-            field=models.DateField(blank=True, help_text='Overall package finish date', null=True),
+            model_name="workpackage",
+            name="package_finish_date",
+            field=models.DateField(
+                blank=True, help_text="Overall package finish date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='package_number',
-            field=models.CharField(blank=True, help_text='Package number/reference', max_length=256),
+            model_name="workpackage",
+            name="package_number",
+            field=models.CharField(
+                blank=True, help_text="Package number/reference", max_length=256
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='package_start_date',
-            field=models.DateField(blank=True, help_text='Overall package start date', null=True),
+            model_name="workpackage",
+            name="package_start_date",
+            field=models.DateField(
+                blank=True, help_text="Overall package start date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='tender_finish_date',
-            field=models.DateField(blank=True, help_text='Tender process finish date', null=True),
+            model_name="workpackage",
+            name="tender_finish_date",
+            field=models.DateField(
+                blank=True, help_text="Tender process finish date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='tender_start_date',
-            field=models.DateField(blank=True, help_text='Tender process start date', null=True),
+            model_name="workpackage",
+            name="tender_start_date",
+            field=models.DateField(
+                blank=True, help_text="Tender process start date", null=True
+            ),
         ),
     ]
