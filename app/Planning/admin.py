@@ -57,21 +57,17 @@ class WorkPackageAdmin(admin.ModelAdmin):
 
     list_display = [
         "name",
+        "package_number",
         "project",
-        "advert_start_date",
-        "advert_end_date",
-        "site_inspection_complete",
-        "tender_close_complete",
-        "created_at",
+        "package_start_date",
+        "package_finish_date",
+        "package_budget",
     ]
     list_filter = [
-        "site_inspection_complete",
-        "tender_close_complete",
-        "tender_evaluation_complete",
-        "award_signing_complete",
-        "mobilization_complete",
+        "package_start_date",
+        "package_finish_date",
     ]
-    search_fields = ["name", "project__name"]
+    search_fields = ["name", "package_number", "project__name"]
     inlines = [TenderDocumentInline]
 
 

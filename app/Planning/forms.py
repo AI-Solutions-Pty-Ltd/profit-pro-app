@@ -22,45 +22,60 @@ class WorkPackageForm(forms.ModelForm):
     class Meta:
         model = WorkPackage
         fields = [
+            "package_number",
             "name",
             "description",
-            "advert_start_date",
-            "advert_end_date",
-            "site_inspection_percentage",
-            "site_inspection_complete",
-            "tender_close_percentage",
-            "tender_close_complete",
-            "tender_evaluation_percentage",
-            "tender_evaluation_complete",
-            "award_signing_percentage",
-            "award_signing_complete",
-            "mobilization_percentage",
-            "mobilization_complete",
+            "package_start_date",
+            "package_finish_date",
+            "design_start_date",
+            "design_finish_date",
+            "documentation_start_date",
+            "documentation_finish_date",
+            "tender_start_date",
+            "tender_finish_date",
+            "execution_start_date",
+            "execution_finish_date",
+            "package_budget",
+            "budget_structure_file",
         ]
         widgets = {
+            "package_number": forms.TextInput(attrs={"class": "form-input"}),
             "name": forms.TextInput(attrs={"class": "form-input"}),
             "description": forms.Textarea(attrs={"class": "form-textarea", "rows": 3}),
-            "advert_start_date": forms.DateInput(
+            "package_start_date": forms.DateInput(
                 attrs={"type": "date", "class": "form-input"}
             ),
-            "advert_end_date": forms.DateInput(
+            "package_finish_date": forms.DateInput(
                 attrs={"type": "date", "class": "form-input"}
             ),
-            "site_inspection_percentage": forms.NumberInput(
-                attrs={"class": "form-input", "min": 0, "max": 100, "step": 0.01}
+            "design_start_date": forms.DateInput(
+                attrs={"type": "date", "class": "form-input"}
             ),
-            "tender_close_percentage": forms.NumberInput(
-                attrs={"class": "form-input", "min": 0, "max": 100, "step": 0.01}
+            "design_finish_date": forms.DateInput(
+                attrs={"type": "date", "class": "form-input"}
             ),
-            "tender_evaluation_percentage": forms.NumberInput(
-                attrs={"class": "form-input", "min": 0, "max": 100, "step": 0.01}
+            "documentation_start_date": forms.DateInput(
+                attrs={"type": "date", "class": "form-input"}
             ),
-            "award_signing_percentage": forms.NumberInput(
-                attrs={"class": "form-input", "min": 0, "max": 100, "step": 0.01}
+            "documentation_finish_date": forms.DateInput(
+                attrs={"type": "date", "class": "form-input"}
             ),
-            "mobilization_percentage": forms.NumberInput(
-                attrs={"class": "form-input", "min": 0, "max": 100, "step": 0.01}
+            "tender_start_date": forms.DateInput(
+                attrs={"type": "date", "class": "form-input"}
             ),
+            "tender_finish_date": forms.DateInput(
+                attrs={"type": "date", "class": "form-input"}
+            ),
+            "execution_start_date": forms.DateInput(
+                attrs={"type": "date", "class": "form-input"}
+            ),
+            "execution_finish_date": forms.DateInput(
+                attrs={"type": "date", "class": "form-input"}
+            ),
+            "package_budget": forms.NumberInput(
+                attrs={"class": "form-input", "step": 0.01}
+            ),
+            "budget_structure_file": forms.FileInput(attrs={"class": "form-input"}),
         }
 
 

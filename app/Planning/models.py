@@ -25,8 +25,7 @@ from app.Project.models import (
 class WorkPackage(BaseModel):
     """Work package representing a contract/tender being applied for.
 
-    Tracks the tender lifecycle from advert through to mobilization,
-    with percentage completion and boolean flags for each stage.
+    Tracks package dates across different stages and budget information.
     """
 
     project = models.ForeignKey(
@@ -34,6 +33,11 @@ class WorkPackage(BaseModel):
         on_delete=models.CASCADE,
         related_name="work_packages",
         help_text="Project this work package belongs to",
+    )
+    package_number = models.CharField(
+        max_length=256,
+        blank=True,
+        help_text="Package number/reference",
     )
     name = models.CharField(
         max_length=255,
@@ -44,76 +48,79 @@ class WorkPackage(BaseModel):
         help_text="Description of the work package",
     )
 
-    # Applied to Advert
-    advert_start_date = models.DateField(
+    # Whole Package Dates
+    package_start_date = models.DateField(
         null=True,
         blank=True,
-        help_text="Advert start date",
+        help_text="Overall package start date",
     )
-    advert_end_date = models.DateField(
+    package_finish_date = models.DateField(
         null=True,
         blank=True,
-        help_text="Advert end date",
+        help_text="Overall package finish date",
     )
 
-    # Site Inspection
-    site_inspection_percentage = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=0,
-        help_text="Site inspection completion percentage",
+    # Design Development Stage
+    design_start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Design development start date",
     )
-    site_inspection_complete = models.BooleanField(
-        default=False,
-        help_text="Whether site inspection is complete",
-    )
-
-    # Tender Close
-    tender_close_percentage = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=0,
-        help_text="Tender close completion percentage",
-    )
-    tender_close_complete = models.BooleanField(
-        default=False,
-        help_text="Whether tender close is complete",
+    design_finish_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Design development finish date",
     )
 
-    # Tender Evaluation
-    tender_evaluation_percentage = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=0,
-        help_text="Tender evaluation completion percentage",
+    # Documentation Stage
+    documentation_start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Documentation stage start date",
     )
-    tender_evaluation_complete = models.BooleanField(
-        default=False,
-        help_text="Whether tender evaluation is complete",
-    )
-
-    # Award & Contract Signing
-    award_signing_percentage = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=0,
-        help_text="Award & contract signing completion percentage",
-    )
-    award_signing_complete = models.BooleanField(
-        default=False,
-        help_text="Whether award & contract signing is complete",
+    documentation_finish_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Documentation stage finish date",
     )
 
-    # Mobilization
-    mobilization_percentage = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=0,
-        help_text="Mobilization completion percentage",
+    # Tender Process
+    tender_start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Tender process start date",
     )
-    mobilization_complete = models.BooleanField(
-        default=False,
-        help_text="Whether mobilization is complete",
+    tender_finish_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Tender process finish date",
+    )
+
+    # Execution
+    execution_start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Execution start date",
+    )
+    execution_finish_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Execution finish date",
+    )
+
+    # Budget
+    package_budget = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Total package budget",
+    )
+    budget_structure_file = models.FileField(
+        upload_to="planning/budget_structures/%Y/%m/",
+        null=True,
+        blank=True,
+        help_text="Cost budget structure (sources of funds)",
     )
 
     def __str__(self) -> str:
@@ -123,18 +130,6 @@ class WorkPackage(BaseModel):
         verbose_name = "Work Package"
         verbose_name_plural = "Work Packages"
         ordering = ["-created_at"]
-
-    @property
-    def overall_percentage(self) -> float:
-        """Calculate overall completion percentage across all stages."""
-        stages = [
-            self.site_inspection_percentage,
-            self.tender_close_percentage,
-            self.tender_evaluation_percentage,
-            self.award_signing_percentage,
-            self.mobilization_percentage,
-        ]
-        return float(sum(stages) / len(stages))
 
     def create_default_tender_documents(self) -> None:
         """Create default tender documents for this work package."""
