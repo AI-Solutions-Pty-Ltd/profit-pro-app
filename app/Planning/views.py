@@ -3,7 +3,6 @@
 import json
 
 from django.contrib import messages
-from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.views import View
@@ -1452,31 +1451,15 @@ class DesignDevelopmentOverviewView(PlanningMixin, ListView):
 
     def get_queryset(self):
         project = self.get_project()
-        return (
-            WorkPackage.objects.filter(project=project)
-            .prefetch_related(
-                "design_categories",
-                "design_subcategories",
-                "design_groups",
-                "design_disciplines",
-            )
-            .annotate(
-                total_design_items=Count("design_categories")
-                + Count("design_subcategories")
-                + Count("design_groups")
-                + Count("design_disciplines"),
-                approved_design_items=Count(
-                    "design_categories", filter=Q(design_categories__approved=True)
-                )
-                + Count(
-                    "design_subcategories",
-                    filter=Q(design_subcategories__approved=True),
-                )
-                + Count("design_groups", filter=Q(design_groups__approved=True))
-                + Count(
-                    "design_disciplines", filter=Q(design_disciplines__approved=True)
-                ),
-            )
+        return WorkPackage.objects.filter(project=project).prefetch_related(
+            "design_categories__files",
+            "design_categories__category",
+            "design_subcategories__files",
+            "design_subcategories__sub_category",
+            "design_groups__files",
+            "design_groups__group",
+            "design_disciplines__files",
+            "design_disciplines__discipline",
         )
 
     def get_breadcrumbs(self):
@@ -1495,7 +1478,57 @@ class DesignDevelopmentOverviewView(PlanningMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["project"] = self.get_project()
+        project = self.get_project()
+        context["project"] = project
+
+        cat_lookup = {
+            cat.pk: cat
+            for cat in project.categories.prefetch_related(
+                "subcategories__groups"
+            ).all()
+        }
+        disciplines = project.disciplines.all()
+
+        for wp in context["work_packages"]:
+            subcat_map: dict = {}
+            for dsc in wp.design_subcategories.all():
+                subcat_map.setdefault(dsc.sub_category_id, []).append(dsc)
+
+            group_map: dict = {}
+            for dg in wp.design_groups.all():
+                group_map.setdefault(dg.group_id, []).append(dg)
+
+            for dc in wp.design_categories.all():
+                category = cat_lookup.get(dc.category_id)
+                subcats_data = []
+                if category:
+                    for subcat in category.subcategories.all():
+                        subcat_designs = subcat_map.get(subcat.pk, [])
+                        groups_data = [
+                            {"group": group, "designs": group_map.get(group.pk, [])}
+                            for group in subcat.groups.all()
+                            if group_map.get(group.pk)
+                        ]
+                        if subcat_designs or groups_data:
+                            subcats_data.append(
+                                {
+                                    "subcat": subcat,
+                                    "designs": subcat_designs,
+                                    "groups": groups_data,
+                                }
+                            )
+                dc.subcats = subcats_data
+
+            disc_map: dict = {}
+            for dd in wp.design_disciplines.all():
+                disc_map.setdefault(dd.discipline_id, []).append(dd)
+
+            wp.disciplines_data = [
+                {"discipline": disc, "designs": disc_map[disc.pk]}
+                for disc in disciplines
+                if disc.pk in disc_map
+            ]
+
         return context
 
 

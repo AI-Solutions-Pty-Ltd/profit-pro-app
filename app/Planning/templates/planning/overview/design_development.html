@@ -22,8 +22,8 @@
         </div>
     </div>
     {% if work_packages %}
-        <div class="space-y-4">
-            {% for wp in work_packages %}
+        {% for wp in work_packages %}
+            <div class="space-y-4 mb-4">
                 <div class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300">
                     <!-- Header -->
                     <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-gray-200">
@@ -40,7 +40,7 @@
                                 {% if wp.site_inspection_start_date or wp.site_inspection_end_date %}
                                     <p class="text-xs text-gray-600 flex items-center">
                                         {% heroicon_outline "calendar" size="12" class="mr-1" %}
-                                        {{ wp.site_inspection_start_date|date:"M d, Y"|default:"TBD" }} - {{ wp.site_inspection_end_date|date:"M d, Y"|default:"TBD" }}
+                                        {{ wp.site_inspection_start_date|date:"M d, Y"|default:"TBD" }} – {{ wp.site_inspection_end_date|date:"M d, Y"|default:"TBD" }}
                                     </p>
                                 {% endif %}
                             </div>
@@ -51,66 +51,184 @@
                             </a>
                         </div>
                     </div>
-                    <!-- Design Items Grid -->
-                    <div class="p-4">
-                        <div class="space-y-3">
-                            <!-- L1 Categories -->
-                            {% for cat in wp.design_categories.all %}
-                                <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-sm font-medium text-blue-900">{{ cat.category.name }}</span>
-                                        <span class="text-xs text-blue-700">{{ cat.files.count }}/{{ cat.required_quantity }}</span>
+                    <!-- Hierarchical Design Content -->
+                    <div class="p-4 space-y-4">
+                        {% if wp.design_categories.exists %}
+                            {% for design_category in wp.design_categories.all %}
+                                <!-- L1 Category Section -->
+                                <div class="border border-blue-200 rounded-lg overflow-hidden">
+                                    <div class="bg-blue-50 px-4 py-2 flex items-center justify-between">
+                                        <span class="text-sm font-semibold text-blue-900">L1: {{ design_category }}</span>
+                                        <a href="{% url 'planning:design-category-upload' project.pk wp.pk design_category.pk %}?category={{ design_category.pk }}"
+                                           class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded transition-colors">
+                                            {% heroicon_outline "plus" size="14" class="mr-1" %}
+                                            Add
+                                        </a>
                                     </div>
-                                    <div class="w-full bg-blue-200 rounded-full h-1.5">
-                                        <div class="bg-blue-600 h-1.5 rounded-full"
-                                             style="width: {{ cat.progress }}%"></div>
+                                    <div class="p-3 space-y-3">
+                                        <!-- L1 DesignCategory items for this category -->
+                                        {% if design_category.files.exists %}
+                                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                                <div class="p-3 bg-white border border-blue-100 rounded-lg">
+                                                    <div class="flex items-center justify-between mb-1">
+                                                        <span class="text-xs font-medium text-gray-800">{{ design_category.get_stage_display }}</span>
+                                                        {% if design_category.approved %}
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700">Approved</span>
+                                                        {% else %}
+                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">Pending</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="flex items-center justify-between text-[10px] text-gray-500 mb-1">
+                                                        <span>{{ design_category.files.count }} / {{ design_category.required_quantity }} files</span>
+                                                        <span>{{ design_category.progress }}%</span>
+                                                    </div>
+                                                    <div class="w-full bg-blue-100 rounded-full h-1.5">
+                                                        <div class="bg-blue-500 h-1.5 rounded-full"
+                                                             style="width: {{ design_category.progress }}%"></div>
+                                                    </div>
+                                                </div>
+                                                <div class="p-2 bg-gray-50 border border-gray-100 rounded flex left-content-stacked">
+                                                    {% for file in design_category.files.all %}
+                                                        <span class="text-xs text-gray-700 truncate left-content">{{ file.file.name|slice:"-30:" }}
+                                                            <a href="{{ file.file.url }}"
+                                                               download
+                                                               class="inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-800">
+                                                                {% heroicon_outline "arrow-down-tray" size="14" %}
+                                                            </a>
+                                                        </span>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        <!-- L2 SubCategories -->
+                                        {% for subdesign_category in design_category.subcats %}
+                                            <div class="border border-emerald-200 rounded-lg overflow-hidden">
+                                                <div class="bg-emerald-50 px-3 py-1.5 flex items-center justify-between">
+                                                    <span class="text-xs font-semibold text-emerald-900">{{ subdesign_category.subcat.name }}</span>
+                                                    <span class="text-[10px] text-emerald-600">L2 SubCategory</span>
+                                                </div>
+                                                <div class="p-3 space-y-3">
+                                                    {% if subdesign_category.designs %}
+                                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                                            {% for dsc in subdesign_category.designs %}
+                                                                <div class="p-3 bg-white border border-emerald-100 rounded-lg">
+                                                                    <div class="flex items-center justify-between mb-1">
+                                                                        <span class="text-xs font-medium text-gray-800">{{ dsc.get_stage_display }}</span>
+                                                                        {% if dsc.approved %}
+                                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700">Approved</span>
+                                                                        {% else %}
+                                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">Pending</span>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                    <div class="flex items-center justify-between text-[10px] text-gray-500 mb-1">
+                                                                        <span>{{ dsc.files.count }} / {{ dsc.required_quantity }} files</span>
+                                                                        <span>{{ dsc.progress }}%</span>
+                                                                    </div>
+                                                                    <div class="w-full bg-emerald-100 rounded-full h-1.5">
+                                                                        <div class="bg-emerald-500 h-1.5 rounded-full"
+                                                                             style="width: {{ dsc.progress }}%"></div>
+                                                                    </div>
+                                                                </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                    <!-- L3 Groups -->
+                                                    {% for group_data in subdesign_category.groups %}
+                                                        <div class="border border-amber-200 rounded-lg overflow-hidden">
+                                                            <div class="bg-amber-50 px-3 py-1.5 flex items-center justify-between">
+                                                                <span class="text-xs font-semibold text-amber-900">{{ group_data.group.name }}</span>
+                                                                <span class="text-[10px] text-amber-600">L3 Group</span>
+                                                            </div>
+                                                            <div class="p-3">
+                                                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                                                    {% for dg in group_data.designs %}
+                                                                        <div class="p-3 bg-white border border-amber-100 rounded-lg">
+                                                                            <div class="flex items-center justify-between mb-1">
+                                                                                <span class="text-xs font-medium text-gray-800">{{ dg.get_stage_display }}</span>
+                                                                                {% if dg.approved %}
+                                                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700">Approved</span>
+                                                                                {% else %}
+                                                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">Pending</span>
+                                                                                {% endif %}
+                                                                            </div>
+                                                                            <div class="flex items-center justify-between text-[10px] text-gray-500 mb-1">
+                                                                                <span>{{ dg.files.count }} / {{ dg.required_quantity }} files</span>
+                                                                                <span>{{ dg.progress }}%</span>
+                                                                            </div>
+                                                                            <div class="w-full bg-amber-100 rounded-full h-1.5">
+                                                                                <div class="bg-amber-500 h-1.5 rounded-full"
+                                                                                     style="width: {{ dg.progress }}%">
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    {% endfor %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        {% endfor %}
                                     </div>
                                 </div>
                             {% endfor %}
-                            <!-- L2 SubCategories -->
-                            {% for subcat in wp.design_subcategories.all %}
-                                <div class="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-sm font-medium text-emerald-900">{{ subcat.sub_category.name }}</span>
-                                        <span class="text-xs text-emerald-700">{{ subcat.files.count }}/{{ subcat.required_quantity }}</span>
+                            <!-- L4 Disciplines (standalone) -->
+                            {% if wp.disciplines_data %}
+                                <div class="border border-purple-200 rounded-lg overflow-hidden">
+                                    <div class="bg-purple-50 px-4 py-2 flex items-center justify-between">
+                                        <span class="text-sm font-semibold text-purple-900">Disciplines</span>
+                                        <span class="text-xs text-purple-600">L4</span>
                                     </div>
-                                    <div class="w-full bg-emerald-200 rounded-full h-1.5">
-                                        <div class="bg-emerald-600 h-1.5 rounded-full"
-                                             style="width: {{ subcat.progress }}%"></div>
+                                    <div class="p-3">
+                                        <div class="space-y-3">
+                                            {% for disc_data in wp.disciplines_data %}
+                                                <div>
+                                                    <p class="text-xs font-semibold text-purple-800 mb-2">{{ disc_data.discipline.name }}</p>
+                                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                                        {% for dd in disc_data.designs %}
+                                                            <div class="p-3 bg-white border border-purple-100 rounded-lg">
+                                                                <div class="flex items-center justify-between mb-1">
+                                                                    <span class="text-xs font-medium text-gray-800">{{ dd.get_stage_display }}</span>
+                                                                    {% if dd.approved %}
+                                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700">Approved</span>
+                                                                    {% else %}
+                                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">Pending</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <div class="flex items-center justify-between text-[10px] text-gray-500 mb-1">
+                                                                    <span>{{ dd.files.count }} / {{ dd.required_quantity }} files</span>
+                                                                    <span>{{ dd.progress }}%</span>
+                                                                </div>
+                                                                <div class="w-full bg-purple-100 rounded-full h-1.5">
+                                                                    <div class="bg-purple-500 h-1.5 rounded-full"
+                                                                         style="width: {{ dd.progress }}%"></div>
+                                                                </div>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
                                     </div>
                                 </div>
-                            {% endfor %}
-                            <!-- L3 Groups -->
-                            {% for group in wp.design_groups.all %}
-                                <div class="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-sm font-medium text-amber-900">{{ group.group.name }}</span>
-                                        <span class="text-xs text-amber-700">{{ group.files.count }}/{{ group.required_quantity }}</span>
-                                    </div>
-                                    <div class="w-full bg-amber-200 rounded-full h-1.5">
-                                        <div class="bg-amber-600 h-1.5 rounded-full"
-                                             style="width: {{ group.progress }}%"></div>
-                                    </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-center py-8 text-gray-500">
+                                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    {% heroicon_outline "pencil-square" size="20" class="text-gray-400" %}
                                 </div>
-                            {% endfor %}
-                            <!-- L4 Disciplines -->
-                            {% for disc in wp.design_disciplines.all %}
-                                <div class="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-sm font-medium text-purple-900">{{ disc.discipline.name }}</span>
-                                        <span class="text-xs text-purple-700">{{ disc.files.count }}/{{ disc.required_quantity }}</span>
-                                    </div>
-                                    <div class="w-full bg-purple-200 rounded-full h-1.5">
-                                        <div class="bg-purple-600 h-1.5 rounded-full"
-                                             style="width: {{ disc.progress }}%"></div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
+                                <p class="text-sm mb-2">No design items yet</p>
+                                <a href="{% url 'planning:design-list' project.pk wp.pk %}"
+                                   class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors">
+                                    {% heroicon_outline "plus" size="14" class="mr-1" %}
+                                    Add design items
+                                </a>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
-            {% endfor %}
-        </div>
+            </div>
+        {% endfor %}
     {% else %}
         <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
             <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
