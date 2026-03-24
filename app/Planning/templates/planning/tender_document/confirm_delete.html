@@ -36,7 +36,7 @@
             {% endif %}
             <div class="mt-3 text-sm text-gray-500">
                 <p>Created: {{ tender_document.created_at|date:"M d, Y" }}</p>
-                <p>Progress: {{ tender_document.percentage_completed|floatformat:0 }}%</p>
+                <p>Progress: {{ tender_document.progress|floatformat:0 }}%</p>
             </div>
         </div>
         <form method="post" class="flex items-center justify-end space-x-3">

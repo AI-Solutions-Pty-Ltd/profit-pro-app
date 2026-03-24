@@ -12,6 +12,7 @@ from app.Planning.models import (
     DesignSubCategory,
     DesignSubCategoryFile,
     TenderDocument,
+    TenderDocumentFile,
     WorkPackage,
 )
 
@@ -25,16 +26,27 @@ class WorkPackageForm(forms.ModelForm):
             "package_number",
             "name",
             "description",
-            "package_start_date",
-            "package_finish_date",
-            "design_start_date",
-            "design_finish_date",
-            "documentation_start_date",
-            "documentation_finish_date",
-            "tender_start_date",
-            "tender_finish_date",
-            "execution_start_date",
-            "execution_finish_date",
+            "applied_to_advert_start_date",
+            "applied_to_advert_end_date",
+            "applied_to_advert_completed",
+            "site_inspection_start_date",
+            "site_inspection_end_date",
+            "site_inspection_completed",
+            "tender_close_start_date",
+            "tender_close_end_date",
+            "tender_close_completed",
+            "tender_evaluation_start_date",
+            "tender_evaluation_end_date",
+            "tender_evaluation_completed",
+            "award_start_date",
+            "award_end_date",
+            "award_completed",
+            "contract_signing_start_date",
+            "contract_signing_end_date",
+            "contract_signing_completed",
+            "mobilization_start_date",
+            "mobilization_end_date",
+            "mobilization_completed",
             "package_budget",
             "budget_structure_file",
         ]
@@ -42,35 +54,66 @@ class WorkPackageForm(forms.ModelForm):
             "package_number": forms.TextInput(attrs={"class": "form-input"}),
             "name": forms.TextInput(attrs={"class": "form-input"}),
             "description": forms.Textarea(attrs={"class": "form-textarea", "rows": 3}),
-            "package_start_date": forms.DateInput(
+            "applied_to_advert_start_date": forms.DateInput(
                 attrs={"type": "date", "class": "form-input"}
             ),
-            "package_finish_date": forms.DateInput(
+            "applied_to_advert_end_date": forms.DateInput(
                 attrs={"type": "date", "class": "form-input"}
             ),
-            "design_start_date": forms.DateInput(
+            "applied_to_advert_completed": forms.CheckboxInput(
+                attrs={"class": "form-checkbox"}
+            ),
+            "site_inspection_start_date": forms.DateInput(
                 attrs={"type": "date", "class": "form-input"}
             ),
-            "design_finish_date": forms.DateInput(
+            "site_inspection_end_date": forms.DateInput(
                 attrs={"type": "date", "class": "form-input"}
             ),
-            "documentation_start_date": forms.DateInput(
+            "site_inspection_completed": forms.CheckboxInput(
+                attrs={"class": "form-checkbox"}
+            ),
+            "tender_close_start_date": forms.DateInput(
                 attrs={"type": "date", "class": "form-input"}
             ),
-            "documentation_finish_date": forms.DateInput(
+            "tender_close_end_date": forms.DateInput(
                 attrs={"type": "date", "class": "form-input"}
             ),
-            "tender_start_date": forms.DateInput(
+            "tender_close_completed": forms.CheckboxInput(
+                attrs={"class": "form-checkbox"}
+            ),
+            "tender_evaluation_start_date": forms.DateInput(
                 attrs={"type": "date", "class": "form-input"}
             ),
-            "tender_finish_date": forms.DateInput(
+            "tender_evaluation_end_date": forms.DateInput(
                 attrs={"type": "date", "class": "form-input"}
             ),
-            "execution_start_date": forms.DateInput(
+            "tender_evaluation_completed": forms.CheckboxInput(
+                attrs={"class": "form-checkbox"}
+            ),
+            "award_start_date": forms.DateInput(
                 attrs={"type": "date", "class": "form-input"}
             ),
-            "execution_finish_date": forms.DateInput(
+            "award_end_date": forms.DateInput(
                 attrs={"type": "date", "class": "form-input"}
+            ),
+            "award_completed": forms.CheckboxInput(attrs={"class": "form-checkbox"}),
+            "contract_signing_start_date": forms.DateInput(
+                attrs={"type": "date", "class": "form-input"}
+            ),
+            "contract_signing_end_date": forms.DateInput(
+                attrs={"type": "date", "class": "form-input"}
+            ),
+            "contract_signing_completed": forms.CheckboxInput(
+                attrs={"class": "form-checkbox"}
+            ),
+            "mobilization_start_date": forms.DateInput(
+                attrs={"type": "date", "class": "form-input"}
+            ),
+            "mobilization_end_date": forms.DateInput(
+                attrs={"type": "date", "class": "form-input"}
+            ),
+            "mobilization_completed": forms.CheckboxInput(
+                attrs={"class": "form-checkbox"}
             ),
             "package_budget": forms.NumberInput(
                 attrs={"class": "form-input", "step": 0.01}
@@ -84,11 +127,16 @@ class TenderDocumentForm(forms.ModelForm):
 
     class Meta:
         model = TenderDocument
-        fields = ["name", "file", "percentage_completed", "planned_date", "actual_date"]
+        fields = [
+            "name",
+            "planned_date",
+            "actual_date",
+            "required_quantity",
+        ]
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-input"}),
-            "percentage_completed": forms.NumberInput(
-                attrs={"class": "form-input", "min": 0, "max": 100, "step": 0.01}
+            "required_quantity": forms.NumberInput(
+                attrs={"class": "form-input", "min": 1, "step": 1}
             ),
             "planned_date": forms.DateInput(
                 attrs={"type": "date", "class": "form-input"}
@@ -99,15 +147,30 @@ class TenderDocumentForm(forms.ModelForm):
         }
 
 
+class TenderDocumentFileForm(forms.ModelForm):
+    """Form for uploading files to a tender document."""
+
+    class Meta:
+        model = TenderDocumentFile
+        fields = ["file"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["file"].widget.attrs.update({"class": "form-input"})
+
+
 class DesignCategoryForm(forms.ModelForm):
     """Form for creating/editing design categories (L1)."""
 
     class Meta:
         model = DesignCategory
-        fields = ["category", "stage"]
+        fields = ["category", "stage", "required_quantity"]
         widgets = {
             "category": forms.Select(attrs={"class": "form-select"}),
             "stage": forms.Select(attrs={"class": "form-select"}),
+            "required_quantity": forms.NumberInput(
+                attrs={"class": "form-input", "min": 1}
+            ),
         }
 
 
@@ -127,10 +190,13 @@ class DesignSubCategoryForm(forms.ModelForm):
 
     class Meta:
         model = DesignSubCategory
-        fields = ["sub_category", "stage"]
+        fields = ["sub_category", "stage", "required_quantity"]
         widgets = {
             "sub_category": forms.Select(attrs={"class": "form-select"}),
             "stage": forms.Select(attrs={"class": "form-select"}),
+            "required_quantity": forms.NumberInput(
+                attrs={"class": "form-input", "min": 1}
+            ),
         }
 
 
@@ -150,10 +216,13 @@ class DesignGroupForm(forms.ModelForm):
 
     class Meta:
         model = DesignGroup
-        fields = ["group", "stage"]
+        fields = ["group", "stage", "required_quantity"]
         widgets = {
             "group": forms.Select(attrs={"class": "form-select"}),
             "stage": forms.Select(attrs={"class": "form-select"}),
+            "required_quantity": forms.NumberInput(
+                attrs={"class": "form-input", "min": 1}
+            ),
         }
 
 
@@ -173,10 +242,13 @@ class DesignDisciplineForm(forms.ModelForm):
 
     class Meta:
         model = DesignDiscipline
-        fields = ["discipline", "stage"]
+        fields = ["discipline", "stage", "required_quantity"]
         widgets = {
             "discipline": forms.Select(attrs={"class": "form-select"}),
             "stage": forms.Select(attrs={"class": "form-select"}),
+            "required_quantity": forms.NumberInput(
+                attrs={"class": "form-input", "min": 1}
+            ),
         }
 
 

@@ -66,9 +66,24 @@
                         {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                     </a>
                 {% endif %}
+                <a href="{% url 'planning:design-development-overview' project.pk %}"
+                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
+                    <span class="text-sm font-medium text-emerald-700">Design Development</span>
+                    {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                </a>
                 <a href="{% url 'planning:work-package-list' project.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
                     <span class="text-sm font-medium text-emerald-700">Work Packages</span>
+                    {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                </a>
+                <a href="{% url 'planning:tender-documentation-overview' project.pk %}"
+                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
+                    <span class="text-sm font-medium text-emerald-700">Tender Documentation</span>
+                    {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                </a>
+                <a href="{% url 'planning:tender-process-overview' project.pk %}"
+                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
+                    <span class="text-sm font-medium text-emerald-700">Tender Process</span>
                     {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                 </a>
             </div>

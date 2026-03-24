@@ -33,20 +33,17 @@
         </div>
     </div>
     <div class="bg-white rounded-xl border border-gray-200 p-6">
-        <form method="post" enctype="multipart/form-data" class="space-y-6">
+        <form method="post"
+              enctype="multipart/form-data"
+              {% if action == "Add" %} action={% url 'planning:tender-document-create' project.pk work_package.pk %} {% else %} action={% url 'planning:tender-document-update' project.pk work_package.pk object.pk %} {% endif %}
+              class="space-y-6">
             {% csrf_token %}
             {% if form.non_field_errors %}
                 <div class="bg-red-50 border border-red-200 rounded-md p-4">
                     {% for error in form.non_field_errors %}<p class="text-sm text-red-600">{{ error }}</p>{% endfor %}
                 </div>
             {% endif %}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="md:col-span-2">{{ form.name|as_crispy_field }}</div>
-                <div>{{ form.planned_date|as_crispy_field }}</div>
-                <div>{{ form.actual_date|as_crispy_field }}</div>
-                <div>{{ form.percentage_completed|as_crispy_field }}</div>
-                <div class="md:col-span-2">{{ form.file|as_crispy_field }}</div>
-            </div>
+            {{ form|crispy }}
             <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
                 <a href="{% url 'planning:work-package-detail' project.pk work_package.pk %}"
                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% block title %}
+    Design Development Overview - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Design Development Overview</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }} - Track design progress across all work packages</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:project-management' project.pk %}"
+                       class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        {% heroicon_outline "arrow-left" size="16" class="mr-1" %}
+                        Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if work_packages %}
+        <div class="space-y-4">
+            {% for wp in work_packages %}
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300">
+                    <!-- Header -->
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    {% if wp.package_number %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            {{ wp.package_number }}
+                                        </span>
+                                    {% endif %}
+                                    <h3 class="text-lg font-bold text-gray-900">{{ wp.name }}</h3>
+                                </div>
+                                {% if wp.site_inspection_start_date or wp.site_inspection_end_date %}
+                                    <p class="text-xs text-gray-600 flex items-center">
+                                        {% heroicon_outline "calendar" size="12" class="mr-1" %}
+                                        {{ wp.site_inspection_start_date|date:"M d, Y"|default:"TBD" }} - {{ wp.site_inspection_end_date|date:"M d, Y"|default:"TBD" }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'planning:design-list' project.pk wp.pk %}"
+                               class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                                {% heroicon_outline "arrow-right" size="14" class="mr-1" %}
+                                Manage
+                            </a>
+                        </div>
+                    </div>
+                    <!-- Design Items Grid -->
+                    <div class="p-4">
+                        <div class="space-y-3">
+                            <!-- L1 Categories -->
+                            {% for cat in wp.design_categories.all %}
+                                <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-blue-900">{{ cat.category.name }}</span>
+                                        <span class="text-xs text-blue-700">{{ cat.files.count }}/{{ cat.required_quantity }}</span>
+                                    </div>
+                                    <div class="w-full bg-blue-200 rounded-full h-1.5">
+                                        <div class="bg-blue-600 h-1.5 rounded-full"
+                                             style="width: {{ cat.progress }}%"></div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            <!-- L2 SubCategories -->
+                            {% for subcat in wp.design_subcategories.all %}
+                                <div class="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-emerald-900">{{ subcat.sub_category.name }}</span>
+                                        <span class="text-xs text-emerald-700">{{ subcat.files.count }}/{{ subcat.required_quantity }}</span>
+                                    </div>
+                                    <div class="w-full bg-emerald-200 rounded-full h-1.5">
+                                        <div class="bg-emerald-600 h-1.5 rounded-full"
+                                             style="width: {{ subcat.progress }}%"></div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            <!-- L3 Groups -->
+                            {% for group in wp.design_groups.all %}
+                                <div class="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-amber-900">{{ group.group.name }}</span>
+                                        <span class="text-xs text-amber-700">{{ group.files.count }}/{{ group.required_quantity }}</span>
+                                    </div>
+                                    <div class="w-full bg-amber-200 rounded-full h-1.5">
+                                        <div class="bg-amber-600 h-1.5 rounded-full"
+                                             style="width: {{ group.progress }}%"></div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            <!-- L4 Disciplines -->
+                            {% for disc in wp.design_disciplines.all %}
+                                <div class="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-purple-900">{{ disc.discipline.name }}</span>
+                                        <span class="text-xs text-purple-700">{{ disc.files.count }}/{{ disc.required_quantity }}</span>
+                                    </div>
+                                    <div class="w-full bg-purple-200 rounded-full h-1.5">
+                                        <div class="bg-purple-600 h-1.5 rounded-full"
+                                             style="width: {{ disc.progress }}%"></div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                {% heroicon_outline "pencil-square" size="32" class="text-blue-500" %}
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No Work Packages Yet</h3>
+            <p class="text-sm text-gray-500 mb-4">Create work packages to start tracking design development.</p>
+            <a href="{% url 'planning:work-package-list' project.pk %}"
+               class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-md hover:bg-gray-50 transition-colors text-sm font-medium">
+                {% heroicon_outline "clipboard-document-list" size="16" class="mr-1" %}
+                Go to Work Packages
+            </a>
+        </div>
+    {% endif %}
+{% endblock content %}

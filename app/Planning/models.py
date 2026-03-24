@@ -6,16 +6,14 @@ B) Tender Documents - documentation linked to work packages
 C) Design Development - engineering sketches/calculations at L1-L4 levels
 """
 
-from django.db import models
+from typing import TYPE_CHECKING
 
-from app.core.Utilities.models import BaseModel
-from app.Project.models import (
-    Category,
-    Discipline,
-    Group,
-    Project,
-    SubCategory,
-)
+from django.db import models
+from django.db.models import QuerySet
+
+from app.Account.models import Account
+from app.core.Utilities.models import BaseModel, sum_queryset
+from app.Project.models import Category, Discipline, Group, Project, SubCategory
 
 # =============================================================================
 # A: Work Packages
@@ -48,64 +46,104 @@ class WorkPackage(BaseModel):
         help_text="Description of the work package",
     )
 
-    # Whole Package Dates
-    package_start_date = models.DateField(
+    # Tender Milestones
+    applied_to_advert_start_date = models.DateField(
         null=True,
         blank=True,
-        help_text="Overall package start date",
+        help_text="Applied to advert start date",
     )
-    package_finish_date = models.DateField(
+    applied_to_advert_end_date = models.DateField(
         null=True,
         blank=True,
-        help_text="Overall package finish date",
+        help_text="Applied to advert end date",
     )
-
-    # Design Development Stage
-    design_start_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Design development start date",
+    applied_to_advert_completed = models.BooleanField(
+        default=False,
+        help_text="Whether applied to advert milestone is completed",
     )
-    design_finish_date = models.DateField(
+    site_inspection_start_date = models.DateField(
         null=True,
         blank=True,
-        help_text="Design development finish date",
+        help_text="Site inspection start date",
     )
-
-    # Documentation Stage
-    documentation_start_date = models.DateField(
+    site_inspection_end_date = models.DateField(
         null=True,
         blank=True,
-        help_text="Documentation stage start date",
+        help_text="Site inspection end date",
     )
-    documentation_finish_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Documentation stage finish date",
+    site_inspection_completed = models.BooleanField(
+        default=False,
+        help_text="Whether site inspection milestone is completed",
     )
-
-    # Tender Process
-    tender_start_date = models.DateField(
+    tender_close_start_date = models.DateField(
         null=True,
         blank=True,
-        help_text="Tender process start date",
+        help_text="Tender close start date",
     )
-    tender_finish_date = models.DateField(
+    tender_close_end_date = models.DateField(
         null=True,
         blank=True,
-        help_text="Tender process finish date",
+        help_text="Tender close end date",
     )
-
-    # Execution
-    execution_start_date = models.DateField(
-        null=True,
-        blank=True,
-        help_text="Execution start date",
+    tender_close_completed = models.BooleanField(
+        default=False,
+        help_text="Whether tender close milestone is completed",
     )
-    execution_finish_date = models.DateField(
+    tender_evaluation_start_date = models.DateField(
         null=True,
         blank=True,
-        help_text="Execution finish date",
+        help_text="Tender evaluation start date",
+    )
+    tender_evaluation_end_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Tender evaluation end date",
+    )
+    tender_evaluation_completed = models.BooleanField(
+        default=False,
+        help_text="Whether tender evaluation milestone is completed",
+    )
+    award_start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Award start date",
+    )
+    award_end_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Award end date",
+    )
+    award_completed = models.BooleanField(
+        default=False,
+        help_text="Whether award milestone is completed",
+    )
+    contract_signing_start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Contract signing start date",
+    )
+    contract_signing_end_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Contract signing end date",
+    )
+    contract_signing_completed = models.BooleanField(
+        default=False,
+        help_text="Whether contract signing milestone is completed",
+    )
+    mobilization_start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Mobilization start date",
+    )
+    mobilization_end_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Mobilization end date",
+    )
+    mobilization_completed = models.BooleanField(
+        default=False,
+        help_text="Whether mobilization milestone is completed",
     )
 
     # Budget
@@ -122,6 +160,9 @@ class WorkPackage(BaseModel):
         blank=True,
         help_text="Cost budget structure (sources of funds)",
     )
+
+    if TYPE_CHECKING:
+        tender_documents: QuerySet["TenderDocument"]
 
     def __str__(self) -> str:
         return self.name
@@ -144,8 +185,78 @@ class WorkPackage(BaseModel):
             TenderDocument.objects.get_or_create(
                 work_package=self,
                 name=name,
-                defaults={"percentage_completed": 0},
             )
+
+    def create_default_design_items(self) -> None:
+        """Create design development items for all project categories/subcategories/groups/disciplines and both stages."""
+        from app.Planning.models import (
+            DesignCategory,
+            DesignDiscipline,
+            DesignGroup,
+            DesignStage,
+            DesignSubCategory,
+        )
+
+        # Create for both stages
+        for stage in DesignStage.choices:
+            stage_value = stage[0]
+
+            # L1 - Categories
+            for category in self.project.categories.all():
+                DesignCategory.objects.get_or_create(
+                    work_package=self,
+                    category=category,
+                    stage=stage_value,
+                    defaults={"required_quantity": 1, "approved": False},
+                )
+
+            # L2 - SubCategories
+            for subcategory in self.project.subcategories.all():
+                DesignSubCategory.objects.get_or_create(
+                    work_package=self,
+                    sub_category=subcategory,
+                    stage=stage_value,
+                    defaults={"required_quantity": 1, "approved": False},
+                )
+
+            # L3 - Groups
+            for group in self.project.groups.all():  # type: ignore
+                DesignGroup.objects.get_or_create(
+                    work_package=self,
+                    group=group,
+                    stage=stage_value,
+                    defaults={"required_quantity": 1, "approved": False},
+                )
+
+            # L4 - Disciplines
+            for discipline in self.project.disciplines.all():
+                DesignDiscipline.objects.get_or_create(
+                    work_package=self,
+                    discipline=discipline,
+                    stage=stage_value,
+                    defaults={"required_quantity": 1, "approved": False},
+                )
+
+    @property
+    def total_tender_docs(self) -> int:
+        """Return the total number of tender documents for this work package."""
+        return int(sum_queryset(self.tender_documents, "required_quantity"))
+
+    @property
+    def completed_tender_docs(self) -> int:
+        """Return the number of completed tender documents (those with files uploaded)."""
+        count = 0
+        for tender_document in self.tender_documents.all():
+            count += tender_document.files.count()
+        return count
+
+    def save(self, *args, **kwargs) -> None:
+        """Override save to auto-create design items and tender documents on creation."""
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if is_new:
+            self.create_default_tender_documents()
+            self.create_default_design_items()
 
 
 # =============================================================================
@@ -170,18 +281,6 @@ class TenderDocument(BaseModel):
         max_length=255,
         help_text="Document category name",
     )
-    file = models.FileField(
-        upload_to="planning/tender_documents/",
-        null=True,
-        blank=True,
-        help_text="Uploaded tender document file",
-    )
-    percentage_completed = models.DecimalField(
-        max_digits=5,
-        decimal_places=2,
-        default=0,
-        help_text="Completion percentage for this document category",
-    )
     planned_date = models.DateField(
         null=True,
         blank=True,
@@ -192,6 +291,10 @@ class TenderDocument(BaseModel):
         blank=True,
         help_text="Actual completion date",
     )
+    required_quantity = models.PositiveIntegerField(default=1)
+
+    if TYPE_CHECKING:
+        files: QuerySet["TenderDocumentFile"]
 
     def __str__(self) -> str:
         return f"{self.work_package.name} - {self.name}"
@@ -200,18 +303,64 @@ class TenderDocument(BaseModel):
         verbose_name = "Tender Document"
         verbose_name_plural = "Tender Documents"
         ordering = ["name"]
-        unique_together = [("work_package", "name")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["work_package", "name"],
+                name="unique_tender_document_per_work_package",
+            )
+        ]
 
     @property
     def is_complete(self) -> bool:
-        """A document category is complete when a file has been uploaded."""
-        return bool(self.file)
+        """A document category is complete when at least one file has been uploaded."""
+        return self.progress == 100
 
-    def save(self, *args, **kwargs) -> None:
-        """Auto-set percentage to 100 if file is uploaded."""
-        if self.file and self.percentage_completed == 0:
-            self.percentage_completed = 100
-        super().save(*args, **kwargs)
+    @property
+    def file_count(self) -> int:
+        """Return the number of files uploaded for this document."""
+        return self.files.count()
+
+    @property
+    def progress(self) -> int:
+        if self.required_quantity == 0:
+            return 0
+        return min(
+            100, int(round((self.files.count() / self.required_quantity) * 100, 0))
+        )
+
+
+class TenderDocumentFile(BaseModel):
+    """Individual file for a tender document."""
+
+    tender_document = models.ForeignKey(
+        TenderDocument,
+        on_delete=models.CASCADE,
+        related_name="files",
+        help_text="Tender document this file belongs to",
+    )
+    file = models.FileField(
+        upload_to="planning/tender_documents/",
+        help_text="Uploaded tender document file",
+    )
+    uploaded_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="Date and time when the file was uploaded",
+    )
+    uploaded_by = models.ForeignKey(
+        Account,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="User who uploaded the file",
+    )
+
+    def __str__(self) -> str:
+        return f"{self.tender_document.name} - {self.file.name}"
+
+    class Meta:
+        verbose_name = "Tender Document File"
+        verbose_name_plural = "Tender Document Files"
+        ordering = ["-uploaded_at"]
 
 
 # =============================================================================
@@ -223,8 +372,7 @@ class DesignStage(models.TextChoices):
     """Stages for design development documents."""
 
     DESIGN_CRITERIA = "DESIGN_CRITERIA", "Design Criteria"
-    DESIGN_CALCULATIONS = "DESIGN_CALCULATIONS", "Design Calculations"
-    SKETCHES = "SKETCHES", "Sketches"
+    DRAWINGS = "DRAWINGS", "Drawings"
 
 
 class DesignCategory(BaseModel):
@@ -245,6 +393,7 @@ class DesignCategory(BaseModel):
         related_name="design_categories",
         help_text="L1 Category from project structure",
     )
+    required_quantity = models.PositiveBigIntegerField(default=1)
     stage = models.CharField(
         max_length=30,
         choices=DesignStage.choices,
@@ -256,6 +405,9 @@ class DesignCategory(BaseModel):
         help_text="Whether this design stage is approved",
     )
 
+    if TYPE_CHECKING:
+        files: QuerySet["DesignCategoryFile"]
+
     def __str__(self) -> str:
         return f"{self.category.name} - {self.get_stage_display()}"  # type: ignore
 
@@ -263,6 +415,14 @@ class DesignCategory(BaseModel):
         verbose_name = "Design Category (L1)"
         verbose_name_plural = "Design Categories (L1)"
         ordering = ["category__name", "stage"]
+
+    @property
+    def progress(self) -> int:
+        if self.required_quantity == 0:
+            return 0
+        return min(
+            100, int(round((self.files.count() / self.required_quantity) * 100, 0))
+        )
 
 
 class DesignCategoryFile(BaseModel):
@@ -318,6 +478,7 @@ class DesignSubCategory(BaseModel):
         related_name="design_subcategories",
         help_text="L2 SubCategory from project structure",
     )
+    required_quantity = models.PositiveBigIntegerField(default=1)
     stage = models.CharField(
         max_length=30,
         choices=DesignStage.choices,
@@ -329,6 +490,9 @@ class DesignSubCategory(BaseModel):
         help_text="Whether this design stage is approved",
     )
 
+    if TYPE_CHECKING:
+        files: QuerySet["DesignSubCategoryFile"]
+
     def __str__(self) -> str:
         return f"{self.sub_category.name} - {self.get_stage_display()}"  # type: ignore
 
@@ -336,6 +500,14 @@ class DesignSubCategory(BaseModel):
         verbose_name = "Design SubCategory (L2)"
         verbose_name_plural = "Design SubCategories (L2)"
         ordering = ["sub_category__name", "stage"]
+
+    @property
+    def progress(self) -> int:
+        if self.required_quantity == 0:
+            return 0
+        return min(
+            100, int(round((self.files.count() / self.required_quantity) * 100, 0))
+        )
 
 
 class DesignSubCategoryFile(BaseModel):
@@ -391,6 +563,7 @@ class DesignGroup(BaseModel):
         related_name="design_groups",
         help_text="L3 Group from project structure",
     )
+    required_quantity = models.PositiveBigIntegerField(default=1)
     stage = models.CharField(
         max_length=30,
         choices=DesignStage.choices,
@@ -402,6 +575,9 @@ class DesignGroup(BaseModel):
         help_text="Whether this design stage is approved",
     )
 
+    if TYPE_CHECKING:
+        files: QuerySet["DesignGroupFile"]
+
     def __str__(self) -> str:
         return f"{self.group.name} - {self.get_stage_display()}"  # type: ignore
 
@@ -409,6 +585,14 @@ class DesignGroup(BaseModel):
         verbose_name = "Design Group (L3)"
         verbose_name_plural = "Design Groups (L3)"
         ordering = ["group__name", "stage"]
+
+    @property
+    def progress(self) -> int:
+        if self.required_quantity == 0:
+            return 0
+        return min(
+            100, int(round((self.files.count() / self.required_quantity) * 100, 0))
+        )
 
 
 class DesignGroupFile(BaseModel):
@@ -464,6 +648,7 @@ class DesignDiscipline(BaseModel):
         related_name="design_disciplines",
         help_text="L4 Discipline from project structure",
     )
+    required_quantity = models.PositiveBigIntegerField(default=1)
     stage = models.CharField(
         max_length=30,
         choices=DesignStage.choices,
@@ -475,6 +660,9 @@ class DesignDiscipline(BaseModel):
         help_text="Whether this design stage is approved",
     )
 
+    if TYPE_CHECKING:
+        files: QuerySet["DesignDisciplineFile"]
+
     def __str__(self) -> str:
         return f"{self.discipline.name} - {self.get_stage_display()}"  # type: ignore
 
@@ -482,6 +670,14 @@ class DesignDiscipline(BaseModel):
         verbose_name = "Design Discipline (L4)"
         verbose_name_plural = "Design Disciplines (L4)"
         ordering = ["discipline__name", "stage"]
+
+    @property
+    def progress(self) -> int:
+        if self.required_quantity == 0:
+            return 0
+        return min(
+            100, int(round((self.files.count() / self.required_quantity) * 100, 0))
+        )
 
 
 class DesignDisciplineFile(BaseModel):

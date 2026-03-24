@@ -34,42 +34,63 @@
                 <div class="md:col-span-2">{{ form.description|as_crispy_field }}</div>
             </div>
             <div class="border-t border-gray-200 pt-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Overall Package Timeline</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>{{ form.package_start_date|as_crispy_field }}</div>
-                    <div>{{ form.package_finish_date|as_crispy_field }}</div>
-                </div>
-            </div>
-            <div class="border-t border-gray-200 pt-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Stage Timelines</h3>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Tender Milestones</h3>
                 <div class="space-y-6">
                     <div>
-                        <h4 class="text-sm font-medium text-gray-700 mb-3">Design Development Stage</h4>
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">Applied to Advert</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>{{ form.design_start_date|as_crispy_field }}</div>
-                            <div>{{ form.design_finish_date|as_crispy_field }}</div>
+                            <div>{{ form.applied_to_advert_start_date|as_crispy_field }}</div>
+                            <div>{{ form.applied_to_advert_end_date|as_crispy_field }}</div>
                         </div>
+                        <div class="mt-3">{{ form.applied_to_advert_completed|as_crispy_field }}</div>
                     </div>
                     <div>
-                        <h4 class="text-sm font-medium text-gray-700 mb-3">Documentation Stage</h4>
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">Site Inspection</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>{{ form.documentation_start_date|as_crispy_field }}</div>
-                            <div>{{ form.documentation_finish_date|as_crispy_field }}</div>
+                            <div>{{ form.site_inspection_start_date|as_crispy_field }}</div>
+                            <div>{{ form.site_inspection_end_date|as_crispy_field }}</div>
                         </div>
+                        <div class="mt-3">{{ form.site_inspection_completed|as_crispy_field }}</div>
                     </div>
                     <div>
-                        <h4 class="text-sm font-medium text-gray-700 mb-3">Tender Process</h4>
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">Tender Close</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>{{ form.tender_start_date|as_crispy_field }}</div>
-                            <div>{{ form.tender_finish_date|as_crispy_field }}</div>
+                            <div>{{ form.tender_close_start_date|as_crispy_field }}</div>
+                            <div>{{ form.tender_close_end_date|as_crispy_field }}</div>
                         </div>
+                        <div class="mt-3">{{ form.tender_close_completed|as_crispy_field }}</div>
                     </div>
                     <div>
-                        <h4 class="text-sm font-medium text-gray-700 mb-3">Execution</h4>
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">Tender Evaluation</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>{{ form.execution_start_date|as_crispy_field }}</div>
-                            <div>{{ form.execution_finish_date|as_crispy_field }}</div>
+                            <div>{{ form.tender_evaluation_start_date|as_crispy_field }}</div>
+                            <div>{{ form.tender_evaluation_end_date|as_crispy_field }}</div>
                         </div>
+                        <div class="mt-3">{{ form.tender_evaluation_completed|as_crispy_field }}</div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">Award</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>{{ form.award_start_date|as_crispy_field }}</div>
+                            <div>{{ form.award_end_date|as_crispy_field }}</div>
+                        </div>
+                        <div class="mt-3">{{ form.award_completed|as_crispy_field }}</div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">Contract Signing</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>{{ form.contract_signing_start_date|as_crispy_field }}</div>
+                            <div>{{ form.contract_signing_end_date|as_crispy_field }}</div>
+                        </div>
+                        <div class="mt-3">{{ form.contract_signing_completed|as_crispy_field }}</div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">Mobilization</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>{{ form.mobilization_start_date|as_crispy_field }}</div>
+                            <div>{{ form.mobilization_end_date|as_crispy_field }}</div>
+                        </div>
+                        <div class="mt-3">{{ form.mobilization_completed|as_crispy_field }}</div>
                     </div>
                 </div>
             </div>

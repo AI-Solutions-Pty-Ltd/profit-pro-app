@@ -33,7 +33,7 @@
             <div class="space-y-3">
                 {% for design_cat in design_categories %}
                     <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                        <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center justify-between mb-3">
                             <div>
                                 <h3 class="font-medium text-gray-900">{{ design_cat.category.name }}</h3>
                                 <p class="text-sm text-gray-500">{{ design_cat.get_stage_display }}</p>
@@ -44,12 +44,33 @@
                                         {% heroicon_outline "check-circle" size="12" class="mr-1" %}
                                         Approved
                                     </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                                        {% heroicon_outline "clock" size="12" class="mr-1" %}
+                                        Work in Progress
+                                    </span>
                                 {% endif %}
                                 <a href="{% url 'planning:design-category-upload' project.pk work_package.pk design_cat.pk %}"
                                    class="inline-flex items-center px-2 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                                     {% heroicon_outline "arrow-up-tray" size="12" class="mr-1" %}
                                     Upload File
                                 </a>
+                                <a href="{% url 'planning:design-category-edit' project.pk work_package.pk design_cat.pk %}"
+                                   class="inline-flex items-center px-2 py-1 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-white hover:bg-blue-50 transition-colors"
+                                   title="Edit">{% heroicon_outline "pencil" size="12" %}</a>
+                                <a href="{% url 'planning:design-category-delete' project.pk work_package.pk design_cat.pk %}"
+                                   class="inline-flex items-center px-2 py-1 border border-red-300 rounded text-xs font-medium text-red-700 bg-white hover:bg-red-50 transition-colors"
+                                   title="Delete">{% heroicon_outline "trash" size="12" %}</a>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="flex items-center justify-between text-xs mb-1">
+                                <span class="text-gray-600">Progress</span>
+                                <span class="font-medium text-gray-900">{{ design_cat.files.count }} / {{ design_cat.required_quantity }} files ({{ design_cat.progress }}%)</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-500 h-2 rounded-full"
+                                     style="width: {{ design_cat.progress }}%"></div>
                             </div>
                         </div>
                         {% if design_cat.files.exists %}
@@ -94,7 +115,7 @@
             <div class="space-y-3">
                 {% for design_subcat in design_subcategories %}
                     <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                        <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center justify-between mb-3">
                             <div>
                                 <h3 class="font-medium text-gray-900">{{ design_subcat.sub_category.name }}</h3>
                                 <p class="text-sm text-gray-500">{{ design_subcat.get_stage_display }}</p>
@@ -105,12 +126,33 @@
                                         {% heroicon_outline "check-circle" size="12" class="mr-1" %}
                                         Approved
                                     </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                                        {% heroicon_outline "clock" size="12" class="mr-1" %}
+                                        Work in Progress
+                                    </span>
                                 {% endif %}
                                 <a href="{% url 'planning:design-subcategory-upload' project.pk work_package.pk design_subcat.pk %}"
                                    class="inline-flex items-center px-2 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                                     {% heroicon_outline "arrow-up-tray" size="12" class="mr-1" %}
                                     Upload File
                                 </a>
+                                <a href="{% url 'planning:design-subcategory-edit' project.pk work_package.pk design_subcat.pk %}"
+                                   class="inline-flex items-center px-2 py-1 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-white hover:bg-blue-50 transition-colors"
+                                   title="Edit">{% heroicon_outline "pencil" size="12" %}</a>
+                                <a href="{% url 'planning:design-subcategory-delete' project.pk work_package.pk design_subcat.pk %}"
+                                   class="inline-flex items-center px-2 py-1 border border-red-300 rounded text-xs font-medium text-red-700 bg-white hover:bg-red-50 transition-colors"
+                                   title="Delete">{% heroicon_outline "trash" size="12" %}</a>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="flex items-center justify-between text-xs mb-1">
+                                <span class="text-gray-600">Progress</span>
+                                <span class="font-medium text-gray-900">{{ design_subcat.files.count }} / {{ design_subcat.required_quantity }} files ({{ design_subcat.progress }}%)</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-emerald-500 h-2 rounded-full"
+                                     style="width: {{ design_subcat.progress }}%"></div>
                             </div>
                         </div>
                         {% if design_subcat.files.exists %}
@@ -155,7 +197,7 @@
             <div class="space-y-3">
                 {% for design_group in design_groups %}
                     <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                        <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center justify-between mb-3">
                             <div>
                                 <h3 class="font-medium text-gray-900">{{ design_group.group.name }}</h3>
                                 <p class="text-sm text-gray-500">{{ design_group.get_stage_display }}</p>
@@ -166,12 +208,33 @@
                                         {% heroicon_outline "check-circle" size="12" class="mr-1" %}
                                         Approved
                                     </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                                        {% heroicon_outline "clock" size="12" class="mr-1" %}
+                                        Work in Progress
+                                    </span>
                                 {% endif %}
                                 <a href="{% url 'planning:design-group-upload' project.pk work_package.pk design_group.pk %}"
                                    class="inline-flex items-center px-2 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                                     {% heroicon_outline "arrow-up-tray" size="12" class="mr-1" %}
                                     Upload File
                                 </a>
+                                <a href="{% url 'planning:design-group-edit' project.pk work_package.pk design_group.pk %}"
+                                   class="inline-flex items-center px-2 py-1 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-white hover:bg-blue-50 transition-colors"
+                                   title="Edit">{% heroicon_outline "pencil" size="12" %}</a>
+                                <a href="{% url 'planning:design-group-delete' project.pk work_package.pk design_group.pk %}"
+                                   class="inline-flex items-center px-2 py-1 border border-red-300 rounded text-xs font-medium text-red-700 bg-white hover:bg-red-50 transition-colors"
+                                   title="Delete">{% heroicon_outline "trash" size="12" %}</a>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="flex items-center justify-between text-xs mb-1">
+                                <span class="text-gray-600">Progress</span>
+                                <span class="font-medium text-gray-900">{{ design_group.files.count }} / {{ design_group.required_quantity }} files ({{ design_group.progress }}%)</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-amber-500 h-2 rounded-full"
+                                     style="width: {{ design_group.progress }}%"></div>
                             </div>
                         </div>
                         {% if design_group.files.exists %}
@@ -214,7 +277,7 @@
             <div class="space-y-3">
                 {% for design_discipline in design_disciplines %}
                     <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                        <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center justify-between mb-3">
                             <div>
                                 <h3 class="font-medium text-gray-900">{{ design_discipline.discipline.name }}</h3>
                                 <p class="text-sm text-gray-500">{{ design_discipline.get_stage_display }}</p>
@@ -225,12 +288,33 @@
                                         {% heroicon_outline "check-circle" size="12" class="mr-1" %}
                                         Approved
                                     </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                                        {% heroicon_outline "clock" size="12" class="mr-1" %}
+                                        Work in Progress
+                                    </span>
                                 {% endif %}
                                 <a href="{% url 'planning:design-discipline-upload' project.pk work_package.pk design_discipline.pk %}"
                                    class="inline-flex items-center px-2 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                                     {% heroicon_outline "arrow-up-tray" size="12" class="mr-1" %}
                                     Upload File
                                 </a>
+                                <a href="{% url 'planning:design-discipline-edit' project.pk work_package.pk design_discipline.pk %}"
+                                   class="inline-flex items-center px-2 py-1 border border-blue-300 rounded text-xs font-medium text-blue-700 bg-white hover:bg-blue-50 transition-colors"
+                                   title="Edit">{% heroicon_outline "pencil" size="12" %}</a>
+                                <a href="{% url 'planning:design-discipline-delete' project.pk work_package.pk design_discipline.pk %}"
+                                   class="inline-flex items-center px-2 py-1 border border-red-300 rounded text-xs font-medium text-red-700 bg-white hover:bg-red-50 transition-colors"
+                                   title="Delete">{% heroicon_outline "trash" size="12" %}</a>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="flex items-center justify-between text-xs mb-1">
+                                <span class="text-gray-600">Progress</span>
+                                <span class="font-medium text-gray-900">{{ design_discipline.files.count }} / {{ design_discipline.required_quantity }} files ({{ design_discipline.progress }}%)</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-purple-500 h-2 rounded-full"
+                                     style="width: {{ design_discipline.progress }}%"></div>
                             </div>
                         </div>
                         {% if design_discipline.files.exists %}
