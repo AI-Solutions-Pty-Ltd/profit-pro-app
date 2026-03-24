@@ -323,28 +323,106 @@
                     <p class="text-xs text-gray-600">Manage compliance requirements</p>
                 </div>
             </div>
-            <div class="left-content gap-2">
-                <a href="{% url 'project:compliance-dashboard' project.pk %}"
-                   class="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
-                    <span class="text-sm font-medium text-indigo-700">Contractual</span>
-                </a>
-                <a href="{% url 'project:compliance-dashboard' project.pk %}"
-                   class="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
-                    <span class="text-sm font-medium text-indigo-700">Administrative</span>
-                </a>
-                <a href="{% url 'project:compliance-dashboard' project.pk %}"
-                   class="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
-                    <span class="text-sm font-medium text-indigo-700">Final Account</span>
-                </a>
-                <span class="flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed opacity-50">
-                    <span class="text-sm font-medium text-gray-400">Quality</span>
-                </span>
-                <span class="flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed opacity-50">
-                    <span class="text-sm font-medium text-gray-400">Safety</span>
-                </span>
-                <span class="flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed opacity-50">
-                    <span class="text-sm font-medium text-gray-400">Social Facilitation</span>
-                </span>
+            <div class="space-y-4">
+                <!-- E-Procurement Section -->
+                <div class="bg-gradient-to-br from-purple-50/50 to-indigo-50/30 rounded-lg p-3 border border-purple-100/50">
+                    <div class="flex items-center px-3 py-2 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-lg border border-purple-200 shadow-sm">
+                        {% heroicon_outline "shopping-cart" size="16" class="text-purple-600 mr-2" %}
+                        <span class="text-sm font-bold text-purple-800">E-PROCUREMENT</span>
+                        <span class="ml-auto px-2 py-0.5 bg-purple-200/50 rounded-full text-xs font-medium text-purple-700">5</span>
+                    </div>
+                    <div class="ml-4 mt-2 space-y-1">
+                        <a href="#"
+                           class="group flex items-center px-3 py-1.5 bg-white rounded-md border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 text-sm text-gray-700 hover:text-purple-700 hover:shadow-sm">
+                            {% heroicon_outline "key" size="14" class="mr-2 text-gray-400 group-hover:text-purple-500 transition-colors" %}
+                            Tenderer Access
+                            {% heroicon_outline "arrow-right" size="12" class="ml-auto opacity-0 group-hover:opacity-100 text-purple-500 transition-all" %}
+                        </a>
+                        <a href="#"
+                           class="group flex items-center px-3 py-1.5 bg-white rounded-md border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 text-sm text-gray-700 hover:text-purple-700 hover:shadow-sm">
+                            {% heroicon_outline "document-text" size="14" class="mr-2 text-gray-400 group-hover:text-purple-500 transition-colors" %}
+                            Tender Documents
+                            {% heroicon_outline "arrow-right" size="12" class="ml-auto opacity-0 group-hover:opacity-100 text-purple-500 transition-all" %}
+                        </a>
+                        <a href="#"
+                           class="group flex items-center px-3 py-1.5 bg-white rounded-md border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 text-sm text-gray-700 hover:text-purple-700 hover:shadow-sm">
+                            {% heroicon_outline "inbox" size="14" class="mr-2 text-gray-400 group-hover:text-purple-500 transition-colors" %}
+                            Submissions
+                            {% heroicon_outline "arrow-right" size="12" class="ml-auto opacity-0 group-hover:opacity-100 text-purple-500 transition-all" %}
+                        </a>
+                        <!-- Tender Evaluation with sub-items -->
+                        <div class="space-y-1">
+                            <a href="#"
+                               class="group flex items-center px-3 py-1.5 bg-white rounded-md border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 text-sm text-gray-700 hover:text-purple-700 hover:shadow-sm">
+                                {% heroicon_outline "clipboard-document-check" size="14" class="mr-2 text-gray-400 group-hover:text-purple-500 transition-colors" %}
+                                Tender Evaluation
+                                {% heroicon_outline "chevron-down" size="12" class="ml-auto text-gray-400 group-hover:text-purple-500 transition-all" %}
+                            </a>
+                            <div class="ml-6 space-y-1">
+                                <a href="#"
+                                   class="group flex items-center px-3 py-1 bg-gray-50 rounded-md border border-gray-200 hover:border-purple-200 hover:bg-purple-50 transition-all duration-200 text-xs text-gray-600 hover:text-purple-700">
+                                    <span class="w-4 h-4 bg-purple-100 rounded-full flex items-center justify-center mr-2 text-[10px] font-medium text-purple-600">a</span>
+                                    Commercial Evaluation
+                                    {% heroicon_outline "arrow-right" size="10" class="ml-auto opacity-0 group-hover:opacity-100 text-purple-500 transition-all" %}
+                                </a>
+                                <a href="#"
+                                   class="group flex items-center px-3 py-1 bg-gray-50 rounded-md border border-gray-200 hover:border-purple-200 hover:bg-purple-50 transition-all duration-200 text-xs text-gray-600 hover:text-purple-700">
+                                    <span class="w-4 h-4 bg-purple-100 rounded-full flex items-center justify-center mr-2 text-[10px] font-medium text-purple-600">b</span>
+                                    Compliance Evaluation
+                                    {% heroicon_outline "arrow-right" size="10" class="ml-auto opacity-0 group-hover:opacity-100 text-purple-500 transition-all" %}
+                                </a>
+                                <a href="#"
+                                   class="group flex items-center px-3 py-1 bg-gray-50 rounded-md border border-gray-200 hover:border-purple-200 hover:bg-purple-50 transition-all duration-200 text-xs text-gray-600 hover:text-purple-700">
+                                    <span class="w-4 h-4 bg-purple-100 rounded-full flex items-center justify-center mr-2 text-[10px] font-medium text-purple-600">c</span>
+                                    Health & Safety Evaluation
+                                    {% heroicon_outline "arrow-right" size="10" class="ml-auto opacity-0 group-hover:opacity-100 text-purple-500 transition-all" %}
+                                </a>
+                                <a href="#"
+                                   class="group flex items-center px-3 py-1 bg-gray-50 rounded-md border border-gray-200 hover:border-purple-200 hover:bg-purple-50 transition-all duration-200 text-xs text-gray-600 hover:text-purple-700">
+                                    <span class="w-4 h-4 bg-purple-100 rounded-full flex items-center justify-center mr-2 text-[10px] font-medium text-purple-600">d</span>
+                                    Schedule Evaluation
+                                    {% heroicon_outline "arrow-right" size="10" class="ml-auto opacity-0 group-hover:opacity-100 text-purple-500 transition-all" %}
+                                </a>
+                                <a href="#"
+                                   class="group flex items-center px-3 py-1 bg-gray-50 rounded-md border border-gray-200 hover:border-purple-200 hover:bg-purple-50 transition-all duration-200 text-xs text-gray-600 hover:text-purple-700">
+                                    <span class="w-4 h-4 bg-purple-100 rounded-full flex items-center justify-center mr-2 text-[10px] font-medium text-purple-600">e</span>
+                                    Methodology
+                                    {% heroicon_outline "arrow-right" size="10" class="ml-auto opacity-0 group-hover:opacity-100 text-purple-500 transition-all" %}
+                                </a>
+                            </div>
+                        </div>
+                        <a href="#"
+                           class="group flex items-center px-3 py-1.5 bg-white rounded-md border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200 text-sm text-gray-700 hover:text-purple-700 hover:shadow-sm">
+                            {% heroicon_outline "chart-bar" size="14" class="mr-2 text-gray-400 group-hover:text-purple-500 transition-colors" %}
+                            Evaluation Report
+                            {% heroicon_outline "arrow-right" size="12" class="ml-auto opacity-0 group-hover:opacity-100 text-purple-500 transition-all" %}
+                        </a>
+                    </div>
+                </div>
+                <!-- Original Compliance Items -->
+                <div class="left-content gap-2">
+                    <a href="{% url 'project:compliance-dashboard' project.pk %}"
+                       class="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
+                        <span class="text-sm font-medium text-indigo-700">Contractual</span>
+                    </a>
+                    <a href="{% url 'project:compliance-dashboard' project.pk %}"
+                       class="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
+                        <span class="text-sm font-medium text-indigo-700">Administrative</span>
+                    </a>
+                    <a href="{% url 'project:compliance-dashboard' project.pk %}"
+                       class="flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
+                        <span class="text-sm font-medium text-indigo-700">Final Account</span>
+                    </a>
+                    <span class="flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed opacity-50">
+                        <span class="text-sm font-medium text-gray-400">Quality</span>
+                    </span>
+                    <span class="flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed opacity-50">
+                        <span class="text-sm font-medium text-gray-400">Safety</span>
+                    </span>
+                    <span class="flex items-center justify-between px-3 py-2 bg-gray-100 rounded-lg border border-gray-200 cursor-not-allowed opacity-50">
+                        <span class="text-sm font-medium text-gray-400">Social Facilitation</span>
+                    </span>
+                </div>
             </div>
         </div>
     {% endif %}
