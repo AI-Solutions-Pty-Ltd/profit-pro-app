@@ -17,9 +17,7 @@
     <div class="bg-white rounded-xl border border-red-200 overflow-hidden max-w-2xl mx-auto">
         <div class="bg-red-50 p-6 border-b border-red-200">
             <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    {% heroicon_outline "exclamation-triangle" size="24" class="text-red-600" %}
-                </div>
+                <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" size="24" class="text-red-600" %}</div>
                 <div class="ml-3">
                     <h3 class="text-lg font-medium text-red-900">Confirm Deletion</h3>
                     <p class="text-sm text-red-700 mt-1">This action cannot be undone.</p>
@@ -33,9 +31,7 @@
             {% if object.files.count > 0 %}
                 <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
                     <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            {% heroicon_outline "exclamation-circle" size="20" class="text-amber-600" %}
-                        </div>
+                        <div class="flex-shrink-0">{% heroicon_outline "exclamation-circle" size="20" class="text-amber-600" %}</div>
                         <div class="ml-3">
                             <p class="text-sm text-amber-800">
                                 This {{ level }} has <strong>{{ object.files.count }} file(s)</strong> attached. All files will also be deleted.

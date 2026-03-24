@@ -4,18 +4,20 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('planning', '0006_remove_tenderdocument_file_tenderdocumentfile'),
+        ("planning", "0006_remove_tenderdocument_file_tenderdocumentfile"),
     ]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name='tenderdocument',
+            name="tenderdocument",
             unique_together=set(),
         ),
         migrations.AddConstraint(
-            model_name='tenderdocument',
-            constraint=models.UniqueConstraint(fields=('work_package', 'name'), name='unique_tender_document_per_work_package'),
+            model_name="tenderdocument",
+            constraint=models.UniqueConstraint(
+                fields=("work_package", "name"),
+                name="unique_tender_document_per_work_package",
+            ),
         ),
     ]

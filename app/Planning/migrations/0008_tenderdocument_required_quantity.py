@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('planning', '0007_alter_tenderdocument_unique_together_and_more'),
+        ("planning", "0007_alter_tenderdocument_unique_together_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='tenderdocument',
-            name='required_quantity',
+            model_name="tenderdocument",
+            name="required_quantity",
             field=models.PositiveIntegerField(default=1),
         ),
     ]

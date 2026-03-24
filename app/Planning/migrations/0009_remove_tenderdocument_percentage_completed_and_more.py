@@ -4,114 +4,137 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('planning', '0008_tenderdocument_required_quantity'),
+        ("planning", "0008_tenderdocument_required_quantity"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='tenderdocument',
-            name='percentage_completed',
+            model_name="tenderdocument",
+            name="percentage_completed",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='design_finish_date',
+            model_name="workpackage",
+            name="design_finish_date",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='design_start_date',
+            model_name="workpackage",
+            name="design_start_date",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='documentation_finish_date',
+            model_name="workpackage",
+            name="documentation_finish_date",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='documentation_start_date',
+            model_name="workpackage",
+            name="documentation_start_date",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='execution_finish_date',
+            model_name="workpackage",
+            name="execution_finish_date",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='execution_start_date',
+            model_name="workpackage",
+            name="execution_start_date",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='package_finish_date',
+            model_name="workpackage",
+            name="package_finish_date",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='package_start_date',
+            model_name="workpackage",
+            name="package_start_date",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='tender_finish_date',
+            model_name="workpackage",
+            name="tender_finish_date",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='tender_start_date',
+            model_name="workpackage",
+            name="tender_start_date",
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='applied_to_advert_end_date',
-            field=models.DateField(blank=True, help_text='Applied to advert end date', null=True),
+            model_name="workpackage",
+            name="applied_to_advert_end_date",
+            field=models.DateField(
+                blank=True, help_text="Applied to advert end date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='applied_to_advert_start_date',
-            field=models.DateField(blank=True, help_text='Applied to advert start date', null=True),
+            model_name="workpackage",
+            name="applied_to_advert_start_date",
+            field=models.DateField(
+                blank=True, help_text="Applied to advert start date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='award_contract_signing_end_date',
-            field=models.DateField(blank=True, help_text='Award and contract signing end date', null=True),
+            model_name="workpackage",
+            name="award_contract_signing_end_date",
+            field=models.DateField(
+                blank=True, help_text="Award and contract signing end date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='award_contract_signing_start_date',
-            field=models.DateField(blank=True, help_text='Award and contract signing start date', null=True),
+            model_name="workpackage",
+            name="award_contract_signing_start_date",
+            field=models.DateField(
+                blank=True, help_text="Award and contract signing start date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='mobilization_end_date',
-            field=models.DateField(blank=True, help_text='Mobilization end date', null=True),
+            model_name="workpackage",
+            name="mobilization_end_date",
+            field=models.DateField(
+                blank=True, help_text="Mobilization end date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='mobilization_start_date',
-            field=models.DateField(blank=True, help_text='Mobilization start date', null=True),
+            model_name="workpackage",
+            name="mobilization_start_date",
+            field=models.DateField(
+                blank=True, help_text="Mobilization start date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='site_inspection_end_date',
-            field=models.DateField(blank=True, help_text='Site inspection end date', null=True),
+            model_name="workpackage",
+            name="site_inspection_end_date",
+            field=models.DateField(
+                blank=True, help_text="Site inspection end date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='site_inspection_start_date',
-            field=models.DateField(blank=True, help_text='Site inspection start date', null=True),
+            model_name="workpackage",
+            name="site_inspection_start_date",
+            field=models.DateField(
+                blank=True, help_text="Site inspection start date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='tender_close_end_date',
-            field=models.DateField(blank=True, help_text='Tender close end date', null=True),
+            model_name="workpackage",
+            name="tender_close_end_date",
+            field=models.DateField(
+                blank=True, help_text="Tender close end date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='tender_close_start_date',
-            field=models.DateField(blank=True, help_text='Tender close start date', null=True),
+            model_name="workpackage",
+            name="tender_close_start_date",
+            field=models.DateField(
+                blank=True, help_text="Tender close start date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='tender_evaluation_end_date',
-            field=models.DateField(blank=True, help_text='Tender evaluation end date', null=True),
+            model_name="workpackage",
+            name="tender_evaluation_end_date",
+            field=models.DateField(
+                blank=True, help_text="Tender evaluation end date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='tender_evaluation_start_date',
-            field=models.DateField(blank=True, help_text='Tender evaluation start date', null=True),
+            model_name="workpackage",
+            name="tender_evaluation_start_date",
+            field=models.DateField(
+                blank=True, help_text="Tender evaluation start date", null=True
+            ),
         ),
     ]

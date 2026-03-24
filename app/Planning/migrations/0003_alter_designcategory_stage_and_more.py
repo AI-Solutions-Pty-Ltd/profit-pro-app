@@ -4,30 +4,61 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('planning', '0002_remove_workpackage_advert_end_date_and_more'),
+        ("planning", "0002_remove_workpackage_advert_end_date_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='designcategory',
-            name='stage',
-            field=models.CharField(choices=[('DESIGN_CRITERIA', 'Design Criteria'), ('DRAWINGS', 'Drawings')], default='DESIGN_CRITERIA', help_text='Current design stage', max_length=30),
+            model_name="designcategory",
+            name="stage",
+            field=models.CharField(
+                choices=[
+                    ("DESIGN_CRITERIA", "Design Criteria"),
+                    ("DRAWINGS", "Drawings"),
+                ],
+                default="DESIGN_CRITERIA",
+                help_text="Current design stage",
+                max_length=30,
+            ),
         ),
         migrations.AlterField(
-            model_name='designdiscipline',
-            name='stage',
-            field=models.CharField(choices=[('DESIGN_CRITERIA', 'Design Criteria'), ('DRAWINGS', 'Drawings')], default='DESIGN_CRITERIA', help_text='Current design stage', max_length=30),
+            model_name="designdiscipline",
+            name="stage",
+            field=models.CharField(
+                choices=[
+                    ("DESIGN_CRITERIA", "Design Criteria"),
+                    ("DRAWINGS", "Drawings"),
+                ],
+                default="DESIGN_CRITERIA",
+                help_text="Current design stage",
+                max_length=30,
+            ),
         ),
         migrations.AlterField(
-            model_name='designgroup',
-            name='stage',
-            field=models.CharField(choices=[('DESIGN_CRITERIA', 'Design Criteria'), ('DRAWINGS', 'Drawings')], default='DESIGN_CRITERIA', help_text='Current design stage', max_length=30),
+            model_name="designgroup",
+            name="stage",
+            field=models.CharField(
+                choices=[
+                    ("DESIGN_CRITERIA", "Design Criteria"),
+                    ("DRAWINGS", "Drawings"),
+                ],
+                default="DESIGN_CRITERIA",
+                help_text="Current design stage",
+                max_length=30,
+            ),
         ),
         migrations.AlterField(
-            model_name='designsubcategory',
-            name='stage',
-            field=models.CharField(choices=[('DESIGN_CRITERIA', 'Design Criteria'), ('DRAWINGS', 'Drawings')], default='DESIGN_CRITERIA', help_text='Current design stage', max_length=30),
+            model_name="designsubcategory",
+            name="stage",
+            field=models.CharField(
+                choices=[
+                    ("DESIGN_CRITERIA", "Design Criteria"),
+                    ("DRAWINGS", "Drawings"),
+                ],
+                default="DESIGN_CRITERIA",
+                help_text="Current design stage",
+                max_length=30,
+            ),
         ),
     ]
