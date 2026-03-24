@@ -220,7 +220,7 @@ class WorkPackage(BaseModel):
                 )
 
             # L3 - Groups
-            for group in self.project.groups.all():  # type: ignore
+            for group in self.project.groups.all():
                 DesignGroup.objects.get_or_create(
                     work_package=self,
                     group=group,

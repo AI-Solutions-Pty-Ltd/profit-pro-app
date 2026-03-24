@@ -3,6 +3,7 @@
 import json
 
 from django.contrib import messages
+from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.urls import reverse_lazy
 from django.views import View
@@ -43,7 +44,6 @@ from app.Planning.models import (
     WorkPackage,
 )
 from app.Project.models import Project, Role
-from django.db.models import Count, Q
 
 # =============================================================================
 # Shared Mixin

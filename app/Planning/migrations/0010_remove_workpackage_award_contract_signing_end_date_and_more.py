@@ -4,73 +4,94 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('planning', '0009_remove_tenderdocument_percentage_completed_and_more'),
+        ("planning", "0009_remove_tenderdocument_percentage_completed_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='workpackage',
-            name='award_contract_signing_end_date',
+            model_name="workpackage",
+            name="award_contract_signing_end_date",
         ),
         migrations.RemoveField(
-            model_name='workpackage',
-            name='award_contract_signing_start_date',
+            model_name="workpackage",
+            name="award_contract_signing_start_date",
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='applied_to_advert_completed',
-            field=models.BooleanField(default=False, help_text='Whether applied to advert milestone is completed'),
+            model_name="workpackage",
+            name="applied_to_advert_completed",
+            field=models.BooleanField(
+                default=False,
+                help_text="Whether applied to advert milestone is completed",
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='award_completed',
-            field=models.BooleanField(default=False, help_text='Whether award milestone is completed'),
+            model_name="workpackage",
+            name="award_completed",
+            field=models.BooleanField(
+                default=False, help_text="Whether award milestone is completed"
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='award_end_date',
-            field=models.DateField(blank=True, help_text='Award end date', null=True),
+            model_name="workpackage",
+            name="award_end_date",
+            field=models.DateField(blank=True, help_text="Award end date", null=True),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='award_start_date',
-            field=models.DateField(blank=True, help_text='Award start date', null=True),
+            model_name="workpackage",
+            name="award_start_date",
+            field=models.DateField(blank=True, help_text="Award start date", null=True),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='contract_signing_completed',
-            field=models.BooleanField(default=False, help_text='Whether contract signing milestone is completed'),
+            model_name="workpackage",
+            name="contract_signing_completed",
+            field=models.BooleanField(
+                default=False,
+                help_text="Whether contract signing milestone is completed",
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='contract_signing_end_date',
-            field=models.DateField(blank=True, help_text='Contract signing end date', null=True),
+            model_name="workpackage",
+            name="contract_signing_end_date",
+            field=models.DateField(
+                blank=True, help_text="Contract signing end date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='contract_signing_start_date',
-            field=models.DateField(blank=True, help_text='Contract signing start date', null=True),
+            model_name="workpackage",
+            name="contract_signing_start_date",
+            field=models.DateField(
+                blank=True, help_text="Contract signing start date", null=True
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='mobilization_completed',
-            field=models.BooleanField(default=False, help_text='Whether mobilization milestone is completed'),
+            model_name="workpackage",
+            name="mobilization_completed",
+            field=models.BooleanField(
+                default=False, help_text="Whether mobilization milestone is completed"
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='site_inspection_completed',
-            field=models.BooleanField(default=False, help_text='Whether site inspection milestone is completed'),
+            model_name="workpackage",
+            name="site_inspection_completed",
+            field=models.BooleanField(
+                default=False,
+                help_text="Whether site inspection milestone is completed",
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='tender_close_completed',
-            field=models.BooleanField(default=False, help_text='Whether tender close milestone is completed'),
+            model_name="workpackage",
+            name="tender_close_completed",
+            field=models.BooleanField(
+                default=False, help_text="Whether tender close milestone is completed"
+            ),
         ),
         migrations.AddField(
-            model_name='workpackage',
-            name='tender_evaluation_completed',
-            field=models.BooleanField(default=False, help_text='Whether tender evaluation milestone is completed'),
+            model_name="workpackage",
+            name="tender_evaluation_completed",
+            field=models.BooleanField(
+                default=False,
+                help_text="Whether tender evaluation milestone is completed",
+            ),
         ),
     ]

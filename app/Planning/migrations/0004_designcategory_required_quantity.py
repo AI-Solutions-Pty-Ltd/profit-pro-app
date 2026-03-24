@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('planning', '0003_alter_designcategory_stage_and_more'),
+        ("planning", "0003_alter_designcategory_stage_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='designcategory',
-            name='required_quantity',
+            model_name="designcategory",
+            name="required_quantity",
             field=models.PositiveBigIntegerField(default=1),
         ),
     ]
