@@ -1,7 +1,11 @@
 """Views for Planning & Procurement app."""
 
+import json
+
 from django.contrib import messages
+from django.http import JsonResponse
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -21,6 +25,7 @@ from app.Planning.forms import (
     DesignGroupForm,
     DesignSubCategoryFileForm,
     DesignSubCategoryForm,
+    TenderDocumentFileForm,
     TenderDocumentForm,
     WorkPackageForm,
 )
@@ -34,9 +39,11 @@ from app.Planning.models import (
     DesignSubCategory,
     DesignSubCategoryFile,
     TenderDocument,
+    TenderDocumentFile,
     WorkPackage,
 )
 from app.Project.models import Project, Role
+from django.db.models import Count, Q
 
 # =============================================================================
 # Shared Mixin
@@ -113,6 +120,90 @@ class WorkPackageListView(PlanningMixin, ListView):
             ),
             BreadcrumbItem(title="Work Packages", url=None),
         ]
+
+
+class TenderProcessSectionCompleteAPIView(PlanningMixin, View):
+    """Update completion state for a tender process section on a work package."""
+
+    section_to_field = {
+        "applied_to_advert": "applied_to_advert_completed",
+        "site_inspection": "site_inspection_completed",
+        "tender_close": "tender_close_completed",
+        "tender_evaluation": "tender_evaluation_completed",
+        "award": "award_completed",
+        "contract_signing": "contract_signing_completed",
+        "mobilization": "mobilization_completed",
+    }
+
+    @staticmethod
+    def _to_bool(value: str | bool | None) -> bool | None:
+        if isinstance(value, bool):
+            return value
+        if value is None:
+            return None
+        normalized = str(value).strip().lower()
+        if normalized in {"true", "1", "yes", "on"}:
+            return True
+        if normalized in {"false", "0", "no", "off"}:
+            return False
+        return None
+
+    def post(self, request, project_pk: int, wp_pk: int):
+        project = self.get_project()
+        work_package = WorkPackage.objects.filter(project=project, pk=wp_pk).first()
+        if work_package is None:
+            return JsonResponse(
+                {"success": False, "message": "Work package not found."}, status=404
+            )
+
+        payload: dict[str, str | bool | None] = {}
+        if (request.content_type or "").startswith("application/json"):
+            try:
+                payload = json.loads(request.body or "{}")
+            except json.JSONDecodeError:
+                return JsonResponse(
+                    {"success": False, "message": "Invalid JSON payload."},
+                    status=400,
+                )
+
+        section = str(payload.get("section") or request.POST.get("section") or "")
+        section = section.strip().lower()
+        if section not in self.section_to_field:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "message": "Invalid section.",
+                    "allowed_sections": sorted(self.section_to_field.keys()),
+                },
+                status=400,
+            )
+
+        requested_completed = payload.get("completed")
+        if requested_completed is None:
+            requested_completed = request.POST.get("completed")
+
+        completed = self._to_bool(requested_completed)
+        field_name = self.section_to_field[section]
+        current_value = bool(getattr(work_package, field_name))
+        next_value = (not current_value) if completed is None else completed
+
+        setattr(work_package, field_name, next_value)
+        work_package.save(update_fields=[field_name])
+
+        statuses = {
+            key: bool(getattr(work_package, value))
+            for key, value in self.section_to_field.items()
+        }
+        return JsonResponse(
+            {
+                "success": True,
+                "message": "Section completion updated.",
+                "work_package_id": work_package.pk,
+                "section": section,
+                "completed": next_value,
+                "statuses": statuses,
+            }
+        )
 
 
 class WorkPackageCreateView(PlanningMixin, CreateView):
@@ -306,17 +397,40 @@ class TenderDocumentUpdateView(PlanningMixin, UpdateView):
 
     def get_success_url(self):
         return reverse_lazy(
-            "planning:work-package-detail",
+            "planning:tender-documentation-overview",
             kwargs={
                 "project_pk": self.kwargs["project_pk"],
-                "pk": self.kwargs["wp_pk"],
             },
         )
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        return [
+            BreadcrumbItem(
+                title=project.name,
+                url=str(
+                    reverse_lazy(
+                        "project:project-management", kwargs={"pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title="Tender Document Overview",
+                url=str(
+                    reverse_lazy(
+                        "planning:tender-documentation-overview",
+                        kwargs={"project_pk": project.pk},
+                    )
+                ),
+            ),
+            BreadcrumbItem(title=f"Edit: {self.object.name}", url=None),
+        ]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         context["work_package"] = WorkPackage.objects.get(pk=self.kwargs["wp_pk"])
+        context["action"] = "Edit"
         return context
 
 
@@ -334,6 +448,60 @@ class TenderDocumentCreateView(PlanningMixin, CreateView):
 
     def get_success_url(self):
         return reverse_lazy(
+            "planning:tender-documentation-overview",
+            kwargs={
+                "project_pk": self.kwargs["project_pk"],
+            },
+        )
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        return [
+            BreadcrumbItem(
+                title=project.name,
+                url=str(
+                    reverse_lazy(
+                        "project:project-management", kwargs={"pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title="Tender Document Overview",
+                url=str(
+                    reverse_lazy(
+                        "planning:tender-documentation-overview",
+                        kwargs={"project_pk": project.pk},
+                    )
+                ),
+            ),
+            BreadcrumbItem(title="Add Tender Document", url=None),
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        context["work_package"] = WorkPackage.objects.get(pk=self.kwargs["wp_pk"])
+        context["action"] = "Add"
+        return context
+
+
+class TenderDocumentFileUploadView(PlanningMixin, CreateView):
+    """Upload a file to a tender document."""
+
+    model = TenderDocumentFile
+    form_class = TenderDocumentFileForm
+    template_name = "planning/tender_document/file_upload.html"
+
+    def form_valid(self, form):
+        form.instance.tender_document = TenderDocument.objects.get(
+            pk=self.kwargs["doc_pk"]
+        )
+        form.instance.uploaded_by = self.request.user
+        messages.success(self.request, "File uploaded successfully.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
             "planning:work-package-detail",
             kwargs={
                 "project_pk": self.kwargs["project_pk"],
@@ -341,11 +509,37 @@ class TenderDocumentCreateView(PlanningMixin, CreateView):
             },
         )
 
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        tender_doc = TenderDocument.objects.get(pk=self.kwargs["doc_pk"])
+        return [
+            BreadcrumbItem(
+                title=project.name,
+                url=str(
+                    reverse_lazy(
+                        "project:project-management", kwargs={"pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title="Tender Document Overview",
+                url=str(
+                    reverse_lazy(
+                        "planning:tender-documentation-overview",
+                        kwargs={"project_pk": project.pk},
+                    )
+                ),
+            ),
+            BreadcrumbItem(title=f"Upload: {tender_doc.name}", url=None),
+        ]
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         context["work_package"] = WorkPackage.objects.get(pk=self.kwargs["wp_pk"])
-        context["action"] = "Add"
+        context["tender_document"] = TenderDocument.objects.get(
+            pk=self.kwargs["doc_pk"]
+        )
         return context
 
 
@@ -371,6 +565,42 @@ class TenderDocumentDeleteView(PlanningMixin, DeleteView):
             },
         )
 
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        work_package = WorkPackage.objects.get(pk=self.kwargs["wp_pk"])
+        return [
+            BreadcrumbItem(
+                title="Projects",
+                url=str(reverse_lazy("project:project-list")),
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=str(
+                    reverse_lazy(
+                        "project:project-management", kwargs={"pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title="Work Packages",
+                url=str(
+                    reverse_lazy(
+                        "planning:work-package-list", kwargs={"project_pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title=work_package.name,
+                url=str(
+                    reverse_lazy(
+                        "planning:work-package-detail",
+                        kwargs={"project_pk": project.pk, "pk": work_package.pk},
+                    )
+                ),
+            ),
+            BreadcrumbItem(title=f"Delete: {self.object.name}", url=None),
+        ]
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
@@ -392,6 +622,42 @@ class DesignListView(PlanningMixin, DetailView):
     def get_queryset(self):
         return WorkPackage.objects.filter(project=self.get_project())
 
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        work_package = self.object
+        return [
+            BreadcrumbItem(
+                title="Projects",
+                url=str(reverse_lazy("project:project-list")),
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=str(
+                    reverse_lazy(
+                        "project:project-management", kwargs={"pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title="Work Packages",
+                url=str(
+                    reverse_lazy(
+                        "planning:work-package-list", kwargs={"project_pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title=work_package.name,
+                url=str(
+                    reverse_lazy(
+                        "planning:work-package-detail",
+                        kwargs={"project_pk": project.pk, "pk": work_package.pk},
+                    )
+                ),
+            ),
+            BreadcrumbItem(title="Design Development", url=None),
+        ]
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
@@ -409,44 +675,6 @@ class DesignListView(PlanningMixin, DetailView):
             "discipline"
         ).prefetch_related("files")
         return context
-
-    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
-        project = self.get_project()
-        wp = self.get_object()
-        return [
-            BreadcrumbItem(
-                title="Projects",
-                url=str(reverse_lazy("project:project-list")),
-            ),
-            BreadcrumbItem(
-                title=project.name,
-                url=str(
-                    reverse_lazy(
-                        "project:project-management",
-                        kwargs={"pk": project.pk},
-                    )
-                ),
-            ),
-            BreadcrumbItem(
-                title="Work Packages",
-                url=str(
-                    reverse_lazy(
-                        "planning:work-package-list",
-                        kwargs={"project_pk": project.pk},
-                    )
-                ),
-            ),
-            BreadcrumbItem(
-                title=wp.name,
-                url=str(
-                    reverse_lazy(
-                        "planning:work-package-detail",
-                        kwargs={"project_pk": project.pk, "pk": wp.pk},
-                    )
-                ),
-            ),
-            BreadcrumbItem(title="Design Development", url=None),
-        ]
 
 
 # --- Design Category (L1) ---
@@ -479,6 +707,50 @@ class DesignCategoryCreateView(PlanningMixin, CreateView):
             },
         )
 
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        work_package = WorkPackage.objects.get(pk=self.kwargs["wp_pk"])
+        return [
+            BreadcrumbItem(
+                title="Projects", url=str(reverse_lazy("project:project-list"))
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=str(
+                    reverse_lazy(
+                        "project:project-management", kwargs={"pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title="Work Packages",
+                url=str(
+                    reverse_lazy(
+                        "planning:work-package-list", kwargs={"project_pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title=work_package.name,
+                url=str(
+                    reverse_lazy(
+                        "planning:work-package-detail",
+                        kwargs={"project_pk": project.pk, "pk": work_package.pk},
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title="Design Development",
+                url=str(
+                    reverse_lazy(
+                        "planning:design-list",
+                        kwargs={"project_pk": project.pk, "pk": work_package.pk},
+                    )
+                ),
+            ),
+            BreadcrumbItem(title="Add L1 Category", url=None),
+        ]
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
@@ -510,6 +782,53 @@ class DesignCategoryFileUploadView(PlanningMixin, CreateView):
                 "pk": self.kwargs["wp_pk"],
             },
         )
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        work_package = WorkPackage.objects.get(pk=self.kwargs["wp_pk"])
+        design_item = DesignCategory.objects.select_related("category").get(
+            pk=self.kwargs["design_pk"]
+        )
+        return [
+            BreadcrumbItem(
+                title="Projects", url=str(reverse_lazy("project:project-list"))
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=str(
+                    reverse_lazy(
+                        "project:project-management", kwargs={"pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title="Work Packages",
+                url=str(
+                    reverse_lazy(
+                        "planning:work-package-list", kwargs={"project_pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title=work_package.name,
+                url=str(
+                    reverse_lazy(
+                        "planning:work-package-detail",
+                        kwargs={"project_pk": project.pk, "pk": work_package.pk},
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title="Design Development",
+                url=str(
+                    reverse_lazy(
+                        "planning:design-list",
+                        kwargs={"project_pk": project.pk, "pk": work_package.pk},
+                    )
+                ),
+            ),
+            BreadcrumbItem(title=f"Upload: {design_item.category.name}", url=None),
+        ]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -738,4 +1057,509 @@ class DesignDisciplineFileUploadView(PlanningMixin, CreateView):
             "discipline"
         ).get(pk=self.kwargs["design_pk"])
         context["level"] = "L4 - Discipline"
+        return context
+
+
+# Design Edit Views
+
+
+class DesignCategoryUpdateView(PlanningMixin, UpdateView):
+    """Edit a design category (L1)."""
+
+    model = DesignCategory
+    form_class = DesignCategoryForm
+    template_name = "planning/design/design_form.html"
+
+    def get_queryset(self):
+        return DesignCategory.objects.filter(
+            work_package__project=self.get_project(),
+            work_package_id=self.kwargs["wp_pk"],
+        )
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        project = self.get_project()
+        form.fields["category"].queryset = project.categories.all()
+        return form
+
+    def form_valid(self, form):
+        messages.success(self.request, "Design category updated.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "planning:design-list",
+            kwargs={
+                "project_pk": self.kwargs["project_pk"],
+                "pk": self.kwargs["wp_pk"],
+            },
+        )
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        work_package = WorkPackage.objects.get(pk=self.kwargs["wp_pk"])
+        return [
+            BreadcrumbItem(
+                title="Projects", url=str(reverse_lazy("project:project-list"))
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=str(
+                    reverse_lazy(
+                        "project:project-management", kwargs={"pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title="Work Packages",
+                url=str(
+                    reverse_lazy(
+                        "planning:work-package-list", kwargs={"project_pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title=work_package.name,
+                url=str(
+                    reverse_lazy(
+                        "planning:work-package-detail",
+                        kwargs={"project_pk": project.pk, "pk": work_package.pk},
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title="Design Development",
+                url=str(
+                    reverse_lazy(
+                        "planning:design-list",
+                        kwargs={"project_pk": project.pk, "pk": work_package.pk},
+                    )
+                ),
+            ),
+            BreadcrumbItem(title=f"Edit: {self.object.category.name}", url=None),
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        context["work_package"] = WorkPackage.objects.get(pk=self.kwargs["wp_pk"])
+        context["level"] = "L1 - Category"
+        context["action"] = "Edit"
+        return context
+
+
+class DesignSubCategoryUpdateView(PlanningMixin, UpdateView):
+    """Edit a design subcategory (L2)."""
+
+    model = DesignSubCategory
+    form_class = DesignSubCategoryForm
+    template_name = "planning/design/design_form.html"
+
+    def get_queryset(self):
+        return DesignSubCategory.objects.filter(
+            work_package__project=self.get_project(),
+            work_package_id=self.kwargs["wp_pk"],
+        )
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        project = self.get_project()
+        form.fields["sub_category"].queryset = project.subcategories.all()
+        return form
+
+    def form_valid(self, form):
+        messages.success(self.request, "Design subcategory updated.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "planning:design-list",
+            kwargs={
+                "project_pk": self.kwargs["project_pk"],
+                "pk": self.kwargs["wp_pk"],
+            },
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        context["work_package"] = WorkPackage.objects.get(pk=self.kwargs["wp_pk"])
+        context["level"] = "L2 - SubCategory"
+        context["action"] = "Edit"
+        return context
+
+
+class DesignGroupUpdateView(PlanningMixin, UpdateView):
+    """Edit a design group (L3)."""
+
+    model = DesignGroup
+    form_class = DesignGroupForm
+    template_name = "planning/design/design_form.html"
+
+    def get_queryset(self):
+        return DesignGroup.objects.filter(
+            work_package__project=self.get_project(),
+            work_package_id=self.kwargs["wp_pk"],
+        )
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        project = self.get_project()
+        form.fields["group"].queryset = project.groups.all()  # type: ignore
+        return form
+
+    def form_valid(self, form):
+        messages.success(self.request, "Design group updated.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "planning:design-list",
+            kwargs={
+                "project_pk": self.kwargs["project_pk"],
+                "pk": self.kwargs["wp_pk"],
+            },
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        context["work_package"] = WorkPackage.objects.get(pk=self.kwargs["wp_pk"])
+        context["level"] = "L3 - Group"
+        context["action"] = "Edit"
+        return context
+
+
+class DesignDisciplineUpdateView(PlanningMixin, UpdateView):
+    """Edit a design discipline (L4)."""
+
+    model = DesignDiscipline
+    form_class = DesignDisciplineForm
+    template_name = "planning/design/design_form.html"
+
+    def get_queryset(self):
+        return DesignDiscipline.objects.filter(
+            work_package__project=self.get_project(),
+            work_package_id=self.kwargs["wp_pk"],
+        )
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        project = self.get_project()
+        form.fields["discipline"].queryset = project.disciplines.all()
+        return form
+
+    def form_valid(self, form):
+        messages.success(self.request, "Design discipline updated.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "planning:design-list",
+            kwargs={
+                "project_pk": self.kwargs["project_pk"],
+                "pk": self.kwargs["wp_pk"],
+            },
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        context["work_package"] = WorkPackage.objects.get(pk=self.kwargs["wp_pk"])
+        context["level"] = "L4 - Discipline"
+        context["action"] = "Edit"
+        return context
+
+
+# Design Delete Views
+
+
+class DesignCategoryDeleteView(PlanningMixin, DeleteView):
+    """Delete a design category (L1)."""
+
+    model = DesignCategory
+    template_name = "planning/design/confirm_delete.html"
+
+    def get_queryset(self):
+        return DesignCategory.objects.filter(
+            work_package__project=self.get_project(),
+            work_package_id=self.kwargs["wp_pk"],
+        )
+
+    def get_success_url(self):
+        messages.success(self.request, "Design category deleted successfully.")
+        return reverse_lazy(
+            "planning:design-list",
+            kwargs={
+                "project_pk": self.kwargs["project_pk"],
+                "pk": self.kwargs["wp_pk"],
+            },
+        )
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        work_package = WorkPackage.objects.get(pk=self.kwargs["wp_pk"])
+        return [
+            BreadcrumbItem(
+                title="Projects", url=str(reverse_lazy("project:project-list"))
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=str(
+                    reverse_lazy(
+                        "project:project-management", kwargs={"pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title="Work Packages",
+                url=str(
+                    reverse_lazy(
+                        "planning:work-package-list", kwargs={"project_pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title=work_package.name,
+                url=str(
+                    reverse_lazy(
+                        "planning:work-package-detail",
+                        kwargs={"project_pk": project.pk, "pk": work_package.pk},
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title="Design Development",
+                url=str(
+                    reverse_lazy(
+                        "planning:design-list",
+                        kwargs={"project_pk": project.pk, "pk": work_package.pk},
+                    )
+                ),
+            ),
+            BreadcrumbItem(title=f"Delete: {self.object.category.name}", url=None),
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        context["work_package"] = WorkPackage.objects.get(pk=self.kwargs["wp_pk"])
+        context["level"] = "L1 - Category"
+        return context
+
+
+class DesignSubCategoryDeleteView(PlanningMixin, DeleteView):
+    """Delete a design subcategory (L2)."""
+
+    model = DesignSubCategory
+    template_name = "planning/design/confirm_delete.html"
+
+    def get_queryset(self):
+        return DesignSubCategory.objects.filter(
+            work_package__project=self.get_project(),
+            work_package_id=self.kwargs["wp_pk"],
+        )
+
+    def get_success_url(self):
+        messages.success(self.request, "Design subcategory deleted successfully.")
+        return reverse_lazy(
+            "planning:design-list",
+            kwargs={
+                "project_pk": self.kwargs["project_pk"],
+                "pk": self.kwargs["wp_pk"],
+            },
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        context["work_package"] = WorkPackage.objects.get(pk=self.kwargs["wp_pk"])
+        context["level"] = "L2 - SubCategory"
+        return context
+
+
+class DesignGroupDeleteView(PlanningMixin, DeleteView):
+    """Delete a design group (L3)."""
+
+    model = DesignGroup
+    template_name = "planning/design/confirm_delete.html"
+
+    def get_queryset(self):
+        return DesignGroup.objects.filter(
+            work_package__project=self.get_project(),
+            work_package_id=self.kwargs["wp_pk"],
+        )
+
+    def get_success_url(self):
+        messages.success(self.request, "Design group deleted successfully.")
+        return reverse_lazy(
+            "planning:design-list",
+            kwargs={
+                "project_pk": self.kwargs["project_pk"],
+                "pk": self.kwargs["wp_pk"],
+            },
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        context["work_package"] = WorkPackage.objects.get(pk=self.kwargs["wp_pk"])
+        context["level"] = "L3 - Group"
+        return context
+
+
+class DesignDisciplineDeleteView(PlanningMixin, DeleteView):
+    """Delete a design discipline (L4)."""
+
+    model = DesignDiscipline
+    template_name = "planning/design/confirm_delete.html"
+
+    def get_queryset(self):
+        return DesignDiscipline.objects.filter(
+            work_package__project=self.get_project(),
+            work_package_id=self.kwargs["wp_pk"],
+        )
+
+    def get_success_url(self):
+        messages.success(self.request, "Design discipline deleted successfully.")
+        return reverse_lazy(
+            "planning:design-list",
+            kwargs={
+                "project_pk": self.kwargs["project_pk"],
+                "pk": self.kwargs["wp_pk"],
+            },
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        context["work_package"] = WorkPackage.objects.get(pk=self.kwargs["wp_pk"])
+        context["level"] = "L4 - Discipline"
+        return context
+
+
+# =============================================================================
+# Overview Pages
+# =============================================================================
+
+
+class DesignDevelopmentOverviewView(PlanningMixin, ListView):
+    """Overview of design development across all work packages in a project."""
+
+    model = WorkPackage
+    template_name = "planning/overview/design_development.html"
+    context_object_name = "work_packages"
+
+    def get_queryset(self):
+        project = self.get_project()
+        return (
+            WorkPackage.objects.filter(project=project)
+            .prefetch_related(
+                "design_categories",
+                "design_subcategories",
+                "design_groups",
+                "design_disciplines",
+            )
+            .annotate(
+                total_design_items=Count("design_categories")
+                + Count("design_subcategories")
+                + Count("design_groups")
+                + Count("design_disciplines"),
+                approved_design_items=Count(
+                    "design_categories", filter=Q(design_categories__approved=True)
+                )
+                + Count(
+                    "design_subcategories",
+                    filter=Q(design_subcategories__approved=True),
+                )
+                + Count("design_groups", filter=Q(design_groups__approved=True))
+                + Count(
+                    "design_disciplines", filter=Q(design_disciplines__approved=True)
+                ),
+            )
+        )
+
+    def get_breadcrumbs(self):
+        project = self.get_project()
+        return [
+            BreadcrumbItem(
+                title="Projects",
+                url=str(reverse_lazy("project:project-list")),
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=str(reverse_lazy("project:project-management", args=[project.pk])),
+            ),
+            BreadcrumbItem(title="Design Development Overview", url=None),
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context
+
+
+class TenderDocumentationOverviewView(PlanningMixin, ListView):
+    """Overview of tender documentation across all work packages in a project."""
+
+    model = WorkPackage
+    template_name = "planning/overview/tender_documentation.html"
+    context_object_name = "work_packages"
+
+    def get_queryset(self):
+        project = self.get_project()
+        return WorkPackage.objects.filter(project=project).prefetch_related(
+            "tender_documents"
+        )
+
+    def get_breadcrumbs(self):
+        project = self.get_project()
+        return [
+            BreadcrumbItem(
+                title="Projects",
+                url=str(reverse_lazy("project:project-list")),
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=str(reverse_lazy("project:project-management", args=[project.pk])),
+            ),
+            BreadcrumbItem(title="Tender Documentation Overview", url=None),
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context
+
+
+class TenderProcessOverviewView(PlanningMixin, ListView):
+    """Overview of tender process timeline across all work packages in a project."""
+
+    model = WorkPackage
+    template_name = "planning/overview/tender_process.html"
+    context_object_name = "work_packages"
+
+    def get_queryset(self):
+        project = self.get_project()
+        return WorkPackage.objects.filter(project=project).order_by(
+            "applied_to_advert_start_date"
+        )
+
+    def get_breadcrumbs(self):
+        project = self.get_project()
+        return [
+            BreadcrumbItem(
+                title="Projects",
+                url=str(reverse_lazy("project:project-list")),
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=str(reverse_lazy("project:project-management", args=[project.pk])),
+            ),
+            BreadcrumbItem(title="Tender Process Overview", url=None),
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
         return context

@@ -59,13 +59,13 @@ class WorkPackageAdmin(admin.ModelAdmin):
         "name",
         "package_number",
         "project",
-        "package_start_date",
-        "package_finish_date",
+        "applied_to_advert_start_date",
+        "mobilization_end_date",
         "package_budget",
     ]
     list_filter = [
-        "package_start_date",
-        "package_finish_date",
+        "applied_to_advert_start_date",
+        "mobilization_end_date",
     ]
     search_fields = ["name", "package_number", "project__name"]
     inlines = [TenderDocumentInline]
@@ -78,7 +78,6 @@ class TenderDocumentAdmin(admin.ModelAdmin):
     list_display = [
         "name",
         "work_package",
-        "percentage_completed",
         "planned_date",
         "actual_date",
     ]

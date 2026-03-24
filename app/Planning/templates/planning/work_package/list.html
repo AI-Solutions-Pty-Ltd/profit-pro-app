@@ -27,148 +27,172 @@
         </div>
     </div>
     {% if work_packages %}
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {% for wp in work_packages %}
-                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                    <!-- Header Section -->
-                    <div class="bg-gradient-to-r from-emerald-50 to-blue-50 p-5 border-b border-gray-200">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-2">
-                                    {% if wp.package_number %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                                            {{ wp.package_number }}
-                                        </span>
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Package
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Budget
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Applied to Advert
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Site Inspection
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Tender Close
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Evaluation
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Award
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Contract Signing
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for wp in work_packages %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            {% if wp.package_number %}
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                                    {{ wp.package_number }}
+                                                </span>
+                                            {% endif %}
+                                            {% if wp.budget_structure_file %}
+                                                <a href="{{ wp.budget_structure_file.url }}"
+                                                   target="_blank"
+                                                   title="Budget Structure File">
+                                                    {% heroicon_outline "document-text" size="14" class="text-blue-600 hover:text-blue-800" %}
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                        <div class="text-sm font-medium text-gray-900">{{ wp.name }}</div>
+                                        {% if wp.description %}<div class="text-xs text-gray-500 mt-1 line-clamp-2">{{ wp.description }}</div>{% endif %}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {% if wp.package_budget|floatformat:2|intcomma %}
+                                        <div class="text-sm font-semibold text-emerald-600">R {{ wp.package_budget|floatformat:0 }}</div>
+                                    {% else %}
+                                        <span class="text-xs text-gray-400">-</span>
                                     {% endif %}
-                                    {% if wp.budget_structure_file %}
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            {% heroicon_outline "document-text" size="12" class="inline mr-0.5" %}
-                                            Budget File
-                                        </span>
-                                    {% endif %}
-                                </div>
-                                <h3 class="text-xl font-bold text-gray-900 mb-1">{{ wp.name }}</h3>
-                                {% if wp.description %}<p class="text-sm text-gray-600 line-clamp-2">{{ wp.description }}</p>{% endif %}
-                            </div>
-                            {% if wp.package_budget %}
-                                <div class="ml-4 text-right">
-                                    <p class="text-xs text-gray-500 mb-1">Budget</p>
-                                    <p class="text-lg font-bold text-emerald-600">R {{ wp.package_budget|floatformat:0 }}</p>
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <!-- Timeline Section -->
-                    <div class="p-5">
-                        <!-- Overall Package Timeline -->
-                        {% if wp.package_start_date or wp.package_finish_date %}
-                            <div class="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                <div class="flex items-center mb-2">
-                                    {% heroicon_outline "calendar-days" size="16" class="text-gray-600 mr-2" %}
-                                    <span class="text-sm font-semibold text-gray-900">Overall Timeline</span>
-                                </div>
-                                <div class="flex items-center text-xs text-gray-600">
-                                    <span class="font-medium">{{ wp.package_start_date|date:"M d, Y"|default:"TBD" }}</span>
-                                    <span class="mx-2">→</span>
-                                    <span class="font-medium">{{ wp.package_finish_date|date:"M d, Y"|default:"TBD" }}</span>
-                                </div>
-                            </div>
-                        {% endif %}
-                        <!-- Stage Timeline Grid -->
-                        <div class="grid grid-cols-2 gap-3 mb-4">
-                            <!-- Design Stage -->
-                            {% if wp.design_start_date or wp.design_finish_date %}
-                                <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                    <div class="flex items-center mb-2">
-                                        {% heroicon_outline "pencil-square" size="14" class="text-blue-600 mr-1.5" %}
-                                        <span class="text-xs font-semibold text-blue-900">Design</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-xs">
+                                        <div class="text-gray-900">{{ wp.applied_to_advert_start_date|date:"M d, Y"|default:"TBD" }}</div>
+                                        <div class="text-gray-500">{{ wp.applied_to_advert_end_date|date:"M d, Y"|default:"TBD" }}</div>
+                                        <div class="text-[11px] {% if wp.applied_to_advert_completed %}text-emerald-600{% else %}text-gray-500{% endif %}">
+                                            {% if wp.applied_to_advert_completed %}
+                                                Completed
+                                            {% else %}
+                                                Pending
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                    <div class="text-xs text-blue-700">
-                                        <div>{{ wp.design_start_date|date:"M d"|default:"TBD" }}</div>
-                                        <div class="text-blue-500">to</div>
-                                        <div>{{ wp.design_finish_date|date:"M d"|default:"TBD" }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-xs">
+                                        <div class="text-blue-900">{{ wp.site_inspection_start_date|date:"M d"|default:"TBD" }}</div>
+                                        <div class="text-blue-600">{{ wp.site_inspection_end_date|date:"M d"|default:"TBD" }}</div>
+                                        <div class="text-[11px] {% if wp.site_inspection_completed %}text-emerald-600{% else %}text-gray-500{% endif %}">
+                                            {% if wp.site_inspection_completed %}
+                                                Completed
+                                            {% else %}
+                                                Pending
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                </div>
-                            {% endif %}
-                            <!-- Documentation Stage -->
-                            {% if wp.documentation_start_date or wp.documentation_finish_date %}
-                                <div class="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-                                    <div class="flex items-center mb-2">
-                                        {% heroicon_outline "document-text" size="14" class="text-emerald-600 mr-1.5" %}
-                                        <span class="text-xs font-semibold text-emerald-900">Documentation</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-xs">
+                                        <div class="text-emerald-900">{{ wp.tender_close_start_date|date:"M d"|default:"TBD" }}</div>
+                                        <div class="text-emerald-600">{{ wp.tender_close_end_date|date:"M d"|default:"TBD" }}</div>
+                                        <div class="text-[11px] {% if wp.tender_close_completed %}text-emerald-600{% else %}text-gray-500{% endif %}">
+                                            {% if wp.tender_close_completed %}
+                                                Completed
+                                            {% else %}
+                                                Pending
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                    <div class="text-xs text-emerald-700">
-                                        <div>{{ wp.documentation_start_date|date:"M d"|default:"TBD" }}</div>
-                                        <div class="text-emerald-500">to</div>
-                                        <div>{{ wp.documentation_finish_date|date:"M d"|default:"TBD" }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-xs">
+                                        <div class="text-amber-900">{{ wp.tender_evaluation_start_date|date:"M d"|default:"TBD" }}</div>
+                                        <div class="text-amber-600">{{ wp.tender_evaluation_end_date|date:"M d"|default:"TBD" }}</div>
+                                        <div class="text-[11px] {% if wp.tender_evaluation_completed %}text-emerald-600{% else %}text-gray-500{% endif %}">
+                                            {% if wp.tender_evaluation_completed %}
+                                                Completed
+                                            {% else %}
+                                                Pending
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                </div>
-                            {% endif %}
-                            <!-- Tender Stage -->
-                            {% if wp.tender_start_date or wp.tender_finish_date %}
-                                <div class="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                                    <div class="flex items-center mb-2">
-                                        {% heroicon_outline "clipboard-document-list" size="14" class="text-amber-600 mr-1.5" %}
-                                        <span class="text-xs font-semibold text-amber-900">Tender</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-xs">
+                                        <div class="text-purple-900">{{ wp.award_start_date|date:"M d"|default:"TBD" }}</div>
+                                        <div class="text-purple-600">{{ wp.award_end_date|date:"M d"|default:"TBD" }}</div>
+                                        <div class="text-[11px] {% if wp.award_completed %}text-emerald-600{% else %}text-gray-500{% endif %}">
+                                            {% if wp.award_completed %}
+                                                Completed
+                                            {% else %}
+                                                Pending
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                    <div class="text-xs text-amber-700">
-                                        <div>{{ wp.tender_start_date|date:"M d"|default:"TBD" }}</div>
-                                        <div class="text-amber-500">to</div>
-                                        <div>{{ wp.tender_finish_date|date:"M d"|default:"TBD" }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-xs">
+                                        <div class="text-fuchsia-900">{{ wp.contract_signing_start_date|date:"M d"|default:"TBD" }}</div>
+                                        <div class="text-fuchsia-600">{{ wp.contract_signing_end_date|date:"M d"|default:"TBD" }}</div>
+                                        <div class="text-[11px] {% if wp.contract_signing_completed %}text-emerald-600{% else %}text-gray-500{% endif %}">
+                                            {% if wp.contract_signing_completed %}
+                                                Completed
+                                            {% else %}
+                                                Pending
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                </div>
-                            {% endif %}
-                            <!-- Execution Stage -->
-                            {% if wp.execution_start_date or wp.execution_finish_date %}
-                                <div class="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                                    <div class="flex items-center mb-2">
-                                        {% heroicon_outline "wrench-screwdriver" size="14" class="text-purple-600 mr-1.5" %}
-                                        <span class="text-xs font-semibold text-purple-900">Execution</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <a href="{% url 'planning:work-package-detail' project.pk wp.pk %}"
+                                           class="text-emerald-600 hover:text-emerald-900"
+                                           title="View Details">{% heroicon_outline "eye" size="16" %}</a>
+                                        <a href="{% url 'planning:work-package-update' project.pk wp.pk %}"
+                                           class="text-blue-600 hover:text-blue-900"
+                                           title="Edit">{% heroicon_outline "pencil" size="16" %}</a>
                                     </div>
-                                    <div class="text-xs text-purple-700">
-                                        <div>{{ wp.execution_start_date|date:"M d"|default:"TBD" }}</div>
-                                        <div class="text-purple-500">to</div>
-                                        <div>{{ wp.execution_finish_date|date:"M d"|default:"TBD" }}</div>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        </div>
-                        <!-- Metadata Footer -->
-                        <div class="flex items-center justify-between text-xs text-gray-500 mb-3 pt-3 border-t border-gray-200">
-                            <div class="flex items-center">
-                                {% heroicon_outline "clock" size="12" class="mr-1" %}
-                                <span>Created {{ wp.created_at|date:"M d, Y" }}</span>
-                            </div>
-                            {% if wp.updated_at != wp.created_at %}
-                                <div class="flex items-center">
-                                    {% heroicon_outline "arrow-path" size="12" class="mr-1" %}
-                                    <span>Updated {{ wp.updated_at|timesince }} ago</span>
-                                </div>
-                            {% endif %}
-                        </div>
-                        <!-- Action Buttons -->
-                        <div class="flex items-center gap-2">
-                            <a href="{% url 'planning:work-package-detail' project.pk wp.pk %}"
-                               class="flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
-                                {% heroicon_outline "eye" size="16" class="mr-1.5" %}
-                                View Details
-                            </a>
-                            <a href="{% url 'planning:work-package-update' project.pk wp.pk %}"
-                               class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
-                                {% heroicon_outline "pencil" size="16" %}
-                            </a>
-                            {% if wp.budget_structure_file %}
-                                <a href="{{ wp.budget_structure_file.url }}"
-                                   target="_blank"
-                                   class="inline-flex items-center justify-center px-4 py-2 border border-blue-300 text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
-                                   title="Download Budget Structure">
-                                    {% heroicon_outline "document-arrow-down" size="16" %}
-                                </a>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     {% else %}
         <div class="bg-white rounded-xl border border-gray-200 centered-content mt-4">

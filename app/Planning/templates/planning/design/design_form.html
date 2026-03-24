@@ -39,6 +39,7 @@
                     <div>{{ form.discipline|as_crispy_field }}</div>
                 {% endif %}
                 <div>{{ form.stage|as_crispy_field }}</div>
+                <div>{{ form.required_quantity|as_crispy_field }}</div>
             </div>
             <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
                 <a href="{% url 'planning:design-list' project.pk work_package.pk %}"
