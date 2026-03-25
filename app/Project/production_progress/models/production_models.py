@@ -24,6 +24,7 @@ class ProductionPlan(BaseModel):
     finish_date = models.DateField()
     quantity = models.DecimalField(max_digits=15, decimal_places=2)
     unit = models.CharField(max_length=50)
+    duration = models.IntegerField(default=0, help_text="Duration in days")
 
     class Meta:
         verbose_name = "Production Plan"
@@ -33,8 +34,9 @@ class ProductionPlan(BaseModel):
     def __str__(self):
         return f"{self.project.name} - {self.activity}"
 
-    @property
-    def duration(self):
+    def save(self, *args, **kwargs):
         if self.start_date and self.finish_date:
-            return (self.finish_date - self.start_date).days
-        return 0
+            self.duration = (self.finish_date - self.start_date).days
+        else:
+            self.duration = 0
+        super().save(*args, **kwargs)

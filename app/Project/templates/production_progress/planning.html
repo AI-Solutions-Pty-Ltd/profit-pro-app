@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% load heroicons %}
+{% load crispy_forms_tags %}
 
 {% block title %} 
   Production Planning - {{ project.name }} - {{ block.super }} 
@@ -36,63 +37,32 @@
         
         <!-- Activity -->
         <div class="md:col-span-2">
-          <label for="activity" class="block text-sm font-medium text-gray-700">Activity</label>
-          <div class="mt-1">
-            <!-- Added bg-white and text-gray-900 for explicit light theme visibility -->
-            <input type="text" id="activity" name="activity" value="{{ form.activity.value|default_if_none:'' }}" required class="bg-white text-gray-900 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 pl-3 pb-2 pr-3 border" placeholder="Enter Activity (e.g., Bricks)">
-            {% if form.activity.errors %}
-              <p class="mt-2 text-sm text-red-600">{{ form.activity.errors.0 }}</p>
-            {% endif %}
-          </div>
+            {{ form.activity|as_crispy_field }}
         </div>
 
         <!-- Start Date -->
         <div>
-          <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
-          <div class="mt-1">
-            <!-- Ensure explicit input styling for light theme override (bg-white text-gray-900) -->
-            <input type="date" name="start_date" id="start_date" value="{{ form.start_date.value|default_if_none:''|date:'Y-m-d' }}" required onchange="calculateDuration()" style="color-scheme: light;" class="bg-white text-gray-900 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 pl-3 pr-3 border">
-            {% if form.start_date.errors %}
-              <p class="mt-2 text-sm text-red-600">{{ form.start_date.errors.0 }}</p>
-            {% endif %}
-          </div>
+            {{ form.start_date|as_crispy_field }}
         </div>
 
         <!-- Finish Date -->
         <div>
-          <label for="finish_date" class="block text-sm font-medium text-gray-700">Finish Date</label>
-          <div class="mt-1">
-            <input type="date" name="finish_date" id="finish_date" value="{{ form.finish_date.value|default_if_none:''|date:'Y-m-d' }}" required onchange="calculateDuration()" style="color-scheme: light;" class="bg-white text-gray-900 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 pl-3 pr-3 border">
-            {% if form.finish_date.errors %}
-              <p class="mt-2 text-sm text-red-600">{{ form.finish_date.errors.0 }}</p>
-            {% endif %}
-          </div>
+            {{ form.finish_date|as_crispy_field }}
         </div>
 
         <!-- Duration (Auto Calculated) -->
         <div>
-          <label for="duration" class="block text-sm font-medium text-gray-700">Duration</label>
-          <div class="mt-1 flex rounded-md shadow-sm">
-            <input type="number" name="duration" id="duration" readonly tabindex="-1" class="bg-gray-50 text-gray-500 flex-1 block w-full rounded-none rounded-l-md sm:text-sm border-gray-300 py-2 pl-3 pr-3 border text-right focus:outline-none cursor-not-allowed" placeholder="0">
-            <span class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-100 text-gray-500 sm:text-sm">
-              days
-            </span>
-          </div>
+            {{ form.duration|as_crispy_field }}
         </div>
-
+        
         <!-- Quantity -->
         <div>
-          <label for="quantity" class="block text-sm font-medium text-gray-700">Quantity</label>
-          <div class="mt-1 flex rounded-md shadow-sm">
-            <input type="number" name="quantity" id="quantity" step="1" value="{{ form.quantity.value|default_if_none:'' }}" required class="bg-white text-gray-900 focus:ring-indigo-500 focus:border-indigo-500 flex-auto block w-full rounded-none rounded-l-md sm:text-sm border-gray-300 py-2 pl-3 pr-3 border text-right" placeholder="10000">
-            <input type="text" name="unit" id="unit" value="{{ form.unit.value|default_if_none:'' }}" required class="bg-white text-gray-900 focus:ring-indigo-500 focus:border-indigo-500  block rounded-none rounded-r-md sm:text-sm border-gray-300 border-l-0 py-2 pl-2 pr-2 border" placeholder="Unit e.g. bricks">
-          </div>
-          {% if form.quantity.errors %}
-            <p class="mt-2 text-sm text-red-600">{{ form.quantity.errors.0 }}</p>
-          {% endif %}
-          {% if form.unit.errors %}
-            <p class="mt-2 text-sm text-red-600">{{ form.unit.errors.0 }}</p>
-          {% endif %}
+            {{ form.quantity|as_crispy_field }}
+        </div>
+        
+        <!-- Unit -->
+        <div>
+            {{ form.unit|as_crispy_field }}
         </div>
 
       </div>
