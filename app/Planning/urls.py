@@ -28,10 +28,12 @@ from app.Planning.views import (
     TenderDocumentUpdateView,
     TenderProcessOverviewView,
     TenderProcessSectionCompleteAPIView,
+    TenderProcessUpdateView,
     WorkPackageCreateView,
     WorkPackageDeleteView,
     WorkPackageDetailView,
     WorkPackageListView,
+    WorkPackageProcessUpdateView,
     WorkPackageUpdateView,
 )
 
@@ -84,6 +86,16 @@ urlpatterns = [
         "<int:project_pk>/work-packages/<int:pk>/delete/",
         WorkPackageDeleteView.as_view(),
         name="work-package-delete",
+    ),
+    path(
+        "<int:project_pk>/work-packages/<int:pk>/edit-process/",
+        WorkPackageProcessUpdateView.as_view(),
+        name="work-package-edit-process",
+    ),
+    path(
+        "<int:project_pk>/work-packages/<int:pk>/edit-tender-process/",
+        TenderProcessUpdateView.as_view(),
+        name="work-package-edit-tender-process",
     ),
     # Tender Documents
     path(

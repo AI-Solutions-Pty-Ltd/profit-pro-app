@@ -27,7 +27,9 @@ from app.Planning.forms import (
     DesignSubCategoryForm,
     TenderDocumentFileForm,
     TenderDocumentForm,
+    TenderProcessForm,
     WorkPackageForm,
+    WorkPackageProcessForm,
 )
 from app.Planning.models import (
     DesignCategory,
@@ -348,6 +350,108 @@ class WorkPackageUpdateView(PlanningMixin, UpdateView):
         context["project"] = self.get_project()
         context["action"] = "Update"
         return context
+
+
+class WorkPackageProcessUpdateView(PlanningMixin, UpdateView):
+    """Edit work package process tracking dates and budget."""
+
+    model = WorkPackage
+    form_class = WorkPackageProcessForm
+    template_name = "planning/work_package/process_form.html"
+
+    def get_queryset(self):
+        return WorkPackage.objects.filter(project=self.get_project())
+
+    def form_valid(self, form):
+        messages.success(self.request, "Work package process updated successfully.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "planning:work-package-list",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        return [
+            BreadcrumbItem(
+                title="Projects", url=str(reverse_lazy("project:project-list"))
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=str(
+                    reverse_lazy(
+                        "project:project-management", kwargs={"pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title="Work Packages",
+                url=str(
+                    reverse_lazy(
+                        "planning:work-package-list", kwargs={"project_pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(title=f"Edit: {self.object.name}", url=None),
+        ]
+
+
+class TenderProcessUpdateView(PlanningMixin, UpdateView):
+    """Edit tender process milestone dates and completion flags."""
+
+    model = WorkPackage
+    form_class = TenderProcessForm
+    template_name = "planning/work_package/tender_process_form.html"
+
+    def get_queryset(self):
+        return WorkPackage.objects.filter(project=self.get_project())
+
+    def form_valid(self, form):
+        messages.success(self.request, "Tender process updated successfully.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "planning:work-package-list",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        return [
+            BreadcrumbItem(
+                title="Projects", url=str(reverse_lazy("project:project-list"))
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=str(
+                    reverse_lazy(
+                        "project:project-management", kwargs={"pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title="Work Packages",
+                url=str(
+                    reverse_lazy(
+                        "planning:work-package-list", kwargs={"project_pk": project.pk}
+                    )
+                ),
+            ),
+            BreadcrumbItem(title=f"Tender Process: {self.object.name}", url=None),
+        ]
 
 
 class WorkPackageDeleteView(PlanningMixin, DeleteView):

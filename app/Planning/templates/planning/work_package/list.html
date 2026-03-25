@@ -8,14 +8,14 @@
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Work Packages</h1>
+                    <h1 class="text-2xl font-bold text-gray-900">Procurement Packages</h1>
                     <p class="text-sm text-gray-600 mt-1">{{ project.name }} - Tender Tracking</p>
                 </div>
                 <div class="flex items-center space-x-3">
                     <a href="{% url 'planning:work-package-create' project.pk %}"
                        class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                         {% heroicon_outline "plus" size="16" class="mr-1" %}
-                        New Work Package
+                        New Procurement Package
                     </a>
                     <a href="{% url 'project:project-management' project.pk %}"
                        class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
@@ -42,27 +42,19 @@
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Applied to Advert
+                                Overall
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Site Inspection
+                                Documentation
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Tender Close
+                                Tender Process
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Evaluation
-                            </th>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Award
-                            </th>
-                            <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Contract Signing
+                                Execution
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -94,98 +86,49 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    {% if wp.package_budget|floatformat:2|intcomma %}
-                                        <div class="text-sm font-semibold text-emerald-600">R {{ wp.package_budget|floatformat:0 }}</div>
+                                    {% if wp.package_budget %}
+                                        <div class="text-sm font-semibold text-emerald-600">R {{ wp.package_budget|floatformat:2|intcomma }}</div>
                                     {% else %}
                                         <span class="text-xs text-gray-400">-</span>
                                     {% endif %}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-xs">
-                                        <div class="text-gray-900">{{ wp.applied_to_advert_start_date|date:"M d, Y"|default:"TBD" }}</div>
-                                        <div class="text-gray-500">{{ wp.applied_to_advert_end_date|date:"M d, Y"|default:"TBD" }}</div>
-                                        <div class="text-[11px] {% if wp.applied_to_advert_completed %}text-emerald-600{% else %}text-gray-500{% endif %}">
-                                            {% if wp.applied_to_advert_completed %}
-                                                Completed
-                                            {% else %}
-                                                Pending
-                                            {% endif %}
+                                {% with cols="overall documentation tender_process execution" %}
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-xs space-y-0.5">
+                                            <div class="text-gray-700 font-medium">{{ wp.overall_start_date|date:"d M Y"|default:"—" }}</div>
+                                            <div class="text-gray-500">{{ wp.overall_end_date|date:"d M Y"|default:"—" }}</div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-xs">
-                                        <div class="text-blue-900">{{ wp.site_inspection_start_date|date:"M d"|default:"TBD" }}</div>
-                                        <div class="text-blue-600">{{ wp.site_inspection_end_date|date:"M d"|default:"TBD" }}</div>
-                                        <div class="text-[11px] {% if wp.site_inspection_completed %}text-emerald-600{% else %}text-gray-500{% endif %}">
-                                            {% if wp.site_inspection_completed %}
-                                                Completed
-                                            {% else %}
-                                                Pending
-                                            {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-xs space-y-0.5">
+                                            <div class="text-blue-700 font-medium">{{ wp.documentation_start_date|date:"d M Y"|default:"—" }}</div>
+                                            <div class="text-blue-500">{{ wp.documentation_end_date|date:"d M Y"|default:"—" }}</div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-xs">
-                                        <div class="text-emerald-900">{{ wp.tender_close_start_date|date:"M d"|default:"TBD" }}</div>
-                                        <div class="text-emerald-600">{{ wp.tender_close_end_date|date:"M d"|default:"TBD" }}</div>
-                                        <div class="text-[11px] {% if wp.tender_close_completed %}text-emerald-600{% else %}text-gray-500{% endif %}">
-                                            {% if wp.tender_close_completed %}
-                                                Completed
-                                            {% else %}
-                                                Pending
-                                            {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-xs space-y-0.5">
+                                            <div class="text-amber-700 font-medium">{{ wp.tender_process_start_date|date:"d M Y"|default:"—" }}</div>
+                                            <div class="text-amber-500">{{ wp.tender_process_end_date|date:"d M Y"|default:"—" }}</div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-xs">
-                                        <div class="text-amber-900">{{ wp.tender_evaluation_start_date|date:"M d"|default:"TBD" }}</div>
-                                        <div class="text-amber-600">{{ wp.tender_evaluation_end_date|date:"M d"|default:"TBD" }}</div>
-                                        <div class="text-[11px] {% if wp.tender_evaluation_completed %}text-emerald-600{% else %}text-gray-500{% endif %}">
-                                            {% if wp.tender_evaluation_completed %}
-                                                Completed
-                                            {% else %}
-                                                Pending
-                                            {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-xs space-y-0.5">
+                                            <div class="text-emerald-700 font-medium">{{ wp.execution_start_date|date:"d M Y"|default:"—" }}</div>
+                                            <div class="text-emerald-500">{{ wp.execution_end_date|date:"d M Y"|default:"—" }}</div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-xs">
-                                        <div class="text-purple-900">{{ wp.award_start_date|date:"M d"|default:"TBD" }}</div>
-                                        <div class="text-purple-600">{{ wp.award_end_date|date:"M d"|default:"TBD" }}</div>
-                                        <div class="text-[11px] {% if wp.award_completed %}text-emerald-600{% else %}text-gray-500{% endif %}">
-                                            {% if wp.award_completed %}
-                                                Completed
-                                            {% else %}
-                                                Pending
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-xs">
-                                        <div class="text-fuchsia-900">{{ wp.contract_signing_start_date|date:"M d"|default:"TBD" }}</div>
-                                        <div class="text-fuchsia-600">{{ wp.contract_signing_end_date|date:"M d"|default:"TBD" }}</div>
-                                        <div class="text-[11px] {% if wp.contract_signing_completed %}text-emerald-600{% else %}text-gray-500{% endif %}">
-                                            {% if wp.contract_signing_completed %}
-                                                Completed
-                                            {% else %}
-                                                Pending
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </td>
+                                    </td>
+                                {% endwith %}
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end gap-2">
                                         <a href="{% url 'planning:work-package-detail' project.pk wp.pk %}"
-                                           class="text-emerald-600 hover:text-emerald-900"
+                                           class="text-gray-500 hover:text-gray-800"
                                            title="View Details">{% heroicon_outline "eye" size="16" %}</a>
-                                        <a href="{% url 'planning:work-package-update' project.pk wp.pk %}"
+                                        <a href="{% url 'planning:work-package-edit-process' project.pk wp.pk %}"
                                            class="text-blue-600 hover:text-blue-900"
-                                           title="Edit">{% heroicon_outline "pencil" size="16" %}</a>
+                                           title="Edit Package Process">{% heroicon_outline "pencil" size="16" %}</a>
+                                        <a href="{% url 'planning:work-package-edit-tender-process' project.pk wp.pk %}"
+                                           class="text-amber-600 hover:text-amber-900"
+                                           title="Edit Tender Process">{% heroicon_outline "calendar-days" size="16" %}</a>
                                     </div>
                                 </td>
                             </tr>
