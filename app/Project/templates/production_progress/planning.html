@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block title %} 
+  Production Planning - {{ project.name }} - {{ block.super }} 
+{% endblock title %} 
+
+{% block content %}
+<!-- Header -->
+<div class="bg-white shadow-sm rounded-lg mb-6">
+  <div class="px-6 py-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Production Planning</h1>
+        <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+      </div>
+      <a href="#" onclick="window.history.back(); return false;" class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+          {% heroicon_outline "arrow-left" size="16" %}
+          <span class="ml-1">Back</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Form -->
+<div class="bg-white shadow-sm rounded-lg mb-6">
+  <div class="px-6 py-4 border-b border-gray-200">
+      <h2 class="text-lg font-medium text-gray-900">Planning Item Details</h2>
+      <p class="text-sm text-gray-600">Enter the planning item information below</p>
+  </div>
+  <form method="POST" action="" class="p-6">
+    {% csrf_token %}
+    <div class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        
+        <!-- Activity -->
+        <div class="md:col-span-2">
+          <label for="activity" class="block text-sm font-medium text-gray-700">Activity</label>
+          <div class="mt-1">
+            <!-- Added bg-white and text-gray-900 for explicit light theme visibility -->
+            <input type="text" id="activity" name="activity" value="{{ form.activity.value|default_if_none:'' }}" required class="bg-white text-gray-900 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 pl-3 pb-2 pr-3 border" placeholder="Enter Activity (e.g., Bricks)">
+            {% if form.activity.errors %}
+              <p class="mt-2 text-sm text-red-600">{{ form.activity.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Start Date -->
+        <div>
+          <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
+          <div class="mt-1">
+            <!-- Ensure explicit input styling for light theme override (bg-white text-gray-900) -->
+            <input type="date" name="start_date" id="start_date" value="{{ form.start_date.value|default_if_none:''|date:'Y-m-d' }}" required onchange="calculateDuration()" style="color-scheme: light;" class="bg-white text-gray-900 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 pl-3 pr-3 border">
+            {% if form.start_date.errors %}
+              <p class="mt-2 text-sm text-red-600">{{ form.start_date.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Finish Date -->
+        <div>
+          <label for="finish_date" class="block text-sm font-medium text-gray-700">Finish Date</label>
+          <div class="mt-1">
+            <input type="date" name="finish_date" id="finish_date" value="{{ form.finish_date.value|default_if_none:''|date:'Y-m-d' }}" required onchange="calculateDuration()" style="color-scheme: light;" class="bg-white text-gray-900 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 pl-3 pr-3 border">
+            {% if form.finish_date.errors %}
+              <p class="mt-2 text-sm text-red-600">{{ form.finish_date.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Duration (Auto Calculated) -->
+        <div>
+          <label for="duration" class="block text-sm font-medium text-gray-700">Duration</label>
+          <div class="mt-1 flex rounded-md shadow-sm">
+            <input type="number" name="duration" id="duration" readonly tabindex="-1" class="bg-gray-50 text-gray-500 flex-1 block w-full rounded-none rounded-l-md sm:text-sm border-gray-300 py-2 pl-3 pr-3 border text-right focus:outline-none cursor-not-allowed" placeholder="0">
+            <span class="inline-flex items-center px-3 rounded-r-md border border-l-0 border-gray-300 bg-gray-100 text-gray-500 sm:text-sm">
+              days
+            </span>
+          </div>
+        </div>
+
+        <!-- Quantity -->
+        <div>
+          <label for="quantity" class="block text-sm font-medium text-gray-700">Quantity</label>
+          <div class="mt-1 flex rounded-md shadow-sm">
+            <input type="number" name="quantity" id="quantity" step="1" value="{{ form.quantity.value|default_if_none:'' }}" required class="bg-white text-gray-900 focus:ring-indigo-500 focus:border-indigo-500 flex-auto block w-full rounded-none rounded-l-md sm:text-sm border-gray-300 py-2 pl-3 pr-3 border text-right" placeholder="10000">
+            <input type="text" name="unit" id="unit" value="{{ form.unit.value|default_if_none:'' }}" required class="bg-white text-gray-900 focus:ring-indigo-500 focus:border-indigo-500  block rounded-none rounded-r-md sm:text-sm border-gray-300 border-l-0 py-2 pl-2 pr-2 border" placeholder="Unit e.g. bricks">
+          </div>
+          {% if form.quantity.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.quantity.errors.0 }}</p>
+          {% endif %}
+          {% if form.unit.errors %}
+            <p class="mt-2 text-sm text-red-600">{{ form.unit.errors.0 }}</p>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="mt-8 flex items-center justify-end space-x-3">
+        <a href="#" onclick="window.history.back(); return false;" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+            Cancel
+        </a>
+        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            Save Item
+        </button>
+    </div>
+  </form>
+</div>
+
+<!-- Footer -->
+{% comment %} <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-6 rounded-lg">
+    <div class="flex justify-between items-center">
+        <a href="{% url 'project:project-management' project.pk %}"
+           class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+            {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+            Back to Project Management
+        </a>
+    </div>
+</div> {% endcomment %}
+{% endblock content %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+  function calculateDuration() {
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('finish_date');
+    const durationInput = document.getElementById('duration');
+    
+    // Automatically set the minimum finish date based on the start date
+    if (startDateInput.value) {
+      endDateInput.min = startDateInput.value;
+    }
+
+    if (startDateInput.value && endDateInput.value) {
+      const start = new Date(startDateInput.value);
+      const end = new Date(endDateInput.value);
+      
+      // Date Validation
+      if (end < start) {
+        endDateInput.setCustomValidity("Finish date cannot be before start date.");
+        endDateInput.reportValidity();
+        durationInput.value = '';
+        return;
+      } else {
+        endDateInput.setCustomValidity("");
+      }
+
+      // Calculate the difference in dates in days
+      // (Difference calculated as: end date - start date)
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      
+      durationInput.value = diffDays;
+    } else {
+      durationInput.value = '';
+    }
+  }
+
+  // Pre-calculate duration if form loads with populated data
+  document.addEventListener('DOMContentLoaded', calculateDuration);
+</script>
+{% endblock extra_js %}

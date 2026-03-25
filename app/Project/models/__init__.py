@@ -31,6 +31,10 @@ from .portfolio_models import Portfolio
 from .project_roles_models import ProjectRole, Role
 from .risk_models import Risk, RiskStatus
 from .signatories_models import Signatories
+from ..production_progress.models.production_models import (
+    DailyProduction,
+    ProductionPlan,
+)
 
 __all__ = [
     "AdministrativeCompliance",
@@ -61,4 +65,6 @@ __all__ = [
     "Risk",
     "RiskStatus",
     "Signatories",
+    "DailyProduction",
+    "ProductionPlan",
 ]

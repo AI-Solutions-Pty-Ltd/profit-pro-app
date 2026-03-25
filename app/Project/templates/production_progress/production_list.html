@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg p-6">
+        <h1 class="text-2xl font-bold mb-4">Production Logs - {{ project.name }}</h1>
+        <ul class="divide-y divide-gray-200">
+            {% for note in productions %}
+                <li class="py-4">
+                    <p class="text-sm font-medium text-gray-900">{{ note.notes }}</p>
+                    <p class="text-xs text-gray-500">{{ note.created_at|date:"Y-m-d H:i" }}</p>
+                </li>
+            {% empty %}
+                <li>No logs found.</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}
