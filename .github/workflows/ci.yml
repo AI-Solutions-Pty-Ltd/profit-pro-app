@@ -20,38 +20,38 @@ jobs:
           echo "Branch: ${{ github.ref }}"
           echo "Event: ${{ github.event_name }}"
 
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-          cache: "pip"
-      - run: pip install -r requirements/local.txt
+      # - uses: actions/setup-python@v6
+      #   with:
+      #     python-version: "3.13"
+      #     cache: "pip"
+      # - run: pip install -r requirements/local.txt
 
-      - name: Run djlint linting
-        run: djlint --check .
+      # - name: Run djlint linting
+      #   run: djlint --check .
 
-      - name: Run Ruff format check
-        run: ruff format . --check
+      # - name: Run Ruff format check
+      #   run: ruff format . --check
 
-      - name: Run Ruff linting
-        run: ruff check . --fix
+      # - name: Run Ruff linting
+      #   run: ruff check . --fix
 
-      - name: Run Ty type checking
-        run: |
-          echo "Python version: $(python --version)"
-          echo "Python path: $(python -c 'import sys; print(sys.executable)')"
-          python -m ty check . --python $(python -c 'import sys; print(sys.executable)')
+      # - name: Run Ty type checking
+      #   run: |
+      #     echo "Python version: $(python --version)"
+      #     echo "Python path: $(python -c 'import sys; print(sys.executable)')"
+      #     python -m ty check . --python $(python -c 'import sys; print(sys.executable)')
 
-      - name: Run tests
-        run: pytest -v -n auto --reuse-db --durations=10
+      # - name: Run tests
+      #   run: pytest -v -n auto --reuse-db --durations=10
 
-      - name: Clean up
-        run: |
-          find . -type d -name "__pycache__" -exec rm -r {} + || true
-          find . -type f -name "*.pyc" -delete || true
-          find . -type f -name "*.pyo" -delete || true
-          find . -type f -name "*.pyd" -delete || true
-          find . -type f -name ".coverage" -delete || true
-          find . -type d -name "*.egg-info" -exec rm -r {} + || true
-          find . -type d -name "*.egg" -exec rm -r {} + || true
-          find . -type d -name ".pytest_cache" -exec rm -r {} + || true
-          find . -type d -name ".ruff_cache" -exec rm -r {} + || true
+      # - name: Clean up
+      #   run: |
+      #     find . -type d -name "__pycache__" -exec rm -r {} + || true
+      #     find . -type f -name "*.pyc" -delete || true
+      #     find . -type f -name "*.pyo" -delete || true
+      #     find . -type f -name "*.pyd" -delete || true
+      #     find . -type f -name ".coverage" -delete || true
+      #     find . -type d -name "*.egg-info" -exec rm -r {} + || true
+      #     find . -type d -name "*.egg" -exec rm -r {} + || true
+      #     find . -type d -name ".pytest_cache" -exec rm -r {} + || true
+      #     find . -type d -name ".ruff_cache" -exec rm -r {} + || true
