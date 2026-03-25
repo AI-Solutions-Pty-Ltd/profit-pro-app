@@ -1,6 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, CreateView, TemplateView
 from django.urls import reverse_lazy
+from django.contrib import messages
 
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
@@ -41,7 +42,7 @@ class ProductionPlanningView(
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_success_url(self):
-        return reverse_lazy("project:production-planning", kwargs={"project_pk": self.kwargs["project_pk"]})
+        return reverse_lazy("project:production-dashboard", kwargs={"project_pk": self.kwargs["project_pk"]})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -51,6 +52,7 @@ class ProductionPlanningView(
 
     def form_valid(self, form):
         form.instance.project_id = self.kwargs["project_pk"]
+        messages.success(self.request, "Production plan saved successfully.")
         return super().form_valid(form)
 
 class ProductionCostBreakdownView(
