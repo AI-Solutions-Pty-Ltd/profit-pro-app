@@ -26,6 +26,31 @@ class WorkPackage(BaseModel):
     Tracks package dates across different stages and budget information.
     """
 
+    class ContractType(models.TextChoices):
+        """Contract type choices."""
+
+        LUMP_SUM = "LUMP_SUM", "Lump Sum"
+        BOQ = "BOQ", "BoQ"
+        ACTIVITY_SCHEDULE = "ACTIVITY_SCHEDULE", "Activity Schedule"
+        SCHEDULE_OF_RATES = "SCHEDULE_OF_RATES", "Schedule of Rates"
+        OTHER = "OTHER", "Other - Specify"
+
+    class ProcurementStrategy(models.TextChoices):
+        """Procurement strategy choices."""
+
+        SUPPLY = "SUPPLY", "Supply"
+        INSTALL = "INSTALL", "Install"
+        SUPPLY_AND_INSTALL = "SUPPLY_AND_INSTALL", "Supply & Install"
+
+    class ConditionsOfContract(models.TextChoices):
+        """Conditions of contract choices."""
+
+        FIDIC = "FIDIC", "FIDIC"
+        NEC = "NEC", "NEC"
+        JBCC = "JBCC", "JBCC"
+        CLIENT = "CLIENT", "Client"
+        OTHER = "OTHER", "Other - Specify"
+
     project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,
@@ -45,17 +70,35 @@ class WorkPackage(BaseModel):
         blank=True,
         help_text="Description of the work package",
     )
+    contract_type = models.CharField(
+        max_length=32,
+        choices=ContractType.choices,
+        blank=True,
+        help_text="Type of contract",
+    )
+    procurement_strategy = models.CharField(
+        max_length=32,
+        choices=ProcurementStrategy.choices,
+        blank=True,
+        help_text="Procurement strategy",
+    )
+    conditions_of_contract = models.CharField(
+        max_length=32,
+        choices=ConditionsOfContract.choices,
+        blank=True,
+        help_text="Conditions of contract",
+    )
 
     # Tender Milestones
     applied_to_advert_start_date = models.DateField(
         null=True,
         blank=True,
-        help_text="Applied to advert start date",
+        help_text="Advert start date",
     )
     applied_to_advert_end_date = models.DateField(
         null=True,
         blank=True,
-        help_text="Applied to advert end date",
+        help_text="Advert end date",
     )
     applied_to_advert_completed = models.BooleanField(
         default=False,
@@ -144,6 +187,48 @@ class WorkPackage(BaseModel):
     mobilization_completed = models.BooleanField(
         default=False,
         help_text="Whether mobilization milestone is completed",
+    )
+
+    # Package Tracking Dates
+    overall_start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Overall package start date",
+    )
+    overall_end_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Overall package end/finish date",
+    )
+    documentation_start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Documentation phase start date",
+    )
+    documentation_end_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Documentation phase end/finish date",
+    )
+    tender_process_start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Tender process phase start date",
+    )
+    tender_process_end_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Tender process phase end/finish date",
+    )
+    execution_start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Execution phase start date",
+    )
+    execution_end_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Execution phase end/finish date",
     )
 
     # Budget
@@ -373,6 +458,7 @@ class DesignStage(models.TextChoices):
 
     DESIGN_CRITERIA = "DESIGN_CRITERIA", "Design Criteria"
     DRAWINGS = "DRAWINGS", "Drawings"
+    DOCUMENTS = "DOCUMENTS", "Documents"
 
 
 class DesignCategory(BaseModel):
