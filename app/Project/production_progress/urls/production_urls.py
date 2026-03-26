@@ -28,6 +28,11 @@ urlpatterns = [
         name="production-plan-edit",
     ),
     path(
+        "<int:project_pk>/plan/<int:pk>/delete/",
+        views.ProductionPlanDeleteView.as_view(),
+        name="production-plan-delete",
+    ),
+    path(
         "<int:project_pk>/create/",
         views.DailyProductionCreateView.as_view(),
         name="production-create",

@@ -5,6 +5,7 @@ from django.views.generic import (
     TemplateView,
     DetailView,
     UpdateView,
+    DeleteView,
 )
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -43,9 +44,29 @@ class ProductionDashboardView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["project"] = Project.objects.get(pk=self.kwargs["project_pk"])
-        context["plans"] = ProductionPlan.objects.filter(
-            project_id=self.kwargs["project_pk"]
-        )
+
+        # Get filter parameters
+        activity_filter = self.request.GET.get("activity", "").strip()
+        start_date_filter = self.request.GET.get("start_date", "").strip()
+        finish_date_filter = self.request.GET.get("finish_date", "").strip()
+
+        # Build queryset with filters
+        plans = ProductionPlan.objects.filter(project_id=self.kwargs["project_pk"])
+
+        if activity_filter:
+            plans = plans.filter(activity__icontains=activity_filter)
+
+        if start_date_filter:
+            plans = plans.filter(start_date__gte=start_date_filter)
+
+        if finish_date_filter:
+            plans = plans.filter(finish_date__lte=finish_date_filter)
+
+        context["plans"] = plans
+        context["activity_filter"] = activity_filter
+        context["start_date_filter"] = start_date_filter
+        context["finish_date_filter"] = finish_date_filter
+
         return context
 
 
@@ -128,6 +149,34 @@ class ProductionPlanUpdateView(
     def form_valid(self, form):
         messages.success(self.request, "Production plan updated successfully.")
         return super().form_valid(form)
+
+
+class ProductionPlanDeleteView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, DeleteView
+):
+    """Delete an existing production plan item."""
+
+    model = ProductionPlan
+    template_name = "production_progress/plan_confirm_delete.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_queryset(self):
+        return ProductionPlan.objects.filter(project_id=self.kwargs["project_pk"])
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "project:production-dashboard",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = Project.objects.get(pk=self.kwargs["project_pk"])
+        return context
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, "Production plan deleted successfully.")
+        return super().delete(request, *args, **kwargs)
 
 
 class ProductionCostBreakdownView(
