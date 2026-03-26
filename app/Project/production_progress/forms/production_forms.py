@@ -1,5 +1,5 @@
 from django import forms
-from ..models.production_models import DailyProduction, ProductionPlan
+from ..models.production_models import DailyProduction, ProductionPlan, ProductionResource
 
 
 class DailyProductionForm(forms.ModelForm):
@@ -54,3 +54,25 @@ class ProductionPlanForm(forms.ModelForm):
                 "placeholder": "Unit e.g. bricks"
             }),
         }
+
+
+class ProductionResourceForm(forms.ModelForm):
+    """Form for adding resources to a production plan."""
+    
+    class Meta:
+        model = ProductionResource
+        fields = ["production_plan", "resource_type", "name", "number", "days", "rate"]
+        widgets = {
+            "production_plan": forms.Select(attrs={"class": "form-select"}),
+            "resource_type": forms.Select(attrs={"class": "form-select"}),
+            "name": forms.TextInput(attrs={"class": "form-input", "placeholder": "e.g. Skilled Labour, Bobcat"}),
+            "number": forms.NumberInput(attrs={"class": "form-input", "placeholder": "1"}),
+            "days": forms.NumberInput(attrs={"class": "form-input", "placeholder": "1"}),
+            "rate": forms.NumberInput(attrs={"class": "form-input", "placeholder": "0.00"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        project_id = kwargs.pop('project_id', None)
+        super().__init__(*args, **kwargs)
+        if project_id:
+            self.fields['production_plan'].queryset = ProductionPlan.objects.filter(project_id=project_id)

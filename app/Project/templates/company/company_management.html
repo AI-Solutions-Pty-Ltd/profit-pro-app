@@ -58,7 +58,7 @@
                         <span class="text-sm font-medium text-blue-700">Planning</span>
                     </div>
                 </a>
-                <a href="#" data-tip="Production Cost Breakdown Structure"
+                <a href="{% url 'project:production-cost-breakdown' company.pk %}" data-tip="Production Cost Breakdown Structure"
                    class="tooltip w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "document-currency-dollar" class="w-4 h-4 text-indigo-500 mr-2" %}
@@ -91,7 +91,7 @@
             </div>
         </div>
          <!-- Row 2: Payments and Invoices -->
-        <div class="group relative bg-gradient-to-br from-emerald-50 to-indigo-50 rounded-xl p-5 border border-emerald-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+        {% comment %} <div class="group relative bg-gradient-to-br from-emerald-50 to-indigo-50 rounded-xl p-5 border border-emerald-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
             <div class="flex items-center mb-4">
                 <div class="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center mr-3">
                     {% heroicon_outline "banknotes" class="w-6 h-6 text-white" %}
@@ -144,7 +144,7 @@
                     </div>
                 </a>
             </div>
-        </div> 
+        </div>  {% endcomment %}
          <!-- Row 3: Payments and Invoices -->
         <div class="group relative bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-5 border border-emerald-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
             <div class="flex items-center mb-4">

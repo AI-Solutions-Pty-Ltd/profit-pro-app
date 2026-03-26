@@ -8,8 +8,9 @@ from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Account.subscription_config import Subscription
 from app.Project.models import Project
 
-from ..models.production_models import DailyProduction, ProductionPlan
-from ..forms.production_forms import DailyProductionForm, ProductionPlanForm
+from ..models.production_models import DailyProduction, ProductionPlan, ProductionResource
+from ..forms.production_forms import DailyProductionForm, ProductionPlanForm, ProductionResourceForm
+from django.shortcuts import redirect
 
 
 class ProductionDashboardView(
@@ -65,9 +66,34 @@ class ProductionCostBreakdownView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["project"] = Project.objects.get(pk=self.kwargs["project_pk"])
-        # Add financial metrics calculation context here
+        project = Project.objects.get(pk=self.kwargs["project_pk"])
+        context["project"] = project
+        context["plans"] = ProductionPlan.objects.filter(project=project).prefetch_related('resources')
+        context["resource_form"] = ProductionResourceForm(project_id=project.pk)
         return context
+
+    def post(self, request, *args, **kwargs):
+        project_pk = self.kwargs["project_pk"]
+        action = request.POST.get("action")
+        
+        if action == "delete":
+            resource_id = request.POST.get("resource_id")
+            try:
+                resource = ProductionResource.objects.get(id=resource_id)
+                resource_name = resource.name
+                resource.delete()
+                messages.success(request, f"Resource '{resource_name}' deleted successfully.")
+            except ProductionResource.DoesNotExist:
+                messages.error(request, "Resource not found.")
+        else:
+            form = ProductionResourceForm(request.POST)
+            if form.is_valid():
+                resource = form.save()
+                messages.success(request, f"Resource '{resource.name}' added successfully.")
+            else:
+                messages.error(request, "Error adding resource. Please check the form.")
+        
+        return redirect("project:production-cost-breakdown", project_pk=project_pk)
 
 
 class DailyProductionCreateView(

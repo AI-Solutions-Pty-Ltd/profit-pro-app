@@ -1,13 +1,268 @@
 {% extends "base.html" %}
 {% load static %}
+{% load heroicons %}
+{% load crispy_forms_tags %}
+{% load humanize %}
 
 {% block title %}
     Cost Breakdown - {{ project.name }} - {{ block.super }}
 {% endblock title %}
 
 {% block content %}
-    <div class="bg-white shadow-sm rounded-lg mb-6 p-6">
-        <h1 class="text-2xl font-bold text-gray-900">Production Cost Breakdown</h1>
-        <p class="text-gray-600 mt-1">Project: {{ project.name }}</p>
+<!-- Header -->
+<div class="bg-white shadow-sm rounded-lg mb-6">
+    <div class="px-6 py-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Production Cost Breakdown</h1>
+                <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="openModal()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    {% heroicon_outline "plus" size="16" %}
+                    <span class="ml-2">Add Resource</span>
+                </button>
+                <a href="#" class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    {% heroicon_outline "arrow-left" size="16" %}
+                    <span class="ml-1">Dashboard</span>
+                </a>
+            </div>
+        </div>
     </div>
+</div>
+
+{% comment %} {% for plan in plans %}
+<div class="bg-white shadow-sm rounded-lg mb-8 overflow-hidden">
+    <!-- Activity Banner -->
+    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="md:col-span-2">
+                <h2 class="text-lg font-bold text-gray-900">{{ plan.activity }}</h2>
+                <div class="flex items-center mt-1 text-sm text-gray-500">
+                    {% heroicon_outline "calendar" size="14" class="mr-1" %}
+                    <span>{{ plan.start_date|date:"d M Y" }} - {{ plan.finish_date|date:"d M Y" }} ({{ plan.duration }} days)</span>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-xs text-gray-500 uppercase font-semibold">Quantity</p>
+                <p class="text-sm font-medium text-gray-900">{{ plan.quantity|intcomma }} {{ plan.unit }}</p>
+            </div>
+            <div class="text-right">
+                <button onclick="openModal('{{ plan.id }}')" class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                    + Add Resource
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Table 2A: Labour Costs -->
+            <div class="space-y-4">
+                <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Table 2A - Planned Labour Costs</h3>
+                <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50 uppercase text-[10px] font-bold text-gray-500 tracking-wider">
+                            <tr>
+                                <th class="px-4 py-3 text-left">Labour</th>
+                                <th class="px-4 py-3 text-right">Number</th>
+                                <th class="px-4 py-3 text-right">Days</th>
+                                <th class="px-4 py-3 text-right">Rate</th>
+                                <th class="px-4 py-3 text-right">CTC</th>
+                                <th class="px-4 py-3 text-center w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200 hover:bg-gray-50 transition-colors">
+                            {% for resource in plan.resources.all %}
+                                {% if resource.resource_type == 'LABOUR' %}
+                                <tr class="text-sm">
+                                    <td class="px-4 py-3 text-gray-900 font-medium">{{ resource.name }}</td>
+                                    <td class="px-4 py-3 text-right text-gray-600">{{ resource.number|floatformat:2 }}</td>
+                                    <td class="px-4 py-3 text-right text-gray-600">{{ resource.days|floatformat:2 }}</td>
+                                    <td class="px-4 py-3 text-right text-gray-600">R {{ resource.rate|intcomma }}</td>
+                                    <td class="px-4 py-3 text-right font-semibold text-gray-900">R {{ resource.total_cost|intcomma }}</td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="bg-gray-50 font-bold border-t-2 border-gray-200">
+                            <tr>
+                                <td colspan="4" class="px-4 py-3 text-sm text-gray-700">Total planned labour costs</td>
+                                <td class="px-4 py-3 text-right text-sm text-indigo-600">
+                                    R {{ plan.total_labour_cost|intcomma }}
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Table 2B: Plant Costs -->
+            <div class="space-y-4">
+                <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider">Table 2B - Planned Plant Costs</h3>
+                <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50 uppercase text-[10px] font-bold text-gray-500 tracking-wider">
+                            <tr>
+                                <th class="px-4 py-3 text-left">Equipment</th>
+                                <th class="px-4 py-3 text-right">Number</th>
+                                <th class="px-4 py-3 text-right">Days</th>
+                                <th class="px-4 py-3 text-right">Rate</th>
+                                <th class="px-4 py-3 text-right">Cost</th>
+                                <th class="px-4 py-3 text-center w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200 hover:bg-gray-50 transition-colors">
+                            {% for resource in plan.resources.all %}
+                                {% if resource.resource_type == 'PLANT' %}
+                                <tr class="text-sm">
+                                    <td class="px-4 py-3 text-gray-900 font-medium">{{ resource.name }}</td>
+                                    <td class="px-4 py-3 text-right text-gray-600">{{ resource.number|floatformat:2 }}</td>
+                                    <td class="px-4 py-3 text-right text-gray-600">{{ resource.days|floatformat:2 }}</td>
+                                    <td class="px-4 py-3 text-right text-gray-600">R {{ resource.rate|intcomma }}</td>
+                                    <td class="px-4 py-3 text-right font-semibold text-gray-900">R {{ resource.total_cost|intcomma }}</td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="bg-gray-50 font-bold border-t-2 border-gray-200">
+                            <tr>
+                                <td colspan="4" class="px-4 py-3 text-sm text-gray-700">Total Planned equipment costs</td>
+                                <td class="px-4 py-3 text-right text-sm text-indigo-600">
+                                    R {{ plan.total_plant_cost|intcomma }}
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            </div>
+        </div>
+        
+        <!-- Other Resources if any -->
+        <div class="mt-8">
+            <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Other Resources</h3>
+            <div class="overflow-x-auto border border-gray-200 rounded-lg">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50 uppercase text-[10px] font-bold text-gray-500 tracking-wider">
+                        <tr>
+                            <th class="px-4 py-3 text-left">Resource</th>
+                            <th class="px-4 py-3 text-right">Number</th>
+                            <th class="px-4 py-3 text-right">Days</th>
+                            <th class="px-4 py-3 text-right">Rate</th>
+                            <th class="px-4 py-3 text-right">Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200 hover:bg-gray-50 transition-colors">
+                        {% for resource in plan.resources.all %}
+                            {% if resource.resource_type == 'RESOURCE' %}
+                            <tr class="text-sm">
+                                <td class="px-4 py-3 text-gray-900 font-medium">{{ resource.name }}</td>
+                                <td class="px-4 py-3 text-right text-gray-600">{{ resource.number|floatformat:2 }}</td>
+                                <td class="px-4 py-3 text-right text-gray-600">{{ resource.days|floatformat:2 }}</td>
+                                <td class="px-4 py-3 text-right text-gray-600">R {{ resource.rate|intcomma }}</td>
+                                <td class="px-4 py-3 text-right font-semibold text-gray-900">R {{ resource.total_cost|intcomma }}</td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="bg-gray-50 font-bold border-t-2 border-gray-200">
+                        <tr>
+                            <td colspan="4" class="px-4 py-3 text-sm text-gray-700">Total other resources</td>
+                            <td class="px-4 py-3 text-right text-sm text-indigo-600">
+                                R {{ plan.total_other_cost|intcomma }}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="bg-white shadow-sm rounded-lg p-12 text-center">
+    {% heroicon_outline "clipboard-document-list" size="48" class="mx-auto text-gray-400 mb-4" %}
+    <h2 class="text-lg font-medium text-gray-900">No Production Plans Found</h2>
+    <p class="text-gray-500 mt-2">Start by adding a production plan to see the cost breakdown.</p>
+    <a href="{% url 'project:production-planning' project.pk %}" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+        Go to Planning
+    </a>
+</div>
+{% endfor %}
+
+<!-- Modal -->
+<div id="resourceModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal()"></div>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <div class="absolute top-0 right-0 pt-4 pr-4">
+                <button type="button" onclick="closeModal()" class="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none">
+                    <span class="sr-only">Close</span>
+                    {% heroicon_outline "x-mark" size="24" %}
+                </button>
+            </div>
+            
+            <div class="sm:flex sm:items-start">
+                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                        Add New Resource
+                    </h3>
+                    <div class="mt-4">
+                        <form method="POST" action="{% url 'project:production-cost-breakdown' project.pk %}">
+                            {% csrf_token %}
+                            <div class="space-y-4">
+                                {{ resource_form|crispy }}
+                            </div>
+                            <div class="mt-6 flex justify-end space-x-3">
+                                <button type="button" onclick="closeModal()" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none">
+                                    Save Resource
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> {% endcomment %}
+
 {% endblock content %}
+
+{% block extra_js %}
+<script>
+    function openModal(planId = null) {
+        const modal = document.getElementById('resourceModal');
+        modal.classList.remove('hidden');
+        
+        if (planId) {
+            const planSelect = document.querySelector('select[name="production_plan"]');
+            if (planSelect) {
+                planSelect.value = planId;
+            }
+        }
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('resourceModal');
+        modal.classList.add('hidden');
+    }
+    
+    // Auto-populate labour name if labour is selected? 
+    // Or maybe just let the user type.
+    
+    // Handle Esc key to close modal
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape") {
+            closeModal();
+        }
+    });
+</script>
+{% endblock extra_js %}

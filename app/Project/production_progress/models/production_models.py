@@ -40,3 +40,42 @@ class ProductionPlan(BaseModel):
         else:
             self.duration = 0
         super().save(*args, **kwargs)
+
+    @property
+    def total_labour_cost(self):
+        return self.resources.filter(resource_type='LABOUR').aggregate(total=models.Sum('total_cost'))['total'] or 0
+
+    @property
+    def total_plant_cost(self):
+        return self.resources.filter(resource_type='PLANT').aggregate(total=models.Sum('total_cost'))['total'] or 0
+
+    @property
+    def total_other_cost(self):
+        return self.resources.filter(resource_type='RESOURCE').aggregate(total=models.Sum('total_cost'))['total'] or 0
+
+
+class ProductionResource(BaseModel):
+    RESOURCE_TYPES = [
+        ('LABOUR', 'Labour'),
+        ('PLANT', 'Plant/Equipment'),
+        ('RESOURCE', 'Other Resource'),
+    ]
+    
+    production_plan = models.ForeignKey(ProductionPlan, on_delete=models.CASCADE, related_name="resources")
+    resource_type = models.CharField(max_length=20, choices=RESOURCE_TYPES)
+    name = models.CharField(max_length=255, help_text="e.g., Skilled, Bobcat, Diesel")
+    number = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    days = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    rate = models.DecimalField(max_digits=15, decimal_places=2)
+    total_cost = models.DecimalField(max_digits=15, decimal_places=2, editable=False)
+
+    class Meta:
+        verbose_name = "Production Resource"
+        verbose_name_plural = "Production Resources"
+
+    def __str__(self):
+        return f"{self.resource_type} - {self.name} ({self.production_plan.activity})"
+
+    def save(self, *args, **kwargs):
+        self.total_cost = (self.number or 0) * (self.days or 0) * (self.rate or 0)
+        super().save(*args, **kwargs)
