@@ -58,6 +58,48 @@ class ProjectContractorForm(forms.ModelForm):
             contractor_field.queryset = queryset.distinct()  # type: ignore[attr-defined]
 
 
+class ProjectLeadConsultantForm(forms.ModelForm):
+    """Form for updating the project lead consultant."""
+
+    class Meta:
+        model = Project
+        fields = ["lead_consultant"]
+        widgets = {
+            "lead_consultant": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+        }
+        labels = {
+            "lead_consultant": "Lead Consultant",
+        }
+        help_texts = {
+            "lead_consultant": "Select the lead consultant company for this project",
+        }
+
+    def __init__(self, *args, **kwargs):
+        project = kwargs.pop("project", None)
+        user: Account = kwargs.pop("user", None)
+        projects = user.get_projects
+
+        super().__init__(*args, **kwargs)
+
+        # Filter to only show lead consultant companies
+        queryset = Company.objects.filter(
+            contractor_projects__in=projects, type=Company.Type.LEAD_CONSULTANT
+        ).order_by("name")
+
+        # Exclude the currently assigned lead consultant if project is provided
+        if project and project.lead_consultant:
+            queryset = queryset.exclude(pk=project.lead_consultant.pk)
+
+        # Type: ModelChoiceField has queryset attribute
+        lead_consultant_field = self.fields["lead_consultant"]
+        if hasattr(lead_consultant_field, "queryset"):
+            lead_consultant_field.queryset = queryset.distinct()  # type: ignore[attr-defined]
+
+
 class ClientCreateUpdateForm(forms.ModelForm):
     """Form for creating and updating clients."""
 

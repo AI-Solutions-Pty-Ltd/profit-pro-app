@@ -18,6 +18,16 @@ urlpatterns = [
         name="production-cost-breakdown",
     ),
     path(
+        "<int:project_pk>/plan/<int:pk>/",
+        views.ProductionPlanDetailView.as_view(),
+        name="production-plan-detail",
+    ),
+    path(
+        "<int:project_pk>/plan/<int:pk>/edit/",
+        views.ProductionPlanUpdateView.as_view(),
+        name="production-plan-edit",
+    ),
+    path(
         "<int:project_pk>/create/",
         views.DailyProductionCreateView.as_view(),
         name="production-create",
