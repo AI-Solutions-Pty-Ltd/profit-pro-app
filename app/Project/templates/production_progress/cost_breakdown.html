@@ -36,11 +36,11 @@
                             <span class="ml-2">Back</span>
                         </a>
                         {% if selected_plan %}
-                        <button onclick="toggleModal(true)" 
+                        <a href="{% url 'project:production-resource-add' project.pk %}?plan_id={{ selected_plan.pk }}" 
                                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                             {% heroicon_outline "plus" size="20" %}
                             <span class="ml-2">Add Resource</span>
-                        </button>
+                        </a>
                         {% endif %}
                     </div>
                 </div>
@@ -92,11 +92,11 @@
                 <div class="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
                     <div class="px-6 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
                         <h3 class="text-md font-semibold text-gray-900">{{ type_name }}</h3>
-                         <button onclick="toggleModal(true, '{{ type_code }}')" 
+                         <a href="{% url 'project:production-resource-add' project.pk %}?plan_id={{ selected_plan.pk }}&type={{ type_code }}" 
                                     class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
                                 {% heroicon_solid "plus" class="w-3 h-3 mr-1" %}
                                 Add {{ type_name }}
-                            </button>
+                            </a>
                     </div>
                     <div class="overflow-x-auto">
                          {% if selected_plan.resources.all %}
@@ -154,11 +154,11 @@
                          <div  class="px-6 py-8 text-center">
                             <div class="flex flex-col items-center">
                                 <p class="text-sm text-gray-500 italic mb-3">No {{ type_name|lower }} resources added yet.</p>
-                                <button onclick="toggleModal(true, '{{ type_code }}')" 
+                                 <a href="{% url 'project:production-resource-add' project.pk %}?plan_id={{ selected_plan.pk }}&type={{ type_code }}" 
                                         class="inline-flex items-center px-3 py-1.5 border border-indigo-600 text-xs font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                                     {% heroicon_solid "plus" class="w-3 h-3 mr-1" %}
                                     Add {{ type_name }}
-                                </button>
+                                </a>
                             </div>
                         </div>
                         {% endif %}
@@ -168,65 +168,6 @@
             {% endfor %}
         </div>
 
-        <!-- Add Resource Modal -->
-        <div id="resourceModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="toggleModal(false)"></div>
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-                    <div>
-                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 text-indigo-600">
-                            {% heroicon_outline "plus" size="24" %}
-                        </div>
-                        <div class="mt-3 text-center sm:mt-5">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Add Cost Resource</h3>
-                            <p class="text-sm text-gray-500 mt-2">Add labour, plant, or other resources for {{ selected_plan.activity }}</p>
-                        </div>
-                    </div>
-                    <form method="POST" class="mt-6 space-y-4">
-                        {% csrf_token %}
-                        <input type="hidden" name="action" value="add">
-                        <div class="hidden">
-                            {{ resource_form.production_plan }}
-                        </div>
-                        
-                        <div class="grid grid-cols-1 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Resource Type</label>
-                                {{ resource_form.resource_type }}
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Name / Description</label>
-                                {{ resource_form.name }}
-                            </div>
-                            <div class="grid grid-cols-3 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Number</label>
-                                    {{ resource_form.number }}
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Days</label>
-                                    {{ resource_form.days }}
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">Rate</label>
-                                    {{ resource_form.rate }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-8 sm:flex sm:flex-row-reverse sm:gap-3">
-                            <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
-                                Add Resource
-                            </button>
-                            <button type="button" onclick="toggleModal(false)" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm">
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
 
     {% else %}
         <!-- Empty State -->
@@ -257,33 +198,4 @@
 </div>
 {% endblock content %}
 
-{% block extra_js %}
-<script>
-    function toggleModal(show, typeCode = '') {
-        const modal = document.getElementById('resourceModal');
-        if (show) {
-            modal.classList.remove('hidden');
-            document.body.classList.add('overflow-hidden');
-            
-            // If a type is provided, pre-select it in the dropdown
-            if (typeCode) {
-                const typeSelect = modal.querySelector('select[name="resource_type"]');
-                if (typeSelect) {
-                    typeSelect.value = typeCode;
-                }
-            }
-        } else {
-            modal.classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
-        }
-    }
-
-    // Close on escape key
-    document.addEventListener('keydown', function(event) {
-        if (event.key === "Escape") {
-            toggleModal(false);
-        }
-    });
-</script>
-{% endblock extra_js %}
 

@@ -58,7 +58,7 @@ class ProductionResource(BaseModel):
     RESOURCE_TYPES = [
         ('LABOUR', 'Labour'),
         ('PLANT', 'Plant/Equipment'),
-        ('RESOURCE', 'Other Resource'),
+        # ('RESOURCE', 'Other Resource'),
     ]
     
     production_plan = models.ForeignKey(ProductionPlan, on_delete=models.CASCADE, related_name="resources")

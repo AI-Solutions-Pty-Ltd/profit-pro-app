@@ -208,7 +208,6 @@ class ProductionCostBreakdownView(
         # If a plan is selected, only pass that one to the 'plans' context for display
         context["plans"] = [selected_plan] if selected_plan else []
         
-        # Initialize form with project_id and pre-select current plan if available
         initial = {}
         if selected_plan:
             initial['production_plan'] = selected_plan
@@ -234,17 +233,81 @@ class ProductionCostBreakdownView(
                 )
             except ProductionResource.DoesNotExist:
                 messages.error(request, "Resource not found.")
-        else:
-            form = ProductionResourceForm(request.POST, project_id=project_pk)
-            if form.is_valid():
-                resource = form.save()
-                messages.success(
-                    request, f"Resource '{resource.name}' added successfully."
-                )
-            else:
-                messages.error(request, "Error adding resource. Please check the form.")
 
         return redirect("project:production-cost-breakdown", project_pk=project_pk)
+
+
+class ProductionResourceCreateView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, CreateView
+):
+    """Form to add a production resource."""
+
+    model = ProductionResource
+    form_class = ProductionResourceForm
+    template_name = "production_progress/production_resource_form.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_success_url(self):
+        url = reverse_lazy(
+            "project:production-cost-breakdown",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+        plan_id = self.request.GET.get("plan_id")
+        if plan_id:
+            return f"{url}?plan_id={plan_id}"
+        return url
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["project_id"] = self.kwargs["project_pk"]
+        
+        # Determine which fields should be read-only based on query parameters
+        disabled_fields = []
+        if self.request.GET.get("plan_id") or (self.request.method == "POST" and self.request.POST.get("production_plan")):
+            disabled_fields.append("production_plan")
+        if self.request.GET.get("type") or (self.request.method == "POST" and self.request.POST.get("resource_type")):
+            disabled_fields.append("resource_type")
+            
+        kwargs["disabled_fields"] = disabled_fields
+        return kwargs
+
+    def get_initial(self):
+        initial = super().get_initial()
+        
+        # In Django, if a field is disabled, it must be provided in initial
+        # so that it holds its value during validation/POST re-rendering.
+        plan_id = self.request.GET.get("plan_id") or self.request.POST.get("production_plan")
+        resource_type = self.request.GET.get("type") or self.request.POST.get("resource_type")
+        
+        if plan_id:
+            initial["production_plan"] = plan_id
+        if resource_type:
+            initial["resource_type"] = resource_type
+            
+        return initial
+
+    def form_valid(self, form):
+        resource = form.save()
+        messages.success(self.request, f"Resource '{resource.name}' added successfully.")
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = Project.objects.get(pk=self.kwargs["project_pk"])
+        context["project"] = project
+        
+        # Try to get plan_id from GET and then from POST (e.g. on validation error)
+        plan_id = self.request.GET.get("plan_id")
+        if not plan_id and self.request.method == "POST":
+            plan_id = self.request.POST.get("production_plan")
+            
+        if plan_id:
+            try:
+                context["production_plan"] = ProductionPlan.objects.get(pk=plan_id, project=project)
+            except (ProductionPlan.DoesNotExist, ValueError):
+                pass
+                
+        return context
 
 
 class DailyProductionCreateView(

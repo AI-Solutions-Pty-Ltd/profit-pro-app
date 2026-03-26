@@ -66,13 +66,18 @@ class ProductionResourceForm(forms.ModelForm):
             "production_plan": forms.Select(attrs={"class": "form-select"}),
             "resource_type": forms.Select(attrs={"class": "form-select"}),
             "name": forms.TextInput(attrs={"class": "form-input", "placeholder": "e.g. Skilled Labour, Bobcat"}),
-            "number": forms.NumberInput(attrs={"class": "form-input", "placeholder": "1"}),
-            "days": forms.NumberInput(attrs={"class": "form-input", "placeholder": "1"}),
-            "rate": forms.NumberInput(attrs={"class": "form-input", "placeholder": "0.00"}),
+            "number": forms.NumberInput(attrs={"class": "form-input", "placeholder": "1", "min": "1", "step": "1"}),
+            "days": forms.NumberInput(attrs={"class": "form-input", "placeholder": "1", "min": "1", "step": "1"}),
+            "rate": forms.NumberInput(attrs={"class": "form-input", "placeholder": "0.00", "min": "0.00", "step": "0.10"}),
         }
 
     def __init__(self, *args, **kwargs):
         project_id = kwargs.pop('project_id', None)
+        disabled_fields = kwargs.pop('disabled_fields', [])
         super().__init__(*args, **kwargs)
         if project_id:
             self.fields['production_plan'].queryset = ProductionPlan.objects.filter(project_id=project_id)
+            
+        for field_name in disabled_fields:
+            if field_name in self.fields:
+                self.fields[field_name].disabled = True

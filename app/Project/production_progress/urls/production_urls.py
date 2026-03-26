@@ -42,4 +42,9 @@ urlpatterns = [
         views.DailyProductionListView.as_view(),
         name="production-list",
     ),
+    path(
+        "<int:project_pk>/resource/add/",
+        views.ProductionResourceCreateView.as_view(),
+        name="production-resource-add",
+    ),
 ]
