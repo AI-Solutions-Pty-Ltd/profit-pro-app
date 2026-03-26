@@ -191,10 +191,32 @@ class ProductionCostBreakdownView(
         context = super().get_context_data(**kwargs)
         project = Project.objects.get(pk=self.kwargs["project_pk"])
         context["project"] = project
-        context["plans"] = ProductionPlan.objects.filter(
-            project=project
-        ).prefetch_related("resources")
-        context["resource_form"] = ProductionResourceForm(project_id=project.pk)
+        
+        # Selection logic: get specific plan if plan_id is provided
+        all_plans = ProductionPlan.objects.filter(project=project).order_by('activity')
+        plan_id = self.request.GET.get("plan_id")
+        
+        selected_plan = None
+        if plan_id:
+            try:
+                selected_plan = all_plans.get(pk=plan_id)
+            except (ProductionPlan.DoesNotExist, ValueError):
+                pass
+        
+        context["all_plans"] = all_plans
+        context["selected_plan"] = selected_plan
+        # If a plan is selected, only pass that one to the 'plans' context for display
+        context["plans"] = [selected_plan] if selected_plan else []
+        
+        # Initialize form with project_id and pre-select current plan if available
+        initial = {}
+        if selected_plan:
+            initial['production_plan'] = selected_plan
+            
+        context["resource_form"] = ProductionResourceForm(
+            project_id=project.pk,
+            initial=initial
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -213,7 +235,7 @@ class ProductionCostBreakdownView(
             except ProductionResource.DoesNotExist:
                 messages.error(request, "Resource not found.")
         else:
-            form = ProductionResourceForm(request.POST)
+            form = ProductionResourceForm(request.POST, project_id=project_pk)
             if form.is_valid():
                 resource = form.save()
                 messages.success(
