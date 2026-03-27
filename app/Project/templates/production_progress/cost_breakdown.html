@@ -14,7 +14,7 @@
     <div class="bg-white shadow-sm rounded-lg mb-6">
         <div class="px-6 py-4">
             <a href="#" onclick="window.history.back(); return false;"
-            class="inline-flex items-center p py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                class="inline-flex items-center p py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                 {% heroicon_outline "chevron-left" size="20" %}
                 <span class="ml-1">Back</span>
             </a>
@@ -182,19 +182,22 @@
     {% endif %}
 
     <!-- Footer -->
-    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-8 shadow-inner">
-    <div class="flex justify-between items-center">
-        <a href="{% url 'project:production-dashboard' project.pk %}"
-        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-        {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
-        Back to Production Dashboard
-        </a>
-        <a href="{% url 'project:company-management' project.pk %}"
-        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-        Business Management
-        {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
-        </a>
-    </div>
+    <div class="px-6 py-4 bg-white rounded-lg mt-8 shadow-sm">
+        <div class="flex justify-between items-center">
+            
+            <a href="{% url 'project:company-management' project.pk %}"
+            class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+            {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+            Business Management
+        
+            </a>
+            <a href="{% url 'project:production-dashboard' project.pk %}"
+            class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+        
+            Production Dashboard
+            {% heroicon_outline "chevron-right" class="w-4 h-4 mr-1" %}
+            </a>
+        </div>
     </div>
 </div>
 {% endblock content %}

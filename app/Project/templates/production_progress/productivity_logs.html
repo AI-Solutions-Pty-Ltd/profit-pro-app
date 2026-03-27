@@ -214,4 +214,23 @@
 </div>
 {% endfor %}
 
+ <!-- Footer -->
+    <div class="px-6 py-4 bg-white rounded-lg mt-8 shadow-sm">
+        <div class="flex justify-between items-center">
+            
+            <a href="{% url 'project:company-management' project.pk %}"
+            class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+            {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+            Business Management
+        
+            </a>
+            <a href="{% url 'project:production-dashboard' project.pk %}"
+            class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+        
+            Production Dashboard
+            {% heroicon_outline "chevron-right" class="w-4 h-4 mr-1" %}
+            </a>
+        </div>
+    </div>
+
 {% endblock content %}
