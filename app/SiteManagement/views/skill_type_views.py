@@ -1,7 +1,6 @@
-"""CRUD views for Plant Equipment."""
+"""CRUD views for Skill Type."""
 
 from django.contrib import messages
-from django.forms import DateInput
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
@@ -10,24 +9,24 @@ from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project, Role
-from app.SiteManagement.models import PlantEquipment
+from app.SiteManagement.models import SkillType
 
 
-class PlantEquipmentMixin(
+class SkillTypeMixin(
     SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
 ):
-    """Mixin for Plant Equipment views."""
+    """Mixin for Skill Type views."""
 
-    model = PlantEquipment
-    required_tiers = [Subscription.SITE_MANAGEMENT]
+    model = SkillType
     roles = [Role.ADMIN, Role.USER]
     project_slug = "project_pk"
+    required_tiers = [Subscription.SITE_MANAGEMENT]
 
     def get_project(self) -> Project:
         return Project.objects.get(pk=self.kwargs["project_pk"])
 
     def get_queryset(self):
-        return PlantEquipment.objects.filter(project=self.get_project())
+        return SkillType.objects.filter(project=self.get_project())
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
@@ -50,15 +49,23 @@ class PlantEquipmentMixin(
                     )
                 ),
             ),
-            BreadcrumbItem(title="Plant & Equipment", url=None),
+            BreadcrumbItem(
+                title="Skill Types",
+                url=str(
+                    reverse_lazy(
+                        "site_management:skill-type-list",
+                        kwargs={"project_pk": project.pk},
+                    )
+                ),
+            ),
         ]
 
 
-class PlantEquipmentListView(PlantEquipmentMixin, ListView):
-    """List all plant equipment."""
+class SkillTypeListView(SkillTypeMixin, ListView):
+    """List all skill types."""
 
-    template_name = "site_management/plant_equipment/list.html"
-    context_object_name = "plant_equipment"
+    template_name = "site_management/skill_type/list.html"
+    context_object_name = "skill_types"
     paginate_by = 20
 
     def get_context_data(self, **kwargs):
@@ -67,35 +74,20 @@ class PlantEquipmentListView(PlantEquipmentMixin, ListView):
         return context
 
 
-class PlantEquipmentCreateView(PlantEquipmentMixin, CreateView):
-    """Create a new plant equipment entry."""
+class SkillTypeCreateView(SkillTypeMixin, CreateView):
+    """Create a new skill type."""
 
-    template_name = "site_management/plant_equipment/form.html"
-    fields = [
-        "plant_type",
-        "date",
-        "equipment_name",
-        "supplier",
-        "usage_hours",
-        "breakdown_status",
-        "maintenance_done",
-        "remarks",
-    ]
-    widgets = {"date": DateInput(attrs={"type": "date"})}
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        form.fields["date"].widget = self.widgets["date"]
-        return form
+    template_name = "site_management/skill_type/form.html"
+    fields = ["name", "hourly_rate"]
 
     def form_valid(self, form):
         form.instance.project = self.get_project()
-        messages.success(self.request, "Plant equipment entry created successfully!")
+        messages.success(self.request, "Skill type created successfully!")
         return super().form_valid(form)
 
     def get_success_url(self):
         return reverse_lazy(
-            "site_management:plant-equipment-list",
+            "site_management:skill-type-list",
             kwargs={"project_pk": self.get_project().pk},
         )
 
@@ -105,34 +97,19 @@ class PlantEquipmentCreateView(PlantEquipmentMixin, CreateView):
         return context
 
 
-class PlantEquipmentUpdateView(PlantEquipmentMixin, UpdateView):
-    """Update a plant equipment entry."""
+class SkillTypeUpdateView(SkillTypeMixin, UpdateView):
+    """Update a skill type."""
 
-    template_name = "site_management/plant_equipment/form.html"
-    fields = [
-        "plant_type",
-        "date",
-        "equipment_name",
-        "supplier",
-        "usage_hours",
-        "breakdown_status",
-        "maintenance_done",
-        "remarks",
-    ]
-    widgets = {"date": DateInput(attrs={"type": "date"})}
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        form.fields["date"].widget = self.widgets["date"]
-        return form
+    template_name = "site_management/skill_type/form.html"
+    fields = ["name", "hourly_rate"]
 
     def form_valid(self, form):
-        messages.success(self.request, "Plant equipment entry updated successfully!")
+        messages.success(self.request, "Skill type updated successfully!")
         return super().form_valid(form)
 
     def get_success_url(self):
         return reverse_lazy(
-            "site_management:plant-equipment-list",
+            "site_management:skill-type-list",
             kwargs={"project_pk": self.get_project().pk},
         )
 
@@ -142,15 +119,15 @@ class PlantEquipmentUpdateView(PlantEquipmentMixin, UpdateView):
         return context
 
 
-class PlantEquipmentDeleteView(PlantEquipmentMixin, DeleteView):
-    """Delete a plant equipment entry."""
+class SkillTypeDeleteView(SkillTypeMixin, DeleteView):
+    """Delete a skill type."""
 
-    template_name = "site_management/plant_equipment/confirm_delete.html"
+    template_name = "site_management/skill_type/confirm_delete.html"
 
     def get_success_url(self):
-        messages.success(self.request, "Plant equipment entry deleted successfully!")
+        messages.success(self.request, "Skill type deleted successfully!")
         return reverse_lazy(
-            "site_management:plant-equipment-list",
+            "site_management:skill-type-list",
             kwargs={"project_pk": self.get_project().pk},
         )
 

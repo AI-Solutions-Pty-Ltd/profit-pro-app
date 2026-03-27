@@ -19,6 +19,14 @@ class LabourLog(BaseModel):
     person_name = models.CharField(max_length=255, help_text="Person's name")
     id_number = models.CharField(max_length=100, help_text="ID number")
     trade = models.CharField(max_length=100, help_text="Trade/specialty")
+    skill_type = models.ForeignKey(
+        "SkillType",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="labour_logs",
+        help_text="Skill type of the worker",
+    )
     hours_worked = models.DecimalField(
         max_digits=6, decimal_places=2, help_text="Hours worked"
     )

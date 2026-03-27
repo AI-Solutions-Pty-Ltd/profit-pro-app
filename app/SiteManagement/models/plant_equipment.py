@@ -4,6 +4,7 @@ from django.db import models
 
 from app.core.Utilities.models import BaseModel
 from app.Project.models import Project
+from .plant_type import PlantType
 
 
 class PlantEquipment(BaseModel):
@@ -21,8 +22,16 @@ class PlantEquipment(BaseModel):
         related_name="plant_equipment",
         help_text="Project this equipment belongs to",
     )
+    plant_type = models.ForeignKey(
+        PlantType,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="equipment_items",
+        help_text="Type of plant/equipment",
+    )
     date = models.DateField(help_text="Date of record")
-    equipment_name = models.CharField(max_length=255, help_text="Plant/Equipment name")
+    equipment_name = models.CharField(max_length=255, blank=True, help_text="Specific equipment name/ID (optional)")
     supplier = models.CharField(max_length=255, blank=True, help_text="Supplier/Owner")
     usage_hours = models.DecimalField(
         max_digits=8,
@@ -43,7 +52,14 @@ class PlantEquipment(BaseModel):
     remarks = models.TextField(blank=True, help_text="Additional remarks")
 
     def __str__(self):
-        return f"{self.equipment_name} - {self.date}"
+        return f"{self.equipment_name or self.plant_type.name if self.plant_type else 'Equipment'} - {self.date}"
+
+    @property
+    def total_cost(self):
+        """Calculate total cost based on the linked plant type's hourly rate."""
+        if self.plant_type and self.usage_hours:
+            return self.plant_type.hourly_rate * self.usage_hours
+        return 0
 
     class Meta:
         verbose_name = "Plant & Equipment"

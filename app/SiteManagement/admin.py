@@ -5,6 +5,8 @@ from app.SiteManagement.models import (
     EarlyWarning,
     Meeting,
     SiteInstruction,
+    LabourLog,
+    SkillType,
 )
 
 
@@ -88,3 +90,17 @@ class RFIAdmin(admin.ModelAdmin):
         "response_date",
         "date_closed",
     ]
+
+
+@admin.register(LabourLog)
+class LabourLogAdmin(admin.ModelAdmin):
+    list_display = ["project", "date", "person_name", "trade", "skill_type", "hours_worked"]
+    list_filter = ["project", "date", "skill_type"]
+    search_fields = ["person_name", "trade", "task_activity"]
+
+
+@admin.register(SkillType)
+class SkillTypeAdmin(admin.ModelAdmin):
+    list_display = ["project", "name", "hourly_rate"]
+    list_filter = ["project"]
+    search_fields = ["name"]
