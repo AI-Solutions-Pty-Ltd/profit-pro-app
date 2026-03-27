@@ -50,6 +50,16 @@
                     </div>
                 </div>
 
+                <!-- Skill/Plant Type Row (Dynamic) -->
+                <div class="grid grid-cols-1 gap-6 items-start">
+                    <div id="skill_type_container" style="display: none;">
+                        {{ form.skill_type|as_crispy_field }}
+                    </div>
+                    <div id="plant_type_container" style="display: none;">
+                        {{ form.plant_type|as_crispy_field }}
+                    </div>
+                </div>
+
                 <!-- Name Row -->
                 <div class="grid grid-cols-1 gap-6 items-start">
                     <div>
@@ -105,4 +115,86 @@
         </div>
     </div>
 </div>
+<script>
+    function toggleResourceTypes() {
+        const resourceTypeSelect = document.querySelector('[name="resource_type"]');
+        if (!resourceTypeSelect) return;
+        
+        const resourceType = resourceTypeSelect.value;
+        const skillContainer = document.getElementById('skill_type_container');
+        const plantContainer = document.getElementById('plant_type_container');
+        
+        if (resourceType === 'LABOUR') {
+            skillContainer.style.display = 'block';
+            plantContainer.style.display = 'none';
+            const plantSelect = document.querySelector('[name="plant_type"]');
+            if (plantSelect) plantSelect.value = '';
+        } else if (resourceType === 'PLANT') {
+            skillContainer.style.display = 'none';
+            plantContainer.style.display = 'block';
+            const skillSelect = document.querySelector('[name="skill_type"]');
+            if (skillSelect) skillSelect.value = '';
+        } else {
+            skillContainer.style.display = 'none';
+            plantContainer.style.display = 'none';
+        }
+    }
+
+    function updateFromSkillType() {
+        const select = document.querySelector('[name="skill_type"]');
+        if (!select) return;
+        
+        const option = select.options[select.selectedIndex];
+        if (option && option.value) {
+            // Text format is "Name (Rate/hr)"
+            const text = option.text;
+            const nameMatch = text.match(/^(.*) \(/);
+            const rateMatch = text.match(/\((.*)\/hr\)/);
+            
+            if (nameMatch) {
+                const nameInput = document.querySelector('[name="name"]');
+                if (nameInput) nameInput.value = nameMatch[1];
+            }
+            if (rateMatch) {
+                const rateInput = document.querySelector('[name="rate"]');
+                if (rateInput) rateInput.value = rateMatch[1];
+            }
+        }
+    }
+
+    function updateFromPlantType() {
+        const select = document.querySelector('[name="plant_type"]');
+        if (!select) return;
+        
+        const option = select.options[select.selectedIndex];
+        if (option && option.value) {
+            const text = option.text;
+            const nameMatch = text.match(/^(.*) \(/);
+            const rateMatch = text.match(/\((.*)\/hr\)/);
+            
+            if (nameMatch) {
+                const nameInput = document.querySelector('[name="name"]');
+                if (nameInput) nameInput.value = nameMatch[1];
+            }
+            if (rateMatch) {
+                const rateInput = document.querySelector('[name="rate"]');
+                if (rateInput) rateInput.value = rateMatch[1];
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleResourceTypes();
+        
+        // Add event listeners if widgets didn't include them correctly
+        const rtSelect = document.querySelector('[name="resource_type"]');
+        if (rtSelect) rtSelect.addEventListener('change', toggleResourceTypes);
+        
+        const stSelect = document.querySelector('[name="skill_type"]');
+        if (stSelect) stSelect.addEventListener('change', updateFromSkillType);
+        
+        const ptSelect = document.querySelector('[name="plant_type"]');
+        if (ptSelect) ptSelect.addEventListener('change', updateFromPlantType);
+    });
+</script>
 {% endblock content %}

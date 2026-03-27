@@ -34,6 +34,7 @@ from .signatories_models import Signatories
 from ..production_progress.models.production_models import (
     DailyProduction,
     ProductionPlan,
+    ProductionResource,
 )
 
 __all__ = [
@@ -67,4 +68,5 @@ __all__ = [
     "Signatories",
     "DailyProduction",
     "ProductionPlan",
+    "ProductionResource",
 ]

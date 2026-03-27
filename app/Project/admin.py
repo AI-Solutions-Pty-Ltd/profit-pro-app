@@ -21,6 +21,7 @@ from .models import (
     PlannedValue,
     Portfolio,
     ProductionPlan,
+    ProductionResource,
     Project,
     ProjectCategory,
     ProjectDiscipline,
@@ -335,3 +336,21 @@ class ProductionPlanAdmin(SoftDeleteAdmin):
     list_filter = ["deleted", "created_at", "project"]
     search_fields = ["activity", "project__name"]
     readonly_fields = ["created_at", "updated_at", "duration"]
+
+
+@admin.register(ProductionResource)
+class ProductionResourceAdmin(SoftDeleteAdmin):
+    list_display = [
+        "production_plan",
+        "resource_type",
+        "skill_type",
+        "plant_type",
+        "name",
+        "number",
+        "days",
+        "rate",
+        "total_cost",
+    ]
+    list_filter = ["resource_type", "production_plan__project", "production_plan"]
+    search_fields = ["name", "production_plan__activity"]
+    readonly_fields = ["created_at", "updated_at", "name", "rate", "total_cost"]

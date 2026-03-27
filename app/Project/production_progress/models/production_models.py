@@ -63,6 +63,12 @@ class ProductionResource(BaseModel):
     
     production_plan = models.ForeignKey(ProductionPlan, on_delete=models.CASCADE, related_name="resources")
     resource_type = models.CharField(max_length=20, choices=RESOURCE_TYPES)
+    skill_type = models.ForeignKey(
+        "SiteManagement.SkillType", on_delete=models.SET_NULL, null=True, blank=True, related_name="production_resources"
+    )
+    plant_type = models.ForeignKey(
+        "SiteManagement.PlantType", on_delete=models.SET_NULL, null=True, blank=True, related_name="production_resources"
+    )
     name = models.CharField(max_length=255, help_text="e.g., Skilled, Bobcat, Diesel")
     number = models.DecimalField(max_digits=10, decimal_places=2, default=1)
     days = models.DecimalField(max_digits=10, decimal_places=2, default=1)
@@ -77,6 +83,13 @@ class ProductionResource(BaseModel):
         return f"{self.resource_type} - {self.name} ({self.production_plan.activity})"
 
     def save(self, *args, **kwargs):
+        if self.skill_type:
+            self.name = self.skill_type.name
+            self.rate = self.skill_type.hourly_rate
+        elif self.plant_type:
+            self.name = self.plant_type.name
+            self.rate = self.plant_type.hourly_rate
+            
         self.total_cost = (self.number or 0) * (self.days or 0) * (self.rate or 0)
         super().save(*args, **kwargs)
 

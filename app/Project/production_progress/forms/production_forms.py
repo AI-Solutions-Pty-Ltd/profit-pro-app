@@ -57,7 +57,8 @@ class ProductionPlanForm(forms.ModelForm):
             "quantity": forms.NumberInput(attrs={
                 "id": "quantity",
                 "step": "1",
-                "placeholder": "10000"
+                "placeholder": "10000.00",
+                "format": "{:.2f}"
             }),
             "unit": forms.TextInput(attrs={
                 "id": "unit",
@@ -71,14 +72,16 @@ class ProductionResourceForm(forms.ModelForm):
     
     class Meta:
         model = ProductionResource
-        fields = ["production_plan", "resource_type", "name", "number", "days", "rate"]
+        fields = ["production_plan", "resource_type", "skill_type", "plant_type", "name", "number", "days", "rate"]
         widgets = {
             "production_plan": forms.Select(attrs={"class": "form-select"}),
-            "resource_type": forms.Select(attrs={"class": "form-select"}),
-            "name": forms.TextInput(attrs={"class": "form-input", "placeholder": "e.g. Skilled Labour, Bobcat"}),
+            "resource_type": forms.Select(attrs={"class": "form-select", "onchange": "toggleResourceTypes()"}),
+            "skill_type": forms.Select(attrs={"class": "form-select", "onchange": "updateFromSkillType()"}),
+            "plant_type": forms.Select(attrs={"class": "form-select", "onchange": "updateFromPlantType()"}),
+            "name": forms.TextInput(attrs={"class": "form-input", "placeholder": "Selection auto-fills this field", "readonly": "readonly"}),
             "number": forms.NumberInput(attrs={"class": "form-input", "placeholder": "1", "min": "1", "step": "1"}),
             "days": forms.NumberInput(attrs={"class": "form-input", "placeholder": "1", "min": "1", "step": "1"}),
-            "rate": forms.NumberInput(attrs={"class": "form-input", "placeholder": "0.00", "min": "0.00", "step": "0.10"}),
+            "rate": forms.NumberInput(attrs={"class": "form-input", "placeholder": "0.00", "min": "0.00", "step": "0.10", "readonly": "readonly"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -87,7 +90,8 @@ class ProductionResourceForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if project_id:
             self.fields['production_plan'].queryset = ProductionPlan.objects.filter(project_id=project_id)
-            
+            self.fields['skill_type'].queryset = self.fields['skill_type'].queryset.filter(project_id=project_id)
+            self.fields['plant_type'].queryset = self.fields['plant_type'].queryset.filter(project_id=project_id)
         for field_name in disabled_fields:
             if field_name in self.fields:
                 self.fields[field_name].disabled = True
