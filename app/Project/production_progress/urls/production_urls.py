@@ -52,4 +52,15 @@ urlpatterns = [
         views.ProductionResourceCreateView.as_view(),
         name="production-resource-add",
     ),
+    path(
+        "<int:project_pk>/progress-dashboard/",
+        views.ProductionProgressDashboardView.as_view(),
+        name="production-progress-dashboard",
+    ),
+    path(
+        "<int:project_pk>/activity/<int:pk>/",
+        views.ProductionActivityDetailView.as_view(),
+        name="activity-detail",
+    ),
 ]
+

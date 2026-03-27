@@ -41,6 +41,8 @@ from django.utils import timezone
 from django.db.models import Sum, F
 from django.forms import inlineformset_factory
 from collections import defaultdict
+from .utils import get_dashboard_data, get_activity_detail_data
+
 
 
 class ProductionDashboardView(
@@ -82,6 +84,73 @@ class ProductionDashboardView(
         context["start_date_filter"] = start_date_filter
         context["finish_date_filter"] = finish_date_filter
 
+        return context
+
+
+class ProductionProgressDashboardView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """
+    Electronic Production Progress Dashboard.
+    Provides a high-level overview of all production activities.
+    """
+
+    template_name = "production_progress/production_progress_dashboard.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+        
+        # Filters
+        start_date = self.request.GET.get("start_date")
+        end_date = self.request.GET.get("end_date")
+        status_filter = self.request.GET.get("status")
+        
+        # Get data from utils
+        dashboard_data = get_dashboard_data(project_pk, start_date, end_date)
+        
+        # Filter item cards by status if requested
+        if status_filter:
+            dashboard_data['item_cards'] = [
+                card for card in dashboard_data['item_cards'] 
+                if card['status_text'] == status_filter
+            ]
+            
+        context.update({
+            "project": project,
+            **dashboard_data,
+            "start_date": start_date,
+            "end_date": end_date,
+            "status_filter": status_filter,
+        })
+        return context
+
+
+
+class ProductionActivityDetailView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, DetailView
+):
+    """
+    Detailed Electronic Progress Dashboard for a single activity.
+    """
+    model = ProductionPlan
+    template_name = "production_progress/plan_progress_detail.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+        
+        # Get detailed metrics from utils
+        activity_data = get_activity_detail_data(self.object.pk)
+        
+        context.update({
+            "project": project,
+            **activity_data,
+        })
         return context
 
 
