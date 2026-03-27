@@ -79,3 +79,105 @@ class ProductionResource(BaseModel):
     def save(self, *args, **kwargs):
         self.total_cost = (self.number or 0) * (self.days or 0) * (self.rate or 0)
         super().save(*args, **kwargs)
+
+class DailyActivityReport(BaseModel):
+    """Daily container for all activities performed on a specific date."""
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="daily_reports")
+    date = models.DateField()
+    notes = models.TextField(blank=True, help_text="Optional site-wide remarks")
+
+    class Meta:
+        verbose_name = "Daily Activity Report"
+        verbose_name_plural = "Daily Activity Reports"
+        ordering = ["-date", "-created_at"]
+        unique_together = ["project", "date"]
+
+    def __str__(self):
+        return f"{self.project.name} - {self.date}"
+
+
+class DailyActivityEntry(BaseModel):
+    """Specific activity performed during a daily report."""
+    report = models.ForeignKey(DailyActivityReport, on_delete=models.CASCADE, related_name="entries")
+    production_plan = models.ForeignKey(ProductionPlan, on_delete=models.CASCADE, related_name="daily_entries")
+    quantity = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+
+    class Meta:
+        verbose_name = "Daily Activity Entry"
+        verbose_name_plural = "Daily Activity Entries"
+
+    def __str__(self):
+        return f"{self.production_plan.activity} on {self.report.date}"
+
+    @property
+    def day_number(self):
+        """Calculates D1, D2 etc relative to the plan start date."""
+        if self.report.date and self.production_plan.start_date:
+            delta = (self.report.date - self.production_plan.start_date).days
+            return f"D{delta + 1}"
+        return "D?"
+
+    @property
+    def total_labour_cost(self):
+        return sum(usage.total_cost for usage in self.labour_usage.all())
+
+    @property
+    def total_plant_cost(self):
+        return sum(usage.total_cost for usage in self.plant_usage.all())
+
+    @property
+    def man_hours(self):
+        return sum(usage.man_hours for usage in self.labour_usage.all())
+
+    @property
+    def total_cost(self):
+        return self.total_labour_cost + self.total_plant_cost
+
+    @property
+    def work_productivity(self):
+        mh = self.man_hours
+        if mh > 0:
+            return self.quantity / mh
+        return 0
+
+    @property
+    def cost_per_item(self):
+        if self.quantity > 0:
+            return self.total_cost / self.quantity
+        return 0
+
+
+class DailyLabourUsage(BaseModel):
+    """Tracks labour usage for a specific activity entry."""
+    entry = models.ForeignKey(DailyActivityEntry, on_delete=models.CASCADE, related_name="labour_usage")
+    resource = models.ForeignKey(ProductionResource, on_delete=models.CASCADE, limit_choices_to={'resource_type': 'LABOUR'})
+    number = models.IntegerField(default=1)
+    hours = models.DecimalField(max_digits=5, decimal_places=2, default=8)
+
+    class Meta:
+        verbose_name = "Daily Labour Usage"
+        verbose_name_plural = "Daily Labour Usages"
+
+    @property
+    def total_cost(self):
+        return (self.number or 0) * (self.hours or 0) * (self.resource.rate or 0)
+
+    @property
+    def man_hours(self):
+        return (self.number or 0) * (self.hours or 0)
+
+
+class DailyPlantUsage(BaseModel):
+    """Tracks plant usage for a specific activity entry."""
+    entry = models.ForeignKey(DailyActivityEntry, on_delete=models.CASCADE, related_name="plant_usage")
+    resource = models.ForeignKey(ProductionResource, on_delete=models.CASCADE, limit_choices_to={'resource_type': 'PLANT'})
+    number = models.IntegerField(default=1)
+    hours = models.DecimalField(max_digits=5, decimal_places=2, default=8)
+
+    class Meta:
+        verbose_name = "Daily Plant Usage"
+        verbose_name_plural = "Daily Plant Usages"
+
+    @property
+    def total_cost(self):
+        return (self.number or 0) * (self.hours or 0) * (self.resource.rate or 0)

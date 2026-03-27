@@ -33,14 +33,19 @@ urlpatterns = [
         name="production-plan-delete",
     ),
     path(
-        "<int:project_pk>/create/",
-        views.DailyProductionCreateView.as_view(),
+        "<int:project_pk>/logs/",
+        views.ProductivityLogsView.as_view(),
+        name="production-list",
+    ),
+    path(
+        "<int:project_pk>/productivity/add/",
+        views.DailyProductivityCreateView.as_view(),
         name="production-create",
     ),
     path(
-        "<int:project_pk>/logs/",
-        views.DailyProductionListView.as_view(),
-        name="production-list",
+        "<int:project_pk>/tracking/",
+        views.ProgressTrackingView.as_view(),
+        name="production-tracking",
     ),
     path(
         "<int:project_pk>/resource/add/",

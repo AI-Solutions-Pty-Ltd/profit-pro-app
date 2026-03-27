@@ -1,5 +1,15 @@
 from django import forms
-from ..models.production_models import DailyProduction, ProductionPlan, ProductionResource
+from ..models.production_models import (
+    DailyProduction, 
+    ProductionPlan, 
+    ProductionResource,
+    DailyActivityReport,
+    DailyActivityEntry,
+    DailyLabourUsage,
+    DailyPlantUsage
+)
+from django.forms import inlineformset_factory
+
 
 
 class DailyProductionForm(forms.ModelForm):
@@ -81,3 +91,76 @@ class ProductionResourceForm(forms.ModelForm):
         for field_name in disabled_fields:
             if field_name in self.fields:
                 self.fields[field_name].disabled = True
+
+class DailyActivityReportForm(forms.ModelForm):
+    class Meta:
+        model = DailyActivityReport
+        fields = ["date"]
+        widgets = {
+            "date": forms.DateInput(attrs={"type": "date", "class": "form-input"}),
+        }
+
+
+class DailyActivityEntryForm(forms.ModelForm):
+    class Meta:
+        model = DailyActivityEntry
+        fields = ["production_plan"]
+        widgets = {
+            "production_plan": forms.Select(attrs={"class": "form-select"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        project_id = kwargs.pop('project_id', None)
+        super().__init__(*args, **kwargs)
+        if project_id:
+            self.fields['production_plan'].queryset = ProductionPlan.objects.filter(project_id=project_id)
+
+
+class DailyLabourUsageForm(forms.ModelForm):
+    class Meta:
+        model = DailyLabourUsage
+        fields = ["resource", "number", "hours"]
+        widgets = {
+            "resource": forms.Select(attrs={"class": "form-select"}),
+            "number": forms.NumberInput(attrs={"class": "form-input", "min": "0"}),
+            "hours": forms.NumberInput(attrs={"class": "form-input", "step": "0.1", "min": "0"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        activity_id = kwargs.pop('activity_id', None)
+        super().__init__(*args, **kwargs)
+        if activity_id:
+            # Filter resources by the selected production plan
+            self.fields['resource'].queryset = ProductionResource.objects.filter(
+                production_plan_id=activity_id, 
+                resource_type='LABOUR'
+            )
+
+
+class DailyPlantUsageForm(forms.ModelForm):
+    class Meta:
+        model = DailyPlantUsage
+        fields = ["resource", "number", "hours"]
+        widgets = {
+            "resource": forms.Select(attrs={"class": "form-select"}),
+            "number": forms.NumberInput(attrs={"class": "form-input", "min": "0"}),
+            "hours": forms.NumberInput(attrs={"class": "form-input", "step": "0.1", "min": "0"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        activity_id = kwargs.pop('activity_id', None)
+        super().__init__(*args, **kwargs)
+        if activity_id:
+            self.fields['resource'].queryset = ProductionResource.objects.filter(
+                production_plan_id=activity_id, 
+                resource_type='PLANT'
+            )
+
+
+DailyLabourUsageFormSet = inlineformset_factory(
+    DailyActivityEntry, DailyLabourUsage, form=DailyLabourUsageForm, extra=3, can_delete=True
+)
+
+DailyPlantUsageFormSet = inlineformset_factory(
+    DailyActivityEntry, DailyPlantUsage, form=DailyPlantUsageForm, extra=3, can_delete=True
+)
