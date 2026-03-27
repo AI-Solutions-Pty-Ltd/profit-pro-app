@@ -13,6 +13,11 @@
     <!-- Header -->
     <div class="bg-white shadow-sm rounded-lg mb-6">
         <div class="px-6 py-4">
+            <a href="#" onclick="window.history.back(); return false;"
+            class="inline-flex items-center p py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                {% heroicon_outline "chevron-left" size="20" %}
+                <span class="ml-1">Back</span>
+            </a>
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Production Cost Breakdown</h1>
@@ -30,11 +35,7 @@
                         </select>
                     </div>
                     <div class="flex items-center space-x-3">
-                        <a href="{% url 'project:production-dashboard' project.pk %}"
-                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                            {% heroicon_outline "arrow-left" size="20" %}
-                            <span class="ml-2">Back</span>
-                        </a>
+                        
                         {% if selected_plan %}
                         <a href="{% url 'project:production-resource-add' project.pk %}?plan_id={{ selected_plan.pk }}" 
                                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
@@ -188,9 +189,9 @@
         {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
         Back to Production Dashboard
         </a>
-        <a href="{% url 'project:project-management' project.pk %}"
+        <a href="{% url 'project:company-management' project.pk %}"
         class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-        Project Management
+        Business Management
         {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
         </a>
     </div>
