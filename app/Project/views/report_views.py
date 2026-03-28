@@ -82,7 +82,7 @@ class FinancialReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListVie
 
         self.filter_form = ProjectFilterForm(
             request.GET or {},
-            user=self.request.user,  # type: ignore[arg-type]
+            user=self.request.user,  # type: ignore
             projects_queryset=projects,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
@@ -334,7 +334,7 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
 
         self.filter_form = ProjectFilterForm(
             request.GET or {},
-            user=self.request.user,  # type: ignore[arg-type]
+            user=self.request.user,  # type: ignore
             projects_queryset=projects,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
@@ -538,7 +538,7 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
 
         self.filter_form = ProjectFilterForm(
             request.GET or {},
-            user=self.request.user,  # type: ignore[arg-type]
+            user=self.request.user,  # type: ignore
             projects_queryset=projects,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
@@ -744,7 +744,7 @@ class TrendReportView(SubscriptionRequiredMixin, ProjectAccessMixin, TemplateVie
 
         self.filter_form = ProjectFilterForm(
             request.GET or {},
-            user=self.request.user,  # type: ignore[arg-type]
+            user=self.request.user,  # type: ignore
             projects_queryset=projects,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,

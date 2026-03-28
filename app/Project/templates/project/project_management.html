@@ -48,43 +48,42 @@
                 </div>
                 <div>
                     <h3 class="text-sm font-bold text-emerald-900">Planning & Procurement</h3>
-                    <p class="text-xs text-emerald-600">Work Packages & Tender Tracking</p>
                 </div>
             </div>
             <div class="space-y-2">
                 {% if request.user|projectroles:project|userhasrole:'TIME_FORECASTS,ADMIN,User' %}
-                    <a href="{% url 'project:time-forecast' project.pk %}"
-                       class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
-                        <span class="text-sm font-medium text-blue-700">Scope Planning</span>
-                        {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                    <a href="{% url 'planning:scope-planning' project.pk %}"
+                       class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-sky-200 hover:bg-sky-50 transition-colors group/btn">
+                        <span class="text-sm font-medium text-sky-700">Scope Planning</span>
+                        {% heroicon_outline "arrow-right" size="16" class="text-sky-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                     </a>
                 {% endif %}
                 {% if request.user|projectroles:project|userhasrole:'TIME_FORECASTS,ADMIN,User' %}
-                    <a href="{% url 'project:budget-forecast' project.pk %}"
-                       class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
-                        <span class="text-sm font-medium text-blue-700">Budget Forecast</span>
-                        {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                    <a href="{% url 'planning:budget-planning' project.pk %}"
+                       class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
+                        <span class="text-sm font-medium text-amber-700">Budget Forecast</span>
+                        {% heroicon_outline "arrow-right" size="16" class="text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                     </a>
                 {% endif %}
                 <a href="{% url 'planning:design-development-overview' project.pk %}"
-                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
-                    <span class="text-sm font-medium text-emerald-700">Design Development</span>
-                    {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
+                    <span class="text-sm font-medium text-violet-700">Design Development</span>
+                    {% heroicon_outline "arrow-right" size="16" class="text-violet-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                 </a>
                 <a href="{% url 'planning:work-package-list' project.pk %}"
-                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
-                    <span class="text-sm font-medium text-emerald-700">Procurement Packages</span>
-                    {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors group/btn">
+                    <span class="text-sm font-medium text-cyan-700">Procurement Packages</span>
+                    {% heroicon_outline "arrow-right" size="16" class="text-cyan-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                 </a>
                 <a href="{% url 'planning:tender-documentation-overview' project.pk %}"
-                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
-                    <span class="text-sm font-medium text-emerald-700">Tender Documentation</span>
-                    {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-lime-200 hover:bg-lime-50 transition-colors group/btn">
+                    <span class="text-sm font-medium text-lime-700">Tender Documentation</span>
+                    {% heroicon_outline "arrow-right" size="16" class="text-lime-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                 </a>
                 <a href="{% url 'planning:tender-process-overview' project.pk %}"
-                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
-                    <span class="text-sm font-medium text-emerald-700">Tender Process</span>
-                    {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                   class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-rose-200 hover:bg-rose-50 transition-colors group/btn">
+                    <span class="text-sm font-medium text-rose-700">Tender Process</span>
+                    {% heroicon_outline "arrow-right" size="16" class="text-rose-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                 </a>
             </div>
         </div>
@@ -98,8 +97,7 @@
                         {% heroicon_outline "clipboard-document-check" size="20" class="text-white" %}
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold text-slate-900">Project Documents</h3>
-                        <p class="text-xs text-slate-600">Management, Documents & Correspondence</p>
+                        <h3 class="text-sm font-bold text-slate-900">Contract Documents</h3>
                     </div>
                 </div>
                 <!-- Project Documents Section -->
@@ -152,11 +150,6 @@
                                         <span class="text-sm font-medium text-emerald-700">Historic Documents</span>
                                         {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                                     </a>
-                                    <a href="{% url 'project:document-list' project.pk 'PHOTOS_IMAGES' %}"
-                                       class="w-full flex items-center justify-between px-3 py-2 bg-rose-50 rounded-lg border border-rose-200 hover:bg-rose-100 transition-colors group/btn">
-                                        <span class="text-sm font-medium text-rose-700">Photos</span>
-                                        {% heroicon_outline "arrow-right" size="16" class="text-rose-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                                    </a>
                                 {% endif %}
                             {% endif %}
                         </div>
@@ -175,7 +168,6 @@
                     </div>
                     <div>
                         <h3 class="text-sm font-bold text-slate-900">Contracts Management</h3>
-                        <p class="text-xs text-slate-600">Management contractual requirements</p>
                     </div>
                 </div>
                 <!-- Contracts Management Section -->
@@ -245,8 +237,7 @@
                     {% heroicon_outline "currency-dollar" size="20" class="text-white" %}
                 </div>
                 <div>
-                    <h3 class="text-sm font-bold text-purple-900">Payment Certificates</h3>
-                    <p class="text-xs text-purple-600">Payments & Claims</p>
+                    <h3 class="text-sm font-bold text-purple-900">Payments & Forecasts</h3>
                 </div>
             </div>
             {% if request.user|userhassubscription:"PAYMENTS_AND_INVOICES" %}
@@ -303,6 +294,11 @@
                             {% heroicon_outline "arrow-right" size="16" class="text-violet-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                         </a>
                     {% endif %}
+                    <a href="{% url 'project:document-list' project.pk 'PHOTOS_IMAGES' %}"
+                       class="w-full flex items-center justify-between px-3 py-2 bg-rose-50 rounded-lg border border-rose-200 hover:bg-rose-100 transition-colors group/btn">
+                        <span class="text-sm font-medium text-rose-700">Photos</span>
+                        {% heroicon_outline "arrow-right" size="16" class="text-rose-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                    </a>
                 </div>
             {% else %}
                 <div class="p-4 text-center">

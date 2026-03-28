@@ -250,7 +250,7 @@
                             {% heroicon_outline "document-plus" size="16" class="mr-1" %}
                             Add Tender Document
                         </a>
-                        <a href="{% url 'planning:design-list' project.pk work_package.pk %}"
+                        <a href="{% url 'planning:design-development-overview' project.pk %}"
                            class="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                             {% heroicon_outline "pencil-square" size="16" class="mr-1" %}
                             Design Development
@@ -341,7 +341,7 @@
     <div class="bg-white rounded-xl border border-gray-200 p-6 mt-6">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-lg font-medium text-gray-900">Design Development</h2>
-            <a href="{% url 'planning:design-list' project.pk work_package.pk %}"
+            <a href="{% url 'planning:design-development-overview' project.pk %}"
                class="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                 {% heroicon_outline "pencil-square" size="12" class="mr-1" %}
                 Manage Design

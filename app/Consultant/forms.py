@@ -67,4 +67,4 @@ class ProjectClientForm(forms.Form):
         # Type: ModelChoiceField has queryset attribute
         client_field = self.fields["client"]
         if hasattr(client_field, "queryset"):
-            client_field.queryset = queryset.distinct()  # type: ignore[attr-defined]
+            client_field.queryset = queryset.distinct()  # type: ignore
