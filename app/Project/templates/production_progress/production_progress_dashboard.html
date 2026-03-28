@@ -63,9 +63,7 @@
             
             <div class="w-full">
                 <div class="flex items-center justify-between space-x-5 mb-8">
-                    <div class="bg-indigo-100 p-3.5 rounded-md border border-indigo-200">
-                        {% heroicon_outline "chart-bar" size="28" class="text-indigo-400" %}
-                    </div>
+             
                     <div class="flex flex-1 items-center justify-between gap-2">
                         <div class="flex-1">
                             <h2 class="text-2xl font-bold">Production Progress Overview</h2>
@@ -126,59 +124,54 @@
     <!-- Active Item Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for item in item_cards %}
-        <div class="bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-6 group relative">
-            <div class="flex justify-between items-start mb-6">
-                <div class="flex items-center space-x-4">
-                    <div class="p-3 rounded-2xl {% if item.status_color == 'green' %}bg-emerald-50 text-emerald-600{% elif item.status_color == 'yellow' %}bg-amber-50 text-amber-600{% else %}bg-rose-50 text-rose-600{% endif %}">
-                        {% heroicon_outline "cube" size="24" %}
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{{ item.plan.activity }}</h3>
-                        <div class="flex items-center mt-1 space-x-2">
-                            <span class="flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full 
-                                {% if item.status_color == 'green' %}bg-emerald-100 text-emerald-700{% elif item.status_color == 'yellow' %}bg-amber-100 text-amber-700{% else %}bg-rose-100 text-rose-700{% endif %}">
-                                <span class="w-1.5 h-1.5 rounded-full mr-1.5 {% if item.status_color == 'green' %}bg-emerald-500{% elif item.status_color == 'yellow' %}bg-amber-500{% else %}bg-rose-500{% endif %}"></span>
-                                {{ item.status_text }}
-                            </span>
-                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Day {{ item.day_indicator|slice:"1:" }}</span>
+        <div class="bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow group relative">
+        
+
+        
+            <div class="p-4">
+                <div class="mb-3 flex items-start justify-between">
+                    <div class="flex items-center gap-3"> 
+                      
+                        <div>
+                            <h3 class="font-bold capitalize text-slate-800">{{ item.plan.activity }}</h3>
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium {% if item.status_color == 'green' %}bg-emerald-100 text-emerald-700{% elif item.status_color == 'yellow' %}bg-amber-100 text-amber-700{% else %}bg-rose-100 text-rose-700{% endif %}">
+                                    <span class="h-1.5 w-1.5 rounded-full {% if item.status_color == 'green' %}bg-emerald-500{% elif item.status_color == 'yellow' %}bg-amber-500{% else %}bg-rose-500{% endif %}"></span>{{ item.status_text }}
+                                </span>
+                                <span class="text-[10px] text-slate-400">Day {{ item.day_indicator|slice:"1:" }}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="text-right">
-                    <div class="text-2xl font-black text-gray-900">{{ item.completion_pct }}%</div>
-                    <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">complete</div>
-                </div>
-            </div>
-
-            <!-- Progress Bar -->
-            <div class="w-full bg-gray-100 rounded-full h-2 mb-6 overflow-hidden">
-                <div class="{% if item.status_color == 'green' %}bg-emerald-500{% elif item.status_color == 'yellow' %}bg-amber-500{% else %}bg-rose-500{% endif %} h-full rounded-full transition-all duration-700" style="width: {{ item.completion_pct }}%"></div>
-            </div>
-
-            <div class="flex justify-between text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-6">
-                <span>{{ item.produced_qty|floatformat:0 }} produced</span>
-                <span>{{ item.remaining_qty|floatformat:0 }} remaining</span>
-            </div>
-
-            <!-- Metrics Grid -->
-            <div class="grid grid-cols-4 gap-2 pt-6 border-t border-gray-50">
-                <div class="text-center">
-                    <div class="text-sm font-bold text-gray-900">R {{ item.spent|floatformat:1 }}k</div>
-                    <div class="text-[9px] text-gray-400 uppercase font-bold tracking-tight mt-1">Spent</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-sm font-bold text-gray-900">{{ item.hours|floatformat:0 }}h</div>
-                    <div class="text-[9px] text-gray-400 uppercase font-bold tracking-tight mt-1">Hours</div>
-                </div>
-                <div class="text-center border-x border-gray-50 px-1">
-                    <div class="text-sm font-bold text-gray-900">{{ item.umh }}</div>
-                    <div class="text-[9px] text-gray-400 uppercase font-bold tracking-tight mt-1">U/MH</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-sm font-bold flex items-center justify-center {% if item.trend_positive %}text-emerald-500{% else %}text-rose-500{% endif %}">
-                        {% if item.trend_positive %}+{% endif %}{{ item.trend_val }}%
+                    <div class="text-right">
+                        <p class="text-lg font-bold text-slate-800">{{ item.completion_pct|floatformat:0 }}%</p>
+                        <p class="text-[10px] text-slate-500">complete</p>
                     </div>
-                    <div class="text-[9px] text-gray-400 uppercase font-bold tracking-tight mt-1">Trend</div>
+                </div>
+                <div class="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                    <div class="{% if item.status_color == 'green' %}bg-emerald-500{% elif item.status_color == 'yellow' %}bg-amber-500{% else %}bg-rose-500{% endif %} h-full rounded-full transition-all duration-700" style="width: {{ item.completion_pct }}%"></div>
+                </div>
+                <div class="mt-1.5 flex justify-between text-[10px] text-slate-500">
+                    <span>{{ item.produced_qty|floatformat:0 }} {{ item.plan.unit }}</span>
+                    <span>{{ item.remaining_qty|floatformat:0 }} {{ item.plan.unit }} remaining</span>
+                </div>
+                 <!-- Metrics Grid -->
+                <div class="mt-4 grid grid-cols-4 gap-2">
+                    <div class="text-center">
+                        <p class="text-sm font-bold text-slate-800">R {{ item.spent|floatformat:1 }}</p>
+                        <p class="text-[10px] text-slate-500">Spent</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm font-bold text-slate-800">{{ item.hours|floatformat:0 }}h</p>
+                        <p class="text-[10px] text-slate-500">Hours</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm font-bold text-slate-800">{{ item.umh }}</p>
+                        <p class="text-[10px] text-slate-500">U/MH</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm font-bold {% if item.trend_positive %}text-emerald-500{% else %}text-rose-500{% endif %}">  {% if item.trend_positive %}+{% endif %}{{ item.trend_val }}%</p>
+                        <p class="text-[10px] text-slate-500">Trend</p>
+                    </div>
                 </div>
             </div>
             
