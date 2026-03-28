@@ -36,7 +36,7 @@ def auth_client(client: Client):
     """Create an authenticated client."""
     user = AccountFactory(email="admin@admin.com", password="password")
     # AccountFactory returns an Account instance, not a factory object
-    client.force_login(user)  # type: ignore[arg-type]
+    client.force_login(user)  # type: ignore
     return client
 
 

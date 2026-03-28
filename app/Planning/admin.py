@@ -89,7 +89,7 @@ class TenderDocumentAdmin(admin.ModelAdmin):
 class DesignCategoryAdmin(admin.ModelAdmin):
     """Admin for DesignCategory model."""
 
-    list_display = ["category", "work_package", "stage", "approved"]
+    list_display = ["category", "stage", "approved"]
     list_filter = ["stage", "approved"]
     inlines = [DesignCategoryFileInline]
 
@@ -98,7 +98,7 @@ class DesignCategoryAdmin(admin.ModelAdmin):
 class DesignSubCategoryAdmin(admin.ModelAdmin):
     """Admin for DesignSubCategory model."""
 
-    list_display = ["sub_category", "work_package", "stage", "approved"]
+    list_display = ["sub_category", "stage", "approved"]
     list_filter = ["stage", "approved"]
     inlines = [DesignSubCategoryFileInline]
 
@@ -107,7 +107,7 @@ class DesignSubCategoryAdmin(admin.ModelAdmin):
 class DesignGroupAdmin(admin.ModelAdmin):
     """Admin for DesignGroup model."""
 
-    list_display = ["group", "work_package", "stage", "approved"]
+    list_display = ["group", "stage", "approved"]
     list_filter = ["stage", "approved"]
     inlines = [DesignGroupFileInline]
 
@@ -116,6 +116,6 @@ class DesignGroupAdmin(admin.ModelAdmin):
 class DesignDisciplineAdmin(admin.ModelAdmin):
     """Admin for DesignDiscipline model."""
 
-    list_display = ["discipline", "work_package", "stage", "approved"]
+    list_display = ["discipline", "stage", "approved"]
     list_filter = ["stage", "approved"]
     inlines = [DesignDisciplineFileInline]

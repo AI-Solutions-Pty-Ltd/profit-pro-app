@@ -100,21 +100,21 @@ class ProjectDocumentForm(forms.ModelForm):
             # Filter for project-specific categories
             category_field = self.fields["project_category"]
             if hasattr(category_field, "queryset"):
-                category_field.queryset = Category.objects.filter(  # type: ignore[attr-defined]
+                category_field.queryset = Category.objects.filter(  # type: ignore
                     projects_id=project.pk, deleted=False
                 ).order_by("name")
 
             # Filter for project-specific subcategories
             subcategory_field = self.fields["project_sub_category"]
             if hasattr(subcategory_field, "queryset"):
-                subcategory_field.queryset = SubCategory.objects.filter(  # type: ignore[attr-defined]
+                subcategory_field.queryset = SubCategory.objects.filter(  # type: ignore
                     project_id=project.pk, deleted=False
                 ).order_by("name")
 
             # Filter for project-specific disciplines
             discipline_field = self.fields["project_discipline"]
             if hasattr(discipline_field, "queryset"):
-                discipline_field.queryset = Discipline.objects.filter(  # type: ignore[attr-defined]
+                discipline_field.queryset = Discipline.objects.filter(  # type: ignore
                     projects_id=project.pk, deleted=False
                 ).order_by("name")
 

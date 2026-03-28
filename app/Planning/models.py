@@ -91,11 +91,13 @@ class WorkPackage(BaseModel):
 
     # Tender Milestones
     applied_to_advert_start_date = models.DateField(
+        verbose_name="Advert Start Date",
         null=True,
         blank=True,
         help_text="Advert start date",
     )
     applied_to_advert_end_date = models.DateField(
+        verbose_name="Advert End Date",
         null=True,
         blank=True,
         help_text="Advert end date",
@@ -467,25 +469,19 @@ class DesignCategory(BaseModel):
     Linked to Category in project_models.py.
     """
 
-    work_package = models.ForeignKey(
-        WorkPackage,
-        on_delete=models.CASCADE,
-        related_name="design_categories",
-        help_text="Work package this design category belongs to",
-    )
     category = models.ForeignKey(
         Category,
         on_delete=models.CASCADE,
         related_name="design_categories",
         help_text="L1 Category from project structure",
     )
-    required_quantity = models.PositiveBigIntegerField(default=1)
     stage = models.CharField(
         max_length=30,
         choices=DesignStage.choices,
         default=DesignStage.DESIGN_CRITERIA,
         help_text="Current design stage",
     )
+    required_quantity = models.PositiveBigIntegerField(default=1)
     approved = models.BooleanField(
         default=False,
         help_text="Whether this design stage is approved",
@@ -552,25 +548,19 @@ class DesignSubCategory(BaseModel):
     Linked to SubCategory in project_models.py.
     """
 
-    work_package = models.ForeignKey(
-        WorkPackage,
-        on_delete=models.CASCADE,
-        related_name="design_subcategories",
-        help_text="Work package this design subcategory belongs to",
-    )
     sub_category = models.ForeignKey(
         SubCategory,
         on_delete=models.CASCADE,
         related_name="design_subcategories",
         help_text="L2 SubCategory from project structure",
     )
-    required_quantity = models.PositiveBigIntegerField(default=1)
     stage = models.CharField(
         max_length=30,
         choices=DesignStage.choices,
         default=DesignStage.DESIGN_CRITERIA,
         help_text="Current design stage",
     )
+    required_quantity = models.PositiveBigIntegerField(default=1)
     approved = models.BooleanField(
         default=False,
         help_text="Whether this design stage is approved",
@@ -637,25 +627,19 @@ class DesignGroup(BaseModel):
     Linked to Group in project_models.py.
     """
 
-    work_package = models.ForeignKey(
-        WorkPackage,
-        on_delete=models.CASCADE,
-        related_name="design_groups",
-        help_text="Work package this design group belongs to",
-    )
     group = models.ForeignKey(
         Group,
         on_delete=models.CASCADE,
         related_name="design_groups",
         help_text="L3 Group from project structure",
     )
-    required_quantity = models.PositiveBigIntegerField(default=1)
     stage = models.CharField(
         max_length=30,
         choices=DesignStage.choices,
         default=DesignStage.DESIGN_CRITERIA,
         help_text="Current design stage",
     )
+    required_quantity = models.PositiveBigIntegerField(default=1)
     approved = models.BooleanField(
         default=False,
         help_text="Whether this design stage is approved",
@@ -722,11 +706,11 @@ class DesignDiscipline(BaseModel):
     Linked to Discipline in project_models.py.
     """
 
-    work_package = models.ForeignKey(
-        WorkPackage,
-        on_delete=models.CASCADE,
-        related_name="design_disciplines",
-        help_text="Work package this design discipline belongs to",
+    stage = models.CharField(
+        max_length=30,
+        choices=DesignStage.choices,
+        default=DesignStage.DESIGN_CRITERIA,
+        help_text="Current design stage",
     )
     discipline = models.ForeignKey(
         Discipline,
@@ -735,12 +719,6 @@ class DesignDiscipline(BaseModel):
         help_text="L4 Discipline from project structure",
     )
     required_quantity = models.PositiveBigIntegerField(default=1)
-    stage = models.CharField(
-        max_length=30,
-        choices=DesignStage.choices,
-        default=DesignStage.DESIGN_CRITERIA,
-        help_text="Current design stage",
-    )
     approved = models.BooleanField(
         default=False,
         help_text="Whether this design stage is approved",

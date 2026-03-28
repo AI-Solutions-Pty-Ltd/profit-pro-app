@@ -148,7 +148,7 @@ class ProjectFactory(DjangoModelFactory):
         # But the most compatible way is to use a RelatedManager
         if hasattr(self, "instance"):
             # Newer factory_boy versions
-            instance: Project = self.instance  # type: ignore[attr-defined]
+            instance: Project = self.instance  # type: ignore
         else:
             # Older versions - we need to find the instance differently
             # This is a hack but works for older versions
@@ -184,7 +184,7 @@ class ProjectFactory(DjangoModelFactory):
 
         # Get the project instance
         if hasattr(self, "instance"):
-            instance: Project = self.instance  # type: ignore[attr-defined]
+            instance: Project = self.instance  # type: ignore
         else:
             instance: Project = Project.objects.latest("created_at")
 

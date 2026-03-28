@@ -20,7 +20,7 @@ class AdvancedPaymentCreateUpdateForm(forms.ModelForm):
         if self.project:
             self.fields[
                 "payment_certificate"
-            ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
+            ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
                 "-created_at"
             )
 
@@ -49,7 +49,7 @@ class RetentionCreateUpdateCreateForm(forms.ModelForm):
         if self.project:
             self.fields[
                 "payment_certificate"
-            ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
+            ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
                 "-created_at"
             )
 
@@ -76,7 +76,7 @@ class MaterialsOnSiteCreateUpdateForm(forms.ModelForm):
         if self.project:
             self.fields[
                 "payment_certificate"
-            ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore[attr-defined]
+            ].queryset = self.project.payment_certificates.all().order_by(  # type: ignore
                 "-created_at"
             )
 

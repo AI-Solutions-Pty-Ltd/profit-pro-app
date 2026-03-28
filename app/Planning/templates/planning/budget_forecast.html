@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load humanize %}
 {% load heroicons %}
+{% load static %}
 {% block title %}
     Budget Forecast - {{ project.name }}
 {% endblock title %}
@@ -84,117 +85,141 @@
                                             onclick="openDeleteCategoryModal({{ category.pk }}, '{{ category.name|escapejs }}', {{ category.projects.count }})"
                                             class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                             title="Delete category">{% heroicon_outline "trash" size="18" %}</button>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Category Milestones -->
-                        {% if category.milestones.all %}
-                            <div class="px-6 py-2 bg-gray-50">
-                                {% for milestone in category.milestones.all %}
-                                    {% include "forecasts/partials/milestone_row.html" with milestone=milestone level=1 %}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                        <!-- Add Subcategory Button -->
-                        <div class="px-8 py-3 bg-gray-50/50">
-                            <button type="button"
-                                    onclick="openCreateSubCategoryModal({{ category.pk }})"
-                                    class="inline-flex items-center px-4 py-2 border border-green-200 text-sm font-semibold rounded-lg text-green-700 bg-green-50 hover:bg-green-100 hover:border-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-sm">
-                                {% heroicon_outline "plus" size="16" class="mr-1.5" %}
-                                <span>Add Subcategory</span>
-                            </button>
-                        </div>
-                        <!-- Subcategories -->
-                        {% for subcategory in category.subcategories.all %}
-                            <div class="border-l-4 border-green-500 ml-6 hover:border-green-600 transition-colors">
-                                <div class="px-6 py-4 bg-gradient-to-r from-green-50 to-green-50/50">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center space-x-3">
-                                            <div class="p-1.5 bg-green-100 rounded-lg">{% heroicon_outline "tag" size="18" class="text-green-600" %}</div>
-                                            <div>
-                                                <h4 class="text-md font-bold text-green-900">{{ subcategory.name }}</h4>
-                                                {% include "project/components/budget_input.html" with field_id="subcategory_"|addstr:subcategory.pk entity_type="subcategory" entity_id=subcategory.pk budget=subcategory.budget parent_id=category.pk %}
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center space-x-2">
-                                            <span class="px-2.5 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">
-                                                {{ subcategory.milestones|length }} milestone{{ subcategory.milestones|length|pluralize }}
-                                            </span>
-                                            <button type="button"
-                                                    onclick="openEditSubCategoryModal({{ subcategory.pk }}, '{{ subcategory.name|escapejs }}', '{{ subcategory.description|escapejs }}',{{ category.pk }})"
-                                                    class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                    title="Edit subcategory">
-                                                {% heroicon_outline "pencil" size="16" %}
-                                            </button>
-                                            <button type="button"
-                                                    onclick="openDeleteSubcategoryModal({{ subcategory.pk }}, '{{ subcategory.name|escapejs }}', {{ subcategory.project_set.count }})"
-                                                    class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Delete subcategory">
-                                                {% heroicon_outline "trash" size="16" %}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Subcategory Milestones -->
-                                {% if subcategory.milestones %}
-                                    <div class="px-6 py-2 bg-gray-50">
-                                        {% for milestone in subcategory.milestones.all %}
-                                            {% include "forecasts/partials/milestone_row.html" with milestone=milestone level=2 %}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                <!-- Add Group Button -->
-                                <div class="px-6 py-3 bg-gray-50/50 ml-6">
                                     <button type="button"
-                                            onclick="openCreateGroupModal({{ subcategory.pk }})"
-                                            class="inline-flex items-center px-4 py-2 border border-purple-200 text-sm font-semibold rounded-lg text-purple-700 bg-purple-50 hover:bg-purple-100 hover:border-purple-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 shadow-sm">
-                                        {% heroicon_outline "plus" size="16" class="mr-1.5" %}
-                                        <span>Add Group</span>
+                                            onclick="toggleElement(this, 'category-{{ category.pk }}')"
+                                            class="p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                                            title="Toggle category">
+                                        {% heroicon_outline "chevron-right" size="18" class="text-blue-600" %}
                                     </button>
                                 </div>
-                                <!-- Groups -->
-                                {% for group in subcategory.groups.all %}
-                                    <div class="border-l-4 border-purple-500 ml-12 hover:border-purple-600 transition-colors">
-                                        <div class="px-6 py-3 bg-gradient-to-r from-purple-50 to-purple-50/50">
-                                            <div class="flex items-center justify-between">
-                                                <div class="flex items-center space-x-3">
-                                                    <div class="p-1.5 bg-purple-100 rounded-lg">{% heroicon_outline "folder" size="16" class="text-purple-600" %}</div>
-                                                    <div>
-                                                        <h5 class="text-sm font-bold text-purple-900">{{ group.name }}</h5>
-                                                        {% include "project/components/budget_input.html" with field_id="group_"|addstr:group.pk entity_type="group" entity_id=group.pk budget=group.budget parent_id=subcategory.pk %}
-                                                    </div>
-                                                </div>
-                                                <div class="flex items-center space-x-2">
-                                                    <span class="px-2.5 py-0.5 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full">
-                                                        {{ group.milestones|length }} milestone{{ group.milestones|length|pluralize }}
-                                                    </span>
-                                                    <button type="button"
-                                                            onclick="openEditGroupModal({{ group.pk }}, '{{ group.name|escapejs }}', '{{ group.description|escapejs }}', {{ subcategory.pk }})"
-                                                            class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                            title="Edit group">
-                                                        {% heroicon_outline "pencil" size="16" %}
-                                                    </button>
-                                                    <button type="button"
-                                                            onclick="openDeleteGroupModal({{ group.pk }}, '{{ group.name|escapejs }}', {{ subcategory.pk }}, 0)"
-                                                            class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                            title="Delete group">
-                                                        {% heroicon_outline "trash" size="16" %}
-                                                    </button>
+                            </div>
+                        </div>
+                        <div id="category-{{ category.pk }}" class="hidden">
+                            <!-- Category Milestones -->
+                            {% if category.milestones.all %}
+                                <div class="px-6 py-2 bg-gray-50">
+                                    {% for milestone in category.milestones.all %}
+                                        {% include "forecasts/partials/milestone_row.html" with milestone=milestone level=1 %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <!-- Add Subcategory Button -->
+                            <div class="px-8 py-3 bg-gray-50/50">
+                                <button type="button"
+                                        onclick="openCreateSubCategoryModal({{ category.pk }})"
+                                        class="inline-flex items-center px-4 py-2 border border-green-200 text-sm font-semibold rounded-lg text-green-700 bg-green-50 hover:bg-green-100 hover:border-green-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-sm">
+                                    {% heroicon_outline "plus" size="16" class="mr-1.5" %}
+                                    <span>Add Subcategory</span>
+                                </button>
+                            </div>
+                            <!-- Subcategories -->
+                            {% for subcategory in category.subcategories.all %}
+                                <div class="border-l-4 border-green-500 ml-6 hover:border-green-600 transition-colors">
+                                    <div class="px-6 py-4 bg-gradient-to-r from-green-50 to-green-50/50">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-3">
+                                                <div class="p-1.5 bg-green-100 rounded-lg">{% heroicon_outline "tag" size="18" class="text-green-600" %}</div>
+                                                <div>
+                                                    <h4 class="text-md font-bold text-green-900">{{ subcategory.name }}</h4>
+                                                    {% include "project/components/budget_input.html" with field_id="subcategory_"|addstr:subcategory.pk entity_type="subcategory" entity_id=subcategory.pk budget=subcategory.budget parent_id=category.pk %}
                                                 </div>
                                             </div>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="px-2.5 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">
+                                                    {{ subcategory.milestones|length }} milestone{{ subcategory.milestones|length|pluralize }}
+                                                </span>
+                                                <button type="button"
+                                                        onclick="openEditSubCategoryModal({{ subcategory.pk }}, '{{ subcategory.name|escapejs }}', '{{ subcategory.description|escapejs }}',{{ category.pk }})"
+                                                        class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                        title="Edit subcategory">
+                                                    {% heroicon_outline "pencil" size="16" %}
+                                                </button>
+                                                <button type="button"
+                                                        onclick="openDeleteSubcategoryModal({{ subcategory.pk }}, '{{ subcategory.name|escapejs }}', {{ subcategory.project_set.count }})"
+                                                        class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Delete subcategory">
+                                                    {% heroicon_outline "trash" size="16" %}
+                                                </button>
+                                                <button type="button"
+                                                        onclick="toggleElement(this, 'subcategory-{{ subcategory.pk }}')"
+                                                        class="p-1.5 hover:bg-green-100 rounded-lg transition-colors"
+                                                        title="Toggle subcategory">
+                                                    {% heroicon_outline "chevron-right" size="16" class="text-green-600" %}
+                                                </button>
+                                            </div>
                                         </div>
-                                        <!-- Group Milestones -->
-                                        {% if group.milestones %}
+                                    </div>
+                                    <div id="subcategory-{{ subcategory.pk }}" class="hidden">
+                                        <!-- Subcategory Milestones -->
+                                        {% if subcategory.milestones %}
                                             <div class="px-6 py-2 bg-gray-50">
-                                                {% for milestone in group.milestones.all %}
-                                                    {% include "forecasts/partials/milestone_row.html" with milestone=milestone level=3 %}
+                                                {% for milestone in subcategory.milestones.all %}
+                                                    {% include "forecasts/partials/milestone_row.html" with milestone=milestone level=2 %}
                                                 {% endfor %}
                                             </div>
                                         {% endif %}
+                                        <!-- Add Group Button -->
+                                        <div class="px-6 py-3 bg-gray-50/50 ml-6">
+                                            <button type="button"
+                                                    onclick="openCreateGroupModal({{ subcategory.pk }})"
+                                                    class="inline-flex items-center px-4 py-2 border border-purple-200 text-sm font-semibold rounded-lg text-purple-700 bg-purple-50 hover:bg-purple-100 hover:border-purple-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 shadow-sm">
+                                                {% heroicon_outline "plus" size="16" class="mr-1.5" %}
+                                                <span>Add Group</span>
+                                            </button>
+                                        </div>
+                                        <!-- Groups -->
+                                        {% for group in subcategory.groups.all %}
+                                            <div class="border-l-4 border-purple-500 ml-12 hover:border-purple-600 transition-colors">
+                                                <div class="px-6 py-3 bg-gradient-to-r from-purple-50 to-purple-50/50">
+                                                    <div class="flex items-center justify-between">
+                                                        <div class="flex items-center space-x-3">
+                                                            <div class="p-1.5 bg-purple-100 rounded-lg">{% heroicon_outline "folder" size="16" class="text-purple-600" %}</div>
+                                                            <div>
+                                                                <h5 class="text-sm font-bold text-purple-900">{{ group.name }}</h5>
+                                                                {% include "project/components/budget_input.html" with field_id="group_"|addstr:group.pk entity_type="group" entity_id=group.pk budget=group.budget parent_id=subcategory.pk %}
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex items-center space-x-2">
+                                                            <span class="px-2.5 py-0.5 text-xs font-semibold text-purple-700 bg-purple-100 rounded-full">
+                                                                {{ group.milestones|length }} milestone{{ group.milestones|length|pluralize }}
+                                                            </span>
+                                                            <button type="button"
+                                                                    onclick="openEditGroupModal({{ group.pk }}, '{{ group.name|escapejs }}', '{{ group.description|escapejs }}', {{ subcategory.pk }})"
+                                                                    class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                                    title="Edit group">
+                                                                {% heroicon_outline "pencil" size="16" %}
+                                                            </button>
+                                                            <button type="button"
+                                                                    onclick="openDeleteGroupModal({{ group.pk }}, '{{ group.name|escapejs }}', {{ subcategory.pk }}, 0)"
+                                                                    class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                                    title="Delete group">
+                                                                {% heroicon_outline "trash" size="16" %}
+                                                            </button>
+                                                            <button type="button"
+                                                                    onclick="toggleElement(this, 'group-{{ group.pk }}')"
+                                                                    class="p-1.5 hover:bg-purple-100 rounded-lg transition-colors"
+                                                                    title="Toggle group">
+                                                                {% heroicon_outline "chevron-right" size="16" class="text-purple-600" %}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div id="group-{{ group.pk }}" class="hidden">
+                                                    <!-- Group Milestones -->
+                                                    {% if group.milestones %}
+                                                        <div class="px-6 py-2 bg-gray-50">
+                                                            {% for milestone in group.milestones.all %}
+                                                                {% include "forecasts/partials/milestone_row.html" with milestone=milestone level=3 %}
+                                                            {% endfor %}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        {% endfor %}
                                     </div>
-                                {% endfor %}
-                            </div>
-                        {% endfor %}
+                                </div>
+                            {% endfor %}
+                        </div>
                     </div>
                 {% endfor %}
             </div>
@@ -265,17 +290,25 @@
                                         onclick="openDeleteDisciplineModal({{ discipline.pk }}, '{{ discipline.name|escapejs }}', {{ discipline.projects.count }})"
                                         class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                         title="Delete discipline">{% heroicon_outline "trash" size="18" %}</button>
+                                <button type="button"
+                                        onclick="toggleElement(this, 'discipline-{{ discipline.pk }}')"
+                                        class="p-2 hover:bg-amber-100 rounded-lg transition-colors"
+                                        title="Toggle discipline">
+                                    {% heroicon_outline "chevron-right" size="18" class="text-amber-600" %}
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <!-- Discipline Milestones -->
-                    {% if discipline.milestones.all %}
-                        <div class="px-6 py-2 bg-gray-50">
-                            {% for milestone in discipline.milestones.all %}
-                                {% include "forecasts/partials/milestone_row.html" with milestone=milestone level=4 %}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    <div id="discipline-{{ discipline.pk }}" class="hidden">
+                        <!-- Discipline Milestones -->
+                        {% if discipline.milestones.all %}
+                            <div class="px-6 py-2 bg-gray-50">
+                                {% for milestone in discipline.milestones.all %}
+                                    {% include "forecasts/partials/milestone_row.html" with milestone=milestone level=4 %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             {% empty %}
                 <div class="px-6 py-16 text-center">
@@ -306,3 +339,6 @@
         </div>
     </div>
 {% endblock content %}
+{% block extra_js %}
+    <script src="{% static 'js/toggle-utils.js' %}"></script>
+{% endblock extra_js %}
