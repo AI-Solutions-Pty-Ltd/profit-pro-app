@@ -250,3 +250,184 @@ def get_activity_detail_data(plan_id):
         'daily_breakdown': daily_breakdown,
         'remaining_qty': max(0, plan.quantity - total_produced),
     }
+
+def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
+    """
+    Calculates detailed productivity metrics (Actual vs Planned) for a specific plan.
+    Used for the Plan Productivity Dashboard.
+    """
+    if not plan_id:
+        return {}
+
+    plan = get_object_or_404(ProductionPlan, pk=plan_id)
+    entries_qs = DailyActivityEntry.objects.filter(production_plan=plan).select_related('report').prefetch_related(
+        'labour_usage', 'plant_usage', 'labour_usage__resource', 'plant_usage__resource'
+    ).order_by('report__date')
+
+    if start_date:
+        entries_qs = entries_qs.filter(report__date__gte=start_date)
+    if end_date:
+        entries_qs = entries_qs.filter(report__date__lte=end_date)
+
+    entries = list(entries_qs)
+    
+    # 1. Planned Metrics (Targets)
+    # Total planned man hours: sum(resource.number * resource.days * 8)
+    planned_man_hours = Decimal('0.0')
+    for res in plan.resources.filter(resource_type='LABOUR'):
+        planned_man_hours += (res.number or 0) * (res.days or 0) * 8
+    
+    planned_cost = plan.total_labour_cost + plan.total_plant_cost + plan.total_other_cost
+    
+    target_productivity = Decimal('0.0')
+    if planned_man_hours > 0:
+        target_productivity = Decimal(plan.quantity) / planned_man_hours
+    
+    target_cost_per_item = Decimal('0.0')
+    if plan.quantity > 0:
+        target_cost_per_item = planned_cost / Decimal(plan.quantity)
+    
+    target_daily_output = Decimal('0.0')
+    if plan.duration > 0:
+        target_daily_output = Decimal(plan.quantity) / Decimal(plan.duration)
+
+    # 2. Actual Metrics
+    actual_total_qty = sum(e.quantity for e in entries)
+    actual_total_spent = sum(e.total_cost for e in entries)
+    actual_total_hours = sum(e.man_hours for e in entries)
+    
+    actual_avg_productivity = Decimal('0.0')
+    if actual_total_hours > 0:
+        actual_avg_productivity = actual_total_qty / actual_total_hours
+        
+    actual_avg_cost_per_item = Decimal('0.0')
+    if actual_total_qty > 0:
+        actual_avg_cost_per_item = actual_total_spent / actual_total_qty
+        
+    days_elapsed = len(entries)
+    actual_avg_daily_output = Decimal('0.0')
+    if days_elapsed > 0:
+        actual_avg_daily_output = actual_total_qty / Decimal(days_elapsed)
+
+    # 3. Trends and Variances
+    def calc_var(actual, target):
+        if not target or target == 0:
+            return 0
+        return round(((actual - target) / target) * 100, 1)
+
+    # Productivity Trend (Compare latest day vs previous days average)
+    prod_trend_val = 0
+    prod_trend_pos = True
+    if len(entries) >= 2:
+        latest = entries[-1].work_productivity
+        prev_sum_qty = sum(e.quantity for e in entries[:-1])
+        prev_sum_hours = sum(e.man_hours for e in entries[:-1])
+        prev_avg = prev_sum_qty / prev_sum_hours if prev_sum_hours > 0 else 0
+        prod_trend_val, prod_trend_pos = calculate_trend(latest, prev_avg)
+
+    # Cost Trend
+    cost_trend_val = 0
+    cost_trend_pos = False # For cost, positive change is usually "bad", but let's stick to the math
+    if len(entries) >= 2:
+        latest_cost = entries[-1].cost_per_item
+        prev_sum_cost = sum(e.total_cost for e in entries[:-1])
+        prev_sum_qty = sum(e.quantity for e in entries[:-1])
+        prev_avg_cost = prev_sum_cost / prev_sum_qty if prev_sum_qty > 0 else 0
+        cost_trend_val, cost_trend_pos = calculate_trend(latest_cost, prev_avg_cost)
+
+    # Output Trend
+    output_trend_val = 0
+    output_trend_pos = True
+    if len(entries) >= 2:
+        latest_out = entries[-1].quantity
+        prev_avg_out = sum(e.quantity for e in entries[:-1]) / (len(entries) - 1)
+        output_trend_val, output_trend_pos = calculate_trend(latest_out, prev_avg_out)
+
+    # 4. Chart Data Preparation
+    labels = [e.day_number for e in entries]
+    dates = [e.report.date.strftime('%b %d') for e in entries]
+    
+    actual_production = [float(e.quantity) for e in entries]
+    target_production = [float(target_daily_output) for _ in entries]
+    
+    cum_actual = []
+    running_actual = 0
+    for q in actual_production:
+        running_actual += q
+        cum_actual.append(running_actual)
+        
+    cum_target = []
+    running_target = 0
+    for _ in range(len(entries)):
+        running_target += float(target_daily_output)
+        cum_target.append(running_target)
+        
+    productivity_trend = [float(e.work_productivity) for e in entries]
+    cost_trend = [float(e.cost_per_item) for e in entries]
+
+    # 5. Daily Summary Breakdown
+    daily_summaries = []
+    for i, e in enumerate(entries):
+        prev_e = entries[i-1] if i > 0 else None
+        
+        # Prod trend arrow
+        p_trend_arrow = 'up'
+        if prev_e and e.work_productivity < prev_e.work_productivity:
+            p_trend_arrow = 'down'
+            
+        daily_summaries.append({
+            'day': e.day_number,
+            'date': e.report.date,
+            'actual_qty': e.quantity,
+            'target_qty': target_daily_output,
+            'progress_pct': min(100, round((e.quantity / target_daily_output) * 100, 1)) if target_daily_output > 0 else 0,
+            'productivity': e.work_productivity,
+            'productivity_arrow': p_trend_arrow,
+            'cost_per_item': e.cost_per_item,
+            'is_cost_over': e.cost_per_item > target_cost_per_item,
+            'status': 'On Track' if e.quantity >= target_daily_output else 'Behind'
+        })
+
+    return {
+        'kpis': {
+            'productivity': {
+                'actual': actual_avg_productivity,
+                'target': target_productivity,
+                'variance': calc_var(actual_avg_productivity, target_productivity),
+                'trend': prod_trend_val,
+                'trend_pos': prod_trend_pos,
+            },
+            'cost': {
+                'actual': actual_avg_cost_per_item,
+                'target': target_cost_per_item,
+                'variance': calc_var(actual_avg_cost_per_item, target_cost_per_item),
+                'trend': cost_trend_val,
+                'trend_pos': not cost_trend_pos, # Inverse: for cost, down is good
+            },
+            'man_hours': {
+                'actual': actual_total_hours,
+                'planned': planned_man_hours,
+                'variance': calc_var(actual_total_hours, planned_man_hours),
+            },
+            'daily_output': {
+                'actual': actual_avg_daily_output,
+                'target': target_daily_output,
+                'variance': calc_var(actual_avg_daily_output, target_daily_output),
+                'trend': output_trend_val,
+                'trend_pos': output_trend_pos,
+            }
+        },
+        'charts': {
+            'labels': labels,
+            'dates': dates,
+            'actual_production': actual_production,
+            'target_production': target_production,
+            'cum_actual': cum_actual,
+            'cum_target': cum_target,
+            'productivity_trend': productivity_trend,
+            'target_productivity': float(target_productivity),
+            'cost_trend': cost_trend,
+            'target_cost': float(target_cost_per_item),
+        },
+        'daily_summaries': daily_summaries
+    }

@@ -41,7 +41,7 @@ from django.utils import timezone
 from django.db.models import Sum, F
 from django.forms import inlineformset_factory
 from collections import defaultdict
-from .utils import get_dashboard_data, get_activity_detail_data
+from .utils import get_dashboard_data, get_activity_detail_data, get_plan_productivity_data
 
 
 
@@ -441,7 +441,7 @@ class DailyProductionCreateView(
 class DailyProductivityCreateView(
     SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
 ):
-    """View to handle the composite Daily Productivity Form (3B)."""
+    """View to handle the composite Daily Productivity Form."""
     template_name = "production_progress/productivity_form.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
@@ -470,7 +470,7 @@ class DailyProductivityCreateView(
             initial_plant = [{'resource': res} for res in plant_res]
 
         if "labour_formset" not in kwargs:
-            labour_extra = len(initial_labour) if initial_labour else 3
+            labour_extra = 0
             LabourFormSet = inlineformset_factory(
                 DailyActivityEntry, DailyLabourUsage, form=DailyLabourUsageForm, extra=labour_extra, can_delete=True
             )
@@ -483,7 +483,7 @@ class DailyProductivityCreateView(
             context["labour_formset"] = kwargs["labour_formset"]
 
         if "plant_formset" not in kwargs:
-            plant_extra = len(initial_plant) if initial_plant else 3
+            plant_extra = 0
             PlantFormSet = inlineformset_factory(
                 DailyActivityEntry, DailyPlantUsage, form=DailyPlantUsageForm, extra=plant_extra, can_delete=True
             )
@@ -617,3 +617,51 @@ class ProductivityLogsView(
 class ProgressTrackingView(ProductivityLogsView):
     """View to display the data from the analysis view, with daily breakdowns."""
     template_name = "production_progress/progress_tracking.html"
+
+
+class PlanProductivityDashboardView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """
+    Plan Productivity Dashboard.
+    Compares planned production targets against actual performance.
+    """
+
+    template_name = "production_progress/plan_productivity_dashboard.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+
+        # Filters
+        plan_id = self.request.GET.get("plan_id")
+        start_date = self.request.GET.get("start_date")
+        end_date = self.request.GET.get("end_date")
+
+        all_plans = ProductionPlan.objects.filter(project=project).order_by("activity")
+
+        # Default to first plan if none selected
+        selected_plan = None
+        if plan_id:
+            selected_plan = all_plans.filter(pk=plan_id).first()
+        if not selected_plan and all_plans.exists():
+            selected_plan = all_plans.first()
+
+        # Get data from utils
+        dashboard_data = get_plan_productivity_data(
+            selected_plan.pk if selected_plan else None, start_date, end_date
+        )
+
+        context.update(
+            {
+                "project": project,
+                "all_plans": all_plans,
+                "selected_plan": selected_plan,
+                "start_date": start_date,
+                "end_date": end_date,
+                **dashboard_data,
+            }
+        )
+        return context

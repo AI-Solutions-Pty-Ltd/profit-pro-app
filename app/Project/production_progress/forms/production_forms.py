@@ -108,9 +108,15 @@ class DailyActivityReportForm(forms.ModelForm):
 class DailyActivityEntryForm(forms.ModelForm):
     class Meta:
         model = DailyActivityEntry
-        fields = ["production_plan"]
+        fields = ["production_plan", "quantity"]
         widgets = {
             "production_plan": forms.Select(attrs={"class": "form-select"}),
+            "quantity": forms.NumberInput(attrs={
+                "class": "form-input", 
+                "placeholder": "0.00", 
+                "step": "1", 
+                "min": "0"
+            }),
         }
 
     def __init__(self, *args, **kwargs):

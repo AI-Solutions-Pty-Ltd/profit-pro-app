@@ -21,16 +21,16 @@
                     <a href="." class="p-2 text-gray-500 hover:text-indigo-600 hover:bg-gray-50 rounded-md transition-colors border border-gray-200" title="Refresh Data">
                         {% heroicon_outline "arrow-path" size="18" %}
                     </a>
-                    <div class="flex items-center bg-gray-50 rounded-md border border-gray-200 p-1">
-                        <button class="px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-white hover:shadow-sm rounded transition-colors flex items-center">
+                    {% comment %} <div class="flex items-center bg-gray-50 rounded-md border border-gray-200 p-1">
+                        <a href="{% url 'project:plan-productivity-dashboard' project.pk %}" class="px-3 py-1.5 text-xs font-bold text-indigo-600 hover:bg-white hover:shadow-sm rounded transition-colors flex items-center">
+                            {% heroicon_outline "chart-bar" size="14" class="mr-1.5" %}
+                            Productivity Analytics
+                        </a>
+                        <button class="px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-white hover:shadow-sm rounded transition-colors flex items-center border-l border-gray-200 ml-1 pl-2">
                             {% heroicon_outline "document-arrow-down" size="14" class="mr-1.5" %}
                             PDF
                         </button>
-                        <button class="px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-white hover:shadow-sm rounded transition-colors flex items-center">
-                            {% heroicon_outline "table-cells" size="14" class="mr-1.5" %}
-                            Excel
-                        </button>
-                    </div>
+                    </div> {% endcomment %}
                 </div>
             </div>
             <div class="flex items-center justify-between">
@@ -38,7 +38,7 @@
                     <h1 class="text-2xl font-bold text-gray-900">Production Progress Tracker</h1>
                     <p class="text-sm text-gray-600 mt-1">High-level overview and performance metrics for {{ project.name }}</p>
                 </div>
-                <div class="flex items-center space-x-3">
+                {% comment %} <div class="flex items-center space-x-3">
                     <form method="GET" class="flex items-center space-x-2 bg-white px-3 py-2 rounded-md border border-gray-300 shadow-sm focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500">
                         <input type="date" name="start_date" value="{{ start_date|default:'' }}" class="text-xs border-0 p-0 focus:ring-0">
                         <span class="text-gray-400">to</span>
@@ -51,7 +51,7 @@
                         {% heroicon_solid "plus" class="w-4 h-4 mr-2" %}
                         Log Production
                     </a>
-                </div>
+                </div> {% endcomment %}
             </div>
         </div>
     </div>
@@ -59,9 +59,9 @@
     <!-- Overall Summary Section -->
     <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-8 overflow-hidden">
         <div class="px-6 py-8 bg-gray-50/50">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div class="grid grid-cols-1 gap-8 items-center">
                 <!-- Left: Progress & Stats -->
-                <div class="lg:col-span-8">
+                <div class="">
                     <div class="mb-8">
                         <div class="flex justify-between items-end mb-2">
                             <div>
@@ -103,7 +103,7 @@
                 </div>
 
                 <!-- Right: Status breakdown -->
-                <div class="lg:col-span-4 border-l border-gray-200 pl-8 hidden lg:block">
+                {% comment %} <div class="lg:col-span-4 border-l border-gray-200 pl-8 hidden lg:block">
                     <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Activity Status</h3>
                     <div class="space-y-4">
                         <div class="flex items-center justify-between">
@@ -128,7 +128,7 @@
                             <span class="text-lg font-bold text-gray-900">{{ status_counts.Delayed|default:0 }}</span>
                         </div>
                     </div>
-                </div>
+                </div> {% endcomment %}
             </div>
         </div>
     </div>
@@ -194,9 +194,7 @@
                 <a href="{% url 'project:activity-detail' project.pk item.plan.pk %}" class="flex-1 bg-white border border-gray-200 hover:border-indigo-300 text-gray-700 hover:text-indigo-600 text-xs font-bold py-2 rounded shadow-sm text-center transition-all">
                     Detail View
                 </a>
-                <a href="{% url 'project:production-cost-breakdown' project.pk %}?plan_id={{ item.plan.pk }}" class="flex-1 bg-white border border-gray-200 hover:border-indigo-300 text-gray-700 hover:text-indigo-600 text-xs font-bold py-2 rounded shadow-sm text-center transition-all">
-                    Cost Audit
-                </a>
+              
             </div>
         </div>
         {% empty %}

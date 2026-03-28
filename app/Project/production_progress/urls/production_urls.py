@@ -62,5 +62,10 @@ urlpatterns = [
         views.ProductionActivityDetailView.as_view(),
         name="activity-detail",
     ),
+    path(
+        "<int:project_pk>/plan-productivity-dashboard/",
+        views.PlanProductivityDashboardView.as_view(),
+        name="plan-productivity-dashboard",
+    ),
 ]
 
