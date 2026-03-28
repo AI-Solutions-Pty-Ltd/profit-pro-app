@@ -42,7 +42,7 @@
                         </p>
                     </div>
                 </div>
-                <div class="flex items-center space-x-3">
+                {% comment %} <div class="flex items-center space-x-3">
                     <a href="{% url 'project:production-plan-edit' project.pk plan.pk %}" 
                        class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Edit Plan
@@ -57,7 +57,7 @@
                         {% heroicon_solid "plus" size="18" class="mr-2" %}
                         Log Progress
                     </a>
-                </div>
+                </div> {% endcomment %}
             </div>
 
             <!-- Progress Section -->
@@ -139,7 +139,7 @@
             <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ daily_breakdown|length }} logs found</span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {% for entry in daily_breakdown %}
             <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden relative group hover:border-indigo-300 transition-colors">
                 {% if entry.is_latest %}
