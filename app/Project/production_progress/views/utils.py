@@ -375,6 +375,19 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
         if prev_e and e.work_productivity < prev_e.work_productivity:
             p_trend_arrow = 'down'
             
+        # Variance Calculations for UI Bars (Capped at 50% for display)
+        prod_var_pct = 0
+        if target_daily_output > 0:
+            prod_var_pct = float((e.quantity / target_daily_output - 1) * 100)
+            
+        cost_var_pct = 0
+        if target_cost_per_item > 0:
+            cost_var_pct = float((e.cost_per_item / target_cost_per_item - 1) * 100)
+
+        productivity_var_pct = 0
+        if target_productivity > 0:
+            productivity_var_pct = float((e.work_productivity / target_productivity - 1) * 100)
+
         daily_summaries.append({
             'day': e.day_number,
             'date': e.report.date,
@@ -384,6 +397,14 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
             'productivity': e.work_productivity,
             'productivity_arrow': p_trend_arrow,
             'cost_per_item': e.cost_per_item,
+            'total_cost': e.total_cost,
+            'man_hours': e.man_hours,
+            'prod_var_display': min(50, abs(prod_var_pct)),
+            'prod_var_pos': prod_var_pct >= 0,
+            'cost_var_display': min(50, abs(cost_var_pct)),
+            'cost_var_pos': cost_var_pct >= 0,
+            'prod_mh_var_display': min(50, abs(productivity_var_pct)),
+            'prod_mh_var_pos': productivity_var_pct >= 0,
             'is_cost_over': e.cost_per_item > target_cost_per_item,
             'status': 'On Track' if e.quantity >= target_daily_output else 'Behind'
         })

@@ -130,7 +130,7 @@
 
     <!-- Daily Breakdown -->
     <div class="mb-10">
-        <div class="flex items-center justify-between mb- px-1">
+        <div class="flex items-center justify-between mb-6 px-1">
             <h2 class="text-xl font-bold text-gray-900 tracking-tight">Daily Breakdown</h2>
             <span class="text-sm f text-gray-500 ">{{ daily_breakdown|length }} logs found</span>
         </div>
@@ -169,20 +169,20 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
-                        <div class="rounded-md bg-indigo-50 px-2 py-1.5">
-                            <div class="text-xs  text-indigo-500  font-mediumer mb-1">Cost</div>
+                        <div class="rounded-md bg-gray-100 px-2 py-1.5">
+                            <div class="text-xs  text-gray-500  font-mediumer mb-1">Cost</div>
                             <div class="text-sm font-bold text-gray-900 tracking-tight">R {{ entry.cost|floatformat:1 }}k</div>
                         </div>
-                        <div class="rounded-md bg-green-50 px-2 py-1.5">
-                            <div class="text-xs  text-green-500  font-mediumer mb-1">Hours</div>
+                        <div class="rounded-md bg-gray-100 px-2 py-1.5">
+                            <div class="text-xs  text-gray-500  font-mediumer mb-1">Hours</div>
                             <div class="text-sm font-bold text-gray-900 tracking-tight">{{ entry.hours|floatformat:0 }}h</div>
                         </div>
-                        <div class="rounded-md bg-amber-50 px-2 py-1.5">
-                            <div class="text-xs  text-amber-500  font-mediumer mb-1">Productivity</div>
+                        <div class="rounded-md bg-gray-100 px-2 py-1.5">
+                            <div class="text-xs  text-gray-500  font-mediumer mb-1">Productivity</div>
                             <div class="text-sm font-bold text-gray-900 tracking-tight">{{ entry.productivity }}</div>
                         </div>
-                        <div class="rounded-md bg-rose-50 px-2 py-1.5">
-                            <div class="text-xs  text-rose-500  font-mediumer mb-1">Workers</div>
+                        <div class="rounded-md bg-gray-100 px-2 py-1.5">
+                            <div class="text-xs  text-gray-500  font-mediumer mb-1">Workers</div>
                             <div class="text-sm font-bold text-gray-900 tracking-tight">{{ entry.workers|floatformat:0 }}</div>
                         </div>
                     </div>
