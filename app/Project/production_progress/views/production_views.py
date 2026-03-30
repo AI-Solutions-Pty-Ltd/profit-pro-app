@@ -42,6 +42,8 @@ from django.db.models import Sum, F
 from django.forms import inlineformset_factory
 from collections import defaultdict
 from .utils import get_dashboard_data, get_activity_detail_data, get_plan_productivity_data
+from django.template.loader import render_to_string
+from django.http import JsonResponse
 
 
 
@@ -450,10 +452,19 @@ class DailyProductivityCreateView(
         project_pk = self.kwargs["project_pk"]
         project = get_object_or_404(Project, pk=project_pk)
         
+        # Robust plan_id discovery
         plan_id = self.request.GET.get("plan_id")
+        if not plan_id and "entry_form" in kwargs:
+            plan_id = kwargs["entry_form"].data.get("production_plan")
+        elif not plan_id and self.request.method == "POST":
+            plan_id = self.request.POST.get("production_plan")
+
         selected_plan = None
         if plan_id:
-            selected_plan = get_object_or_404(ProductionPlan, pk=plan_id, project=project)
+            try:
+                selected_plan = ProductionPlan.objects.get(pk=plan_id, project=project)
+            except (ProductionPlan.DoesNotExist, ValueError):
+                pass
 
         context["project"] = project
         context["selected_plan"] = selected_plan
@@ -470,31 +481,43 @@ class DailyProductivityCreateView(
             initial_plant = [{'resource': res} for res in plant_res]
 
         if "labour_formset" not in kwargs:
-            labour_extra = 0
+            labour_extra = len(initial_labour) if initial_labour else 1
             LabourFormSet = inlineformset_factory(
                 DailyActivityEntry, DailyLabourUsage, form=DailyLabourUsageForm, extra=labour_extra, can_delete=True
             )
             context["labour_formset"] = LabourFormSet(prefix="labour", initial=initial_labour)
-            # Ensure the resource field is filtered and set if we have initial data
-            for i, form in enumerate(context["labour_formset"]):
-                if i < len(initial_labour):
-                    form.fields['resource'].queryset = ProductionResource.objects.filter(production_plan=selected_plan, resource_type='LABOUR')
         else:
             context["labour_formset"] = kwargs["labour_formset"]
+        
+        # Ensure the resource field is filtered for all forms in the formset
+        for form in context["labour_formset"]:
+            form.fields['resource'].queryset = ProductionResource.objects.filter(production_plan=selected_plan, resource_type='LABOUR')
 
         if "plant_formset" not in kwargs:
-            plant_extra = 0
+            plant_extra = len(initial_plant) if initial_plant else 1
             PlantFormSet = inlineformset_factory(
                 DailyActivityEntry, DailyPlantUsage, form=DailyPlantUsageForm, extra=plant_extra, can_delete=True
             )
             context["plant_formset"] = PlantFormSet(prefix="plant", initial=initial_plant)
-            for i, form in enumerate(context["plant_formset"]):
-                if i < len(initial_plant):
-                    form.fields['resource'].queryset = ProductionResource.objects.filter(production_plan=selected_plan, resource_type='PLANT')
         else:
             context["plant_formset"] = kwargs["plant_formset"]
+
+        for form in context["plant_formset"]:
+            form.fields['resource'].queryset = ProductionResource.objects.filter(production_plan=selected_plan, resource_type='PLANT')
             
         context["all_plans"] = ProductionPlan.objects.filter(project=project)
+        
+        labour_formset = kwargs.get("labour_formset") or context.get("labour_formset")
+        plant_formset = kwargs.get("plant_formset") or context.get("plant_formset")
+        
+        context["has_labour"] = (
+            len(initial_labour) > 0 or 
+            (labour_formset and (labour_formset.is_bound or labour_formset.errors or any(form.instance.pk for form in labour_formset)))
+        )
+        context["has_plant"] = (
+            len(initial_plant) > 0 or 
+            (plant_formset and (plant_formset.is_bound or plant_formset.errors or any(form.instance.pk for form in plant_formset)))
+        )
         
         return context
 
@@ -665,3 +688,65 @@ class PlanProductivityDashboardView(
             }
         )
         return context
+
+
+class PlanResourcesAjaxView(SubscriptionRequiredMixin, LoginRequiredMixin, TemplateView):
+    """
+    Returns the Labour and Plant formsets for a given plan_id as an AJAX fragment.
+    """
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get(self, request, *args, **kwargs):
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+        plan_id = request.GET.get("plan_id")
+        
+        selected_plan = None
+        if plan_id:
+            try:
+                selected_plan = ProductionPlan.objects.get(pk=plan_id, project=project)
+            except (ProductionPlan.DoesNotExist, ValueError):
+                pass
+
+        # Re-use the formset population logic
+        labour_res = ProductionResource.objects.filter(production_plan=selected_plan, resource_type='LABOUR') if selected_plan else []
+        initial_labour = [{'resource': res} for res in labour_res]
+        
+        plant_res = ProductionResource.objects.filter(production_plan=selected_plan, resource_type='PLANT') if selected_plan else []
+        initial_plant = [{'resource': res} for res in plant_res]
+
+        labour_extra = len(initial_labour) if initial_labour else 3
+        LabourFormSet = inlineformset_factory(
+            DailyActivityEntry, DailyLabourUsage, form=DailyLabourUsageForm, extra=labour_extra, can_delete=True
+        )
+        labour_formset = LabourFormSet(prefix="labour", initial=initial_labour)
+        if selected_plan:
+            for form in labour_formset:
+                form.fields['resource'].queryset = ProductionResource.objects.filter(production_plan=selected_plan, resource_type='LABOUR')
+        else:
+            for form in labour_formset:
+                form.fields['resource'].queryset = ProductionResource.objects.none()
+
+        plant_extra = len(initial_plant) if initial_plant else 3
+        PlantFormSet = inlineformset_factory(
+            DailyActivityEntry, DailyPlantUsage, form=DailyPlantUsageForm, extra=plant_extra, can_delete=True
+        )
+        plant_formset = PlantFormSet(prefix="plant", initial=initial_plant)
+        if selected_plan:
+            for form in plant_formset:
+                form.fields['resource'].queryset = ProductionResource.objects.filter(production_plan=selected_plan, resource_type='PLANT')
+        else:
+            for form in plant_formset:
+                form.fields['resource'].queryset = ProductionResource.objects.none()
+
+        html = render_to_string(
+            "production_progress/partials/resource_formsets.html",
+            {
+                "labour_formset": labour_formset,
+                "plant_formset": plant_formset,
+                "has_labour": len(initial_labour) > 0 or labour_formset.is_bound,
+                "has_plant": len(initial_plant) > 0 or plant_formset.is_bound,
+            },
+            request=request
+        )
+        return JsonResponse({"html": html})

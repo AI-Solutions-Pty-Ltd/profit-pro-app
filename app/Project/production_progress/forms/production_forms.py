@@ -110,7 +110,7 @@ class DailyActivityEntryForm(forms.ModelForm):
         model = DailyActivityEntry
         fields = ["production_plan", "quantity"]
         widgets = {
-            "production_plan": forms.Select(attrs={"class": "form-select"}),
+            "production_plan": forms.Select(attrs={"class": "form-select", "disabled": True, "readonly": True}),
             "quantity": forms.NumberInput(attrs={
                 "class": "form-input", 
                 "placeholder": "0.00", 
