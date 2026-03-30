@@ -1,11 +1,9 @@
-from django.db.models import Sum, F
+from django.db.models import Sum
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from ..models.production_models import (
     ProductionPlan,
-    DailyActivityEntry,
-    DailyLabourUsage,
-    DailyPlantUsage
+    DailyActivityEntry
 )
 from decimal import Decimal
 from collections import defaultdict
@@ -390,15 +388,15 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
 
         daily_summaries.append({
             'day': e.day_number,
-            'date': e.report.date,
-            'actual_qty': e.quantity,
-            'target_qty': target_daily_output,
-            'progress_pct': min(100, round((e.quantity / target_daily_output) * 100, 1)) if target_daily_output > 0 else 0,
-            'productivity': e.work_productivity,
+            'date': e.report.date.strftime('%Y-%m-%d'),
+            'actual_qty': float(e.quantity),
+            'target_qty': float(target_daily_output),
+            'progress_pct': min(100, round(float((e.quantity / target_daily_output)) * 100, 1)) if target_daily_output > 0 else 0,
+            'productivity': float(e.work_productivity),
             'productivity_arrow': p_trend_arrow,
-            'cost_per_item': e.cost_per_item,
-            'total_cost': e.total_cost,
-            'man_hours': e.man_hours,
+            'cost_per_item': float(e.cost_per_item),
+            'total_cost': float(e.total_cost),
+            'man_hours': float(e.man_hours),
             'prod_var': round(prod_var_pct, 1),
             'cost_var': round(cost_var_pct, 1),
             'prod_mh_var': round(productivity_var_pct, 1),
@@ -454,4 +452,129 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
             'target_cost': float(target_cost_per_item),
         },
         'daily_summaries': daily_summaries
+    }
+
+def get_forecasting_dashboard_data(plan_id, start_date=None, end_date=None):
+    """
+    Calculates predictive forecasting metrics and scenarios for a specific plan.
+    """
+    if not plan_id:
+        return {}
+
+    plan = get_object_or_404(ProductionPlan, pk=plan_id)
+    entries_qs = DailyActivityEntry.objects.filter(production_plan=plan).select_related('report').prefetch_related(
+        'labour_usage', 'plant_usage', 'labour_usage__resource', 'plant_usage__resource'
+    ).order_by('report__date')
+
+    if start_date:
+        entries_qs = entries_qs.filter(report__date__gte=start_date)
+    if end_date:
+        entries_qs = entries_qs.filter(report__date__lte=end_date)
+
+    entries = list(entries_qs)
+    days_elapsed = len(entries)
+    
+    # 1. Base Metrics (Actual vs Target)
+    productive_data = get_plan_productivity_data(plan_id, start_date, end_date)
+    kpis = productive_data.get('kpis', {})
+    
+    # Extract needed values from KPIs
+    actual_avg_out = kpis.get('daily_output', {}).get('actual', Decimal('0.0'))
+    target_avg_out = kpis.get('daily_output', {}).get('target', Decimal('0.0'))
+    actual_avg_cost = kpis.get('cost', {}).get('actual', Decimal('0.0'))
+    target_avg_cost = kpis.get('cost', {}).get('target', Decimal('0.0'))
+    actual_total_qty = sum(e.quantity for e in entries)
+    actual_total_cost = sum(e.total_cost for e in entries)
+    
+    remaining_qty = max(0, plan.quantity - actual_total_qty)
+    budget_allocation = plan.total_labour_cost + plan.total_plant_cost + plan.total_other_cost
+    progress_pct = (float(actual_total_qty) / float(plan.quantity) * 100) if plan.quantity > 0 else 0
+    
+    # 2. Forecasting Calculations
+    # Time Forecast
+    days_to_complete = 0
+    if actual_avg_out > 0:
+        days_to_complete = float(Decimal(remaining_qty) / Decimal(actual_avg_out))
+    else:
+        # Fallback to target if no actual data yet
+        if target_avg_out > 0:
+            days_to_complete = float(Decimal(remaining_qty) / Decimal(target_avg_out))
+        else:
+            days_to_complete = 0
+            
+    forecast_total_days = days_elapsed + days_to_complete
+    time_variance = float(plan.duration) - forecast_total_days
+    
+    # Cost Forecast
+    forecast_remaining_cost = Decimal(remaining_qty) * Decimal(actual_avg_cost)
+    forecast_total_at_completion = Decimal(actual_total_cost) + forecast_remaining_cost
+    budget_variance = Decimal(budget_allocation) - forecast_total_at_completion
+    
+    
+    
+    # 5. Trajectory Data (for composed charts)
+    max_days = int(max(plan.duration, forecast_total_days)) + 2
+    chart_labels = [f"D{i}" for i in range(1, max_days + 1)]
+    
+    actual_prod_traj = []
+    actual_cost_traj = []
+    curr_prod = 0
+    curr_cost = 0
+    for e in entries:
+        curr_prod += float(e.quantity)
+        curr_cost += float(e.total_cost)
+        actual_prod_traj.append(curr_prod)
+        actual_cost_traj.append(curr_cost)
+        
+    planned_prod_traj = []
+    planned_cost_traj = []
+    daily_target_qty = float(target_avg_out)
+    daily_target_cost = float(target_avg_cost * target_avg_out)
+    
+    for i in range(1, max_days + 1):
+        p_qty = min(float(plan.quantity), i * daily_target_qty)
+        p_cost = min(float(budget_allocation), i * daily_target_cost)
+        planned_prod_traj.append(round(p_qty, 2))
+        planned_cost_traj.append(round(p_cost, 2))
+
+    forecast_prod_traj = [None] * (days_elapsed - 1) + [actual_prod_traj[-1] if actual_prod_traj else 0]
+    forecast_cost_traj = [None] * (days_elapsed - 1) + [actual_cost_traj[-1] if actual_cost_traj else 0]
+    
+    for i in range(days_elapsed + 1, max_days + 1):
+        f_qty = min(float(plan.quantity), (actual_prod_traj[-1] if actual_prod_traj else 0) + (i - days_elapsed) * float(actual_avg_out))
+        f_cost = (actual_cost_traj[-1] if actual_cost_traj else 0) + (i - days_elapsed) * float(actual_avg_out) * float(actual_avg_cost)
+        forecast_prod_traj.append(round(f_qty, 2))
+        forecast_cost_traj.append(round(f_cost, 2))
+
+    return {
+        'project': plan.project,
+        'selected_plan': plan,
+        'kpis': kpis,
+        'summary': {
+            'status': 'Critical' if (time_variance < -2 or budget_variance < -50000) else ('At Risk' if (time_variance < 0 or budget_variance < 0) else 'On Track'),
+            'status_color': 'red' if (time_variance < -2 or budget_variance < -50000) else ('amber' if (time_variance < 0 or budget_variance < 0) else 'emerald'),
+            'progress_pct': round(progress_pct, 1),
+            'forecast_days': round(forecast_total_days, 1),
+            'time_variance': round(time_variance, 1),
+            'planned_days': int(plan.duration),
+            'forecast_cost': float(forecast_total_at_completion),
+            'budget_variance': float(budget_variance),
+            'budget_allocation': float(budget_allocation),
+            'days_remaining': round(days_to_complete, 1),
+            'units_remaining': float(remaining_qty),
+            'budget_used_pct': round((float(actual_total_cost) / float(budget_allocation) * 100), 1) if budget_allocation > 0 else 0
+        },
+        'charts': {
+            'labels': chart_labels,
+            'actual_prod': actual_prod_traj,
+            'planned_prod': planned_prod_traj,
+            'forecast_prod': forecast_prod_traj,
+            'actual_cost': actual_cost_traj,
+            'planned_cost': planned_cost_traj,
+            'forecast_cost': forecast_cost_traj,
+            'forecast_start_index': days_elapsed - 1,
+            'target_qty': float(plan.quantity),
+            'target_budget': float(budget_allocation),
+            'daily_variance': productive_data.get('daily_summaries', [])
+        }
     }

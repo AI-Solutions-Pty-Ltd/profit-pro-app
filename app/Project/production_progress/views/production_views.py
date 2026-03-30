@@ -42,9 +42,10 @@ from django.utils import timezone
 from django.db.models import Sum, F
 from django.forms import inlineformset_factory
 from collections import defaultdict
-from .utils import get_dashboard_data, get_activity_detail_data, get_plan_productivity_data
+from .utils import get_dashboard_data, get_activity_detail_data, get_plan_productivity_data, get_forecasting_dashboard_data
 from django.template.loader import render_to_string
 from django.http import JsonResponse
+import json
 
 
 
@@ -795,3 +796,65 @@ class PlanResourcesAjaxView(SubscriptionRequiredMixin, LoginRequiredMixin, Templ
             request=request
         )
         return JsonResponse({"html": html})
+
+class ProductionForecastDashboardView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """
+    Costing Forecasting Dashboard.
+    Provides predictive analytics on project completion timelines and budget outcomes.
+    """
+
+    template_name = "production_progress/forecast_dashboard.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+
+        # Filters
+        plan_id = self.request.GET.get("plan_id")
+        start_date = self.request.GET.get("start_date")
+        end_date = self.request.GET.get("end_date")
+
+        all_plans = ProductionPlan.objects.filter(project=project).order_by("activity")
+
+        # Default to first plan if none selected
+        selected_plan = None
+        if plan_id:
+            try:
+                selected_plan = all_plans.filter(pk=plan_id).first()
+            except (ValueError, TypeError):
+                pass
+        
+        if not selected_plan and all_plans.exists():
+            selected_plan = all_plans.first()
+
+        # Get forecasting data from utils
+        forecast_data = {}
+        if selected_plan:
+            forecast_data = get_forecasting_dashboard_data(
+                selected_plan.pk, start_date, end_date
+            )
+
+        # Serialize chart data for JS
+        charts_json = "{}"
+        if "charts" in forecast_data:
+            # We use a custom encoder or just ensure types are good in utils.py
+            # Since I already updated utils.py to use floats/strings, 
+            # simple json.dumps should work.
+            charts_json = json.dumps(forecast_data["charts"])
+
+        context.update(
+            {
+                "project": project,
+                "all_plans": all_plans,
+                "selected_plan": selected_plan,
+                "start_date": start_date,
+                "end_date": end_date,
+                **forecast_data,
+                "charts_json": charts_json,
+            }
+        )
+        return context
