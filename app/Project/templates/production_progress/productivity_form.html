@@ -223,6 +223,26 @@
     totalForms.value = count + 1;
   }
 
+  function showFieldError(input, message) {
+      input.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+      let errorId = input.id + '-error-msg';
+      let errorEl = document.getElementById(errorId);
+      if (!errorEl) {
+          errorEl = document.createElement('p');
+          errorEl.id = errorId;
+          errorEl.className = 'mt-1 text-xs text-red-600 font-medium';
+          input.parentElement.appendChild(errorEl);
+      }
+      errorEl.textContent = message;
+  }
+
+  function clearFieldError(input) {
+      input.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+      let errorId = input.id + '-error-msg';
+      let errorEl = document.getElementById(errorId);
+      if (errorEl) errorEl.remove();
+  }
+
   function removeRow(btn) {
     const row = btn.closest('tr');
     const deleteInput = row.querySelector('input[name$="-DELETE"]');
@@ -266,6 +286,41 @@
     const addPlantBtn = document.getElementById('add-plant-btn');
     if (addPlantBtn) {
       addPlantBtn.onclick = () => addRow('plant', 'plant-form-list', 'empty-plant-form');
+    }
+
+    // Form Submission Validation
+    const form = document.getElementById('productivity-form');
+    form.addEventListener('submit', function(e) {
+        let hasErrors = false;
+
+        // 1. Quantity Validation (> 0)
+        const quantityInput = document.getElementById('id_quantity');
+        if (quantityInput) {
+            const val = parseFloat(quantityInput.value);
+            if (isNaN(val) || val <= 0) {
+                hasErrors = true;
+                showFieldError(quantityInput, "Quantity must be greater than zero.");
+            } else {
+                clearFieldError(quantityInput);
+            }
+        }
+
+        if (hasErrors) {
+            e.preventDefault();
+            // Focus first error
+            const firstError = document.querySelector('.border-red-500');
+            if (firstError) firstError.focus();
+        }
+    });
+
+    // Real-time clearance of errors
+    const quantityInput = document.getElementById('id_quantity');
+    if (quantityInput) {
+        quantityInput.addEventListener('input', function() {
+            if (parseFloat(this.value) > 0) {
+                clearFieldError(this);
+            }
+        });
     }
   });
 </script>

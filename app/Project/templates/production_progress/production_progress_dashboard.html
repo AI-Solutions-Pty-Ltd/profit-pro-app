@@ -82,10 +82,10 @@
                     <div class="h-3 w-full overflow-hidden rounded-full bg-gray-200">
                         <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all duration-500" style="width:{{ overall_progress_pct }}%"></div>
                     </div>
-                    <div class="mt-2 flex justify-between text-sm font-semibold text-slate-400">
+                    {% comment %} <div class="mt-2 flex justify-between text-sm font-semibold text-slate-400">
                         <span>{{ total_produced|floatformat:0 }} produced</span>
                         <span>{{ total_planned|floatformat:0 }} planned</span>
-                    </div>
+                    </div> {% endcomment %}
                 </div>
 
                 <!-- Metric Tiles -->

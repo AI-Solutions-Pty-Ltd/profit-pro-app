@@ -133,10 +133,8 @@
             const addLabourBtn = document.getElementById('add-labour-btn');
             if (addLabourBtn) {
                 addLabourBtn.onclick = () => {
-                    // If we are in empty state, we need to inject the table structure first
                     const emptyState = document.getElementById('labour-empty-state');
                     if (emptyState) {
-                        const list = document.getElementById('labour-form-list');
                         const tableHtml = `
                             <table class="min-w-full divide-y divide-gray-200 border border-gray-100 rounded-lg">
                                 <thead class="bg-gray-50">
@@ -151,7 +149,6 @@
                             </table>
                         `;
                         emptyState.parentElement.innerHTML = tableHtml;
-                        // Point listId to the new tbody for the addRow function
                         addRow('labour', 'labour-form-list-new', 'empty-labour-form');
                     } else {
                         addRow('labour', 'labour-form-list', 'empty-labour-form');

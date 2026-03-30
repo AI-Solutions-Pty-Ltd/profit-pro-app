@@ -129,6 +129,12 @@ class DailyActivityEntryForm(forms.ModelForm):
         if project_id:
             self.fields['production_plan'].queryset = ProductionPlan.objects.filter(project_id=project_id)
 
+    def clean_quantity(self):
+        quantity = self.cleaned_data.get('quantity')
+        if quantity is not None and quantity <= 0:
+            raise forms.ValidationError("Quantity must be greater than zero.")
+        return quantity
+
 
 class DailyLabourUsageForm(forms.ModelForm):
     class Meta:
@@ -151,6 +157,7 @@ class DailyLabourUsageForm(forms.ModelForm):
             )
 
 
+
 class DailyPlantUsageForm(forms.ModelForm):
     class Meta:
         model = DailyPlantUsage
@@ -169,6 +176,7 @@ class DailyPlantUsageForm(forms.ModelForm):
                 production_plan_id=activity_id, 
                 resource_type='PLANT'
             )
+
 
 
 DailyLabourUsageFormSet = inlineformset_factory(
