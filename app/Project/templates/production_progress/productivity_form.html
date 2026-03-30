@@ -189,6 +189,10 @@
             const formPlanSelect = document.getElementById('id_production_plan');
             if (formPlanSelect) {
                 formPlanSelect.value = planId;
+                // Add styling to prevent selection but keep it enabled for submission
+                formPlanSelect.style.pointerEvents = 'none';
+                formPlanSelect.style.backgroundColor = '#f3f4f6'; // bg-gray-100
+                formPlanSelect.tabIndex = -1;
             }
             
             loader.classList.add('hidden');
@@ -196,7 +200,7 @@
         .catch(error => {
             console.error('Error loading resources:', error);
             loader.classList.add('hidden');
-            alert('Failed to load resources. Please try again.');
+            // alert('Failed to load resources. Please try again.');
         });
   }
 

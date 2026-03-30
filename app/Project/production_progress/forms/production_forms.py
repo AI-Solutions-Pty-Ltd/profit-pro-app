@@ -52,11 +52,12 @@ class ProductionPlanForm(forms.ModelForm):
             "duration": forms.NumberInput(attrs={
                 "id": "duration",
                 "readonly": "readonly",
-                "tabindex": "-1"
+                "tabindex": "-1",
+                "required": False,
             }),
             "quantity": forms.NumberInput(attrs={
                 "id": "quantity",
-                "step": "1",
+                "step": "0.01",
                 "placeholder": "10000.00",
                 "format": "{:.2f}"
             }),
@@ -84,6 +85,9 @@ class ProductionResourceForm(forms.ModelForm):
             "rate": forms.NumberInput(attrs={"class": "form-input", "placeholder": "0.00", "min": "0.00", "step": "0.10", "readonly": "readonly"}),
         }
 
+    name = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "form-input", "placeholder": "Selection auto-fills name", "readonly": "readonly"}))
+    rate = forms.DecimalField(required=False, widget=forms.NumberInput(attrs={"class": "form-input", "placeholder": "0.00", "min": "0.00", "step": "0.10", "readonly": "readonly"}))
+
     def __init__(self, *args, **kwargs):
         project_id = kwargs.pop('project_id', None)
         disabled_fields = kwargs.pop('disabled_fields', [])
@@ -110,7 +114,7 @@ class DailyActivityEntryForm(forms.ModelForm):
         model = DailyActivityEntry
         fields = ["production_plan", "quantity"]
         widgets = {
-            "production_plan": forms.Select(attrs={"class": "form-select", "disabled": True, "readonly": True}),
+            "production_plan": forms.Select(attrs={"class": "form-select", "readonly": True}),
             "quantity": forms.NumberInput(attrs={
                 "class": "form-input", 
                 "placeholder": "0.00", 

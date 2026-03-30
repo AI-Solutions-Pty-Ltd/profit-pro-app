@@ -7,6 +7,7 @@ from django.views.generic import (
     UpdateView,
     DeleteView,
 )
+from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.contrib import messages
 
@@ -174,16 +175,30 @@ class ProductionPlanningView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["project"] = Project.objects.get(pk=self.kwargs["project_pk"])
+        context["project"] = get_object_or_404(Project, pk=self.kwargs["project_pk"])
         context["plans"] = ProductionPlan.objects.filter(
             project_id=self.kwargs["project_pk"]
         )
         return context
 
     def form_valid(self, form):
-        form.instance.project_id = self.kwargs["project_pk"]
-        messages.success(self.request, "Production plan saved successfully.")
-        return super().form_valid(form)
+        project_pk = self.kwargs.get("project_pk")
+        project = get_object_or_404(Project, pk=project_pk)
+        form.instance.project = project
+        
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, "Production plan saved successfully.")
+            return response
+        except Exception as e:
+            messages.error(self.request, f"Database error: {str(e)}")
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"Error in {field}: {error}")
+        return super().form_invalid(form)
 
 
 class ProductionPlanDetailView(
@@ -247,7 +262,7 @@ class ProductionPlanUpdateView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["project"] = Project.objects.get(pk=self.kwargs["project_pk"])
+        context["project"] = get_object_or_404(Project, pk=self.kwargs["project_pk"])
         context["plans"] = ProductionPlan.objects.filter(
             project_id=self.kwargs["project_pk"]
         )
@@ -255,8 +270,19 @@ class ProductionPlanUpdateView(
         return context
 
     def form_valid(self, form):
-        messages.success(self.request, "Production plan updated successfully.")
-        return super().form_valid(form)
+        try:
+            response = super().form_valid(form)
+            messages.success(self.request, "Production plan updated successfully.")
+            return response
+        except Exception as e:
+            messages.error(self.request, f"Database error: {str(e)}")
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"Error in {field}: {error}")
+        return super().form_invalid(form)
 
 
 class ProductionPlanDeleteView(
@@ -528,40 +554,59 @@ class DailyProductivityCreateView(
         report_form = DailyActivityReportForm(request.POST)
         entry_form = DailyActivityEntryForm(request.POST, project_id=project_pk)
         
-        if report_form.is_valid() and entry_form.is_valid():
-            with transaction.atomic():
-                # 1. Get or create the report for this project and date
-                report, created = DailyActivityReport.objects.get_or_create(
-                    project=project,
-                    date=report_form.cleaned_data["date"]
-                )
-
-                # 2. Save the Entry
-                entry = entry_form.save(commit=False)
-                entry.report = report
-                entry.save()
-
-                # 3. Save Formsets
-                labour_formset = DailyLabourUsageFormSet(request.POST, instance=entry, prefix="labour")
-                plant_formset = DailyPlantUsageFormSet(request.POST, instance=entry, prefix="plant")
-
-                if labour_formset.is_valid() and plant_formset.is_valid():
-                    labour_formset.save()
-                    plant_formset.save()
-                    messages.success(request, "Daily productivity log saved successfully.")
-                    return redirect("project:production-dashboard", project_pk=project_pk)
-                else:
-                    # If formsets are invalid, we need to re-render with errors
-                    # This is simplified; in a real app, you'd handle this more gracefully
-                    messages.error(request, "Please correct the errors in the resource forms.")
+        # Initialize formsets to None so we can track if they were created during the transaction
+        labour_formset = None
+        plant_formset = None
         
-        # If any form is invalid, re-render the page
+        if report_form.is_valid() and entry_form.is_valid():
+            try:
+                with transaction.atomic():
+                    # 1. Get or create the report for this project and date
+                    report, _ = DailyActivityReport.objects.get_or_create(
+                        project=project,
+                        date=report_form.cleaned_data["date"]
+                    )
+
+                    # 2. Save the Entry
+                    entry = entry_form.save(commit=False)
+                    entry.report = report
+                    entry.save()
+
+                    # 3. Instantiate and validate Formsets
+                    labour_formset = DailyLabourUsageFormSet(request.POST, instance=entry, prefix="labour")
+                    plant_formset = DailyPlantUsageFormSet(request.POST, instance=entry, prefix="plant")
+
+                    if labour_formset.is_valid() and plant_formset.is_valid():
+                        labour_formset.save()
+                        plant_formset.save()
+                        messages.success(request, "Daily productivity log saved successfully.")
+                        return redirect("project:production-dashboard", project_pk=project_pk)
+                    else:
+                        # Fail the transaction if resource forms are invalid
+                        transaction.set_rollback(True)
+                        messages.error(request, "Please correct the errors in the resource forms.")
+            except Exception as e:
+                # Handle unexpected database or other exceptions
+                messages.error(request, f"An error occurred while saving: {str(e)}")
+        else:
+            # Provide feedback on main form errors
+            messages.error(request, "Please check the primary activity details. All fields are required.")
+        
+        # Fallback: Re-render the page with the forms and error messages
+        # If we reached here, something failed.
+        # Ensure formsets are instantiated for the re-render path
+        if labour_formset is None:
+            labour_formset = DailyLabourUsageFormSet(request.POST, prefix="labour")
+        if plant_formset is None:
+            plant_formset = DailyPlantUsageFormSet(request.POST, prefix="plant")
+
         return self.render_to_response(self.get_context_data(
             report_form=report_form,
             entry_form=entry_form,
-            labour_formset=DailyLabourUsageFormSet(request.POST, prefix="labour"),
-            plant_formset=DailyPlantUsageFormSet(request.POST, prefix="plant")
+            labour_formset=labour_formset,
+            plant_formset=plant_formset
         ))
+
 
 
 class ProductivityLogsView(

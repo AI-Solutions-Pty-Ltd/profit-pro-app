@@ -75,6 +75,7 @@ class ProjectListView(
         consultant_queryset = None
         client_queryset = None
         contractor_queryset = None
+        category_queryset = None
         subcategory_queryset = None
         discipline_queryset = None
 
