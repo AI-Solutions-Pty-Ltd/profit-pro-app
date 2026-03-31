@@ -500,98 +500,99 @@ class DailyProductivityCreateView(
         context = super().get_context_data(**kwargs)
         project_pk = self.kwargs["project_pk"]
         project = get_object_or_404(Project, pk=project_pk)
-
-        # Robust plan_id discovery
-        plan_id = self.request.GET.get("plan_id")
-        if not plan_id and "entry_form" in kwargs:
-            plan_id = kwargs["entry_form"].data.get("production_plan")
-        elif not plan_id and self.request.method == "POST":
-            plan_id = self.request.POST.get("production_plan")
-
-        selected_plan = None
-        if plan_id:
-            try:
-                selected_plan = ProductionPlan.objects.get(pk=plan_id, project=project)
-            except (ProductionPlan.DoesNotExist, ValueError):
-                pass
-
         context["project"] = project
-        context["selected_plan"] = selected_plan
-        context["report_form"] = kwargs.get("report_form") or DailyActivityReportForm(
-            initial={"date": timezone.now().date()}
-        )
-        context["entry_form"] = kwargs.get("entry_form") or DailyActivityEntryForm(
-            project_id=project_pk, initial={"production_plan": selected_plan}
-        )
-
-        # If we have a selected plan, pre-populate resources
-        initial_labour = []
-        initial_plant = []
-        if selected_plan:
-            labour_res = ProductionResource.objects.filter(
-                production_plan=selected_plan, resource_type="LABOUR"
-            )
-            initial_labour = [{"resource": res} for res in labour_res]
-            plant_res = ProductionResource.objects.filter(
-                production_plan=selected_plan, resource_type="PLANT"
-            )
-            initial_plant = [{"resource": res} for res in plant_res]
-
-        if "labour_formset" not in kwargs:
-            labour_extra = len(initial_labour) if initial_labour else 1
-            LabourFormSet = inlineformset_factory(
-                DailyActivityEntry,
-                DailyLabourUsage,
-                form=DailyLabourUsageForm,
-                extra=labour_extra,
-                can_delete=True,
-            )
-            context["labour_formset"] = LabourFormSet(
-                prefix="labour", initial=initial_labour
-            )
-        else:
-            context["labour_formset"] = kwargs["labour_formset"]
-
-        # Ensure the resource field is filtered for all forms in the formset
-        for form in context["labour_formset"]:
-            form.fields["resource"].queryset = ProductionResource.objects.filter(
-                production_plan=selected_plan, resource_type="LABOUR"
-            )
-
-        if "plant_formset" not in kwargs:
-            plant_extra = len(initial_plant) if initial_plant else 1
-            PlantFormSet = inlineformset_factory(
-                DailyActivityEntry,
-                DailyPlantUsage,
-                form=DailyPlantUsageForm,
-                extra=plant_extra,
-                can_delete=True,
-            )
-            context["plant_formset"] = PlantFormSet(
-                prefix="plant", initial=initial_plant
-            )
-        else:
-            context["plant_formset"] = kwargs["plant_formset"]
-
-        for form in context["plant_formset"]:
-            form.fields["resource"].queryset = ProductionResource.objects.filter(
-                production_plan=selected_plan, resource_type="PLANT"
-            )
-
         context["all_plans"] = ProductionPlan.objects.filter(project=project)
 
-        labour_formset = kwargs.get("labour_formset") or context.get("labour_formset")
-        plant_formset = kwargs.get("plant_formset") or context.get("plant_formset")
+        selected_plans_ids = self.request.GET.getlist("selected_plans") or self.request.POST.getlist("selected_plans")
+        selected_plans = (
+            ProductionPlan.objects.filter(id__in=selected_plans_ids, project=project).order_by('id')
+            if selected_plans_ids
+            else ProductionPlan.objects.none()
+        )
+        context["selected_plans"] = selected_plans
+        context["selected_plans_ids"] = [int(sid) for sid in selected_plans_ids if sid.isdigit()]
+        context["labour_forms_with_plans"] = []  # Initialize to avoid missing variable
 
-        context["has_plant"] = len(initial_plant) > 0 or (
-            plant_formset
-            and (
-                plant_formset.is_bound
-                or plant_formset.errors
-                or any(form.instance.pk for form in plant_formset)
-            )
+        from ..forms.production_forms import (
+            AggregatedLabourFormSet,
+            DailyPlantUsageFormSet,
         )
 
+        # Prebuild plan resources and plant formsets (safe even when none selected)
+        plan_resources = {}
+        plant_formsets = {}
+
+        for plan in selected_plans:
+            has_skilled = ProductionResource.objects.filter(
+                production_plan=plan,
+                resource_type="LABOUR",
+                skill_type__name__icontains="skilled",
+            ).exists()
+            has_semi_skilled = ProductionResource.objects.filter(
+                production_plan=plan,
+                resource_type="LABOUR",
+                skill_type__name__icontains="semi",
+            ).exists()
+            has_unskilled = ProductionResource.objects.filter(
+                production_plan=plan,
+                resource_type="LABOUR",
+                skill_type__name__icontains="unskilled",
+            ).exists()
+            has_plant = ProductionResource.objects.filter(
+                production_plan=plan, resource_type="PLANT"
+            ).exists()
+            plan_resources[plan.id] = {
+                "skilled": has_skilled,
+                "semi_skilled": has_semi_skilled,
+                "unskilled": has_unskilled,
+                "plant": has_plant,
+            }
+
+            plant_formset = DailyPlantUsageFormSet(prefix=f"plant_{plan.id}")
+            plant_formset.form.base_fields[
+                "resource"
+            ].queryset = ProductionResource.objects.filter(
+                production_plan=plan, resource_type="PLANT"
+            )
+            plant_formset.form.base_fields[
+                "activity"
+            ].queryset = ProductionPlan.objects.filter(id=plan.id)
+            plant_formsets[plan.id] = plant_formset
+
+        context["plan_resources"] = plan_resources
+        context["plant_formsets"] = plant_formsets
+
+        # Aggregated labour formset built from selected plans and inserted into forms
+        labour_initial = [{"activity": plan.id} for plan in selected_plans]
+        labour_formset = AggregatedLabourFormSet(
+            prefix="labour", initial=labour_initial
+        )
+
+        for form, plan in zip(labour_formset.forms, selected_plans):
+            form.fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)
+            if not plan_resources[plan.id]["skilled"]:
+                form.fields["skilled_number"].disabled = True
+            if not plan_resources[plan.id]["semi_skilled"]:
+                form.fields["semi_skilled_number"].disabled = True
+            if not plan_resources[plan.id]["unskilled"]:
+                form.fields["unskilled_number"].disabled = True
+
+        context["labour_formset"] = labour_formset
+        context["labour_forms_with_plans"] = list(zip(labour_formset.forms, selected_plans, strict=True))
+
+        # Provide a plant formset for empty row templates to avoid missing context errors
+        context["plant_formset"] = next(
+            iter(plant_formsets.values()), DailyPlantUsageFormSet(prefix="plant")
+        )
+
+        # Forms for the template
+        if "report_form" not in context:
+            from django.utils import timezone
+            from ..forms.production_forms import DailyActivityReportForm
+
+            context["report_form"] = DailyActivityReportForm(
+                initial={"date": timezone.now().date()}
+            )
 
         return context
 
@@ -599,75 +600,120 @@ class DailyProductivityCreateView(
         project_pk = self.kwargs["project_pk"]
         project = get_object_or_404(Project, pk=project_pk)
 
+        selected_plans_ids = request.POST.getlist("selected_plans")
         report_form = DailyActivityReportForm(request.POST)
-        entry_form = DailyActivityEntryForm(request.POST, project_id=project_pk)
+        from ..forms.production_forms import AggregatedLabourFormSet
 
-        # Initialize formsets to None so we can track if they were created during the transaction
-        labour_formset = None
-        plant_formset = None
+        labour_formset = AggregatedLabourFormSet(request.POST, prefix="labour")
 
-        if report_form.is_valid() and entry_form.is_valid():
+        if report_form.is_valid() and labour_formset.is_valid():
             try:
                 with transaction.atomic():
-                    # 1. Get or create the report for this project and date
                     report, _ = DailyActivityReport.objects.get_or_create(
                         project=project, date=report_form.cleaned_data["date"]
                     )
 
-                    # 2. Save the Entry
-                    entry = entry_form.save(commit=False)
-                    entry.report = report
-                    entry.save()
+                    for labour_form in labour_formset:
+                        if labour_form.cleaned_data:
+                            activity = labour_form.cleaned_data["activity"]
+                            quantity = labour_form.cleaned_data["quantity"]
+                            skilled = labour_form.cleaned_data.get("skilled_number", 0)
+                            semi = labour_form.cleaned_data.get(
+                                "semi_skilled_number", 0
+                            )
+                            unskilled = labour_form.cleaned_data.get(
+                                "unskilled_number", 0
+                            )
+                            hours = labour_form.cleaned_data.get("total_hours", 0)
 
-                    # 3. Instantiate and validate Formsets
-                    labour_formset = DailyLabourUsageFormSet(
-                        request.POST, instance=entry, prefix="labour"
-                    )
-                    plant_formset = DailyPlantUsageFormSet(
-                        request.POST, instance=entry, prefix="plant"
-                    )
+                            # Create entry
+                            entry = DailyActivityEntry.objects.create(
+                                report=report,
+                                production_plan=activity,
+                                quantity=quantity,
+                            )
 
-                    if labour_formset.is_valid() and plant_formset.is_valid():
-                        labour_formset.save()
-                        plant_formset.save()
-                        messages.success(
-                            request, "Daily productivity log saved successfully."
+                            # Create labour usages
+                            if skilled > 0:
+                                skilled_resources = ProductionResource.objects.filter(
+                                    production_plan=activity,
+                                    resource_type="LABOUR",
+                                    skill_type__name__icontains="skilled",
+                                )
+                                if skilled_resources:
+                                    DailyLabourUsage.objects.create(
+                                        entry=entry,
+                                        resource=skilled_resources.first(),
+                                        number=skilled,
+                                        hours=hours,
+                                    )
+                            if semi > 0:
+                                semi_resources = ProductionResource.objects.filter(
+                                    production_plan=activity,
+                                    resource_type="LABOUR",
+                                    skill_type__name__icontains="semi",
+                                )
+                                if semi_resources:
+                                    DailyLabourUsage.objects.create(
+                                        entry=entry,
+                                        resource=semi_resources.first(),
+                                        number=semi,
+                                        hours=hours,
+                                    )
+                            if unskilled > 0:
+                                unskilled_resources = ProductionResource.objects.filter(
+                                    production_plan=activity,
+                                    resource_type="LABOUR",
+                                    skill_type__name__icontains="unskilled",
+                                )
+                                if unskilled_resources:
+                                    DailyLabourUsage.objects.create(
+                                        entry=entry,
+                                        resource=unskilled_resources.first(),
+                                        number=unskilled,
+                                        hours=hours,
+                                    )
+
+                    # Plant formsets
+                    for plan_id in selected_plans_ids:
+                        from ..forms.production_forms import DailyPlantUsageFormSet
+
+                        plant_formset = DailyPlantUsageFormSet(
+                            request.POST, prefix=f"plant_{plan_id}"
                         )
-                        return redirect(
-                            "project:production-dashboard", project_pk=project_pk
-                        )
-                    else:
-                        # Fail the transaction if resource forms are invalid
-                        transaction.set_rollback(True)
-                        messages.error(
-                            request, "Please correct the errors in the resource forms."
-                        )
+                        if plant_formset.is_valid():
+                            plan = ProductionPlan.objects.get(
+                                id=plan_id, project=project
+                            )
+                            entry = DailyActivityEntry.objects.get_or_create(
+                                report=report,
+                                production_plan=plan,
+                                defaults={"quantity": 0},
+                            )[0]
+                            for plant_form in plant_formset:
+                                if (
+                                    plant_form.cleaned_data
+                                    and not plant_form.cleaned_data.get("DELETE", False)
+                                ):
+                                    plant_form.instance.entry = entry
+                                    plant_form.save()
+
+                    messages.success(
+                        request, "Daily productivity logs saved successfully."
+                    )
+                    return redirect(
+                        "project:production-dashboard", project_pk=project_pk
+                    )
             except Exception as e:
-                # Handle unexpected database or other exceptions
-                messages.error(request, f"An error occurred while saving: {str(e)}")
+                messages.error(request, f"An error occurred: {str(e)}")
         else:
-            # Provide feedback on main form errors
-            messages.error(
-                request,
-                "Please check the primary activity details. All fields are required.",
-            )
+            messages.error(request, "Please correct the errors.")
 
-        # Fallback: Re-render the page with the forms and error messages
-        # If we reached here, something failed.
-        # Ensure formsets are instantiated for the re-render path
-        if labour_formset is None:
-            labour_formset = DailyLabourUsageFormSet(request.POST, prefix="labour")
-        if plant_formset is None:
-            plant_formset = DailyPlantUsageFormSet(request.POST, prefix="plant")
-
-        return self.render_to_response(
-            self.get_context_data(
-                report_form=report_form,
-                entry_form=entry_form,
-                labour_formset=labour_formset,
-                plant_formset=plant_formset,
-            )
-        )
+        context = self.get_context_data()
+        context["report_form"] = report_form
+        if selected_plans_ids:
+            context["labour_formset"] = labour_formset
+        return self.render_to_response(context)
 
 
 class ProductivityLogsView(
@@ -823,7 +869,7 @@ class PlanResourcesAjaxView(
     SubscriptionRequiredMixin, LoginRequiredMixin, TemplateView
 ):
     """
-    Returns the Labour and Plant formsets for a given plan_id as an AJAX fragment.
+    Returns the Labour and Plant formsets for given plan_ids as an AJAX fragment.
     """
 
     required_tiers = [Subscription.PROFIT_AND_LOSS]
@@ -831,77 +877,76 @@ class PlanResourcesAjaxView(
     def get(self, request, *args, **kwargs):
         project_pk = self.kwargs["project_pk"]
         project = get_object_or_404(Project, pk=project_pk)
-        plan_id = request.GET.get("plan_id")
 
-        selected_plan = None
-        if plan_id:
-            try:
-                selected_plan = ProductionPlan.objects.get(pk=plan_id, project=project)
-            except (ProductionPlan.DoesNotExist, ValueError):
-                pass
+        plan_ids_raw = request.GET.getlist("plan_ids")
+        plan_ids = []
+        for item in plan_ids_raw:
+            plan_ids.extend([pid.strip() for pid in item.split(",") if pid.strip()])
 
-        # Re-use the formset population logic
-        labour_res = (
-            ProductionResource.objects.filter(
-                production_plan=selected_plan, resource_type="LABOUR"
+        selected_plans = ProductionPlan.objects.filter(id__in=plan_ids, project=project).order_by('id')
+
+        from ..forms.production_forms import (
+            AggregatedLabourFormSet,
+            DailyPlantUsageFormSet,
+        )
+
+        plan_resources = {}
+        plant_formsets = {}
+
+        for plan in selected_plans:
+            has_skilled = ProductionResource.objects.filter(
+                production_plan=plan,
+                resource_type="LABOUR",
+                skill_type__name__icontains="skilled",
+            ).exists()
+            has_semi_skilled = ProductionResource.objects.filter(
+                production_plan=plan,
+                resource_type="LABOUR",
+                skill_type__name__icontains="semi",
+            ).exists()
+            has_unskilled = ProductionResource.objects.filter(
+                production_plan=plan,
+                resource_type="LABOUR",
+                skill_type__name__icontains="unskilled",
+            ).exists()
+            has_plant = ProductionResource.objects.filter(
+                production_plan=plan, resource_type="PLANT"
+            ).exists()
+
+            plan_resources[plan.id] = {
+                "skilled": has_skilled,
+                "semi_skilled": has_semi_skilled,
+                "unskilled": has_unskilled,
+                "plant": has_plant,
+            }
+
+            plant_formset = DailyPlantUsageFormSet(prefix=f"plant_{plan.id}")
+            plant_formset.form.base_fields["resource"].queryset = ProductionResource.objects.filter(
+                production_plan=plan, resource_type="PLANT"
             )
-            if selected_plan
-            else []
-        )
-        initial_labour = [{"resource": res} for res in labour_res]
+            plant_formset.form.base_fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)
+            plant_formsets[plan.id] = plant_formset
 
-        plant_res = (
-            ProductionResource.objects.filter(
-                production_plan=selected_plan, resource_type="PLANT"
-            )
-            if selected_plan
-            else []
-        )
-        initial_plant = [{"resource": res} for res in plant_res]
+        labour_initial = [{"activity": plan.id} for plan in selected_plans]
+        labour_formset = AggregatedLabourFormSet(prefix="labour", initial=labour_initial)
 
-        labour_extra = len(initial_labour) if initial_labour else 3
-        LabourFormSet = inlineformset_factory(
-            DailyActivityEntry,
-            DailyLabourUsage,
-            form=DailyLabourUsageForm,
-            extra=labour_extra,
-            can_delete=True,
-        )
-        labour_formset = LabourFormSet(prefix="labour", initial=initial_labour)
-        if selected_plan:
-            for form in labour_formset:
-                form.fields["resource"].queryset = ProductionResource.objects.filter(
-                    production_plan=selected_plan, resource_type="LABOUR"
-                )
-        else:
-            for form in labour_formset:
-                form.fields["resource"].queryset = ProductionResource.objects.none()
-
-        plant_extra = len(initial_plant) if initial_plant else 3
-        PlantFormSet = inlineformset_factory(
-            DailyActivityEntry,
-            DailyPlantUsage,
-            form=DailyPlantUsageForm,
-            extra=plant_extra,
-            can_delete=True,
-        )
-        plant_formset = PlantFormSet(prefix="plant", initial=initial_plant)
-        if selected_plan:
-            for form in plant_formset:
-                form.fields["resource"].queryset = ProductionResource.objects.filter(
-                    production_plan=selected_plan, resource_type="PLANT"
-                )
-        else:
-            for form in plant_formset:
-                form.fields["resource"].queryset = ProductionResource.objects.none()
+        for form, plan in zip(labour_formset.forms, selected_plans, strict=True):
+            form.fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)
+            if not plan_resources[plan.id]["skilled"]:
+                form.fields["skilled_number"].disabled = True
+            if not plan_resources[plan.id]["semi_skilled"]:
+                form.fields["semi_skilled_number"].disabled = True
+            if not plan_resources[plan.id]["unskilled"]:
+                form.fields["unskilled_number"].disabled = True
 
         html = render_to_string(
-            "production_progress/partials/resource_formsets.html",
+            "production_progress/partials/resource_formsets_multi.html",
             {
                 "labour_formset": labour_formset,
-                "plant_formset": plant_formset,
-                "has_labour": len(initial_labour) > 0 or labour_formset.is_bound,
-                "has_plant": len(initial_plant) > 0 or plant_formset.is_bound,
+                "plant_formsets": plant_formsets,
+                "selected_plans": selected_plans,
+                "plan_resources": plan_resources,
+                "labour_forms_with_plans": list(zip(labour_formset.forms, selected_plans, strict=True)),
             },
             request=request,
         )

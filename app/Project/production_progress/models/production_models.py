@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from app.core.Utilities.models import BaseModel
 from app.Project.models import Project
 
@@ -96,7 +97,7 @@ class ProductionResource(BaseModel):
 class DailyActivityReport(BaseModel):
     """Daily container for all activities performed on a specific date."""
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="daily_reports")
-    date = models.DateField()
+    date = models.DateField(default=timezone.now)
     notes = models.TextField(blank=True, help_text="Optional site-wide remarks")
 
     class Meta:

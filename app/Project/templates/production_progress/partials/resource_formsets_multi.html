@@ -1,0 +1,102 @@
+<!-- Labour Table -->
+<div class="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
+  <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+    <h3 class="text-lg font-bold text-gray-900">Labour Usage</h3>
+    <p class="text-sm text-gray-600">Enter labour requirements for each selected activity</p>
+  </div>
+  <div class="p-6">
+    {{ labour_formset.management_form }}
+    <table class="w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Activity</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Quantity</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Skilled</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Semi</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Unskilled</th>
+          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Hours</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        {% for form, plan in labour_forms_with_plans %}
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ plan.activity }}{{ form.activity }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ form.quantity }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              {% if plan_resources|get:plan.id|get:'skilled' %}
+                {{ form.skilled_number }}
+              {% else %}
+                <span class="text-gray-400 italic text-xs">N/A</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              {% if plan_resources|get:plan.id|get:'semi_skilled' %}
+                {{ form.semi_skilled_number }}
+              {% else %}
+                <span class="text-gray-400 italic text-xs">N/A</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              {% if plan_resources|get:plan.id|get:'unskilled' %}
+                {{ form.unskilled_number }}
+              {% else %}
+                <span class="text-gray-400 italic text-xs">N/A</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ form.total_hours }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Plant Sections -->
+{% for plan in selected_plans %}
+  <div class="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+      <h3 class="text-lg font-bold text-gray-900">{{ plan.activity }} - Plant Usage</h3>
+      <p class="text-sm text-gray-600">Enter plant/equipment usage for this activity</p>
+    </div>
+    <div class="p-6">
+      {% if plan_resources|get:plan.id|get:'plant' %}
+        {% with p_formset=plant_formsets|get:plan.id %}
+          {{ p_formset.management_form }}
+          <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Resource</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Number</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Hours</th>
+              {% comment %} <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Actions</th> {% endcomment %}
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for form in plant_formsets|get:plan.id %}
+              <tr>
+                <td class="px-6 py-4 whitespace-nowrap">{{ form.resource }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ form.number }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">{{ form.hours }}</td>
+                {% comment %} <td class="px-6 py-4 whitespace-nowrap">{{ form.DELETE }}</td> {% endcomment %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endwith %}
+      {% else %}
+        <p class="text-gray-500">No plant resources defined for this activity.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endfor %}
+
+<!-- Loading Overlay -->
+<div id="formset-loading" class="hidden absolute inset-0 bg-white bg-opacity-60 items-center justify-center z-10 rounded-lg">
+  <div class="flex flex-col items-center">
+      <svg class="animate-spin h-8 w-8 text-indigo-600 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span class="text-xs font-medium text-gray-600">Loading resources...</span>
+  </div>
+</div>
