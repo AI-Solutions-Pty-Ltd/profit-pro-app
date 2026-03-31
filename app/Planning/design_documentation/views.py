@@ -33,6 +33,32 @@ from app.Project.models import Project
 
 
 # =============================================================================
+# Overview Pages
+# =============================================================================
+class DesignDevelopmentOverviewView(PlanningMixin, DetailView):
+    """Overview of design development across all work packages in a project."""
+
+    model = Project
+    template_name = "planning/overview/design_development.html"
+    context_object_name = "work_packages"
+    pk_url_kwarg = "project_pk"
+
+    def get_breadcrumbs(self):
+        project = self.get_project()
+        return [
+            BreadcrumbItem(
+                title="Projects",
+                url=str(reverse_lazy("project:project-list")),
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=str(reverse_lazy("project:project-management", args=[project.pk])),
+            ),
+            BreadcrumbItem(title="Design Development", url=None),
+        ]
+
+
+# =============================================================================
 # C: Design Development Views
 # =============================================================================
 # --- Design Category (L1) ---
@@ -684,31 +710,3 @@ class DesignDisciplineDeleteView(PlanningMixin, DeleteView):
         context["project"] = self.get_project()
         context["level"] = "L4 - Discipline"
         return context
-
-
-# =============================================================================
-# Overview Pages
-# =============================================================================
-
-
-class DesignDevelopmentOverviewView(PlanningMixin, DetailView):
-    """Overview of design development across all work packages in a project."""
-
-    model = Project
-    template_name = "planning/overview/design_development.html"
-    context_object_name = "work_packages"
-    pk_url_kwarg = "project_pk"
-
-    def get_breadcrumbs(self):
-        project = self.get_project()
-        return [
-            BreadcrumbItem(
-                title="Projects",
-                url=str(reverse_lazy("project:project-list")),
-            ),
-            BreadcrumbItem(
-                title=project.name,
-                url=str(reverse_lazy("project:project-management", args=[project.pk])),
-            ),
-            BreadcrumbItem(title="Design Development Overview", url=None),
-        ]

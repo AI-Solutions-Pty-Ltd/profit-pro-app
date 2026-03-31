@@ -2,20 +2,20 @@
 {% load heroicons %}
 {% load crispy_forms_tags %}
 {% block title %}
-    {{ action }} Work Package - {{ project.name }} - {{ block.super }}
+    {{ action }} Procurement Package - {{ project.name }} - {{ block.super }}
 {% endblock title %}
 {% block content %}
     <div class="bg-white shadow-sm rounded-lg mb-6">
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">{{ action }} Work Package</h1>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ action }} Procurement Package</h1>
                     <p class="text-sm text-gray-600 mt-1">{{ project.name }} - Tender Tracking</p>
                 </div>
                 <a href="{% url 'planning:work-package-list' project.pk %}"
                    class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                     {% heroicon_outline "arrow-left" size="16" class="mr-1" %}
-                    Back to Work Packages
+                    Back to Procurement Packages
                 </a>
             </div>
         </div>
@@ -88,7 +88,7 @@
                 </a>
                 <button type="submit"
                         class="inline-flex items-center p-2 border border-gray-600 rounded-md shadow-sm font-medium text-gray-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
-                    {{ action }} Work Package
+                    {{ action }} Procurement Package
                 </button>
             </div>
         </form>

@@ -52,7 +52,7 @@ class WorkPackageListView(PlanningMixin, ListView):
                     )
                 ),
             ),
-            BreadcrumbItem(title="Work Packages", url=None),
+            BreadcrumbItem(title="Procurement Packages", url=None),
         ]
 
 
@@ -102,7 +102,7 @@ class WorkPackageCreateView(PlanningMixin, CreateView):
                 ),
             ),
             BreadcrumbItem(
-                title="Work Packages",
+                title="Procurement Packages",
                 url=str(
                     reverse_lazy(
                         "planning:work-package-list",
@@ -152,7 +152,7 @@ class WorkPackageDetailView(PlanningMixin, DetailView):
                 ),
             ),
             BreadcrumbItem(
-                title="Work Packages",
+                title="Procurement Packages",
                 url=str(
                     reverse_lazy(
                         "planning:work-package-list",
@@ -234,7 +234,7 @@ class WorkPackageProcessUpdateView(PlanningMixin, UpdateView):
                 ),
             ),
             BreadcrumbItem(
-                title="Work Packages",
+                title="Procurement Packages",
                 url=str(
                     reverse_lazy(
                         "planning:work-package-list", kwargs={"project_pk": project.pk}
@@ -307,7 +307,7 @@ class TenderProcessUpdateView(PlanningMixin, UpdateView):
                 ),
             ),
             BreadcrumbItem(
-                title="Work Packages",
+                title="Procurement Packages",
                 url=str(
                     reverse_lazy(
                         "planning:work-package-list", kwargs={"project_pk": project.pk}

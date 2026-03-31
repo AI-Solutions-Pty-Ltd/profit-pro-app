@@ -82,7 +82,7 @@
             
             // Handle success
             if (result.success) {
-                // Close modal
+                sessionStorage.setItem('scrollToId', 'category-' + result.id);
                 window.location.reload();
             } else {
                 // Show errors

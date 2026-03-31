@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% block title %}
+    Upload File - {{ item }} - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg mb-8 text-white">
+            <div class="px-8 py-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white mb-2">Upload File</h1>
+                        <div class="flex items-center space-x-2 text-blue-100">
+                            <span>{{ project.name }}</span>
+                            {% heroicon_outline "chevron-right" size="16" class="text-blue-200" %}
+                            <span>{{ item }}</span>
+                            {% heroicon_outline "chevron-right" size="16" class="text-blue-200" %}
+                            <span class="font-medium">{{ level }}</span>
+                        </div>
+                    </div>
+                    <a href="{% url 'planning:scope-planning' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 rounded-lg text-sm font-medium text-white transition-all duration-200">
+                        {% heroicon_outline "arrow-left" size="16" class="mr-2" %}
+                        Back
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- Main Form Card -->
+        <div class="bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden">
+            <div class="p-8">
+                <form method="post" enctype="multipart/form-data" class="space-y-8">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="bg-red-50 border-l-4 border-red-400 rounded-lg p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" size="20" class="text-red-400" %}</div>
+                                <div class="ml-3">
+                                    {% for error in form.non_field_errors %}<p class="text-sm text-red-700">{{ error }}</p>{% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    <!-- File Upload Area -->
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">
+                            Select File <span class="text-red-500">*</span>
+                        </label>
+                        <label for="file"
+                               class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6"
+                                 id="upload-area">
+                                {% heroicon_outline "cloud-arrow-up" size="32" class="text-gray-400 mb-3" %}
+                                <p class="mb-2 text-sm text-gray-500">
+                                    <span class="font-semibold">Click to upload</span> or drag and drop
+                                </p>
+                                <p class="text-xs text-gray-500">PDF, DOC, DOCX, XLS, XLSX, DWG, PNG, JPG up to 50MB</p>
+                            </div>
+                            <input id="file"
+                                   name="file"
+                                   type="file"
+                                   class="hidden"
+                                   onchange="updateFileName(this)" />
+                        </label>
+                        <div id="file-name" class="mt-2 text-sm text-gray-600 hidden">
+                            <span class="font-medium">Selected:</span> <span id="file-name-text"></span>
+                        </div>
+                        {{ form.file.errors }}
+                    </div>
+                    <script>
+                    function updateFileName(input) {
+                        const fileName = input.files[0]?.name;
+                        if (fileName) {
+                            document.getElementById('file-name-text').textContent = fileName;
+                            document.getElementById('file-name').classList.remove('hidden');
+                            document.getElementById('upload-area').innerHTML = `
+                                <svg class="w-8 h-8 text-green-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <p class="mb-2 text-sm text-green-600 font-semibold">File selected!</p>
+                                <p class="text-xs text-gray-500">Click to change file</p>`;
+                        }
+                    }
+                    </script>
+                    <!-- Description -->
+                    <div class="space-y-2">
+                        <label for="description" class="block text-sm font-semibold text-gray-700">
+                            Description <span class="text-gray-400 font-normal">(optional)</span>
+                        </label>
+                        <textarea name="description"
+                                  id="description"
+                                  rows="3"
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                                  placeholder="Add a brief description of this file..."></textarea>
+                        {{ form.description.errors }}
+                    </div>
+                    <!-- Actions -->
+                    <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
+                        <a href="{% url 'planning:scope-planning' project.pk %}"
+                           class="px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-all duration-200">
+                            Cancel
+                        </a>
+                        <button type="submit"
+                                class="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium rounded-lg transition-all duration-200 shadow-lg">
+                            {% heroicon_outline "arrow-up-tray" size="16" class="mr-2" %}
+                            Upload File
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

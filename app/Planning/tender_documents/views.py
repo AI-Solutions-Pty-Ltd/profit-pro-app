@@ -177,10 +177,9 @@ class TenderDocumentFileUploadView(PlanningMixin, CreateView):
 
     def get_success_url(self):
         return reverse_lazy(
-            "planning:work-package-detail",
+            "planning:tender-documentation-overview",
             kwargs={
                 "project_pk": self.kwargs["project_pk"],
-                "pk": self.kwargs["wp_pk"],
             },
         )
 
@@ -257,7 +256,7 @@ class TenderDocumentDeleteView(PlanningMixin, DeleteView):
                 ),
             ),
             BreadcrumbItem(
-                title="Work Packages",
+                title="Procurement Packages",
                 url=str(
                     reverse_lazy(
                         "planning:work-package-list", kwargs={"project_pk": project.pk}

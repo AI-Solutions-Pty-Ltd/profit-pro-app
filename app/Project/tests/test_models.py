@@ -62,22 +62,24 @@ class TestProjectModel:
         """Test soft delete functionality."""
         project = ProjectFactory.create()
         project.soft_delete()
-        project.refresh_from_db()
-
-        assert project.deleted is True
-        assert project.is_deleted is True
+        # Use all_objects to find the soft-deleted project
+        deleted_project = Project.all_objects.get(pk=project.pk)
+        assert deleted_project.deleted is True
+        assert deleted_project.is_deleted is True
 
     def test_project_restore(self):
         """Test restore functionality after soft delete."""
         project = ProjectFactory.create()
         project.soft_delete()
-        project.refresh_from_db()
-        assert project.deleted is True
+        # Use all_objects to find the soft-deleted project
+        deleted_project = Project.all_objects.get(pk=project.pk)
+        assert deleted_project.deleted is True
 
-        project.restore()
-        project.refresh_from_db()
-        assert project.deleted is False
-        assert project.is_deleted is False
+        deleted_project.restore()
+        # Now we can use refresh_from_db since it's restored
+        deleted_project.refresh_from_db()
+        assert deleted_project.deleted is False
+        assert deleted_project.is_deleted is False
 
     def test_project_meta_verbose_names(self):
         """Test the meta verbose names."""
