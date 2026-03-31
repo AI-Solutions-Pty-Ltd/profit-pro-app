@@ -629,6 +629,10 @@ class DailyProductivityCreateView(
         plant_valid = True
         for plan in selected_plans:
             p_prefix = f"plant_{plan.id}"
+            # Safety check: skip if management data is missing
+            if f"{p_prefix}-TOTAL_FORMS" not in request.POST:
+                continue
+
             p_formset = DailyPlantUsageFormSet(
                 request.POST, prefix=p_prefix, form_kwargs={"activity_id": plan.id}
             )
