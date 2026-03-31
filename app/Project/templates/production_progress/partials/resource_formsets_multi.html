@@ -90,6 +90,12 @@
     <div class="py-4">
       {% if plan_resources|get:plan.id|get:'plant' %}
         {% with p_formset=plant_formsets|get:plan.id %}
+          {% if p_formset.non_form_errors %}
+            <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+              {{ p_formset.non_form_errors }}
+            </div>
+          {% endif %}
+          
           {{ p_formset.management_form }}
           <div class="min-w-full border rounded-lg border-gray-200 overflow-hidden divide-y divide-gray-200">
             <!-- Grid Header -->
@@ -100,25 +106,29 @@
             </div>
             <!-- Grid Rows -->
             <div class="bg-white divide-y divide-gray-200" id="plant-form-list-{{ plan.id }}">
-              {% for form in plant_formsets|get:plan.id %}
-                <div class="grid grid-cols-[1fr_120px_120px] items-center hover:bg-gray-50 transition-colors">
+              {% for form in p_formset %}
+                <div class="grid grid-cols-[1fr_120px_120px] items-start hover:bg-gray-50 transition-colors {% if form.errors %}bg-red-50/20{% endif %}">
                   <div class="px-6 py-4  border-gray-200">
-                    {{ form.id }}
+                    <div class="hidden">
+                      {{ form.id }}
+                      {{ form.entry }}
+                      {{ form.activity }}
+                    </div>
                     {{ form.resource }}
                     {% if form.resource.errors %}
-                      <div class="text-red-500 text-xs mt-1">{{ form.resource.errors }}</div>
+                      <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.resource.errors }}</div>
                     {% endif %}
                   </div>
-                  <div class="px-6 py-4  border-gray-200">
+                  <div class="px-6 py-4  border-gray-200 {% if form.number.errors %}field-error-container{% endif %}">
                     {{ form.number }}
                     {% if form.number.errors %}
-                      <div class="text-red-500 text-xs mt-1">{{ form.number.errors }}</div>
+                      <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.number.errors }}</div>
                     {% endif %}
                   </div>
                   <div class="px-6 py-4 {% if form.hours.errors %}field-error-container{% endif %}">
                     {{ form.hours }}
                     {% if form.hours.errors %}
-                      <div class="text-red-500 text-xs mt-1">{{ form.hours.errors }}</div>
+                      <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.hours.errors }}</div>
                     {% endif %}
                   </div>
                 </div>
@@ -127,11 +137,11 @@
           </div>
         {% endwith %}
       {% else %}
-        <p class="text-gray-500">No plant resources defined for this activity.</p>
+        <p class="text-gray-500 italic text-sm">No plant resources defined for this activity.</p>
       {% endif %}
     </div>
   </div>
-  {% endfor %}
+{% endfor %}
 
 <!-- Loading Overlay -->
 <div id="formset-loading" class="hidden absolute inset-0 bg-white bg-opacity-60 items-center justify-center z-10 rounded-lg">

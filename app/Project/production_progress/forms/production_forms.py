@@ -1,4 +1,5 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from ..models.production_models import (
     DailyProduction,
     ProductionPlan,
@@ -9,7 +10,6 @@ from ..models.production_models import (
     DailyPlantUsage,
 )
 from django.forms import inlineformset_factory, formset_factory
-from django.core.exceptions import ValidationError
 from django.db.models import Q
 
 
@@ -312,6 +312,26 @@ class DailyPlantUsageForm(forms.ModelForm):
                 id=activity_id
             )
 
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data is None:
+            return cleaned_data
+            
+        resource = cleaned_data.get('resource')
+        number = cleaned_data.get('number')
+        hours = cleaned_data.get('hours')
+        
+        if number and number > 0:
+            if not resource:
+                raise ValidationError({"resource": "Resource is required if number is specified."})
+            if not hours or hours <= 0:
+                raise ValidationError({"hours": "Hours must be greater than 0 if number is specified."})
+        elif hours and hours > 0:
+            if not number or number <= 0:
+                raise ValidationError({"number": "Number is required if hours are specified."})
+                
+        return cleaned_data
+
 
 class AggregatedLabourForm(forms.Form):
     activity = forms.ModelChoiceField(
@@ -321,11 +341,12 @@ class AggregatedLabourForm(forms.Form):
         min_value=0,
         max_digits=15,
         decimal_places=2,
+        required=True,
         widget=forms.NumberInput(
             attrs={
                 "class": "input  focus:border-primary",
-                "placeholder": "0.00",
-                "step": "0.01",
+                "placeholder": "0",
+                "step": "1",
             }
         ),
     )
@@ -369,11 +390,16 @@ class AggregatedLabourForm(forms.Form):
         skilled = cleaned_data.get("skilled_number") or 0
         semi = cleaned_data.get("semi_skilled_number") or 0
         unskilled = cleaned_data.get("unskilled_number") or 0
+        total_hours = cleaned_data.get("total_hours") or 0
+
+        if (skilled > 0 or semi > 0 or unskilled > 0) and total_hours <= 0:
+            raise ValidationError({"total_hours": "Total hours must be greater than 0 if labourers are specified."})
 
         # Optional project check if project_id was passed to form
         if hasattr(self, "project_id") and self.project_id:
             if plan.project_id != self.project_id:
                 raise ValidationError("Invalid activity for this project.")
+        
         try:
             resources = ProductionResource.objects.filter(
                 production_plan=plan, resource_type="LABOUR"

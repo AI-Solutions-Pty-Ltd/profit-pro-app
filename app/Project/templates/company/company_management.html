@@ -96,6 +96,20 @@
                         <span class="text-sm font-medium text-emerald-700">Log Progress</span>
                     </div>
                 </a>
+                 <a href="{% url 'site_management:skill-type-list' company.pk %}"
+                   class="flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "wrench" class="w-4 h-4 text-violet-500 mr-2" %}
+                        <span class="text-sm font-medium text-violet-700"> Skill Rates</span>
+                    </div>
+                   
+                 <a href="{% url 'site_management:plant-type-list' company.pk %}"
+                    class="flex items-center justify-between px-3 py-2 border border-violet-200 rounded-md hover:bg-violet-50 transition-colors group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "tag" class="w-4 h-4 text-violet-500 mr-2" %}
+                        <span class="text-sm font-medium text-violet-700">Plant Rates</span>
+                    </div>
+                 </a>
                 
             </div>
         </div>
