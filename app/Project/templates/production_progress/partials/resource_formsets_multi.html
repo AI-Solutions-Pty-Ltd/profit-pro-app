@@ -1,95 +1,137 @@
 {% load project_tags %}
 <!-- Labour Table -->
-<div class="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
-  <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+<div class="p-4 bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
+  <div class="  ">
     <h3 class="text-lg font-bold text-gray-900">Labour Usage</h3>
     <p class="text-sm text-gray-600">Enter labour requirements for each selected activity</p>
   </div>
-  <div class="p-6">
+  <div class="py-4 overflow-x-auto">
     {{ labour_formset.management_form }}
-    <table class="w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Activity</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Quantity</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Skilled</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Semi</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Unskilled</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Hours</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
+    <div class="w-full min-w-max border rounded-lg border-gray-200 overflow-hidden divide-y divide-gray-200" id="labour-form-list">
+      <!-- Grid Header -->
+      <div class="bg-gray-50 grid grid-cols-[1fr_repeat(5,110px)] items-center text-left text-xs font-medium text-gray-500 ">
+        <div class="px-3 py-2  border-gray-200">Activity</div>
+        <div class="px-3 py-2  border-gray-200">Quantity</div>
+        <div class="px-3 py-2  border-gray-200">Skilled</div>
+        <div class="px-3 py-2  border-gray-200">Semi</div>
+        <div class="px-3 py-2  border-gray-200">Unskilled</div>
+        <div class="px-3 py-2">Hours</div>
+      </div>
+      <!-- Grid Rows -->
+      <div class="bg-white divide-y divide-gray-200">
         {% for form, plan in labour_forms_with_plans %}
-          <tr>
-            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ plan.activity }}{{ form.activity }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ form.quantity }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">
+          <div class="grid grid-cols-[1fr_repeat(5,110px)] items-start hover:bg-gray-50 transition-colors {% if form.errors %}bg-red-50/30{% endif %}">
+            <div class="px-3 py-2  border-gray-200 font-medium text-gray-900">
+              <div class="flex items-center">
+                {{ plan.activity }}{{ form.activity }}
+              </div>
+              {% if form.non_field_errors %}
+                <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.non_field_errors }}</div>
+              {% endif %}
+            </div>
+            <div class="px-3 py-2  border-gray-200 {% if form.quantity.errors %}field-error-container{% endif %}">
+              {{ form.quantity }}
+              {% if form.quantity.errors %}
+                <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.quantity.errors }}</div>
+              {% endif %}
+            </div>
+            <div class="px-3 py-2  border-gray-200 {% if form.skilled_number.errors %}field-error-container{% endif %}">
               {% if plan_resources|get:plan.id|get:'skilled' %}
                 {{ form.skilled_number }}
+                {% if form.skilled_number.errors %}
+                  <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.skilled_number.errors }}</div>
+                {% endif %}
               {% else %}
                 <span class="text-gray-400 italic text-xs">-</span>
               {% endif %}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
+            </div>
+            <div class="px-3 py-2  border-gray-200 {% if form.semi_skilled_number.errors %}field-error-container{% endif %}">
               {% if plan_resources|get:plan.id|get:'semi_skilled' %}
                 {{ form.semi_skilled_number }}
+                {% if form.semi_skilled_number.errors %}
+                  <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.semi_skilled_number.errors }}</div>
+                {% endif %}
               {% else %}
                 <span class="text-gray-400 italic text-xs">-</span>
               {% endif %}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
+            </div>
+            <div class="px-3 py-2  border-gray-200 {% if form.unskilled_number.errors %}field-error-container{% endif %}">
               {% if plan_resources|get:plan.id|get:'unskilled' %}
                 {{ form.unskilled_number }}
+                {% if form.unskilled_number.errors %}
+                  <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.unskilled_number.errors }}</div>
+                {% endif %}
               {% else %}
                 <span class="text-gray-400 italic text-xs">-</span>
               {% endif %}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ form.total_hours }}</td>
-          </tr>
+            </div>
+            <div class="px-3 py-2 {% if form.total_hours.errors %}field-error-container{% endif %}">
+              {{ form.total_hours }}
+              {% if form.total_hours.errors %}
+                <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.total_hours.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
         {% endfor %}
-      </tbody>
-    </table>
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- Plant Sections -->
 {% for plan in selected_plans %}
-  <div class="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
-    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-      <h3 class="text-lg font-bold text-gray-900">{{ plan.activity }} - Plant Usage</h3>
-      <p class="text-sm text-gray-600">Enter plant/equipment usage for this activity</p>
+  <div class="p-4 bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
+    <div class="  flex justify-between items-center">
+      <div>
+        <h3 class="text-lg font-bold text-gray-900">{{ plan.activity|title }} - Plant Usage</h3>
+        <p class="text-sm text-gray-600">Enter plant/equipment usage for this activity</p>
+      </div>
     </div>
-    <div class="p-6">
+    <div class="py-4">
       {% if plan_resources|get:plan.id|get:'plant' %}
         {% with p_formset=plant_formsets|get:plan.id %}
           {{ p_formset.management_form }}
-          <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Resource</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Number</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Hours</th>
-              {% comment %} <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 ">Actions</th> {% endcomment %}
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            {% for form in plant_formsets|get:plan.id %}
-              <tr>
-                <td class="px-6 py-4 whitespace-nowrap">{{ form.resource }}</td>
-                <td class="px-6 py-4 whitespace-nowrap">{{ form.number }}</td>
-                <td class="px-6 py-4 whitespace-nowrap">{{ form.hours }}</td>
-                {% comment %} <td class="px-6 py-4 whitespace-nowrap">{{ form.DELETE }}</td> {% endcomment %}
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+          <div class="min-w-full border rounded-lg border-gray-200 overflow-hidden divide-y divide-gray-200">
+            <!-- Grid Header -->
+            <div class="bg-gray-50 grid grid-cols-[1fr_120px_120px] items-center text-xs font-medium text-gray-500">
+              <div class="px-6 py-3  border-gray-200">Resource</div>
+              <div class="px-6 py-3  border-gray-200">Number</div>
+              <div class="px-6 py-3">Hours</div>
+            </div>
+            <!-- Grid Rows -->
+            <div class="bg-white divide-y divide-gray-200" id="plant-form-list-{{ plan.id }}">
+              {% for form in plant_formsets|get:plan.id %}
+                <div class="grid grid-cols-[1fr_120px_120px] items-center hover:bg-gray-50 transition-colors">
+                  <div class="px-6 py-4  border-gray-200">
+                    {{ form.id }}
+                    {{ form.resource }}
+                    {% if form.resource.errors %}
+                      <div class="text-red-500 text-xs mt-1">{{ form.resource.errors }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="px-6 py-4  border-gray-200">
+                    {{ form.number }}
+                    {% if form.number.errors %}
+                      <div class="text-red-500 text-xs mt-1">{{ form.number.errors }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="px-6 py-4 {% if form.hours.errors %}field-error-container{% endif %}">
+                    {{ form.hours }}
+                    {% if form.hours.errors %}
+                      <div class="text-red-500 text-xs mt-1">{{ form.hours.errors }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
         {% endwith %}
       {% else %}
         <p class="text-gray-500">No plant resources defined for this activity.</p>
       {% endif %}
     </div>
   </div>
-{% endfor %}
+  {% endfor %}
 
 <!-- Loading Overlay -->
 <div id="formset-loading" class="hidden absolute inset-0 bg-white bg-opacity-60 items-center justify-center z-10 rounded-lg">

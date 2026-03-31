@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.core.validators import MinValueValidator
 from app.core.Utilities.models import BaseModel
 from app.Project.models import Project
 
@@ -23,14 +24,22 @@ class ProductionPlan(BaseModel):
     activity = models.CharField(max_length=255)
     start_date = models.DateField()
     finish_date = models.DateField()
-    quantity = models.DecimalField(max_digits=15, decimal_places=2)
+    quantity = models.DecimalField(max_digits=15, decimal_places=2, validators=[MinValueValidator(0)])
     unit = models.CharField(max_length=50)
     duration = models.IntegerField(default=0, help_text="Duration in days")
+    is_archived = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Production Plan"
         verbose_name_plural = "Production Plans"
         ordering = ["start_date"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "activity", "start_date"],
+                name="unique_plan_activity_date",
+                condition=models.Q(is_archived=False)
+            )
+        ]
 
     def __str__(self):
         return f"{self.project.name} - {self.activity}"
@@ -41,6 +50,14 @@ class ProductionPlan(BaseModel):
         else:
             self.duration = 0
         super().save(*args, **kwargs)
+
+    @property
+    def is_active(self):
+        """A plan is active between start and finish dates and if not archived."""
+        if self.is_archived:
+            return False
+        today = timezone.now().date()
+        return self.start_date <= today <= self.finish_date
 
     @property
     def total_labour_cost(self):
@@ -71,9 +88,9 @@ class ProductionResource(BaseModel):
         "SiteManagement.PlantType", on_delete=models.SET_NULL, null=True, blank=True, related_name="production_resources"
     )
     name = models.CharField(max_length=255, help_text="e.g., Skilled, Bobcat, Diesel")
-    number = models.DecimalField(max_digits=10, decimal_places=2, default=1)
-    days = models.DecimalField(max_digits=10, decimal_places=2, default=1)
-    rate = models.DecimalField(max_digits=15, decimal_places=2)
+    number = models.DecimalField(max_digits=10, decimal_places=2, default=1, validators=[MinValueValidator(0)])
+    days = models.DecimalField(max_digits=10, decimal_places=2, default=1, validators=[MinValueValidator(0)])
+    rate = models.DecimalField(max_digits=15, decimal_places=2, validators=[MinValueValidator(0)])
     total_cost = models.DecimalField(max_digits=15, decimal_places=2, editable=False)
 
     class Meta:
@@ -114,7 +131,7 @@ class DailyActivityEntry(BaseModel):
     """Specific activity performed during a daily report."""
     report = models.ForeignKey(DailyActivityReport, on_delete=models.CASCADE, related_name="entries")
     production_plan = models.ForeignKey(ProductionPlan, on_delete=models.CASCADE, related_name="daily_entries")
-    quantity = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    quantity = models.DecimalField(max_digits=15, decimal_places=2, default=0, validators=[MinValueValidator(0)])
 
     class Meta:
         verbose_name = "Daily Activity Entry"
@@ -165,8 +182,8 @@ class DailyLabourUsage(BaseModel):
     """Tracks labour usage for a specific activity entry."""
     entry = models.ForeignKey(DailyActivityEntry, on_delete=models.CASCADE, related_name="labour_usage")
     resource = models.ForeignKey(ProductionResource, on_delete=models.CASCADE, limit_choices_to={'resource_type': 'LABOUR'})
-    number = models.IntegerField(default=1)
-    hours = models.DecimalField(max_digits=5, decimal_places=2, default=8)
+    number = models.IntegerField(default=1, validators=[MinValueValidator(0)])
+    hours = models.DecimalField(max_digits=5, decimal_places=2, default=8, validators=[MinValueValidator(0)])
 
     class Meta:
         verbose_name = "Daily Labour Usage"
@@ -185,8 +202,8 @@ class DailyPlantUsage(BaseModel):
     """Tracks plant usage for a specific activity entry."""
     entry = models.ForeignKey(DailyActivityEntry, on_delete=models.CASCADE, related_name="plant_usage")
     resource = models.ForeignKey(ProductionResource, on_delete=models.CASCADE, limit_choices_to={'resource_type': 'PLANT'})
-    number = models.IntegerField(default=1)
-    hours = models.DecimalField(max_digits=5, decimal_places=2, default=8)
+    number = models.IntegerField(default=1, validators=[MinValueValidator(0)])
+    hours = models.DecimalField(max_digits=5, decimal_places=2, default=8, validators=[MinValueValidator(0)])
 
     class Meta:
         verbose_name = "Daily Plant Usage"

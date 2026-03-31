@@ -9,6 +9,8 @@ from ..models.production_models import (
     DailyPlantUsage,
 )
 from django.forms import inlineformset_factory, formset_factory
+from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 
 class DailyProductionForm(forms.ModelForm):
@@ -83,6 +85,43 @@ class ProductionPlanForm(forms.ModelForm):
                 attrs={"id": "unit", "placeholder": "Unit e.g. bricks"}
             ),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data:
+            return cleaned_data
+
+        start_date = cleaned_data.get("start_date")
+        finish_date = cleaned_data.get("finish_date")
+        activity = cleaned_data.get("activity")
+        project = (
+            self.instance.project if self.instance.pk else cleaned_data.get("project")
+        )
+
+        if start_date and finish_date and finish_date < start_date:
+            raise ValidationError(
+                {"finish_date": "Finish date cannot be before start date."}
+            )
+
+        # Check for overlapping plans for the same activity
+        if start_date and finish_date and activity:
+            overlapping_plans = ProductionPlan.objects.filter(
+                activity=activity, is_archived=False
+            ).filter(Q(start_date__lte=finish_date) & Q(finish_date__gte=start_date))
+
+            if self.instance.pk:
+                overlapping_plans = overlapping_plans.exclude(pk=self.instance.pk)
+            # Since project might not be in cleaned_data if it's passed via kwargs in view
+            # we rely on the instance's project which is usually set in form_valid or passed to __init__
+            if project:
+                overlapping_plans = overlapping_plans.filter(project=project)
+
+            if overlapping_plans.exists():
+                raise ValidationError(
+                    f"An active plan for '{activity}' already exists within this date range ({start_date} to {finish_date})."
+                )
+
+        return cleaned_data
 
 
 class ProductionResourceForm(forms.ModelForm):
@@ -222,12 +261,6 @@ class DailyActivityEntryForm(forms.ModelForm):
                 project_id=project_id
             )
 
-    def clean_quantity(self):
-        quantity = self.cleaned_data.get("quantity")
-        if quantity is not None and quantity <= 0:
-            raise forms.ValidationError("Quantity must be greater than zero.")
-        return quantity
-
 
 class DailyLabourUsageForm(forms.ModelForm):
     class Meta:
@@ -262,9 +295,9 @@ class DailyPlantUsageForm(forms.ModelForm):
         widgets = {
             "entry": forms.HiddenInput(),
             "resource": forms.Select(attrs={"class": "form-select"}),
-            "number": forms.NumberInput(attrs={"class": "form-input", "min": "0"}),
+            "number": forms.NumberInput(attrs={"class": "input", "min": "0"}),
             "hours": forms.NumberInput(
-                attrs={"class": "form-input", "step": "0.1", "min": "0"}
+                attrs={"class": "input", "step": "1", "min": "0", "placeholder": "0"}
             ),
         }
 
@@ -289,33 +322,87 @@ class AggregatedLabourForm(forms.Form):
         max_digits=15,
         decimal_places=2,
         widget=forms.NumberInput(
-            attrs={"class": "form-input", "placeholder": "0.00", "step": "0.01"}
+            attrs={
+                "class": "input  focus:border-primary",
+                "placeholder": "0.00",
+                "step": "0.01",
+            }
         ),
     )
     skilled_number = forms.IntegerField(
         min_value=0,
         required=False,
-        widget=forms.NumberInput(attrs={"class": "form-input", "placeholder": "0"}),
+        widget=forms.NumberInput(attrs={"class": "input", "placeholder": "0"}),
     )
     semi_skilled_number = forms.IntegerField(
         min_value=0,
         required=False,
-        widget=forms.NumberInput(attrs={"class": "form-input", "placeholder": "0"}),
+        widget=forms.NumberInput(attrs={"class": "input", "placeholder": "0"}),
     )
     unskilled_number = forms.IntegerField(
         min_value=0,
         required=False,
-        widget=forms.NumberInput(attrs={"class": "form-input", "placeholder": "0"}),
+        widget=forms.NumberInput(attrs={"class": "input", "placeholder": "0"}),
     )
     total_hours = forms.DecimalField(
         min_value=0,
         max_digits=5,
-        decimal_places=2,
-        required=False,
+        decimal_places=0,
         widget=forms.NumberInput(
-            attrs={"class": "form-input", "placeholder": "0.00", "step": "0.1"}
+            attrs={
+                "class": "input",
+                "placeholder": "0",
+                "step": "1",
+            }
         ),
     )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data:
+            return cleaned_data
+
+        plan = cleaned_data.get("activity")
+        if not plan:
+            return cleaned_data
+
+        skilled = cleaned_data.get("skilled_number") or 0
+        semi = cleaned_data.get("semi_skilled_number") or 0
+        unskilled = cleaned_data.get("unskilled_number") or 0
+
+        # Optional project check if project_id was passed to form
+        if hasattr(self, "project_id") and self.project_id:
+            if plan.project_id != self.project_id:
+                raise ValidationError("Invalid activity for this project.")
+        try:
+            resources = ProductionResource.objects.filter(
+                production_plan=plan, resource_type="LABOUR"
+            )
+            validation_errors = {}
+            for res in resources:
+                res_name = res.name.lower()
+                if "skilled" in res_name and "semi" not in res_name:
+                    if skilled > res.number:
+                        validation_errors["skilled_number"] = (
+                            f"Exceeds planned ({res.number})"
+                        )
+                elif "semi" in res_name:
+                    if semi > res.number:
+                        validation_errors["semi_skilled_number"] = (
+                            f"Exceeds planned ({res.number})"
+                        )
+                elif "unskilled" in res_name:
+                    if unskilled > res.number:
+                        validation_errors["unskilled_number"] = (
+                            f"Exceeds planned ({res.number})"
+                        )
+
+            if validation_errors:
+                raise ValidationError(validation_errors)
+        except Exception:
+            pass
+
+        return cleaned_data
 
     def __init__(self, *args, **kwargs):
         project_id = kwargs.pop("project_id", None)
@@ -324,18 +411,6 @@ class AggregatedLabourForm(forms.Form):
             self.fields["activity"].queryset = ProductionPlan.objects.filter(
                 project_id=project_id
             )
-
-    def clean(self):
-        cleaned_data = super().clean()
-        skilled = cleaned_data.get("skilled_number") or 0
-        semi = cleaned_data.get("semi_skilled_number") or 0
-        unskilled = cleaned_data.get("unskilled_number") or 0
-        hours = cleaned_data.get("total_hours") or 0
-        if hours > 0 and (skilled + semi + unskilled) == 0:
-            raise forms.ValidationError(
-                "If hours are entered, at least one labour category must have a number > 0"
-            )
-        return cleaned_data
 
 
 DailyLabourUsageFormSet = inlineformset_factory(
