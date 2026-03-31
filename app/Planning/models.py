@@ -103,6 +103,7 @@ class WorkPackage(BaseModel):
         help_text="Advert end date",
     )
     applied_to_advert_completed = models.BooleanField(
+        verbose_name="Advert Completed",
         default=False,
         help_text="Whether applied to advert milestone is completed",
     )
@@ -232,6 +233,41 @@ class WorkPackage(BaseModel):
         blank=True,
         help_text="Execution phase end/finish date",
     )
+    close_out_start_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Close Out phase start date",
+    )
+    close_out_end_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Close Out phase end date",
+    )
+    close_out_completed = models.BooleanField(
+        verbose_name="Close Out Completed",
+        default=False,
+        help_text="Whether close out phase is completed",
+    )
+
+    # Package Breakdown Structure
+    pbs_start_date = models.DateField(
+        verbose_name="PBS Start Date",
+        null=True,
+        blank=True,
+        help_text="Package Breakdown Structure start date",
+    )
+    pbs_end_date = models.DateField(
+        verbose_name="PBS End Date",
+        null=True,
+        blank=True,
+        help_text="Package Breakdown Structure end date",
+    )
+    pbs_attachment = models.FileField(
+        upload_to="planning/pbs/%Y/%m/",
+        null=True,
+        blank=True,
+        help_text="Package Breakdown Structure document",
+    )
 
     # Budget
     package_budget = models.DecimalField(
@@ -291,7 +327,6 @@ class WorkPackage(BaseModel):
             # L1 - Categories
             for category in self.project.categories.all():
                 DesignCategory.objects.get_or_create(
-                    work_package=self,
                     category=category,
                     stage=stage_value,
                     defaults={"required_quantity": 1, "approved": False},
@@ -300,7 +335,6 @@ class WorkPackage(BaseModel):
             # L2 - SubCategories
             for subcategory in self.project.subcategories.all():
                 DesignSubCategory.objects.get_or_create(
-                    work_package=self,
                     sub_category=subcategory,
                     stage=stage_value,
                     defaults={"required_quantity": 1, "approved": False},
@@ -309,7 +343,6 @@ class WorkPackage(BaseModel):
             # L3 - Groups
             for group in self.project.groups.all():
                 DesignGroup.objects.get_or_create(
-                    work_package=self,
                     group=group,
                     stage=stage_value,
                     defaults={"required_quantity": 1, "approved": False},
@@ -318,7 +351,6 @@ class WorkPackage(BaseModel):
             # L4 - Disciplines
             for discipline in self.project.disciplines.all():
                 DesignDiscipline.objects.get_or_create(
-                    work_package=self,
                     discipline=discipline,
                     stage=stage_value,
                     defaults={"required_quantity": 1, "approved": False},
@@ -336,6 +368,49 @@ class WorkPackage(BaseModel):
         for tender_document in self.tender_documents.all():
             count += tender_document.files.count()
         return count
+
+    @property
+    def tender_milestone_summary(self) -> list:
+        """Return a list of (label, start, end, completed) tuples for all tender milestones."""
+        return [
+            (
+                "Advert",
+                self.applied_to_advert_start_date,
+                self.applied_to_advert_end_date,
+                self.applied_to_advert_completed,
+            ),
+            (
+                "Site Inspection",
+                self.site_inspection_start_date,
+                self.site_inspection_end_date,
+                self.site_inspection_completed,
+            ),
+            (
+                "Tender Close",
+                self.tender_close_start_date,
+                self.tender_close_end_date,
+                self.tender_close_completed,
+            ),
+            (
+                "Evaluation",
+                self.tender_evaluation_start_date,
+                self.tender_evaluation_end_date,
+                self.tender_evaluation_completed,
+            ),
+            ("Award", self.award_start_date, self.award_end_date, self.award_completed),
+            (
+                "Contract Signing",
+                self.contract_signing_start_date,
+                self.contract_signing_end_date,
+                self.contract_signing_completed,
+            ),
+            (
+                "Mobilization",
+                self.mobilization_start_date,
+                self.mobilization_end_date,
+                self.mobilization_completed,
+            ),
+        ]
 
     def save(self, *args, **kwargs) -> None:
         """Override save to auto-create design items and tender documents on creation."""
@@ -777,3 +852,120 @@ class DesignDisciplineFile(BaseModel):
         if self.file and not self.design_discipline.approved:
             self.design_discipline.approved = True
             self.design_discipline.save(update_fields=["approved"])
+
+
+# =============================================================================
+# D: Scope Planning File Attachments (direct file uploads per WBS level)
+# =============================================================================
+
+
+class CategoryFile(BaseModel):
+    """File attachment for a Category (L1)."""
+
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.CASCADE,
+        related_name="files",
+        help_text="L1 Category this file belongs to",
+    )
+    file = models.FileField(
+        upload_to="planning/scope/category/",
+        help_text="Uploaded file",
+    )
+    description = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Description of the uploaded file",
+    )
+
+    def __str__(self) -> str:
+        return f"{self.category.name} - {self.file.name}"
+
+    class Meta:
+        verbose_name = "Category File"
+        verbose_name_plural = "Category Files"
+        ordering = ["-created_at"]
+
+
+class SubCategoryFile(BaseModel):
+    """File attachment for a SubCategory (L2)."""
+
+    sub_category = models.ForeignKey(
+        SubCategory,
+        on_delete=models.CASCADE,
+        related_name="files",
+        help_text="L2 SubCategory this file belongs to",
+    )
+    file = models.FileField(
+        upload_to="planning/scope/subcategory/",
+        help_text="Uploaded file",
+    )
+    description = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Description of the uploaded file",
+    )
+
+    def __str__(self) -> str:
+        return f"{self.sub_category.name} - {self.file.name}"
+
+    class Meta:
+        verbose_name = "SubCategory File"
+        verbose_name_plural = "SubCategory Files"
+        ordering = ["-created_at"]
+
+
+class GroupFile(BaseModel):
+    """File attachment for a Group (L3)."""
+
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.CASCADE,
+        related_name="files",
+        help_text="L3 Group this file belongs to",
+    )
+    file = models.FileField(
+        upload_to="planning/scope/group/",
+        help_text="Uploaded file",
+    )
+    description = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Description of the uploaded file",
+    )
+
+    def __str__(self) -> str:
+        return f"{self.group.name} - {self.file.name}"
+
+    class Meta:
+        verbose_name = "Group File"
+        verbose_name_plural = "Group Files"
+        ordering = ["-created_at"]
+
+
+class DisciplineFile(BaseModel):
+    """File attachment for a Discipline (L4)."""
+
+    discipline = models.ForeignKey(
+        Discipline,
+        on_delete=models.CASCADE,
+        related_name="files",
+        help_text="L4 Discipline this file belongs to",
+    )
+    file = models.FileField(
+        upload_to="planning/scope/discipline/",
+        help_text="Uploaded file",
+    )
+    description = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Description of the uploaded file",
+    )
+
+    def __str__(self) -> str:
+        return f"{self.discipline.name} - {self.file.name}"
+
+    class Meta:
+        verbose_name = "Discipline File"
+        verbose_name_plural = "Discipline Files"
+        ordering = ["-created_at"]

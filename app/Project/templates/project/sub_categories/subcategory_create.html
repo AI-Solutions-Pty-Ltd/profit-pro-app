@@ -86,6 +86,7 @@
             const result = await response.json();
             
             if (result.success) {
+                sessionStorage.setItem('scrollToId', 'subcategory-' + result.id);
                 window.location.reload();
             } else {
                 alert('Sub category could not be created');

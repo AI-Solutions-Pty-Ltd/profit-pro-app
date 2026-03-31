@@ -66,6 +66,7 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+        base_manager_name = "objects"
 
     def soft_delete(self):
         """Soft delete the instance by setting deleted=True"""

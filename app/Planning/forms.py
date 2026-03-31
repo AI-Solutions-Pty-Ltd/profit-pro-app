@@ -3,6 +3,7 @@
 from django import forms
 
 from app.Planning.models import (
+    CategoryFile,
     DesignCategory,
     DesignCategoryFile,
     DesignDiscipline,
@@ -11,6 +12,9 @@ from app.Planning.models import (
     DesignGroupFile,
     DesignSubCategory,
     DesignSubCategoryFile,
+    DisciplineFile,
+    GroupFile,
+    SubCategoryFile,
     TenderDocument,
     TenderDocumentFile,
     WorkPackage,
@@ -86,6 +90,12 @@ class WorkPackageProcessForm(forms.ModelForm):
             "tender_process_end_date",
             "execution_start_date",
             "execution_end_date",
+            "close_out_start_date",
+            "close_out_end_date",
+            "close_out_completed",
+            "pbs_start_date",
+            "pbs_end_date",
+            "pbs_attachment",
             "package_budget",
             "budget_structure_file",
         ]
@@ -104,6 +114,12 @@ class WorkPackageProcessForm(forms.ModelForm):
             "tender_process_end_date": forms.DateInput(attrs=_DATE_INPUT),
             "execution_start_date": forms.DateInput(attrs=_DATE_INPUT),
             "execution_end_date": forms.DateInput(attrs=_DATE_INPUT),
+            "close_out_start_date": forms.DateInput(attrs=_DATE_INPUT),
+            "close_out_end_date": forms.DateInput(attrs=_DATE_INPUT),
+            "close_out_completed": forms.CheckboxInput(attrs=_CHECKBOX),
+            "pbs_start_date": forms.DateInput(attrs=_DATE_INPUT),
+            "pbs_end_date": forms.DateInput(attrs=_DATE_INPUT),
+            "pbs_attachment": forms.FileInput(attrs=_TEXT_INPUT),
             "package_budget": forms.NumberInput(
                 attrs={"class": "form-input", "step": 0.01}
             ),
@@ -299,6 +315,47 @@ class DesignDisciplineFileForm(forms.ModelForm):
 
     class Meta:
         model = DesignDisciplineFile
+        fields = ["file", "description"]
+
+
+class CategoryFileForm(forms.ModelForm):
+    """Form for uploading files to a Category (L1)."""
+
+    class Meta:
+        model = CategoryFile
+        fields = ["file", "description"]
+        widgets = {
+            "description": forms.TextInput(attrs={"class": "form-input"}),
+        }
+
+
+class SubCategoryFileForm(forms.ModelForm):
+    """Form for uploading files to a SubCategory (L2)."""
+
+    class Meta:
+        model = SubCategoryFile
+        fields = ["file", "description"]
+        widgets = {
+            "description": forms.TextInput(attrs={"class": "form-input"}),
+        }
+
+
+class GroupFileForm(forms.ModelForm):
+    """Form for uploading files to a Group (L3)."""
+
+    class Meta:
+        model = GroupFile
+        fields = ["file", "description"]
+        widgets = {
+            "description": forms.TextInput(attrs={"class": "form-input"}),
+        }
+
+
+class DisciplineFileForm(forms.ModelForm):
+    """Form for uploading files to a Discipline (L4)."""
+
+    class Meta:
+        model = DisciplineFile
         fields = ["file", "description"]
         widgets = {
             "description": forms.TextInput(attrs={"class": "form-input"}),

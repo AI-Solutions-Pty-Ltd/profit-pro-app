@@ -1,5 +1,5 @@
 <!-- Budget Input Component -->
-<div class="flex items-center space-x-2 mt-2">
+<div class="flex flex-wrap items-center gap-2 mt-2">
     <div class="relative">
         <input type="number"
                id="{{ field_id }}_budget"
@@ -8,10 +8,49 @@
                step="0.01"
                min="0"
                placeholder="0.00"
-               class="w-40 px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-               onchange="updateBudget('{{ entity_type }}', {{ entity_id }}, this.value, {{ parent_id|default:'null' }})">
+               class="w-36 px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+               onchange="updateBudgetFields('{{ entity_type }}', {{ entity_id }}, '{{ field_id }}', {{ parent_id|default:'null' }})">
         <label for="{{ field_id }}_budget"
                class="absolute -top-2 left-2 px-1 text-xs text-gray-500 bg-white">Budget (R)</label>
+    </div>
+    <div class="relative">
+        <input type="number"
+               id="{{ field_id }}_supply_only"
+               name="supply_only"
+               value="{% if supply_only %}{{ supply_only }}{% endif %}"
+               step="0.01"
+               min="0"
+               placeholder="0.00"
+               class="w-36 px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+               onchange="updateBudgetFields('{{ entity_type }}', {{ entity_id }}, '{{ field_id }}', {{ parent_id|default:'null' }})">
+        <label for="{{ field_id }}_supply_only"
+               class="absolute -top-2 left-2 px-1 text-xs text-gray-500 bg-white">Supply Only (R)</label>
+    </div>
+    <div class="relative">
+        <input type="number"
+               id="{{ field_id }}_install_only"
+               name="install_only"
+               value="{% if install_only %}{{ install_only }}{% endif %}"
+               step="0.01"
+               min="0"
+               placeholder="0.00"
+               class="w-36 px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+               onchange="updateBudgetFields('{{ entity_type }}', {{ entity_id }}, '{{ field_id }}', {{ parent_id|default:'null' }})">
+        <label for="{{ field_id }}_install_only"
+               class="absolute -top-2 left-2 px-1 text-xs text-gray-500 bg-white">Install Only (R)</label>
+    </div>
+    <div class="relative">
+        <input type="number"
+               id="{{ field_id }}_preliminaries"
+               name="preliminaries"
+               value="{% if preliminaries %}{{ preliminaries }}{% endif %}"
+               step="0.01"
+               min="0"
+               placeholder="0.00"
+               class="w-36 px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+               onchange="updateBudgetFields('{{ entity_type }}', {{ entity_id }}, '{{ field_id }}', {{ parent_id|default:'null' }})">
+        <label for="{{ field_id }}_preliminaries"
+               class="absolute -top-2 left-2 px-1 text-xs text-gray-500 bg-white">Preliminaries (R)</label>
     </div>
 </div>
 <script>
@@ -31,11 +70,10 @@ function getCookie(name) {
     return cookieValue;
 }
 
-// Global function to update budget via API
-async function updateBudget(entityType, entityId, budget, parentId = null) {
+// Global function to update all cost fields via API
+async function updateBudgetFields(entityType, entityId, fieldId, parentId = null) {
     let url;
-    
-    // Build URL based on entity type
+
     switch(entityType) {
         case 'category':
             url = `/project/{{ project.pk }}/categories/${entityId}/update-budget/`;
@@ -50,9 +88,17 @@ async function updateBudget(entityType, entityId, budget, parentId = null) {
             console.error('Unknown entity type:', entityType);
             return;
     }
-    
+
+    const get = (suffix) => {
+        const el = document.getElementById(`${fieldId}_${suffix}`);
+        return el ? (el.value || null) : null;
+    };
+
     const data = {
-        budget: budget || ""
+        budget: get('budget'),
+        supply_only: get('supply_only'),
+        install_only: get('install_only'),
+        preliminaries: get('preliminaries'),
     };
     
     try {

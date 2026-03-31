@@ -747,7 +747,28 @@ class Category(BaseModel):
     )
     start_date = models.DateField(null=True)
     end_date = models.DateField(null=True)
-    budget = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    budget = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    supply_only = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Supply only cost",
+    )
+    install_only = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Installation only cost",
+    )
+    preliminaries = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Preliminaries cost",
+    )
 
     if TYPE_CHECKING:
         subcategories: QuerySet["SubCategory"]
@@ -784,7 +805,28 @@ class SubCategory(BaseModel):
     )
     start_date = models.DateField(null=True)
     end_date = models.DateField(null=True)
-    budget = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    budget = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    supply_only = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Supply only cost",
+    )
+    install_only = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Installation only cost",
+    )
+    preliminaries = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Preliminaries cost",
+    )
 
     if TYPE_CHECKING:
         groups: QuerySet["Group"]
@@ -821,7 +863,28 @@ class Group(BaseModel):
     )
     start_date = models.DateField(null=True)
     end_date = models.DateField(null=True)
-    budget = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    budget = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    supply_only = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Supply only cost",
+    )
+    install_only = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Installation only cost",
+    )
+    preliminaries = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Preliminaries cost",
+    )
 
     if TYPE_CHECKING:
         milestones: QuerySet["Milestone"]
@@ -851,6 +914,34 @@ class Discipline(BaseModel):
         on_delete=models.CASCADE,
         blank=True,
         related_name="disciplines",
+    )
+    budget = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Total budget",
+    )
+    supply_only = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Supply only cost",
+    )
+    install_only = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Installation only cost",
+    )
+    preliminaries = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Preliminaries cost",
     )
 
     class Meta:
