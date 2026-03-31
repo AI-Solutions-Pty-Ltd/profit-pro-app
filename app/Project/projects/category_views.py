@@ -702,9 +702,10 @@ class CategoryBudgetUpdateView(UserHasProjectRoleGenericMixin, APIView):
         """Handle POST request for budget updates."""
         category = get_object_or_404(Category, project=self.get_project(), pk=pk)
 
-        budget = request.data.get("budget") or None
-
-        category.budget = budget
+        category.budget = request.data.get("budget") or None
+        category.supply_only = request.data.get("supply_only") or None
+        category.install_only = request.data.get("install_only") or None
+        category.preliminaries = request.data.get("preliminaries") or None
         category.save()
         messages.success(
             request, f"Category '{category.name}' budget updated successfully."
@@ -732,9 +733,10 @@ class SubCategoryBudgetUpdateView(UserHasProjectRoleGenericMixin, APIView):
             SubCategory, category__project=self.get_project(), pk=pk
         )
 
-        budget = request.data.get("budget") or None
-
-        subcategory.budget = budget
+        subcategory.budget = request.data.get("budget") or None
+        subcategory.supply_only = request.data.get("supply_only") or None
+        subcategory.install_only = request.data.get("install_only") or None
+        subcategory.preliminaries = request.data.get("preliminaries") or None
         subcategory.save()
         messages.success(
             request, f"Subcategory '{subcategory.name}' budget updated successfully."
@@ -762,9 +764,10 @@ class GroupBudgetUpdateView(UserHasProjectRoleGenericMixin, APIView):
             Group, sub_category__project=self.get_project(), pk=pk
         )
 
-        budget = request.data.get("budget") or None
-
-        group.budget = budget
+        group.budget = request.data.get("budget") or None
+        group.supply_only = request.data.get("supply_only") or None
+        group.install_only = request.data.get("install_only") or None
+        group.preliminaries = request.data.get("preliminaries") or None
         group.save()
         messages.success(request, f"Group '{group.name}' budget updated successfully.")
 

@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% load static %}
+{% block title %}
+    Tender Documentation - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Tender Documentation</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }} - Track tender documents across all Procurement Packages</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:project-management' project.pk %}"
+                       class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        {% heroicon_outline "arrow-left" size="16" class="mr-1" %}
+                        Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if work_packages %}
+        <div class="space-y-4">
+            {% for wp in work_packages %}
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300">
+                    <!-- Header -->
+                    <div class="bg-gradient-to-r from-emerald-50 to-teal-50 p-4 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    {% if wp.package_number %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                            {{ wp.package_number }}
+                                        </span>
+                                    {% endif %}
+                                    <h3 class="text-lg font-bold text-gray-900">{{ wp.name }}</h3>
+                                </div>
+                                {% if wp.tender_close_start_date or wp.tender_close_end_date %}
+                                    <p class="text-xs text-gray-600 flex items-center">
+                                        {% heroicon_outline "calendar" size="12" class="mr-1" %}
+                                        {{ wp.tender_close_start_date|date:"M d, Y"|default:"TBD" }} - {{ wp.tender_close_end_date|date:"M d, Y"|default:"TBD" }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-medium text-gray-500 wp-pct-{{ wp.pk }}">
+                                    {% if wp.total_tender_docs > 0 %}
+                                        {% widthratio wp.completed_tender_docs wp.total_tender_docs 100 %}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                    % complete
+                                </span>
+                                <button type="button"
+                                        onclick="toggleElement(this, 'wp-docs-{{ wp.pk }}')"
+                                        class="p-2 hover:bg-emerald-100 rounded-lg transition-colors"
+                                        title="Toggle documents">
+                                    {% heroicon_outline "chevron-down" size="16" class="text-emerald-600" %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Tender Documents -->
+                    <div id="wp-docs-{{ wp.pk }}" class="p-4">
+                        {% if wp.tender_documents.all %}
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {% for doc in wp.tender_documents.all %}
+                                    <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex flex-col h-full">
+                                        <!-- Header with title and status -->
+                                        <div class="flex items-start justify-between mb-2">
+                                            <div class="flex-1 pr-2">
+                                                <h4 class="font-medium text-gray-900 text-sm truncate">{{ doc.name }}</h4>
+                                                {% if doc.planned_date or doc.actual_date %}
+                                                    <p class="text-xs text-gray-500 mt-1">
+                                                        Planned: {{ doc.planned_date|date:"M d"|default:"TBD" }}
+                                                        {% if doc.actual_date %}<span class="text-emerald-600">✓ {{ doc.actual_date|date:"M d" }}</span>{% endif %}
+                                                    </p>
+                                                {% endif %}
+                                            </div>
+                                            <div class="flex flex-col items-end space-y-1">
+                                                <div class="flex items-center space-x-1">
+                                                    <a href="{% url 'planning:tender-document-upload' project.pk wp.pk doc.pk %}"
+                                                       class="inline-flex items-center text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded transition-colors"
+                                                       title="Upload File">
+                                                        {% heroicon_outline "arrow-up-tray" size="14" %}
+                                                    </a>
+                                                    <a href="{% url 'planning:tender-document-update' project.pk wp.pk doc.pk %}"
+                                                       class="inline-flex items-center py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                                       title="Edit Document">
+                                                        {% heroicon_outline "pencil" size="14" class="mr-0.5" %}
+                                                        Edit
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Spacer to push progress bar to bottom -->
+                                        <div class="flex-grow"></div>
+                                        <!-- Progress Bar -->
+                                        <div class="mt-3">
+                                            <div class="flex items-center justify-between text-xs mb-1">
+                                                <span class="text-gray-600">Progress</span>
+                                                <span class="font-medium text-gray-900">{{ doc.files.count }} / {{ doc.required_quantity }} files ({{ doc.progress }}%)</span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                                <div class="bg-emerald-500 h-2 rounded-full transition-all duration-300"
+                                                     style="width: {{ doc.progress }}%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <!-- Summary Stats -->
+                            <div class="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+                                <div class="text-sm text-gray-600">
+                                    <span class="font-medium text-gray-900">{{ wp.completed_tender_docs }}</span> of
+                                    <span class="font-medium text-gray-900">{{ wp.total_tender_docs }}</span> files uploaded
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-24 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-emerald-500 h-2 rounded-full transition-all duration-300"
+                                             style="width: {% if wp.total_tender_docs > 0 %}{% widthratio wp.completed_tender_docs wp.total_tender_docs 100 %}{% else %}0{% endif %}%">
+                                        </div>
+                                    </div>
+                                    <span class="text-xs text-gray-500 font-medium">
+                                        {% if wp.total_tender_docs > 0 %}
+                                            {% widthratio wp.completed_tender_docs wp.total_tender_docs 100 %}
+                                        {% else %}
+                                            0
+                                        {% endif %}
+                                        %
+                                    </span>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-8 text-gray-500">
+                                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    {% heroicon_outline "document-text" size="20" class="text-gray-400" %}
+                                </div>
+                                <p class="text-sm mb-2">No tender documents yet</p>
+                                <a href="{% url 'planning:tender-document-create' project.pk wp.pk %}"
+                                   class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-md transition-colors">
+                                    {% heroicon_outline "plus" size="14" class="mr-1" %}
+                                    Add first document
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+            <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                {% heroicon_outline "document-text" size="32" class="text-emerald-500" %}
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No Procurement Packages Yet</h3>
+            <p class="text-sm text-gray-500 mb-4">Create Procurement Packages to start tracking tender documentation.</p>
+            <a href="{% url 'planning:work-package-list' project.pk %}"
+               class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-md hover:bg-gray-50 transition-colors text-sm font-medium">
+                {% heroicon_outline "clipboard-document-list" size="16" class="mr-1" %}
+                Go to Procurement Packages
+            </a>
+        </div>
+    {% endif %}
+{% endblock content %}
+{% block extra_js %}
+    <script src="{% static 'js/toggle-utils.js' %}"></script>
+{% endblock extra_js %}

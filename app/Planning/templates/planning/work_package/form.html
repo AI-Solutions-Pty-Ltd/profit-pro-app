@@ -2,20 +2,20 @@
 {% load heroicons %}
 {% load crispy_forms_tags %}
 {% block title %}
-    {{ action }} Work Package - {{ project.name }} - {{ block.super }}
+    {{ action }} Procurement Package - {{ project.name }} - {{ block.super }}
 {% endblock title %}
 {% block content %}
     <div class="bg-white shadow-sm rounded-lg mb-6">
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">{{ action }} Work Package</h1>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ action }} Procurement Package</h1>
                     <p class="text-sm text-gray-600 mt-1">{{ project.name }} - Tender Tracking</p>
                 </div>
                 <a href="{% url 'planning:work-package-list' project.pk %}"
                    class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                     {% heroicon_outline "arrow-left" size="16" class="mr-1" %}
-                    Back to Work Packages
+                    Back to Procurement Packages
                 </a>
             </div>
         </div>
@@ -34,41 +34,42 @@
                 <div class="md:col-span-2">{{ form.description|as_crispy_field }}</div>
             </div>
             <div class="border-t border-gray-200 pt-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Overall Package Timeline</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>{{ form.package_start_date|as_crispy_field }}</div>
-                    <div>{{ form.package_finish_date|as_crispy_field }}</div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Procurement and Contracting Strategy</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>{{ form.contract_type|as_crispy_field }}</div>
+                    <div>{{ form.procurement_strategy|as_crispy_field }}</div>
+                    <div>{{ form.conditions_of_contract|as_crispy_field }}</div>
                 </div>
             </div>
             <div class="border-t border-gray-200 pt-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Stage Timelines</h3>
-                <div class="space-y-6">
-                    <div>
-                        <h4 class="text-sm font-medium text-gray-700 mb-3">Design Development Stage</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>{{ form.design_start_date|as_crispy_field }}</div>
-                            <div>{{ form.design_finish_date|as_crispy_field }}</div>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Package Tracking Dates</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Overall Package</h4>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>{{ form.overall_start_date|as_crispy_field }}</div>
+                            <div>{{ form.overall_end_date|as_crispy_field }}</div>
                         </div>
                     </div>
-                    <div>
-                        <h4 class="text-sm font-medium text-gray-700 mb-3">Documentation Stage</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <h4 class="text-sm font-semibold text-blue-700 mb-3">Documentation</h4>
+                        <div class="grid grid-cols-2 gap-3">
                             <div>{{ form.documentation_start_date|as_crispy_field }}</div>
-                            <div>{{ form.documentation_finish_date|as_crispy_field }}</div>
+                            <div>{{ form.documentation_end_date|as_crispy_field }}</div>
                         </div>
                     </div>
-                    <div>
-                        <h4 class="text-sm font-medium text-gray-700 mb-3">Tender Process</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>{{ form.tender_start_date|as_crispy_field }}</div>
-                            <div>{{ form.tender_finish_date|as_crispy_field }}</div>
+                    <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                        <h4 class="text-sm font-semibold text-amber-700 mb-3">Tender Process</h4>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>{{ form.tender_process_start_date|as_crispy_field }}</div>
+                            <div>{{ form.tender_process_end_date|as_crispy_field }}</div>
                         </div>
                     </div>
-                    <div>
-                        <h4 class="text-sm font-medium text-gray-700 mb-3">Execution</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
+                        <h4 class="text-sm font-semibold text-emerald-700 mb-3">Execution</h4>
+                        <div class="grid grid-cols-2 gap-3">
                             <div>{{ form.execution_start_date|as_crispy_field }}</div>
-                            <div>{{ form.execution_finish_date|as_crispy_field }}</div>
+                            <div>{{ form.execution_end_date|as_crispy_field }}</div>
                         </div>
                     </div>
                 </div>
@@ -87,7 +88,7 @@
                 </a>
                 <button type="submit"
                         class="inline-flex items-center p-2 border border-gray-600 rounded-md shadow-sm font-medium text-gray-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
-                    {{ action }} Work Package
+                    {{ action }} Procurement Package
                 </button>
             </div>
         </form>

@@ -2,7 +2,7 @@
 {% load heroicons %}
 {% load crispy_forms_tags %}
 {% block title %}
-    {{ action }} {{ level }} - {{ work_package.name }} - {{ project.name }} - {{ block.super }}
+    {{ action }} {{ level }} - {{ project.name }} - {{ block.super }}
 {% endblock title %}
 {% block content %}
     <div class="bg-white shadow-sm rounded-lg mb-6">
@@ -10,9 +10,9 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">{{ action }} {{ level }}</h1>
-                    <p class="text-sm text-gray-600 mt-1">{{ project.name }} - {{ work_package.name }}</p>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
                 </div>
-                <a href="{% url 'planning:design-list' project.pk work_package.pk %}"
+                <a href="{% url 'planning:design-development-overview' project.pk %}"
                    class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                     {% heroicon_outline "arrow-left" size="16" class="mr-1" %}
                     Back to Design Development
@@ -39,9 +39,10 @@
                     <div>{{ form.discipline|as_crispy_field }}</div>
                 {% endif %}
                 <div>{{ form.stage|as_crispy_field }}</div>
+                <div>{{ form.required_quantity|as_crispy_field }}</div>
             </div>
             <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
-                <a href="{% url 'planning:design-list' project.pk work_package.pk %}"
+                <a href="{% url 'planning:design-development-overview' project.pk %}"
                    class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                     Cancel
                 </a>

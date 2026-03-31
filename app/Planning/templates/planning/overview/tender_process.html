@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% load static %}
+{% block title %}
+    Tender Process - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Tender Process</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }} - Track tender timelines across all procurement packages</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:project-management' project.pk %}"
+                       class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        {% heroicon_outline "arrow-left" size="16" class="mr-1" %}
+                        Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if work_packages %}
+        <div class="space-y-4">
+            {% for wp in work_packages %}
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300">
+                    <!-- Header -->
+                    <div class="bg-gradient-to-r from-emerald-50 to-teal-50 p-4 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    {% if wp.package_number %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                            {{ wp.package_number }}
+                                        </span>
+                                    {% endif %}
+                                    <h3 class="text-lg font-bold text-gray-900">{{ wp.name }}</h3>
+                                </div>
+                                {% if wp.applied_to_advert_start_date or wp.applied_to_advert_end_date %}
+                                    <p class="text-xs text-gray-600 flex items-center">
+                                        {% heroicon_outline "calendar" size="12" class="mr-1" %}
+                                        Advert: {{ wp.applied_to_advert_start_date|date:"M d, Y"|default:"TBD" }} – {{ wp.applied_to_advert_end_date|date:"M d, Y"|default:"TBD" }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <a href="{% url 'planning:work-package-edit-tender-process' project.pk wp.pk %}"
+                                   class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                                    {% heroicon_outline "pencil" size="14" class="mr-1" %}
+                                    Edit Dates
+                                </a>
+                                <button type="button"
+                                        onclick="toggleElement(this, 'tp-content-{{ wp.pk }}')"
+                                        class="p-2 hover:bg-emerald-100 rounded-lg transition-colors"
+                                        title="Toggle milestones">
+                                    {% heroicon_outline "chevron-down" size="16" class="text-emerald-600" %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Milestone Sections -->
+                    <div id="tp-content-{{ wp.pk }}" class="p-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <!-- Applied to Advert -->
+                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex flex-col h-full">
+                                <h4 class="font-medium text-gray-900 text-sm">Advert</h4>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    {{ wp.applied_to_advert_start_date|date:"M d, Y"|default:"TBD" }}
+                                    {% if wp.applied_to_advert_end_date %}– {{ wp.applied_to_advert_end_date|date:"M d, Y" }}{% endif %}
+                                </p>
+                                <div class="flex-grow"></div>
+                                <button type="button"
+                                        class="section-toggle-btn mt-3 inline-flex items-center justify-center w-full px-2 py-1.5 rounded border text-xs font-medium"
+                                        data-url="{% url 'planning:tender-process-section-complete-api' project.pk wp.pk %}"
+                                        data-section="applied_to_advert"
+                                        data-completed="{{ wp.applied_to_advert_completed|yesno:'true,false' }}">
+                                    <span>
+                                        {% if wp.applied_to_advert_completed %}
+                                            Mark Incomplete
+                                        {% else %}
+                                            Mark Complete
+                                        {% endif %}
+                                    </span>
+                                </button>
+                            </div>
+                            <!-- Site Inspection -->
+                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex flex-col h-full">
+                                <h4 class="font-medium text-gray-900 text-sm">Site Inspection</h4>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    {{ wp.site_inspection_start_date|date:"M d, Y"|default:"TBD" }}
+                                    {% if wp.site_inspection_end_date %}– {{ wp.site_inspection_end_date|date:"M d, Y" }}{% endif %}
+                                </p>
+                                <div class="flex-grow"></div>
+                                <button type="button"
+                                        class="section-toggle-btn mt-3 inline-flex items-center justify-center w-full px-2 py-1.5 rounded border text-xs font-medium"
+                                        data-url="{% url 'planning:tender-process-section-complete-api' project.pk wp.pk %}"
+                                        data-section="site_inspection"
+                                        data-completed="{{ wp.site_inspection_completed|yesno:'true,false' }}">
+                                    <span>
+                                        {% if wp.site_inspection_completed %}
+                                            Mark Incomplete
+                                        {% else %}
+                                            Mark Complete
+                                        {% endif %}
+                                    </span>
+                                </button>
+                            </div>
+                            <!-- Tender Close -->
+                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex flex-col h-full">
+                                <h4 class="font-medium text-gray-900 text-sm">Tender Close</h4>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    {{ wp.tender_close_start_date|date:"M d, Y"|default:"TBD" }}
+                                    {% if wp.tender_close_end_date %}– {{ wp.tender_close_end_date|date:"M d, Y" }}{% endif %}
+                                </p>
+                                <div class="flex-grow"></div>
+                                <button type="button"
+                                        class="section-toggle-btn mt-3 inline-flex items-center justify-center w-full px-2 py-1.5 rounded border text-xs font-medium"
+                                        data-url="{% url 'planning:tender-process-section-complete-api' project.pk wp.pk %}"
+                                        data-section="tender_close"
+                                        data-completed="{{ wp.tender_close_completed|yesno:'true,false' }}">
+                                    <span>
+                                        {% if wp.tender_close_completed %}
+                                            Mark Incomplete
+                                        {% else %}
+                                            Mark Complete
+                                        {% endif %}
+                                    </span>
+                                </button>
+                            </div>
+                            <!-- Evaluation -->
+                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex flex-col h-full">
+                                <h4 class="font-medium text-gray-900 text-sm">Full Tender Evaluation</h4>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    {{ wp.tender_evaluation_start_date|date:"M d, Y"|default:"TBD" }}
+                                    {% if wp.tender_evaluation_end_date %}– {{ wp.tender_evaluation_end_date|date:"M d, Y" }}{% endif %}
+                                </p>
+                                <div class="flex-grow"></div>
+                                <button type="button"
+                                        class="section-toggle-btn mt-3 inline-flex items-center justify-center w-full px-2 py-1.5 rounded border text-xs font-medium"
+                                        data-url="{% url 'planning:tender-process-section-complete-api' project.pk wp.pk %}"
+                                        data-section="tender_evaluation"
+                                        data-completed="{{ wp.tender_evaluation_completed|yesno:'true,false' }}">
+                                    <span>
+                                        {% if wp.tender_evaluation_completed %}
+                                            Mark Incomplete
+                                        {% else %}
+                                            Mark Complete
+                                        {% endif %}
+                                    </span>
+                                </button>
+                            </div>
+                            <!-- Award -->
+                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex flex-col h-full">
+                                <h4 class="font-medium text-gray-900 text-sm">Award</h4>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    {{ wp.award_start_date|date:"M d, Y"|default:"TBD" }}
+                                    {% if wp.award_end_date %}– {{ wp.award_end_date|date:"M d, Y" }}{% endif %}
+                                </p>
+                                <div class="flex-grow"></div>
+                                <button type="button"
+                                        class="section-toggle-btn mt-3 inline-flex items-center justify-center w-full px-2 py-1.5 rounded border text-xs font-medium"
+                                        data-url="{% url 'planning:tender-process-section-complete-api' project.pk wp.pk %}"
+                                        data-section="award"
+                                        data-completed="{{ wp.award_completed|yesno:'true,false' }}">
+                                    <span>
+                                        {% if wp.award_completed %}
+                                            Mark Incomplete
+                                        {% else %}
+                                            Mark Complete
+                                        {% endif %}
+                                    </span>
+                                </button>
+                            </div>
+                            <!-- Contract Signing -->
+                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex flex-col h-full">
+                                <h4 class="font-medium text-gray-900 text-sm">Contract Signing</h4>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    {{ wp.contract_signing_start_date|date:"M d, Y"|default:"TBD" }}
+                                    {% if wp.contract_signing_end_date %}– {{ wp.contract_signing_end_date|date:"M d, Y" }}{% endif %}
+                                </p>
+                                <div class="flex-grow"></div>
+                                <button type="button"
+                                        class="section-toggle-btn mt-3 inline-flex items-center justify-center w-full px-2 py-1.5 rounded border text-xs font-medium"
+                                        data-url="{% url 'planning:tender-process-section-complete-api' project.pk wp.pk %}"
+                                        data-section="contract_signing"
+                                        data-completed="{{ wp.contract_signing_completed|yesno:'true,false' }}">
+                                    <span>
+                                        {% if wp.contract_signing_completed %}
+                                            Mark Incomplete
+                                        {% else %}
+                                            Mark Complete
+                                        {% endif %}
+                                    </span>
+                                </button>
+                            </div>
+                            <!-- Mobilization -->
+                            <div class="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex flex-col h-full">
+                                <h4 class="font-medium text-gray-900 text-sm">Mobilization</h4>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    {{ wp.mobilization_start_date|date:"M d, Y"|default:"TBD" }}
+                                    {% if wp.mobilization_end_date %}– {{ wp.mobilization_end_date|date:"M d, Y" }}{% endif %}
+                                </p>
+                                <div class="flex-grow"></div>
+                                <button type="button"
+                                        class="section-toggle-btn mt-3 inline-flex items-center justify-center w-full px-2 py-1.5 rounded border text-xs font-medium"
+                                        data-url="{% url 'planning:tender-process-section-complete-api' project.pk wp.pk %}"
+                                        data-section="mobilization"
+                                        data-completed="{{ wp.mobilization_completed|yesno:'true,false' }}">
+                                    <span>
+                                        {% if wp.mobilization_completed %}
+                                            Mark Incomplete
+                                        {% else %}
+                                            Mark Complete
+                                        {% endif %}
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Summary Stats -->
+                        <div class="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+                            <div class="text-sm text-gray-600 flex flex-wrap gap-2">
+                                {% if wp.applied_to_advert_completed %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs">Advert ✓</span>
+                                {% endif %}
+                                {% if wp.site_inspection_completed %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs">Inspection ✓</span>
+                                {% endif %}
+                                {% if wp.tender_close_completed %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs">Close ✓</span>
+                                {% endif %}
+                                {% if wp.tender_evaluation_completed %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs">Evaluation ✓</span>
+                                {% endif %}
+                                {% if wp.award_completed %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs">Award ✓</span>
+                                {% endif %}
+                                {% if wp.contract_signing_completed %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs">Signing ✓</span>
+                                {% endif %}
+                                {% if wp.mobilization_completed %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-xs">Mobilization ✓</span>
+                                {% endif %}
+                                {% if not wp.applied_to_advert_completed and not wp.site_inspection_completed and not wp.tender_close_completed and not wp.tender_evaluation_completed and not wp.award_completed and not wp.contract_signing_completed and not wp.mobilization_completed %}
+                                    <span class="text-gray-400 text-xs">No sections completed yet</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
+            <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                {% heroicon_outline "clock" size="32" class="text-emerald-500" %}
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No Procurement Packages Yet</h3>
+            <p class="text-sm text-gray-500 mb-4">Create Procurement Packages to start tracking tender process timelines.</p>
+            <a href="{% url 'planning:work-package-list' project.pk %}"
+               class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-md hover:bg-gray-50 transition-colors text-sm font-medium">
+                {% heroicon_outline "clipboard-document-list" size="16" class="mr-1" %}
+                Go to Procurement Packages
+            </a>
+        </div>
+    {% endif %}
+{% endblock content %}
+{% block extra_js %}
+    <script src="{% static 'js/toggle-utils.js' %}"></script>
+    <script>
+    function getCsrfToken() {
+        return {{CSRF_TOKEN}}
+    }
+
+    function applySectionButtonState(button, completed) {
+        const statusLabel = button.querySelector('.status');
+        button.dataset.completed = completed ? 'true' : 'false';
+        if (statusLabel) {
+            statusLabel.textContent = completed ? 'Mark Incomplete' : 'Mark Complete';
+        }
+
+        button.classList.remove(
+            'bg-emerald-100',
+            'text-emerald-700',
+            'border-emerald-300',
+            'bg-gray-100',
+            'text-gray-600',
+            'border-gray-300'
+        );
+
+        if (completed) {
+            button.classList.add('bg-emerald-100', 'text-emerald-700', 'border-emerald-300');
+        } else {
+            button.classList.add('bg-gray-100', 'text-gray-600', 'border-gray-300');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const buttons = document.querySelectorAll('.section-toggle-btn');
+        buttons.forEach((button) => {
+            applySectionButtonState(button, button.dataset.completed === 'true');
+
+            button.addEventListener('click', async () => {
+                const current = button.dataset.completed === 'true';
+                const next = !current;
+                button.disabled = true;
+
+                try {
+                    const response = await fetch(button.dataset.url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': "{{CSRF_TOKEN}}",
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            section: button.dataset.section,
+                            completed: next
+                        })
+                    });
+
+                    const payload = await response.json();
+                    if (!response.ok || !payload.success) {
+                        throw new Error(payload.message || 'Failed to update section status.');
+                    }
+
+                    applySectionButtonState(button, payload.completed === true);
+                    window.location.reload()
+                } catch (error) {
+                    console.error(error);
+                    button.title = 'Update failed. Please retry.';
+                } finally {
+                    button.disabled = false;
+                }
+            });
+        });
+    });
+    </script>
+{% endblock extra_js %}

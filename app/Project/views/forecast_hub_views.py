@@ -13,12 +13,6 @@ from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.models import sum_queryset
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.models import Milestone, PlannedValue, Project, Role
-from app.Project.projects.category_forms import (
-    CategoryForm,
-    DisciplineForm,
-    GroupForm,
-    SubCategoryForm,
-)
 
 
 class ForecastHubMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
@@ -48,13 +42,10 @@ class TimeForecastView(ForecastHubMixin, TemplateView):
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
         return [
+            {"title": "Projects", "url": reverse("project:portfolio-dashboard")},
             {
                 "title": project.name,
                 "url": reverse("project:project-management", kwargs={"pk": project.pk}),
-            },
-            {
-                "title": "Setup",
-                "url": reverse("project:project-setup", kwargs={"pk": project.pk}),
             },
             {"title": "Time Forecast", "url": None},
         ]
@@ -66,46 +57,24 @@ class TimeForecastView(ForecastHubMixin, TemplateView):
             "sequence", "planned_date"
         )
 
-        # Build hierarchy using ORM
-        # Get all categories for the project
-        categories = project.categories.all().prefetch_related(
-            "milestones",
-            "subcategories__milestones",
-            "subcategories__groups",
-            "subcategories__groups__milestones",
-        )
-
-        # Handle uncategorized milestones
-        uncategorized_milestones = milestones.filter(
-            project_category__isnull=True, project_discipline__isnull=True
-        )
-        if uncategorized_milestones.exists():
-            uncategorized_milestones = {
-                "type": "uncategorized",
-                "name": "Uncategorized",
-                "object": None,
-                "start_date": None,
-                "end_date": None,
-                "milestones": list(uncategorized_milestones),
-            }
+        # Calculate summary stats
+        total_milestones = milestones.count()
+        completed = milestones.filter(is_completed=True).count()
+        delayed = sum(1 for m in milestones if m.is_delayed)
+        on_schedule = total_milestones - delayed - completed
 
         context.update(
             {
                 "project": project,
                 "active_tab": "time",
-                "categories": categories,
-                "uncategorized_milestones": uncategorized_milestones,
-                "category_form": CategoryForm(),
-                "subcategory_form": SubCategoryForm(project=project),
-                "group_form": GroupForm(project=project),
-                "discipline_form": DisciplineForm(),
+                "milestones": milestones,
+                "total_milestones": total_milestones,
+                "completed_milestones": completed,
+                "delayed_milestones": delayed,
+                "on_schedule_milestones": on_schedule,
             }
         )
         return context
-
-
-class BudgetForecastView(TimeForecastView):
-    template_name = "forecasts/budget_forecast.html"
 
 
 class CashflowForecastView(ForecastHubMixin, TemplateView):

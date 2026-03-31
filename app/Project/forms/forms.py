@@ -55,7 +55,7 @@ class ProjectContractorForm(forms.ModelForm):
         # Type: ModelChoiceField has queryset attribute
         contractor_field = self.fields["contractor"]
         if hasattr(contractor_field, "queryset"):
-            contractor_field.queryset = queryset.distinct()  # type: ignore[attr-defined]
+            contractor_field.queryset = queryset.distinct()  # type: ignore
 
 
 class ProjectLeadConsultantForm(forms.ModelForm):

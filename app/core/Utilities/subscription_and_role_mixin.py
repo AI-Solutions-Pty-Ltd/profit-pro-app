@@ -30,7 +30,7 @@ class SubscriptionAndRoleRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 
     def test_func(self) -> bool:
         """Check both subscription and project role permissions."""
-        user: Account = self.request.user  # type: ignore[assignment]
+        user: Account = self.request.user  # type: ignore
 
         # First check subscription
         if not user.has_subscription_tier(self.required_tiers):
@@ -62,22 +62,22 @@ class SubscriptionAndRoleRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 
     def handle_no_permission(self):
         """Redirect with appropriate error message."""
-        if not self.request.user.is_authenticated:  # type: ignore[union-attr]
+        if not self.request.user.is_authenticated:  # type: ignore
             return super().handle_no_permission()
 
-        user: Account = self.request.user  # type: ignore[assignment]
+        user: Account = self.request.user  # type: ignore
 
         # Check if it's a subscription issue or role issue
         if not user.has_subscription_tier(self.required_tiers):
             messages.error(
-                self.request,  # type: ignore[arg-type]
+                self.request,  # type: ignore
                 "Your current subscription does not include access to this feature. "
                 f"A '{self.required_tiers}' subscription is required.",
             )
         else:
             # It's a role issue
             messages.error(
-                self.request,  # type: ignore[arg-type]
+                self.request,  # type: ignore
                 f"Page restricted to {self.roles}.",
             )
 
@@ -85,6 +85,6 @@ class SubscriptionAndRoleRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 
     def get_context_data(self, **kwargs):
         """Add current project to context for template URL building."""
-        context = super().get_context_data(**kwargs)  # type: ignore[misc]
+        context = super().get_context_data(**kwargs)  # type: ignore
         context["project"] = self.get_project()
         return context

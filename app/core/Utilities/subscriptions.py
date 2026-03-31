@@ -23,12 +23,12 @@ class SubscriptionRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     required_tiers: list[Subscription] | None = None
 
     def test_func(self) -> bool:
-        user: Account = self.request.user  # type: ignore[assignment]
+        user: Account = self.request.user  # type: ignore
         return user.has_subscription_tier(self.required_tiers)
 
     def handle_no_permission(self):
         messages.error(
-            self.request,  # type: ignore[arg-type]
+            self.request,  # type: ignore
             "Your current subscription does not include access to this feature. "
             f"A '{self.required_tiers}' subscription is required.",
         )

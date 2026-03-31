@@ -88,6 +88,7 @@
             const result = await response.json();
             
             if (result.success) {
+                sessionStorage.setItem('scrollToId', 'group-' + result.id);
                 window.location.reload();
             } else {
                 alert('Group could not be created');

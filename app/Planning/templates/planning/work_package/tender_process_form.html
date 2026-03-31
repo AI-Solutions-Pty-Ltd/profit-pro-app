@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% load crispy_forms_tags %}
+{% block title %}
+    Tender Process - {{ object.name }} - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Edit Tender Process</h1>
+                    <p class="text-sm text-gray-600 mt-1">{{ project.name }} — {{ object.name }}</p>
+                </div>
+                <a href="{% url 'planning:work-package-list' project.pk %}"
+                   class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    {% heroicon_outline "arrow-left" size="16" class="mr-1" %}
+                    Back to Procurement Packages
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                    {% for error in form.non_field_errors %}<p class="text-sm text-red-600">{{ error }}</p>{% endfor %}
+                </div>
+            {% endif %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Applied to Advert -->
+                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                        <span class="w-2 h-2 bg-gray-500 rounded-full mr-2"></span>Advert
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>{{ form.applied_to_advert_start_date|as_crispy_field }}</div>
+                        <div>{{ form.applied_to_advert_end_date|as_crispy_field }}</div>
+                    </div>
+                    <div class="mt-2">{{ form.applied_to_advert_completed|as_crispy_field }}</div>
+                </div>
+                <!-- Site Inspection -->
+                <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <h4 class="text-sm font-semibold text-blue-700 mb-3 flex items-center">
+                        <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>Site Inspection
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>{{ form.site_inspection_start_date|as_crispy_field }}</div>
+                        <div>{{ form.site_inspection_end_date|as_crispy_field }}</div>
+                    </div>
+                    <div class="mt-2">{{ form.site_inspection_completed|as_crispy_field }}</div>
+                </div>
+                <!-- Tender Close -->
+                <div class="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
+                    <h4 class="text-sm font-semibold text-emerald-700 mb-3 flex items-center">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>Tender Close
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>{{ form.tender_close_start_date|as_crispy_field }}</div>
+                        <div>{{ form.tender_close_end_date|as_crispy_field }}</div>
+                    </div>
+                    <div class="mt-2">{{ form.tender_close_completed|as_crispy_field }}</div>
+                </div>
+                <!-- Tender Evaluation -->
+                <div class="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                    <h4 class="text-sm font-semibold text-amber-700 mb-3 flex items-center">
+                        <span class="w-2 h-2 bg-amber-500 rounded-full mr-2"></span>Tender Evaluation
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>{{ form.tender_evaluation_start_date|as_crispy_field }}</div>
+                        <div>{{ form.tender_evaluation_end_date|as_crispy_field }}</div>
+                    </div>
+                    <div class="mt-2">{{ form.tender_evaluation_completed|as_crispy_field }}</div>
+                </div>
+                <!-- Award -->
+                <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                    <h4 class="text-sm font-semibold text-purple-700 mb-3 flex items-center">
+                        <span class="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>Award
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>{{ form.award_start_date|as_crispy_field }}</div>
+                        <div>{{ form.award_end_date|as_crispy_field }}</div>
+                    </div>
+                    <div class="mt-2">{{ form.award_completed|as_crispy_field }}</div>
+                </div>
+                <!-- Contract Signing -->
+                <div class="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+                    <h4 class="text-sm font-semibold text-indigo-700 mb-3 flex items-center">
+                        <span class="w-2 h-2 bg-indigo-500 rounded-full mr-2"></span>Contract Signing
+                    </h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>{{ form.contract_signing_start_date|as_crispy_field }}</div>
+                        <div>{{ form.contract_signing_end_date|as_crispy_field }}</div>
+                    </div>
+                    <div class="mt-2">{{ form.contract_signing_completed|as_crispy_field }}</div>
+                </div>
+                <!-- Mobilization -->
+                <div class="bg-teal-50 rounded-lg p-4 border border-teal-200 md:col-span-2">
+                    <h4 class="text-sm font-semibold text-teal-700 mb-3 flex items-center">
+                        <span class="w-2 h-2 bg-teal-500 rounded-full mr-2"></span>Mobilization
+                    </h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div>{{ form.mobilization_start_date|as_crispy_field }}</div>
+                        <div>{{ form.mobilization_end_date|as_crispy_field }}</div>
+                    </div>
+                    <div class="mt-2">{{ form.mobilization_completed|as_crispy_field }}</div>
+                </div>
+            </div>
+            <!-- Actions -->
+            <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
+                <a href="{% url 'planning:work-package-list' project.pk %}"
+                   class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-md transition-colors shadow-sm">
+                    {% heroicon_outline "check" size="16" class="mr-1" %}
+                    Save Tender Process
+                </button>
+            </div>
+        </form>
+    </div>
+{% endblock content %}
