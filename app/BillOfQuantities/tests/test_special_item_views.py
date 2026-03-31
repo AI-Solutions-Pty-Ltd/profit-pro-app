@@ -236,7 +236,7 @@ class TestSpecialItemDeleteView:
         response = client.post(url)
         assert response.status_code == 302
 
-        # Refresh from database
-        special_item.refresh_from_db()
-        assert special_item.is_deleted is True
-        assert special_item.deleted is not None
+        # Use all_objects to find the soft-deleted special item
+        deleted_item = LineItem.all_objects.get(pk=special_item.pk)
+        assert deleted_item.is_deleted is True
+        assert deleted_item.deleted is not None

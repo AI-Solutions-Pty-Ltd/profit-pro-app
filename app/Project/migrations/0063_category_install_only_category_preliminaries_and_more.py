@@ -4,90 +4,173 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0062_alter_portfolio_options'),
+        ("Project", "0062_alter_portfolio_options"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='category',
-            name='install_only',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Installation only cost', max_digits=15, null=True),
+            model_name="category",
+            name="install_only",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Installation only cost",
+                max_digits=15,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='category',
-            name='preliminaries',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Preliminaries cost', max_digits=15, null=True),
+            model_name="category",
+            name="preliminaries",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Preliminaries cost",
+                max_digits=15,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='category',
-            name='supply_only',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Supply only cost', max_digits=15, null=True),
+            model_name="category",
+            name="supply_only",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Supply only cost",
+                max_digits=15,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='discipline',
-            name='budget',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Total budget', max_digits=15, null=True),
+            model_name="discipline",
+            name="budget",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Total budget",
+                max_digits=15,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='discipline',
-            name='install_only',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Installation only cost', max_digits=15, null=True),
+            model_name="discipline",
+            name="install_only",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Installation only cost",
+                max_digits=15,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='discipline',
-            name='preliminaries',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Preliminaries cost', max_digits=15, null=True),
+            model_name="discipline",
+            name="preliminaries",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Preliminaries cost",
+                max_digits=15,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='discipline',
-            name='supply_only',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Supply only cost', max_digits=15, null=True),
+            model_name="discipline",
+            name="supply_only",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Supply only cost",
+                max_digits=15,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='group',
-            name='install_only',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Installation only cost', max_digits=15, null=True),
+            model_name="group",
+            name="install_only",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Installation only cost",
+                max_digits=15,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='group',
-            name='preliminaries',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Preliminaries cost', max_digits=15, null=True),
+            model_name="group",
+            name="preliminaries",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Preliminaries cost",
+                max_digits=15,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='group',
-            name='supply_only',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Supply only cost', max_digits=15, null=True),
+            model_name="group",
+            name="supply_only",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Supply only cost",
+                max_digits=15,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='subcategory',
-            name='install_only',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Installation only cost', max_digits=15, null=True),
+            model_name="subcategory",
+            name="install_only",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Installation only cost",
+                max_digits=15,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='subcategory',
-            name='preliminaries',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Preliminaries cost', max_digits=15, null=True),
+            model_name="subcategory",
+            name="preliminaries",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Preliminaries cost",
+                max_digits=15,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='subcategory',
-            name='supply_only',
-            field=models.DecimalField(blank=True, decimal_places=2, help_text='Supply only cost', max_digits=15, null=True),
+            model_name="subcategory",
+            name="supply_only",
+            field=models.DecimalField(
+                blank=True,
+                decimal_places=2,
+                help_text="Supply only cost",
+                max_digits=15,
+                null=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='category',
-            name='budget',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=15, null=True),
+            model_name="category",
+            name="budget",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=15, null=True
+            ),
         ),
         migrations.AlterField(
-            model_name='group',
-            name='budget',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=15, null=True),
+            model_name="group",
+            name="budget",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=15, null=True
+            ),
         ),
         migrations.AlterField(
-            model_name='subcategory',
-            name='budget',
-            field=models.DecimalField(blank=True, decimal_places=2, max_digits=15, null=True),
+            model_name="subcategory",
+            name="budget",
+            field=models.DecimalField(
+                blank=True, decimal_places=2, max_digits=15, null=True
+            ),
         ),
     ]

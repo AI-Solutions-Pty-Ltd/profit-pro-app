@@ -75,8 +75,14 @@ class BaseModel(models.Model):
 
     def restore(self):
         """Restore a soft-deleted instance"""
+        if not self.deleted:
+            # Already restored, nothing to do
+            return
         self.deleted = False
-        self.save(update_fields=["deleted"])
+        # Use all_objects manager to ensure we can find and update the soft-deleted record
+        self.__class__.all_objects.filter(pk=self.pk).update(deleted=False)
+        # Refresh the object to get the updated state
+        self.refresh_from_db()
 
     @property
     def is_deleted(self):

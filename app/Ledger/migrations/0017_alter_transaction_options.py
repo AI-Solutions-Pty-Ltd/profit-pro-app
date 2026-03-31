@@ -4,14 +4,13 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Ledger', '0016_remove_transaction_type'),
+        ("Ledger", "0016_remove_transaction_type"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='transaction',
-            options={'base_manager_name': 'objects'},
+            name="transaction",
+            options={"base_manager_name": "objects"},
         ),
     ]

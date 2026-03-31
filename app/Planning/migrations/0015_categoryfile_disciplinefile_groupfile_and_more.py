@@ -5,79 +5,244 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0062_alter_portfolio_options'),
-        ('planning', '0014_remove_designcategory_work_package_and_more'),
+        ("Project", "0062_alter_portfolio_options"),
+        ("planning", "0014_remove_designcategory_work_package_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='CategoryFile',
+            name="CategoryFile",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last modified')),
-                ('deleted', models.BooleanField(default=False, help_text='Soft delete flag')),
-                ('file', models.FileField(help_text='Uploaded file', upload_to='planning/scope/category/')),
-                ('description', models.CharField(blank=True, help_text='Description of the uploaded file', max_length=255)),
-                ('category', models.ForeignKey(help_text='L1 Category this file belongs to', on_delete=django.db.models.deletion.CASCADE, related_name='files', to='Project.category')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last modified"
+                    ),
+                ),
+                (
+                    "deleted",
+                    models.BooleanField(default=False, help_text="Soft delete flag"),
+                ),
+                (
+                    "file",
+                    models.FileField(
+                        help_text="Uploaded file", upload_to="planning/scope/category/"
+                    ),
+                ),
+                (
+                    "description",
+                    models.CharField(
+                        blank=True,
+                        help_text="Description of the uploaded file",
+                        max_length=255,
+                    ),
+                ),
+                (
+                    "category",
+                    models.ForeignKey(
+                        help_text="L1 Category this file belongs to",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="files",
+                        to="Project.category",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Category File',
-                'verbose_name_plural': 'Category Files',
-                'ordering': ['-created_at'],
+                "verbose_name": "Category File",
+                "verbose_name_plural": "Category Files",
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='DisciplineFile',
+            name="DisciplineFile",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last modified')),
-                ('deleted', models.BooleanField(default=False, help_text='Soft delete flag')),
-                ('file', models.FileField(help_text='Uploaded file', upload_to='planning/scope/discipline/')),
-                ('description', models.CharField(blank=True, help_text='Description of the uploaded file', max_length=255)),
-                ('discipline', models.ForeignKey(help_text='L4 Discipline this file belongs to', on_delete=django.db.models.deletion.CASCADE, related_name='files', to='Project.discipline')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last modified"
+                    ),
+                ),
+                (
+                    "deleted",
+                    models.BooleanField(default=False, help_text="Soft delete flag"),
+                ),
+                (
+                    "file",
+                    models.FileField(
+                        help_text="Uploaded file",
+                        upload_to="planning/scope/discipline/",
+                    ),
+                ),
+                (
+                    "description",
+                    models.CharField(
+                        blank=True,
+                        help_text="Description of the uploaded file",
+                        max_length=255,
+                    ),
+                ),
+                (
+                    "discipline",
+                    models.ForeignKey(
+                        help_text="L4 Discipline this file belongs to",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="files",
+                        to="Project.discipline",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Discipline File',
-                'verbose_name_plural': 'Discipline Files',
-                'ordering': ['-created_at'],
+                "verbose_name": "Discipline File",
+                "verbose_name_plural": "Discipline Files",
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='GroupFile',
+            name="GroupFile",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last modified')),
-                ('deleted', models.BooleanField(default=False, help_text='Soft delete flag')),
-                ('file', models.FileField(help_text='Uploaded file', upload_to='planning/scope/group/')),
-                ('description', models.CharField(blank=True, help_text='Description of the uploaded file', max_length=255)),
-                ('group', models.ForeignKey(help_text='L3 Group this file belongs to', on_delete=django.db.models.deletion.CASCADE, related_name='files', to='Project.group')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last modified"
+                    ),
+                ),
+                (
+                    "deleted",
+                    models.BooleanField(default=False, help_text="Soft delete flag"),
+                ),
+                (
+                    "file",
+                    models.FileField(
+                        help_text="Uploaded file", upload_to="planning/scope/group/"
+                    ),
+                ),
+                (
+                    "description",
+                    models.CharField(
+                        blank=True,
+                        help_text="Description of the uploaded file",
+                        max_length=255,
+                    ),
+                ),
+                (
+                    "group",
+                    models.ForeignKey(
+                        help_text="L3 Group this file belongs to",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="files",
+                        to="Project.group",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Group File',
-                'verbose_name_plural': 'Group Files',
-                'ordering': ['-created_at'],
+                "verbose_name": "Group File",
+                "verbose_name_plural": "Group Files",
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='SubCategoryFile',
+            name="SubCategoryFile",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='When this record was created')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='When this record was last modified')),
-                ('deleted', models.BooleanField(default=False, help_text='Soft delete flag')),
-                ('file', models.FileField(help_text='Uploaded file', upload_to='planning/scope/subcategory/')),
-                ('description', models.CharField(blank=True, help_text='Description of the uploaded file', max_length=255)),
-                ('sub_category', models.ForeignKey(help_text='L2 SubCategory this file belongs to', on_delete=django.db.models.deletion.CASCADE, related_name='files', to='Project.subcategory')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True, help_text="When this record was created"
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True, help_text="When this record was last modified"
+                    ),
+                ),
+                (
+                    "deleted",
+                    models.BooleanField(default=False, help_text="Soft delete flag"),
+                ),
+                (
+                    "file",
+                    models.FileField(
+                        help_text="Uploaded file",
+                        upload_to="planning/scope/subcategory/",
+                    ),
+                ),
+                (
+                    "description",
+                    models.CharField(
+                        blank=True,
+                        help_text="Description of the uploaded file",
+                        max_length=255,
+                    ),
+                ),
+                (
+                    "sub_category",
+                    models.ForeignKey(
+                        help_text="L2 SubCategory this file belongs to",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="files",
+                        to="Project.subcategory",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'SubCategory File',
-                'verbose_name_plural': 'SubCategory Files',
-                'ordering': ['-created_at'],
+                "verbose_name": "SubCategory File",
+                "verbose_name_plural": "SubCategory Files",
+                "ordering": ["-created_at"],
             },
         ),
     ]

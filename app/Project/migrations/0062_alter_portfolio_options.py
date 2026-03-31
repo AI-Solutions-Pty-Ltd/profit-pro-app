@@ -4,14 +4,13 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0061_category_budget_group_budget_subcategory_budget'),
+        ("Project", "0061_category_budget_group_budget_subcategory_budget"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='portfolio',
-            options={'base_manager_name': 'objects'},
+            name="portfolio",
+            options={"base_manager_name": "objects"},
         ),
     ]

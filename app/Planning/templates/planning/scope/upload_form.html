@@ -49,14 +49,19 @@
                         </label>
                         <label for="file"
                                class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-                            <div class="flex flex-col items-center justify-center pt-5 pb-6" id="upload-area">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6"
+                                 id="upload-area">
                                 {% heroicon_outline "cloud-arrow-up" size="32" class="text-gray-400 mb-3" %}
                                 <p class="mb-2 text-sm text-gray-500">
                                     <span class="font-semibold">Click to upload</span> or drag and drop
                                 </p>
                                 <p class="text-xs text-gray-500">PDF, DOC, DOCX, XLS, XLSX, DWG, PNG, JPG up to 50MB</p>
                             </div>
-                            <input id="file" name="file" type="file" class="hidden" onchange="updateFileName(this)" />
+                            <input id="file"
+                                   name="file"
+                                   type="file"
+                                   class="hidden"
+                                   onchange="updateFileName(this)" />
                         </label>
                         <div id="file-name" class="mt-2 text-sm text-gray-600 hidden">
                             <span class="font-medium">Selected:</span> <span id="file-name-text"></span>

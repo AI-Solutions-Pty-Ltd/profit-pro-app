@@ -140,7 +140,7 @@ class ScopePlanningView(PlanningMixin, TemplateView):
 
 class BudgetPlanningView(ScopePlanningView):
     template_name = "planning/budget_forecast.html"
-    
+
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
         return [

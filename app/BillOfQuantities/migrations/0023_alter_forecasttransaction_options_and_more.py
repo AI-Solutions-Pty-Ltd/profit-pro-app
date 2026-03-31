@@ -4,18 +4,17 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('BillOfQuantities', '0022_delete_claim'),
+        ("BillOfQuantities", "0022_delete_claim"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='forecasttransaction',
-            options={'base_manager_name': 'objects'},
+            name="forecasttransaction",
+            options={"base_manager_name": "objects"},
         ),
         migrations.AlterModelOptions(
-            name='paymentcertificatepayment',
-            options={'base_manager_name': 'objects'},
+            name="paymentcertificatepayment",
+            options={"base_manager_name": "objects"},
         ),
     ]
