@@ -1,3 +1,4 @@
+{% load project_tags %}
 <!-- Labour Table -->
 <div class="bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
   <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
@@ -26,21 +27,21 @@
               {% if plan_resources|get:plan.id|get:'skilled' %}
                 {{ form.skilled_number }}
               {% else %}
-                <span class="text-gray-400 italic text-xs">N/A</span>
+                <span class="text-gray-400 italic text-xs">-</span>
               {% endif %}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               {% if plan_resources|get:plan.id|get:'semi_skilled' %}
                 {{ form.semi_skilled_number }}
               {% else %}
-                <span class="text-gray-400 italic text-xs">N/A</span>
+                <span class="text-gray-400 italic text-xs">-</span>
               {% endif %}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               {% if plan_resources|get:plan.id|get:'unskilled' %}
                 {{ form.unskilled_number }}
               {% else %}
-                <span class="text-gray-400 italic text-xs">N/A</span>
+                <span class="text-gray-400 italic text-xs">-</span>
               {% endif %}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">{{ form.total_hours }}</td>

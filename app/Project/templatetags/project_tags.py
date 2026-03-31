@@ -8,3 +8,6 @@ def get_item(dictionary, key):
     if dictionary:
         return dictionary.get(key)
     return None
+
+# Alias for 'get_item' to match existing template usage
+register.filter('get', get_item)

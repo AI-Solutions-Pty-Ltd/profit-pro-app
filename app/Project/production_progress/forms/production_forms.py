@@ -350,7 +350,7 @@ DailyPlantUsageFormSet = inlineformset_factory(
     DailyActivityEntry,
     DailyPlantUsage,
     form=DailyPlantUsageForm,
-    extra=3,
+    extra=1,
     can_delete=True,
 )
 

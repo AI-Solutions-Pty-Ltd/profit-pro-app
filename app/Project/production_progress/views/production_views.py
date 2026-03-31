@@ -503,14 +503,20 @@ class DailyProductivityCreateView(
         context["project"] = project
         context["all_plans"] = ProductionPlan.objects.filter(project=project)
 
-        selected_plans_ids = self.request.GET.getlist("selected_plans") or self.request.POST.getlist("selected_plans")
+        selected_plans_ids = self.request.GET.getlist(
+            "selected_plans"
+        ) or self.request.POST.getlist("selected_plans")
         selected_plans = (
-            ProductionPlan.objects.filter(id__in=selected_plans_ids, project=project).order_by('id')
+            ProductionPlan.objects.filter(
+                id__in=selected_plans_ids, project=project
+            ).order_by("id")
             if selected_plans_ids
             else ProductionPlan.objects.none()
         )
         context["selected_plans"] = selected_plans
-        context["selected_plans_ids"] = [int(sid) for sid in selected_plans_ids if sid.isdigit()]
+        context["selected_plans_ids"] = [
+            int(sid) for sid in selected_plans_ids if sid.isdigit()
+        ]
         context["labour_forms_with_plans"] = []  # Initialize to avoid missing variable
 
         from ..forms.production_forms import (
@@ -548,15 +554,26 @@ class DailyProductivityCreateView(
                 "plant": has_plant,
             }
 
-            plant_formset = DailyPlantUsageFormSet(prefix=f"plant_{plan.id}")
-            plant_formset.form.base_fields[
-                "resource"
-            ].queryset = ProductionResource.objects.filter(
+            planned_plants = ProductionResource.objects.filter(
                 production_plan=plan, resource_type="PLANT"
             )
-            plant_formset.form.base_fields[
-                "activity"
-            ].queryset = ProductionPlan.objects.filter(id=plan.id)
+            plant_initial = [
+                {
+                    "resource": res.id,
+                    "number": int(res.number),
+                    "hours": 8.0,
+                    "activity": plan.id,
+                }
+                for res in planned_plants
+            ]
+            plant_formset = DailyPlantUsageFormSet(
+                prefix=f"plant_{plan.id}", initial=plant_initial
+            )
+            for f in plant_formset.forms:
+                f.fields["resource"].queryset = planned_plants
+                f.fields["activity"].queryset = ProductionPlan.objects.filter(
+                    id=plan.id
+                )
             plant_formsets[plan.id] = plant_formset
 
         context["plan_resources"] = plan_resources
@@ -578,7 +595,9 @@ class DailyProductivityCreateView(
                 form.fields["unskilled_number"].disabled = True
 
         context["labour_formset"] = labour_formset
-        context["labour_forms_with_plans"] = list(zip(labour_formset.forms, selected_plans, strict=True))
+        context["labour_forms_with_plans"] = list(
+            zip(labour_formset.forms, selected_plans, strict=True)
+        )
 
         # Provide a plant formset for empty row templates to avoid missing context errors
         context["plant_formset"] = next(
@@ -691,12 +710,17 @@ class DailyProductivityCreateView(
                                 defaults={"quantity": 0},
                             )[0]
                             for plant_form in plant_formset:
-                                if (
-                                    plant_form.cleaned_data
-                                    and not plant_form.cleaned_data.get("DELETE", False)
-                                ):
-                                    plant_form.instance.entry = entry
-                                    plant_form.save()
+                                if plant_form.is_valid() and plant_form.cleaned_data:
+                                    if not plant_form.cleaned_data.get("DELETE", False):
+                                        # Force save if resource is present, even if not 'changed' in Django's terms
+                                        # because these were pre-filled and we want them persisted by default.
+                                        resource = plant_form.cleaned_data.get(
+                                            "resource"
+                                        )
+                                        if resource:
+                                            plant_usage = plant_form.save(commit=False)
+                                            plant_usage.entry = entry
+                                            plant_usage.save()
 
                     messages.success(
                         request, "Daily productivity logs saved successfully."
@@ -883,7 +907,9 @@ class PlanResourcesAjaxView(
         for item in plan_ids_raw:
             plan_ids.extend([pid.strip() for pid in item.split(",") if pid.strip()])
 
-        selected_plans = ProductionPlan.objects.filter(id__in=plan_ids, project=project).order_by('id')
+        selected_plans = ProductionPlan.objects.filter(
+            id__in=plan_ids, project=project
+        ).order_by("id")
 
         from ..forms.production_forms import (
             AggregatedLabourFormSet,
@@ -920,15 +946,32 @@ class PlanResourcesAjaxView(
                 "plant": has_plant,
             }
 
-            plant_formset = DailyPlantUsageFormSet(prefix=f"plant_{plan.id}")
-            plant_formset.form.base_fields["resource"].queryset = ProductionResource.objects.filter(
+            planned_plants = ProductionResource.objects.filter(
                 production_plan=plan, resource_type="PLANT"
             )
-            plant_formset.form.base_fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)
+            plant_initial = [
+                {
+                    "resource": res.id,
+                    "number": int(res.number),
+                    "hours": 8.0,
+                    "activity": plan.id,
+                }
+                for res in planned_plants
+            ]
+            plant_formset = DailyPlantUsageFormSet(
+                prefix=f"plant_{plan.id}", initial=plant_initial
+            )
+            for f in plant_formset.forms:
+                f.fields["resource"].queryset = planned_plants
+                f.fields["activity"].queryset = ProductionPlan.objects.filter(
+                    id=plan.id
+                )
             plant_formsets[plan.id] = plant_formset
 
         labour_initial = [{"activity": plan.id} for plan in selected_plans]
-        labour_formset = AggregatedLabourFormSet(prefix="labour", initial=labour_initial)
+        labour_formset = AggregatedLabourFormSet(
+            prefix="labour", initial=labour_initial
+        )
 
         for form, plan in zip(labour_formset.forms, selected_plans, strict=True):
             form.fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)
@@ -946,7 +989,9 @@ class PlanResourcesAjaxView(
                 "plant_formsets": plant_formsets,
                 "selected_plans": selected_plans,
                 "plan_resources": plan_resources,
-                "labour_forms_with_plans": list(zip(labour_formset.forms, selected_plans, strict=True)),
+                "labour_forms_with_plans": list(
+                    zip(labour_formset.forms, selected_plans, strict=True)
+                ),
             },
             request=request,
         )
