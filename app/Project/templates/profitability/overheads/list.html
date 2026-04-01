@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block title %}Overheads Cost Tracker - {{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumbs -->
+    <nav class="flex mb-8 text-sm text-gray-500" aria-label="Breadcrumb">
+        <a href="{% url 'project:profitability-dashboard' project.pk %}" class="hover:text-emerald-600">Profitability Management</a>
+        <span class="mx-2">/</span>
+        <span class="text-gray-900 font-medium">Overheads Tracker</span>
+    </nav>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Overheads Cost Tracker</h1>
+                <p class="text-gray-500 mt-1">Manage and track indirect costs for {{ project.name }}</p>
+            </div>
+            <a href="{% url 'project:profitability-overhead-add' project.pk %}" 
+               class="inline-flex items-center px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-colors shadow-sm">
+                {% heroicon_outline "plus" class="w-5 h-5 mr-2" %}
+                Add Overhead Entry
+            </a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 text-gray-600 text-sm font-semibold uppercase tracking-wider">
+                        <th class="px-6 py-4 border-b">Overheads</th>
+                        <th class="px-6 py-4 border-b">Amount of days</th>
+                        <th class="px-6 py-4 border-b">Rate</th>
+                        <th class="px-6 py-4 border-b">Cost</th>
+                        <th class="px-6 py-4 border-b text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for log in logs %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 font-medium text-gray-900">{{ log.description }}</td>
+                        <td class="px-6 py-4 text-gray-500">{{ log.days|floatformat:1 }}</td>
+                        <td class="px-6 py-4 text-gray-500">{{ log.rate|floatformat:2 }}</td>
+                        <td class="px-6 py-4 font-bold text-emerald-600">{{ log.total_cost|floatformat:2 }}</td>
+                        <td class="px-6 py-4 text-right space-x-2">
+                            <button class="text-gray-400 hover:text-emerald-600 p-2 rounded-lg hover:bg-emerald-50 transition-colors">
+                                {% heroicon_outline "pencil-square" class="w-4 h-4" %}
+                            </button>
+                            <button class="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors">
+                                {% heroicon_outline "trash" class="w-4 h-4" %}
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-gray-400 italic">
+                            No overhead entries found. Click "Add Overhead Entry" to create one.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
