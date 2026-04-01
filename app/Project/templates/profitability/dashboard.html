@@ -1,186 +1,178 @@
-{% extends "base.html" %}
+{% extends "profitability/base_profitability.html" %}
 {% load static %}
 {% load heroicons %}
 
-{% block title %}Profitability Management - {{ project.name }}{% endblock %}
+{% block title %}Dashboard - Profitability Management{% endblock %}
 
-{% block content %}
-<div class="container mx-auto px-4 py-8">
-    <!-- Header with Stats -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8">
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 flex items-center">
-                    <div class="p-3 bg-emerald-100 rounded-xl mr-4">
-                        {% heroicon_outline "chart-pie" class="w-8 h-8 text-emerald-600" %}
-                    </div>
-                    Profitability Management
-                </h1>
-                <p class="text-gray-500 mt-2 ml-16">{{ project.name }} - Real-time financial tracking and variance analysis</p>
+{% block profitability_content %}
+<div class="space-y-6">
+    <!-- Summary Header Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Revenue Card (Planned) -->
+        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-indigo-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Planned Revenue</p>
+                    <h3 class="text-2xl font-bold text-gray-900 mt-1">${{ baseline.planned_revenue|floatformat:2 }}</h3>
+                </div>
+                <div class="bg-indigo-100 p-2 rounded-lg">
+                    {% heroicon_outline "banknotes" class="w-6 h-6 text-indigo-600" %}
+                </div>
             </div>
-            <div class="mt-4 md:mt-0 flex items-center space-x-4">
-                <span class="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-sm font-semibold border border-emerald-100">
-                    Active Tracking
+            <div class="mt-4 flex items-center text-xs">
+                <span class="text-gray-500">Target Margin: {{ baseline.target_margin_percentage }}%</span>
+            </div>
+        </div>
+
+        <!-- Total Actual Cost Card -->
+        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-rose-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Actual Total Cost</p>
+                    <h3 class="text-2xl font-bold text-gray-900 mt-1">${{ total_actual_cost|floatformat:2 }}</h3>
+                </div>
+                <div class="bg-rose-100 p-2 rounded-lg">
+                    {% heroicon_outline "shopping-cart" class="w-6 h-6 text-rose-600" %}
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-xs">
+                <span class="font-medium {% if variance_val >= 0 %}text-indigo-600{% else %}text-rose-600{% endif %}">
+                    ${{ variance_val|abs|floatformat:2 }} 
+                    {% if variance_val >= 0 %} under budget {% else %} over budget {% endif %}
                 </span>
             </div>
         </div>
 
-        <!-- Metric Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                <p class="text-sm font-medium text-gray-500 mb-1">Total Planned Cost</p>
-                <h3 class="text-2xl font-bold text-gray-900">{{ total_planned_cost|floatformat:2 }}</h3>
-            </div>
-            <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                <p class="text-sm font-medium text-gray-500 mb-1">Total Actual Cost</p>
-                <h3 class="text-2xl font-bold text-gray-900">{{ total_actual_cost|floatformat:2 }}</h3>
-            </div>
-            <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                <p class="text-sm font-medium text-gray-500 mb-1">Variance</p>
-                <h3 class="text-2xl font-bold {% if variance < 0 %}text-red-600{% else %}text-emerald-600{% endif %}">
-                    {{ variance|floatformat:2 }}
-                </h3>
-            </div>
-            <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                <p class="text-sm font-medium text-gray-500 mb-1">Profitability Index</p>
-                <div class="flex items-center">
-                    <h3 class="text-2xl font-bold text-gray-900">{{ variance_percentage|floatformat:1 }}%</h3>
-                    <div class="ml-3 w-16 bg-gray-200 rounded-full h-2">
-                        <div class="{% if variance_percentage < 0 %}bg-red-500{% else %}bg-emerald-500{% endif %} h-2 rounded-full" style="width: {% if variance_percentage < 0 %}100{% else %}{{ variance_percentage }}{% endif %}%"></div>
-                    </div>
+        <!-- Actual Profit Card (Mocked with Revenue 0 for now) -->
+        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-indigo-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Gross Profit</p>
+                    <h3 class="text-2xl font-bold text-gray-900 mt-1">${{ baseline.planned_revenue|add:total_actual_cost|floatformat:2 }}</h3>
                 </div>
+                <div class="bg-indigo-100 p-2 rounded-lg">
+                    {% heroicon_outline "calculator" class="w-6 h-6 text-indigo-600" %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Profit Margin Card -->
+        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-amber-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Efficiency Index</p>
+                    <h3 class="text-2xl font-bold text-gray-900 mt-1">{{ variance.percentage|floatformat:1 }}%</h3>
+                </div>
+                <div class="bg-amber-100 p-2 rounded-lg">
+                    {% heroicon_outline "arrow-trending-up" class="w-6 h-6 text-amber-600" %}
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-xs">
+                 <span class="text-gray-500">Based on planned vs actual cost</span>
             </div>
         </div>
     </div>
 
-    <!-- Navigation Cards (Matching Image 1) -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Journal Entries -->
-        <a href="{% url 'project:profitability-coming-soon' project.pk 'Journal Entries' %}" 
-           class="group bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all duration-300">
-            <div class="flex items-center space-x-4">
-                <div class="p-4 bg-emerald-50 rounded-xl text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
-                    {% heroicon_outline "book-open" class="w-6 h-6" %}
-                </div>
-                <div>
-                    <h3 class="text-xl font-bold text-gray-900">Journal Entries</h3>
-                    <p class="text-sm text-gray-500">General ledger transactions</p>
-                </div>
+    <!-- Detail Breakdown -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Cost Breakdown Table (Actual vs Planned) -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-lg font-bold text-gray-900">Cost Baseline vs Actuals</h3>
             </div>
-            <div class="mt-4 flex items-center justify-between">
-                <span class="text-xs font-medium text-emerald-600 px-2 py-1 bg-emerald-50 rounded">Coming Soon</span>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-gray-300 group-hover:text-emerald-600 transition-transform group-hover:translate-x-1" %}
-            </div>
-        </a>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Planned</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actual</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Variance</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Labour</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">${{ baseline.planned_labour_cost|floatformat:2 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">${{ actuals.labour|floatformat:2 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-500">
+                            -
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Plant & Equipment</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">-</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">${{ actuals.plant|floatformat:2 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-500">
+                            -
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Subcontractors</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">${{ baseline.planned_subcontractor_cost|floatformat:2 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">${{ actuals.subcontractor|floatformat:2 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-500">
+                            -
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Overheads</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">${{ baseline.planned_overhead_cost|floatformat:2 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">${{ actuals.overhead|floatformat:2 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-500">
+                            -
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot class="bg-gray-50">
+                    <tr class="font-bold">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Total Project Cost</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">${{ total_planned_cost|floatformat:2 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">${{ total_actual_cost|floatformat:2 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right {% if variance_val >= 0 %}text-indigo-600{% else %}text-rose-600{% endif %}">
+                            ${{ variance_val|floatformat:2 }}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
 
-        <!-- Materials Cost Tracker -->
-        <a href="{% url 'project:profitability-coming-soon' project.pk 'Materials Cost Tracker' %}" 
-           class="group bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-cyan-200 transition-all duration-300">
-            <div class="flex items-center space-x-4">
-                <div class="p-4 bg-cyan-50 rounded-xl text-cyan-600 group-hover:bg-cyan-600 group-hover:text-white transition-colors duration-300">
-                    {% heroicon_outline "cube" class="w-6 h-6" %}
-                </div>
-                <div>
-                    <h3 class="text-xl font-bold text-gray-900">Materials Tracker</h3>
-                    <p class="text-sm text-gray-500">Track usage and purchases</p>
-                </div>
-            </div>
-            <div class="mt-4 flex items-center justify-between">
-                <span class="text-xs font-medium text-cyan-600 px-2 py-1 bg-cyan-50 rounded">Coming Soon</span>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-gray-300 group-hover:text-cyan-600 transition-transform group-hover:translate-x-1" %}
-            </div>
-        </a>
+        <!-- Margin Analysis Side Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col justify-between">
+            <div>
+                <h3 class="text-lg font-bold text-gray-900 mb-6">Profitability Analysis</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-500">Total Planned Cost</span>
+                            <span class="font-medium text-gray-900">${{ total_planned_cost|floatformat:2 }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-500">Total Actual Cost</span>
+                            <span class="font-medium text-gray-900">${{ total_actual_cost|floatformat:2 }}</span>
+                        </div>
+                    </div>
 
-        <!-- Subcontractor Cost Tracker (Active) -->
-        <a href="{% url 'project:profitability-subcontractor-list' project.pk %}" 
-           class="group bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-green-200 transition-all duration-300">
-            <div class="flex items-center space-x-4">
-                <div class="p-4 bg-green-50 rounded-xl text-green-600 group-hover:bg-green-600 group-hover:text-white transition-colors duration-300">
-                    {% heroicon_outline "briefcase" class="w-6 h-6" %}
-                </div>
-                <div>
-                    <h3 class="text-xl font-bold text-gray-900">Subcontractor Tracker</h3>
-                    <p class="text-sm text-gray-500">Manage subcontractor costs</p>
+                    <div class="pt-4 border-t border-gray-100">
+                        <div class="flex justify-between text-sm mb-2">
+                             <span class="text-gray-500">Cost Efficiency</span>
+                             <span class="font-bold {% if variance.percentage >= 0 %}text-indigo-600{% else %}text-rose-600{% endif %}">
+                                 {{ variance.percentage|floatformat:1 }}%
+                             </span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                            <div class="h-2 rounded-full {% if variance.percentage >= 0 %}bg-indigo-500{% else %}bg-rose-500{% endif %}" 
+                                 style="width: {% if variance.percentage > 100 %}100{% elif variance.percentage < 0 %}0{% else %}{{ variance.percentage }}{% endif %}%"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="mt-4 flex items-center justify-between">
-                <span class="text-xs font-medium text-green-600 px-2 py-1 bg-green-50 rounded">Active</span>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-gray-300 group-hover:text-green-600 transition-transform group-hover:translate-x-1" %}
-            </div>
-        </a>
 
-        <!-- Labour Cost Tracker (Active) -->
-        <a href="{% url 'project:profitability-labour-list' project.pk %}" 
-           class="group bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-yellow-200 transition-all duration-300">
-            <div class="flex items-center space-x-4">
-                <div class="p-4 bg-yellow-50 rounded-xl text-yellow-600 group-hover:bg-yellow-600 group-hover:text-white transition-colors duration-300">
-                    {% heroicon_outline "user-group" class="w-6 h-6" %}
-                </div>
-                <div>
-                    <h3 class="text-xl font-bold text-gray-900">Labour Tracker</h3>
-                    <p class="text-sm text-gray-500">Log additional labour costs</p>
-                </div>
-            </div>
-            <div class="mt-4 flex items-center justify-between">
-                <span class="text-xs font-medium text-yellow-600 px-2 py-1 bg-yellow-50 rounded">Active</span>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-gray-300 group-hover:text-yellow-600 transition-transform group-hover:translate-x-1" %}
-            </div>
-        </a>
-
-        <!-- Overheads Cost Tracker (Active) -->
-        <a href="{% url 'project:profitability-overhead-list' project.pk %}" 
-           class="group bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-orange-200 transition-all duration-300">
-            <div class="flex items-center space-x-4">
-                <div class="p-4 bg-orange-50 rounded-xl text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-colors duration-300">
-                    {% heroicon_outline "home" class="w-6 h-6" %}
-                </div>
-                <div>
-                    <h3 class="text-xl font-bold text-gray-900">Overheads Tracker</h3>
-                    <p class="text-sm text-gray-500">Track indirect project costs</p>
-                </div>
-            </div>
-            <div class="mt-4 flex items-center justify-between">
-                <span class="text-xs font-medium text-orange-600 px-2 py-1 bg-orange-50 rounded">Active</span>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-gray-300 group-hover:text-orange-600 transition-transform group-hover:translate-x-1" %}
-            </div>
-        </a>
-
-        <!-- Baseline Assumptions -->
-        <a href="{% url 'project:profitability-coming-soon' project.pk 'Baseline Assumptions' %}" 
-           class="group bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-rose-200 transition-all duration-300">
-            <div class="flex items-center space-x-4">
-                <div class="p-4 bg-rose-50 rounded-xl text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition-colors duration-300">
-                    {% heroicon_outline "cog-6-tooth" class="w-6 h-6" %}
-                </div>
-                <div>
-                    <h3 class="text-xl font-bold text-gray-900">Baseline Assumptions</h3>
-                    <p class="text-sm text-gray-500">Initial targets and targets</p>
-                </div>
-            </div>
-            <div class="mt-4 flex items-center justify-between">
-                <span class="text-xs font-medium text-rose-600 px-2 py-1 bg-rose-50 rounded">Coming Soon</span>
-                {% heroicon_outline "chevron-right" class="w-4 h-4 text-gray-300 group-hover:text-rose-600 transition-transform group-hover:translate-x-1" %}
-            </div>
-        </a>
-    </div>
-
-    <!-- Production Logs Summary (Existing Data Integration) -->
-    <div class="mt-12">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">Production Logs Integration</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-bold text-gray-700">Daily Labour Usage</h3>
-                    <span class="text-lg font-bold text-emerald-600">{{ actual_prod_labour|floatformat:2 }}</span>
-                </div>
-                <p class="text-sm text-gray-500">Costs automatically aggregated from daily production reports.</p>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="font-bold text-gray-700">Daily Plant Usage</h3>
-                    <span class="text-lg font-bold text-emerald-600">{{ actual_prod_plant|floatformat:2 }}</span>
-                </div>
-                <p class="text-sm text-gray-500">Costs automatically aggregated from plant usage logs.</p>
+            <div class="mt-8">
+                <a href="{% url 'project:profitability-coming-soon' project.pk 'Baseline Assumptions' %}"
+                   class="w-full block text-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    Manage Project Baseline
+                </a>
             </div>
         </div>
     </div>

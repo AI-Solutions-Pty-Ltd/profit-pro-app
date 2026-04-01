@@ -1,70 +1,82 @@
-{% extends "base.html" %}
+{% extends "profitability/base_profitability.html" %}
 {% load static %}
 {% load heroicons %}
 
-{% block title %}Subcontractor Cost Tracker - {{ project.name }}{% endblock %}
+{% block title %}Subcontractors - Profitability Management{% endblock %}
 
-{% block content %}
-<div class="container mx-auto px-4 py-8">
-    <!-- Breadcrumbs -->
-    <nav class="flex mb-8 text-sm text-gray-500" aria-label="Breadcrumb">
-        <a href="{% url 'project:profitability-dashboard' project.pk %}" class="hover:text-emerald-600">Profitability Management</a>
-        <span class="mx-2">/</span>
-        <span class="text-gray-900 font-medium">Subcontractor Tracker</span>
-    </nav>
-
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <div class="flex items-center justify-between mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">Subcontractor Cost Tracker</h1>
-                <p class="text-gray-500 mt-1">Manage and track subcontractor expenses for {{ project.name }}</p>
-            </div>
-            <a href="{% url 'project:profitability-subcontractor-add' project.pk %}" 
-               class="inline-flex items-center px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-colors shadow-sm">
-                {% heroicon_outline "plus" class="w-5 h-5 mr-2" %}
-                Add Cost Entry
-            </a>
+{% block profitability_content %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <!-- List Header -->
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+        <div>
+            <h3 class="text-lg font-bold text-gray-900">Subcontractor Cost Logs</h3>
+            <p class="text-sm text-gray-500">Itemized tracking of sub-contracted work costs.</p>
         </div>
+        <a href="{% url 'project:profitability-subcontractor-add' project.pk %}" 
+           class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm">
+            {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}
+            Add Entry
+        </a>
+    </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-gray-50 text-gray-600 text-sm font-semibold uppercase tracking-wider">
-                        <th class="px-6 py-4 border-b">Subcontractor</th>
-                        <th class="px-6 py-4 border-b">Reference NO</th>
-                        <th class="px-6 py-4 border-b">Amount of days</th>
-                        <th class="px-6 py-4 border-b">Rate</th>
-                        <th class="px-6 py-4 border-b">Cost</th>
-                        <th class="px-6 py-4 border-b text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    {% for log in logs %}
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="px-6 py-4 font-medium text-gray-900">{{ log.subcontractor_name }}</td>
-                        <td class="px-6 py-4 text-gray-500">{{ log.reference_no|default:"-" }}</td>
-                        <td class="px-6 py-4 text-gray-500">{{ log.days|floatformat:1 }}</td>
-                        <td class="px-6 py-4 text-gray-500">{{ log.rate|floatformat:2 }}</td>
-                        <td class="px-6 py-4 font-bold text-emerald-600">{{ log.total_cost|floatformat:2 }}</td>
-                        <td class="px-6 py-4 text-right space-x-2">
-                            <button class="text-gray-400 hover:text-emerald-600 p-2 rounded-lg hover:bg-emerald-50 transition-colors">
-                                {% heroicon_outline "pencil-square" class="w-4 h-4" %}
-                            </button>
-                            <button class="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors">
-                                {% heroicon_outline "trash" class="w-4 h-4" %}
-                            </button>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-gray-400 italic">
-                            No entries found. Click "Add Cost Entry" to create one.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <!-- Table -->
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subcontractor</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference NO</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Days</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Daily Rate</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Cost</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200 transition-opacity duration-300" id="subcontractor-table-body">
+                {% for log in logs %}
+                <tr class="hover:bg-gray-50 transition-colors group">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-bold text-gray-900">{{ log.subcontractor_name }}</div>
+                        <div class="text-xs text-gray-400">ID: {{ log.pk }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{ log.reference_no|default:"N/A" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
+                        {{ log.days|floatformat:1 }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">
+                        ${{ log.rate|floatformat:2 }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-indigo-600">
+                        ${{ log.total_cost|floatformat:2 }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex items-center justify-end space-x-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <a href="#" class="text-gray-400 hover:text-emerald-600 transition-colors">
+                                {% heroicon_outline "pencil-square" class="w-5 h-5" %}
+                            </a>
+                            <a href="#" class="text-gray-400 hover:text-rose-600 transition-colors">
+                                {% heroicon_outline "trash" class="w-5 h-5" %}
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center">
+                        <div class="flex flex-col items-center justify-center text-gray-400">
+                            {% heroicon_outline "document-minus" class="w-12 h-12 mb-4 opacity-20" %}
+                            <p class="text-sm">No subcontractor logs found for this project.</p>
+                            <a href="{% url 'project:profitability-subcontractor-add' project.pk %}" class="mt-4 text-indigo-600 font-medium hover:underline">
+                                Create your first entry
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

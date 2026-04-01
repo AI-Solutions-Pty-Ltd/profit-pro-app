@@ -19,9 +19,22 @@ class ProfitabilityDashboardView(DetailView):
         context = super().get_context_data(**kwargs)
         project = self.object
 
-        # 1. Planned Costs (Base Estimates)
+        # 1. Baseline Data (Aggregated from Production Plans)
         planned_resources = ProductionResource.objects.filter(production_plan__project=project)
         total_planned_cost = planned_resources.aggregate(total=Sum('total_cost'))['total'] or 0
+
+        # We'll use a dictionary to mimic the BaselineAssumption model structure
+        # Since we don't have a formal Baseline model yet, we'll derive what we can
+        baseline = {
+            "total_planned_cost": total_planned_cost,
+            "planned_revenue": 0,  # Placeholder
+            "planned_profit": 0,   # Placeholder
+            "target_margin_percentage": 0, # Placeholder
+            "planned_labour_cost": 0, # Placeholder
+            "planned_material_cost": 0, # Placeholder
+            "planned_subcontractor_cost": 0, # Placeholder
+            "planned_overhead_cost": 0, # Placeholder
+        }
 
         # 2. Actual Costs from Production Logs
         actual_labour_logs = DailyLabourUsage.objects.filter(entry__report__project=project)
@@ -36,13 +49,28 @@ class ProfitabilityDashboardView(DetailView):
         overhead_costs = OverheadCostLog.objects.filter(project=project).aggregate(total=Sum('total_cost'))['total'] or 0
 
         total_actual_cost = actual_prod_labour + actual_prod_plant + sub_costs + extra_labour_costs + overhead_costs
-        variance = total_planned_cost - total_actual_cost
+        variance_val = total_planned_cost - total_actual_cost
+
+        # Structured context for new UI
+        context['baseline'] = baseline
+        context['actuals'] = {
+            "labour": actual_prod_labour + extra_labour_costs,
+            "material": 0, # Placeholder
+            "subcontractor": sub_costs,
+            "overhead": overhead_costs,
+            "total_cost": total_actual_cost,
+            "plant": actual_prod_plant,
+        }
+        
+        context['variance'] = {
+            "total_cost": variance_val,
+            "percentage": (variance_val / total_planned_cost * 100) if total_planned_cost > 0 else 0,
+        }
 
         context.update({
             "total_planned_cost": total_planned_cost,
             "total_actual_cost": total_actual_cost,
-            "variance": variance,
-            "variance_percentage": (variance / total_planned_cost * 100) if total_planned_cost > 0 else 0,
+            "variance_val": variance_val,
             "sub_costs": sub_costs,
             "extra_labour_costs": extra_labour_costs,
             "overhead_costs": overhead_costs,

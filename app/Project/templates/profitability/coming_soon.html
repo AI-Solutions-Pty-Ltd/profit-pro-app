@@ -6,20 +6,19 @@
 
 {% block content %}
 <div class="container mx-auto px-4 py-20 text-center">
-    <div class="max-w-2xl mx-auto bg-white p-12 rounded-3xl border border-gray-100 shadow-sm">
-        <div class="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6 text-emerald-600">
+    <div class="max-w-2xl mx-auto bg-white p-12 rounded-lg border border-gray-100 shadow-sm">
+        <div class="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-6 text-indigo-600">
             {% heroicon_outline "clock" class="w-12 h-12" %}
         </div>
-        <h1 class="text-4xl font-bold text-gray-900 mb-4">{{ feature_name }}</h1>
-        <p class="text-xl text-gray-500 mb-8">This module is currently under development and will be available in a future update.</p>
+        <h1 class="text-xl font-bold text-gray-900 mb-4">{{ feature_name }}</h1>
+        <p class=" text-gray-500 mb-8">This module is currently under development and will be available in a future update.</p>
         
         <div class="flex flex-col space-y-4">
             <a href="{% url 'project:profitability-dashboard' project.pk %}" 
-               class="inline-flex items-center justify-center px-6 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-colors">
+               class="inline-flex items-center justify-center px-6 py-2 bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 transition-colors">
                 {% heroicon_outline "arrow-left" class="w-5 h-5 mr-2" %}
                 Back to Profitability Dashboard
             </a>
-            <p class="text-xs text-gray-400">Profit Pro - Real-time Intelligence for Site Operations</p>
         </div>
     </div>
 </div>
