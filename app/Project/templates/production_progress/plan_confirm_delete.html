@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block title %}Delete Production Plan - {{ project.name }} - {{ block.super }}{% endblock title %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full space-y-8">
+    <div class="bg-white shadow-lg rounded-lg p-6">
+      <div class="text-center">
+        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-red-600 mb-4">
+          {% heroicon_outline "exclamation-triangle" class="w-8 h-8" %}
+        </div>
+        <h2 class="text-xl font-bold text-gray-900 mb-2">Delete Production Plan</h2>
+        <p class="text-sm text-gray-600 mb-6">
+          Are you sure you want to delete the production plan for <strong>"{{ object.activity }}"</strong>?
+          This action cannot be undone.
+        </p>
+
+        <div class="flex space-x-3 justify-center">
+          <a href="#" onclick="window.history.back(); return false;" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            Cancel
+          </a>
+          <form method="post" class="inline">
+            {% csrf_token %}
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+              {% heroicon_solid "trash" class="w-4 h-4 mr-2" %}
+              Delete Plan
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

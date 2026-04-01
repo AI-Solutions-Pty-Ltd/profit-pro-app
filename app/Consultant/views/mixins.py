@@ -103,8 +103,27 @@ class PaymentCertMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
             )
         )
 
-    def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["project"] = self.project
         context["client"] = self.client
         return context
+
+
+class LeadConsultantMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
+    """Mixin for lead consultant views."""
+
+    roles = [Role.ADMIN]
+    project_slug = "project_pk"
+
+    def get_queryset(self) -> QuerySet[Company]:
+        return Company.objects.filter(type=Company.Type.LEAD_CONSULTANT).order_by("name")
+
+    def get_object(self) -> Company:
+        return Company.objects.get(
+            id=self.kwargs["pk"], type=Company.Type.LEAD_CONSULTANT
+        )
+
+    def get_lead_consultant(self, slug="pk") -> Company:
+        return Company.objects.get(
+            id=self.kwargs[slug], type=Company.Type.LEAD_CONSULTANT
+        )

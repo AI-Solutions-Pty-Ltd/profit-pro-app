@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    Add Resource - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    
+                    <h1 class="text-2xl font-bold text-gray-900">Add Production Resource</h1>
+                    <p class="text-sm font-medium text-gray-600 mt-1">Project: <a href="{% url 'project:project-management' project.pk %}" class="text-indigo-600 hover:text-indigo-900 text-lg">{{ project.name }}</a></p>
+                    <p class="text-sm font-medium text-gray-600 mt-1">Production Plan: <a href="{% url 'project:production-plan-detail' project.pk production_plan.pk %}" class="text-indigo-600 hover:text-indigo-900 text-lg">{{ production_plan.activity|lower|capfirst }}</a></p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="#" onclick="window.history.back(); return false;"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        {% heroicon_outline "arrow-left" size="20" %}
+                        <span class="ml-2">Back</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+    <!-- Form Section -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Resource Details</h2>
+            <p class="text-sm text-gray-600">Enter the resource information below</p>
+        </div>
+        <form method="POST" action="" class="p-6">
+            {% csrf_token %}
+            <div class="space-y-6">
+                <!-- Activity and Type Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    <div>
+                        {{ form.production_plan|as_crispy_field }}
+                    </div>
+                    <div>
+                        {{ form.resource_type|as_crispy_field }}
+                    </div>
+                </div>
+
+                <!-- Skill/Plant Type Row (Dynamic) -->
+                <div class="grid grid-cols-1 gap-6 items-start">
+                    <div id="skill_type_container" style="display: none;">
+                        {{ form.skill_type|as_crispy_field }}
+                    </div>
+                    <div id="plant_type_container" style="display: none;">
+                        {{ form.plant_type|as_crispy_field }}
+                    </div>
+                </div>
+
+                <!-- Name Row -->
+                <div class="grid grid-cols-1 gap-6 items-start">
+                    <div>
+                        {{ form.name|as_crispy_field }}
+                    </div>
+                </div>
+
+                <!-- Quantities Row -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                    <div>
+                        {{ form.number|as_crispy_field }}
+                    </div>
+                    <div>
+                        {{ form.days|as_crispy_field }}
+                    </div>
+                    <div>
+                        {{ form.rate|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="mt-8 flex items-center justify-end space-x-3">
+                <a href="#" onclick="window.history.back(); return false;" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                    Cancel
+                </a>
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                  
+                    Add Resource
+                </button>
+            </div>
+        </form>
+    </div>
+
+
+
+   <!-- Footer -->
+    <div class="px-6 py-4 bg-white rounded-lg mt-8 shadow-sm">
+        <div class="flex justify-between items-center">
+            
+            <a href="{% url 'project:company-management' project.pk %}"
+            class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+            {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+            Business Management
+        
+            </a>
+            <a href="{% url 'project:production-dashboard' project.pk %}"
+            class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+        
+            Production Dashboard
+            {% heroicon_outline "chevron-right" class="w-4 h-4 mr-1" %}
+            </a>
+        </div>
+    </div>
+</div>
+<script>
+    function toggleResourceTypes() {
+        const resourceTypeSelect = document.querySelector('[name="resource_type"]');
+        if (!resourceTypeSelect) return;
+        
+        const resourceType = resourceTypeSelect.value;
+        const skillContainer = document.getElementById('skill_type_container');
+        const plantContainer = document.getElementById('plant_type_container');
+        
+        if (resourceType === 'LABOUR') {
+            skillContainer.style.display = 'block';
+            plantContainer.style.display = 'none';
+            const plantSelect = document.querySelector('[name="plant_type"]');
+            if (plantSelect) plantSelect.value = '';
+        } else if (resourceType === 'PLANT') {
+            skillContainer.style.display = 'none';
+            plantContainer.style.display = 'block';
+            const skillSelect = document.querySelector('[name="skill_type"]');
+            if (skillSelect) skillSelect.value = '';
+        } else {
+            skillContainer.style.display = 'none';
+            plantContainer.style.display = 'none';
+        }
+    }
+
+    function updateFromSkillType() {
+        const select = document.querySelector('[name="skill_type"]');
+        if (!select) return;
+        
+        const option = select.options[select.selectedIndex];
+        if (option && option.value) {
+            // Text format is "Name (Rate/hr)"
+            const text = option.text;
+            const nameMatch = text.match(/^(.*) \(/);
+            const rateMatch = text.match(/\((.*)\/hr\)/);
+            
+            if (nameMatch) {
+                const nameInput = document.querySelector('[name="name"]');
+                if (nameInput) nameInput.value = nameMatch[1];
+            }
+            if (rateMatch) {
+                const rateInput = document.querySelector('[name="rate"]');
+                if (rateInput) rateInput.value = rateMatch[1];
+            }
+        }
+    }
+
+    function updateFromPlantType() {
+        const select = document.querySelector('[name="plant_type"]');
+        if (!select) return;
+        
+        const option = select.options[select.selectedIndex];
+        if (option && option.value) {
+            const text = option.text;
+            const nameMatch = text.match(/^(.*) \(/);
+            const rateMatch = text.match(/\((.*)\/hr\)/);
+            
+            if (nameMatch) {
+                const nameInput = document.querySelector('[name="name"]');
+                if (nameInput) nameInput.value = nameMatch[1];
+            }
+            if (rateMatch) {
+                const rateInput = document.querySelector('[name="rate"]');
+                if (rateInput) rateInput.value = rateMatch[1];
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleResourceTypes();
+        
+        // Add event listeners if widgets didn't include them correctly
+        const rtSelect = document.querySelector('[name="resource_type"]');
+        if (rtSelect) rtSelect.addEventListener('change', toggleResourceTypes);
+        
+        const stSelect = document.querySelector('[name="skill_type"]');
+        if (stSelect) stSelect.addEventListener('change', updateFromSkillType);
+        
+        const ptSelect = document.querySelector('[name="plant_type"]');
+        if (ptSelect) ptSelect.addEventListener('change', updateFromPlantType);
+    });
+</script>
+{% endblock content %}

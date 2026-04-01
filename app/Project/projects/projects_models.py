@@ -184,6 +184,13 @@ class Project(BaseModel):
         blank=True,
         related_name="contractor_projects",
     )
+    lead_consultant = models.ForeignKey(
+        Company,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="lead_consultant_projects",
+    )
     project_category = models.ForeignKey(
         ProjectCategory,
         on_delete=models.SET_NULL,

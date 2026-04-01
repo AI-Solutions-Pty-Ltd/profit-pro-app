@@ -40,13 +40,87 @@
     <!-- Business Management Menu -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-2 mb-4">
         <!-- Row 1: Payments and Invoices -->
-        <div class="group relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+
+         <div class="group relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
             <div class="flex items-center mb-4">
                 <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mr-3">
+                    {% heroicon_outline "wrench-screwdriver" class="w-6 h-6 text-white" %}
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-blue-900">Productivity Management</h3>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <a href="{% url 'project:production-planning' company.pk %}" data-tip="Production Planning"
+                   class="tooltip w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "document-text" class="w-4 h-4 text-blue-500 mr-2" %}
+                        <span class="text-sm font-medium text-blue-700">Planning</span>
+                    </div>
+                </a>
+                <a href="{% url 'project:production-cost-breakdown' company.pk %}" data-tip="Production Cost Breakdown Structure"
+                   class="tooltip w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "document-currency-dollar" class="w-4 h-4 text-indigo-500 mr-2" %}
+                        <span class="text-sm font-medium text-indigo-700">Costing</span>
+                    </div>
+                </a>
+                <a href="{% url 'project:plan-productivity-dashboard' company.pk %}" data-tip="Production & Productivity Analysis"
+                   class="tooltip w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "presentation-chart-line" class="w-4 h-4 text-green-500 mr-2" %}
+                        <span class="text-sm font-medium text-green-700">Analysis</span>
+                    </div>
+                </a>
+                <a href="{% url 'project:production-progress-dashboard' company.pk %}" data-tip="Progress Tracker"
+                   class="tooltip w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "arrow-trending-up" class="w-4 h-4 text-cyan-500 mr-2" %}
+                        <span class="text-sm font-medium text-cyan-700">Progress Tracker</span>
+                    </div>
+                </a>
+               
+               
+                <a href="{% url 'project:production-forecast-dashboard' company.pk %}" 
+                data-tip="Activity Costing Forecast"
+                   class="tooltip w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "information-circle" class="w-4 h-4 text-amber-500 mr-2" %}
+                        <span class="text-sm font-medium text-amber-700">Costing Forecast</span>
+                    </div>
+                </a>
+                 <a href="{% url 'project:production-create' company.pk %}" data-tip="Log Daily Progress Tracking"
+                   class="tooltip w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "plus-circle" class="w-4 h-4 text-emerald-500 mr-2" %}
+                        <span class="text-sm font-medium text-emerald-700">Log Progress</span>
+                    </div>
+                </a>
+                 <a href="{% url 'site_management:skill-type-list' company.pk %}"
+                   class="flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "wrench" class="w-4 h-4 text-violet-500 mr-2" %}
+                        <span class="text-sm font-medium text-violet-700"> Skill Rates</span>
+                    </div>
+                   
+                 <a href="{% url 'site_management:plant-type-list' company.pk %}"
+                    class="flex items-center justify-between px-3 py-2 border border-violet-200 rounded-md hover:bg-violet-50 transition-colors group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "tag" class="w-4 h-4 text-violet-500 mr-2" %}
+                        <span class="text-sm font-medium text-violet-700">Plant Rates</span>
+                    </div>
+                 </a>
+                
+            </div>
+        </div>
+         <!-- Row 2: Payments and Invoices -->
+        {% comment %} <div class="group relative bg-gradient-to-br from-emerald-50 to-indigo-50 rounded-xl p-5 border border-emerald-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+            <div class="flex items-center mb-4">
+                <div class="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center mr-3">
                     {% heroicon_outline "banknotes" class="w-6 h-6 text-white" %}
                 </div>
                 <div>
-                    <h3 class="text-lg font-bold text-blue-900">Payments Management</h3>
+                    <h3 class="text-lg font-bold text-emerald-900">Payments Management</h3>
                 </div>
             </div>
             <div class="space-y-2">
@@ -93,8 +167,8 @@
                     </div>
                 </a>
             </div>
-        </div>
-        <!-- Row 1: Profit and Loss -->
+        </div>  {% endcomment %}
+         <!-- Row 3: Payments and Invoices -->
         <div class="group relative bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-5 border border-emerald-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
             <div class="flex items-center mb-4">
                 <div class="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center mr-3">
@@ -149,7 +223,7 @@
                 </a>
             </div>
         </div>
-        <!-- Row 1: Project Estimator -->
+        <!-- Row 4: Project Estimator -->
         <div class="group relative bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-5 border border-purple-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
             <div class="flex items-center mb-4">
                 <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center mr-3">

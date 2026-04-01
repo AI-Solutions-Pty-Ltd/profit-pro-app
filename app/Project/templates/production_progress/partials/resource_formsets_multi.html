@@ -1,0 +1,156 @@
+{% load project_tags %}
+<!-- Labour Table -->
+<div class="p-4 bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
+  <div class="  ">
+    <h3 class="text-lg font-bold text-gray-900">Labour Usage</h3>
+    <p class="text-sm text-gray-600">Enter labour requirements for each selected activity</p>
+  </div>
+  <div class="py-4 overflow-x-auto">
+    {{ labour_formset.management_form }}
+    <div class="w-full min-w-max border rounded-lg border-gray-200 overflow-hidden divide-y divide-gray-200" id="labour-form-list">
+      <!-- Grid Header -->
+      <div class="bg-gray-50 grid grid-cols-[1fr_repeat(5,110px)] items-center text-left text-xs font-medium text-gray-500 ">
+        <div class="px-3 py-2  border-gray-200">Activity</div>
+        <div class="px-3 py-2  border-gray-200">Quantity</div>
+        <div class="px-3 py-2  border-gray-200">Skilled</div>
+        <div class="px-3 py-2  border-gray-200">Semi</div>
+        <div class="px-3 py-2  border-gray-200">Unskilled</div>
+        <div class="px-3 py-2">Hours</div>
+      </div>
+      <!-- Grid Rows -->
+      <div class="bg-white divide-y divide-gray-200">
+        {% for form, plan in labour_forms_with_plans %}
+          <div class="grid grid-cols-[1fr_repeat(5,110px)] items-start hover:bg-gray-50 transition-colors {% if form.errors %}bg-red-50/30{% endif %}">
+            <div class="px-3 py-2  border-gray-200 font-medium text-gray-900">
+              <div class="flex items-center">
+                {{ plan.activity }}{{ form.activity }}
+              </div>
+              {% if form.non_field_errors %}
+                <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.non_field_errors }}</div>
+              {% endif %}
+            </div>
+            <div class="px-3 py-2  border-gray-200 {% if form.quantity.errors %}field-error-container{% endif %}">
+              {{ form.quantity }}
+              {% if form.quantity.errors %}
+                <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.quantity.errors }}</div>
+              {% endif %}
+            </div>
+            <div class="px-3 py-2  border-gray-200 {% if form.skilled_number.errors %}field-error-container{% endif %}">
+              {% if plan_resources|get:plan.id|get:'skilled' %}
+                {{ form.skilled_number }}
+                {% if form.skilled_number.errors %}
+                  <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.skilled_number.errors }}</div>
+                {% endif %}
+              {% else %}
+                <span class="text-gray-400 italic text-xs">-</span>
+              {% endif %}
+            </div>
+            <div class="px-3 py-2  border-gray-200 {% if form.semi_skilled_number.errors %}field-error-container{% endif %}">
+              {% if plan_resources|get:plan.id|get:'semi_skilled' %}
+                {{ form.semi_skilled_number }}
+                {% if form.semi_skilled_number.errors %}
+                  <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.semi_skilled_number.errors }}</div>
+                {% endif %}
+              {% else %}
+                <span class="text-gray-400 italic text-xs">-</span>
+              {% endif %}
+            </div>
+            <div class="px-3 py-2  border-gray-200 {% if form.unskilled_number.errors %}field-error-container{% endif %}">
+              {% if plan_resources|get:plan.id|get:'unskilled' %}
+                {{ form.unskilled_number }}
+                {% if form.unskilled_number.errors %}
+                  <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.unskilled_number.errors }}</div>
+                {% endif %}
+              {% else %}
+                <span class="text-gray-400 italic text-xs">-</span>
+              {% endif %}
+            </div>
+            <div class="px-3 py-2 {% if form.total_hours.errors %}field-error-container{% endif %}">
+              {{ form.total_hours }}
+              {% if form.total_hours.errors %}
+                <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.total_hours.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Plant Sections -->
+{% for plan in selected_plans %}
+  <div class="p-4 bg-white shadow-sm rounded-lg overflow-hidden border border-gray-200">
+    <div class="  flex justify-between items-center">
+      <div>
+        <h3 class="text-lg font-bold text-gray-900">{{ plan.activity|title }} - Plant Usage</h3>
+        <p class="text-sm text-gray-600">Enter plant/equipment usage for this activity</p>
+      </div>
+    </div>
+    <div class="py-4">
+      {% with p_formset=plant_formsets|get:plan.id %}
+        {% if p_formset %}
+          {{ p_formset.management_form }}
+          {% if p_formset.non_form_errors %}
+            <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+              {{ p_formset.non_form_errors }}
+            </div>
+          {% endif %}
+          
+          {% if plan_resources|get:plan.id|get:'plant' %}
+            <div class="min-w-full border rounded-lg border-gray-200 overflow-hidden divide-y divide-gray-200">
+            <!-- Grid Header -->
+            <div class="bg-gray-50 grid grid-cols-[1fr_120px_120px] items-center text-xs font-medium text-gray-500">
+              <div class="px-6 py-3  border-gray-200">Resource</div>
+              <div class="px-6 py-3  border-gray-200">Number</div>
+              <div class="px-6 py-3">Hours</div>
+            </div>
+            <!-- Grid Rows -->
+            <div class="bg-white divide-y divide-gray-200" id="plant-form-list-{{ plan.id }}">
+              {% for form in p_formset %}
+                <div class="grid grid-cols-[1fr_120px_120px] items-start hover:bg-gray-50 transition-colors {% if form.errors %}bg-red-50/20{% endif %}">
+                  <div class="px-6 py-4  border-gray-200">
+                    <div class="hidden">
+                      {{ form.id }}
+                      {{ form.entry }}
+                      {{ form.activity }}
+                    </div>
+                    {{ form.resource }}
+                    {% if form.resource.errors %}
+                      <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.resource.errors }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="px-6 py-4  border-gray-200 {% if form.number.errors %}field-error-container{% endif %}">
+                    {{ form.number }}
+                    {% if form.number.errors %}
+                      <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.number.errors }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="px-6 py-4 {% if form.hours.errors %}field-error-container{% endif %}">
+                    {{ form.hours }}
+                    {% if form.hours.errors %}
+                      <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.hours.errors }}</div>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-gray-500 italic text-sm">No plant resources defined for this activity.</p>
+          {% endif %}
+        {% endif %}
+      {% endwith %}
+    </div>
+  </div>
+{% endfor %}
+
+<!-- Loading Overlay -->
+<div id="formset-loading" class="hidden absolute inset-0 bg-white bg-opacity-60 items-center justify-center z-10 rounded-lg">
+  <div class="flex flex-col items-center">
+      <svg class="animate-spin h-8 w-8 text-indigo-600 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span class="text-xs font-medium text-gray-600">Loading resources...</span>
+  </div>
+</div>
