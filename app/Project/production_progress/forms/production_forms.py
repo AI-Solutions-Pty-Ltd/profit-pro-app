@@ -213,15 +213,24 @@ class ProductionResourceForm(forms.ModelForm):
         disabled_fields = kwargs.pop("disabled_fields", [])
         super().__init__(*args, **kwargs)
         if project_id:
-            self.fields["production_plan"].queryset = ProductionPlan.objects.filter(
+            production_plan_field: forms.ModelChoiceField = self.fields[
+                "production_plan"
+            ]  # type: ignore
+            production_plan_field.queryset = ProductionPlan.objects.filter(
                 project_id=project_id
             )
-            self.fields["skill_type"].queryset = self.fields[
-                "skill_type"
-            ].queryset.filter(project_id=project_id)
-            self.fields["plant_type"].queryset = self.fields[
-                "plant_type"
-            ].queryset.filter(project_id=project_id)
+
+            skill_type_field: forms.ModelChoiceField = self.fields["skill_type"]  # type: ignore
+            if skill_type_field.queryset:
+                skill_type_field.queryset = skill_type_field.queryset.filter(
+                    project_id=project_id
+                )
+
+            plant_type_field: forms.ModelChoiceField = self.fields["plant_type"]  # type: ignore
+            if plant_type_field.queryset:
+                plant_type_field.queryset = plant_type_field.queryset.filter(
+                    project_id=project_id
+                )
         for field_name in disabled_fields:
             if field_name in self.fields:
                 self.fields[field_name].disabled = True
@@ -258,7 +267,10 @@ class DailyActivityEntryForm(forms.ModelForm):
         project_id = kwargs.pop("project_id", None)
         super().__init__(*args, **kwargs)
         if project_id:
-            self.fields["production_plan"].queryset = ProductionPlan.objects.filter(
+            production_plan_field: forms.ModelChoiceField = self.fields[
+                "production_plan"
+            ]  # type: ignore
+            production_plan_field.queryset = ProductionPlan.objects.filter(
                 project_id=project_id
             )
 
@@ -280,7 +292,8 @@ class DailyLabourUsageForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if activity_id:
             # Filter resources by the selected production plan
-            self.fields["resource"].queryset = ProductionResource.objects.filter(
+            resource_field: forms.ModelChoiceField = self.fields["resource"]  # type: ignore
+            resource_field.queryset = ProductionResource.objects.filter(
                 production_plan_id=activity_id, resource_type="LABOUR"
             )
 
@@ -306,12 +319,12 @@ class DailyPlantUsageForm(forms.ModelForm):
         activity_id = kwargs.pop("activity_id", None)
         super().__init__(*args, **kwargs)
         if activity_id:
-            self.fields["resource"].queryset = ProductionResource.objects.filter(
+            resource_field: forms.ModelChoiceField = self.fields["resource"]  # type: ignore
+            resource_field.queryset = ProductionResource.objects.filter(
                 production_plan_id=activity_id, resource_type="PLANT"
             )
-            self.fields["activity"].queryset = ProductionPlan.objects.filter(
-                id=activity_id
-            )
+            activity_field: forms.ModelChoiceField = self.fields["activity"]  # type: ignore
+            activity_field.queryset = ProductionPlan.objects.filter(id=activity_id)
 
     def clean(self):
         cleaned_data = super().clean()
@@ -407,9 +420,8 @@ class AggregatedLabourForm(forms.Form):
             )
 
         # Optional project check if project_id was passed to form
-        if hasattr(self, "project_id") and self.project_id:
-            if plan.project_id != self.project_id:
-                raise ValidationError("Invalid activity for this project.")
+        if self.project_id and plan.project_id != self.project_id:
+            raise ValidationError("Invalid activity for this project.")
 
         try:
             resources = ProductionResource.objects.filter(
@@ -442,11 +454,12 @@ class AggregatedLabourForm(forms.Form):
         return cleaned_data
 
     def __init__(self, *args, **kwargs):
-        project_id = kwargs.pop("project_id", None)
+        self.project_id: int | None = kwargs.pop("project_id", None)
         super().__init__(*args, **kwargs)
-        if project_id:
-            self.fields["activity"].queryset = ProductionPlan.objects.filter(
-                project_id=project_id
+        if self.project_id:
+            activity_field: forms.ModelChoiceField = self.fields["activity"]  # type: ignore
+            activity_field.queryset = ProductionPlan.objects.filter(
+                project_id=self.project_id
             )
 
 

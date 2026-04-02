@@ -1,9 +1,15 @@
+from typing import TYPE_CHECKING
+
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models import QuerySet
 from django.utils import timezone
 
 from app.core.Utilities.models import BaseModel
 from app.Project.models import Project
+
+if TYPE_CHECKING:
+    from django.db.models import Manager as RelatedManager
 
 
 class DailyProduction(BaseModel):
@@ -36,6 +42,9 @@ class ProductionPlan(BaseModel):
     unit = models.CharField(max_length=50)
     duration = models.IntegerField(default=0, help_text="Duration in days")
     is_archived = models.BooleanField(default=False)
+
+    if TYPE_CHECKING:
+        resources: QuerySet["ProductionResource"]
 
     class Meta:
         verbose_name = "Production Plan"
@@ -182,6 +191,11 @@ class DailyActivityEntry(BaseModel):
     quantity = models.DecimalField(
         max_digits=15, decimal_places=2, default=0, validators=[MinValueValidator(0)]
     )
+
+    if TYPE_CHECKING:
+        labour_usage: "RelatedManager[DailyLabourUsage]"
+        plant_usage: "RelatedManager[DailyPlantUsage]"
+        resource: "RelatedManager[DailyPlantUsage]"
 
     class Meta:
         verbose_name = "Daily Activity Entry"

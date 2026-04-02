@@ -2,13 +2,11 @@
 {% load static %}
 {% load heroicons %}
 {% load crispy_forms_tags %}
-
 {% block title %}
-  Daily Productivity Form - {{ project.name }} - {{ block.super }}
+    Daily Productivity Form - {{ project.name }} - {{ block.super }}
 {% endblock title %}
-
 {% block extra_css %}
-<style>
+    <style>
   .field-error-container input, 
   .field-error-container select, 
   .field-error-container textarea {
@@ -29,242 +27,231 @@
   .animate-shake {
     animation: shake 0.2s ease-in-out 0s 2;
   }
-</style>
+    </style>
 {% endblock extra_css %}
-
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  <!-- Header -->
-  <div class="bg-white shadow-sm rounded-lg mb-6 border border-gray-100">
-    <div class="px-6 py-4">
-      <div class="flex items-center justify-between mb-4">
-        <a href="{% url 'project:company-management' project.pk %}"
-          class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors">
-          {% heroicon_outline "chevron-left" size="20" class="mr-1" %}
-          <span>Back to Management</span>
-        </a>
-      </div>
-      
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div class="flex-1 md:w-2/3">
-          <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Daily Productivity Form</h1>
-          <p class="text-sm font-medium text-gray-500 mt-1 flex items-center">
-            <span>Project:</span>
-            <span class="text-gray-900 ml-2">{{ project.name }}</span>
-          </p>
-        </div>
-
-        <div class=" md:w-1/3 relative">
-          <label class="block text-xs font-semibold text-gray-400  mb-2">Select Production Plans</label>
-          
-          <!-- Custom Multi-Select Dropdown -->
-          <div class="relative" id="plan-selector-container">
-            <button type="button" 
-                    onclick="togglePlanDropdown()"
-                    class="w-full flex items-center justify-between bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-sm">
-              <span id="selector-label">
-                {% if selected_plans %}
-                  {{ selected_plans.count }} Plans Selected
-                {% else %}
-                  Choose activities...
-                {% endif %}
-              </span>
-              {% heroicon_outline "chevron-down" size="20" class="text-gray-400 transition-transform" id="selector-arrow" %}
-            </button>
-
-            <!-- Dropdown Menu -->
-            <div id="plan-dropdown" class="hidden absolute right-0 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-2xl z-50 overflow-hidden transform origin-top transition-all scale-95 opacity-0">
-              <div class="p-3 border-b border-gray-100 bg-gray-50">
-                <div class="relative">
-                  {% heroicon_outline "magnifying-glass" size="18" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" %}
-                  <input type="text" 
-                         id="plan-search" 
-                         placeholder="Search activities..." 
-                         class="w-full pl-10 pr-4 py-2 text-sm border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-                         onkeyup="filterPlans()">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="bg-white shadow-sm rounded-lg mb-6 border border-gray-100">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between mb-4">
+                    <a href="{% url 'project:company-management' project.pk %}"
+                       class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors">
+                        {% heroicon_outline "chevron-left" size="20" class="mr-1" %}
+                        <span>Back to Management</span>
+                    </a>
                 </div>
-              </div>
-              
-              <div class="max-h-64 overflow-y-auto p-2" id="plan-list">
-                {% for plan in all_plans %}
-                  <label class="flex items-center px-3 py-2.5 rounded-lg hover:bg-indigo-50 cursor-pointer group transition-colors plan-item" data-name="{{ plan.activity|lower }}">
-                    <input type="checkbox" 
-                           name="selected_plans_trigger" 
-                           value="{{ plan.id }}" 
-                           class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 transition-all cursor-pointer"
-                           {% if plan.id in selected_plans_ids %}checked{% endif %}
-                           onchange="handlePlanSelectionChange(this)">
-                    <div class="ml-3">
-                      <span class="block text-sm font-semibold text-gray-700 group-hover:text-indigo-900">{{ plan.activity }}</span>
-                      <span class="block text-xs text-gray-400">{{ plan.unit }}</span>
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex-1 md:w-2/3">
+                        <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Daily Productivity Form</h1>
+                        <p class="text-sm font-medium text-gray-500 mt-1 flex items-center">
+                            <span>Project:</span>
+                            <span class="text-gray-900 ml-2">{{ project.name }}</span>
+                        </p>
                     </div>
-                  </label>
-                {% empty %}
-                  <div class="p-4 text-center text-sm text-gray-500 italic">No plans available</div>
-                {% endfor %}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Selected Pills Area -->
-      <div id="selected-pills" class="mt-6 flex flex-wrap gap-2">
-        {% for plan in selected_plans %}
-          <div class="inline-flex items-center bg-indigo-50 border-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold animate-in fade-in zoom-in duration-200" id="pill-{{ plan.id }}">
-            <span>{{ plan.activity|title }}</span>
-            <button type="button" onclick="removePlan('{{ plan.id }}')" class="ml-2 hover:text-indigo-900 transition-colors">
-              {% heroicon_outline "x-mark" size="12" %}
-            </button>
-          </div>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
-    
-  <form method="POST" id="productivity-form" novalidate>
-    {% csrf_token %}
-    <div id="selected-plans-inputs"></div>
-    
-    <div id="form-content-wrapper" class="{% if not selected_plans %}hidden{% endif %}">
-    
-    <!-- Unified Daily Productivity Log Card -->
-    <div class="bg-white shadow-sm rounded-lg mb-6 overflow-hidden border border-gray-200">
-      <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-          <div>
-              <h2 class="text-lg font-bold text-gray-900">Daily Productivity Log</h2>
-              <p class="text-sm text-gray-600">Site report for capturing activity and resource usage</p>
-          </div>
-      </div>
-      
-      <div class="p-6 space-y-8">
-        <!-- Error Alerts -->
-        {% if report_form.non_field_errors or labour_formset.non_form_errors %}
-          <div class="rounded-md bg-red-50 p-4 border border-red-200">
-            <div class="flex">
-              <div class="flex-shrink-0">
-                {% heroicon_solid "x-circle" class="h-5 w-5 text-red-400" %}
-              </div>
-              <div class="ml-3">
-                <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
-                <div class="mt-2 text-sm text-red-700">
-                  <ul class="list-disc pl-5 space-y-1">
-                    {% for error in report_form.non_field_errors %}
-                      <li>{{ error }}</li>
-                    {% endfor %}
-                    {% for error in labour_formset.non_form_errors %}
-                      <li>{{ error }}</li>
-                    {% endfor %}
-                    {% if plant_formsets %}
-                      {% for plan_id, p_formset in plant_formsets.items %}
-                        {% for error in p_formset.non_form_errors %}
-                          <li>Plant Log ({{ plan_id }}): {{ error }}</li>
-                        {% endfor %}
-                      {% endfor %}
-                    {% endif %}
-                  </ul>
+                    <div class=" md:w-1/3 relative">
+                        <label class="block text-xs font-semibold text-gray-400  mb-2">Select Production Plans</label>
+                        <!-- Custom Multi-Select Dropdown -->
+                        <div class="relative" id="plan-selector-container">
+                            <button type="button"
+                                    onclick="togglePlanDropdown()"
+                                    class="w-full flex items-center justify-between bg-white border border-gray-300 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-sm">
+                                <span id="selector-label">
+                                    {% if selected_plans %}
+                                        {{ selected_plans.count }} Plans Selected
+                                    {% else %}
+                                        Choose activities...
+                                    {% endif %}
+                                </span>
+                                {% heroicon_outline "chevron-down" size="20" class="text-gray-400 transition-transform" id="selector-arrow" %}
+                            </button>
+                            <!-- Dropdown Menu -->
+                            <div id="plan-dropdown"
+                                 class="hidden absolute right-0 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-2xl z-50 overflow-hidden transform origin-top transition-all scale-95 opacity-0">
+                                <div class="p-3 border-b border-gray-100 bg-gray-50">
+                                    <div class="relative">
+                                        {% heroicon_outline "magnifying-glass" size="18" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" %}
+                                        <input type="text"
+                                               id="plan-search"
+                                               placeholder="Search activities..."
+                                               class="w-full pl-10 pr-4 py-2 text-sm border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                                               onkeyup="filterPlans()">
+                                    </div>
+                                </div>
+                                <div class="max-h-64 overflow-y-auto p-2" id="plan-list">
+                                    {% for plan in all_plans %}
+                                        <label class="flex items-center px-3 py-2.5 rounded-lg hover:bg-indigo-50 cursor-pointer group transition-colors plan-item"
+                                               data-name="{{ plan.activity|lower }}">
+                                            <input type="checkbox"
+                                                   name="selected_plans_trigger"
+                                                   value="{{ plan.id }}"
+                                                   class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 transition-all cursor-pointer"
+                                                   {% if plan.id in selected_plans_ids %}checked{% endif %}
+                                                   onchange="handlePlanSelectionChange(this)">
+                                            <div class="ml-3">
+                                                <span class="block text-sm font-semibold text-gray-700 group-hover:text-indigo-900">{{ plan.activity }}</span>
+                                                <span class="block text-xs text-gray-400">{{ plan.unit }}</span>
+                                            </div>
+                                        </label>
+                                    {% empty %}
+                                        <div class="p-4 text-center text-sm text-gray-500 italic">No plans available</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
+                <!-- Selected Pills Area -->
+                <div id="selected-pills" class="mt-6 flex flex-wrap gap-2">
+                    {% for plan in selected_plans %}
+                        <div class="inline-flex items-center bg-indigo-50 border-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold animate-in fade-in zoom-in duration-200"
+                             id="pill-{{ plan.id }}">
+                            <span>{{ plan.activity|title }}</span>
+                            <button type="button"
+                                    onclick="removePlan('{{ plan.id }}')"
+                                    class="ml-2 hover:text-indigo-900 transition-colors">
+                                {% heroicon_outline "x-mark" size="12" %}
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
-          </div>
-        {% endif %}
-
-        <!-- Section 1: Activity Overview -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-end border-b border-gray-100 pb-8">
-          <div>
-            {{ report_form.date|as_crispy_field }}
-          </div>
         </div>
-
-        <div id="resource-formsets-container" class="space-y-8 min-h-[200px] relative">
-          <!-- Dynamically loaded content -->
-          {% include "production_progress/partials/resource_formsets_multi.html" %}
+        <form method="post" id="productivity-form" novalidate>
+            {% csrf_token %}
+            <div id="selected-plans-inputs"></div>
+            <div id="form-content-wrapper"
+                 class="{% if not selected_plans %}hidden{% endif %}">
+                <!-- Unified Daily Productivity Log Card -->
+                <div class="bg-white shadow-sm rounded-lg mb-6 overflow-hidden border border-gray-200">
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900">Daily Productivity Log</h2>
+                            <p class="text-sm text-gray-600">Site report for capturing activity and resource usage</p>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-8">
+                        <!-- Error Alerts -->
+                        {% if report_form.non_field_errors or labour_formset.non_form_errors %}
+                            <div class="rounded-md bg-red-50 p-4 border border-red-200">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">{% heroicon_solid "x-circle" class="h-5 w-5 text-red-400" %}</div>
+                                    <div class="ml-3">
+                                        <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
+                                        <div class="mt-2 text-sm text-red-700">
+                                            <ul class="list-disc pl-5 space-y-1">
+                                                {% for error in report_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+                                                {% for error in labour_formset.non_form_errors %}<li>{{ error }}</li>{% endfor %}
+                                                {% if plant_formsets %}
+                                                    {% for plan_id, p_formset in plant_formsets.items %}
+                                                        {% for error in p_formset.non_form_errors %}<li>Plant Log ({{ plan_id }}): {{ error }}</li>{% endfor %}
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                        <!-- Section 1: Activity Overview -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-end border-b border-gray-100 pb-8">
+                            <div>{{ report_form.date|as_crispy_field }}</div>
+                        </div>
+                        <div id="resource-formsets-container"
+                             class="space-y-8 min-h-[200px] relative">
+                            <!-- Dynamically loaded content -->
+                            {% include "production_progress/partials/resource_formsets_multi.html" %}
+                        </div>
+                    </div>
+                </div>
+                <!-- Empty Form Templates -->
+                <div id="empty-labour-form" class="hidden">
+                    <div class="grid grid-cols-[1fr_repeat(5,110px)_12px] items-center hover:bg-gray-50 transition-colors labour-row">
+                        <div class="px-3 py-2 border-r border-gray-200">{{ labour_formset.empty_form.activity|as_crispy_field }}</div>
+                        <div class="px-3 py-2 border-r border-gray-200">{{ labour_formset.empty_form.quantity|as_crispy_field }}</div>
+                        <div class="px-3 py-2 border-r border-gray-200">{{ labour_formset.empty_form.skilled_number|as_crispy_field }}</div>
+                        <div class="px-3 py-2 border-r border-gray-200">
+                            {{ labour_formset.empty_form.semi_skilled_number|as_crispy_field }}
+                        </div>
+                        <div class="px-3 py-2 border-r border-gray-200">{{ labour_formset.empty_form.unskilled_number|as_crispy_field }}</div>
+                        <div class="px-3 py-2 border-r border-gray-200">{{ labour_formset.empty_form.total_hours|as_crispy_field }}</div>
+                        <div class="px-3 py-2 text-right">
+                            <button type="button"
+                                    class="text-red-600 hover:text-red-900 remove-row-btn"
+                                    onclick="removeRow(this)">{% heroicon_outline "trash" size="18" %}</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="empty-plant-form" class="hidden">
+                    <div class="grid grid-cols-[1fr_120px_120px_12px] items-center hover:bg-gray-50 transition-colors plant-row">
+                        <div class="px-6 py-4 border-r border-gray-200">
+                            {{ plant_formset.empty_form.id }}{{ plant_formset.empty_form.resource|as_crispy_field }}
+                        </div>
+                        <div class="px-6 py-4 border-r border-gray-200">{{ plant_formset.empty_form.number|as_crispy_field }}</div>
+                        <div class="px-6 py-4 border-r border-gray-200">{{ plant_formset.empty_form.hours|as_crispy_field }}</div>
+                        <div class="px-3 py-4 text-right">
+                            <button type="button"
+                                    class="text-red-600 hover:text-red-900 remove-row-btn"
+                                    onclick="removeRow(this)">{% heroicon_outline "trash" size="18" %}</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8 flex items-center justify-end space-x-3">
+                    <a href="#"
+                       onclick="window.history.back(); return false;"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                            id="submit-btn"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="btn-text" class="flex items-center">
+                            {% heroicon_solid "check" class="w-4 h-4 mr-2" %}
+                            Submit Daily Log
+                        </span>
+                        <span id="btn-loader" class="hidden flex items-center">
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 fill="none"
+                                 viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            Processing...
+                        </span>
+                    </button>
+                </div>
+            </div>
+            <!-- End form-content-wrapper -->
+            <div id="no-plan-placeholder"
+                 class="{% if selected_plans %}hidden{% endif %} bg-white py-12 text-center border-2 border-dashed border-gray-200 rounded-lg">
+                <div class="mx-auto w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
+                    {% heroicon_outline "clipboard-document-list" class="w-6 h-6 text-gray-400" %}
+                </div>
+                <h3 class="text-sm font-medium text-gray-900">No Plan Selected</h3>
+                <p class="text-xs text-gray-500 mt-1">Select a production plan above to load resource requirements.</p>
+            </div>
+        </form>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-white rounded-lg mt-8 shadow-sm">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'project:company-management' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                    Business Management
+                </a>
+                <a href="{% url 'project:production-dashboard' project.pk %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    Production Dashboard
+                    {% heroicon_outline "chevron-right" class="w-4 h-4 mr-1" %}
+                </a>
+            </div>
         </div>
-      </div>
     </div>
-
-    <!-- Empty Form Templates -->
-    <div id="empty-labour-form" class="hidden">
-      <div class="grid grid-cols-[1fr_repeat(5,110px)_12px] items-center hover:bg-gray-50 transition-colors labour-row">
-        <div class="px-3 py-2 border-r border-gray-200">{{ labour_formset.empty_form.activity|as_crispy_field }}</div>
-        <div class="px-3 py-2 border-r border-gray-200">{{ labour_formset.empty_form.quantity|as_crispy_field }}</div>
-        <div class="px-3 py-2 border-r border-gray-200">{{ labour_formset.empty_form.skilled_number|as_crispy_field }}</div>
-        <div class="px-3 py-2 border-r border-gray-200">{{ labour_formset.empty_form.semi_skilled_number|as_crispy_field }}</div>
-        <div class="px-3 py-2 border-r border-gray-200">{{ labour_formset.empty_form.unskilled_number|as_crispy_field }}</div>
-        <div class="px-3 py-2 border-r border-gray-200">{{ labour_formset.empty_form.total_hours|as_crispy_field }}</div>
-        <div class="px-3 py-2 text-right">
-          <button type="button" class="text-red-600 hover:text-red-900 remove-row-btn" onclick="removeRow(this)">
-            {% heroicon_outline "trash" size="18" %}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div id="empty-plant-form" class="hidden">
-      <div class="grid grid-cols-[1fr_120px_120px_12px] items-center hover:bg-gray-50 transition-colors plant-row">
-        <div class="px-6 py-4 border-r border-gray-200">{{ plant_formset.empty_form.id }}{{ plant_formset.empty_form.resource|as_crispy_field }}</div>
-        <div class="px-6 py-4 border-r border-gray-200">{{ plant_formset.empty_form.number|as_crispy_field }}</div>
-        <div class="px-6 py-4 border-r border-gray-200">{{ plant_formset.empty_form.hours|as_crispy_field }}</div>
-        <div class="px-3 py-4 text-right">
-          <button type="button" class="text-red-600 hover:text-red-900 remove-row-btn" onclick="removeRow(this)">
-            {% heroicon_outline "trash" size="18" %}
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="mt-8 flex items-center justify-end space-x-3">
-      <a href="#" onclick="window.history.back(); return false;" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-          Cancel
-      </a>
-      <button type="submit" id="submit-btn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-          <span id="btn-text" class="flex items-center">
-            {% heroicon_solid "check" class="w-4 h-4 mr-2" %}
-            Submit Daily Log
-          </span>
-          <span id="btn-loader" class="hidden flex items-center">
-             <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-             </svg>
-             Processing...
-          </span>
-      </button>
-    </div>
-    </div><!-- End form-content-wrapper -->
-
-    <div id="no-plan-placeholder" class="{% if selected_plans %}hidden{% endif %} bg-white py-12 text-center border-2 border-dashed border-gray-200 rounded-lg">
-        <div class="mx-auto w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
-            {% heroicon_outline "clipboard-document-list" class="w-6 h-6 text-gray-400" %}
-        </div>
-        <h3 class="text-sm font-medium text-gray-900">No Plan Selected</h3>
-        <p class="text-xs text-gray-500 mt-1">Select a production plan above to load resource requirements.</p>
-    </div>
-  </form>
-
-  <!-- Footer -->
-  <div class="px-6 py-4 bg-white rounded-lg mt-8 shadow-sm">
-      <div class="flex justify-between items-center">
-          
-          <a href="{% url 'project:company-management' project.pk %}"
-          class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-          {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
-          Business Management
-      
-          </a>
-          <a href="{% url 'project:production-dashboard' project.pk %}"
-          class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-      
-          Production Dashboard
-          {% heroicon_outline "chevron-right" class="w-4 h-4 mr-1" %}
-          </a>
-      </div>
-  </div>
-</div>
 {% endblock content %}
-
 {% block extra_js %}
-<script>
+    <script>
   function togglePlanDropdown() {
     const dropdown = document.getElementById('plan-dropdown');
     const arrow = document.getElementById('selector-arrow');
@@ -464,5 +451,5 @@
 
     // Attach change listener... (rest of the logic usually handled by AJAX)
   });
-</script>
+    </script>
 {% endblock extra_js %}

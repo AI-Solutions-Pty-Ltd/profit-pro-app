@@ -1,1 +1,18 @@
-from .production_views import *
+from .production_views import (
+    DailyProductionCreateView,
+    DailyProductivityCreateView,
+    PlanProductivityDashboardView,
+    PlanResourcesAjaxView,
+    ProductionActivityDetailView,
+    ProductionCostBreakdownView,
+    ProductionDashboardView,
+    ProductionForecastDashboardView,
+    ProductionPlanDeleteView,
+    ProductionPlanDetailView,
+    ProductionPlanningView,
+    ProductionPlanUpdateView,
+    ProductionProgressDashboardView,
+    ProductionResourceCreateView,
+    ProductivityLogsView,
+    ProgressTrackingView,
+)

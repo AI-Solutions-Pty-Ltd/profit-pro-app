@@ -1,220 +1,175 @@
-{% extends "base_full.html" %} {% block title %} {{ project.name }} Dashboard -
-{{ block.super }} {% endblock title %} {% load humanize %} {% block content %}
-<!-- Project Dashboard Card -->
-<div class="bg-white shadow-md rounded-lg overflow-hidden">
-  <!-- Header -->
-  <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
-        <p class="text-sm text-gray-500 mt-1">Project Dashboard</p>
-      </div>
-      <!-- Link to Project Management -->
-      <a
-        href="{% url 'project:project-management' project.pk %}"
-        class="inline-flex items-center px-4 py-2 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-      >
-        {% heroicon_outline "cog-6-tooth" size="20" %}
-        <span class="ml-2">Project Management</span>
-      </a>
+{% extends "base_full.html" %}
+{% block title %}
+    {{ project.name }} Dashboard -
+    {{ block.super }}
+{% endblock title %}
+{% load humanize %}
+{% block content %}
+    <!-- Project Dashboard Card -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-gray-200 bg-gray-50">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ project.name }}</h1>
+                    <p class="text-sm text-gray-500 mt-1">Project Dashboard</p>
+                </div>
+                <!-- Link to Project Management -->
+                <a href="{% url 'project:project-management' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    {% heroicon_outline "cog-6-tooth" size="20" %}
+                    <span class="ml-2">Project Management</span>
+                </a>
+            </div>
+        </div>
+        {% include "project/reports_nav.html" with tab="dashboard" %}
+        <!-- Summary Metrics -->
+        <div class="px-6 py-6 border-b border-gray-200">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <!-- Original Contract Value -->
+                <div class="bg-blue-50 rounded-lg p-4 text-center border border-blue-100">
+                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                        {% heroicon_outline "document-text" size="20" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Original Contract</p>
+                    <p class="text-base font-bold text-blue-700 mt-1 text-wrap leading-tight">
+                        R&nbsp;{{ original_contract_value|floatformat:0|intcomma }}
+                    </p>
+                </div>
+                <!-- Revised Contract Value -->
+                <div class="bg-indigo-50 rounded-lg p-4 text-center border border-indigo-100">
+                    <div class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                        {% heroicon_outline "banknotes" size="20" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-indigo-600 uppercase tracking-wider">Revised Contract</p>
+                    <p class="text-base font-bold text-indigo-700 mt-1 text-wrap leading-tight">
+                        R&nbsp;{{ revised_contract_value|floatformat:0|intcomma }}
+                    </p>
+                </div>
+                <!-- Latest Forecast -->
+                <div class="bg-amber-50 rounded-lg p-4 text-center border border-amber-100">
+                    <div class="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                        {% heroicon_outline "chart-bar" size="20" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Latest Forecast</p>
+                    {% if latest_forecast_value %}
+                        <p class="text-base font-bold text-amber-700 mt-1 text-wrap leading-tight">
+                            R&nbsp;{{ latest_forecast_value|floatformat:0|intcomma }}
+                        </p>
+                        <p class="text-xs {% if forecast_variance_percent > 0 %}text-red-600{% elif forecast_variance_percent < 0 %}text-green-600{% else %}text-gray-500{% endif %}">
+                            {% if forecast_variance_percent > 0 %}+{% endif %}
+                            {{
+                            forecast_variance_percent }}% variance
+                        </p>
+                    {% else %}
+                        <p class="text-base font-bold text-amber-700 mt-1">--</p>
+                    {% endif %}
+                </div>
+                <!-- Certified to Date -->
+                <div class="bg-green-50 rounded-lg p-4 text-center border border-green-100">
+                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                        {% heroicon_outline "check-badge" size="20" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Certified to Date</p>
+                    <p class="text-base font-bold text-green-700 mt-1 text-wrap leading-tight">
+                        R&nbsp;{{ certified_to_date|floatformat:0|intcomma }}
+                    </p>
+                    {% if certified_percent is not None %}
+                        <p class="text-xs text-green-600">{{ certified_percent }}% of contract</p>
+                    {% endif %}
+                </div>
+                <!-- CPI -->
+                <div class="bg-cyan-50 rounded-lg p-4 text-center border border-cyan-100">
+                    <div class="w-10 h-10 {% if current_cpi > 1 %}bg-green-500{% elif current_cpi == 1 %}bg-cyan-500{% elif current_cpi %}bg-red-500{% else %}bg-gray-400{% endif %} rounded-full flex items-center justify-center mx-auto mb-3">
+                        {% heroicon_outline "currency-dollar" size="20" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-cyan-600 uppercase tracking-wider">CPI</p>
+                    <p class="text-base font-bold {% if current_cpi > 1 %}text-green-700{% elif current_cpi == 1 %}text-cyan-700{% elif current_cpi %}text-red-700{% else %}text-gray-500{% endif %} mt-1 text-wrap leading-tight">
+                        {{ current_cpi|default:"--" }}
+                    </p>
+                    {% if current_cpi %}
+                        <p class="text-xs {% if current_cpi > 1 %}text-green-600{% elif current_cpi == 1 %}text-cyan-600{% else %}text-red-600{% endif %}">
+                            {% if current_cpi > 1 %}
+                                Under Budget
+                            {% elif current_cpi == 1 %}
+                                On
+                                Budget
+                            {% else %}
+                                Over Budget
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                </div>
+                <!-- SPI -->
+                <div class="bg-violet-50 rounded-lg p-4 text-center border border-violet-100">
+                    <div class="w-10 h-10 {% if current_spi > 1 %}bg-green-500{% elif current_spi == 1 %}bg-violet-500{% elif current_spi %}bg-red-500{% else %}bg-gray-400{% endif %} rounded-full flex items-center justify-center mx-auto mb-3">
+                        {% heroicon_outline "clock" size="20" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-violet-600 uppercase tracking-wider">SPI</p>
+                    <p class="text-base font-bold {% if current_spi > 1 %}text-green-700{% elif current_spi == 1 %}text-violet-700{% elif current_spi %}text-red-700{% else %}text-gray-500{% endif %} mt-1 text-wrap leading-tight">
+                        {{ current_spi|default:"--" }}
+                    </p>
+                    {% if current_spi %}
+                        <p class="text-xs {% if current_spi > 1 %}text-green-600{% elif current_spi == 1 %}text-violet-600{% else %}text-red-600{% endif %}">
+                            {% if current_spi > 1 %}
+                                Ahead
+                            {% elif current_spi == 1 %}
+                                On Schedule
+                            {% else %}
+                                Behind
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <!-- Financial Comparison Bar Chart -->
+        <div class="px-6 py-6 border-b border-gray-200">
+            <h6 class="text-sm font-semibold text-gray-700 mb-4 flex items-center">
+                {% heroicon_outline "chart-bar" size="18" class="mr-2 text-gray-500" %}
+                Financial Comparison (Last 12 Months)
+            </h6>
+            <div class="bg-gradient-to-br from-slate-50 to-gray-50 rounded-lg p-4 border border-slate-200">
+                <div class="h-80">
+                    <canvas id="financialChart"></canvas>
+                </div>
+                <div class="mt-4 flex flex-wrap items-center justify-center gap-4 text-sm">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-cyan-500 rounded mr-2"></div>
+                        <span class="text-gray-600">Planned Value</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-amber-500 rounded mr-2"></div>
+                        <span class="text-gray-600">Forecast</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
+                        <span class="text-gray-600">Cumulative Certified</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-8 h-0.5 bg-red-500 mr-2"></div>
+                        <span class="text-gray-600">Contract Value</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <div class="flex justify-between items-center">
+                <a href="{% url 'project:portfolio-dashboard' %}"
+                   class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                    {% heroicon_outline "chevron-left" %} Back to Portfolio Dashboard
+                </a>
+                <a href="{% url 'project:project-management' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    {% heroicon_outline "cog-6-tooth" size="16" %}
+                    <span class="ml-2">Project Management</span>
+                </a>
+            </div>
+        </div>
     </div>
-  </div>
-  {% include "project/reports_nav.html" with tab="dashboard" %}
-  <!-- Summary Metrics -->
-  <div class="px-6 py-6 border-b border-gray-200">
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-      <!-- Original Contract Value -->
-      <div class="bg-blue-50 rounded-lg p-4 text-center border border-blue-100">
-        <div
-          class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3"
-        >
-          {% heroicon_outline "document-text" size="20" class="text-white" %}
-        </div>
-        <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">
-          Original Contract
-        </p>
-        <p
-          class="text-base font-bold text-blue-700 mt-1 text-wrap leading-tight"
-        >
-          R&nbsp;{{ original_contract_value|floatformat:0|intcomma }}
-        </p>
-      </div>
-      <!-- Revised Contract Value -->
-      <div
-        class="bg-indigo-50 rounded-lg p-4 text-center border border-indigo-100"
-      >
-        <div
-          class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center mx-auto mb-3"
-        >
-          {% heroicon_outline "banknotes" size="20" class="text-white" %}
-        </div>
-        <p class="text-xs font-medium text-indigo-600 uppercase tracking-wider">
-          Revised Contract
-        </p>
-        <p
-          class="text-base font-bold text-indigo-700 mt-1 text-wrap leading-tight"
-        >
-          R&nbsp;{{ revised_contract_value|floatformat:0|intcomma }}
-        </p>
-      </div>
-      <!-- Latest Forecast -->
-      <div
-        class="bg-amber-50 rounded-lg p-4 text-center border border-amber-100"
-      >
-        <div
-          class="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-3"
-        >
-          {% heroicon_outline "chart-bar" size="20" class="text-white" %}
-        </div>
-        <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">
-          Latest Forecast
-        </p>
-        {% if latest_forecast_value %}
-        <p
-          class="text-base font-bold text-amber-700 mt-1 text-wrap leading-tight"
-        >
-          R&nbsp;{{ latest_forecast_value|floatformat:0|intcomma }}
-        </p>
-        <p
-          class="text-xs {% if forecast_variance_percent > 0 %}text-red-600{% elif forecast_variance_percent < 0 %}text-green-600{% else %}text-gray-500{% endif %}"
-        >
-          {% if forecast_variance_percent > 0 %}+{% endif %} {{
-          forecast_variance_percent }}% variance
-        </p>
-        {% else %}
-        <p class="text-base font-bold text-amber-700 mt-1">--</p>
-        {% endif %}
-      </div>
-      <!-- Certified to Date -->
-      <div
-        class="bg-green-50 rounded-lg p-4 text-center border border-green-100"
-      >
-        <div
-          class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3"
-        >
-          {% heroicon_outline "check-badge" size="20" class="text-white" %}
-        </div>
-        <p class="text-xs font-medium text-green-600 uppercase tracking-wider">
-          Certified to Date
-        </p>
-        <p
-          class="text-base font-bold text-green-700 mt-1 text-wrap leading-tight"
-        >
-          R&nbsp;{{ certified_to_date|floatformat:0|intcomma }}
-        </p>
-        {% if certified_percent is not None %}
-        <p class="text-xs text-green-600">
-          {{ certified_percent }}% of contract
-        </p>
-        {% endif %}
-      </div>
-      <!-- CPI -->
-      <div class="bg-cyan-50 rounded-lg p-4 text-center border border-cyan-100">
-        <div
-          class="w-10 h-10 {% if current_cpi > 1 %}bg-green-500{% elif current_cpi == 1 %}bg-cyan-500{% elif current_cpi %}bg-red-500{% else %}bg-gray-400{% endif %} rounded-full flex items-center justify-center mx-auto mb-3"
-        >
-          {% heroicon_outline "currency-dollar" size="20" class="text-white" %}
-        </div>
-        <p class="text-xs font-medium text-cyan-600 uppercase tracking-wider">
-          CPI
-        </p>
-        <p
-          class="text-base font-bold {% if current_cpi > 1 %}text-green-700{% elif current_cpi == 1 %}text-cyan-700{% elif current_cpi %}text-red-700{% else %}text-gray-500{% endif %} mt-1 text-wrap leading-tight"
-        >
-          {{ current_cpi|default:"--" }}
-        </p>
-        {% if current_cpi %}
-        <p
-          class="text-xs {% if current_cpi > 1 %}text-green-600{% elif current_cpi == 1 %}text-cyan-600{% else %}text-red-600{% endif %}"
-        >
-          {% if current_cpi > 1 %} Under Budget {% elif current_cpi == 1 %} On
-          Budget {% else %} Over Budget {% endif %}
-        </p>
-        {% endif %}
-      </div>
-      <!-- SPI -->
-      <div
-        class="bg-violet-50 rounded-lg p-4 text-center border border-violet-100"
-      >
-        <div
-          class="w-10 h-10 {% if current_spi > 1 %}bg-green-500{% elif current_spi == 1 %}bg-violet-500{% elif current_spi %}bg-red-500{% else %}bg-gray-400{% endif %} rounded-full flex items-center justify-center mx-auto mb-3"
-        >
-          {% heroicon_outline "clock" size="20" class="text-white" %}
-        </div>
-        <p class="text-xs font-medium text-violet-600 uppercase tracking-wider">
-          SPI
-        </p>
-        <p
-          class="text-base font-bold {% if current_spi > 1 %}text-green-700{% elif current_spi == 1 %}text-violet-700{% elif current_spi %}text-red-700{% else %}text-gray-500{% endif %} mt-1 text-wrap leading-tight"
-        >
-          {{ current_spi|default:"--" }}
-        </p>
-        {% if current_spi %}
-        <p
-          class="text-xs {% if current_spi > 1 %}text-green-600{% elif current_spi == 1 %}text-violet-600{% else %}text-red-600{% endif %}"
-        >
-          {% if current_spi > 1 %} Ahead {% elif current_spi == 1 %} On Schedule
-          {% else %} Behind {% endif %}
-        </p>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-  <!-- Financial Comparison Bar Chart -->
-  <div class="px-6 py-6 border-b border-gray-200">
-    <h6 class="text-sm font-semibold text-gray-700 mb-4 flex items-center">
-      {% heroicon_outline "chart-bar" size="18" class="mr-2 text-gray-500" %}
-      Financial Comparison (Last 12 Months)
-    </h6>
-    <div
-      class="bg-gradient-to-br from-slate-50 to-gray-50 rounded-lg p-4 border border-slate-200"
-    >
-      <div class="h-80">
-        <canvas id="financialChart"></canvas>
-      </div>
-      <div
-        class="mt-4 flex flex-wrap items-center justify-center gap-4 text-sm"
-      >
-        <div class="flex items-center">
-          <div class="w-4 h-4 bg-cyan-500 rounded mr-2"></div>
-          <span class="text-gray-600">Planned Value</span>
-        </div>
-        <div class="flex items-center">
-          <div class="w-4 h-4 bg-amber-500 rounded mr-2"></div>
-          <span class="text-gray-600">Forecast</span>
-        </div>
-        <div class="flex items-center">
-          <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
-          <span class="text-gray-600">Cumulative Certified</span>
-        </div>
-        <div class="flex items-center">
-          <div class="w-8 h-0.5 bg-red-500 mr-2"></div>
-          <span class="text-gray-600">Contract Value</span>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- Footer -->
-  <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
-    <div class="flex justify-between items-center">
-      <a
-        href="{% url 'project:portfolio-dashboard' %}"
-        class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors"
-      >
-        {% heroicon_outline "chevron-left" %} Back to Portfolio Dashboard
-      </a>
-      <a
-        href="{% url 'project:project-management' project.pk %}"
-        class="inline-flex items-center px-4 py-2 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-      >
-        {% heroicon_outline "cog-6-tooth" size="16" %}
-        <span class="ml-2">Project Management</span>
-      </a>
-    </div>
-  </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
   document.addEventListener('DOMContentLoaded', function() {
       // Financial Comparison Bar Chart
       const financialLabels = {{ financial_labels|safe }};
@@ -324,5 +279,5 @@
           }
       });
   });
-</script>
+    </script>
 {% endblock content %}
