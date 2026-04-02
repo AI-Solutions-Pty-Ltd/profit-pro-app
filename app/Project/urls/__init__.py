@@ -9,6 +9,7 @@ from ..categories.subcategory_urls import urlpatterns as subcategory_urls
 from ..company.company_urls import urlpatterns as company_urls
 from ..documents.document_urls import urlpatterns as document_urls
 from ..milestone_schedules.milestone_urls import urlpatterns as milestone_urls
+from ..production_progress.urls.production_urls import urlpatterns as production_urls
 from ..projects.category_urls import urlpatterns as project_category_urls
 from ..projects.project_urls import urlpatterns as project_urls
 from .compliance_urls import urlpatterns as compliance_urls
@@ -20,7 +21,6 @@ from .report_urls import urlpatterns as report_urls
 from .risk_urls import urlpatterns as risk_urls
 from .signatory_urls import urlpatterns as signatory_urls
 from .user_urls import urlpatterns as user_urls
-from ..production_progress.urls.production_urls import urlpatterns as production_urls
 
 app_name = "project"
 _path_prefix = "project/"

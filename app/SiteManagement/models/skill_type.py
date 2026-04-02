@@ -15,7 +15,10 @@ class SkillType(BaseModel):
         related_name="skill_types",
         help_text="Project this skill type belongs to",
     )
-    name = models.CharField(max_length=100, help_text="Skill type name (e.g., Skilled, Semi-Skilled, General)")
+    name = models.CharField(
+        max_length=100,
+        help_text="Skill type name (e.g., Skilled, Semi-Skilled, General)",
+    )
     hourly_rate = models.DecimalField(
         max_digits=12,
         decimal_places=2,

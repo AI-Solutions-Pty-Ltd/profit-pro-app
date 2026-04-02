@@ -116,7 +116,9 @@ class LeadConsultantMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
     project_slug = "project_pk"
 
     def get_queryset(self) -> QuerySet[Company]:
-        return Company.objects.filter(type=Company.Type.LEAD_CONSULTANT).order_by("name")
+        return Company.objects.filter(type=Company.Type.LEAD_CONSULTANT).order_by(
+            "name"
+        )
 
     def get_object(self) -> Company:
         return Company.objects.get(

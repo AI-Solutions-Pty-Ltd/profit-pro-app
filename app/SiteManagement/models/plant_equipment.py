@@ -4,6 +4,7 @@ from django.db import models
 
 from app.core.Utilities.models import BaseModel
 from app.Project.models import Project
+
 from .plant_type import PlantType
 
 
@@ -31,7 +32,9 @@ class PlantEquipment(BaseModel):
         help_text="Type of plant/equipment",
     )
     date = models.DateField(help_text="Date of record")
-    equipment_name = models.CharField(max_length=255, blank=True, help_text="Specific equipment name/ID (optional)")
+    equipment_name = models.CharField(
+        max_length=255, blank=True, help_text="Specific equipment name/ID (optional)"
+    )
     supplier = models.CharField(max_length=255, blank=True, help_text="Supplier/Owner")
     usage_hours = models.DecimalField(
         max_digits=8,

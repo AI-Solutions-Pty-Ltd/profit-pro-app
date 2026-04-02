@@ -1,4 +1,5 @@
 from django.urls import path
+
 from ..views import production_views as views
 
 urlpatterns = [
@@ -78,4 +79,3 @@ urlpatterns = [
         name="plan-resources-ajax",
     ),
 ]
-

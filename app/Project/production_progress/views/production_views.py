@@ -1,48 +1,46 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic import (
-    ListView,
-    CreateView,
-    TemplateView,
-    DetailView,
-    UpdateView,
-    DeleteView,
-)
-from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
-from django.contrib import messages
+import json
 
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect
+from django.template.loader import render_to_string
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    TemplateView,
+    UpdateView,
+)
+
+from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Account.subscription_config import Subscription
 from app.Project.models import Project
 
-from ..models.production_models import (
-    DailyProduction,
-    ProductionPlan,
-    ProductionResource,
-    DailyActivityReport,
-    DailyActivityEntry,
-    DailyLabourUsage,
-)
 from ..forms.production_forms import (
     DailyProductionForm,
     ProductionPlanForm,
     ProductionResourceForm,
 )
-from django.db import transaction
-from django.utils import timezone
-from django.db.models import Sum, F
-from django.forms import inlineformset_factory
-from collections import defaultdict
-from .utils import (
-    get_dashboard_data,
-    get_activity_detail_data,
-    get_plan_productivity_data,
-    get_forecasting_dashboard_data,
+from ..models.production_models import (
+    DailyActivityEntry,
+    DailyActivityReport,
+    DailyLabourUsage,
+    DailyProduction,
+    ProductionPlan,
+    ProductionResource,
 )
-from django.template.loader import render_to_string
-from django.http import JsonResponse
-import json
+from .utils import (
+    get_activity_detail_data,
+    get_dashboard_data,
+    get_forecasting_dashboard_data,
+    get_plan_productivity_data,
+)
 
 
 class ProductionDashboardView(
@@ -72,8 +70,7 @@ class ProductionDashboardView(
 
         # Build queryset with filters
         plans = ProductionPlan.objects.filter(
-            project_id=self.kwargs["project_pk"],
-            is_archived=False
+            project_id=self.kwargs["project_pk"], is_archived=False
         ).prefetch_related("resources")
 
         if activity_filter:
@@ -185,8 +182,7 @@ class ProductionPlanningView(
         context = super().get_context_data(**kwargs)
         context["project"] = get_object_or_404(Project, pk=self.kwargs["project_pk"])
         context["plans"] = ProductionPlan.objects.filter(
-            project_id=self.kwargs["project_pk"],
-            is_archived=False
+            project_id=self.kwargs["project_pk"], is_archived=False
         ).prefetch_related("resources")
         return context
 
@@ -275,8 +271,7 @@ class ProductionPlanUpdateView(
         context = super().get_context_data(**kwargs)
         context["project"] = get_object_or_404(Project, pk=self.kwargs["project_pk"])
         context["plans"] = ProductionPlan.objects.filter(
-            project_id=self.kwargs["project_pk"],
-            is_archived=False
+            project_id=self.kwargs["project_pk"], is_archived=False
         ).prefetch_related("resources")
         context["is_update"] = True
         return context
@@ -324,7 +319,9 @@ class ProductionPlanDeleteView(
         self.object = self.get_object()
         self.object.is_archived = True
         self.object.save()
-        messages.success(request, f"Production plan '{self.object.activity}' archived successfully.")
+        messages.success(
+            request, f"Production plan '{self.object.activity}' archived successfully."
+        )
         return redirect(self.get_success_url())
 
 
@@ -504,7 +501,9 @@ class DailyProductivityCreateView(
         project_pk = self.kwargs["project_pk"]
         project = get_object_or_404(Project, pk=project_pk)
         context["project"] = project
-        context["all_plans"] = ProductionPlan.objects.filter(project=project, is_archived=False)
+        context["all_plans"] = ProductionPlan.objects.filter(
+            project=project, is_archived=False
+        )
 
         selected_plans_ids = self.request.POST.getlist("selected_plans")
         if not selected_plans_ids:
@@ -524,8 +523,8 @@ class DailyProductivityCreateView(
 
         from ..forms.production_forms import (
             AggregatedLabourFormSet,
-            DailyPlantUsageFormSet,
             DailyActivityReportForm,
+            DailyPlantUsageFormSet,
         )
 
         plan_resources = {}
@@ -534,9 +533,15 @@ class DailyProductivityCreateView(
         for plan in selected_plans:
             resources = ProductionResource.objects.filter(production_plan=plan)
             plan_resources[plan.id] = {
-                "skilled": resources.filter(resource_type="LABOUR", skill_type__name__icontains="skilled").exists(),
-                "semi_skilled": resources.filter(resource_type="LABOUR", skill_type__name__icontains="semi").exists(),
-                "unskilled": resources.filter(resource_type="LABOUR", skill_type__name__icontains="unskilled").exists(),
+                "skilled": resources.filter(
+                    resource_type="LABOUR", skill_type__name__icontains="skilled"
+                ).exists(),
+                "semi_skilled": resources.filter(
+                    resource_type="LABOUR", skill_type__name__icontains="semi"
+                ).exists(),
+                "unskilled": resources.filter(
+                    resource_type="LABOUR", skill_type__name__icontains="unskilled"
+                ).exists(),
                 "plant": resources.filter(resource_type="PLANT").exists(),
             }
 
@@ -553,14 +558,18 @@ class DailyProductivityCreateView(
                 )
             else:
                 p_formset = DailyPlantUsageFormSet(
-                    prefix=p_prefix, initial=plant_initial, form_kwargs={"activity_id": plan.id}
+                    prefix=p_prefix,
+                    initial=plant_initial,
+                    form_kwargs={"activity_id": plan.id},
                 )
 
             for f in p_formset.forms:
                 f.fields["resource"].queryset = planned_plants
                 # Ensure activity hidden field is set
                 f.fields["activity"].initial = plan.id
-                f.fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)
+                f.fields["activity"].queryset = ProductionPlan.objects.filter(
+                    id=plan.id
+                )
             plant_formsets[plan.id] = p_formset
 
         context["plan_resources"] = plan_resources
@@ -574,7 +583,9 @@ class DailyProductivityCreateView(
             )
         else:
             labour_formset = AggregatedLabourFormSet(
-                prefix="labour", initial=labour_initial, form_kwargs={"project_id": project.id}
+                prefix="labour",
+                initial=labour_initial,
+                form_kwargs={"project_id": project.id},
             )
 
         for form, plan in zip(labour_formset.forms, selected_plans, strict=False):
@@ -588,13 +599,19 @@ class DailyProductivityCreateView(
                 form.fields["unskilled_number"].disabled = True
 
         context["labour_formset"] = labour_formset
-        context["labour_forms_with_plans"] = list(zip(labour_formset.forms, selected_plans, strict=False))
-        context["plant_formset"] = next(iter(plant_formsets.values()), None) or DailyPlantUsageFormSet(prefix="plant")
+        context["labour_forms_with_plans"] = list(
+            zip(labour_formset.forms, selected_plans, strict=False)
+        )
+        context["plant_formset"] = next(
+            iter(plant_formsets.values()), None
+        ) or DailyPlantUsageFormSet(prefix="plant")
 
         if post_data:
             context["report_form"] = DailyActivityReportForm(post_data)
         else:
-            context["report_form"] = DailyActivityReportForm(initial={"date": timezone.now().date()})
+            context["report_form"] = DailyActivityReportForm(
+                initial={"date": timezone.now().date()}
+            )
 
         return context
 
@@ -603,8 +620,8 @@ class DailyProductivityCreateView(
         project = get_object_or_404(Project, pk=project_pk)
 
         from ..forms.production_forms import (
-            DailyActivityReportForm,
             AggregatedLabourFormSet,
+            DailyActivityReportForm,
             DailyPlantUsageFormSet,
         )
 
@@ -615,14 +632,20 @@ class DailyProductivityCreateView(
         )
 
         selected_plans_ids = request.POST.getlist("selected_plans")
-        selected_plans = ProductionPlan.objects.filter(id__in=selected_plans_ids, project=project).order_by("id")
+        selected_plans = ProductionPlan.objects.filter(
+            id__in=selected_plans_ids, project=project
+        ).order_by("id")
         plan_map = {str(p.id): p for p in selected_plans}
 
         # Populate labour querysets
         for form in labour_formset.forms:
-            act_id = form.data.get(f"labour-{form.prefix}-activity") or form.initial.get("activity")
+            act_id = form.data.get(
+                f"labour-{form.prefix}-activity"
+            ) or form.initial.get("activity")
             if str(act_id) in plan_map:
-                form.fields["activity"].queryset = ProductionPlan.objects.filter(id=act_id)
+                form.fields["activity"].queryset = ProductionPlan.objects.filter(
+                    id=act_id
+                )
 
         # Initialize Plant Formsets
         plant_formsets = {}
@@ -636,12 +659,16 @@ class DailyProductivityCreateView(
             p_formset = DailyPlantUsageFormSet(
                 request.POST, prefix=p_prefix, form_kwargs={"activity_id": plan.id}
             )
-            
-            planned_plants = ProductionResource.objects.filter(production_plan=plan, resource_type="PLANT")
+
+            planned_plants = ProductionResource.objects.filter(
+                production_plan=plan, resource_type="PLANT"
+            )
             for f in p_formset.forms:
                 f.fields["resource"].queryset = planned_plants
-                f.fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)
-            
+                f.fields["activity"].queryset = ProductionPlan.objects.filter(
+                    id=plan.id
+                )
+
             plant_formsets[plan.id] = p_formset
             if not p_formset.is_valid():
                 plant_valid = False
@@ -661,27 +688,37 @@ class DailyProductivityCreateView(
                         if form.cleaned_data:
                             plan = form.cleaned_data["activity"]
                             entry, _ = DailyActivityEntry.objects.update_or_create(
-                                report=report, production_plan=plan,
-                                defaults={"quantity": form.cleaned_data.get("quantity") or 0.0}
+                                report=report,
+                                production_plan=plan,
+                                defaults={
+                                    "quantity": form.cleaned_data.get("quantity") or 0.0
+                                },
                             )
                             entries[plan.id] = entry
 
                             entry.labour_usage.all().delete()
-                            
+
                             for name_part, number in [
                                 ("skilled", form.cleaned_data.get("skilled_number")),
                                 ("semi", form.cleaned_data.get("semi_skilled_number")),
-                                ("unskilled", form.cleaned_data.get("unskilled_number")),
+                                (
+                                    "unskilled",
+                                    form.cleaned_data.get("unskilled_number"),
+                                ),
                             ]:
                                 if number and number > 0:
                                     res = ProductionResource.objects.filter(
-                                        production_plan=plan, resource_type="LABOUR",
-                                        skill_type__name__icontains=name_part
+                                        production_plan=plan,
+                                        resource_type="LABOUR",
+                                        skill_type__name__icontains=name_part,
                                     ).first()
                                     if res:
                                         DailyLabourUsage.objects.create(
-                                            entry=entry, resource=res, number=number,
-                                            hours=form.cleaned_data.get("total_hours") or 0.0
+                                            entry=entry,
+                                            resource=res,
+                                            number=number,
+                                            hours=form.cleaned_data.get("total_hours")
+                                            or 0.0,
                                         )
 
                     # Save Plants
@@ -690,7 +727,9 @@ class DailyProductivityCreateView(
                         if not entry:
                             plan = plan_map.get(str(plan_id))
                             entry, _ = DailyActivityEntry.objects.update_or_create(
-                                report=report, production_plan=plan, defaults={"quantity": 0}
+                                report=report,
+                                production_plan=plan,
+                                defaults={"quantity": 0},
                             )
                             entries[plan_id] = entry
 
@@ -704,8 +743,12 @@ class DailyProductivityCreateView(
                                     usage.entry = entry
                                     usage.save()
 
-                    messages.success(request, "Daily productivity logs saved successfully.")
-                    return redirect("project:production-dashboard", project_pk=project_pk)
+                    messages.success(
+                        request, "Daily productivity logs saved successfully."
+                    )
+                    return redirect(
+                        "project:production-dashboard", project_pk=project_pk
+                    )
 
             except Exception as e:
                 messages.error(request, f"Error during save: {str(e)}")
@@ -713,12 +756,14 @@ class DailyProductivityCreateView(
             messages.error(request, "Please correct the errors in the form.")
 
         # 3. Fallback - Render with error state
-        context = self.get_context_data(post_data=request.POST) 
-        context.update({
-            "report_form": report_form,
-            "labour_formset": labour_formset,
-            "plant_formsets": plant_formsets,
-        })
+        context = self.get_context_data(post_data=request.POST)
+        context.update(
+            {
+                "report_form": report_form,
+                "labour_formset": labour_formset,
+                "plant_formsets": plant_formsets,
+            }
+        )
         return self.render_to_response(context)
 
 

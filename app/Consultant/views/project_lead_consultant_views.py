@@ -1,6 +1,5 @@
 """Views for managing Lead Consultant Companies."""
 
-from django import forms
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
@@ -37,7 +36,7 @@ class ProjectAllocateLeadConsultantView(
             ),
             BreadcrumbItem(
                 title="Lead Consultants",
-                url=None, # Update this when lead consultant list view exists
+                url=None,  # Update this when lead consultant list view exists
             ),
             BreadcrumbItem(title="Allocate Lead Consultant", url=None),
         ]
@@ -90,7 +89,7 @@ class ProjectLeadConsultantRemoveView(LeadConsultantMixin, View):
             ),
             BreadcrumbItem(
                 title="Lead Consultants",
-                url=None, # Update this when a lead consultant list view exists
+                url=None,  # Update this when a lead consultant list view exists
             ),
             BreadcrumbItem(
                 title=f"Remove Lead Consultant {self.project.lead_consultant.name}",
@@ -132,6 +131,4 @@ class ProjectLeadConsultantRemoveView(LeadConsultantMixin, View):
                 request, "This lead consultant is not assigned to this project."
             )
 
-        return redirect(
-            "project:project-setup", pk=self.project.pk
-        )
+        return redirect("project:project-setup", pk=self.project.pk)

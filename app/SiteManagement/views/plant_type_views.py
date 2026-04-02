@@ -5,6 +5,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from app.SiteManagement.models import PlantType
+
 from .plant_equipment_views import PlantEquipmentMixin
 
 

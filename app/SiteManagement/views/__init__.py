@@ -113,17 +113,17 @@ from .site_instruction_views import (
     SiteInstructionListView,
     SiteInstructionUpdateView,
 )
-from .snag_list_views import (
-    SnagListCreateView,
-    SnagListDeleteView,
-    SnagListListView,
-    SnagListUpdateView,
-)
 from .skill_type_views import (
     SkillTypeCreateView,
     SkillTypeDeleteView,
     SkillTypeListView,
     SkillTypeUpdateView,
+)
+from .snag_list_views import (
+    SnagListCreateView,
+    SnagListDeleteView,
+    SnagListListView,
+    SnagListUpdateView,
 )
 from .subcontractor_log_views import (
     SubcontractorLogCreateView,

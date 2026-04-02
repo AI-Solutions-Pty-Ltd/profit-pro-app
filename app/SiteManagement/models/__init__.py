@@ -18,9 +18,9 @@ from .quality_control import QualityControl
 from .rfi import RFI, RFIStatus
 from .safety_observation import SafetyObservation
 from .site_instruction import SiteInstruction, SiteInstructionStatus
+from .skill_type import SkillType
 from .snag_list import SnagList
 from .subcontractor_log import SubcontractorLog
-from .skill_type import SkillType
 
 __all__ = [
     "DailyDiary",

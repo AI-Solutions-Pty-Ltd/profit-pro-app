@@ -15,7 +15,9 @@ class PlantType(BaseModel):
         related_name="plant_types",
         help_text="Project this plant type belongs to",
     )
-    name = models.CharField(max_length=100, help_text="Plant type name (e.g., Excavator, Crane, Generator)")
+    name = models.CharField(
+        max_length=100, help_text="Plant type name (e.g., Excavator, Crane, Generator)"
+    )
     hourly_rate = models.DecimalField(
         max_digits=12,
         decimal_places=2,

@@ -3,9 +3,9 @@ from django.contrib import admin
 from app.SiteManagement.models import (
     RFI,
     EarlyWarning,
+    LabourLog,
     Meeting,
     SiteInstruction,
-    LabourLog,
     SkillType,
 )
 
@@ -94,7 +94,14 @@ class RFIAdmin(admin.ModelAdmin):
 
 @admin.register(LabourLog)
 class LabourLogAdmin(admin.ModelAdmin):
-    list_display = ["project", "date", "person_name", "trade", "skill_type", "hours_worked"]
+    list_display = [
+        "project",
+        "date",
+        "person_name",
+        "trade",
+        "skill_type",
+        "hours_worked",
+    ]
     list_filter = ["project", "date", "skill_type"]
     search_fields = ["person_name", "trade", "task_activity"]
 

@@ -14,6 +14,11 @@ from app.Project.projects.projects_models import (
 )
 
 from ..milestone_schedules.milestone_models import Milestone
+from ..production_progress.models.production_models import (
+    DailyProduction,
+    ProductionPlan,
+    ProductionResource,
+)
 from .compliance_models import (
     AdministrativeCompliance,
     AdministrativeComplianceDialog,
@@ -31,11 +36,6 @@ from .portfolio_models import Portfolio
 from .project_roles_models import ProjectRole, Role
 from .risk_models import Risk, RiskStatus
 from .signatories_models import Signatories
-from ..production_progress.models.production_models import (
-    DailyProduction,
-    ProductionPlan,
-    ProductionResource,
-)
 
 __all__ = [
     "AdministrativeCompliance",
