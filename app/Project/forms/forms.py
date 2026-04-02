@@ -95,9 +95,9 @@ class ProjectLeadConsultantForm(forms.ModelForm):
             queryset = queryset.exclude(pk=project.lead_consultant.pk)
 
         # Type: ModelChoiceField has queryset attribute
-        lead_consultant_field = self.fields["lead_consultant"]
+        lead_consultant_field: forms.ModelChoiceField = self.fields["lead_consultant"]  # type: ignore
         if hasattr(lead_consultant_field, "queryset"):
-            lead_consultant_field.queryset = queryset.distinct()  # type: ignore[attr-defined]
+            lead_consultant_field.queryset = queryset.distinct()
 
 
 class ClientCreateUpdateForm(forms.ModelForm):

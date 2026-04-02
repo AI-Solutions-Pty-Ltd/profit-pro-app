@@ -1,10 +1,8 @@
 {% extends "base.html" %}
 {% load heroicons %}
-
 {% block title %}
     Plant Types - {{ project.name }} - {{ block.super }}
 {% endblock title %}
-
 {% block content %}
     <div class="bg-white shadow-sm rounded-lg mb-6">
         <div class="px-6 py-4">
@@ -21,7 +19,6 @@
             </div>
         </div>
     </div>
-
     <div class="bg-white shadow-sm rounded-lg overflow-hidden">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -59,7 +56,6 @@
             </table>
         </div>
     </div>
-
     <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
         <div class="flex justify-between items-center">
             <a href="{% url 'site_management:plant-equipment-list' project.pk %}"

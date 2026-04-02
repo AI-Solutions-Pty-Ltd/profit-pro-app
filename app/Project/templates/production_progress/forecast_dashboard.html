@@ -1,13 +1,11 @@
 {% extends "base.html" %}
 {% load static %}
 {% load heroicons %}
-
 {% block title %}
     Costing Forecasting Dashboard - {{ selected_plan.activity|default:"Analytics" }} - {{ block.super }}
 {% endblock title %}
-
 {% block extra_css %}
-<style>
+    <style>
     .glass-card {
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(10px);
@@ -26,265 +24,274 @@
     .chart-container {
         min-height: 350px;
     }
-</style>
+    </style>
 {% endblock extra_css %}
-
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <!-- Section 1: Header and Navigation -->
-    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <div class="flex items-center gap-2 mb-1">
-                        <a href="{% url 'project:company-management' project.pk %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                            {% heroicon_outline "chevron-left" size="18" class="mr-1" %}
-                            Back to Company Management
-                        </a>
-                        <span class="text-gray-300 text-xs">|</span>
-                        <a href="{% url 'project:plan-productivity-dashboard' project.pk %}?plan_id={{ selected_plan.pk }}" class="text-xs font-semibold text-gray-500 hover:text-indigo-600 transition-colors">
-                            Productivity Analysis
-                        </a>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Section 1: Header and Navigation -->
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <a href="{% url 'project:company-management' project.pk %}"
+                               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                                {% heroicon_outline "chevron-left" size="18" class="mr-1" %}
+                                Back to Company Management
+                            </a>
+                            <span class="text-gray-300 text-xs">|</span>
+                            <a href="{% url 'project:plan-productivity-dashboard' project.pk %}?plan_id={{ selected_plan.pk }}"
+                               class="text-xs font-semibold text-gray-500 hover:text-indigo-600 transition-colors">
+                                Productivity Analysis
+                            </a>
+                        </div>
+                        <h1 class="text-2xl font-bold text-gray-900">
+                            Costing Forecast: {{ selected_plan.activity|default:"No Plan Selected" }}
+                        </h1>
+                        <p class="text-sm text-gray-600 mt-1 flex items-center">
+                            {% if selected_plan %}
+                                <span class="font-medium text-gray-900">{{ selected_plan.start_date|date:"M d, Y" }} to {{ selected_plan.finish_date|date:"M d, Y" }}</span>
+                                <span class="mx-2 text-gray-300">|</span>
+                                <span>Target: {{ selected_plan.quantity }} {{ selected_plan.unit }}</span>
+                            {% endif %}
+                        </p>
                     </div>
-                    <h1 class="text-2xl font-bold text-gray-900">Costing Forecast: {{ selected_plan.activity|default:"No Plan Selected" }}</h1>
-                    <p class="text-sm text-gray-600 mt-1 flex items-center">
-                        {% if selected_plan %}
-                            <span class="font-medium text-gray-900">{{ selected_plan.start_date|date:"M d, Y" }} to {{ selected_plan.finish_date|date:"M d, Y" }}</span>
-                            <span class="mx-2 text-gray-300">|</span>
-                            <span>Target: {{ selected_plan.quantity }} {{ selected_plan.unit }}</span>
-                        {% endif %}
-                    </p>
-                </div>
-                
-                <div class="flex items-center space-x-3">
-                    <form method="GET" id="forecastForm" class="flex items-center space-x-2">
-                        <select name="plan_id" onchange="this.form.submit()" 
-                                class="block w-full min-w-[200px] py-1.5 text-xs border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md shadow-sm">
-                            {% for p in all_plans %}
-                                <option value="{{ p.id }}" {% if p.id == selected_plan.id %}selected{% endif %}>{{ p.activity }}</option>
-                            {% endfor %}
-                        </select>
-                    </form>
-
-                    <button onclick="window.location.reload()" class="p-1.5 text-gray-500 hover:text-indigo-600 border border-gray-200 rounded-md shadow-sm bg-white hover:bg-gray-50" title="Refresh">
-                        {% heroicon_outline "arrow-path" size="16" %}
-                    </button>
+                    <div class="flex items-center space-x-3">
+                        <form method="get" id="forecastForm" class="flex items-center space-x-2">
+                            <select name="plan_id"
+                                    onchange="this.form.submit()"
+                                    class="block w-full min-w-[200px] py-1.5 text-xs border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md shadow-sm">
+                                {% for p in all_plans %}
+                                    <option value="{{ p.id }}"
+                                            {% if p.id == selected_plan.id %}selected{% endif %}>
+                                        {{ p.activity }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                        <button onclick="window.location.reload()"
+                                class="p-1.5 text-gray-500 hover:text-indigo-600 border border-gray-200 rounded-md shadow-sm bg-white hover:bg-gray-50"
+                                title="Refresh">{% heroicon_outline "arrow-path" size="16" %}</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    {% if not selected_plan %}
-    <!-- Empty State -->
-    <div class="bg-white rounded-xl border-2 border-dashed border-gray-200 p-20 text-center shadow-sm">
-        <div class="mx-auto w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-400 mb-4">
-            {% heroicon_outline "chart-pie" size="32" %}
-        </div>
-        <h3 class="text-lg font-bold text-gray-900">No Production Plan Selected</h3>
-        <p class="text-sm text-gray-500 mt-2">Select a plan from the dropdown to view forecasting analytics.</p>
-    </div>
-    {% else %}
-
-    <!-- Section 2: Forecast Summary Card -->
-    <div class="grid grid-cols-1 gap-6 mb-6">
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col glass-card border-l-[6px] border-l-{{ summary.status_color }}-500">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1 text-left">
-                            <span class="status-dot bg-{{ summary.status_color }}-500"></span>
-                            <span class="text-xs font-medium text-{{ summary.status_color }}-600 tracking-tight">System Status: {{ summary.status }}</span>
-                        </div>
-                        <h3 class="text-xl font-semibold text-gray-900 mt-1">Overall Forecast Summary</h3>
-                    </div>
+        {% if not selected_plan %}
+            <!-- Empty State -->
+            <div class="bg-white rounded-xl border-2 border-dashed border-gray-200 p-20 text-center shadow-sm">
+                <div class="mx-auto w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-400 mb-4">
+                    {% heroicon_outline "chart-pie" size="32" %}
                 </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-                    <!-- Progress Section -->
-                    <div>
-                        <div class="flex justify-between items-end mb-2">
-                            <span class="text-xs font-semibold text-gray-500  tracking-tight">Production Progress</span>
-                            <span class="text-xl font-bold text-gray-900 metric-value">{{ summary.progress_pct }}%</span>
-                        </div>
-                        <div class="w-full bg-gray-100 rounded-full h-2 mb-6">
-                            <div class="bg-indigo-600 h-2 rounded-full transition-all duration-1000" style="width: {{ summary.progress_pct }}%"></div>
-                        </div>
-                        
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-center text-sm font-semibold">
-                                <div class="flex items-center text-gray-600">
-                                    {% heroicon_outline "calendar" size="16" class="mr-2 text-indigo-400" %}
-                                    <span class="text-xs font-semibold text-gray-500  tracking-tight">Time Forecast</span>
+                <h3 class="text-lg font-bold text-gray-900">No Production Plan Selected</h3>
+                <p class="text-sm text-gray-500 mt-2">Select a plan from the dropdown to view forecasting analytics.</p>
+            </div>
+        {% else %}
+            <!-- Section 2: Forecast Summary Card -->
+            <div class="grid grid-cols-1 gap-6 mb-6">
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col glass-card border-l-[6px] border-l-{{ summary.status_color }}-500">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <div class="flex items-center gap-2 mb-1 text-left">
+                                    <span class="status-dot bg-{{ summary.status_color }}-500"></span>
+                                    <span class="text-xs font-medium text-{{ summary.status_color }}-600 tracking-tight">System Status: {{ summary.status }}</span>
                                 </div>
-                                <div class="text-right">
-                                    <div class="font-bold text-gray-900 metric-value">{{ summary.forecast_days }} Days</div>
-                                    <div class="text-xs {% if summary.time_variance >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %} font-semibold ">
-                                        {% if summary.time_variance >= 0 %}
-                                            early by {{ summary.time_variance }} days
-                                        {% else %}
-                                            late by {{ summary.time_variance|abs }} days
-                                        {% endif %}
+                                <h3 class="text-xl font-semibold text-gray-900 mt-1">Overall Forecast Summary</h3>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+                            <!-- Progress Section -->
+                            <div>
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-xs font-semibold text-gray-500  tracking-tight">Production Progress</span>
+                                    <span class="text-xl font-bold text-gray-900 metric-value">{{ summary.progress_pct }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-100 rounded-full h-2 mb-6">
+                                    <div class="bg-indigo-600 h-2 rounded-full transition-all duration-1000"
+                                         style="width: {{ summary.progress_pct }}%"></div>
+                                </div>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center text-sm font-semibold">
+                                        <div class="flex items-center text-gray-600">
+                                            {% heroicon_outline "calendar" size="16" class="mr-2 text-indigo-400" %}
+                                            <span class="text-xs font-semibold text-gray-500  tracking-tight">Time Forecast</span>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="font-bold text-gray-900 metric-value">{{ summary.forecast_days }} Days</div>
+                                            <div class="text-xs {% if summary.time_variance >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %} font-semibold ">
+                                                {% if summary.time_variance >= 0 %}
+                                                    early by {{ summary.time_variance }} days
+                                                {% else %}
+                                                    late by {{ summary.time_variance|abs }} days
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center text-sm font-semibold border-t border-gray-100 pt-4">
+                                        <div class="flex items-center text-gray-600">
+                                            {% heroicon_outline "banknotes" size="16" class="mr-2 text-emerald-400" %}
+                                            <span class="text-xs font-semibold text-gray-500  tracking-tight">Cost Forecast</span>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="font-bold text-gray-900 metric-value">R {{ summary.forecast_cost|floatformat:0 }}</div>
+                                            <div class="text-xs {% if summary.budget_variance >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %} font-semibold ">
+                                                {% if summary.budget_variance >= 0 %}
+                                                    under by R {{ summary.budget_variance|floatformat:0 }}
+                                                {% else %}
+                                                    over by R {{ summary.budget_variance|abs|floatformat:0 }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="flex justify-between items-center text-sm font-semibold border-t border-gray-100 pt-4">
-                                <div class="flex items-center text-gray-600">
-                                    {% heroicon_outline "banknotes" size="16" class="mr-2 text-emerald-400" %}
-                                    <span class="text-xs font-semibold text-gray-500  tracking-tight">Cost Forecast</span>
-                                </div>
-                                <div class="text-right">
-                                    <div class="font-bold text-gray-900 metric-value">R {{ summary.forecast_cost|floatformat:0 }}</div>
-                                    <div class="text-xs {% if summary.budget_variance >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %} font-semibold ">
-                                        {% if summary.budget_variance >= 0 %}
-                                            under by R {{ summary.budget_variance|floatformat:0 }}
-                                        {% else %}
-                                            over by R {{ summary.budget_variance|abs|floatformat:0 }}
-                                        {% endif %}
+                            <!-- Quick Stats -->
+                            <div class="bg-indigo-50/50 rounded-lg p-5 border border-gray-100">
+                                <h4 class="text-sm font-semibold text-gray-500  tracking-tight">Performance Metrics</h4>
+                                <div class="grid grid-cols-2 gap-y-4 gap-x-2">
+                                    <div>
+                                        <p class="text-xs text-gray-400 mb-0.5 font-semibold  tracking-tight">Days Remaining</p>
+                                        <p class="text-lg font-semibold text-indigo-600 metric-value">{{ summary.days_remaining }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-400 mb-0.5 font-semibold  tracking-tight">Units Remaining</p>
+                                        <p class="text-lg font-semibold text-emerald-600 metric-value">{{ summary.units_remaining|floatformat:0 }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-400 mb-0.5 font-semibold  tracking-tight">Budget Used</p>
+                                        <p class="text-lg font-bold text-amber-600 metric-value">{{ summary.budget_used_pct }}%</p>
                                     </div>
                                 </div>
+                                <div class="mt-4 pt-4 border-t border-gray-200">
+                                    <p class="text-[11px] text-gray-400 leading-relaxed ">
+                                        Forecast based on cumulative actual performance as of today ({% now "M d, Y" %}).
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Quick Stats -->
-                    <div class="bg-indigo-50/50 rounded-lg p-5 border border-gray-100">
-                        <h4 class="text-sm font-semibold text-gray-500  tracking-tight">Performance Metrics</h4>
-                        <div class="grid grid-cols-2 gap-y-4 gap-x-2">
-                            <div>
-                                <p class="text-xs text-gray-400 mb-0.5 font-semibold  tracking-tight">Days Remaining</p>
-                                <p class="text-lg font-semibold text-indigo-600 metric-value">{{ summary.days_remaining }}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-400 mb-0.5 font-semibold  tracking-tight">Units Remaining</p>
-                                <p class="text-lg font-semibold text-emerald-600 metric-value">{{ summary.units_remaining|floatformat:0 }}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-400 mb-0.5 font-semibold  tracking-tight">Budget Used</p>
-                                <p class="text-lg font-bold text-amber-600 metric-value">{{ summary.budget_used_pct }}%</p>
+                </div>
+            </div>
+            <!-- Section 3: Key Performance Indicators (KPIs) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <!-- Average Daily Output -->
+                <div class="bg-white rounded-lg p-5 border border-blue-200 shadow-sm hover:shadow-md transition-shadow text-left">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                            {% heroicon_outline "chart-bar" class="w-5 h-5 text-blue-600" %}
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-semibold text-blue-900 mb-0.5  ">Avg Daily Output</h3>
+                            <div class="text-xl font-bold text-gray-900 metric-value">
+                                {{ kpis.daily_output.actual|floatformat:1 }} <span class="text-xs text-gray-400 font-bold ">{{ selected_plan.unit }}</span>
                             </div>
                         </div>
-                        <div class="mt-4 pt-4 border-t border-gray-200">
-                            <p class="text-[11px] text-gray-400 leading-relaxed ">
-                                Forecast based on cumulative actual performance as of today ({% now "M d, Y" %}).
-                            </p>
+                    </div>
+                    <div class="flex justify-between items-center text-xs font-bold pt-3 border-t border-blue-50">
+                        <span class="text-gray-400 font-semibold tracking-tight">Target: {{ kpis.daily_output.target|floatformat:1 }}</span>
+                        <span class="{% if kpis.daily_output.variance >= 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                            {{ kpis.daily_output.variance|stringformat:"+0.1f" }}%
+                            {% if kpis.daily_output.variance >= 0 %}
+                                {% heroicon_solid "arrow-small-up" size="14" class="inline" %}
+                            {% else %}
+                                {% heroicon_solid "arrow-small-down" size="14" class="inline" %}
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <!-- Cost Per Unit -->
+                <div class="bg-white rounded-lg p-5 border border-emerald-200 shadow-sm hover:shadow-md transition-shadow text-left">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mr-3">
+                            {% heroicon_outline "tag" class="w-5 h-5 text-emerald-600" %}
                         </div>
+                        <div>
+                            <h3 class="text-xs font-semibold text-emerald-900 mb-0.5  ">Cost Per Unit</h3>
+                            <div class="text-xl font-bold text-gray-900 metric-value">R {{ kpis.cost.actual|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-xs font-bold pt-3 border-t border-emerald-50">
+                        <span class="text-gray-400 font-semibold tracking-tight">Budget: R {{ kpis.cost.target|floatformat:2 }}</span>
+                        <span class="{% if kpis.cost.variance <= 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                            {{ kpis.cost.variance|stringformat:"+0.1f" }}%
+                            {% if kpis.cost.variance <= 0 %}
+                                {% heroicon_solid "arrow-small-down" size="14" class="inline" %}
+                            {% else %}
+                                {% heroicon_solid "arrow-small-up" size="14" class="inline" %}
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <!-- Work Productivity -->
+                <div class="bg-white rounded-lg p-5 border border-purple-200 shadow-sm hover:shadow-md transition-shadow text-left">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                            {% heroicon_outline "bolt" class="w-5 h-5 text-purple-600" %}
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-semibold text-purple-900 mb-0.5  ">Work Productivity</h3>
+                            <div class="text-xl font-bold text-gray-900 metric-value">
+                                {{ kpis.productivity.actual|floatformat:2 }} <span class="text-xs text-gray-400 font-bold tracking-tight">U/MH</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-xs font-bold pt-3 border-t border-purple-50">
+                        <span class="text-gray-400 font-semibold tracking-tight">Target: {{ kpis.productivity.target|floatformat:2 }}</span>
+                        <span class="{% if kpis.productivity.variance >= 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
+                            {{ kpis.productivity.variance|stringformat:"+0.1f" }}%
+                            {% if kpis.productivity.variance >= 0 %}
+                                {% heroicon_solid "arrow-small-up" size="14" class="inline" %}
+                            {% else %}
+                                {% heroicon_solid "arrow-small-down" size="14" class="inline" %}
+                            {% endif %}
+                        </span>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Section 3: Key Performance Indicators (KPIs) -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <!-- Average Daily Output -->
-        <div class="bg-white rounded-lg p-5 border border-blue-200 shadow-sm hover:shadow-md transition-shadow text-left">
-            <div class="flex items-center mb-4">
-                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                    {% heroicon_outline "chart-bar" class="w-5 h-5 text-blue-600" %}
+            <!-- Section 4: Forecast Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 text-left">
+                <!-- Production Trajectory -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+                    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                        <h3 class="text-xs font-bold text-gray-900 flex items-center  ">
+                            {% heroicon_outline "presentation-chart-line" size="18" class="mr-2 text-indigo-500" %}
+                            Production Trajectory Forecast
+                        </h3>
+                    </div>
+                    <div class="p-6 flex-grow h-[380px]">
+                        <canvas id="productionTrajectoryChart"></canvas>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-xs font-semibold text-blue-900 mb-0.5  ">Avg Daily Output</h3>
-                    <div class="text-xl font-bold text-gray-900 metric-value">{{ kpis.daily_output.actual|floatformat:1 }} <span class="text-xs text-gray-400 font-bold ">{{ selected_plan.unit }}</span></div>
-                </div>
-            </div>
-            <div class="flex justify-between items-center text-xs font-bold pt-3 border-t border-blue-50">
-                <span class="text-gray-400 font-semibold tracking-tight">Target: {{ kpis.daily_output.target|floatformat:1 }}</span>
-                <span class="{% if kpis.daily_output.variance >= 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
-                    {{ kpis.daily_output.variance|stringformat:"+0.1f" }}%
-                    {% if kpis.daily_output.variance >= 0 %}{% heroicon_solid "arrow-small-up" size="14" class="inline" %}{% else %}{% heroicon_solid "arrow-small-down" size="14" class="inline" %}{% endif %}
-                </span>
-            </div>
-        </div>
-
-        <!-- Cost Per Unit -->
-        <div class="bg-white rounded-lg p-5 border border-emerald-200 shadow-sm hover:shadow-md transition-shadow text-left">
-            <div class="flex items-center mb-4">
-                <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mr-3">
-                    {% heroicon_outline "tag" class="w-5 h-5 text-emerald-600" %}
-                </div>
-                <div>
-                    <h3 class="text-xs font-semibold text-emerald-900 mb-0.5  ">Cost Per Unit</h3>
-                    <div class="text-xl font-bold text-gray-900 metric-value">R {{ kpis.cost.actual|floatformat:2 }}</div>
+                <!-- Cost Trajectory -->
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+                    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                        <h3 class="text-xs font-bold text-gray-900 flex items-center  ">
+                            {% heroicon_outline "banknotes" size="18" class="mr-2 text-emerald-500" %}
+                            Cost Trajectory Forecast
+                        </h3>
+                    </div>
+                    <div class="p-6 flex-grow h-[380px]">
+                        <canvas id="costTrajectoryChart"></canvas>
+                    </div>
                 </div>
             </div>
-            <div class="flex justify-between items-center text-xs font-bold pt-3 border-t border-emerald-50">
-                <span class="text-gray-400 font-semibold tracking-tight">Budget: R {{ kpis.cost.target|floatformat:2 }}</span>
-                <span class="{% if kpis.cost.variance <= 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
-                    {{ kpis.cost.variance|stringformat:"+0.1f" }}%
-                    {% if kpis.cost.variance <= 0 %}{% heroicon_solid "arrow-small-down" size="14" class="inline" %}{% else %}{% heroicon_solid "arrow-small-up" size="14" class="inline" %}{% endif %}
-                </span>
-            </div>
-        </div>
-
-        <!-- Work Productivity -->
-        <div class="bg-white rounded-lg p-5 border border-purple-200 shadow-sm hover:shadow-md transition-shadow text-left">
-            <div class="flex items-center mb-4">
-                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                    {% heroicon_outline "bolt" class="w-5 h-5 text-purple-600" %}
-                </div>
-                <div>
-                    <h3 class="text-xs font-semibold text-purple-900 mb-0.5  ">Work Productivity</h3>
-                    <div class="text-xl font-bold text-gray-900 metric-value">{{ kpis.productivity.actual|floatformat:2 }} <span class="text-xs text-gray-400 font-bold tracking-tight">U/MH</span></div>
-                </div>
-            </div>
-            <div class="flex justify-between items-center text-xs font-bold pt-3 border-t border-purple-50">
-                <span class="text-gray-400 font-semibold tracking-tight">Target: {{ kpis.productivity.target|floatformat:2 }}</span>
-                <span class="{% if kpis.productivity.variance >= 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
-                    {{ kpis.productivity.variance|stringformat:"+0.1f" }}%
-                    {% if kpis.productivity.variance >= 0 %}{% heroicon_solid "arrow-small-up" size="14" class="inline" %}{% else %}{% heroicon_solid "arrow-small-down" size="14" class="inline" %}{% endif %}
-                </span>
+        {% endif %}
+        <!-- Global Layout Footer -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-8 flex justify-between items-center shadow-sm">
+            <a href="{% url 'project:production-progress-dashboard' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                {% heroicon_outline "chevron-left" size="16" class="mr-1" %}
+                Back to Dashboard
+            </a>
+            <div class="flex items-center space-x-6">
+                <span class="text-xs font-semibold text-gray-400  text-right  tracking-tighter">Data refreshed {% now "H:i" %}</span>
             </div>
         </div>
     </div>
-
-    <!-- Section 4: Forecast Charts Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 text-left">
-        <!-- Production Trajectory -->
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                <h3 class="text-xs font-bold text-gray-900 flex items-center  ">
-                    {% heroicon_outline "presentation-chart-line" size="18" class="mr-2 text-indigo-500" %}
-                    Production Trajectory Forecast
-                </h3>
-            </div>
-            <div class="p-6 flex-grow h-[380px]">
-                <canvas id="productionTrajectoryChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Cost Trajectory -->
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-            <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                <h3 class="text-xs font-bold text-gray-900 flex items-center  ">
-                    {% heroicon_outline "banknotes" size="18" class="mr-2 text-emerald-500" %}
-                    Cost Trajectory Forecast
-                </h3>
-            </div>
-            <div class="p-6 flex-grow h-[380px]">
-                <canvas id="costTrajectoryChart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    {% endif %}
-
-    <!-- Global Layout Footer -->
-    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-8 flex justify-between items-center shadow-sm">
-        <a href="{% url 'project:production-progress-dashboard' project.pk %}"
-           class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-            {% heroicon_outline "chevron-left" size="16" class="mr-1" %}
-            Back to Dashboard
-        </a>
-        <div class="flex items-center space-x-6">
-            <span class="text-xs font-semibold text-gray-400  text-right  tracking-tighter"> Data refreshed {% now "H:i" %}</span>
-        </div>
-    </div>
-</div>
 {% endblock content %}
-
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
     document.addEventListener('DOMContentLoaded', function() {
         {% if selected_plan and charts_json %}
         const chartData = {{ charts_json|safe }};
@@ -453,5 +460,5 @@
 
         {% endif %}
     });
-</script>
+    </script>
 {% endblock extra_js %}

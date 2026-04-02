@@ -322,7 +322,7 @@ class ProductionPlanDeleteView(
         messages.success(
             request, f"Production plan '{self.object.activity}' archived successfully."
         )
-        return redirect(self.get_success_url())
+        return redirect(str(self.get_success_url()))
 
 
 class ProductionCostBreakdownView(
@@ -564,10 +564,10 @@ class DailyProductivityCreateView(
                 )
 
             for f in p_formset.forms:
-                f.fields["resource"].queryset = planned_plants
+                f.fields["resource"].queryset = planned_plants  # type: ignore[attr]
                 # Ensure activity hidden field is set
                 f.fields["activity"].initial = plan.id
-                f.fields["activity"].queryset = ProductionPlan.objects.filter(
+                f.fields["activity"].queryset = ProductionPlan.objects.filter(  # type: ignore[attr]
                     id=plan.id
                 )
             plant_formsets[plan.id] = p_formset
@@ -589,7 +589,7 @@ class DailyProductivityCreateView(
             )
 
         for form, plan in zip(labour_formset.forms, selected_plans, strict=False):
-            form.fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)
+            form.fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)  # type: ignore[attr]
             res_info = plan_resources[plan.id]
             if not res_info["skilled"]:
                 form.fields["skilled_number"].disabled = True
@@ -643,7 +643,7 @@ class DailyProductivityCreateView(
                 f"labour-{form.prefix}-activity"
             ) or form.initial.get("activity")
             if str(act_id) in plan_map:
-                form.fields["activity"].queryset = ProductionPlan.objects.filter(
+                form.fields["activity"].queryset = ProductionPlan.objects.filter(  # type: ignore[attr]
                     id=act_id
                 )
 
@@ -664,8 +664,8 @@ class DailyProductivityCreateView(
                 production_plan=plan, resource_type="PLANT"
             )
             for f in p_formset.forms:
-                f.fields["resource"].queryset = planned_plants
-                f.fields["activity"].queryset = ProductionPlan.objects.filter(
+                f.fields["resource"].queryset = planned_plants  # type: ignore[attr]
+                f.fields["activity"].queryset = ProductionPlan.objects.filter(  # type: ignore[attr]
                     id=plan.id
                 )
 
@@ -806,10 +806,9 @@ class ProductivityLogsView(
                 production_plan=plan, resource_type="PLANT"
             )
 
-            day_list = []
             # Get unique day numbers from entries
             day_identifiers = sorted(
-                list(set(entry.day_number for entry in plan_entries)),
+                {entry.day_number for entry in plan_entries},
                 key=lambda x: int(x[1:]) if x[1:].isdigit() else 0,
             )
 
@@ -821,11 +820,11 @@ class ProductivityLogsView(
                     continue
 
                 labour_usage_map = {
-                    usage.resource_id: usage.number
+                    usage.resource.id: usage.number
                     for usage in entry.labour_usage.all()
                 }
                 plant_usage_map = {
-                    usage.resource_id: usage.number for usage in entry.plant_usage.all()
+                    usage.resource.id: usage.number for usage in entry.plant_usage.all()
                 }
 
                 day_data[day_id] = {
@@ -989,8 +988,8 @@ class PlanResourcesAjaxView(
                 prefix=f"plant_{plan.id}", initial=plant_initial
             )
             for f in plant_formset.forms:
-                f.fields["resource"].queryset = planned_plants
-                f.fields["activity"].queryset = ProductionPlan.objects.filter(
+                f.fields["resource"].queryset = planned_plants  # type: ignore[att]
+                f.fields["activity"].queryset = ProductionPlan.objects.filter(  # type: ignore[att]
                     id=plan.id
                 )
             plant_formsets[plan.id] = plant_formset
@@ -1001,7 +1000,7 @@ class PlanResourcesAjaxView(
         )
 
         for form, plan in zip(labour_formset.forms, selected_plans, strict=True):
-            form.fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)
+            form.fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)  # type: ignore[att]
             if not plan_resources[plan.id]["skilled"]:
                 form.fields["skilled_number"].disabled = True
             if not plan_resources[plan.id]["semi_skilled"]:

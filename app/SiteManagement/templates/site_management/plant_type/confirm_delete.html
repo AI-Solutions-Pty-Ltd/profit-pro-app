@@ -1,6 +1,7 @@
 {% extends "base.html" %}
-{% block title %}Delete Plant Type - {{ project.name }}{% endblock title %}
-
+{% block title %}
+    Delete Plant Type - {{ project.name }}
+{% endblock title %}
 {% block content %}
     <div class="max-w-2xl mx-auto">
         <div class="bg-white shadow-sm rounded-lg overflow-hidden">
@@ -8,13 +9,14 @@
                 <h1 class="text-xl font-bold text-gray-900">Delete Plant Type</h1>
             </div>
             <div class="px-6 py-8">
-                <p class="text-gray-700">Are you sure you want to delete the plant type "<strong>{{ object.name }}</strong>"?</p>
+                <p class="text-gray-700">
+                    Are you sure you want to delete the plant type "<strong>{{ object.name }}</strong>"?
+                </p>
                 <div class="mt-4 p-4 bg-amber-50 rounded-md border border-amber-200">
                     <p class="text-sm text-amber-700">
                         <strong>Warning:</strong> Deleting this type may affect existing equipment records linked to it.
                     </p>
                 </div>
-                
                 <form method="post" class="mt-8 flex justify-end space-x-3">
                     {% csrf_token %}
                     <a href="{% url 'site_management:plant-type-list' project.pk %}"

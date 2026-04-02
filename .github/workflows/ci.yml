@@ -2,9 +2,9 @@ name: CI - Test and Validate
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging, develop]
   pull_request:
-    branches: [main]
+    branches: [main, staging, develop]
   workflow_dispatch:
 
 jobs:

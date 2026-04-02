@@ -12,20 +12,20 @@
                     <p class="text-sm text-gray-600 mt-1">Track workers for {{ project.name }}</p>
                 </div>
                 <div class="flex items-center space-x-3">
-                 <a href="{% url 'site_management:skill-type-list' project.pk %}"
-                   class=" flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
-                    <div class="flex items-center">
-                        {% heroicon_outline "wrench" class="w-4 h-4 text-violet-500 mr-2" %}
-                        <span class="text-sm font-medium text-violet-700">Manage Skill Types</span>
-                    </div>
-                    {% heroicon_outline "chevron-right" class="w-4 h-4 text-violet-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
-                </a>
-                <a href="{% url 'site_management:labour-log-create' project.pk %}"
-                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
-                    {% heroicon_outline "plus" class="w-5 h-5 mr-2" %}
-                    Add Labour Entry
-                </a>
-            </div>
+                    <a href="{% url 'site_management:skill-type-list' project.pk %}"
+                       class=" flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
+                        <div class="flex items-center">
+                            {% heroicon_outline "wrench" class="w-4 h-4 text-violet-500 mr-2" %}
+                            <span class="text-sm font-medium text-violet-700">Manage Skill Types</span>
+                        </div>
+                        {% heroicon_outline "chevron-right" class="w-4 h-4 text-violet-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                    </a>
+                    <a href="{% url 'site_management:labour-log-create' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        {% heroicon_outline "plus" class="w-5 h-5 mr-2" %}
+                        Add Labour Entry
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -51,7 +51,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ log.person_name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ log.id_number }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ log.trade }}</td>
-                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ log.skill_type.name|default:"-" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ log.skill_type.name|default:"-" }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ log.hours_worked }}</td>
                             <td class="px-6 py-4 text-sm text-gray-900">{{ log.task_activity|truncatewords:8 }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">

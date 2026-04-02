@@ -48,12 +48,18 @@
                     {% for equipment in plant_equipment %}
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ equipment.date }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ equipment.plant_type.name|default:"-" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ equipment.plant_type.name|default:"-" }}
+                            </td>
                             <td class="px-6 py-4 text-sm text-gray-900">{{ equipment.equipment_name|default:"-" }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ equipment.supplier }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ equipment.usage_hours }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                                {% if equipment.total_cost %}{{ equipment.total_cost|floatformat:2 }}{% else %}-{% endif %}
+                                {% if equipment.total_cost %}
+                                    {{ equipment.total_cost|floatformat:2 }}
+                                {% else %}
+                                    -
+                                {% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if equipment.breakdown_status == 'OPERATIONAL' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">{{ equipment.get_breakdown_status_display }}</span>
