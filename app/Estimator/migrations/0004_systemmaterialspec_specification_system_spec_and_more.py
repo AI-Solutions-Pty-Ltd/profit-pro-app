@@ -5,42 +5,82 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('estimator', '0003_boqitem_labour_markup_pct_and_more'),
+        ("estimator", "0003_boqitem_labour_markup_pct_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='SystemMaterialSpec',
+            name="SystemMaterialSpec",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100, unique=True)),
-                ('unit', models.CharField(default='m3', max_length=20)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100, unique=True)),
+                ("unit", models.CharField(default="m3", max_length=20)),
             ],
             options={
-                'verbose_name': 'System Material Spec',
-                'verbose_name_plural': 'System Material Specs',
-                'ordering': ['name'],
+                "verbose_name": "System Material Spec",
+                "verbose_name_plural": "System Material Specs",
+                "ordering": ["name"],
             },
         ),
         migrations.AddField(
-            model_name='specification',
-            name='system_spec',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='project_specs', to='estimator.systemmaterialspec'),
+            model_name="specification",
+            name="system_spec",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="project_specs",
+                to="estimator.systemmaterialspec",
+            ),
         ),
         migrations.CreateModel(
-            name='SystemMaterialSpecComponent',
+            name="SystemMaterialSpecComponent",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('label', models.CharField(max_length=100)),
-                ('qty_per_unit', models.DecimalField(decimal_places=4, default=0, max_digits=10)),
-                ('sort_order', models.IntegerField(default=0)),
-                ('material', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='system_spec_components', to='estimator.material')),
-                ('spec', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='system_spec_components', to='estimator.systemmaterialspec')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("label", models.CharField(max_length=100)),
+                (
+                    "qty_per_unit",
+                    models.DecimalField(decimal_places=4, default=0, max_digits=10),
+                ),
+                ("sort_order", models.IntegerField(default=0)),
+                (
+                    "material",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="system_spec_components",
+                        to="estimator.material",
+                    ),
+                ),
+                (
+                    "spec",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="system_spec_components",
+                        to="estimator.systemmaterialspec",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['sort_order'],
+                "ordering": ["sort_order"],
             },
         ),
     ]

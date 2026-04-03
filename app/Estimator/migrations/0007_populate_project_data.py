@@ -6,25 +6,31 @@ from django.db import migrations
 
 def clone_system_to_project(apps, schema_editor):
     """Clone all System* records into Project* for each project that has BOQItems."""
-    BOQItem = apps.get_model('estimator', 'BOQItem')
-    SystemTradeCode = apps.get_model('estimator', 'SystemTradeCode')
-    SystemMaterial = apps.get_model('estimator', 'SystemMaterial')
-    SystemSpecification = apps.get_model('estimator', 'SystemSpecification')
-    SystemSpecificationComponent = apps.get_model('estimator', 'SystemSpecificationComponent')
-    SystemLabourCrew = apps.get_model('estimator', 'SystemLabourCrew')
-    SystemLabourSpecification = apps.get_model('estimator', 'SystemLabourSpecification')
-    ProjectTradeCode = apps.get_model('estimator', 'ProjectTradeCode')
-    ProjectMaterial = apps.get_model('estimator', 'ProjectMaterial')
-    ProjectSpecification = apps.get_model('estimator', 'ProjectSpecification')
-    ProjectSpecificationComponent = apps.get_model('estimator', 'ProjectSpecificationComponent')
-    ProjectLabourCrew = apps.get_model('estimator', 'ProjectLabourCrew')
-    ProjectLabourSpecification = apps.get_model('estimator', 'ProjectLabourSpecification')
-    apps.get_model('estimator', 'SystemMaterialSpec')  # noqa: F841
+    BOQItem = apps.get_model("estimator", "BOQItem")
+    SystemTradeCode = apps.get_model("estimator", "SystemTradeCode")
+    SystemMaterial = apps.get_model("estimator", "SystemMaterial")
+    SystemSpecification = apps.get_model("estimator", "SystemSpecification")
+    SystemSpecificationComponent = apps.get_model(
+        "estimator", "SystemSpecificationComponent"
+    )
+    SystemLabourCrew = apps.get_model("estimator", "SystemLabourCrew")
+    SystemLabourSpecification = apps.get_model("estimator", "SystemLabourSpecification")
+    ProjectTradeCode = apps.get_model("estimator", "ProjectTradeCode")
+    ProjectMaterial = apps.get_model("estimator", "ProjectMaterial")
+    ProjectSpecification = apps.get_model("estimator", "ProjectSpecification")
+    ProjectSpecificationComponent = apps.get_model(
+        "estimator", "ProjectSpecificationComponent"
+    )
+    ProjectLabourCrew = apps.get_model("estimator", "ProjectLabourCrew")
+    ProjectLabourSpecification = apps.get_model(
+        "estimator", "ProjectLabourSpecification"
+    )
+    apps.get_model("estimator", "SystemMaterialSpec")  # noqa: F841
 
     # Find all projects that have BOQItems
     project_ids = set(
         BOQItem.objects.exclude(project__isnull=True)
-        .values_list('project_id', flat=True)
+        .values_list("project_id", flat=True)
         .distinct()
     )
 
@@ -99,22 +105,28 @@ def clone_system_to_project(apps, schema_editor):
         spec_map = {}  # old SystemSpecification pk → new ProjectSpecification pk
         for ss in SystemSpecification.objects.all():
             # Find matching SystemMaterialSpec source if linked
-            source_id = ss.system_spec_id if hasattr(ss, 'system_spec_id') else None
+            source_id = ss.system_spec_id if hasattr(ss, "system_spec_id") else None
             ps = ProjectSpecification.objects.create(
                 project_id=project_id,
                 source_id=source_id,
                 section=ss.section,
-                trade_code_id=tc_map.get(ss.trade_code_id) if ss.trade_code_id else None,
+                trade_code_id=tc_map.get(ss.trade_code_id)
+                if ss.trade_code_id
+                else None,
                 unit_label=ss.unit_label,
                 name=ss.name,
             )
             spec_map[ss.pk] = ps.pk
 
             # Clone specification components
-            for ssc in SystemSpecificationComponent.objects.filter(specification_id=ss.pk):
+            for ssc in SystemSpecificationComponent.objects.filter(
+                specification_id=ss.pk
+            ):
                 ProjectSpecificationComponent.objects.create(
                     specification_id=ps.pk,
-                    material_id=mat_map.get(ssc.material_id) if ssc.material_id else None,
+                    material_id=mat_map.get(ssc.material_id)
+                    if ssc.material_id
+                    else None,
                     label=ssc.label,
                     qty_per_unit=ssc.qty_per_unit,
                     sort_order=ssc.sort_order,
@@ -146,9 +158,8 @@ def reverse_noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('estimator', '0006_systemlabourcrew_systemmaterial_systemtradecode_and_more'),
+        ("estimator", "0006_systemlabourcrew_systemmaterial_systemtradecode_and_more"),
     ]
 
     operations = [

@@ -45,10 +45,10 @@ def calculate_rate_per_unit(components):
     Returns:
         Decimal: total rate per unit
     """
-    total = Decimal('0')
+    total = Decimal("0")
     for comp in components:
-        qty = comp.get('qty_per_unit')
-        rate = comp.get('market_rate')
+        qty = comp.get("qty_per_unit")
+        rate = comp.get("market_rate")
         if qty and rate:
             total += Decimal(str(qty)) * Decimal(str(rate))
     return total
@@ -66,7 +66,7 @@ def calculate_total_quantity(boq_quantity, qty_per_unit):
         Decimal: total quantity needed
     """
     if boq_quantity is None or qty_per_unit is None:
-        return Decimal('0')
+        return Decimal("0")
     return Decimal(str(boq_quantity)) * Decimal(str(qty_per_unit))
 
 
@@ -157,57 +157,59 @@ def calculate_boq_summary(items):
             - total_forecast_amount (Decimal)
             - item_count (int)
     """
-    total_contract = Decimal('0')
-    total_progress = Decimal('0')
-    total_forecast = Decimal('0')
-    total_materials_rate = Decimal('0')
-    total_labour_rate = Decimal('0')
+    total_contract = Decimal("0")
+    total_progress = Decimal("0")
+    total_forecast = Decimal("0")
+    total_materials_rate = Decimal("0")
+    total_labour_rate = Decimal("0")
 
     for item in items:
         contract_amt = calculate_contract_amount(
-            item.get('contract_quantity'),
-            item.get('contract_rate'),
+            item.get("contract_quantity"),
+            item.get("contract_rate"),
         )
         if contract_amt:
             total_contract += contract_amt
 
         materials_rate = calculate_materials_rate(
-            item.get('rate_override'),
-            item.get('specification_rate'),
+            item.get("rate_override"),
+            item.get("specification_rate"),
         )
 
         if materials_rate is not None:
             total_materials_rate += materials_rate
 
-        labour_rate = item.get('labour_rate')
+        labour_rate = item.get("labour_rate")
         if labour_rate is not None:
             total_labour_rate += Decimal(str(labour_rate))
 
         # Baseline new price = materials + labour
-        baseline_price = (materials_rate or Decimal('0')) + (labour_rate or Decimal('0'))
+        baseline_price = (materials_rate or Decimal("0")) + (
+            labour_rate or Decimal("0")
+        )
         effective_rate = baseline_price if baseline_price > 0 else None
 
         progress_amt = calculate_progress_amount(
             effective_rate,
-            item.get('progress_quantity'),
+            item.get("progress_quantity"),
         )
         if progress_amt:
             total_progress += progress_amt
 
         forecast_amt = calculate_forecast_amount(
             effective_rate,
-            item.get('forecast_quantity'),
+            item.get("forecast_quantity"),
         )
         if forecast_amt:
             total_forecast += forecast_amt
 
     return {
-        'total_contract_amount': total_contract,
-        'total_materials_rate': total_materials_rate,
-        'total_labour_rate': total_labour_rate,
-        'total_progress_amount': total_progress,
-        'total_forecast_amount': total_forecast,
-        'item_count': len(items),
+        "total_contract_amount": total_contract,
+        "total_materials_rate": total_materials_rate,
+        "total_labour_rate": total_labour_rate,
+        "total_progress_amount": total_progress,
+        "total_forecast_amount": total_forecast,
+        "item_count": len(items),
     }
 
 
@@ -230,7 +232,7 @@ def calculate_variance(amount_a, amount_b):
     b = Decimal(str(amount_b))
     variance = b - a
     if a != 0:
-        pct = (variance / a) * Decimal('100')
+        pct = (variance / a) * Decimal("100")
     else:
         pct = None
     return (variance, pct)
@@ -249,7 +251,7 @@ def calculate_pct_of_total(item_amount, grand_total):
     """
     if not grand_total or grand_total == 0 or item_amount is None:
         return None
-    return (Decimal(str(item_amount)) / Decimal(str(grand_total))) * Decimal('100')
+    return (Decimal(str(item_amount)) / Decimal(str(grand_total))) * Decimal("100")
 
 
 def calculate_specification_summary(specifications):
@@ -281,15 +283,15 @@ def calculate_specification_summary(specifications):
     enriched_specs = []
 
     for spec in specifications:
-        boq_qty = spec.get('boq_quantity', Decimal('0'))
-        components = spec.get('components', [])
+        boq_qty = spec.get("boq_quantity", Decimal("0"))
+        components = spec.get("components", [])
 
         rate = calculate_rate_per_unit(components)
 
         enriched_components = []
         for comp in components:
-            comp_name = comp.get('name', '')
-            qty_per_unit = comp.get('qty_per_unit', Decimal('0'))
+            comp_name = comp.get("name", "")
+            qty_per_unit = comp.get("qty_per_unit", Decimal("0"))
             total_qty = calculate_total_quantity(boq_qty, qty_per_unit)
 
             # Accumulate into global totals by component name
@@ -298,19 +300,23 @@ def calculate_specification_summary(specifications):
             else:
                 component_totals[comp_name] = total_qty
 
-            enriched_components.append({
-                **comp,
-                'total_quantity': total_qty,
-            })
+            enriched_components.append(
+                {
+                    **comp,
+                    "total_quantity": total_qty,
+                }
+            )
 
         enriched = dict(spec)
-        enriched.update({
-            'rate_per_unit': rate,
-            'components': enriched_components,
-        })
+        enriched.update(
+            {
+                "rate_per_unit": rate,
+                "components": enriched_components,
+            }
+        )
         enriched_specs.append(enriched)
 
     return {
-        'component_totals': component_totals,
-        'specs': enriched_specs,
+        "component_totals": component_totals,
+        "specs": enriched_specs,
     }

@@ -35,19 +35,23 @@ class ExcelImporter:
 
     def log(self, msg):
         if self.output:
-            self.output.write(msg + '\n')
+            self.output.write(msg + "\n")
 
     def run(self):
         wb = openpyxl.load_workbook(self.file_path, data_only=True)
 
-        self.results['trade_codes'] = self._import_trade_codes(wb['Trade Code'])
-        self.results['materials'] = self._import_materials(wb['Materials Cost'])
-        self.results['specifications'] = self._import_material_specifications(wb['Material Specification'])
-        if 'Labour Costs' in wb.sheetnames:
-            self.results['labour_crews'] = self._import_labour_costs(wb['Labour Costs'])
-        if 'Labour Specification' in wb.sheetnames:
-            self.results['labour_specs'] = self._import_labour_specifications(wb['Labour Specification'])
-        self.results['boq_items'] = self._import_boq_items(wb['Output BoQ'])
+        self.results["trade_codes"] = self._import_trade_codes(wb["Trade Code"])
+        self.results["materials"] = self._import_materials(wb["Materials Cost"])
+        self.results["specifications"] = self._import_material_specifications(
+            wb["Material Specification"]
+        )
+        if "Labour Costs" in wb.sheetnames:
+            self.results["labour_crews"] = self._import_labour_costs(wb["Labour Costs"])
+        if "Labour Specification" in wb.sheetnames:
+            self.results["labour_specs"] = self._import_labour_specifications(
+                wb["Labour Specification"]
+            )
+        self.results["boq_items"] = self._import_boq_items(wb["Output BoQ"])
 
         wb.close()
         return self.results
@@ -55,7 +59,7 @@ class ExcelImporter:
     def _safe_decimal(self, value):
         if value is None:
             return None
-        if isinstance(value, str) and (value.startswith('#') or not value.strip()):
+        if isinstance(value, str) and (value.startswith("#") or not value.strip()):
             return None
         try:
             return Decimal(str(value))
@@ -64,10 +68,10 @@ class ExcelImporter:
 
     def _safe_str(self, value):
         if value is None:
-            return ''
+            return ""
         s = str(value).strip()
-        if s.startswith('#'):
-            return ''
+        if s.startswith("#"):
+            return ""
         return s
 
     # ── Trade Codes ────────────────────────────────────────────
@@ -80,15 +84,14 @@ class ExcelImporter:
             prefix, trade_name, _, _ = vals
             if not prefix:
                 continue
-            lookup = {'prefix': str(prefix).strip()}
+            lookup = {"prefix": str(prefix).strip()}
             if self.project:
-                lookup['project'] = self.project
+                lookup["project"] = self.project
             model.objects.update_or_create(
-                **lookup,
-                defaults={'trade_name': str(trade_name or '').strip()}
+                **lookup, defaults={"trade_name": str(trade_name or "").strip()}
             )
             count += 1
-        self.log(f'  Trade Codes: {count}')
+        self.log(f"  Trade Codes: {count}")
         return count
 
     # ── Materials Cost ─────────────────────────────────────────
@@ -103,21 +106,21 @@ class ExcelImporter:
                 continue
 
             mat_code_str = self._safe_str(mat_code)
-            lookup = {'material_code': mat_code_str}
+            lookup = {"material_code": mat_code_str}
             if self.project:
-                lookup['project'] = self.project
+                lookup["project"] = self.project
             model.objects.update_or_create(
                 **lookup,
                 defaults={
-                    'trade_name': self._safe_str(trade_name),
-                    'unit': self._safe_str(unit),
-                    'market_rate': self._safe_decimal(rate) or Decimal('0'),
-                    'material_variety': self._safe_str(variety),
-                    'market_spec': self._safe_str(spec),
-                }
+                    "trade_name": self._safe_str(trade_name),
+                    "unit": self._safe_str(unit),
+                    "market_rate": self._safe_decimal(rate) or Decimal("0"),
+                    "material_variety": self._safe_str(variety),
+                    "market_spec": self._safe_str(spec),
+                },
             )
             count += 1
-        self.log(f'  Materials: {count}')
+        self.log(f"  Materials: {count}")
         return count
 
     # ── Material Specification ─────────────────────────────────
@@ -150,7 +153,11 @@ class ExcelImporter:
 
     def _import_material_specifications(self, ws):
         spec_model = ProjectSpecification if self.project else SystemSpecification
-        comp_model = ProjectSpecificationComponent if self.project else SystemSpecificationComponent
+        comp_model = (
+            ProjectSpecificationComponent
+            if self.project
+            else SystemSpecificationComponent
+        )
 
         if self.project:
             spec_model.objects.filter(project=self.project).delete()
@@ -171,15 +178,17 @@ class ExcelImporter:
             trade = self._find_trade_code(trade_code_str)
 
             create_kwargs = {
-                'section': self._safe_str(section),
-                'trade_code': trade,
-                'unit_label': self._safe_str(boq_unit) or 'm3',
-                'name': self._safe_str(spec_code),
+                "section": self._safe_str(section),
+                "trade_code": trade,
+                "unit_label": self._safe_str(boq_unit) or "m3",
+                "name": self._safe_str(spec_code),
             }
             if self.project:
-                create_kwargs['project'] = self.project
+                create_kwargs["project"] = self.project
             else:
-                create_kwargs['boq_quantity'] = self._safe_decimal(vals[17]) or Decimal('0')
+                create_kwargs["boq_quantity"] = self._safe_decimal(vals[17]) or Decimal(
+                    "0"
+                )
 
             spec = spec_model.objects.create(**create_kwargs)
 
@@ -195,13 +204,13 @@ class ExcelImporter:
                     specification=spec,
                     material=mat,
                     label=self._safe_str(mat_code),
-                    qty_per_unit=self._safe_decimal(qty_val) or Decimal('0'),
+                    qty_per_unit=self._safe_decimal(qty_val) or Decimal("0"),
                     sort_order=i,
                 )
 
             count += 1
 
-        self.log(f'  Material Specifications: {count}')
+        self.log(f"  Material Specifications: {count}")
         return count
 
     # ── Labour Costs ───────────────────────────────────────────
@@ -221,28 +230,30 @@ class ExcelImporter:
                 continue
 
             create_kwargs = {
-                'crew_type': self._safe_str(crew_type),
-                'crew_size': int(vals[2] or 0),
-                'skilled': int(vals[3] or 0),
-                'semi_skilled': int(vals[4] or 0),
-                'general': int(vals[5] or 0),
-                'daily_production': self._safe_decimal(vals[6]) or Decimal('0'),
-                'skilled_rate': self._safe_decimal(vals[8]) or Decimal('0'),
-                'semi_skilled_rate': self._safe_decimal(vals[9]) or Decimal('0'),
-                'general_rate': self._safe_decimal(vals[10]) or Decimal('0'),
+                "crew_type": self._safe_str(crew_type),
+                "crew_size": int(vals[2] or 0),
+                "skilled": int(vals[3] or 0),
+                "semi_skilled": int(vals[4] or 0),
+                "general": int(vals[5] or 0),
+                "daily_production": self._safe_decimal(vals[6]) or Decimal("0"),
+                "skilled_rate": self._safe_decimal(vals[8]) or Decimal("0"),
+                "semi_skilled_rate": self._safe_decimal(vals[9]) or Decimal("0"),
+                "general_rate": self._safe_decimal(vals[10]) or Decimal("0"),
             }
             if self.project:
-                create_kwargs['project'] = self.project
+                create_kwargs["project"] = self.project
             model.objects.create(**create_kwargs)
             count += 1
 
-        self.log(f'  Labour Crews: {count}')
+        self.log(f"  Labour Crews: {count}")
         return count
 
     # ── Labour Specification ───────────────────────────────────
 
     def _import_labour_specifications(self, ws):
-        model = ProjectLabourSpecification if self.project else SystemLabourSpecification
+        model = (
+            ProjectLabourSpecification if self.project else SystemLabourSpecification
+        )
         crew_model = ProjectLabourCrew if self.project else SystemLabourCrew
         if self.project:
             model.objects.filter(project=self.project).delete()
@@ -258,32 +269,42 @@ class ExcelImporter:
 
             crew_type_str = self._safe_str(vals[4])
             if self.project:
-                crew = crew_model.objects.filter(
-                    project=self.project, crew_type=crew_type_str
-                ).first() if crew_type_str else None
+                crew = (
+                    crew_model.objects.filter(
+                        project=self.project, crew_type=crew_type_str
+                    ).first()
+                    if crew_type_str
+                    else None
+                )
             else:
-                crew = crew_model.objects.filter(crew_type=crew_type_str).first() if crew_type_str else None
+                crew = (
+                    crew_model.objects.filter(crew_type=crew_type_str).first()
+                    if crew_type_str
+                    else None
+                )
 
             create_kwargs = {
-                'section': self._safe_str(vals[0]),
-                'trade_name': self._safe_str(vals[1]),
-                'name': self._safe_str(labour_spec),
-                'unit': self._safe_str(vals[3]),
-                'crew': crew,
-                'daily_production': self._safe_decimal(vals[5]) or Decimal('0'),
-                'team_mix': self._safe_decimal(vals[6]) or Decimal('1'),
-                'site_factor': self._safe_decimal(vals[7]) or Decimal('1'),
-                'tools_factor': self._safe_decimal(vals[8]) or Decimal('1'),
-                'leadership_factor': self._safe_decimal(vals[9]) or Decimal('1'),
+                "section": self._safe_str(vals[0]),
+                "trade_name": self._safe_str(vals[1]),
+                "name": self._safe_str(labour_spec),
+                "unit": self._safe_str(vals[3]),
+                "crew": crew,
+                "daily_production": self._safe_decimal(vals[5]) or Decimal("0"),
+                "team_mix": self._safe_decimal(vals[6]) or Decimal("1"),
+                "site_factor": self._safe_decimal(vals[7]) or Decimal("1"),
+                "tools_factor": self._safe_decimal(vals[8]) or Decimal("1"),
+                "leadership_factor": self._safe_decimal(vals[9]) or Decimal("1"),
             }
             if self.project:
-                create_kwargs['project'] = self.project
+                create_kwargs["project"] = self.project
             else:
-                create_kwargs['boq_quantity'] = self._safe_decimal(vals[13]) or Decimal('0')
+                create_kwargs["boq_quantity"] = self._safe_decimal(vals[13]) or Decimal(
+                    "0"
+                )
             model.objects.create(**create_kwargs)
             count += 1
 
-        self.log(f'  Labour Specifications: {count}')
+        self.log(f"  Labour Specifications: {count}")
         return count
 
     # ── Output BoQ ─────────────────────────────────────────────
@@ -335,27 +356,27 @@ class ExcelImporter:
                 material = self._find_material(spec_str)
 
             create_kwargs = {
-                'section': self._safe_str(section),
-                'bill_no': self._safe_str(vals[1]),
-                'trade_code': trade,
-                'specification': spec,
-                'labour_specification': labour_spec,
-                'material': material,
-                'item_no': self._safe_str(vals[6]),
-                'pay_ref': self._safe_str(vals[7]),
-                'description': self._safe_str(desc),
-                'unit': self._safe_str(vals[9]),
-                'contract_quantity': self._safe_decimal(vals[10]),
-                'contract_rate': self._safe_decimal(vals[11]),
-                'progress_quantity': self._safe_decimal(vals[13]),
-                'forecast_quantity': self._safe_decimal(vals[14]),
-                'is_section_header': is_header,
+                "section": self._safe_str(section),
+                "bill_no": self._safe_str(vals[1]),
+                "trade_code": trade,
+                "specification": spec,
+                "labour_specification": labour_spec,
+                "material": material,
+                "item_no": self._safe_str(vals[6]),
+                "pay_ref": self._safe_str(vals[7]),
+                "description": self._safe_str(desc),
+                "unit": self._safe_str(vals[9]),
+                "contract_quantity": self._safe_decimal(vals[10]),
+                "contract_rate": self._safe_decimal(vals[11]),
+                "progress_quantity": self._safe_decimal(vals[13]),
+                "forecast_quantity": self._safe_decimal(vals[14]),
+                "is_section_header": is_header,
             }
             if self.project:
-                create_kwargs['project'] = self.project
+                create_kwargs["project"] = self.project
             BOQItem.objects.create(**create_kwargs)
             count += 1
-        self.log(f'  BoQ Items: {count}')
+        self.log(f"  BoQ Items: {count}")
         return count
 
 
@@ -369,11 +390,11 @@ class SystemSpecImporter:
 
     def log(self, msg):
         if self.output:
-            self.output.write(msg + '\n')
+            self.output.write(msg + "\n")
 
     def _safe_str(self, value):
         if value is None:
-            return ''
+            return ""
         return str(value).strip()
 
     def _safe_decimal(self, value):
@@ -405,23 +426,25 @@ class SystemSpecImporter:
             if not spec_name:
                 continue
 
-            key = (spec_name, unit or 'm3')
+            key = (spec_name, unit or "m3")
             if key not in specs_data:
                 specs_data[key] = []
 
             mat_code_str = self._safe_str(mat_code)
             if mat_code_str:
-                specs_data[key].append({
-                    'material_code': mat_code_str,
-                    'qty_per_unit': self._safe_decimal(qty) or Decimal('0'),
-                })
+                specs_data[key].append(
+                    {
+                        "material_code": mat_code_str,
+                        "qty_per_unit": self._safe_decimal(qty) or Decimal("0"),
+                    }
+                )
 
         created = 0
         updated = 0
 
         for (name, unit), components in specs_data.items():
             spec, was_created = SystemMaterialSpec.objects.get_or_create(
-                name=name, defaults={'unit': unit}
+                name=name, defaults={"unit": unit}
             )
             if not was_created:
                 spec.unit = unit
@@ -432,28 +455,30 @@ class SystemSpecImporter:
                 created += 1
 
             for i, comp in enumerate(components):
-                mat = SystemMaterial.objects.filter(material_code=comp['material_code']).first()
+                mat = SystemMaterial.objects.filter(
+                    material_code=comp["material_code"]
+                ).first()
                 SystemMaterialSpecComponent.objects.create(
                     spec=spec,
                     material=mat,
-                    label=comp['material_code'],
-                    qty_per_unit=comp['qty_per_unit'],
+                    label=comp["material_code"],
+                    qty_per_unit=comp["qty_per_unit"],
                     sort_order=i,
                 )
 
-        self.results['system_specs'] = {'created': created, 'updated': updated}
+        self.results["system_specs"] = {"created": created, "updated": updated}
         wb.close()
         return self.results
 
 
 class Command(BaseCommand):
-    help = 'Import data from Resources Estimator Excel file'
+    help = "Import data from Resources Estimator Excel file"
 
     def add_arguments(self, parser):
-        parser.add_argument('file', type=str, help='Path to the Excel file')
+        parser.add_argument("file", type=str, help="Path to the Excel file")
 
     def handle(self, *args, **options):
-        importer = ExcelImporter(options['file'], output=self.stdout)
-        self.stdout.write('Importing full Resources Estimator Excel...')
+        importer = ExcelImporter(options["file"], output=self.stdout)
+        self.stdout.write("Importing full Resources Estimator Excel...")
         importer.run()
-        self.stdout.write(self.style.SUCCESS('Import completed successfully.'))
+        self.stdout.write(self.style.SUCCESS("Import completed successfully."))

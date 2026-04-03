@@ -5,26 +5,52 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0046_alter_projectdocument_category'),
-        ('estimator', '0008_alter_boqitem_fks'),
+        ("Project", "0046_alter_projectdocument_category"),
+        ("estimator", "0008_alter_boqitem_fks"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ProjectAssumptions',
+            name="ProjectAssumptions",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('material_markup_pct', models.DecimalField(decimal_places=2, default=0, max_digits=6)),
-                ('labour_markup_pct', models.DecimalField(decimal_places=2, default=0, max_digits=6)),
-                ('transport_pct', models.DecimalField(decimal_places=2, default=0, max_digits=6)),
-                ('wastage_pct', models.DecimalField(decimal_places=2, default=0, max_digits=6)),
-                ('project', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='estimator_assumptions', to='Project.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "material_markup_pct",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=6),
+                ),
+                (
+                    "labour_markup_pct",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=6),
+                ),
+                (
+                    "transport_pct",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=6),
+                ),
+                (
+                    "wastage_pct",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=6),
+                ),
+                (
+                    "project",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="estimator_assumptions",
+                        to="Project.project",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Project Assumptions',
-                'verbose_name_plural': 'Project Assumptions',
+                "verbose_name": "Project Assumptions",
+                "verbose_name_plural": "Project Assumptions",
             },
         ),
     ]

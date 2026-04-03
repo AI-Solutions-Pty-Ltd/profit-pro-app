@@ -16,13 +16,14 @@ from app.Estimator.calculations import (
 # System-Level Library Models (admin-managed, importable)
 # ═══════════════════════════════════════════════════════════════════
 
+
 class SystemTradeCode(models.Model):
     prefix = models.CharField(max_length=20)
     trade_name = models.CharField(max_length=100)
 
     class Meta:
-        db_table = 'estimator_tradecode'
-        ordering = ['prefix']
+        db_table = "estimator_tradecode"
+        ordering = ["prefix"]
 
     def __str__(self):
         return self.trade_code
@@ -41,8 +42,8 @@ class SystemMaterial(models.Model):
     market_spec = models.CharField(max_length=100, blank=True)
 
     class Meta:
-        db_table = 'estimator_material'
-        ordering = ['material_code']
+        db_table = "estimator_material"
+        ordering = ["material_code"]
 
     def __str__(self):
         return self.material_code
@@ -51,20 +52,26 @@ class SystemMaterial(models.Model):
 class SystemSpecification(models.Model):
     section = models.CharField(max_length=100, blank=True)
     trade_code = models.ForeignKey(
-        SystemTradeCode, on_delete=models.CASCADE, related_name='specifications',
-        null=True, blank=True
+        SystemTradeCode,
+        on_delete=models.CASCADE,
+        related_name="specifications",
+        null=True,
+        blank=True,
     )
-    unit_label = models.CharField(max_length=20, default='m3')
+    unit_label = models.CharField(max_length=20, default="m3")
     name = models.CharField(max_length=100)
     boq_quantity = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     system_spec = models.ForeignKey(
-        'SystemMaterialSpec', on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='project_specs'
+        "SystemMaterialSpec",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_specs",
     )
 
     class Meta:
-        db_table = 'estimator_specification'
-        ordering = ['section', 'name']
+        db_table = "estimator_specification"
+        ordering = ["section", "name"]
 
     def __str__(self):
         return self.name
@@ -72,13 +79,15 @@ class SystemSpecification(models.Model):
     @property
     def components(self):
         comps = []
-        for sc in self.spec_components.select_related('material').all():
-            comps.append({
-                'name': sc.label,
-                'qty_per_unit': sc.qty_per_unit,
-                'market_rate': sc.material.market_rate if sc.material else 0,
-                'unit': sc.material.unit if sc.material else '',
-            })
+        for sc in self.spec_components.select_related("material").all():
+            comps.append(
+                {
+                    "name": sc.label,
+                    "qty_per_unit": sc.qty_per_unit,
+                    "market_rate": sc.material.market_rate if sc.material else 0,
+                    "unit": sc.material.unit if sc.material else "",
+                }
+            )
         return comps
 
     @property
@@ -87,40 +96,47 @@ class SystemSpecification(models.Model):
             return calculate_rate_per_unit(self.components)
         elif self.system_spec:
             return self.system_spec.rate_per_unit
-        return Decimal('0')
+        return Decimal("0")
 
     @property
     def baseline_boq_quantity(self):
-        return self.boq_quantity or Decimal('0')
+        return self.boq_quantity or Decimal("0")
 
     def component_totals(self):
         results = []
-        for sc in self.spec_components.select_related('material').all():
-            results.append({
-                'id': sc.id,
-                'label': sc.label,
-                'qty_per_unit': sc.qty_per_unit,
-                'total_quantity': calculate_total_quantity(self.baseline_boq_quantity, sc.qty_per_unit),
-                'unit': sc.material.unit if sc.material else '',
-            })
+        for sc in self.spec_components.select_related("material").all():
+            results.append(
+                {
+                    "id": sc.id,
+                    "label": sc.label,
+                    "qty_per_unit": sc.qty_per_unit,
+                    "total_quantity": calculate_total_quantity(
+                        self.baseline_boq_quantity, sc.qty_per_unit
+                    ),
+                    "unit": sc.material.unit if sc.material else "",
+                }
+            )
         return results
 
 
 class SystemSpecificationComponent(models.Model):
     specification = models.ForeignKey(
-        SystemSpecification, on_delete=models.CASCADE, related_name='spec_components'
+        SystemSpecification, on_delete=models.CASCADE, related_name="spec_components"
     )
     material = models.ForeignKey(
-        SystemMaterial, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='spec_components'
+        SystemMaterial,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="spec_components",
     )
     label = models.CharField(max_length=100)
     qty_per_unit = models.DecimalField(max_digits=10, decimal_places=4, default=0)
     sort_order = models.IntegerField(default=0)
 
     class Meta:
-        db_table = 'estimator_specificationcomponent'
-        ordering = ['sort_order']
+        db_table = "estimator_specificationcomponent"
+        ordering = ["sort_order"]
 
     def __str__(self):
         return f"{self.specification.name} - {self.label}"
@@ -138,9 +154,9 @@ class SystemLabourCrew(models.Model):
     general_rate = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     class Meta:
-        db_table = 'estimator_labourcrew'
-        ordering = ['crew_type']
-        verbose_name = 'System Labour Crew'
+        db_table = "estimator_labourcrew"
+        ordering = ["crew_type"]
+        verbose_name = "System Labour Crew"
 
     def __str__(self):
         return self.crew_type
@@ -160,8 +176,11 @@ class SystemLabourSpecification(models.Model):
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     crew = models.ForeignKey(
-        SystemLabourCrew, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='labour_specs'
+        SystemLabourCrew,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="labour_specs",
     )
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     team_mix = models.DecimalField(max_digits=6, decimal_places=4, default=1)
@@ -171,9 +190,9 @@ class SystemLabourSpecification(models.Model):
     boq_quantity = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     class Meta:
-        db_table = 'estimator_labourspecification'
-        ordering = ['section', 'name']
-        verbose_name = 'System Labour Specification'
+        db_table = "estimator_labourspecification"
+        ordering = ["section", "name"]
+        verbose_name = "System Labour Specification"
 
     def __str__(self):
         return self.name
@@ -192,13 +211,13 @@ class SystemLabourSpecification(models.Model):
     def daily_cost(self):
         if self.crew:
             return self.crew.crew_daily_cost
-        return Decimal('0')
+        return Decimal("0")
 
     @property
     def rate_per_unit(self):
         if self.daily_production and self.daily_production > 0:
             return self.daily_cost / self.daily_production
-        return Decimal('0')
+        return Decimal("0")
 
     @property
     def total_cost(self):
@@ -206,21 +225,20 @@ class SystemLabourSpecification(models.Model):
 
     @property
     def baseline_boq_quantity(self):
-        total = self.boq_items.aggregate(
-            total=models.Sum('contract_quantity')
-        )['total']
-        return total or Decimal('0')
+        total = self.boq_items.aggregate(total=models.Sum("contract_quantity"))["total"]
+        return total or Decimal("0")
 
 
 class SystemMaterialSpec(models.Model):
     """Reusable material specification library at system level."""
+
     name = models.CharField(max_length=100, unique=True)
-    unit = models.CharField(max_length=20, default='m3')
+    unit = models.CharField(max_length=20, default="m3")
 
     class Meta:
-        verbose_name = 'System Material Spec'
-        verbose_name_plural = 'System Material Specs'
-        ordering = ['name']
+        verbose_name = "System Material Spec"
+        verbose_name_plural = "System Material Specs"
+        ordering = ["name"]
 
     def __str__(self):
         return self.name
@@ -228,13 +246,15 @@ class SystemMaterialSpec(models.Model):
     @property
     def components(self):
         comps = []
-        for sc in self.system_spec_components.select_related('material').all():
-            comps.append({
-                'name': sc.label,
-                'qty_per_unit': sc.qty_per_unit,
-                'market_rate': sc.material.market_rate if sc.material else 0,
-                'unit': sc.material.unit if sc.material else '',
-            })
+        for sc in self.system_spec_components.select_related("material").all():
+            comps.append(
+                {
+                    "name": sc.label,
+                    "qty_per_unit": sc.qty_per_unit,
+                    "market_rate": sc.material.market_rate if sc.material else 0,
+                    "unit": sc.material.unit if sc.material else "",
+                }
+            )
         return comps
 
     @property
@@ -244,19 +264,25 @@ class SystemMaterialSpec(models.Model):
 
 class SystemMaterialSpecComponent(models.Model):
     """Component of a system-level material specification."""
+
     spec = models.ForeignKey(
-        SystemMaterialSpec, on_delete=models.CASCADE, related_name='system_spec_components'
+        SystemMaterialSpec,
+        on_delete=models.CASCADE,
+        related_name="system_spec_components",
     )
     material = models.ForeignKey(
-        SystemMaterial, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='system_spec_components'
+        SystemMaterial,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="system_spec_components",
     )
     label = models.CharField(max_length=100)
     qty_per_unit = models.DecimalField(max_digits=10, decimal_places=4, default=0)
     sort_order = models.IntegerField(default=0)
 
     class Meta:
-        ordering = ['sort_order']
+        ordering = ["sort_order"]
 
     def __str__(self):
         return f"{self.spec.name} - {self.label}"
@@ -266,20 +292,26 @@ class SystemMaterialSpecComponent(models.Model):
 # Project-Scoped Models (cloned from system library per project)
 # ═══════════════════════════════════════════════════════════════════
 
+
 class ProjectTradeCode(models.Model):
     project = models.ForeignKey(
-        'Project.Project', on_delete=models.CASCADE, related_name='estimator_trade_codes'
+        "Project.Project",
+        on_delete=models.CASCADE,
+        related_name="estimator_trade_codes",
     )
     source = models.ForeignKey(
-        SystemTradeCode, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='project_copies'
+        SystemTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_copies",
     )
     prefix = models.CharField(max_length=20)
     trade_name = models.CharField(max_length=100)
 
     class Meta:
-        ordering = ['prefix']
-        unique_together = [('project', 'prefix')]
+        ordering = ["prefix"]
+        unique_together = [("project", "prefix")]
 
     def __str__(self):
         return self.trade_code
@@ -291,11 +323,14 @@ class ProjectTradeCode(models.Model):
 
 class ProjectMaterial(models.Model):
     project = models.ForeignKey(
-        'Project.Project', on_delete=models.CASCADE, related_name='estimator_materials'
+        "Project.Project", on_delete=models.CASCADE, related_name="estimator_materials"
     )
     source = models.ForeignKey(
-        SystemMaterial, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='project_copies'
+        SystemMaterial,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_copies",
     )
     trade_name = models.CharField(max_length=200, blank=True)
     material_code = models.CharField(max_length=100)
@@ -305,8 +340,8 @@ class ProjectMaterial(models.Model):
     market_spec = models.CharField(max_length=100, blank=True)
 
     class Meta:
-        ordering = ['material_code']
-        unique_together = [('project', 'material_code')]
+        ordering = ["material_code"]
+        unique_together = [("project", "material_code")]
 
     def __str__(self):
         return self.material_code
@@ -314,23 +349,31 @@ class ProjectMaterial(models.Model):
 
 class ProjectSpecification(models.Model):
     project = models.ForeignKey(
-        'Project.Project', on_delete=models.CASCADE, related_name='estimator_specifications'
+        "Project.Project",
+        on_delete=models.CASCADE,
+        related_name="estimator_specifications",
     )
     source = models.ForeignKey(
-        SystemMaterialSpec, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='project_specification_copies'
+        SystemMaterialSpec,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_specification_copies",
     )
     section = models.CharField(max_length=100, blank=True)
     trade_code = models.ForeignKey(
-        ProjectTradeCode, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='specifications'
+        ProjectTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="specifications",
     )
-    unit_label = models.CharField(max_length=20, default='m3')
+    unit_label = models.CharField(max_length=20, default="m3")
     name = models.CharField(max_length=100)
 
     class Meta:
-        ordering = ['section', 'name']
-        unique_together = [('project', 'name')]
+        ordering = ["section", "name"]
+        unique_together = [("project", "name")]
 
     def __str__(self):
         return self.name
@@ -338,13 +381,15 @@ class ProjectSpecification(models.Model):
     @property
     def components(self):
         comps = []
-        for sc in self.spec_components.select_related('material').all():
-            comps.append({
-                'name': sc.label,
-                'qty_per_unit': sc.qty_per_unit,
-                'market_rate': sc.material.market_rate if sc.material else 0,
-                'unit': sc.material.unit if sc.material else '',
-            })
+        for sc in self.spec_components.select_related("material").all():
+            comps.append(
+                {
+                    "name": sc.label,
+                    "qty_per_unit": sc.qty_per_unit,
+                    "market_rate": sc.material.market_rate if sc.material else 0,
+                    "unit": sc.material.unit if sc.material else "",
+                }
+            )
         return comps
 
     @property
@@ -353,42 +398,47 @@ class ProjectSpecification(models.Model):
             return calculate_rate_per_unit(self.components)
         elif self.source:
             return self.source.rate_per_unit
-        return Decimal('0')
+        return Decimal("0")
 
     @property
     def baseline_boq_quantity(self):
-        total = self.boq_items.aggregate(
-            total=models.Sum('contract_quantity')
-        )['total']
-        return total or Decimal('0')
+        total = self.boq_items.aggregate(total=models.Sum("contract_quantity"))["total"]
+        return total or Decimal("0")
 
     def component_totals(self):
         results = []
-        for sc in self.spec_components.select_related('material').all():
-            results.append({
-                'id': sc.id,
-                'label': sc.label,
-                'qty_per_unit': sc.qty_per_unit,
-                'total_quantity': calculate_total_quantity(self.baseline_boq_quantity, sc.qty_per_unit),
-                'unit': sc.material.unit if sc.material else '',
-            })
+        for sc in self.spec_components.select_related("material").all():
+            results.append(
+                {
+                    "id": sc.id,
+                    "label": sc.label,
+                    "qty_per_unit": sc.qty_per_unit,
+                    "total_quantity": calculate_total_quantity(
+                        self.baseline_boq_quantity, sc.qty_per_unit
+                    ),
+                    "unit": sc.material.unit if sc.material else "",
+                }
+            )
         return results
 
 
 class ProjectSpecificationComponent(models.Model):
     specification = models.ForeignKey(
-        ProjectSpecification, on_delete=models.CASCADE, related_name='spec_components'
+        ProjectSpecification, on_delete=models.CASCADE, related_name="spec_components"
     )
     material = models.ForeignKey(
-        ProjectMaterial, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='spec_components'
+        ProjectMaterial,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="spec_components",
     )
     label = models.CharField(max_length=100)
     qty_per_unit = models.DecimalField(max_digits=10, decimal_places=4, default=0)
     sort_order = models.IntegerField(default=0)
 
     class Meta:
-        ordering = ['sort_order']
+        ordering = ["sort_order"]
 
     def __str__(self):
         return f"{self.specification.name} - {self.label}"
@@ -396,11 +446,16 @@ class ProjectSpecificationComponent(models.Model):
 
 class ProjectLabourCrew(models.Model):
     project = models.ForeignKey(
-        'Project.Project', on_delete=models.CASCADE, related_name='estimator_labour_crews'
+        "Project.Project",
+        on_delete=models.CASCADE,
+        related_name="estimator_labour_crews",
     )
     source = models.ForeignKey(
-        SystemLabourCrew, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='project_copies'
+        SystemLabourCrew,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_copies",
     )
     crew_type = models.CharField(max_length=100)
     crew_size = models.IntegerField(default=0)
@@ -413,9 +468,9 @@ class ProjectLabourCrew(models.Model):
     general_rate = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     class Meta:
-        ordering = ['crew_type']
-        unique_together = [('project', 'crew_type')]
-        verbose_name = 'Project Labour Crew'
+        ordering = ["crew_type"]
+        unique_together = [("project", "crew_type")]
+        verbose_name = "Project Labour Crew"
 
     def __str__(self):
         return self.crew_type
@@ -431,19 +486,27 @@ class ProjectLabourCrew(models.Model):
 
 class ProjectLabourSpecification(models.Model):
     project = models.ForeignKey(
-        'Project.Project', on_delete=models.CASCADE, related_name='estimator_labour_specs'
+        "Project.Project",
+        on_delete=models.CASCADE,
+        related_name="estimator_labour_specs",
     )
     source = models.ForeignKey(
-        SystemLabourSpecification, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='project_copies'
+        SystemLabourSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_copies",
     )
     section = models.CharField(max_length=100, blank=True)
     trade_name = models.CharField(max_length=200, blank=True)
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
     crew = models.ForeignKey(
-        ProjectLabourCrew, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='labour_specs'
+        ProjectLabourCrew,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="labour_specs",
     )
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     team_mix = models.DecimalField(max_digits=6, decimal_places=4, default=1)
@@ -452,9 +515,9 @@ class ProjectLabourSpecification(models.Model):
     leadership_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
 
     class Meta:
-        ordering = ['section', 'name']
-        unique_together = [('project', 'name')]
-        verbose_name = 'Project Labour Specification'
+        ordering = ["section", "name"]
+        unique_together = [("project", "name")]
+        verbose_name = "Project Labour Specification"
 
     def __str__(self):
         return self.name
@@ -473,13 +536,13 @@ class ProjectLabourSpecification(models.Model):
     def daily_cost(self):
         if self.crew:
             return self.crew.crew_daily_cost
-        return Decimal('0')
+        return Decimal("0")
 
     @property
     def rate_per_unit(self):
         if self.daily_production and self.daily_production > 0:
             return self.daily_cost / self.daily_production
-        return Decimal('0')
+        return Decimal("0")
 
     @property
     def total_cost(self):
@@ -487,19 +550,20 @@ class ProjectLabourSpecification(models.Model):
 
     @property
     def baseline_boq_quantity(self):
-        total = self.boq_items.aggregate(
-            total=models.Sum('contract_quantity')
-        )['total']
-        return total or Decimal('0')
+        total = self.boq_items.aggregate(total=models.Sum("contract_quantity"))["total"]
+        return total or Decimal("0")
 
 
 # ═══════════════════════════════════════════════════════════════════
 # ProjectAssumptions — Project-level global markups & wastage
 # ═══════════════════════════════════════════════════════════════════
 
+
 class ProjectAssumptions(models.Model):
     project = models.OneToOneField(
-        'Project.Project', on_delete=models.CASCADE, related_name='estimator_assumptions',
+        "Project.Project",
+        on_delete=models.CASCADE,
+        related_name="estimator_assumptions",
     )
     material_markup_pct = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     labour_markup_pct = models.DecimalField(max_digits=6, decimal_places=2, default=0)
@@ -507,8 +571,8 @@ class ProjectAssumptions(models.Model):
     wastage_pct = models.DecimalField(max_digits=6, decimal_places=2, default=0)
 
     class Meta:
-        verbose_name = 'Project Assumptions'
-        verbose_name_plural = 'Project Assumptions'
+        verbose_name = "Project Assumptions"
+        verbose_name_plural = "Project Assumptions"
 
     def __str__(self):
         return f"Assumptions for {self.project}"
@@ -518,41 +582,68 @@ class ProjectAssumptions(models.Model):
 # BOQItem — Project-scoped, references Project* models
 # ═══════════════════════════════════════════════════════════════════
 
+
 class BOQItem(models.Model):
     project = models.ForeignKey(
-        'Project.Project', on_delete=models.CASCADE, related_name='estimator_boq_items',
-        null=True, blank=True,
+        "Project.Project",
+        on_delete=models.CASCADE,
+        related_name="estimator_boq_items",
+        null=True,
+        blank=True,
     )
     source_line_item = models.ForeignKey(
-        LineItem, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='estimator_boq_items',
+        LineItem,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="estimator_boq_items",
     )
     section = models.CharField(max_length=200, blank=True)
     bill_no = models.CharField(max_length=200, blank=True)
     trade_code = models.ForeignKey(
-        ProjectTradeCode, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='boq_items'
+        ProjectTradeCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="boq_items",
     )
     specification = models.ForeignKey(
-        ProjectSpecification, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='boq_items'
+        ProjectSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="boq_items",
     )
     labour_specification = models.ForeignKey(
-        ProjectLabourSpecification, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='boq_items'
+        ProjectLabourSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="boq_items",
     )
     item_no = models.CharField(max_length=20, blank=True)
     pay_ref = models.CharField(max_length=50, blank=True)
     description = models.CharField(max_length=500, blank=True)
     unit = models.CharField(max_length=20, blank=True)
-    contract_quantity = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    contract_rate = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    progress_quantity = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    forecast_quantity = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    contract_quantity = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    contract_rate = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    progress_quantity = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    forecast_quantity = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
     material = models.ForeignKey(
-        ProjectMaterial, on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='boq_items',
-        help_text="Direct material for items that don't use a specification"
+        ProjectMaterial,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="boq_items",
+        help_text="Direct material for items that don't use a specification",
     )
     is_section_header = models.BooleanField(default=False)
     material_markup_pct = models.DecimalField(max_digits=6, decimal_places=2, default=0)
@@ -560,9 +651,9 @@ class BOQItem(models.Model):
     transport_pct = models.DecimalField(max_digits=6, decimal_places=2, default=0)
 
     class Meta:
-        ordering = ['id']
-        verbose_name = 'BoQ Item'
-        verbose_name_plural = 'BoQ Items'
+        ordering = ["id"]
+        verbose_name = "BoQ Item"
+        verbose_name_plural = "BoQ Items"
 
     def __str__(self):
         return self.description or f"{self.section} - {self.bill_no}"
@@ -570,9 +661,9 @@ class BOQItem(models.Model):
     @property
     def rate_type(self):
         if self.specification:
-            return 'spec'
+            return "spec"
         if self.material:
-            return 'material'
+            return "material"
         return None
 
     @property
@@ -615,18 +706,22 @@ class BOQItem(models.Model):
 
     @property
     def baseline_new_price(self):
-        mat = self.new_materials_rate or Decimal('0')
-        lab = self.new_labour_rate or Decimal('0')
+        mat = self.new_materials_rate or Decimal("0")
+        lab = self.new_labour_rate or Decimal("0")
         total = mat + lab
         return total if total > 0 else None
 
     @property
     def progress_amount(self):
-        return calculate_progress_amount(self.baseline_new_price, self.progress_quantity)
+        return calculate_progress_amount(
+            self.baseline_new_price, self.progress_quantity
+        )
 
     @property
     def forecast_amount(self):
-        return calculate_forecast_amount(self.baseline_new_price, self.forecast_quantity)
+        return calculate_forecast_amount(
+            self.baseline_new_price, self.forecast_quantity
+        )
 
 
 def sync_boq_from_lineitems(project):
@@ -638,11 +733,17 @@ def sync_boq_from_lineitems(project):
     - Updates baseline fields on existing BOQItems (preserves user-edit fields)
     - Deletes BOQItems whose source LineItem no longer exists
     """
-    line_items = LineItem.objects.filter(project=project).select_related('bill', 'bill__structure').order_by('row_index')
+    line_items = (
+        LineItem.objects.filter(project=project)
+        .select_related("bill", "bill__structure")
+        .order_by("row_index")
+    )
 
     existing = {
         boq.source_line_item_id: boq
-        for boq in BOQItem.objects.filter(project=project, source_line_item__isnull=False)
+        for boq in BOQItem.objects.filter(
+            project=project, source_line_item__isnull=False
+        )
     }
 
     seen_ids = set()
@@ -651,19 +752,19 @@ def sync_boq_from_lineitems(project):
 
     for li in line_items:
         seen_ids.add(li.pk)
-        section_name = li.bill.structure.name if li.bill and li.bill.structure else ''
-        bill_name = li.bill.name if li.bill else ''
+        section_name = li.bill.structure.name if li.bill and li.bill.structure else ""
+        bill_name = li.bill.name if li.bill else ""
 
         baseline_fields = {
-            'section': section_name,
-            'bill_no': bill_name,
-            'item_no': li.item_number or '',
-            'pay_ref': li.payment_reference or '',
-            'description': li.description or '',
-            'unit': li.unit_measurement or '',
-            'contract_quantity': li.budgeted_quantity,
-            'contract_rate': li.unit_price,
-            'is_section_header': not li.is_work,
+            "section": section_name,
+            "bill_no": bill_name,
+            "item_no": li.item_number or "",
+            "pay_ref": li.payment_reference or "",
+            "description": li.description or "",
+            "unit": li.unit_measurement or "",
+            "contract_quantity": li.budgeted_quantity,
+            "contract_rate": li.unit_price,
+            "is_section_header": not li.is_work,
         }
 
         if li.pk in existing:
@@ -681,11 +782,15 @@ def sync_boq_from_lineitems(project):
             created += 1
 
     # Delete BOQItems whose source LineItem is gone
-    deleted_count, _ = BOQItem.objects.filter(
-        project=project,
-        source_line_item__isnull=False,
-    ).exclude(
-        source_line_item_id__in=seen_ids,
-    ).delete()
+    deleted_count, _ = (
+        BOQItem.objects.filter(
+            project=project,
+            source_line_item__isnull=False,
+        )
+        .exclude(
+            source_line_item_id__in=seen_ids,
+        )
+        .delete()
+    )
 
     return created, updated, deleted_count

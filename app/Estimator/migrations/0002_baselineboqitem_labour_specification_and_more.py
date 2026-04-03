@@ -5,20 +5,31 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('estimator', '0001_initial'),
+        ("estimator", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='baselineboqitem',
-            name='labour_specification',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='baseline_items', to='estimator.labourspecification'),
+            model_name="baselineboqitem",
+            name="labour_specification",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="baseline_items",
+                to="estimator.labourspecification",
+            ),
         ),
         migrations.AddField(
-            model_name='baselineboqitem',
-            name='trade_code',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='baseline_items', to='estimator.tradecode'),
+            model_name="baselineboqitem",
+            name="trade_code",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="baseline_items",
+                to="estimator.tradecode",
+            ),
         ),
     ]

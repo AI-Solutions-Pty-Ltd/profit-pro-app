@@ -4,25 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('estimator', '0002_baselineboqitem_labour_specification_and_more'),
+        ("estimator", "0002_baselineboqitem_labour_specification_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='boqitem',
-            name='labour_markup_pct',
+            model_name="boqitem",
+            name="labour_markup_pct",
             field=models.DecimalField(decimal_places=2, default=0, max_digits=6),
         ),
         migrations.AddField(
-            model_name='boqitem',
-            name='material_markup_pct',
+            model_name="boqitem",
+            name="material_markup_pct",
             field=models.DecimalField(decimal_places=2, default=0, max_digits=6),
         ),
         migrations.AddField(
-            model_name='boqitem',
-            name='transport_pct',
+            model_name="boqitem",
+            name="transport_pct",
             field=models.DecimalField(decimal_places=2, default=0, max_digits=6),
         ),
     ]

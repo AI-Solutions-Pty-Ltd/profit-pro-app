@@ -5,25 +5,36 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('BillOfQuantities', '0022_delete_claim'),
-        ('Project', '0046_alter_projectdocument_category'),
-        ('estimator', '0004_systemmaterialspec_specification_system_spec_and_more'),
+        ("BillOfQuantities", "0022_delete_claim"),
+        ("Project", "0046_alter_projectdocument_category"),
+        ("estimator", "0004_systemmaterialspec_specification_system_spec_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='boqitem',
-            name='project',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='estimator_boq_items', to='Project.project'),
+            model_name="boqitem",
+            name="project",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="estimator_boq_items",
+                to="Project.project",
+            ),
         ),
         migrations.AddField(
-            model_name='boqitem',
-            name='source_line_item',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='estimator_boq_items', to='BillOfQuantities.lineitem'),
+            model_name="boqitem",
+            name="source_line_item",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="estimator_boq_items",
+                to="BillOfQuantities.lineitem",
+            ),
         ),
         migrations.DeleteModel(
-            name='BaselineBOQItem',
+            name="BaselineBOQItem",
         ),
     ]
