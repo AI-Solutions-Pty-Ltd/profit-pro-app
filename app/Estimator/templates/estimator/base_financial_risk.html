@@ -1,30 +1,29 @@
 {% extends "estimator/base.html" %}
 {% load estimator_tags %}
-
 {% block estimator_content %}
-<!-- Financial Risk Report Sub-Navigation -->
-<div class="mb-6">
-    <nav class="flex space-x-1 rounded-lg bg-gray-100 p-1" aria-label="Financial Risk Report sections">
-        {% with url_name=request.resolver_match.url_name %}
-        <a href="{% url 'estimator:report_baseline_assessment' project_pk=project_pk %}"
-           class="{% if url_name == 'report_baseline_assessment' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
-            Baseline Assessment
-        </a>
-        <a href="{% url 'estimator:report_progress_assessment' project_pk=project_pk %}"
-           class="{% if url_name == 'report_progress_assessment' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
-            Progress Assessment
-        </a>
-        <a href="{% url 'estimator:report_forecast_assessment' project_pk=project_pk %}"
-           class="{% if url_name == 'report_forecast_assessment' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
-            Forecast Assessment
-        </a>
-        <a href="{% url 'estimator:report_key_rates_assessment' project_pk=project_pk %}"
-           class="{% if url_name == 'report_key_rates_assessment' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
-            Key Rates Assessment
-        </a>
-        {% endwith %}
-    </nav>
-</div>
-
-{% block sub_content %}{% endblock %}
+    <!-- Financial Risk Report Sub-Navigation -->
+    <div class="mb-6">
+        <nav class="flex space-x-1 rounded-lg bg-gray-100 p-1"
+             aria-label="Financial Risk Report sections">
+            {% with url_name=request.resolver_match.url_name %}
+                <a href="{% url 'estimator:report_baseline_assessment' project_pk=project_pk %}"
+                   class="{% if url_name == 'report_baseline_assessment' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                    Baseline Assessment
+                </a>
+                <a href="{% url 'estimator:report_progress_assessment' project_pk=project_pk %}"
+                   class="{% if url_name == 'report_progress_assessment' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                    Progress Assessment
+                </a>
+                <a href="{% url 'estimator:report_forecast_assessment' project_pk=project_pk %}"
+                   class="{% if url_name == 'report_forecast_assessment' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                    Forecast Assessment
+                </a>
+                <a href="{% url 'estimator:report_key_rates_assessment' project_pk=project_pk %}"
+                   class="{% if url_name == 'report_key_rates_assessment' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                    Key Rates Assessment
+                </a>
+            {% endwith %}
+        </nav>
+    </div>
+    {% block sub_content %}{% endblock %}
 {% endblock %}

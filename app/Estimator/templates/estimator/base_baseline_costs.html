@@ -1,26 +1,25 @@
 {% extends "estimator/base.html" %}
 {% load estimator_tags %}
-
 {% block estimator_content %}
-<!-- Baseline Resources Costs Sub-Navigation -->
-<div class="mb-6">
-    <nav class="flex space-x-1 rounded-lg bg-gray-100 p-1" aria-label="Baseline Resources Costs sections">
-        {% with url_name=request.resolver_match.url_name %}
-        <a href="{% url 'estimator:trade_codes' project_pk=project_pk %}"
-           class="{% if url_name == 'trade_codes' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
-            Trade Codes
-        </a>
-        <a href="{% url 'estimator:materials' project_pk=project_pk %}"
-           class="{% if url_name == 'materials' or url_name == 'material_cost_upload' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
-            Material Costs
-        </a>
-        <a href="{% url 'estimator:labour_costs' project_pk=project_pk %}"
-           class="{% if url_name == 'labour_costs' or url_name == 'labour_cost_upload' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
-            Labour Costs
-        </a>
-        {% endwith %}
-    </nav>
-</div>
-
-{% block sub_content %}{% endblock %}
+    <!-- Baseline Resources Costs Sub-Navigation -->
+    <div class="mb-6">
+        <nav class="flex space-x-1 rounded-lg bg-gray-100 p-1"
+             aria-label="Baseline Resources Costs sections">
+            {% with url_name=request.resolver_match.url_name %}
+                <a href="{% url 'estimator:trade_codes' project_pk=project_pk %}"
+                   class="{% if url_name == 'trade_codes' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                    Trade Codes
+                </a>
+                <a href="{% url 'estimator:materials' project_pk=project_pk %}"
+                   class="{% if url_name == 'materials' or url_name == 'material_cost_upload' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                    Material Costs
+                </a>
+                <a href="{% url 'estimator:labour_costs' project_pk=project_pk %}"
+                   class="{% if url_name == 'labour_costs' or url_name == 'labour_cost_upload' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                    Labour Costs
+                </a>
+            {% endwith %}
+        </nav>
+    </div>
+    {% block sub_content %}{% endblock %}
 {% endblock %}
