@@ -34,6 +34,16 @@
                     {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
                     Categories
                 </a>
+                <a href="{% url 'project:subcategory-list' %}"
+                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
+                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
+                    Sub Categories
+                </a>
+                <a href="{% url 'project:discipline-list' %}"
+                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
+                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
+                    Disciplines
+                </a>
             </nav>
         </div>
         <!-- Header with Create Button -->
@@ -49,13 +59,125 @@
         </div>
         <!-- Filter Form -->
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
-            <form id="filterForm" method="get" class="left-content gap-4">
-                <!-- Search -->
-                <div class="flex-1 min-w-[200px] max-w-xs">{{ filter_form.search|as_crispy_field }}</div>
-                <!-- Category Filter -->
-                <div class="min-w-[150px]">{{ filter_form.category|as_crispy_field }}</div>
-                <!-- Status Filter -->
-                <div class="min-w-[150px]">{{ filter_form.status|as_crispy_field }}</div>
+            <form id="filterForm" method="get" class="space-y-4">
+                <!-- Search Bar -->
+                <div class="flex items-center gap-3">
+                    {% heroicon_outline "magnifying-glass" size="18" class="text-gray-500" %}
+                    <input type="text"
+                           name="search"
+                           value="{{ filter_form.search.value|default:'' }}"
+                           placeholder="Search projects..."
+                           class="flex-1 max-w-md px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <!-- Filter Dropdowns -->
+                <div class="flex items-center gap-3 flex-wrap">
+                    <!-- Filter Icon and Label -->
+                    <div class="flex items-center gap-2">
+                        {% heroicon_outline "funnel" size="18" class="text-gray-500" %}
+                        <label class="text-sm font-semibold text-gray-700">Filters</label>
+                    </div>
+                    <!-- Classification Filters -->
+                    <div class="flex items-center gap-2 pr-3 border-r border-gray-300">
+                        <!-- Category Filter -->
+                        <div class="relative">
+                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Category</span>
+                            <select name="project_category"
+                                    onchange="this.form.submit()"
+                                    class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                <option value="">All</option>
+                                {% for category in filter_form.project_category.field.queryset %}
+                                    <option value="{{ category.pk }}"
+                                            {% if filter_form.project_category.value|stringformat:"s" == category.pk|stringformat:"s" %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                        </div>
+                        <!-- Subcategory Filter -->
+                        <div class="relative">
+                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Subcategory</span>
+                            <select name="project_subcategory"
+                                    onchange="this.form.submit()"
+                                    class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                <option value="">All</option>
+                                {% for subcategory in filter_form.project_subcategory.field.queryset %}
+                                    <option value="{{ subcategory.pk }}"
+                                            {% if filter_form.project_subcategory.value|stringformat:"s" == subcategory.pk|stringformat:"s" %}selected{% endif %}>
+                                        {{ subcategory.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                        </div>
+                        <!-- Discipline Filter -->
+                        <div class="relative">
+                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Discipline</span>
+                            <select name="project_discipline"
+                                    onchange="this.form.submit()"
+                                    class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                <option value="">All</option>
+                                {% for discipline in filter_form.project_discipline.field.queryset %}
+                                    <option value="{{ discipline.pk }}"
+                                            {% if filter_form.project_discipline.value|stringformat:"s" == discipline.pk|stringformat:"s" %}selected{% endif %}>
+                                        {{ discipline.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                        </div>
+                    </div>
+                    <!-- People Filters -->
+                    <div class="flex items-center gap-2 pr-3 border-r border-gray-300">
+                        <!-- Client Filter -->
+                        <div class="relative">
+                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Client</span>
+                            <select name="client"
+                                    onchange="this.form.submit()"
+                                    class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                <option value="">All</option>
+                                {% for client in filter_form.client.field.queryset %}
+                                    <option value="{{ client.pk }}"
+                                            {% if filter_form.client.value|stringformat:"s" == client.pk|stringformat:"s" %}selected{% endif %}>
+                                        {{ client.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                        </div>
+                        <!-- Contractor Filter -->
+                        <div class="relative">
+                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Contractor</span>
+                            <select name="contractor"
+                                    onchange="this.form.submit()"
+                                    class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                <option value="">All</option>
+                                {% for contractor in filter_form.contractor.field.queryset %}
+                                    <option value="{{ contractor.pk }}"
+                                            {% if filter_form.contractor.value|stringformat:"s" == contractor.pk|stringformat:"s" %}selected{% endif %}>
+                                        {{ contractor.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                        </div>
+                    </div>
+                    <!-- Status Filter -->
+                    <div class="relative">
+                        <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Status</span>
+                        <select name="status"
+                                onchange="this.form.submit()"
+                                class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                            {% for value, label in filter_form.status.field.choices %}
+                                <option value="{{ value }}"
+                                        {% if filter_form.status.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                    </div>
+                </div>
                 <!-- Filter Actions -->
                 <div class="centered-content-horizontal">
                     <button type="submit"
@@ -63,12 +185,15 @@
                         {% heroicon_outline "funnel" class="w-4 h-4 mr-1.5" %}
                         Filter
                     </button>
-                    {% if filter_form.search.value or filter_form.category.value or filter_form.status.value and filter_form.status.value != 'ALL' %}
-                        <a href="{% url 'project:project-list' %}"
-                           class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-                            {% heroicon_outline "x-mark" class="w-4 h-4 mr-1" %}
+                    {% if filter_form.search.value or filter_form.project_category.value or filter_form.project_subcategory.value or filter_form.project_discipline.value or filter_form.client.value or filter_form.contractor.value or filter_form.status.value and filter_form.status.value != 'ALL' %}
+                        <button type="button"
+                                onclick="window.location.href='{% url 'project:project-list' %}'"
+                                class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 hover:text-indigo-700 transition-all duration-200"
+                                title="Clear all filters"
+                                aria-label="Clear filters">
+                            {% heroicon_outline "x-mark" size="14" class="mr-1" %}
                             Clear
-                        </a>
+                        </button>
                     {% endif %}
                 </div>
             </form>
@@ -95,9 +220,9 @@
                                 <div class="text-xs text-gray-500">{{ project.client.name|default:"No Client" }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                {% if project.category %}
+                                {% if project.project_category %}
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                        {{ project.category.name }}
+                                        {{ project.project_category.name }}
                                     </span>
                                 {% else %}
                                     <span class="text-sm text-gray-400">--</span>

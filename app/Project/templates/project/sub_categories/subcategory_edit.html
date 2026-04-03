@@ -1,0 +1,113 @@
+<!-- Edit Modal -->
+<div id="editSubCategoryModal"
+     class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">Edit Sub Category</h3>
+                    <button type="button"
+                            onclick="closeEditSubCategoryModal()"
+                            class="text-gray-400 hover:text-gray-500">
+                        {% heroicon_outline "x-mark" size="20" %}
+                    </button>
+                </div>
+            </div>
+            <form method="post" id="editForm">
+                {% csrf_token %}
+                <div class="px-6 py-4 space-y-4">
+                    <div class="space-y-4">
+                        {{ form.id }}
+                        {{ form.category }}
+                        <div>{{ form.name|as_crispy_field }}</div>
+                        <div>{{ form.description|as_crispy_field }}</div>
+                    </div>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-3">
+                    <button type="button"
+                            onclick="closeEditSubCategoryModal()"
+                            class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "check" size="16" class="inline mr-1" %}
+                        Update Sub Category
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    // Edit Modal Functions
+    const editSubCategoryModal = document.getElementById("editSubCategoryModal");
+    const editSubCategoryForm = editSubCategoryModal.querySelector('#editForm')
+
+    function openEditSubCategoryModal(id, name, description, categoryId) {
+        editSubCategoryModal.dataset.id = id;
+        editSubCategoryModal.dataset.categoryId = categoryId;
+        const nameInput = editSubCategoryForm.querySelector('#id_name');
+        const descriptionInput = editSubCategoryForm.querySelector('#id_description');
+        const categoryInput = editSubCategoryForm.querySelector('#id_category');
+        
+        // Set values
+        nameInput.value = name;
+        descriptionInput.value = description;
+        categoryInput.value = categoryId
+        
+        // Show modal
+        editSubCategoryModal.classList.remove('hidden');
+        nameInput.focus();
+    }
+
+    function closeEditSubCategoryModal() {
+        editSubCategoryModal.classList.add('hidden');
+        editSubCategoryForm.reset();
+    }
+
+    // Close modals on escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeEditSubCategoryModal();
+        }
+    });
+
+    editSubCategoryModal.addEventListener('click', function(event) {
+        if (event.target === this) closeEditSubCategoryModal();
+    });
+
+    // Form submission
+    editSubCategoryForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        const id = editSubCategoryModal.dataset.id;
+        const categoryId = editSubCategoryModal.dataset.categoryId;
+        url = `/project/{{project.pk}}/categories/${categoryId}/subcategories/${id}/update/`
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ CSRF_TOKEN }}'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                window.location.reload();
+            } else {
+                alert('Sub category could not be updated');
+                console.error('Errors:', result.errors);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while updating the sub category');
+        }
+    });
+        
+</script>

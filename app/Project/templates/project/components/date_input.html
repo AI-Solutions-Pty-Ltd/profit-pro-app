@@ -1,0 +1,108 @@
+<!-- Date Input Component -->
+<div class="flex items-center space-x-2 mt-2">
+    <div class="relative">
+        <input type="date"
+               id="{{ field_id }}_start_date"
+               name="start_date"
+               value="{% if start_date %}{{ start_date|date:'Y-m-d' }}{% endif %}"
+               class="w-32 px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+               onchange="updateDates('{{ entity_type }}', {{ entity_id }}, this.value, document.getElementById('{{ field_id }}_end_date').value, {{ parent_id|default:'null' }})">
+        <label for="{{ field_id }}_start_date"
+               class="absolute -top-2 left-2 px-1 text-xs text-gray-500 bg-white">Start</label>
+    </div>
+    <span class="text-gray-400">to</span>
+    <div class="relative">
+        <input type="date"
+               id="{{ field_id }}_end_date"
+               name="end_date"
+               value="{% if end_date %}{{ end_date|date:'Y-m-d' }}{% endif %}"
+               class="w-32 px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+               onchange="updateDates('{{ entity_type }}', {{ entity_id }}, document.getElementById('{{ field_id }}_start_date').value, this.value, {{ parent_id|default:'null' }})">
+        <label for="{{ field_id }}_end_date"
+               class="absolute -top-2 left-2 px-1 text-xs text-gray-500 bg-white">End</label>
+    </div>
+</div>
+<script>
+// Function to get CSRF token from cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Global function to update dates via API
+async function updateDates(entityType, entityId, startDate, endDate, parentId = null) {
+    let url;
+    
+    // Build URL based on entity type
+    switch(entityType) {
+        case 'category':
+            url = `/project/{{ project.pk }}/categories/${entityId}/update-dates/`;
+            break;
+        case 'subcategory':
+            url = `/project/{{ project.pk }}/categories/${parentId}/subcategories/${entityId}/update-dates/`;
+            break;
+        case 'group':
+            url = `/project/{{ project.pk }}/subcategories/${parentId}/groups/${entityId}/update-dates/`;
+            break;
+        default:
+            console.error('Unknown entity type:', entityType);
+            return;
+    }
+    
+    const data = {
+        start_date: startDate || "",
+        end_date: endDate || ""
+    };
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        console.log(result)
+        
+        if (result.success) {
+            // Show success feedback
+            showDateUpdateSuccess();
+            window.location.reload()
+        } else {
+            console.error('Failed to update dates:', result);
+        }
+    } catch (error) {
+        console.error('Error updating dates:', error);
+    }
+}
+
+// Show success feedback
+function showDateUpdateSuccess() {
+    const alert = document.createElement('div');
+    alert.className = 'fixed bottom-4 right-4 bg-green-50 border border-green-200 rounded-md p-3 z-50 shadow-lg';
+    alert.innerHTML = `
+        <div class="flex items-center">
+            {% heroicon_outline "check-circle" size="20" class="text-green-500 mr-2" %}
+            <p class="text-sm font-medium text-green-800">Dates updated successfully</p>
+        </div>
+    `;
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        alert.remove();
+    }, 3000);
+}
+</script>

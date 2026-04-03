@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en" class="h-full" data-theme="light">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -21,6 +21,7 @@
         {% block extra_css %}
         {% endblock extra_css %}
         <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+        <!-- from cdn -->
     </head>
     <body class="flex flex-col min-h-screen bg-white">
         <!-- Sticky Top Navigation -->
@@ -32,7 +33,7 @@
         </div>
         <!-- Footer -->
         <footer class="fixed bottom-0 w-full bg-gray-800 text-white z-99">
-            <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-7xl mx-auto py-2 px-4 sm:px-6 lg:px-8">
                 <div class="flex flex-col md:flex-row justify-between items-center">
                     <p class="text-gray-300 text-sm">{% now "Y" %} {{ SITE_NAME|default:"Profit Pro" }}.</p>
                     <p class="text-gray-300 text-sm">Empowering businesses with smart financial solutions.</p>

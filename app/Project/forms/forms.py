@@ -2,7 +2,6 @@
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.db.models import QuerySet
 
 from app.Account.models import Account
 from app.Project.models import (
@@ -10,217 +9,11 @@ from app.Project.models import (
     Company,
     ContractualCompliance,
     FinalAccountCompliance,
-    Milestone,
     PlannedValue,
     Project,
-    ProjectCategory,
-    ProjectDocument,
     Risk,
     Signatories,
 )
-
-
-class FilterForm(forms.Form):
-    """Form for filtering projects."""
-
-    search = forms.CharField(
-        required=False,
-        widget=forms.TextInput(
-            attrs={
-                "placeholder": "Search projects...",
-            }
-        ),
-    )
-    category = forms.ModelChoiceField(
-        queryset=ProjectCategory.objects.all(),
-        required=False,
-        label="Filter by Category",
-        empty_label="All Categories",
-        widget=forms.Select(
-            attrs={
-                "onchange": "this.form.submit()",
-            }
-        ),
-    )
-    status = forms.ChoiceField(
-        choices=[("ALL", "All Statuses")] + list(Project.Status.choices),
-        required=False,
-        initial="ALL",
-        widget=forms.Select(
-            attrs={
-                "onchange": "this.form.submit()",
-            }
-        ),
-    )
-    active_projects = forms.BooleanField(
-        required=False,
-        label="Active Projects",
-    )
-    projects = forms.ModelChoiceField(
-        queryset=Project.objects.none(),
-        required=False,
-        label="Jump to Project",
-        widget=forms.Select(
-            attrs={
-                "onchange": "this.form.submit()",
-            }
-        ),
-    )
-    consultant = forms.ModelChoiceField(
-        queryset=Account.objects.none(),
-        required=False,
-        empty_label="All Consultants",
-        widget=forms.Select(
-            attrs={
-                "onchange": "this.form.submit()",
-            }
-        ),
-    )
-
-    def __init__(
-        self,
-        *args,
-        user: Account | None = None,
-        projects_queryset: QuerySet[Project] | None = None,
-        consultant_queryset: QuerySet[Account] | None = None,
-        **kwargs,
-    ):
-        """Initialize filter form with user-specific querysets."""
-        super().__init__(*args, **kwargs)
-
-        # Set custom querysets if provided
-        if projects_queryset is not None:
-            self.fields["projects"].queryset = projects_queryset  # type: ignore
-        if consultant_queryset is not None:
-            self.fields["consultant"].queryset = consultant_queryset  # type: ignore
-
-
-class ProjectCategoryForm(forms.ModelForm):
-    """Form for creating and updating project categories."""
-
-    class Meta:
-        model = ProjectCategory
-        fields = ["name", "description"]
-        widgets = {
-            "name": forms.TextInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Enter category name (e.g., Education, Health)",
-                }
-            ),
-            "description": forms.Textarea(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Optional description of this category",
-                    "rows": 3,
-                }
-            ),
-        }
-        labels = {
-            "name": "Category Name",
-            "description": "Description (Optional)",
-        }
-
-
-class BasicProjectCreateForm(forms.ModelForm):
-    class Meta:
-        model = Project
-        fields = ["name"]
-        widgets = {
-            "name": forms.TextInput(
-                attrs={
-                    "placeholder": "Enter project name",
-                }
-            ),
-        }
-
-
-class ProjectForm(forms.ModelForm):
-    """Form for creating and updating projects."""
-
-    class Meta:
-        model = Project
-        fields = [
-            "name",
-            "description",
-            "logo",
-            "category",
-            "start_date",
-            "end_date",
-            "contract_number",
-            "contract_clause",
-            "status",
-            "vat",
-            "payment_terms",
-        ]
-        widgets = {
-            "name": forms.TextInput(
-                attrs={
-                    "placeholder": "Enter project name",
-                }
-            ),
-            "description": forms.Textarea(
-                attrs={
-                    "placeholder": "Enter project description (optional)",
-                    "rows": 3,
-                }
-            ),
-            "start_date": forms.DateInput(
-                attrs={
-                    "type": "date",
-                }
-            ),
-            "end_date": forms.DateInput(
-                attrs={
-                    "type": "date",
-                }
-            ),
-            "contract_number": forms.TextInput(
-                attrs={
-                    "placeholder": "Enter contract number",
-                }
-            ),
-            "contract_clause": forms.Textarea(
-                attrs={
-                    "placeholder": "Enter contract clause",
-                    "rows": 3,
-                }
-            ),
-            "logo": forms.FileInput(
-                attrs={
-                    "accept": ".jpg,.jpeg,.png,.gif,.svg",
-                }
-            ),
-            "category": forms.Select(),
-            "vat": forms.CheckboxInput(),
-            "payment_terms": forms.Select(),
-        }
-        labels = {
-            "name": "Project Name",
-            "logo": "Project Logo",
-            "contract_number": "Payment Certificate Contract Number",
-            "contract_clause": "Payment Certificate Contract Clause",
-            "bank_account_name": "Account Name",
-            "bank_account_number": "Account Number",
-            "bank_branch_code": "Branch Code",
-            "bank_swift_code": "SWIFT Code",
-            "vat_number": "VAT/Tax Number",
-        }
-        help_texts = {
-            "logo": "Upload a logo for invoices and documents (JPG, PNG, GIF, SVG). Recommended size: 900x600px",
-            "category": "Select the project category",
-        }
-
-    def clean(self):
-        """Validate that end_date is after start_date."""
-        cleaned_data = super().clean() or {}
-        start_date = cleaned_data.get("start_date")
-        end_date = cleaned_data.get("end_date")
-
-        if start_date and end_date and end_date < start_date:
-            raise forms.ValidationError("End date must be after start date.")
-
-        return cleaned_data
 
 
 class ProjectContractorForm(forms.ModelForm):
@@ -262,7 +55,49 @@ class ProjectContractorForm(forms.ModelForm):
         # Type: ModelChoiceField has queryset attribute
         contractor_field = self.fields["contractor"]
         if hasattr(contractor_field, "queryset"):
-            contractor_field.queryset = queryset.distinct()  # type: ignore[attr-defined]
+            contractor_field.queryset = queryset.distinct()  # type: ignore
+
+
+class ProjectLeadConsultantForm(forms.ModelForm):
+    """Form for updating the project lead consultant."""
+
+    class Meta:
+        model = Project
+        fields = ["lead_consultant"]
+        widgets = {
+            "lead_consultant": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+        }
+        labels = {
+            "lead_consultant": "Lead Consultant",
+        }
+        help_texts = {
+            "lead_consultant": "Select the lead consultant company for this project",
+        }
+
+    def __init__(self, *args, **kwargs):
+        project = kwargs.pop("project", None)
+        user: Account = kwargs.pop("user", None)
+        projects = user.get_projects
+
+        super().__init__(*args, **kwargs)
+
+        # Filter to only show lead consultant companies
+        queryset = Company.objects.filter(
+            contractor_projects__in=projects, type=Company.Type.LEAD_CONSULTANT
+        ).order_by("name")
+
+        # Exclude the currently assigned lead consultant if project is provided
+        if project and project.lead_consultant:
+            queryset = queryset.exclude(pk=project.lead_consultant.pk)
+
+        # Type: ModelChoiceField has queryset attribute
+        lead_consultant_field: forms.ModelChoiceField = self.fields["lead_consultant"]  # type: ignore
+        if hasattr(lead_consultant_field, "queryset"):
+            lead_consultant_field.queryset = queryset.distinct()
 
 
 class ClientCreateUpdateForm(forms.ModelForm):
@@ -501,153 +336,6 @@ class CashflowForecastForm(forms.ModelForm):
         labels = {
             "forecast_value": "Cashflow Forecast",
             "work_completed_percent": "% Work Completed",
-        }
-
-
-class MilestoneForm(forms.ModelForm):
-    """Form for creating and updating milestones."""
-
-    class Meta:
-        model = Milestone
-        fields = [
-            "name",
-            "planned_date",
-            "forecast_date",
-            "reason_for_change",
-            "sequence",
-            "is_completed",
-            "actual_date",
-        ]
-        widgets = {
-            "name": forms.TextInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Enter milestone name",
-                }
-            ),
-            "planned_date": forms.DateInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "type": "date",
-                },
-                format="%Y-%m-%d",
-            ),
-            "forecast_date": forms.DateInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "type": "date",
-                },
-                format="%Y-%m-%d",
-            ),
-            "reason_for_change": forms.Textarea(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Enter reason for change in forecast date",
-                    "rows": 3,
-                }
-            ),
-            "sequence": forms.NumberInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "min": "0",
-                }
-            ),
-            "is_completed": forms.CheckboxInput(
-                attrs={
-                    "class": "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded",
-                }
-            ),
-            "actual_date": forms.DateInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "type": "date",
-                },
-                format="%Y-%m-%d",
-            ),
-        }
-        labels = {
-            "name": "Milestone Name",
-            "planned_date": "Planned Date (Baseline)",
-            "forecast_date": "Forecast Date",
-            "reason_for_change": "Reason for Change",
-            "sequence": "Order/Sequence",
-            "is_completed": "Completed",
-            "actual_date": "Actual Completion Date",
-        }
-        help_texts = {
-            "planned_date": "Original planned completion date",
-            "forecast_date": "Current forecast completion date (leave blank if same as planned)",
-            "reason_for_change": "Explain why the forecast date differs from the planned date",
-            "sequence": "Order in which milestones should appear (0 = first)",
-        }
-
-    def clean(self):
-        """Validate milestone dates."""
-        cleaned_data = super().clean() or {}
-        planned_date = cleaned_data.get("planned_date")
-        forecast_date = cleaned_data.get("forecast_date")
-        is_completed = cleaned_data.get("is_completed")
-        actual_date = cleaned_data.get("actual_date")
-        reason_for_change = cleaned_data.get("reason_for_change")
-
-        # Require reason if forecast differs from planned
-        if forecast_date and planned_date and forecast_date != planned_date:
-            if not reason_for_change:
-                self.add_error(
-                    "reason_for_change",
-                    "Reason is required when forecast date differs from planned date.",
-                )
-
-        # Require actual date if completed
-        if is_completed and not actual_date:
-            self.add_error(
-                "actual_date",
-                "Actual completion date is required when milestone is marked as completed.",
-            )
-
-        return cleaned_data
-
-
-class ProjectDocumentForm(forms.ModelForm):
-    """Form for uploading project documents."""
-
-    class Meta:
-        model = ProjectDocument
-        fields = ["category", "title", "file", "notes"]
-        widgets = {
-            "category": forms.Select(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                }
-            ),
-            "title": forms.TextInput(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Enter document title",
-                }
-            ),
-            "file": forms.FileInput(
-                attrs={
-                    "class": "mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100",
-                    "accept": ".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip",
-                }
-            ),
-            "notes": forms.Textarea(
-                attrs={
-                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
-                    "placeholder": "Optional notes about this document",
-                    "rows": 3,
-                }
-            ),
-        }
-        labels = {
-            "category": "Document Category",
-            "title": "Document Title",
-            "file": "File",
-            "notes": "Notes (Optional)",
-        }
-        help_texts = {
-            "file": "Accepted formats: PDF, Word, Excel, Images, ZIP",
         }
 
 

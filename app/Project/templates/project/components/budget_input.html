@@ -1,0 +1,145 @@
+<!-- Budget Input Component -->
+<div class="flex flex-wrap items-center gap-2 mt-2">
+    <div class="relative">
+        <input type="number"
+               id="{{ field_id }}_budget"
+               name="budget"
+               value="{% if budget %}{{ budget }}{% endif %}"
+               step="0.01"
+               min="0"
+               placeholder="0.00"
+               class="w-36 px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+               onchange="updateBudgetFields('{{ entity_type }}', {{ entity_id }}, '{{ field_id }}', {{ parent_id|default:'null' }})">
+        <label for="{{ field_id }}_budget"
+               class="absolute -top-2 left-2 px-1 text-xs text-gray-500 bg-white">Budget (R)</label>
+    </div>
+    <div class="relative">
+        <input type="number"
+               id="{{ field_id }}_supply_only"
+               name="supply_only"
+               value="{% if supply_only %}{{ supply_only }}{% endif %}"
+               step="0.01"
+               min="0"
+               placeholder="0.00"
+               class="w-36 px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+               onchange="updateBudgetFields('{{ entity_type }}', {{ entity_id }}, '{{ field_id }}', {{ parent_id|default:'null' }})">
+        <label for="{{ field_id }}_supply_only"
+               class="absolute -top-2 left-2 px-1 text-xs text-gray-500 bg-white">Supply Only (R)</label>
+    </div>
+    <div class="relative">
+        <input type="number"
+               id="{{ field_id }}_install_only"
+               name="install_only"
+               value="{% if install_only %}{{ install_only }}{% endif %}"
+               step="0.01"
+               min="0"
+               placeholder="0.00"
+               class="w-36 px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+               onchange="updateBudgetFields('{{ entity_type }}', {{ entity_id }}, '{{ field_id }}', {{ parent_id|default:'null' }})">
+        <label for="{{ field_id }}_install_only"
+               class="absolute -top-2 left-2 px-1 text-xs text-gray-500 bg-white">Install Only (R)</label>
+    </div>
+    <div class="relative">
+        <input type="number"
+               id="{{ field_id }}_preliminaries"
+               name="preliminaries"
+               value="{% if preliminaries %}{{ preliminaries }}{% endif %}"
+               step="0.01"
+               min="0"
+               placeholder="0.00"
+               class="w-36 px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+               onchange="updateBudgetFields('{{ entity_type }}', {{ entity_id }}, '{{ field_id }}', {{ parent_id|default:'null' }})">
+        <label for="{{ field_id }}_preliminaries"
+               class="absolute -top-2 left-2 px-1 text-xs text-gray-500 bg-white">Preliminaries (R)</label>
+    </div>
+</div>
+<script>
+// Function to get CSRF token from cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Global function to update all cost fields via API
+async function updateBudgetFields(entityType, entityId, fieldId, parentId = null) {
+    let url;
+
+    switch(entityType) {
+        case 'category':
+            url = `/project/{{ project.pk }}/categories/${entityId}/update-budget/`;
+            break;
+        case 'subcategory':
+            url = `/project/{{ project.pk }}/categories/${parentId}/subcategories/${entityId}/update-budget/`;
+            break;
+        case 'group':
+            url = `/project/{{ project.pk }}/subcategories/${parentId}/groups/${entityId}/update-budget/`;
+            break;
+        default:
+            console.error('Unknown entity type:', entityType);
+            return;
+    }
+
+    const get = (suffix) => {
+        const el = document.getElementById(`${fieldId}_${suffix}`);
+        return el ? (el.value || null) : null;
+    };
+
+    const data = {
+        budget: get('budget'),
+        supply_only: get('supply_only'),
+        install_only: get('install_only'),
+        preliminaries: get('preliminaries'),
+    };
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        console.log(result);
+        
+        if (result.success) {
+            // Show success feedback
+            showBudgetUpdateSuccess();
+            window.location.reload();
+        } else {
+            console.error('Failed to update budget:', result);
+        }
+    } catch (error) {
+        console.error('Error updating budget:', error);
+    }
+}
+
+// Show success feedback
+function showBudgetUpdateSuccess() {
+    const alert = document.createElement('div');
+    alert.className = 'fixed bottom-4 right-4 bg-green-50 border border-green-200 rounded-md p-3 z-50 shadow-lg';
+    alert.innerHTML = `
+        <div class="flex items-center">
+            {% heroicon_outline "check-circle" size="20" class="text-green-500 mr-2" %}
+            <p class="text-sm font-medium text-green-800">Budget updated successfully</p>
+        </div>
+    `;
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        alert.remove();
+    }, 3000);
+}
+</script>

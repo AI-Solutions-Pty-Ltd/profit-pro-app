@@ -8,20 +8,28 @@ from .models import (
     AdministrativeCompliance,
     AdministrativeComplianceDialog,
     AdministrativeComplianceDialogFile,
+    Category,
     Company,
     ContractualCompliance,
     ContractualComplianceDialog,
     ContractualComplianceDialogFile,
+    Discipline,
     FinalAccountCompliance,
     FinalAccountComplianceDialog,
     FinalAccountComplianceDialogFile,
+    Group,
     PlannedValue,
     Portfolio,
+    ProductionPlan,
+    ProductionResource,
     Project,
     ProjectCategory,
+    ProjectDiscipline,
     ProjectDocument,
     ProjectRole,
+    ProjectSubCategory,
     Signatories,
+    SubCategory,
 )
 
 
@@ -33,10 +41,39 @@ class ProjectCategoryAdmin(SoftDeleteAdmin):
     readonly_fields = ["created_at", "updated_at"]
 
 
+@admin.register(ProjectSubCategory)
+class ProjectSubCategoryAdmin(SoftDeleteAdmin):
+    list_display = ["name", "description", "deleted", "created_at"]
+    list_filter = ["deleted", "created_at"]
+    search_fields = ["name", "description", "category__name"]
+    readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(ProjectDiscipline)
+class ProjectDisciplineAdmin(SoftDeleteAdmin):
+    list_display = ["name", "description", "deleted", "created_at"]
+    list_filter = [
+        "deleted",
+        "created_at",
+    ]
+    search_fields = [
+        "name",
+        "description",
+    ]
+    readonly_fields = ["created_at", "updated_at"]
+
+
 @admin.register(Project)
 class ProjectAdmin(SoftDeleteAdmin):
-    list_display = ["name", "client", "status", "category", "deleted", "created_at"]
-    list_filter = ["deleted", "created_at", "vat", "category", "status"]
+    list_display = [
+        "name",
+        "client",
+        "status",
+        "project_category",
+        "deleted",
+        "created_at",
+    ]
+    list_filter = ["deleted", "created_at", "vat", "project_category", "status"]
     search_fields = ["name", "description", "account__email"]
     readonly_fields = ["created_at", "updated_at"]
 
@@ -210,3 +247,110 @@ class FinalAccountComplianceDialogFileAdmin(SoftDeleteAdmin):
     search_fields = ["file"]
     date_hierarchy = "created_at"
     ordering = ["-created_at"]
+
+
+@admin.register(Category)
+class CategoryAdmin(SoftDeleteAdmin):
+    list_display = ["name", "description", "deleted", "created_at"]
+    list_filter = [
+        "deleted",
+        "created_at",
+    ]
+    search_fields = [
+        "name",
+        "description",
+    ]
+    readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(SubCategory)
+class SubCategoryAdmin(SoftDeleteAdmin):
+    list_display = [
+        "name",
+        "description",
+        "deleted",
+        "created_at",
+        "category__name",
+    ]
+    list_filter = [
+        "category",
+        "deleted",
+        "created_at",
+    ]
+    search_fields = [
+        "category__name",
+        "name",
+        "description",
+    ]
+    readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(Group)
+class GroupAdmin(SoftDeleteAdmin):
+    list_display = [
+        "name",
+        "description",
+        "deleted",
+        "created_at",
+        "sub_category__name",
+    ]
+    list_filter = [
+        "sub_category",
+        "deleted",
+        "created_at",
+    ]
+    search_fields = [
+        "sub_category__name",
+        "name",
+        "description",
+    ]
+    readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(Discipline)
+class DisciplineAdmin(SoftDeleteAdmin):
+    list_display = ["name", "description", "deleted", "created_at"]
+    list_filter = [
+        "deleted",
+        "created_at",
+    ]
+    search_fields = [
+        "name",
+        "description",
+    ]
+    readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(ProductionPlan)
+class ProductionPlanAdmin(SoftDeleteAdmin):
+    list_display = [
+        "project",
+        "activity",
+        "start_date",
+        "finish_date",
+        "quantity",
+        "unit",
+        "deleted",
+        "created_at",
+    ]
+    list_filter = ["deleted", "created_at", "project"]
+    search_fields = ["activity", "project__name"]
+    readonly_fields = ["created_at", "updated_at", "duration"]
+
+
+@admin.register(ProductionResource)
+class ProductionResourceAdmin(SoftDeleteAdmin):
+    list_display = [
+        "production_plan",
+        "resource_type",
+        "skill_type",
+        "plant_type",
+        "name",
+        "number",
+        "days",
+        "rate",
+        "total_cost",
+    ]
+    list_filter = ["resource_type", "production_plan__project", "production_plan"]
+    search_fields = ["name", "production_plan__activity"]
+    readonly_fields = ["created_at", "updated_at", "name", "rate", "total_cost"]

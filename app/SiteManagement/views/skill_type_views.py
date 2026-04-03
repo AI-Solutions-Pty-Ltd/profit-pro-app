@@ -1,0 +1,137 @@
+"""CRUD views for Skill Type."""
+
+from django.contrib import messages
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+
+from app.Account.subscription_config import Subscription
+from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
+from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
+from app.Project.models import Project, Role
+from app.SiteManagement.models import SkillType
+
+
+class SkillTypeMixin(
+    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
+):
+    """Mixin for Skill Type views."""
+
+    model = SkillType
+    roles = [Role.ADMIN, Role.USER]
+    project_slug = "project_pk"
+    required_tiers = [Subscription.SITE_MANAGEMENT]
+
+    def get_project(self) -> Project:
+        return Project.objects.get(pk=self.kwargs["project_pk"])
+
+    def get_queryset(self):
+        return SkillType.objects.filter(project=self.get_project())
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        return [
+            BreadcrumbItem(
+                title="Projects", url=str(reverse_lazy("project:project-list"))
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=str(
+                    reverse_lazy("project:project-dashboard", kwargs={"pk": project.pk})
+                ),
+            ),
+            BreadcrumbItem(
+                title="Site Management",
+                url=str(
+                    reverse_lazy(
+                        "site_management:site-management",
+                        kwargs={"project_pk": project.pk},
+                    )
+                ),
+            ),
+            BreadcrumbItem(
+                title="Skill Types",
+                url=str(
+                    reverse_lazy(
+                        "site_management:skill-type-list",
+                        kwargs={"project_pk": project.pk},
+                    )
+                ),
+            ),
+        ]
+
+
+class SkillTypeListView(SkillTypeMixin, ListView):
+    """List all skill types."""
+
+    template_name = "site_management/skill_type/list.html"
+    context_object_name = "skill_types"
+    paginate_by = 20
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context
+
+
+class SkillTypeCreateView(SkillTypeMixin, CreateView):
+    """Create a new skill type."""
+
+    template_name = "site_management/skill_type/form.html"
+    fields = ["name", "hourly_rate"]
+
+    def form_valid(self, form):
+        form.instance.project = self.get_project()
+        messages.success(self.request, "Skill type created successfully!")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "site_management:skill-type-list",
+            kwargs={"project_pk": self.get_project().pk},
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context
+
+
+class SkillTypeUpdateView(SkillTypeMixin, UpdateView):
+    """Update a skill type."""
+
+    template_name = "site_management/skill_type/form.html"
+    fields = ["name", "hourly_rate"]
+
+    def form_valid(self, form):
+        messages.success(self.request, "Skill type updated successfully!")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "site_management:skill-type-list",
+            kwargs={"project_pk": self.get_project().pk},
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context
+
+
+class SkillTypeDeleteView(SkillTypeMixin, DeleteView):
+    """Delete a skill type."""
+
+    template_name = "site_management/skill_type/confirm_delete.html"
+
+    def get_success_url(self):
+        messages.success(self.request, "Skill type deleted successfully!")
+        return reverse_lazy(
+            "site_management:skill-type-list",
+            kwargs={"project_pk": self.get_project().pk},
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.get_project()
+        return context

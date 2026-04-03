@@ -1,0 +1,176 @@
+{% extends "base_full.html" %}
+{% load heroicons %}
+{% block title %}
+    Procurement Packages - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="centered-content">
+        <div class="bg-white shadow-sm rounded-lg mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Procurement Packages</h1>
+                        <p class="text-sm text-gray-600 mt-1">{{ project.name }} - Package Timelines</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <a href="{% url 'planning:work-package-create' project.pk %}"
+                           class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            {% heroicon_outline "plus" size="16" class="mr-1" %}
+                            New Procurement Package
+                        </a>
+                        <a href="{% url 'project:project-management' project.pk %}"
+                           class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            {% heroicon_outline "arrow-left" size="16" class="mr-1" %}
+                            Back
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% if work_packages %}
+            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Package
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Budget
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Overall
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    PBS
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Documentation
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Tender Process
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Execution
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Close Out
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for wp in work_packages %}
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="px-6 py-4">
+                                        <div class="flex flex-col">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                {% if wp.package_number %}
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                                        {{ wp.package_number }}
+                                                    </span>
+                                                {% endif %}
+                                                {% if wp.budget_structure_file %}
+                                                    <a href="{{ wp.budget_structure_file.url }}"
+                                                       target="_blank"
+                                                       title="Budget Structure File">
+                                                        {% heroicon_outline "document-text" size="14" class="text-blue-600 hover:text-blue-800" %}
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                            <div class="text-sm font-medium text-gray-900">{{ wp.name }}</div>
+                                            {% if wp.description %}<div class="text-xs text-gray-500 mt-1 line-clamp-2">{{ wp.description }}</div>{% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {% if wp.package_budget %}
+                                            <div class="text-sm font-semibold text-emerald-600">R {{ wp.package_budget|floatformat:2|intcomma }}</div>
+                                        {% else %}
+                                            <span class="text-xs text-gray-400">-</span>
+                                        {% endif %}
+                                    </td>
+                                    {% with cols="overall pbs documentation tender_process execution close_out" %}
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-xs space-y-0.5">
+                                                <div class="text-gray-700 font-medium">{{ wp.overall_start_date|date:"d M Y"|default:"—" }}</div>
+                                                <div class="text-gray-500">{{ wp.overall_end_date|date:"d M Y"|default:"—" }}</div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-xs space-y-0.5">
+                                                <div class="text-violet-700 font-medium">{{ wp.pbs_start_date|date:"d M Y"|default:"—" }}</div>
+                                                <div class="text-violet-500">{{ wp.pbs_end_date|date:"d M Y"|default:"—" }}</div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-xs space-y-0.5">
+                                                <div class="text-blue-700 font-medium">{{ wp.documentation_start_date|date:"d M Y"|default:"—" }}</div>
+                                                <div class="text-blue-500">{{ wp.documentation_end_date|date:"d M Y"|default:"—" }}</div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-xs space-y-0.5">
+                                                <div class="text-amber-700 font-medium">{{ wp.tender_process_start_date|date:"d M Y"|default:"—" }}</div>
+                                                <div class="text-amber-500">{{ wp.tender_process_end_date|date:"d M Y"|default:"—" }}</div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-xs space-y-0.5">
+                                                <div class="text-emerald-700 font-medium">{{ wp.execution_start_date|date:"d M Y"|default:"—" }}</div>
+                                                <div class="text-emerald-500">{{ wp.execution_end_date|date:"d M Y"|default:"—" }}</div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-xs space-y-0.5">
+                                                <div class="text-rose-700 font-medium">{{ wp.close_out_start_date|date:"d M Y"|default:"—" }}</div>
+                                                <div class="text-rose-500">{{ wp.close_out_end_date|date:"d M Y"|default:"—" }}</div>
+                                            </div>
+                                        </td>
+                                    {% endwith %}
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div class="flex items-center justify-end gap-2">
+                                            <a href="{% url 'planning:work-package-detail' project.pk wp.pk %}"
+                                               class="text-gray-500 hover:text-gray-800"
+                                               title="View Details">{% heroicon_outline "eye" size="16" %}</a>
+                                            <a href="{% url 'planning:work-package-edit-process' project.pk wp.pk %}"
+                                               class="text-blue-600 hover:text-blue-900"
+                                               title="Edit Package Process">{% heroicon_outline "pencil" size="16" %}</a>
+                                            <a href="{% url 'planning:work-package-edit-tender-process' project.pk wp.pk %}"
+                                               class="text-amber-600 hover:text-amber-900"
+                                               title="Edit Tender Process">{% heroicon_outline "calendar-days" size="16" %}</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% else %}
+            <div class="bg-white rounded-xl border border-gray-200 centered-content mt-4">
+                <div class="w-16 h-16 bg-emerald-100 rounded-full centered-content mt-8">
+                    {% heroicon_outline "clipboard-document-list" size="32" class="text-emerald-500" %}
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No Procurement Packages Yet</h3>
+                <p class="text-sm text-gray-500 mb-4">Create your first Procurement Package to start tracking tenders.</p>
+                <a href="{% url 'planning:work-package-create' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-md hover:bg-gray-50 transition-colors text-sm font-medium">
+                    {% heroicon_outline "plus" size="16" class="mr-1" %}
+                    Create Procurement Package
+                </a>
+            </div>
+        {% endif %}
+    </div>
+{% endblock content %}

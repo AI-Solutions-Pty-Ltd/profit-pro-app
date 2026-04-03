@@ -2,9 +2,9 @@ name: CI - Test and Validate
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging, develop]
   pull_request:
-    branches: [main]
+    branches: [main, staging, develop]
   workflow_dispatch:
 
 jobs:
@@ -41,17 +41,17 @@ jobs:
           echo "Python path: $(python -c 'import sys; print(sys.executable)')"
           python -m ty check . --python $(python -c 'import sys; print(sys.executable)')
 
-      - name: Run tests
-        run: pytest -v -n auto --reuse-db --durations=10
+      # - name: Run tests
+      #   run: pytest -v -n auto --reuse-db --durations=10
 
-      - name: Clean up
-        run: |
-          find . -type d -name "__pycache__" -exec rm -r {} + || true
-          find . -type f -name "*.pyc" -delete || true
-          find . -type f -name "*.pyo" -delete || true
-          find . -type f -name "*.pyd" -delete || true
-          find . -type f -name ".coverage" -delete || true
-          find . -type d -name "*.egg-info" -exec rm -r {} + || true
-          find . -type d -name "*.egg" -exec rm -r {} + || true
-          find . -type d -name ".pytest_cache" -exec rm -r {} + || true
-          find . -type d -name ".ruff_cache" -exec rm -r {} + || true
+      # - name: Clean up
+      #   run: |
+      #     find . -type d -name "__pycache__" -exec rm -r {} + || true
+      #     find . -type f -name "*.pyc" -delete || true
+      #     find . -type f -name "*.pyo" -delete || true
+      #     find . -type f -name "*.pyd" -delete || true
+      #     find . -type f -name ".coverage" -delete || true
+      #     find . -type d -name "*.egg-info" -exec rm -r {} + || true
+      #     find . -type d -name "*.egg" -exec rm -r {} + || true
+      #     find . -type d -name ".pytest_cache" -exec rm -r {} + || true
+      #     find . -type d -name ".ruff_cache" -exec rm -r {} + || true

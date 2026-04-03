@@ -1,5 +1,14 @@
 """Project forms."""
 
+from app.Project.categories.category_forms import (
+    ProjectCategoryForm,
+    ProjectDisciplineForm,
+    ProjectSubCategoryForm,
+)
+from app.Project.documents.document_forms import ProjectDocumentForm
+from app.Project.projects.project_forms import ProjectFilterForm, ProjectForm
+
+from ..milestone_schedules.milestone_forms import MilestoneForm
 from .compliance_forms import (
     AdministrativeComplianceDialogForm,
     ContractualComplianceDialogForm,
@@ -12,14 +21,9 @@ from .forms import (
     ClientForm,
     ClientUserInviteForm,
     ContractualComplianceForm,
-    FilterForm,
     FinalAccountComplianceForm,
-    MilestoneForm,
     PlannedValueForm,
-    ProjectCategoryForm,
     ProjectContractorForm,
-    ProjectDocumentForm,
-    ProjectForm,
     ProjectUserCreateForm,
     RiskForm,
     SignatoryForm,
@@ -31,8 +35,10 @@ __all__ = [
     "ContractualComplianceDialogForm",
     "AdministrativeComplianceDialogForm",
     "FinalAccountComplianceDialogForm",
-    "FilterForm",
+    "ProjectFilterForm",
     "ProjectCategoryForm",
+    "ProjectSubCategoryForm",
+    "ProjectDisciplineForm",
     "ProjectForm",
     "ProjectContractorForm",
     "ClientCreateUpdateForm",
@@ -47,7 +53,6 @@ __all__ = [
     "ContractualComplianceForm",
     "AdministrativeComplianceForm",
     "FinalAccountComplianceForm",
-    "CompanyForm",
     "ClientForm",
     "SignatoryLinkForm",
     "ProjectUserCreateForm",

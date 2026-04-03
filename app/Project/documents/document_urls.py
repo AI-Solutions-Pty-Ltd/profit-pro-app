@@ -4,7 +4,7 @@ from django.urls import path
 
 from app.Project.views import document_views
 
-_prefix = "document/"
+_path_prefix = "document/"
 
 urlpatterns = [
     path(
@@ -16,6 +16,11 @@ urlpatterns = [
         "<int:project_pk>/<str:category>/upload/",
         document_views.DocumentCreateView.as_view(),
         name="document-upload",
+    ),
+    path(
+        "<int:project_pk>/<str:category>/<int:pk>/edit/",
+        document_views.DocumentEditView.as_view(),
+        name="document-edit",
     ),
     path(
         "<int:project_pk>/<str:category>/<int:pk>/delete/",

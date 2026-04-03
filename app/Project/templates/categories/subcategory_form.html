@@ -1,0 +1,56 @@
+{% extends "base_full.html" %}
+{% load heroicons %}
+{% block content %}
+    <div class="max-w-2xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white shadow-sm rounded-lg mb-6">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Add Project Subcategory</h1>
+                        <p class="text-sm text-gray-600 mt-1">Create a new subcategory for organizing projects</p>
+                    </div>
+                    <a href="{% url 'project:subcategory-list' %}"
+                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        {% heroicon_outline "arrow-left" size="16" %}
+                        <span class="ml-1">Back to Subcategories</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- Form -->
+        <div class="bg-white shadow-sm rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Subcategory Details</h2>
+            </div>
+            <div class="px-6 py-6">
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    <div>
+                        <label for="id_name" class="block text-sm font-medium text-gray-700">Subcategory Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}<p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>{% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Examples: Top Structures, Drawings, Foundations</p>
+                    </div>
+                    <div>
+                        <label for="id_description" class="block text-sm font-medium text-gray-700">Description (Optional)</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}<p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>{% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Provide additional details about this subcategory</p>
+                    </div>
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                        <a href="{% url 'project:subcategory-list' %}"
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                            Cancel
+                        </a>
+                        <button type="submit"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                            {% heroicon_outline "plus" size="16" class="mr-1.5" %}
+                            Create Subcategory
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

@@ -1,7 +1,24 @@
+from app.Project.categories.category_models import (
+    ProjectCategory,
+    ProjectDiscipline,
+    ProjectSubCategory,
+)
+from app.Project.company.company_models import Company
 from app.Project.documents.document_models import ProjectDocument
+from app.Project.projects.projects_models import (
+    Category,
+    Discipline,
+    Group,
+    Project,
+    SubCategory,
+)
 
-from .category_models import ProjectCategory
-from .company_models import Company
+from ..milestone_schedules.milestone_models import Milestone
+from ..production_progress.models.production_models import (
+    DailyProduction,
+    ProductionPlan,
+    ProductionResource,
+)
 from .compliance_models import (
     AdministrativeCompliance,
     AdministrativeComplianceDialog,
@@ -14,11 +31,9 @@ from .compliance_models import (
     FinalAccountComplianceDialogFile,
 )
 from .impact_models import ProjectImpact
-from .milestone_models import Milestone
 from .planned_value_models import PlannedValue
 from .portfolio_models import Portfolio
 from .project_roles_models import ProjectRole, Role
-from .projects_models import Project
 from .risk_models import Risk, RiskStatus
 from .signatories_models import Signatories
 
@@ -29,7 +44,7 @@ __all__ = [
     "Company",
     "ContractualCompliance",
     "ContractualComplianceDialog",
-    "ContractualComplianceFile",
+    "ContractualComplianceDialogFile",
     "FinalAccountCompliance",
     "FinalAccountComplianceDialog",
     "FinalAccountComplianceDialogFile",
@@ -37,7 +52,13 @@ __all__ = [
     "PlannedValue",
     "Portfolio",
     "Project",
+    "Category",
+    "SubCategory",
+    "Group",
+    "Discipline",
     "ProjectCategory",
+    "ProjectDiscipline",
+    "ProjectSubCategory",
     "ProjectDocument",
     "ProjectImpact",
     "ProjectRole",
@@ -45,4 +66,7 @@ __all__ = [
     "Risk",
     "RiskStatus",
     "Signatories",
+    "DailyProduction",
+    "ProductionPlan",
+    "ProductionResource",
 ]

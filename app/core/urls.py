@@ -35,6 +35,10 @@ urlpatterns = (
             "site-management/",
             include("app.SiteManagement.urls", namespace="site_management"),
         ),
+        path(
+            "planning/",
+            include("app.Planning.urls", namespace="planning"),
+        ),
         path("estimator/", include("app.Estimator.urls", namespace="estimator")),
     ]
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -4,6 +4,11 @@ from django.db import models
 
 from app.Account.models import Account
 from app.core.Utilities.models import BaseModel
+from app.Project.projects.projects_models import (
+    Category,
+    Discipline,
+    SubCategory,
+)
 
 
 class ProjectDocument(BaseModel):
@@ -14,7 +19,7 @@ class ProjectDocument(BaseModel):
     stage gate approvals, and other audit-required documentation.
     """
 
-    class Category(models.TextChoices):
+    class DocumentCategory(models.TextChoices):
         """Categories of project documents."""
 
         CONTRACT_DOCUMENTS = (
@@ -55,7 +60,7 @@ class ProjectDocument(BaseModel):
     )
     category = models.CharField(
         max_length=30,
-        choices=Category.choices,
+        choices=DocumentCategory.choices,
         help_text="Category of the document",
     )
     title = models.CharField(
@@ -89,12 +94,37 @@ class ProjectDocument(BaseModel):
             models.Index(fields=["category"]),
         ]
 
+    project_category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="documents",
+        help_text="Project category (e.g., Education, Health, Roads)",
+    )
+    project_sub_category = models.ForeignKey(
+        SubCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="documents",
+        help_text="Project category (e.g., Education, Health, Roads)",
+    )
+    project_discipline = models.ForeignKey(
+        Discipline,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="documents",
+        help_text="Project discipline",
+    )
+
     def __str__(self) -> str:
         return f"{self.title} ({self.get_category_display()})"  # type: ignore
 
     @property
     def filename(self) -> str:
         """Return just the filename without the path."""
-        if self.file:
+        if self.file and self.file.name:
             return self.file.name.split("/")[-1]
-        return ""
+        return self.pk

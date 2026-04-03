@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% block title %}
+    Upload File - {{ tender_document.name }}
+{% endblock title %}
+{% block content %}
+    <div class="min-h-screen bg-gray-50 py-8">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="bg-white shadow-sm rounded-lg p-6 mb-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">{% heroicon_outline "document-arrow-down" size="24" class="text-gray-400" %}</div>
+                    <div class="ml-4">
+                        <p class="text-xl font-semibold text-gray-900">{{ tender_document.name }} - {{ work_package.name }}</p>
+                        <h1 class="text-sm text-gray-500">Upload Tender Document</h1>
+                    </div>
+                </div>
+            </div>
+            <!-- Upload Form -->
+            <div class="bg-white shadow-sm rounded-lg p-6">
+                <form method="post" enctype="multipart/form-data" id="uploadForm">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="mb-4 bg-red-50 border border-red-200 rounded-md p-4">
+                            {% for error in form.non_field_errors %}<p class="text-sm text-red-600">{{ error }}</p>{% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="space-y-6">
+                        <!-- File Upload Area -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Select File</label>
+                            <div class="relative">
+                                <input type="file"
+                                       name="file"
+                                       id="fileInput"
+                                       class="hidden"
+                                       accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                                       required>
+                                <label for="fileInput"
+                                       class="cursor-pointer flex items-center justify-center w-full h-32 px-4 transition bg-white border-2 border-gray-300 border-dashed rounded-lg hover:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                                    <div class="text-center">
+                                        {% heroicon_outline "cloud-arrow-up" size="24" class="mx-auto text-gray-400" %}
+                                        <p class="mt-2 text-sm text-gray-600">
+                                            <span class="font-medium text-emerald-600 hover:text-emerald-500">Click to upload</span>
+                                            or drag and drop
+                                        </p>
+                                        <p class="text-xs text-gray-500">PDF, DOC, XLS, PNG, JPG up to 10MB</p>
+                                    </div>
+                                </label>
+                                <div id="fileInfo"
+                                     class="hidden mt-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                                    <div class="flex items-center">
+                                        {% heroicon_outline "document" size="16" class="text-emerald-600 mr-2" %}
+                                        <span id="fileName" class="text-sm text-emerald-700 font-medium"></span>
+                                        <button type="button"
+                                                onclick="clearFile()"
+                                                class="ml-auto text-emerald-600 hover:text-emerald-700">
+                                            {% heroicon_outline "x-mark" size="16" %}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if form.file.errors %}<p class="mt-2 text-sm text-red-600">{{ form.file.errors.0 }}</p>{% endif %}
+                        </div>
+                        <!-- Notes Field -->
+                        <div>
+                            <label for="id_notes" class="block text-sm font-medium text-gray-700 mb-2">Notes (optional)</label>
+                            <textarea name="notes"
+                                      id="id_notes"
+                                      rows="3"
+                                      class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                                      placeholder="Add any notes about this file..."></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-8 flex justify-end space-x-3">
+                        <a href="{% url 'planning:tender-documentation-overview' project.pk %}"
+                           class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </a>
+                        <button type="submit"
+                                class="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors flex items-center">
+                            {% heroicon_outline "arrow-up-tray" size="16" class="mr-2" %}
+                            Upload File
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <!-- Existing Files -->
+            {% if tender_document.files.exists %}
+                <div class="bg-white shadow-sm rounded-lg p-6 mt-6">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">Uploaded Files</h2>
+                    <div class="space-y-3">
+                        {% for file in tender_document.files.all %}
+                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                <div class="flex items-center">
+                                    {% heroicon_outline "document" size="16" class="text-gray-400 mr-3" %}
+                                    <a href="{{ file.file.url }}"
+                                       target="_blank"
+                                       class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
+                                        {{ file.file.name|slice:"20:" }}
+                                    </a>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <span class="text-xs text-gray-500">Uploaded: {{ file.uploaded_at|date:"Y-m-d H:i" }}</span>
+                                    {% if file.uploaded_by %}
+                                        <span class="text-xs text-gray-500">By: {{ file.uploaded_by.get_full_name|default:file.uploaded_by.email }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock content %}
+{% block extra_js %}
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const uploadLabel = fileInput.nextElementSibling;
+    
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            fileName.textContent = file.name;
+            fileInfo.classList.remove('hidden');
+            uploadLabel.classList.add('hidden');
+        }
+    });
+    
+    // Handle drag and drop
+    uploadLabel.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('border-emerald-400', 'bg-emerald-50');
+    });
+    
+    uploadLabel.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.classList.remove('border-emerald-400', 'bg-emerald-50');
+    });
+    
+    uploadLabel.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('border-emerald-400', 'bg-emerald-50');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            const event = new Event('change', { bubbles: true });
+            fileInput.dispatchEvent(event);
+        }
+    });
+});
+
+function clearFile() {
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const uploadLabel = fileInput.nextElementSibling;
+    
+    fileInput.value = '';
+    fileInfo.classList.add('hidden');
+    uploadLabel.classList.remove('hidden');
+}
+    </script>
+{% endblock extra_js %}

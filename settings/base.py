@@ -8,7 +8,8 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
+# DATA_UPLOAD_MAX_NUMBER_FIELDS = 20000
+DATA_UPLOAD_MAX_MEMORY_SIZE = 26214400  # 25mb
 AUTH_USER_MODEL = "Account.Account"
 
 # Authentication settings
@@ -19,7 +20,7 @@ LOGIN_REDIRECT_URL = "home"  # Redirect to home after successful login
 LOGOUT_REDIRECT_URL = "home"  # Redirect to home after logout
 
 SITE_ID = 1
-SITE_NAME = os.getenv("SITE_NAME", "Profit Pros")
+SITE_NAME = os.getenv("SITE_NAME", "Sedge Pro")
 SITE_URL = os.getenv("SITE_URL", "http://localhost:8000")
 
 CORE_APPS = [
@@ -32,6 +33,7 @@ CORE_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "django.contrib.sites",
+    "rest_framework",
     "app.core",
     "app.utils",
 ]
@@ -59,6 +61,7 @@ SHARED_APPS = [
     "app.Ledger",
     "app.Inventories",
     "app.Notices",
+    "app.Planning",
     "app.Project",
     "app.SiteManagement",
     "app.Estimator",
@@ -82,6 +85,17 @@ MIDDLEWARE = [
     "django.middleware.locale.LocaleMiddleware",
     "app.core.middleware.timer_middleware.RequestTimerMiddleware",
 ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.MultiPartParser",
+    ],
+}
 
 ROOT_URLCONF = "app.core.urls"
 
