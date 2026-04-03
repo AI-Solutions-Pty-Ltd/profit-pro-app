@@ -24,14 +24,14 @@
     {% if report_rows %}
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <!-- Cost by Crew Type Donut -->
-            <div class="bg-white shadow ring-1 ring-black/5 rounded-lg p-4">
+            <div class="bg-white shadow-sm rounded-lg p-4">
                 <h3 class="text-sm font-semibold text-gray-900 mb-3">Cost by Crew Type</h3>
                 <div class="relative" style="height: 280px;">
                     <canvas id="crewDonut"></canvas>
                 </div>
             </div>
             <!-- Crew Composition Stacked Bar -->
-            <div class="bg-white shadow ring-1 ring-black/5 rounded-lg p-4">
+            <div class="bg-white shadow-sm rounded-lg p-4">
                 <h3 class="text-sm font-semibold text-gray-900 mb-3">Crew Composition</h3>
                 <div class="relative" style="height: 280px;">
                     <canvas id="crewCompBar"></canvas>
@@ -40,7 +40,7 @@
         </div>
     {% endif %}
     <!-- Filters -->
-    <div class="bg-white shadow ring-1 ring-black/5 rounded-lg p-4 mb-4">
+    <div class="bg-white shadow-sm rounded-lg p-4 mb-4">
         <form method="get" id="filter-form" class="flex flex-wrap items-end gap-3">
             <div class="min-w-0">
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Section</label>
@@ -74,7 +74,7 @@
         </form>
     </div>
     <!-- Data Table -->
-    <div class="bg-white shadow ring-1 ring-black/5 rounded-lg">
+    <div class="bg-white shadow-sm rounded-lg">
         <div class="overflow-x-auto">
             <table class="text-xs whitespace-nowrap" style="min-width: 1100px;">
                 <thead>

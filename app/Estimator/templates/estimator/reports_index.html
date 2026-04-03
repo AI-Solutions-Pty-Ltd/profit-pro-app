@@ -10,7 +10,7 @@
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Priced BoQ Reports</h2>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <a href="{% url 'estimator:report_baseline_assessment' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow ring-1 ring-black/5 p-5 hover:shadow-md hover:ring-indigo-200 transition">
+               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="rounded-lg bg-blue-100 p-2">
                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -27,7 +27,7 @@
                 <p class="text-xs text-gray-500">Compares contract rates vs new baseline rates based on original quantities</p>
             </a>
             <a href="{% url 'estimator:report_progress_assessment' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow ring-1 ring-black/5 p-5 hover:shadow-md hover:ring-indigo-200 transition">
+               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="rounded-lg bg-green-100 p-2">
                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -44,7 +44,7 @@
                 <p class="text-xs text-gray-500">Compares baseline budget vs work completed at new rates</p>
             </a>
             <a href="{% url 'estimator:report_forecast_assessment' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow ring-1 ring-black/5 p-5 hover:shadow-md hover:ring-indigo-200 transition">
+               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="rounded-lg bg-purple-100 p-2">
                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -61,7 +61,7 @@
                 <p class="text-xs text-gray-500">Compares baseline BoQ with new rates and forecast quantities</p>
             </a>
             <a href="{% url 'estimator:report_key_rates_assessment' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow ring-1 ring-black/5 p-5 hover:shadow-md hover:ring-indigo-200 transition">
+               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="rounded-lg bg-amber-100 p-2">
                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -84,7 +84,7 @@
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Material Lists</h2>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <a href="{% url 'estimator:report_material_list_baseline' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow ring-1 ring-black/5 p-5 hover:shadow-md hover:ring-indigo-200 transition">
+               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="rounded-lg bg-blue-100 p-2">
                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -101,7 +101,7 @@
                 <p class="text-xs text-gray-500">Material breakdown using contract quantities and new rates</p>
             </a>
             <a href="{% url 'estimator:report_material_list_progress' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow ring-1 ring-black/5 p-5 hover:shadow-md hover:ring-indigo-200 transition">
+               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="rounded-lg bg-green-100 p-2">
                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -118,7 +118,7 @@
                 <p class="text-xs text-gray-500">Material breakdown using progress quantities and new rates</p>
             </a>
             <a href="{% url 'estimator:report_material_list_forecast' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow ring-1 ring-black/5 p-5 hover:shadow-md hover:ring-indigo-200 transition">
+               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="rounded-lg bg-purple-100 p-2">
                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -141,7 +141,7 @@
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Labour Lists</h2>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <a href="{% url 'estimator:report_labour_list_baseline' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow ring-1 ring-black/5 p-5 hover:shadow-md hover:ring-indigo-200 transition">
+               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="rounded-lg bg-blue-100 p-2">
                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -158,7 +158,7 @@
                 <p class="text-xs text-gray-500">Labour/crew breakdown using contract quantities</p>
             </a>
             <a href="{% url 'estimator:report_labour_list_progress' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow ring-1 ring-black/5 p-5 hover:shadow-md hover:ring-indigo-200 transition">
+               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="rounded-lg bg-green-100 p-2">
                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -175,7 +175,7 @@
                 <p class="text-xs text-gray-500">Labour/crew breakdown using progress quantities</p>
             </a>
             <a href="{% url 'estimator:report_labour_list_forecast' project_pk=project_pk %}"
-               class="group rounded-lg bg-white shadow ring-1 ring-black/5 p-5 hover:shadow-md hover:ring-indigo-200 transition">
+               class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="rounded-lg bg-purple-100 p-2">
                         <svg xmlns="http://www.w3.org/2000/svg"
