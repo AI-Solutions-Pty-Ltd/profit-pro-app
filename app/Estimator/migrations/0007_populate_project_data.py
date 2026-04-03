@@ -19,7 +19,7 @@ def clone_system_to_project(apps, schema_editor):
     ProjectSpecificationComponent = apps.get_model('estimator', 'ProjectSpecificationComponent')
     ProjectLabourCrew = apps.get_model('estimator', 'ProjectLabourCrew')
     ProjectLabourSpecification = apps.get_model('estimator', 'ProjectLabourSpecification')
-    SystemMaterialSpec = apps.get_model('estimator', 'SystemMaterialSpec')
+    apps.get_model('estimator', 'SystemMaterialSpec')  # noqa: F841
 
     # Find all projects that have BOQItems
     project_ids = set(

@@ -1,39 +1,61 @@
 import json
 import os
 import tempfile
+from decimal import Decimal
 from pathlib import Path
 
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db import models
-from django.http import JsonResponse, FileResponse
-from django.shortcuts import redirect, get_object_or_404
-from django.urls import reverse, reverse_lazy
+from django.http import FileResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
-from decimal import Decimal
-from django.views.generic import ListView, FormView, TemplateView
-from .models import (
-    BOQItem, ProjectAssumptions,
-    ProjectSpecification, ProjectSpecificationComponent, ProjectMaterial,
-    ProjectLabourCrew, ProjectLabourSpecification, ProjectTradeCode,
-    SystemTradeCode, SystemMaterial, SystemLabourCrew, SystemLabourSpecification,
-    SystemSpecification, SystemSpecificationComponent,
-    sync_boq_from_lineitems,
-)
-from .data_adapters import DjangoORMAdapter
-from .calculations import calculate_boq_summary, calculate_variance, calculate_pct_of_total
-from .forms import (
-    MaterialForm, SpecificationForm, SpecificationComponentFormSet,
-    LabourCrewForm, LabourSpecificationForm, ExcelImportForm,
-    ProjectAssumptionsForm,
-    SystemTradeCodeForm, SystemMaterialForm, SystemLabourCrewForm, SystemLabourSpecificationForm,
-    SystemSpecificationForm, SystemSpecificationComponentFormSet,
-)
+from django.views.generic import FormView, ListView, TemplateView
 
 from app.BillOfQuantities.models.structure_models import LineItem
 from app.Project.models import Project
+
+from .calculations import (
+    calculate_boq_summary,
+    calculate_pct_of_total,
+    calculate_variance,
+)
+from .data_adapters import DjangoORMAdapter
+from .forms import (
+    ExcelImportForm,
+    LabourCrewForm,
+    LabourSpecificationForm,
+    MaterialForm,
+    ProjectAssumptionsForm,
+    SpecificationComponentFormSet,
+    SpecificationForm,
+    SystemLabourCrewForm,
+    SystemLabourSpecificationForm,
+    SystemMaterialForm,
+    SystemSpecificationComponentFormSet,
+    SystemSpecificationForm,
+    SystemTradeCodeForm,
+)
+from .models import (
+    BOQItem,
+    ProjectAssumptions,
+    ProjectLabourCrew,
+    ProjectLabourSpecification,
+    ProjectMaterial,
+    ProjectSpecification,
+    ProjectSpecificationComponent,
+    ProjectTradeCode,
+    SystemLabourCrew,
+    SystemLabourSpecification,
+    SystemMaterial,
+    SystemSpecification,
+    SystemSpecificationComponent,
+    SystemTradeCode,
+    sync_boq_from_lineitems,
+)
 
 
 class ProjectEstimatorMixin:
@@ -1543,12 +1565,13 @@ def _handle_upload(request, importer_class, success_url, entity_name, project=No
 def _generate_template(headers, filename):
     """Generate an Excel template with headers and return a FileResponse."""
     import io
+
     import openpyxl
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = 'Data'
 
-    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.styles import Alignment, Font, PatternFill
 
     header_font = Font(bold=True, color='FFFFFF', size=11)
     header_fill = PatternFill(start_color='4472C4', end_color='4472C4', fill_type='solid')
@@ -1980,7 +2003,7 @@ class SysMaterialSpecListView(SystemLibraryMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from .forms import SystemSpecificationForm, SystemSpecificationComponentFormSet
+        from .forms import SystemSpecificationComponentFormSet, SystemSpecificationForm
         context['spec_form'] = context.get('spec_form', SystemSpecificationForm())
         context['component_formset'] = context.get('component_formset', SystemSpecificationComponentFormSet())
 
@@ -1994,7 +2017,7 @@ class SysMaterialSpecListView(SystemLibraryMixin, ListView):
         return context
 
     def post(self, request, *args, **kwargs):
-        from .forms import SystemSpecificationForm, SystemSpecificationComponentFormSet
+        from .forms import SystemSpecificationComponentFormSet, SystemSpecificationForm
         spec_form = SystemSpecificationForm(request.POST)
         component_formset = SystemSpecificationComponentFormSet(request.POST)
         if spec_form.is_valid():

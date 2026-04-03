@@ -10,11 +10,16 @@ from django.core.management.base import BaseCommand
 
 from app.Estimator.models import (
     BOQItem,
-    ProjectTradeCode as TradeCode,
-    ProjectSpecification as Specification,
+)
+from app.Estimator.models import (
     ProjectLabourSpecification as LabourSpecification,
 )
-
+from app.Estimator.models import (
+    ProjectSpecification as Specification,
+)
+from app.Estimator.models import (
+    ProjectTradeCode as TradeCode,
+)
 
 # ── bill_no keyword → TradeCode prefix mapping ────────────────────────
 BILL_TO_TRADE = {
@@ -380,7 +385,6 @@ class Command(BaseCommand):
         'landscap': 'Kikuyu Grass',
         # Precast
         'precast lintel': 'Precast Lintels',
-        'prestressed fabricated concrete lintel': 'Precast Lintels',
         'precast sill': 'Precast Sills',
     }
 

@@ -14,13 +14,25 @@ from decimal import Decimal
 from django.core.management.base import BaseCommand
 
 from app.Estimator.models import (
-    SystemTradeCode as TradeCode,
-    SystemMaterial as Material,
-    SystemLabourCrew as LabourCrew,
-    SystemSpecification as Specification,
-    SystemSpecificationComponent as SpecificationComponent,
-    SystemLabourSpecification as LabourSpecification,
     BOQItem,
+)
+from app.Estimator.models import (
+    SystemLabourCrew as LabourCrew,
+)
+from app.Estimator.models import (
+    SystemLabourSpecification as LabourSpecification,
+)
+from app.Estimator.models import (
+    SystemMaterial as Material,
+)
+from app.Estimator.models import (
+    SystemSpecification as Specification,
+)
+from app.Estimator.models import (
+    SystemSpecificationComponent as SpecificationComponent,
+)
+from app.Estimator.models import (
+    SystemTradeCode as TradeCode,
 )
 
 D = Decimal
@@ -491,7 +503,7 @@ def _build_section_items():
     ]
 
     # Prelim rates (contract_rate set directly, no spec/labour)
-    PRELIM_RATES = {
+    prelim_rates = {
         'Site establishment and mobilisation': 380000,
         'Site offices, stores and ablutions': 280000,
         'Temporary water supply and reticulation': 75000,
@@ -548,7 +560,7 @@ def _build_section_items():
         ]),
     ]
 
-    return sections, PRELIM_RATES
+    return sections, prelim_rates
 
 
 def _new_build_bills(floor_area, wall_perim, wall_height,
@@ -558,7 +570,7 @@ def _new_build_bills(floor_area, wall_perim, wall_height,
     """Generate full bill sequence for a new build section."""
     wall_area = wall_perim * wall_height
     ext_wall_area = wall_area * 0.6
-    int_wall_area = wall_area * 0.4
+    _ = wall_area * 0.4  # int_wall_area reserved for future use
     window_area = (num_windows_csm * 1.44 + num_windows_sld * 2.16)
     net_wall = wall_area - window_area - (num_doors * 1.65)
 
@@ -913,9 +925,9 @@ class Command(BaseCommand):
             prefixes = set()
             spec_names_used = set()
             labour_names_used = set()
-            for bill_name, trade_prefix, items in bills:
+            for _bill_name, trade_prefix, items in bills:
                 prefixes.add(trade_prefix)
-                for desc, unit, qty, spec_name, labour_name, markup in items:
+                for _desc, _unit, _qty, spec_name, labour_name, _markup in items:
                     if spec_name:
                         spec_names_used.add(spec_name)
                     if labour_name:
@@ -926,7 +938,7 @@ class Command(BaseCommand):
 
         spec_count = 0
         comp_count = 0
-        for section, prefixes in section_trades.items():
+        for section, _prefixes in section_trades.items():
             if section == 'Section 1 - Preliminaries':
                 continue  # No specs for prelims
             used_names = section_spec_names.get(section, set())
@@ -958,7 +970,7 @@ class Command(BaseCommand):
         self.stdout.write('Creating labour specifications...')
         labour_map = {}  # (section, name) → LabourSpecification
         ls_count = 0
-        for section, prefixes in section_trades.items():
+        for section, _prefixes in section_trades.items():
             if section == 'Section 1 - Preliminaries':
                 continue
             used_labour = section_labour_names.get(section, set())
@@ -999,18 +1011,18 @@ class Command(BaseCommand):
                 tc = tc_map.get(trade_prefix)
 
                 # Create section header
-                header_fields = dict(
-                    section=section,
-                    bill_no=bill_name,
-                    trade_code=tc,
-                    item_no='',
-                    pay_ref='',
-                    description=bill_name.split(' - ', 1)[-1] if ' - ' in bill_name else bill_name,
-                    unit='',
-                    contract_quantity=None,
-                    contract_rate=None,
-                    is_section_header=True,
-                )
+                header_fields = {
+                    'section': section,
+                    'bill_no': bill_name,
+                    'trade_code': tc,
+                    'item_no': '',
+                    'pay_ref': '',
+                    'description': bill_name.split(' - ', 1)[-1] if ' - ' in bill_name else bill_name,
+                    'unit': '',
+                    'contract_quantity': None,
+                    'contract_rate': None,
+                    'is_section_header': True,
+                }
                 BOQItem.objects.create(**header_fields)
                 BOQItem.objects.create(**header_fields, progress_quantity=None, forecast_quantity=None)
                 baseline_count += 1
@@ -1057,20 +1069,20 @@ class Command(BaseCommand):
                     forecast_qty = round(float(qty_d) * random.uniform(1.00, 1.10), 2)
                     forecast_qty = max(forecast_qty, progress_qty)
 
-                    common = dict(
-                        section=section,
-                        bill_no=bill_name,
-                        trade_code=tc,
-                        specification=spec,
-                        labour_specification=labour,
-                        item_no=str(item_seq),
-                        pay_ref=f'{section.split(" ")[1]}.{item_seq:03d}',
-                        description=desc,
-                        unit=unit,
-                        contract_quantity=qty_d,
-                        contract_rate=contract_rate.quantize(D('0.01')),
-                        is_section_header=False,
-                    )
+                    common = {
+                        'section': section,
+                        'bill_no': bill_name,
+                        'trade_code': tc,
+                        'specification': spec,
+                        'labour_specification': labour,
+                        'item_no': str(item_seq),
+                        'pay_ref': f'{section.split(" ")[1]}.{item_seq:03d}',
+                        'description': desc,
+                        'unit': unit,
+                        'contract_quantity': qty_d,
+                        'contract_rate': contract_rate.quantize(D('0.01')),
+                        'is_section_header': False,
+                    }
 
                     BOQItem.objects.create(**common)
                     BOQItem.objects.create(

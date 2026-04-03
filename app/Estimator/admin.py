@@ -1,12 +1,20 @@
 from django.contrib import admin
-from .models import (
-    SystemTradeCode, SystemMaterial, SystemSpecification, SystemSpecificationComponent,
-    SystemLabourCrew, SystemLabourSpecification,
-    ProjectTradeCode, ProjectMaterial, ProjectSpecification, ProjectSpecificationComponent,
-    ProjectLabourCrew, ProjectLabourSpecification,
-    BOQItem,
-)
 
+from .models import (
+    BOQItem,
+    ProjectLabourCrew,
+    ProjectLabourSpecification,
+    ProjectMaterial,
+    ProjectSpecification,
+    ProjectSpecificationComponent,
+    ProjectTradeCode,
+    SystemLabourCrew,
+    SystemLabourSpecification,
+    SystemMaterial,
+    SystemSpecification,
+    SystemSpecificationComponent,
+    SystemTradeCode,
+)
 
 # ── System Library Admin ──────────────────────────────────────────
 

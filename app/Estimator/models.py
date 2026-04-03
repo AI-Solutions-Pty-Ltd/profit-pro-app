@@ -1,17 +1,16 @@
 from decimal import Decimal
+
 from django.db import models
 
+from app.BillOfQuantities.models.structure_models import LineItem
 from app.Estimator.calculations import (
-    calculate_rate_per_unit,
-    calculate_total_quantity,
     calculate_contract_amount,
+    calculate_forecast_amount,
     calculate_materials_rate,
     calculate_progress_amount,
-    calculate_forecast_amount,
+    calculate_rate_per_unit,
+    calculate_total_quantity,
 )
-
-from app.BillOfQuantities.models.structure_models import LineItem
-
 
 # ═══════════════════════════════════════════════════════════════════
 # System-Level Library Models (admin-managed, importable)
@@ -21,16 +20,16 @@ class SystemTradeCode(models.Model):
     prefix = models.CharField(max_length=20)
     trade_name = models.CharField(max_length=100)
 
-    @property
-    def trade_code(self):
-        return f"{self.prefix}{self.trade_name}"
+    class Meta:
+        db_table = 'estimator_tradecode'
+        ordering = ['prefix']
 
     def __str__(self):
         return self.trade_code
 
-    class Meta:
-        db_table = 'estimator_tradecode'
-        ordering = ['prefix']
+    @property
+    def trade_code(self):
+        return f"{self.prefix}{self.trade_name}"
 
 
 class SystemMaterial(models.Model):
@@ -41,12 +40,12 @@ class SystemMaterial(models.Model):
     material_variety = models.CharField(max_length=100, blank=True)
     market_spec = models.CharField(max_length=100, blank=True)
 
-    def __str__(self):
-        return self.material_code
-
     class Meta:
         db_table = 'estimator_material'
         ordering = ['material_code']
+
+    def __str__(self):
+        return self.material_code
 
 
 class SystemSpecification(models.Model):
@@ -62,6 +61,13 @@ class SystemSpecification(models.Model):
         'SystemMaterialSpec', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='project_specs'
     )
+
+    class Meta:
+        db_table = 'estimator_specification'
+        ordering = ['section', 'name']
+
+    def __str__(self):
+        return self.name
 
     @property
     def components(self):
@@ -99,13 +105,6 @@ class SystemSpecification(models.Model):
             })
         return results
 
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        db_table = 'estimator_specification'
-        ordering = ['section', 'name']
-
 
 class SystemSpecificationComponent(models.Model):
     specification = models.ForeignKey(
@@ -119,12 +118,12 @@ class SystemSpecificationComponent(models.Model):
     qty_per_unit = models.DecimalField(max_digits=10, decimal_places=4, default=0)
     sort_order = models.IntegerField(default=0)
 
-    def __str__(self):
-        return f"{self.specification.name} - {self.label}"
-
     class Meta:
         db_table = 'estimator_specificationcomponent'
         ordering = ['sort_order']
+
+    def __str__(self):
+        return f"{self.specification.name} - {self.label}"
 
 
 class SystemLabourCrew(models.Model):
@@ -138,6 +137,14 @@ class SystemLabourCrew(models.Model):
     semi_skilled_rate = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     general_rate = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
+    class Meta:
+        db_table = 'estimator_labourcrew'
+        ordering = ['crew_type']
+        verbose_name = 'System Labour Crew'
+
+    def __str__(self):
+        return self.crew_type
+
     @property
     def crew_daily_cost(self):
         return (
@@ -145,14 +152,6 @@ class SystemLabourCrew(models.Model):
             + Decimal(str(self.semi_skilled)) * self.semi_skilled_rate
             + Decimal(str(self.general)) * self.general_rate
         )
-
-    def __str__(self):
-        return self.crew_type
-
-    class Meta:
-        db_table = 'estimator_labourcrew'
-        ordering = ['crew_type']
-        verbose_name = 'System Labour Crew'
 
 
 class SystemLabourSpecification(models.Model):
@@ -170,6 +169,14 @@ class SystemLabourSpecification(models.Model):
     tools_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     leadership_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     boq_quantity = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    class Meta:
+        db_table = 'estimator_labourspecification'
+        ordering = ['section', 'name']
+        verbose_name = 'System Labour Specification'
+
+    def __str__(self):
+        return self.name
 
     @property
     def daily_output(self):
@@ -204,27 +211,19 @@ class SystemLabourSpecification(models.Model):
         )['total']
         return total or Decimal('0')
 
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        db_table = 'estimator_labourspecification'
-        ordering = ['section', 'name']
-        verbose_name = 'System Labour Specification'
-
 
 class SystemMaterialSpec(models.Model):
     """Reusable material specification library at system level."""
     name = models.CharField(max_length=100, unique=True)
     unit = models.CharField(max_length=20, default='m3')
 
-    def __str__(self):
-        return self.name
-
     class Meta:
         verbose_name = 'System Material Spec'
         verbose_name_plural = 'System Material Specs'
         ordering = ['name']
+
+    def __str__(self):
+        return self.name
 
     @property
     def components(self):
@@ -256,11 +255,11 @@ class SystemMaterialSpecComponent(models.Model):
     qty_per_unit = models.DecimalField(max_digits=10, decimal_places=4, default=0)
     sort_order = models.IntegerField(default=0)
 
-    def __str__(self):
-        return f"{self.spec.name} - {self.label}"
-
     class Meta:
         ordering = ['sort_order']
+
+    def __str__(self):
+        return f"{self.spec.name} - {self.label}"
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -278,16 +277,16 @@ class ProjectTradeCode(models.Model):
     prefix = models.CharField(max_length=20)
     trade_name = models.CharField(max_length=100)
 
-    @property
-    def trade_code(self):
-        return f"{self.prefix}{self.trade_name}"
+    class Meta:
+        ordering = ['prefix']
+        unique_together = [('project', 'prefix')]
 
     def __str__(self):
         return self.trade_code
 
-    class Meta:
-        ordering = ['prefix']
-        unique_together = [('project', 'prefix')]
+    @property
+    def trade_code(self):
+        return f"{self.prefix}{self.trade_name}"
 
 
 class ProjectMaterial(models.Model):
@@ -305,12 +304,12 @@ class ProjectMaterial(models.Model):
     material_variety = models.CharField(max_length=100, blank=True)
     market_spec = models.CharField(max_length=100, blank=True)
 
-    def __str__(self):
-        return self.material_code
-
     class Meta:
         ordering = ['material_code']
         unique_together = [('project', 'material_code')]
+
+    def __str__(self):
+        return self.material_code
 
 
 class ProjectSpecification(models.Model):
@@ -328,6 +327,13 @@ class ProjectSpecification(models.Model):
     )
     unit_label = models.CharField(max_length=20, default='m3')
     name = models.CharField(max_length=100)
+
+    class Meta:
+        ordering = ['section', 'name']
+        unique_together = [('project', 'name')]
+
+    def __str__(self):
+        return self.name
 
     @property
     def components(self):
@@ -368,13 +374,6 @@ class ProjectSpecification(models.Model):
             })
         return results
 
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        ordering = ['section', 'name']
-        unique_together = [('project', 'name')]
-
 
 class ProjectSpecificationComponent(models.Model):
     specification = models.ForeignKey(
@@ -388,11 +387,11 @@ class ProjectSpecificationComponent(models.Model):
     qty_per_unit = models.DecimalField(max_digits=10, decimal_places=4, default=0)
     sort_order = models.IntegerField(default=0)
 
-    def __str__(self):
-        return f"{self.specification.name} - {self.label}"
-
     class Meta:
         ordering = ['sort_order']
+
+    def __str__(self):
+        return f"{self.specification.name} - {self.label}"
 
 
 class ProjectLabourCrew(models.Model):
@@ -413,6 +412,14 @@ class ProjectLabourCrew(models.Model):
     semi_skilled_rate = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     general_rate = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
+    class Meta:
+        ordering = ['crew_type']
+        unique_together = [('project', 'crew_type')]
+        verbose_name = 'Project Labour Crew'
+
+    def __str__(self):
+        return self.crew_type
+
     @property
     def crew_daily_cost(self):
         return (
@@ -420,14 +427,6 @@ class ProjectLabourCrew(models.Model):
             + Decimal(str(self.semi_skilled)) * self.semi_skilled_rate
             + Decimal(str(self.general)) * self.general_rate
         )
-
-    def __str__(self):
-        return self.crew_type
-
-    class Meta:
-        ordering = ['crew_type']
-        unique_together = [('project', 'crew_type')]
-        verbose_name = 'Project Labour Crew'
 
 
 class ProjectLabourSpecification(models.Model):
@@ -451,6 +450,14 @@ class ProjectLabourSpecification(models.Model):
     site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     tools_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     leadership_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+
+    class Meta:
+        ordering = ['section', 'name']
+        unique_together = [('project', 'name')]
+        verbose_name = 'Project Labour Specification'
+
+    def __str__(self):
+        return self.name
 
     @property
     def daily_output(self):
@@ -485,14 +492,6 @@ class ProjectLabourSpecification(models.Model):
         )['total']
         return total or Decimal('0')
 
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        ordering = ['section', 'name']
-        unique_together = [('project', 'name')]
-        verbose_name = 'Project Labour Specification'
-
 
 # ═══════════════════════════════════════════════════════════════════
 # ProjectAssumptions — Project-level global markups & wastage
@@ -507,12 +506,12 @@ class ProjectAssumptions(models.Model):
     transport_pct = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     wastage_pct = models.DecimalField(max_digits=6, decimal_places=2, default=0)
 
-    def __str__(self):
-        return f"Assumptions for {self.project}"
-
     class Meta:
         verbose_name = 'Project Assumptions'
         verbose_name_plural = 'Project Assumptions'
+
+    def __str__(self):
+        return f"Assumptions for {self.project}"
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -559,6 +558,14 @@ class BOQItem(models.Model):
     material_markup_pct = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     labour_markup_pct = models.DecimalField(max_digits=6, decimal_places=2, default=0)
     transport_pct = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+
+    class Meta:
+        ordering = ['id']
+        verbose_name = 'BoQ Item'
+        verbose_name_plural = 'BoQ Items'
+
+    def __str__(self):
+        return self.description or f"{self.section} - {self.bill_no}"
 
     @property
     def rate_type(self):
@@ -620,14 +627,6 @@ class BOQItem(models.Model):
     @property
     def forecast_amount(self):
         return calculate_forecast_amount(self.baseline_new_price, self.forecast_quantity)
-
-    def __str__(self):
-        return self.description or f"{self.section} - {self.bill_no}"
-
-    class Meta:
-        ordering = ['id']
-        verbose_name = 'BoQ Item'
-        verbose_name_plural = 'BoQ Items'
 
 
 def sync_boq_from_lineitems(project):

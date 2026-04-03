@@ -9,15 +9,26 @@ Usage:
 """
 
 from decimal import Decimal
+
 from django.core.management.base import BaseCommand
 
 from app.Estimator.models import (
-    SystemTradeCode as TradeCode,
-    SystemMaterial as Material,
-    SystemSpecification as Specification,
-    SystemSpecificationComponent as SpecificationComponent,
     SystemLabourCrew as LabourCrew,
+)
+from app.Estimator.models import (
     SystemLabourSpecification as LabourSpecification,
+)
+from app.Estimator.models import (
+    SystemMaterial as Material,
+)
+from app.Estimator.models import (
+    SystemSpecification as Specification,
+)
+from app.Estimator.models import (
+    SystemSpecificationComponent as SpecificationComponent,
+)
+from app.Estimator.models import (
+    SystemTradeCode as TradeCode,
 )
 
 

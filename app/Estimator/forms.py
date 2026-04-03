@@ -1,13 +1,21 @@
 from django import forms
 from django.forms import inlineformset_factory
-from .models import (
-    ProjectMaterial, ProjectSpecification, ProjectSpecificationComponent,
-    ProjectLabourCrew, ProjectLabourSpecification, ProjectTradeCode,
-    ProjectAssumptions,
-    SystemTradeCode, SystemMaterial, SystemLabourCrew, SystemLabourSpecification,
-    SystemSpecification, SystemSpecificationComponent,
-)
 
+from .models import (
+    ProjectAssumptions,
+    ProjectLabourCrew,
+    ProjectLabourSpecification,
+    ProjectMaterial,
+    ProjectSpecification,
+    ProjectSpecificationComponent,
+    ProjectTradeCode,
+    SystemLabourCrew,
+    SystemLabourSpecification,
+    SystemMaterial,
+    SystemSpecification,
+    SystemSpecificationComponent,
+    SystemTradeCode,
+)
 
 TAILWIND_INPUT = 'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6'
 TAILWIND_SELECT = TAILWIND_INPUT

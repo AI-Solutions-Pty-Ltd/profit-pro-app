@@ -1,13 +1,22 @@
 from decimal import Decimal, InvalidOperation
-from django.core.management.base import BaseCommand
+
 import openpyxl
+from django.core.management.base import BaseCommand
 
 from app.Estimator.models import (
-    SystemTradeCode, SystemMaterial, SystemSpecification, SystemSpecificationComponent,
-    SystemLabourCrew, SystemLabourSpecification,
-    ProjectTradeCode, ProjectMaterial, ProjectSpecification, ProjectSpecificationComponent,
-    ProjectLabourCrew, ProjectLabourSpecification,
     BOQItem,
+    ProjectLabourCrew,
+    ProjectLabourSpecification,
+    ProjectMaterial,
+    ProjectSpecification,
+    ProjectSpecificationComponent,
+    ProjectTradeCode,
+    SystemLabourCrew,
+    SystemLabourSpecification,
+    SystemMaterial,
+    SystemSpecification,
+    SystemSpecificationComponent,
+    SystemTradeCode,
 )
 
 
@@ -65,7 +74,7 @@ class ExcelImporter:
 
     def _import_trade_codes(self, ws):
         count = 0
-        Model = ProjectTradeCode if self.project else SystemTradeCode
+        model = ProjectTradeCode if self.project else SystemTradeCode
         for row in ws.iter_rows(min_row=2, values_only=True):
             vals = (row + (None,) * 4)[:4]
             prefix, trade_name, _, _ = vals
@@ -74,7 +83,7 @@ class ExcelImporter:
             lookup = {'prefix': str(prefix).strip()}
             if self.project:
                 lookup['project'] = self.project
-            Model.objects.update_or_create(
+            model.objects.update_or_create(
                 **lookup,
                 defaults={'trade_name': str(trade_name or '').strip()}
             )
@@ -86,7 +95,7 @@ class ExcelImporter:
 
     def _import_materials(self, ws):
         count = 0
-        Model = ProjectMaterial if self.project else SystemMaterial
+        model = ProjectMaterial if self.project else SystemMaterial
         for row in ws.iter_rows(min_row=2, values_only=True):
             vals = (row + (None,) * 6)[:6]
             trade_name, mat_code, unit, rate, variety, spec = vals
@@ -97,7 +106,7 @@ class ExcelImporter:
             lookup = {'material_code': mat_code_str}
             if self.project:
                 lookup['project'] = self.project
-            Model.objects.update_or_create(
+            model.objects.update_or_create(
                 **lookup,
                 defaults={
                     'trade_name': self._safe_str(trade_name),
@@ -140,13 +149,13 @@ class ExcelImporter:
         return None
 
     def _import_material_specifications(self, ws):
-        SpecModel = ProjectSpecification if self.project else SystemSpecification
-        CompModel = ProjectSpecificationComponent if self.project else SystemSpecificationComponent
+        spec_model = ProjectSpecification if self.project else SystemSpecification
+        comp_model = ProjectSpecificationComponent if self.project else SystemSpecificationComponent
 
         if self.project:
-            SpecModel.objects.filter(project=self.project).delete()
+            spec_model.objects.filter(project=self.project).delete()
         else:
-            SpecModel.objects.all().delete()
+            spec_model.objects.all().delete()
         count = 0
 
         for row in ws.iter_rows(min_row=4, values_only=True):
@@ -172,7 +181,7 @@ class ExcelImporter:
             else:
                 create_kwargs['boq_quantity'] = self._safe_decimal(vals[17]) or Decimal('0')
 
-            spec = SpecModel.objects.create(**create_kwargs)
+            spec = spec_model.objects.create(**create_kwargs)
 
             for i in range(4):
                 mat_code = vals[4 + i]
@@ -182,7 +191,7 @@ class ExcelImporter:
                     continue
 
                 mat = self._find_material(mat_code)
-                CompModel.objects.create(
+                comp_model.objects.create(
                     specification=spec,
                     material=mat,
                     label=self._safe_str(mat_code),
@@ -198,11 +207,11 @@ class ExcelImporter:
     # ── Labour Costs ───────────────────────────────────────────
 
     def _import_labour_costs(self, ws):
-        Model = ProjectLabourCrew if self.project else SystemLabourCrew
+        model = ProjectLabourCrew if self.project else SystemLabourCrew
         if self.project:
-            Model.objects.filter(project=self.project).delete()
+            model.objects.filter(project=self.project).delete()
         else:
-            Model.objects.all().delete()
+            model.objects.all().delete()
         count = 0
 
         for row in ws.iter_rows(min_row=3, values_only=True):
@@ -224,7 +233,7 @@ class ExcelImporter:
             }
             if self.project:
                 create_kwargs['project'] = self.project
-            Model.objects.create(**create_kwargs)
+            model.objects.create(**create_kwargs)
             count += 1
 
         self.log(f'  Labour Crews: {count}')
@@ -233,12 +242,12 @@ class ExcelImporter:
     # ── Labour Specification ───────────────────────────────────
 
     def _import_labour_specifications(self, ws):
-        Model = ProjectLabourSpecification if self.project else SystemLabourSpecification
-        CrewModel = ProjectLabourCrew if self.project else SystemLabourCrew
+        model = ProjectLabourSpecification if self.project else SystemLabourSpecification
+        crew_model = ProjectLabourCrew if self.project else SystemLabourCrew
         if self.project:
-            Model.objects.filter(project=self.project).delete()
+            model.objects.filter(project=self.project).delete()
         else:
-            Model.objects.all().delete()
+            model.objects.all().delete()
         count = 0
 
         for row in ws.iter_rows(min_row=3, values_only=True):
@@ -249,11 +258,11 @@ class ExcelImporter:
 
             crew_type_str = self._safe_str(vals[4])
             if self.project:
-                crew = CrewModel.objects.filter(
+                crew = crew_model.objects.filter(
                     project=self.project, crew_type=crew_type_str
                 ).first() if crew_type_str else None
             else:
-                crew = CrewModel.objects.filter(crew_type=crew_type_str).first() if crew_type_str else None
+                crew = crew_model.objects.filter(crew_type=crew_type_str).first() if crew_type_str else None
 
             create_kwargs = {
                 'section': self._safe_str(vals[0]),
@@ -271,7 +280,7 @@ class ExcelImporter:
                 create_kwargs['project'] = self.project
             else:
                 create_kwargs['boq_quantity'] = self._safe_decimal(vals[13]) or Decimal('0')
-            Model.objects.create(**create_kwargs)
+            model.objects.create(**create_kwargs)
             count += 1
 
         self.log(f'  Labour Specifications: {count}')
@@ -376,7 +385,11 @@ class SystemSpecImporter:
             return None
 
     def run(self):
-        from app.Estimator.models import SystemMaterialSpec, SystemMaterialSpecComponent, SystemMaterial
+        from app.Estimator.models import (
+            SystemMaterial,
+            SystemMaterialSpec,
+            SystemMaterialSpecComponent,
+        )
 
         wb = openpyxl.load_workbook(self.file_path, data_only=True)
         ws = wb.active

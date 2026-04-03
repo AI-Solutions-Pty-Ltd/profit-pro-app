@@ -18,10 +18,18 @@ from decimal import Decimal, InvalidOperation
 import openpyxl
 
 from .models import (
-    SystemTradeCode, SystemMaterial, SystemSpecification, SystemSpecificationComponent,
-    SystemLabourCrew, SystemLabourSpecification,
-    ProjectTradeCode, ProjectMaterial, ProjectSpecification, ProjectSpecificationComponent,
-    ProjectLabourCrew, ProjectLabourSpecification,
+    ProjectLabourCrew,
+    ProjectLabourSpecification,
+    ProjectMaterial,
+    ProjectSpecification,
+    ProjectSpecificationComponent,
+    ProjectTradeCode,
+    SystemLabourCrew,
+    SystemLabourSpecification,
+    SystemMaterial,
+    SystemSpecification,
+    SystemSpecificationComponent,
+    SystemTradeCode,
 )
 
 
@@ -320,7 +328,7 @@ class MaterialSpecImporter:
             else:
                 updated += 1
 
-            ComponentModel = ProjectSpecificationComponent if self.project else SystemSpecificationComponent
+            component_model = ProjectSpecificationComponent if self.project else SystemSpecificationComponent
             for i in range(4):
                 mat_col = 4 + i
                 qty_col = 8 + i
@@ -331,7 +339,7 @@ class MaterialSpecImporter:
                     continue
 
                 mat = self._get_material(mat_code)
-                ComponentModel.objects.create(
+                component_model.objects.create(
                     specification=spec,
                     material=mat,
                     label=mat_code,
@@ -390,10 +398,10 @@ class MaterialSpecImporter:
             else:
                 updated += 1
 
-            ComponentModel = ProjectSpecificationComponent if self.project else SystemSpecificationComponent
+            component_model = ProjectSpecificationComponent if self.project else SystemSpecificationComponent
             for i, comp in enumerate(data['components']):
                 mat = self._get_material(comp['material_code'])
-                ComponentModel.objects.create(
+                component_model.objects.create(
                     specification=spec,
                     material=mat,
                     label=comp['label'],

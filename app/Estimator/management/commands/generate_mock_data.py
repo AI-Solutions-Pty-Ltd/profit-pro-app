@@ -7,15 +7,21 @@ and generates forecast/progress quantities based on description and unit matchin
 
 import random
 from decimal import Decimal
+
 from django.core.management.base import BaseCommand
 
 from app.Estimator.models import (
     BOQItem,
-    SystemSpecification as Specification,
+)
+from app.Estimator.models import (
     SystemLabourSpecification as LabourSpecification,
+)
+from app.Estimator.models import (
     SystemMaterial as Material,
 )
-
+from app.Estimator.models import (
+    SystemSpecification as Specification,
+)
 
 # ── Unit normalisation ───────────────────────────────────────────────
 
@@ -76,7 +82,7 @@ class Command(BaseCommand):
         all_materials = {m.material_code: m for m in Material.objects.all()}
 
         # ── Material Specification Rules ─────────────────────────────
-        MAT_SPEC_RULES = [
+        mat_spec_rules = [
             # Concrete by strength
             (['blinding', 'under footings'], 'm3', '10MPa'),
             (['apron'], 'm3', '15MPa'),
@@ -120,7 +126,7 @@ class Command(BaseCommand):
         ]
 
         # ── Direct Material Rules (uses actual DB material codes) ────
-        DIRECT_MAT_RULES = [
+        direct_mat_rules = [
             # Roofing
             (['ibr', 'corrugated iron', 'roof sheet', 'chromadek', 'galvanized', 'roof covering', 'lightning'], 'm2', 'SKN-IBR580'),
             (['ridge cap', 'ridge'], 'm', 'ACC-RIDG'),
@@ -234,7 +240,7 @@ class Command(BaseCommand):
         ]
 
         # ── Labour Specification Rules ───────────────────────────────
-        LAB_RULES = [
+        lab_rules = [
             # Earthworks
             (['rip and scarify', 'scarify', 'site preparation', 'topsoil', 'remove topsoil'], 'm2', 'Excavations - Site Preparation'),
             (['excavat', 'excavate for restricted', 'trench'], 'm3', 'Excavations - Manual Trenches'),
@@ -330,7 +336,7 @@ class Command(BaseCommand):
 
             # 1) Material specification
             if not item.specification and not item.material:
-                s = match_rules(item.description, item.unit, MAT_SPEC_RULES, specs)
+                s = match_rules(item.description, item.unit, mat_spec_rules, specs)
                 if s:
                     item.specification = s
                     mat_spec += 1
@@ -338,7 +344,7 @@ class Command(BaseCommand):
 
             # 2) Direct material fallback
             if not item.specification and not item.material:
-                m = find_direct_material(item.description, item.unit, DIRECT_MAT_RULES, all_materials)
+                m = find_direct_material(item.description, item.unit, direct_mat_rules, all_materials)
                 if m:
                     item.material = m
                     direct_mat += 1
@@ -346,9 +352,9 @@ class Command(BaseCommand):
 
             # 3) Labour specification
             if not item.labour_specification:
-                l = match_rules(item.description, item.unit, LAB_RULES, labour_specs)
-                if l:
-                    item.labour_specification = l
+                matched_labour = match_rules(item.description, item.unit, lab_rules, labour_specs)
+                if matched_labour:
+                    item.labour_specification = matched_labour
                     lab += 1
                     changed = True
 
@@ -366,7 +372,7 @@ class Command(BaseCommand):
             if changed:
                 item.save()
 
-        self.stdout.write(f'  Output BoQ:')
+        self.stdout.write('  Output BoQ:')
         self.stdout.write(f'    Material specs: {mat_spec}')
         self.stdout.write(f'    Direct materials: {direct_mat}')
         self.stdout.write(f'    Labour specs: {lab}')

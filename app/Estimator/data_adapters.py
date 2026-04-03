@@ -6,7 +6,6 @@ into a uniform format that can be passed to the calculation functions in
 calculations.py.
 """
 
-from decimal import Decimal
 
 
 class DjangoORMAdapter:
