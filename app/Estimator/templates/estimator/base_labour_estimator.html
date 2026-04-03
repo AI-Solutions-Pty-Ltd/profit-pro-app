@@ -1,0 +1,44 @@
+{% extends "estimator/base.html" %}
+{% load estimator_tags %}
+{% block estimator_content %}
+    <!-- Category Toggle: Materials / Labour -->
+    <div class="mb-4">
+        <nav class="flex space-x-2" aria-label="Estimator category">
+            <a href="{% url 'estimator:report_material_list_progress' project_pk=project_pk %}"
+               class="bg-gray-200 text-gray-700 hover:bg-gray-300 rounded-md px-4 py-2 text-sm font-medium">
+                Materials
+            </a>
+            <a href="{% url 'estimator:report_labour_list_progress' project_pk=project_pk %}"
+               class="bg-indigo-600 text-white rounded-md px-4 py-2 text-sm font-medium">Labour</a>
+        </nav>
+    </div>
+    <!-- Labour Estimator Sub-Navigation -->
+    <div class="mb-6">
+        <nav class="flex space-x-1 rounded-lg bg-gray-100 p-1"
+             aria-label="Labour Estimator sections">
+            {% with url_name=request.resolver_match.url_name %}
+                <a href="{% url 'estimator:report_labour_list_progress' project_pk=project_pk %}"
+                   class="{% if url_name == 'report_labour_list_progress' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                    Report: Progress
+                </a>
+                <a href="{% url 'estimator:report_labour_list_baseline' project_pk=project_pk %}"
+                   class="{% if url_name == 'report_labour_list_baseline' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                    Report: Baseline
+                </a>
+                <a href="{% url 'estimator:report_labour_list_forecast' project_pk=project_pk %}"
+                   class="{% if url_name == 'report_labour_list_forecast' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                    Report: Forecast
+                </a>
+                <a href="{% url 'estimator:labour_spec_defs' project_pk=project_pk %}"
+                   class="{% if url_name == 'labour_spec_defs' or url_name == 'labour_spec_upload' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                    Specs
+                </a>
+                <a href="{% url 'estimator:labour_specs' project_pk=project_pk %}"
+                   class="{% if url_name == 'labour_specs' %}bg-white text-gray-900 shadow{% else %}text-gray-500 hover:text-gray-700{% endif %} rounded-md px-3 py-2 text-sm font-medium">
+                    Calculator
+                </a>
+            {% endwith %}
+        </nav>
+    </div>
+    {% block sub_content %}{% endblock %}
+{% endblock %}
