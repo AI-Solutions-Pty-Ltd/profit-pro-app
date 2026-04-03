@@ -35,6 +35,7 @@ urlpatterns = (
             "site-management/",
             include("app.SiteManagement.urls", namespace="site_management"),
         ),
+        path("estimator/", include("app.Estimator.urls", namespace="estimator")),
     ]
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

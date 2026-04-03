@@ -1,0 +1,769 @@
+{% extends "estimator/base.html" %}
+{% load estimator_tags %}
+
+{% block title %}Output BoQ - Project Resource Estimator{% endblock %}
+
+{% block estimator_content %}
+<!-- Page header -->
+<div class="sm:flex sm:items-center sm:justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Output Bill of Quantities</h1>
+        <p class="mt-1 text-sm text-gray-500">Calculated BoQ with materials rates, labour rates, progress and forecast amounts.</p>
+    </div>
+</div>
+
+<!-- Summary cards -->
+<div class="grid grid-cols-2 gap-4 lg:grid-cols-5 mb-8">
+    <div class="rounded-lg bg-white shadow p-4">
+        <div class="flex items-center gap-3">
+            <div class="rounded-lg bg-gray-100 p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-500">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+                </svg>
+            </div>
+            <div class="min-w-0">
+                <p class="text-xs font-medium text-gray-500 truncate">Contract Amount</p>
+                <p class="text-base font-bold text-gray-900 truncate">{{ total_contract_amount|currency }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="rounded-lg bg-white shadow p-4">
+        <div class="flex items-center gap-3">
+            <div class="rounded-lg bg-amber-50 p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-amber-600">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                </svg>
+            </div>
+            <div class="min-w-0">
+                <p class="text-xs font-medium text-gray-500 truncate">Material Costs Rate</p>
+                <p class="text-base font-bold text-amber-700 truncate">{{ total_materials_rate|currency }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="rounded-lg bg-white shadow p-4">
+        <div class="flex items-center gap-3">
+            <div class="rounded-lg bg-purple-50 p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-purple-600">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                </svg>
+            </div>
+            <div class="min-w-0">
+                <p class="text-xs font-medium text-gray-500 truncate">Labour Rate</p>
+                <p class="text-base font-bold text-purple-700 truncate">{{ total_labour_rate|currency }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="rounded-lg bg-white shadow p-4">
+        <div class="flex items-center gap-3">
+            <div class="rounded-lg bg-green-50 p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-green-600">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+                </svg>
+            </div>
+            <div class="min-w-0">
+                <p class="text-xs font-medium text-gray-500 truncate">Progress Amount</p>
+                <p class="text-base font-bold text-green-700 truncate">{{ total_progress_amount|currency }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="rounded-lg bg-white shadow p-4">
+        <div class="flex items-center gap-3">
+            <div class="rounded-lg bg-blue-50 p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-blue-600">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+                </svg>
+            </div>
+            <div class="min-w-0">
+                <p class="text-xs font-medium text-gray-500 truncate">Forecast Amount</p>
+                <p class="text-base font-bold text-blue-700 truncate">{{ total_forecast_amount|currency }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="bg-white shadow ring-1 ring-black/5 rounded-lg p-4 mb-4">
+    <form method="get" id="filter-form" class="flex flex-wrap items-end gap-3">
+        <div class="min-w-0">
+            <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Section</label>
+            <select name="section" onchange="this.form.submit()"
+                    class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                <option value="">All Sections</option>
+                {% for s in sections %}
+                <option value="{{ s }}" {% if f_section == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="min-w-0">
+            <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Bill No.</label>
+            <select name="bill_no" onchange="this.form.submit()"
+                    class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                <option value="">All Bills</option>
+                {% for b in bill_nos %}
+                <option value="{{ b }}" {% if f_bill_no == b %}selected{% endif %}>{{ b }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="min-w-0">
+            <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Trade Code</label>
+            <select name="trade_code" onchange="this.form.submit()"
+                    class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                <option value="">All Trades</option>
+                {% for tc in trade_codes %}
+                <option value="{{ tc.id }}" {% if f_trade_code == tc.id|stringformat:"d" %}selected{% endif %}>{{ tc.prefix }} {{ tc.trade_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="min-w-0">
+            <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Material Spec</label>
+            <select name="mat_spec" onchange="this.form.submit()"
+                    class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                <option value="">All</option>
+                <option value="has_spec" {% if f_mat_spec == "has_spec" %}selected{% endif %}>Has Specification</option>
+                <option value="has_material" {% if f_mat_spec == "has_material" %}selected{% endif %}>Has Direct Material</option>
+                <option value="none" {% if f_mat_spec == "none" %}selected{% endif %}>No Material</option>
+                {% for name in spec_names %}
+                <option value="{{ name }}" {% if f_mat_spec == name %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="min-w-0">
+            <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Labour Spec</label>
+            <select name="lab_spec" onchange="this.form.submit()"
+                    class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                <option value="">All</option>
+                <option value="none" {% if f_lab_spec == "none" %}selected{% endif %}>No Labour Spec</option>
+                {% for name in labour_spec_names %}
+                <option value="{{ name }}" {% if f_lab_spec == name %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% if f_section or f_bill_no or f_trade_code or f_mat_spec or f_lab_spec %}
+        <a href="{% url 'estimator:dashboard' project_pk=project_pk %}"
+           class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 ring-1 ring-inset ring-gray-300">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 mr-1">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+            Clear
+        </a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- BoQ Table -->
+<div class="bg-white shadow ring-1 ring-black/5 rounded-lg">
+    <div class="flex items-center justify-between gap-3 p-4 border-b border-gray-200">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-700">Bill of Quantities</h3>
+        <div class="flex items-center gap-2">
+            <button id="column-groups-btn" type="button" class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 mr-1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 0a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0m7.5 0v6m-6 0v6m6-6v6m6-6v6" />
+                </svg>
+                Column Groups
+            </button>
+            <button id="column-details-btn" type="button" class="inline-flex items-center rounded-md bg-slate-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 mr-1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.132 0 4.235.677 6.039 1.952.992.615 1.961 1.4 2.872 2.2V3m0 0A9.75 9.75 0 0 0 18.039 1.049M0 3v5.757a9.75 9.75 0 0 1 1.952-6.039A9.75 9.75 0 0 1 6.039 1.049m12 0A9.75 9.75 0 0 0 6.039 1.049m0 0v5.008a3 3 0 1 1 0-5.008m0 0h.008v.008H6.039v-.008m0 0h5.952v5.008m0 0a3 3 0 1 1 6 0v-5.008m0 5.008v5.757m0 0a9.75 9.75 0 0 1-1.952 6.039A9.75 9.75 0 0 1 6.039 22.95m12 0a9.75 9.75 0 0 0 1.952-6.039 9.75 9.75 0 0 0-1.952-6.039m0 6.039a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                </svg>
+                Fine-tune Columns
+            </button>
+        </div>
+    </div>
+    <!-- Column Groups Modal -->
+    <div id="column-groups-modal" class="hidden absolute bg-white shadow-lg rounded-lg p-4 z-50 mt-2" style="min-width: 320px;">
+        <div class="space-y-2">
+            <label class="flex items-center text-xs text-gray-700">
+                <input type="checkbox" class="column-toggle" data-column-group="item-details" checked>
+                <span class="ml-2 font-medium">Item Details</span>
+            </label>
+            <label class="flex items-center text-xs text-gray-700">
+                <input type="checkbox" class="column-toggle" data-column-group="contract" checked>
+                <span class="ml-2 font-medium">Contract</span>
+            </label>
+            <label class="flex items-center text-xs text-gray-700">
+                <input type="checkbox" class="column-toggle" data-column-group="project-qty" checked>
+                <span class="ml-2 font-medium">Project Qty</span>
+            </label>
+            <label class="flex items-center text-xs text-gray-700">
+                <input type="checkbox" class="column-toggle" data-column-group="new-material" checked>
+                <span class="ml-2 font-medium">New Material</span>
+            </label>
+            <label class="flex items-center text-xs text-gray-700">
+                <input type="checkbox" class="column-toggle" data-column-group="new-labour" checked>
+                <span class="ml-2 font-medium">New Labour</span>
+            </label>
+            <label class="flex items-center text-xs text-gray-700">
+                <input type="checkbox" class="column-toggle" data-column-group="markups" checked>
+                <span class="ml-2 font-medium">Markups</span>
+            </label>
+            <label class="flex items-center text-xs text-gray-700">
+                <input type="checkbox" class="column-toggle" data-column-group="combined" checked>
+                <span class="ml-2 font-medium">Combined</span>
+            </label>
+            <label class="flex items-center text-xs text-gray-700">
+                <input type="checkbox" class="column-toggle" data-column-group="progress" checked>
+                <span class="ml-2 font-medium">Progress</span>
+            </label>
+            <label class="flex items-center text-xs text-gray-700">
+                <input type="checkbox" class="column-toggle" data-column-group="forecast" checked>
+                <span class="ml-2 font-medium">Forecast</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Fine-tune Columns Modal -->
+    <div id="column-details-modal" class="hidden absolute bg-white shadow-lg rounded-lg p-4 z-50 mt-2" style="min-width: 380px; max-height: 500px; overflow-y-auto;">
+        <div class="space-y-2">
+            <div class="pb-2 border-b border-gray-200">
+                <p class="text-xs font-semibold uppercase text-gray-600 mb-2">Item Details</p>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-section" checked>
+                    <span class="ml-2">Section</span>
+                </label>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-bill-no" checked>
+                    <span class="ml-2">Bill No.</span>
+                </label>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-trade-code" checked>
+                    <span class="ml-2">Trade Code</span>
+                </label>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-mat-spec" checked>
+                    <span class="ml-2">Material Spec</span>
+                </label>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-lab-spec" checked>
+                    <span class="ml-2">Labour Spec</span>
+                </label>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-unit" checked>
+                    <span class="ml-2">Unit</span>
+                </label>
+            </div>
+            <div class="py-2 border-b border-gray-200">
+                <p class="text-xs font-semibold uppercase text-gray-600 mb-2">Contract</p>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-contract-qty" checked>
+                    <span class="ml-2">Qty</span>
+                </label>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-contract-rate" checked>
+                    <span class="ml-2">Rate</span>
+                </label>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-contract-amount" checked>
+                    <span class="ml-2">Amount</span>
+                </label>
+            </div>
+            <div class="py-2 border-b border-gray-200">
+                <p class="text-xs font-semibold uppercase text-gray-600 mb-2">Project</p>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-project-qty" checked>
+                    <span class="ml-2">Qty</span>
+                </label>
+            </div>
+            <div class="py-2 border-b border-gray-200">
+                <p class="text-xs font-semibold uppercase text-gray-600 mb-2">New Material</p>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-mat-rate" checked>
+                    <span class="ml-2">Rate</span>
+                </label>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-mat-amount" checked>
+                    <span class="ml-2">Amount</span>
+                </label>
+            </div>
+            <div class="py-2 border-b border-gray-200">
+                <p class="text-xs font-semibold uppercase text-gray-600 mb-2">New Labour</p>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-labour-rate" checked>
+                    <span class="ml-2">Rate</span>
+                </label>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-labour-amount" checked>
+                    <span class="ml-2">Amount</span>
+                </label>
+            </div>
+            <div class="py-2 border-b border-gray-200">
+                <p class="text-xs font-semibold uppercase text-gray-600 mb-2">Markups</p>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-mat-markup" checked>
+                    <span class="ml-2">Material %</span>
+                </label>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-labour-markup" checked>
+                    <span class="ml-2">Labour %</span>
+                </label>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-transport-pct" checked>
+                    <span class="ml-2">Transport %</span>
+                </label>
+            </div>
+            <div class="py-2 border-b border-gray-200">
+                <p class="text-xs font-semibold uppercase text-gray-600 mb-2">Combined</p>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-combined-price" checked>
+                    <span class="ml-2">Price</span>
+                </label>
+            </div>
+            <div class="py-2 border-b border-gray-200">
+                <p class="text-xs font-semibold uppercase text-gray-600 mb-2">Progress</p>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-progress-qty" checked>
+                    <span class="ml-2">Qty</span>
+                </label>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-progress-amount" checked>
+                    <span class="ml-2">Amount</span>
+                </label>
+            </div>
+            <div class="py-2">
+                <p class="text-xs font-semibold uppercase text-gray-600 mb-2">Forecast</p>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-forecast-qty" checked>
+                    <span class="ml-2">Qty</span>
+                </label>
+                <label class="flex items-center text-xs text-gray-700">
+                    <input type="checkbox" class="column-detail-toggle" data-column="col-forecast-amount" checked>
+                    <span class="ml-2">Amount</span>
+                </label>
+            </div>
+        </div>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="text-xs" style="min-width: 2700px;" id="boq-table">
+            <thead>
+                <!-- Column group headers -->
+                <tr class="border-b border-gray-200">
+                    <th colspan="6" class="bg-gray-50 px-2 py-1.5 text-left text-[9px] font-bold uppercase tracking-widest text-gray-400 border-r border-gray-200 column-group-item-details">Item Details</th>
+                    <th class="bg-gray-50 px-2 py-1.5 text-left text-[9px] font-bold uppercase tracking-widest text-gray-400 border-r border-gray-200">Details</th>
+                    <th colspan="3" class="bg-gray-50 px-2 py-1.5 text-center text-[9px] font-bold uppercase tracking-widest text-gray-400 border-r border-gray-200 column-group-contract">Contract</th>
+                    <th class="bg-teal-50/70 px-2 py-1.5 text-center text-[9px] font-bold uppercase tracking-widest text-teal-500 border-r border-gray-200 column-group-project-qty">Project</th>
+                    <th colspan="2" class="bg-amber-50/70 px-2 py-1.5 text-center text-[9px] font-bold uppercase tracking-widest text-amber-500 border-r border-gray-200 column-group-new-material">New Material</th>
+                    <th colspan="2" class="bg-purple-50/70 px-2 py-1.5 text-center text-[9px] font-bold uppercase tracking-widest text-purple-500 border-r border-gray-200 column-group-new-labour">New Labour</th>
+                    <th colspan="3" class="bg-orange-50/70 px-2 py-1.5 text-center text-[9px] font-bold uppercase tracking-widest text-orange-500 border-r border-gray-200 column-group-markups">Markups</th>
+                    <th class="bg-indigo-50/70 px-2 py-1.5 text-center text-[9px] font-bold uppercase tracking-widest text-indigo-500 border-r border-gray-200 column-group-combined">Combined</th>
+                    <th colspan="2" class="bg-green-50/70 px-2 py-1.5 text-center text-[9px] font-bold uppercase tracking-widest text-green-500 border-r border-gray-200 column-group-progress">Progress</th>
+                    <th colspan="2" class="bg-blue-50/70 px-2 py-1.5 text-center text-[9px] font-bold uppercase tracking-widest text-blue-500 column-group-forecast">Forecast</th>
+                </tr>
+                <tr class="border-b-2 border-gray-300">
+                    <!-- Item Details -->
+                    <th class="bg-gray-50 py-2 pl-3 pr-1 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details" style="width:100px;">Section</th>
+                    <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details" style="width:100px;">Bill No.</th>
+                    <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details" style="width:120px;">Trade Code</th>
+                    <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details" style="width:120px;">Mat. Spec</th>
+                    <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details" style="width:120px;">Lab. Spec</th>
+                    <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 border-r border-gray-200" style="width:200px;">Details</th>
+                    <th class="bg-gray-50 px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details" style="width:40px;">Unit</th>
+                    <!-- Contract -->
+                    <th class="bg-gray-50 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-contract" style="width:75px;">Qty</th>
+                    <th class="bg-gray-50 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-contract" style="width:85px;">Rate</th>
+                    <th class="bg-gray-50 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-600 border-r border-gray-200 column-group-contract" style="width:95px;">Amount</th>
+                    <!-- Project Qty -->
+                    <th class="bg-teal-50/70 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-teal-700 border-r border-gray-200 column-group-project-qty" style="width:85px;">Qty{% if wastage_pct %} <span class="text-[8px] font-normal">(+{{ wastage_pct }}%)</span>{% endif %}</th>
+                    <!-- New Material -->
+                    <th class="bg-amber-50/70 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-amber-700 column-group-new-material" style="width:85px;">Rate</th>
+                    <th class="bg-amber-50/70 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-amber-700 border-r border-gray-200 column-group-new-material" style="width:95px;">Amount</th>
+                    <!-- New Labour -->
+                    <th class="bg-purple-50/70 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-purple-700 column-group-new-labour" style="width:85px;">Rate</th>
+                    <th class="bg-purple-50/70 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-purple-700 border-r border-gray-200 column-group-new-labour" style="width:95px;">Amount</th>
+                    <!-- Markups -->
+                    <th class="bg-orange-50/70 px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-orange-700 column-group-markups" style="width:75px;">Mat. M%</th>
+                    <th class="bg-orange-50/70 px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-orange-700 column-group-markups" style="width:75px;">Lab. M%</th>
+                    <th class="bg-orange-50/70 px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-orange-700 border-r border-gray-200 column-group-markups" style="width:75px;">Transp%</th>
+                    <!-- Baseline New Price -->
+                    <th class="bg-indigo-50/70 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-indigo-700 border-r border-gray-200 column-group-combined" style="width:95px;">Price</th>
+                    <!-- Progress -->
+                    <th class="bg-green-50/70 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-green-700 column-group-progress" style="width:75px;">Qty</th>
+                    <th class="bg-green-50/70 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-green-700 border-r border-gray-200 column-group-progress" style="width:95px;">Amount</th>
+                    <!-- Forecast -->
+                    <th class="bg-blue-50/70 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-blue-700 column-group-forecast" style="width:75px;">Qty</th>
+                    <th class="bg-blue-50/70 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-blue-700 pr-3 column-group-forecast" style="width:95px;">Amount</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for item in items %}
+                {% if item.is_section_header %}{% else %}
+                <tr class="hover:bg-gray-50/50 align-top" data-item-id="{{ item.id }}">
+                    <!-- Section -->
+                    <td class="py-1.5 pl-3 pr-1 text-gray-400 whitespace-normal break-words column-group-item-details col-section" style="width:100px;">{{ item.section }}</td>
+                    <!-- Bill No -->
+                    <td class="px-1 py-1.5 text-gray-400 whitespace-normal break-words column-group-item-details col-bill-no" style="width:100px;">{{ item.bill_no }}</td>
+                    <!-- Trade Code (editable dropdown) -->
+                    <td class="px-1 py-0.5 column-group-item-details col-trade-code whitespace-normal" style="width:120px;">
+                        <select class="boq-edit-select w-full rounded border-0 py-0.5 pl-1 pr-5 text-[10px] text-gray-700 ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-indigo-500 bg-white"
+                                data-item-id="{{ item.id }}" data-field="trade_code">
+                            <option value="">--</option>
+                            {% for tc in trade_codes %}
+                            <option value="{{ tc.id }}" {% if item.trade_code_id == tc.id %}selected{% endif %}>{{ tc.prefix }}{{ tc.trade_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <!-- Material Spec (editable dropdown) -->
+                    <td class="px-1 py-0.5 column-group-item-details col-mat-spec whitespace-normal" style="width:120px;">
+                        <select class="boq-edit-select w-full rounded border-0 py-0.5 pl-1 pr-5 text-[10px] text-gray-700 ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-indigo-500 bg-white"
+                                data-item-id="{{ item.id }}" data-field="specification">
+                            <option value="">--</option>
+                            {% for name in spec_names %}
+                            <option value="{{ name }}" {% if item.specification and item.specification.name == name %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <!-- Labour Spec (editable dropdown) -->
+                    <td class="px-1 py-0.5 column-group-item-details col-lab-spec whitespace-normal" style="width:120px;">
+                        <select class="boq-edit-select w-full rounded border-0 py-0.5 pl-1 pr-5 text-[10px] text-gray-700 ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-indigo-500 bg-white"
+                                data-item-id="{{ item.id }}" data-field="labour_specification">
+                            <option value="">--</option>
+                            {% for name in labour_spec_names %}
+                            <option value="{{ name }}" {% if item.labour_specification and item.labour_specification.name == name %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <!-- Details -->
+                    <td class="px-1 py-1.5 whitespace-normal break-words text-gray-700 border-r border-gray-100" style="width:200px;">
+                        {% if item.description %}
+                            <div class="text-gray-600 text-[11px]">{{ item.description }}</div>
+                        {% else %}
+                            <span class="text-gray-300 text-[11px]">&mdash;</span>
+                        {% endif %}
+                    </td>
+                    <!-- Unit -->
+                    <td class="px-1 py-1.5 text-center text-gray-500 column-group-item-details col-unit" style="width:40px;">{{ item.unit }}</td>
+                    <!-- Contract Qty -->
+                    <td class="px-1 py-1.5 text-right tabular-nums text-gray-700 column-group-contract col-contract-qty">{{ item.contract_quantity|qty }}</td>
+                    <!-- Contract Rate -->
+                    <td class="px-1 py-1.5 text-right tabular-nums text-gray-700 column-group-contract col-contract-rate">{{ item.contract_rate|currency }}</td>
+                    <!-- Contract Amount -->
+                    <td class="px-1 py-1.5 text-right tabular-nums font-medium text-gray-900 border-r border-gray-100 column-group-contract col-contract-amount">{{ item.contract_amount|currency }}</td>
+                    <!-- Project Qty -->
+                    <td class="px-1 py-1.5 text-right tabular-nums font-medium text-teal-700 bg-teal-50/30 border-r border-gray-100 column-group-project-qty col-project-qty">{{ item.contract_quantity|apply_wastage:wastage_pct|qty }}</td>
+                    <!-- New Material Rate -->
+                    <td class="px-1 py-1.5 text-right tabular-nums font-medium text-amber-700 bg-amber-50/30 column-group-new-material col-mat-rate" data-cell="new_materials_rate">{{ item.new_materials_rate|currency }}</td>
+                    <!-- New Material Amount -->
+                    <td class="px-1 py-1.5 text-right tabular-nums font-medium text-amber-700 bg-amber-50/30 border-r border-gray-100 column-group-new-material col-mat-amount" data-cell="new_materials_amount">{{ item.new_materials_amount|currency }}</td>
+                    <!-- New Labour Rate -->
+                    <td class="px-1 py-1.5 text-right tabular-nums font-medium text-purple-700 bg-purple-50/30 column-group-new-labour col-labour-rate" data-cell="new_labour_rate">{{ item.new_labour_rate|currency }}</td>
+                    <!-- New Labour Amount -->
+                    <td class="px-1 py-1.5 text-right tabular-nums font-medium text-purple-700 bg-purple-50/30 border-r border-gray-100 column-group-new-labour col-labour-amount" data-cell="new_labour_amount">{{ item.new_labour_amount|currency }}</td>
+                    <!-- Markups -->
+                    <td class="px-0.5 py-0.5 bg-orange-50/30 column-group-markups col-mat-markup">
+                        <input type="number" step="0.01" value="{{ item.material_markup_pct }}"
+                               class="markup-input w-full rounded border-0 py-0.5 px-1 text-[10px] text-right tabular-nums text-orange-700 ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-orange-500 bg-white"
+                               data-item-id="{{ item.id }}" data-field="material_markup_pct" style="width:65px;">
+                    </td>
+                    <td class="px-0.5 py-0.5 bg-orange-50/30 column-group-markups col-labour-markup">
+                        <input type="number" step="0.01" value="{{ item.labour_markup_pct }}"
+                               class="markup-input w-full rounded border-0 py-0.5 px-1 text-[10px] text-right tabular-nums text-orange-700 ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-orange-500 bg-white"
+                               data-item-id="{{ item.id }}" data-field="labour_markup_pct" style="width:65px;">
+                    </td>
+                    <td class="px-0.5 py-0.5 bg-orange-50/30 border-r border-gray-100 column-group-markups col-transport-pct">
+                        <input type="number" step="0.01" value="{{ item.transport_pct }}"
+                               class="markup-input w-full rounded border-0 py-0.5 px-1 text-[10px] text-right tabular-nums text-orange-700 ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-orange-500 bg-white"
+                               data-item-id="{{ item.id }}" data-field="transport_pct" style="width:65px;">
+                    </td>
+                    <!-- Baseline New Price -->
+                    <td class="px-1 py-1.5 text-right tabular-nums font-semibold text-indigo-700 bg-indigo-50/30 border-r border-gray-100 column-group-combined col-combined-price" data-cell="baseline_new_price">{{ item.baseline_new_price|currency }}</td>
+                    <!-- Progress Qty (now editable) -->
+                    <td class="px-0.5 py-0.5 bg-green-50/30 column-group-progress col-progress-qty">
+                        <input type="number" step="0.01" value="{{ item.progress_quantity }}"
+                               class="qty-input w-full rounded border-0 py-0.5 px-1 text-[10px] text-right tabular-nums text-green-700 ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-green-500 bg-white"
+                               data-item-id="{{ item.id }}" data-field="progress_quantity" style="width:65px;">
+                    </td>
+                    <!-- Progress Amount -->
+                    <td class="px-1 py-1.5 text-right tabular-nums font-medium text-green-700 bg-green-50/30 border-r border-gray-100 column-group-progress col-progress-amount" data-cell="progress_amount">{{ item.progress_amount|currency }}</td>
+                    <!-- Forecast Qty (now editable) -->
+                    <td class="px-0.5 py-0.5 bg-blue-50/30 column-group-forecast col-forecast-qty">
+                        <input type="number" step="0.01" value="{{ item.forecast_quantity }}"
+                               class="qty-input w-full rounded border-0 py-0.5 px-1 text-[10px] text-right tabular-nums text-blue-700 ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-blue-500 bg-white"
+                               data-item-id="{{ item.id }}" data-field="forecast_quantity" style="width:65px;">
+                    </td>
+                    <!-- Forecast Amount -->
+                    <td class="px-1 py-1.5 text-right tabular-nums font-medium text-blue-700 bg-blue-50/30 pr-3 column-group-forecast col-forecast-amount" data-cell="forecast_amount">{{ item.forecast_amount|currency }}</td>
+                </tr>
+                {% endif %}
+                {% empty %}
+                <tr>
+                    <td colspan="23" class="px-6 py-16 text-center text-sm text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 text-gray-200 mx-auto mb-3">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H6.911a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661Z" />
+                        </svg>
+                        <p>No BoQ items found. Import data using:</p>
+                        <code class="mt-2 inline-block px-3 py-1 bg-gray-100 rounded text-xs font-mono">python manage.py import_excel "Resources Estimator Rev 2.xlsx"</code>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- AJAX auto-save script for inline dropdowns, qty inputs, and markup inputs -->
+<script>
+(function() {
+    const STORAGE_KEY = 'boq-column-visibility';
+
+    function formatCurrency(val) {
+        if (val === null || val === undefined) return '-';
+        const num = parseFloat(val);
+        if (isNaN(num)) return '-';
+        return num.toLocaleString('en', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    function updateRowCells(row, data) {
+        const cells = {
+            'new_materials_rate': data.new_materials_rate,
+            'new_materials_amount': data.new_materials_amount,
+            'new_labour_rate': data.new_labour_rate,
+            'new_labour_amount': data.new_labour_amount,
+            'baseline_new_price': data.baseline_new_price,
+            'progress_amount': data.progress_amount,
+            'forecast_amount': data.forecast_amount,
+        };
+        for (const [key, val] of Object.entries(cells)) {
+            const cell = row.querySelector(`[data-cell="${key}"]`);
+            if (cell) {
+                cell.textContent = formatCurrency(val);
+            }
+        }
+    }
+
+    function flashElement(el, ok) {
+        const cls = ok ? 'ring-green-400' : 'ring-red-400';
+        el.classList.add(cls);
+        setTimeout(() => el.classList.remove(cls), ok ? 800 : 1500);
+    }
+
+    // ============ Column Groups Visibility Toggle ============
+    const columnGroupsBtn = document.getElementById('column-groups-btn');
+    const columnGroupsModal = document.getElementById('column-groups-modal');
+
+    const columnDetailsBtn = document.getElementById('column-details-btn');
+    const columnDetailsModal = document.getElementById('column-details-modal');
+
+    if (columnGroupsBtn) {
+        columnGroupsBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            columnGroupsModal.classList.toggle('hidden');
+            columnDetailsModal.classList.add('hidden');
+            if (!columnGroupsModal.classList.contains('hidden')) {
+                columnGroupsModal.style.position = 'fixed';
+                const rect = columnGroupsBtn.getBoundingClientRect();
+                columnGroupsModal.style.top = (rect.bottom + 8) + 'px';
+                columnGroupsModal.style.left = (rect.right - 320) + 'px';
+            }
+        });
+    }
+
+    if (columnDetailsBtn) {
+        columnDetailsBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            columnDetailsModal.classList.toggle('hidden');
+            columnGroupsModal.classList.add('hidden');
+            if (!columnDetailsModal.classList.contains('hidden')) {
+                columnDetailsModal.style.position = 'fixed';
+                const rect = columnDetailsBtn.getBoundingClientRect();
+                columnDetailsModal.style.top = (rect.bottom + 8) + 'px';
+                columnDetailsModal.style.left = (rect.right - 380) + 'px';
+            }
+        });
+    }
+
+    // Close modals when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!columnGroupsModal.contains(e.target) && e.target !== columnGroupsBtn &&
+            !columnDetailsModal.contains(e.target) && e.target !== columnDetailsBtn) {
+            columnGroupsModal.classList.add('hidden');
+            columnDetailsModal.classList.add('hidden');
+        }
+    });
+
+    // Load saved visibility state
+    function loadColumnVisibility() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            const state = JSON.parse(saved);
+            // Load group visibility
+            Object.entries(state.groups || {}).forEach(([group, visible]) => {
+                const checkbox = document.querySelector(`input[data-column-group="${group}"]`);
+                if (checkbox) {
+                    checkbox.checked = visible;
+                    toggleColumnGroup(group, visible);
+                }
+            });
+            // Load column detail visibility
+            Object.entries(state.columns || {}).forEach(([col, visible]) => {
+                const checkbox = document.querySelector(`input[data-column="${col}"]`);
+                if (checkbox) {
+                    checkbox.checked = visible;
+                    toggleColumn(col, visible);
+                }
+            });
+        }
+    }
+
+    function toggleColumnGroup(group, visible) {
+        const elements = document.querySelectorAll(`.column-group-${group}`);
+        elements.forEach(el => {
+            if (visible) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        });
+    }
+
+    function toggleColumn(col, visible) {
+        const elements = document.querySelectorAll(`.${col}`);
+        elements.forEach(el => {
+            if (visible) {
+                el.classList.remove('hidden');
+            } else {
+                el.classList.add('hidden');
+            }
+        });
+    }
+
+    function saveColumnVisibility() {
+        const state = {
+            groups: {},
+            columns: {}
+        };
+        document.querySelectorAll('.column-toggle').forEach(checkbox => {
+            const group = checkbox.dataset.columnGroup;
+            state.groups[group] = checkbox.checked;
+        });
+        document.querySelectorAll('.column-detail-toggle').forEach(checkbox => {
+            const col = checkbox.dataset.column;
+            state.columns[col] = checkbox.checked;
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    // Column group toggle checkbox handlers
+    document.querySelectorAll('.column-toggle').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            const group = this.dataset.columnGroup;
+            toggleColumnGroup(group, this.checked);
+            saveColumnVisibility();
+        });
+    });
+
+    // Column detail toggle checkbox handlers
+    document.querySelectorAll('.column-detail-toggle').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function() {
+            const col = this.dataset.column;
+            toggleColumn(col, this.checked);
+            saveColumnVisibility();
+        });
+    });
+
+    // Load saved state on page load
+    loadColumnVisibility();
+
+    // ============ FK dropdown handlers ============
+    document.querySelectorAll('.boq-edit-select').forEach(function(select) {
+        select.addEventListener('change', function() {
+            const itemId = this.dataset.itemId;
+            const field = this.dataset.field;
+            const raw = this.value;
+            const value = raw ? (isNaN(raw) ? raw : parseInt(raw)) : null;
+            const row = this.closest('tr');
+
+            this.style.opacity = '0.5';
+
+            fetch(`/estimator/project/{{ project_pk }}/api/boq-item/${itemId}/update/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ field: field, value: value }),
+            })
+            .then(r => r.json())
+            .then(data => {
+                this.style.opacity = '1';
+                if (data.ok) {
+                    flashElement(this, true);
+                    updateRowCells(row, data);
+                } else {
+                    flashElement(this, false);
+                    console.error('Save error:', data.error);
+                }
+            })
+            .catch(err => {
+                this.style.opacity = '1';
+                flashElement(this, false);
+                console.error('Network error:', err);
+            });
+        });
+    });
+
+    // ============ Qty input handlers (progress_quantity, forecast_quantity) ============
+    document.querySelectorAll('.qty-input').forEach(function(input) {
+        input.addEventListener('change', function() {
+            const itemId = this.dataset.itemId;
+            const field = this.dataset.field;
+            const value = this.value;
+            const row = this.closest('tr');
+
+            this.style.opacity = '0.5';
+
+            fetch(`/estimator/project/{{ project_pk }}/api/boq-item/${itemId}/update/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ field: field, value: value }),
+            })
+            .then(r => r.json())
+            .then(data => {
+                this.style.opacity = '1';
+                if (data.ok) {
+                    flashElement(this, true);
+                    updateRowCells(row, data);
+                } else {
+                    flashElement(this, false);
+                    console.error('Save error:', data.error);
+                }
+            })
+            .catch(err => {
+                this.style.opacity = '1';
+                flashElement(this, false);
+                console.error('Network error:', err);
+            });
+        });
+    });
+
+    // ============ Per-row markup input handlers ============
+    document.querySelectorAll('.markup-input').forEach(function(input) {
+        input.addEventListener('change', function() {
+            const itemId = this.dataset.itemId;
+            const field = this.dataset.field;
+            const value = this.value;
+            const row = this.closest('tr');
+
+            this.style.opacity = '0.5';
+
+            fetch(`/estimator/project/{{ project_pk }}/api/boq-item/${itemId}/update/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ field: field, value: value }),
+            })
+            .then(r => r.json())
+            .then(data => {
+                this.style.opacity = '1';
+                if (data.ok) {
+                    flashElement(this, true);
+                    updateRowCells(row, data);
+                } else {
+                    flashElement(this, false);
+                    console.error('Save error:', data.error);
+                }
+            })
+            .catch(err => {
+                this.style.opacity = '1';
+                flashElement(this, false);
+                console.error('Network error:', err);
+            });
+        });
+    });
+
+})();
+</script>
+{% endblock %}

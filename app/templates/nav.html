@@ -31,6 +31,14 @@
                                 {% heroicon_outline "building-office-2" class="w-4 h-4 mr-1" %}
                                 Project List
                             </a>
+                            {% if user.is_staff %}
+                            <!-- 4b. System Library (staff only) -->
+                            <a href="{% url 'estimator:sys_trade_codes' %}"
+                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
+                                {% heroicon_outline "server-stack" class="w-4 h-4 mr-1" %}
+                                System Library
+                            </a>
+                            {% endif %}
                             {% if request.user|userhassubscription:"BUSINESS_MANAGEMENT" %}
                                 <!-- 3. Companies (only if user has companies) -->
                                 <a href="{% url 'project:company-dashboard' %}"

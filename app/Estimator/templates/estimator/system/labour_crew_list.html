@@ -1,0 +1,215 @@
+{% extends "estimator/system/base_system.html" %}
+{% load estimator_tags %}
+
+{% block title %}Labour Crews - System Library{% endblock %}
+
+{% block sub_content %}
+<div class="sm:flex sm:items-center sm:justify-between mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Labour Costs</h1>
+        <p class="mt-1 text-sm text-gray-500">Crew compositions with worker types and daily rates.</p>
+    </div>
+    <div class="mt-4 sm:mt-0 flex gap-2">
+        <a href="{% url 'estimator:sys_download_labour_crew_template' %}"
+           class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1.5 -ml-0.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Template
+        </a>
+        <a href="{% url 'estimator:sys_labour_crew_upload' %}"
+           class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-1.5 -ml-0.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+            </svg>
+            Upload
+        </a>
+        <button type="button" onclick="document.getElementById('crew-form').classList.toggle('hidden')"
+                class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-1.5 -ml-0.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Add Crew
+        </button>
+    </div>
+</div>
+
+<!-- Add Crew Form -->
+<div id="crew-form" class="{% if not form.errors %}hidden{% endif %} mb-6">
+    <div class="overflow-hidden bg-white shadow ring-1 ring-black/5 sm:rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-base font-semibold text-gray-900 mb-4">New Labour Crew</h3>
+            <form method="post">
+                {% csrf_token %}
+                {% if form.errors %}
+                <div class="rounded-md bg-red-50 p-4 mb-4">
+                    <div class="text-sm text-red-700">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}<p>{{ field }}: {{ error }}</p>{% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
+                    <div class="sm:col-span-2">
+                        <label for="id_crew_type" class="block text-sm font-medium text-gray-700">Crew Type</label>
+                        <div class="mt-1">{{ form.crew_type }}</div>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <label for="id_crew_size" class="block text-sm font-medium text-gray-700">Crew Size</label>
+                        <div class="mt-1">{{ form.crew_size }}</div>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <label for="id_skilled" class="block text-sm font-medium text-gray-700">Skilled</label>
+                        <div class="mt-1">{{ form.skilled }}</div>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <label for="id_semi_skilled" class="block text-sm font-medium text-gray-700">Semi-Skilled</label>
+                        <div class="mt-1">{{ form.semi_skilled }}</div>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <label for="id_general" class="block text-sm font-medium text-gray-700">General</label>
+                        <div class="mt-1">{{ form.general }}</div>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <label for="id_skilled_rate" class="block text-sm font-medium text-gray-700">Skilled Rate (R)</label>
+                        <div class="mt-1">{{ form.skilled_rate }}</div>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <label for="id_semi_skilled_rate" class="block text-sm font-medium text-gray-700">Semi-Skilled Rate (R)</label>
+                        <div class="mt-1">{{ form.semi_skilled_rate }}</div>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <label for="id_general_rate" class="block text-sm font-medium text-gray-700">General Rate (R)</label>
+                        <div class="mt-1">{{ form.general_rate }}</div>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-end gap-x-3">
+                    <button type="button" onclick="document.getElementById('crew-form').classList.add('hidden')"
+                            class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Cancel</button>
+                    <button type="submit"
+                            class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">Save Crew</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="overflow-hidden bg-white shadow ring-1 ring-black/5 sm:rounded-lg">
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-300">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">Crew Type</th>
+                    <th scope="col" class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Crew Size</th>
+                    <th scope="col" class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Skilled</th>
+                    <th scope="col" class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Semi-Skilled</th>
+                    <th scope="col" class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">General</th>
+                    <th scope="col" class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Skilled Rate</th>
+                    <th scope="col" class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">Semi-Skilled Rate</th>
+                    <th scope="col" class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">General Rate</th>
+                    <th scope="col" class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 bg-amber-50 sm:pr-6">Daily Cost</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white">
+                {% for crew in crews %}
+                <tr class="hover:bg-gray-50" data-crew-id="{{ crew.id }}">
+                    <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                        <input type="text"
+                               class="inline-edit-crew w-32 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                               data-item-id="{{ crew.id }}" data-field="crew_type"
+                               value="{{ crew.crew_type }}">
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                        <input type="number" step="1"
+                               class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                               data-item-id="{{ crew.id }}" data-field="crew_size"
+                               value="{{ crew.crew_size }}">
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                        <input type="number" step="1"
+                               class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                               data-item-id="{{ crew.id }}" data-field="skilled"
+                               value="{{ crew.skilled }}">
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                        <input type="number" step="1"
+                               class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                               data-item-id="{{ crew.id }}" data-field="semi_skilled"
+                               value="{{ crew.semi_skilled }}">
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                        <input type="number" step="1"
+                               class="inline-edit-crew w-14 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                               data-item-id="{{ crew.id }}" data-field="general"
+                               value="{{ crew.general }}">
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                        <input type="number" step="0.01"
+                               class="inline-edit-crew w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                               data-item-id="{{ crew.id }}" data-field="skilled_rate"
+                               value="{{ crew.skilled_rate }}">
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                        <input type="number" step="0.01"
+                               class="inline-edit-crew w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                               data-item-id="{{ crew.id }}" data-field="semi_skilled_rate"
+                               value="{{ crew.semi_skilled_rate }}">
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                        <input type="number" step="0.01"
+                               class="inline-edit-crew w-20 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                               data-item-id="{{ crew.id }}" data-field="general_rate"
+                               value="{{ crew.general_rate }}">
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-amber-700 text-right bg-amber-50/50 sm:pr-6 crew-daily-cost">{{ crew.crew_daily_cost|currency }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="px-6 py-12 text-center text-sm text-gray-500">No labour crews found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.inline-edit-crew').forEach(input => {
+    let original = input.value;
+    input.addEventListener('focus', () => { original = input.value; });
+    input.addEventListener('change', () => {
+        if (input.value === original) return;
+        const id = input.dataset.itemId;
+        const field = input.dataset.field;
+        fetch(`/estimator/system/api/labour-crew/${id}/update/`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({field, value: input.value})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                input.classList.add('ring-2', 'ring-green-500');
+                setTimeout(() => input.classList.remove('ring-2', 'ring-green-500'), 800);
+                original = input.value;
+                const row = document.querySelector(`tr[data-crew-id="${id}"]`);
+                if (row) {
+                    const costCell = row.querySelector('.crew-daily-cost');
+                    if (costCell) costCell.textContent = 'R ' + parseFloat(data.crew_daily_cost).toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                }
+            } else {
+                input.classList.add('ring-2', 'ring-red-500');
+                setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);
+                input.value = original;
+            }
+        })
+        .catch(() => {
+            input.classList.add('ring-2', 'ring-red-500');
+            setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);
+            input.value = original;
+        });
+    });
+});
+</script>
+{% endblock %}

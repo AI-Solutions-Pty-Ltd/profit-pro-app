@@ -61,6 +61,7 @@ SHARED_APPS = [
     "app.Notices",
     "app.Project",
     "app.SiteManagement",
+    "app.Estimator",
 ]
 
 CLEANUP_APPS = [
