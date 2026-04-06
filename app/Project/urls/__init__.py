@@ -30,6 +30,8 @@ _path_prefix = "project/"
 urlpatterns = [
     path("portfolio/", include(portfolio_urls)),
     path("", include(project_urls)),
+    path("", include("app.Project.urls.signatory_urls")),
+    path("", include("app.Project.urls.entity_urls")),
     path("", include(project_category_urls)),
     path("project-categories/", include(category_urls)),
     path("project-subcategories/", include(subcategory_urls)),
