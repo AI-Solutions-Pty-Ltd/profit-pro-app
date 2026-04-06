@@ -1,6 +1,7 @@
 """Project Entity Definitions for centralized resource management."""
 
 from django.db import models
+
 from app.core.Utilities.models import BaseModel
 
 
@@ -32,7 +33,7 @@ class BaseProjectEntity(BaseModel):
             prefix = self._get_prefix()
             project_id = str(self.project.id).zfill(3)
             # Count existing objects of this type for this project to generate sequence
-            # We use all_objects to include soft-deleted ones for unique sequence if needed, 
+            # We use all_objects to include soft-deleted ones for unique sequence if needed,
             # but usually pk is enough. Here we use count for human-readable sequence.
             count = self.__class__.objects.filter(project=self.project).count() + 1
             self.reference_no = f"{prefix}-PRJ{project_id}-{str(count).zfill(3)}"
@@ -68,7 +69,9 @@ class LabourEntity(BaseProjectEntity):
         blank=True,
         related_name="labour_entities",
     )
-    date_joined = models.DateField(null=True, blank=True, help_text="Date joined project")
+    date_joined = models.DateField(
+        null=True, blank=True, help_text="Date joined project"
+    )
 
     def save(self, *args, **kwargs):
         if not self.name:

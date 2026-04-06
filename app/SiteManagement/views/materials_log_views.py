@@ -9,7 +9,7 @@ from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Project.models import Project, Role
+from app.Project.models import MaterialEntity, Project, Role
 from app.SiteManagement.models import MaterialsLog
 
 
@@ -28,6 +28,18 @@ class MaterialsLogMixin(
 
     def get_queryset(self):
         return MaterialsLog.objects.filter(project=self.get_project())
+
+    def get_form(self, form_class=None):
+        """Filter material_entity to only show entities for the current project."""
+        form = super().get_form(form_class)
+        project = self.get_project()
+        if "material_entity" in form.fields:
+            form.fields["material_entity"].queryset = MaterialEntity.objects.filter(
+                project=project
+            )
+        if "date_received" in form.fields:
+            form.fields["date_received"].widget = DateInput(attrs={"type": "date"})
+        return form
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
@@ -72,6 +84,7 @@ class MaterialsLogCreateView(MaterialsLogMixin, CreateView):
 
     template_name = "site_management/materials_log/form.html"
     fields = [
+        "material_entity",
         "date_received",
         "supplier",
         "invoice_number",
@@ -81,12 +94,6 @@ class MaterialsLogCreateView(MaterialsLogMixin, CreateView):
         "intended_usage",
         "comments",
     ]
-    widgets = {"date_received": DateInput(attrs={"type": "date"})}
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        form.fields["date_received"].widget = self.widgets["date_received"]
-        return form
 
     def form_valid(self, form):
         form.instance.project = self.get_project()
@@ -110,6 +117,7 @@ class MaterialsLogUpdateView(MaterialsLogMixin, UpdateView):
 
     template_name = "site_management/materials_log/form.html"
     fields = [
+        "material_entity",
         "date_received",
         "supplier",
         "invoice_number",
@@ -119,12 +127,6 @@ class MaterialsLogUpdateView(MaterialsLogMixin, UpdateView):
         "intended_usage",
         "comments",
     ]
-    widgets = {"date_received": DateInput(attrs={"type": "date"})}
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        form.fields["date_received"].widget = self.widgets["date_received"]
-        return form
 
     def form_valid(self, form):
         messages.success(self.request, "Materials log updated successfully!")
