@@ -23,15 +23,20 @@ class SubcontractorLog(BaseModel):
         related_name="subcontractor_logs",
         help_text="Link to master subcontractor definition",
     )
-    name = models.CharField(max_length=255, blank=True, help_text="Subcontractor name")
-    trade = models.CharField(max_length=100, blank=True, help_text="Trade/specialty")
-    scope = models.TextField(blank=True, help_text="Scope of work")
-    start_date = models.DateField(help_text="Start date")
+    date = models.DateField(help_text="Date of work entry")
+    name = models.CharField(
+        max_length=255, blank=True, editable=False, help_text="Subcontractor name"
+    )
+    trade = models.CharField(
+        max_length=100, blank=True, editable=False, help_text="Trade/specialty"
+    )
+    scope = models.TextField(blank=True, editable=False, help_text="Scope of work")
+    start_date = models.DateField(editable=False, help_text="Start date")
     planned_finish_date = models.DateField(
-        blank=True, null=True, help_text="Planned finish date"
+        blank=True, null=True, editable=False, help_text="Planned finish date"
     )
     actual_finish_date = models.DateField(
-        blank=True, null=True, help_text="Actual finish date"
+        blank=True, null=True, editable=False, help_text="Actual finish date"
     )
     task = models.CharField(max_length=255, help_text="Current task")
     hours_worked = models.DecimalField(

@@ -86,10 +86,6 @@ class LabourLogCreateView(LabourLogMixin, CreateView):
     fields = [
         "labour_entity",
         "date",
-        "person_name",
-        "id_number",
-        "trade",
-        "skill_type",
         "hours_worked",
         "task_activity",
         "remarks",
@@ -119,10 +115,6 @@ class LabourLogUpdateView(LabourLogMixin, UpdateView):
     fields = [
         "labour_entity",
         "date",
-        "person_name",
-        "id_number",
-        "trade",
-        "skill_type",
         "hours_worked",
         "task_activity",
         "remarks",

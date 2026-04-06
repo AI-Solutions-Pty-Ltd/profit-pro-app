@@ -39,7 +39,7 @@ class SubcontractorLogMixin(
             )
 
         # Apply date widgets
-        date_fields = ["start_date", "planned_finish_date", "actual_finish_date"]
+        date_fields = ["date", "start_date", "planned_finish_date", "actual_finish_date"]
         for field_name in date_fields:
             if field_name in form.fields:
                 form.fields[field_name].widget = DateInput(attrs={"type": "date"})
@@ -89,12 +89,7 @@ class SubcontractorLogCreateView(SubcontractorLogMixin, CreateView):
     template_name = "site_management/subcontractor_log/form.html"
     fields = [
         "subcontractor_entity",
-        "name",
-        "trade",
-        "scope",
-        "start_date",
-        "planned_finish_date",
-        "actual_finish_date",
+        "date",
         "task",
         "hours_worked",
         "output",
@@ -120,17 +115,12 @@ class SubcontractorLogCreateView(SubcontractorLogMixin, CreateView):
 
 
 class SubcontractorLogUpdateView(SubcontractorLogMixin, UpdateView):
-    """Update a subcontractor log."""
+    """Update a labour log."""
 
     template_name = "site_management/subcontractor_log/form.html"
     fields = [
         "subcontractor_entity",
-        "name",
-        "trade",
-        "scope",
-        "start_date",
-        "planned_finish_date",
-        "actual_finish_date",
+        "date",
         "task",
         "hours_worked",
         "output",
