@@ -46,7 +46,8 @@ class ProjectEntityMixin(LoginRequiredMixin):
         return context
 
     def form_valid(self, form):
-        form.instance.project = self.project
+        if hasattr(form, "instance"):
+            form.instance.project = self.project
         return super().form_valid(form)
 
     def get_success_url(self):
