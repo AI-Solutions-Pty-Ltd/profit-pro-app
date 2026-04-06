@@ -12,6 +12,14 @@ from app.Project.projects.projects_models import (
     Project,
     SubCategory,
 )
+from .entity_definitions import (
+    BaseProjectEntity,
+    LabourEntity,
+    MaterialEntity,
+    PlantEntity,
+    SubcontractorEntity,
+    OverheadEntity,
+)
 
 from ..milestone_schedules.milestone_models import Milestone
 from ..production_progress.models.production_models import (
@@ -69,4 +77,10 @@ __all__ = [
     "DailyProduction",
     "ProductionPlan",
     "ProductionResource",
+    "BaseProjectEntity",
+    "LabourEntity",
+    "MaterialEntity",
+    "PlantEntity",
+    "SubcontractorEntity",
+    "OverheadEntity",
 ]
