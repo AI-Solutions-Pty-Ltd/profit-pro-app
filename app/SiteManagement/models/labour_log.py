@@ -25,15 +25,20 @@ class LabourLog(BaseModel):
     )
     date = models.DateField(help_text="Date of work")
     person_name = models.CharField(
-        max_length=255, blank=True, help_text="Person's name"
+        max_length=255, blank=True, editable=False, help_text="Person's name"
     )
-    id_number = models.CharField(max_length=100, blank=True, help_text="ID number")
-    trade = models.CharField(max_length=100, blank=True, help_text="Trade/specialty")
+    id_number = models.CharField(
+        max_length=100, blank=True, editable=False, help_text="ID number"
+    )
+    trade = models.CharField(
+        max_length=100, blank=True, editable=False, help_text="Trade/specialty"
+    )
     skill_type = models.ForeignKey(
         "SkillType",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        editable=False,
         related_name="labour_logs",
         help_text="Skill type of the worker",
     )

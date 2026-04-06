@@ -85,10 +85,7 @@ class PlantEquipmentCreateView(PlantEquipmentMixin, CreateView):
     template_name = "site_management/plant_equipment/form.html"
     fields = [
         "plant_entity",
-        "plant_type",
         "date",
-        "equipment_name",
-        "supplier",
         "usage_hours",
         "breakdown_status",
         "maintenance_done",
@@ -118,10 +115,7 @@ class PlantEquipmentUpdateView(PlantEquipmentMixin, UpdateView):
     template_name = "site_management/plant_equipment/form.html"
     fields = [
         "plant_entity",
-        "plant_type",
         "date",
-        "equipment_name",
-        "supplier",
         "usage_hours",
         "breakdown_status",
         "maintenance_done",

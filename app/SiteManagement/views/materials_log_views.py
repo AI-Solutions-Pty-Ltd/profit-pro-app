@@ -86,11 +86,8 @@ class MaterialsLogCreateView(MaterialsLogMixin, CreateView):
     fields = [
         "material_entity",
         "date_received",
-        "supplier",
         "invoice_number",
-        "items_received",
         "quantity",
-        "unit",
         "intended_usage",
         "comments",
     ]
@@ -119,11 +116,8 @@ class MaterialsLogUpdateView(MaterialsLogMixin, UpdateView):
     fields = [
         "material_entity",
         "date_received",
-        "supplier",
         "invoice_number",
-        "items_received",
         "quantity",
-        "unit",
         "intended_usage",
         "comments",
     ]
