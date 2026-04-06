@@ -1,8 +1,10 @@
 """Views for Project Entity Management."""
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.views import View
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from app.Project.forms.entity_forms import (
@@ -236,3 +238,76 @@ class OverheadEntityDeleteView(ProjectEntityMixin, DeleteView):
     template_name = "entity_management/confirm_delete.html"
     entity_name = "Overhead"
     entity_type = "overhead"
+
+
+# ==========================================
+# API Views
+# ==========================================
+
+
+class EntityDetailView(LoginRequiredMixin, View):
+    """API view to return entity details as JSON for auto-filling site logs."""
+
+    def get(self, request, *args, **kwargs):
+        entity_type = kwargs.get("entity_type", "")
+        pk = kwargs.get("pk")
+        project_pk = kwargs.get("project_pk")
+
+        if not pk or not project_pk:
+            return JsonResponse({"error": "Missing parameters"}, status=400)
+
+        models_map = {
+            "labour": LabourEntity,
+            "material": MaterialEntity,
+            "plant": PlantEntity,
+            "subcontractor": SubcontractorEntity,
+            "overhead": OverheadEntity,
+        }
+
+        model = models_map.get(str(entity_type))
+        if not model:
+            return JsonResponse({"error": "Invalid entity type"}, status=400)
+
+        entity = get_object_or_404(model, pk=pk, project__pk=project_pk)
+
+        data = {}
+        if entity_type == "labour":
+            data = {
+                "person_name": entity.person_name,
+                "id_number": entity.id_number,
+                "trade": entity.trade,
+                "skill_type_id": entity.skill_type.id if entity.skill_type else "",
+            }
+        elif entity_type == "material":
+            data = {
+                "supplier": entity.supplier,
+                "items_received": entity.items_received or entity.name,
+                "unit": entity.unit,
+            }
+        elif entity_type == "plant":
+            data = {
+                "equipment_name": entity.name,
+                "supplier": entity.supplier,
+                "plant_type_id": entity.plant_type.id if entity.plant_type else "",
+            }
+        elif entity_type == "subcontractor":
+            data = {
+                "name": entity.name,
+                "trade": entity.trade,
+                "scope": entity.scope,
+                "start_date": (
+                    entity.start_date.isoformat() if entity.start_date else ""
+                ),
+                "planned_finish_date": (
+                    entity.planned_finish_date.isoformat()
+                    if entity.planned_finish_date
+                    else ""
+                ),
+                "actual_finish_date": (
+                    entity.actual_finish_date.isoformat()
+                    if entity.actual_finish_date
+                    else ""
+                ),
+            }
+
+        return JsonResponse(data)

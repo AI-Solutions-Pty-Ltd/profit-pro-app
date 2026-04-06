@@ -9,7 +9,7 @@ from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Project.models import Project, Role
+from app.Project.models import PlantEntity, Project, Role
 from app.SiteManagement.models import PlantEquipment
 
 
@@ -28,6 +28,18 @@ class PlantEquipmentMixin(
 
     def get_queryset(self):
         return PlantEquipment.objects.filter(project=self.get_project())
+
+    def get_form(self, form_class=None):
+        """Filter plant_entity to only show entities for the current project."""
+        form = super().get_form(form_class)
+        project = self.get_project()
+        if "plant_entity" in form.fields:
+            form.fields["plant_entity"].queryset = PlantEntity.objects.filter(
+                project=project
+            )
+        if "date" in form.fields:
+            form.fields["date"].widget = DateInput(attrs={"type": "date"})
+        return form
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
@@ -72,6 +84,7 @@ class PlantEquipmentCreateView(PlantEquipmentMixin, CreateView):
 
     template_name = "site_management/plant_equipment/form.html"
     fields = [
+        "plant_entity",
         "plant_type",
         "date",
         "equipment_name",
@@ -81,12 +94,6 @@ class PlantEquipmentCreateView(PlantEquipmentMixin, CreateView):
         "maintenance_done",
         "remarks",
     ]
-    widgets = {"date": DateInput(attrs={"type": "date"})}
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        form.fields["date"].widget = self.widgets["date"]
-        return form
 
     def form_valid(self, form):
         form.instance.project = self.get_project()
@@ -110,6 +117,7 @@ class PlantEquipmentUpdateView(PlantEquipmentMixin, UpdateView):
 
     template_name = "site_management/plant_equipment/form.html"
     fields = [
+        "plant_entity",
         "plant_type",
         "date",
         "equipment_name",
@@ -119,12 +127,6 @@ class PlantEquipmentUpdateView(PlantEquipmentMixin, UpdateView):
         "maintenance_done",
         "remarks",
     ]
-    widgets = {"date": DateInput(attrs={"type": "date"})}
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        form.fields["date"].widget = self.widgets["date"]
-        return form
 
     def form_valid(self, form):
         messages.success(self.request, "Plant equipment entry updated successfully!")

@@ -9,7 +9,7 @@ from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Project.models import Project, Role
+from app.Project.models import Project, Role, SubcontractorEntity
 from app.SiteManagement.models import SubcontractorLog
 
 
@@ -28,6 +28,22 @@ class SubcontractorLogMixin(
 
     def get_queryset(self):
         return SubcontractorLog.objects.filter(project=self.get_project())
+
+    def get_form(self, form_class=None):
+        """Filter subcontractor_entity and apply date widgets."""
+        form = super().get_form(form_class)
+        project = self.get_project()
+        if "subcontractor_entity" in form.fields:
+            form.fields["subcontractor_entity"].queryset = (
+                SubcontractorEntity.objects.filter(project=project)
+            )
+
+        # Apply date widgets
+        date_fields = ["start_date", "planned_finish_date", "actual_finish_date"]
+        for field_name in date_fields:
+            if field_name in form.fields:
+                form.fields[field_name].widget = DateInput(attrs={"type": "date"})
+        return form
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
@@ -72,6 +88,7 @@ class SubcontractorLogCreateView(SubcontractorLogMixin, CreateView):
 
     template_name = "site_management/subcontractor_log/form.html"
     fields = [
+        "subcontractor_entity",
         "name",
         "trade",
         "scope",
@@ -84,17 +101,6 @@ class SubcontractorLogCreateView(SubcontractorLogMixin, CreateView):
         "output_unit",
         "remarks",
     ]
-    widgets = {
-        "start_date": DateInput(attrs={"type": "date"}),
-        "planned_finish_date": DateInput(attrs={"type": "date"}),
-        "actual_finish_date": DateInput(attrs={"type": "date"}),
-    }
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        for field_name, widget in self.widgets.items():
-            form.fields[field_name].widget = widget
-        return form
 
     def form_valid(self, form):
         form.instance.project = self.get_project()
@@ -118,6 +124,7 @@ class SubcontractorLogUpdateView(SubcontractorLogMixin, UpdateView):
 
     template_name = "site_management/subcontractor_log/form.html"
     fields = [
+        "subcontractor_entity",
         "name",
         "trade",
         "scope",
@@ -130,17 +137,6 @@ class SubcontractorLogUpdateView(SubcontractorLogMixin, UpdateView):
         "output_unit",
         "remarks",
     ]
-    widgets = {
-        "start_date": DateInput(attrs={"type": "date"}),
-        "planned_finish_date": DateInput(attrs={"type": "date"}),
-        "actual_finish_date": DateInput(attrs={"type": "date"}),
-    }
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        for field_name, widget in self.widgets.items():
-            form.fields[field_name].widget = widget
-        return form
 
     def form_valid(self, form):
         messages.success(self.request, "Subcontractor log updated successfully!")
