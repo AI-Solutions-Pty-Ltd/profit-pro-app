@@ -12,14 +12,6 @@ from app.Project.projects.projects_models import (
     Project,
     SubCategory,
 )
-from .entity_definitions import (
-    BaseProjectEntity,
-    LabourEntity,
-    MaterialEntity,
-    PlantEntity,
-    SubcontractorEntity,
-    OverheadEntity,
-)
 
 from ..milestone_schedules.milestone_models import Milestone
 from ..production_progress.models.production_models import (
@@ -37,6 +29,14 @@ from .compliance_models import (
     FinalAccountCompliance,
     FinalAccountComplianceDialog,
     FinalAccountComplianceDialogFile,
+)
+from .entity_definitions import (
+    BaseProjectEntity,
+    LabourEntity,
+    MaterialEntity,
+    OverheadEntity,
+    PlantEntity,
+    SubcontractorEntity,
 )
 from .impact_models import ProjectImpact
 from .planned_value_models import PlannedValue

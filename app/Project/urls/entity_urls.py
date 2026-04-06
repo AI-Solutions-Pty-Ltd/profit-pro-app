@@ -110,4 +110,10 @@ urlpatterns = [
         entity_views.OverheadEntityDeleteView.as_view(),
         name="entity-overhead-delete",
     ),
+    # API for form auto-fill
+    path(
+        "<int:project_pk>/entities/<str:entity_type>/<int:pk>/detail/",
+        entity_views.EntityDetailView.as_view(),
+        name="entity-detail-json",
+    ),
 ]
