@@ -108,6 +108,12 @@ class MaterialEntity(BaseProjectEntity):
 class PlantEntity(BaseProjectEntity):
     """Plant and Equipment entity definition."""
 
+    class BreakdownStatus(models.TextChoices):
+        OPERATIONAL = "OPERATIONAL", "Operational"
+        BREAKDOWN = "BREAKDOWN", "Breakdown"
+        UNDER_MAINTENANCE = "UNDER_MAINTENANCE", "Under Maintenance"
+        RETIRED = "RETIRED", "Retired"
+
     plant_type = models.ForeignKey(
         "SiteManagement.PlantType",
         on_delete=models.SET_NULL,
@@ -120,7 +126,10 @@ class PlantEntity(BaseProjectEntity):
     )
     supplier = models.CharField(max_length=255, blank=True)
     breakdown_status = models.CharField(
-        max_length=100, blank=True, help_text="Current status"
+        max_length=20,
+        choices=BreakdownStatus.choices,
+        default=BreakdownStatus.OPERATIONAL,
+        help_text="Current breakdown status",
     )
     date = models.DateField(null=True, blank=True, help_text="Record date")
 

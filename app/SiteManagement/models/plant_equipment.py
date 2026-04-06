@@ -28,6 +28,7 @@ class PlantEquipment(BaseModel):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        editable=False,
         related_name="equipment_items",
         help_text="Type of plant/equipment",
     )
@@ -41,9 +42,14 @@ class PlantEquipment(BaseModel):
     )
     date = models.DateField(help_text="Date of record")
     equipment_name = models.CharField(
-        max_length=255, blank=True, help_text="Specific equipment name/ID (optional)"
+        max_length=255,
+        blank=True,
+        editable=False,
+        help_text="Specific equipment name/ID (optional)",
     )
-    supplier = models.CharField(max_length=255, blank=True, help_text="Supplier/Owner")
+    supplier = models.CharField(
+        max_length=255, blank=True, editable=False, help_text="Supplier/Owner"
+    )
     usage_hours = models.DecimalField(
         max_digits=8,
         decimal_places=2,
