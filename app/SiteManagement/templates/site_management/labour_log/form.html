@@ -9,7 +9,7 @@
     Labour Log - {{ project.name }}
 {% endblock title %}
 {% block content %}
-    <div class="bg-white shadow-sm rounded-lg mb-6">
+    <div class="mb-6 bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4">
             <h1 class="text-2xl font-bold text-gray-900">
                 {% if object %}
@@ -19,18 +19,18 @@
                 {% endif %}
                 Labour Log
             </h1>
-            <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+            <p class="mt-1 text-sm text-gray-600">{{ project.name }}</p>
         </div>
     </div>
-    <div class="bg-white shadow-sm rounded-lg">
+    <div class="bg-white rounded-lg shadow-sm">
         <form method="post" class="px-6 py-6">
             {% csrf_token %}
             {{ form|crispy }}
-            <div class="flex justify-end space-x-3 mt-6 pt-6 border-t">
+            <div class="flex justify-end pt-6 mt-6 space-x-3 border-t">
                 <a href="{% url 'site_management:labour-log-list' project.pk %}"
-                   class="px-4 py-2 border rounded-md text-sm">Cancel</a>
+                   class="px-4 py-2 text-sm rounded-md border">Cancel</a>
                 <button type="submit"
-                        class="px-4 py-2 rounded-md text-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                        class="px-4 py-2 text-sm text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
                     {% if object %}
                         Update
                     {% else %}

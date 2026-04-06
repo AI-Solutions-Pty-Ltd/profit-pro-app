@@ -31,7 +31,7 @@ class MaterialsLogMixin(
 
     def get_form(self, form_class=None):
         """Filter material_entity to only show entities for the current project."""
-        form = super().get_form(form_class)  # type: ignore
+        form = super().get_form(form_class)
         project = self.get_project()
         if "material_entity" in form.fields:
             form.fields["material_entity"].queryset = MaterialEntity.objects.filter(
