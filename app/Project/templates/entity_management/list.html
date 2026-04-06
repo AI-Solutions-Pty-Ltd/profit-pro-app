@@ -15,6 +15,19 @@
                 <p class="mt-1 text-sm text-gray-600">{{ project.name }}</p>
             </div>
             <div class="flex items-center space-x-3">
+                {% if is_labour %}
+                <a href="{% url 'site_management:skill-type-list' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_outline "wrench" size="20" class="mr-2 text-indigo-500" %}
+                    Manage Skill Types
+                </a>
+                {% elif is_plant %}
+                <a href="{% url 'site_management:plant-type-list' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_outline "tag" size="20" class="mr-2 text-indigo-500" %}
+                    Manage Plant Types
+                </a>
+                {% endif %}
                 <a href="{% url 'project:entity-'|add:entity_type|add:'-create' project.pk %}"
                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     {% heroicon_outline "plus" size="20" class="mr-2" %}
@@ -35,7 +48,7 @@
             <thead class="bg-gray-50">
                 <tr>
                     <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Ref No</th>
-                    <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Name/Identifier</th>
+                    <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Name</th>
                     {% if is_labour %}
                     <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Skill/Trade</th>
                     {% elif is_material %}
