@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load heroicons %}
+
+{% block title %}
+    {% if object %}Edit{% else %}New{% endif %} {{ entity_name }} - {{ project.name }}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-8">
+    <div class="bg-white shadow sm:rounded-lg overflow-hidden border border-gray-200">
+        <!-- Form Header -->
+        <div class="px-6 py-5 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+            <div>
+                <h3 class="text-xl font-bold text-gray-900">
+                    {% if object %}Update{% else %}New{% endif %} {{ entity_name }} Definition
+                </h3>
+                <p class="mt-1 text-sm text-gray-600">{{ project.name }}</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                {% if object %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                        {{ object.reference_no }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Form Body -->
+        <div class="px-6 py-8">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                    <div class="sm:col-span-6">
+                        {{ form|crispy }}
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex justify-end items-center pt-6 border-t border-gray-200 space-x-4">
+                    <a href="{% url 'project:entity-'|add:entity_type|add:'-list' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                            class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                        {% heroicon_outline "check" size="18" class="mr-2" %}
+                        {% if object %}Update{% else %}Create{% endif %} {{ entity_name }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Help Box -->
+    <div class="mt-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md shadow-sm">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                {% heroicon_outline "information-circle" size="20" class="text-blue-400" %}
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-blue-700">
+                    <span class="font-bold">Pro Tip:</span> This definition will serve as the source of truth for rate and unit when recording transactional logs for {{ project.name }}.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
