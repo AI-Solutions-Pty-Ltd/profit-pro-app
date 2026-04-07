@@ -1,6 +1,7 @@
 """Forms for Project Entity Management."""
 
 from django import forms
+from django.forms import modelformset_factory
 
 from app.Project.models.entity_definitions import (
     LabourEntity,
@@ -69,13 +70,96 @@ class MaterialEntityForm(BaseEntityForm):
         ]
         widgets = {
             "date_received": forms.DateInput(attrs={"type": "date"}),
-            "items_received": forms.Textarea(attrs={"rows": 3}),
-            "description": forms.Textarea(attrs={"rows": 3}),
+            "items_received": forms.Textarea(attrs={"rows": 2}),
+            "description": forms.Textarea(attrs={"rows": 2}),
         }
         labels = {
             "items_received": "Items / Specifications",
             "date_received": "Receipt Date",
         }
+
+
+class MaterialHeaderForm(forms.ModelForm):
+    """Form for shared material information."""
+
+    class Meta:
+        model = MaterialEntity
+        fields = ["supplier", "invoice_number", "date_received"]
+        widgets = {
+            "supplier": forms.TextInput(attrs=COMMON_WIDGET_ATTRS),
+            "invoice_number": forms.TextInput(attrs=COMMON_WIDGET_ATTRS),
+            "date_received": forms.DateInput(attrs={**COMMON_WIDGET_ATTRS, "type": "date"}),
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Ensure header fields are required for bulk creation
+        self.fields["supplier"].required = True
+        self.fields["invoice_number"].required = True
+        self.fields["date_received"].required = True
+
+        # Apply common styling to all fields
+        for field in self.fields.values():
+            existing_class = field.widget.attrs.get("class", "")
+            field.widget.attrs["class"] = (
+                f"{existing_class} {COMMON_WIDGET_ATTRS['class']}".strip()
+            )
+
+
+class MaterialItemForm(forms.ModelForm):
+    """Form for individual material items in bulk create."""
+
+    class Meta:
+        model = MaterialEntity
+        fields = ["name", "unit", "quantity", "rate", "description"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "placeholder": "Item Name",
+                    "class": "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "unit": forms.TextInput(
+                attrs={
+                    "placeholder": "Unit",
+                    "class": "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "quantity": forms.NumberInput(
+                attrs={
+                    "placeholder": "Qty",
+                    "step": "0.01",
+                    "class": "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "rate": forms.NumberInput(
+                attrs={
+                    "placeholder": "Rate",
+                    "step": "0.01",
+                    "class": "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+            "description": forms.TextInput(
+                attrs={
+                    "placeholder": "Optional description",
+                    "class": "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Clear labels and help texts for clean layout in table
+        for field in self.fields.values():
+            field.label = ""
+            field.help_text = ""
+
+
+MaterialItemFormSet = modelformset_factory(
+    MaterialEntity,
+    form=MaterialItemForm,
+    extra=1,
+    can_delete=True,
+)
 
 
 class PlantEntityForm(BaseEntityForm):

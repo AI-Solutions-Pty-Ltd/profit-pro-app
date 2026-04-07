@@ -10,6 +10,8 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from app.Project.forms.entity_forms import (
     LabourEntityForm,
     MaterialEntityForm,
+    MaterialHeaderForm,
+    MaterialItemFormSet,
     OverheadEntityForm,
     PlantEntityForm,
     SubcontractorEntityForm,
@@ -111,10 +113,65 @@ class MaterialEntityListView(ProjectEntityMixin, ListView):
 
 class MaterialEntityCreateView(ProjectEntityMixin, CreateView):
     model = MaterialEntity
-    form_class = MaterialEntityForm
-    template_name = "entity_management/form.html"
+    form_class = MaterialHeaderForm  # Use header form as primary for validation
+    template_name = "entity_management/material_bulk_form.html"
     entity_name = "Material"
     entity_type = "material"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if "header_form" in kwargs:
+            context["header_form"] = kwargs["header_form"]
+        elif self.request.POST:
+            context["header_form"] = MaterialHeaderForm(self.request.POST)
+        else:
+            context["header_form"] = MaterialHeaderForm()
+
+        if "formset" in kwargs:
+            context["formset"] = kwargs["formset"]
+        elif self.request.POST:
+            context["formset"] = MaterialItemFormSet(
+                self.request.POST, queryset=MaterialEntity.objects.none()
+            )
+        else:
+            context["formset"] = MaterialItemFormSet(
+                queryset=MaterialEntity.objects.none()
+            )
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        header_form = MaterialHeaderForm(request.POST)
+        formset = MaterialItemFormSet(request.POST)
+
+        if header_form.is_valid() and formset.is_valid():
+            return self.formset_valid(header_form, formset)
+        else:
+            return self.render_to_response(
+                self.get_context_data(header_form=header_form, formset=formset)
+            )
+
+    def formset_valid(self, header_form, formset):
+        supplier = header_form.cleaned_data["supplier"]
+        invoice_number = header_form.cleaned_data["invoice_number"]
+        date_received = header_form.cleaned_data["date_received"]
+
+        instances = formset.save(commit=False)
+        for instance in instances:
+            instance.project = self.project
+            instance.supplier = supplier
+            instance.invoice_number = invoice_number
+            instance.date_received = date_received
+            instance.save()
+
+        # Handle deletions if any (though usually not in a pure CreateView)
+        for obj in formset.deleted_objects:
+            obj.delete()
+
+        # We return HttpResponseRedirect instead of calling super().form_valid(header_form)
+        # to avoid CreateView potentially saving the header form as a separate MaterialEntity
+        from django.http import HttpResponseRedirect
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class MaterialEntityUpdateView(ProjectEntityMixin, UpdateView):
