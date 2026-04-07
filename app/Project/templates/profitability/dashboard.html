@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}
+    {{ project.name }} - Profitability Management - {{ block.super }}
+{% endblock title %}
+
+{% block content %}
+    <!-- Page Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center mr-4 shadow-lg shadow-emerald-200">
+                        {% heroicon_outline "chart-pie" size="28" class="text-white" %}
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Profitability Management</h1>
+                        <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:project-management' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        {% heroicon_outline "chevron-left" size="18" class="mr-2" %}
+                        Back to Management
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <!-- Total Overall -->
+        <div class="bg-emerald-600 rounded-2xl p-5 text-white shadow-lg shadow-emerald-100">
+            <p class="text-emerald-100 text-xs font-bold uppercase tracking-wider mb-1">Total Expenditure</p>
+            <h2 class="text-2xl font-black">R{{ total_project_expenditure|floatformat:2|intcomma }}</h2>
+            <div class="mt-4 flex items-center text-xs text-emerald-100/80">
+                {% heroicon_outline "chart-bar" size="14" class="mr-1" %}
+                Overall Project Costs
+            </div>
+        </div>
+
+        <!-- Journal Total -->
+        <div class="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm">
+            <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Journal Entries</p>
+            <h2 class="text-2xl font-black text-emerald-900">R{{ total_journal_amount|floatformat:2|intcomma }}</h2>
+            <div class="mt-4 flex items-center text-xs text-emerald-600">
+                {% heroicon_outline "book-open" size="14" class="mr-1 text-emerald-400" %}
+                General Ledger
+            </div>
+        </div>
+
+        <!-- Subcontractor Total -->
+        <div class="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm">
+            <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Subcontractors</p>
+            <h2 class="text-2xl font-black text-emerald-900">R{{ total_subcontractor_cost|floatformat:2|intcomma }}</h2>
+            <div class="mt-4 flex items-center text-xs text-emerald-600">
+                {% heroicon_outline "briefcase" size="14" class="mr-1 text-emerald-400" %}
+                Contracted Costs
+            </div>
+        </div>
+
+        <!-- Labour Total -->
+        <div class="bg-white rounded-2xl p-5 border border-amber-100 shadow-sm">
+            <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Total Labour</p>
+            <h2 class="text-2xl font-black text-amber-900">R{{ total_labour_cost|floatformat:2|intcomma }}</h2>
+            <div class="mt-4 flex items-center text-xs text-amber-600">
+                {% heroicon_outline "users" size="14" class="mr-1 text-amber-400" %}
+                Salary & Wages
+            </div>
+        </div>
+
+        <!-- Overheads Total -->
+        <div class="bg-white rounded-2xl p-5 border border-orange-100 shadow-sm">
+            <p class="text-gray-500 text-xs font-bold uppercase tracking-wider mb-1">Total Overheads</p>
+            <h2 class="text-2xl font-black text-orange-900">R{{ total_overhead_cost|floatformat:2|intcomma }}</h2>
+            <div class="mt-4 flex items-center text-xs text-orange-600">
+                {% heroicon_outline "home" size="14" class="mr-1 text-orange-400" %}
+                Indirect Costs
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Navigation Grid -->
+    <div class="max-w-xl mx-auto space-y-4">
+        <!-- Journal Entries -->
+        <a href="{% url 'project:profitability-journal-list' project.pk %}"
+           class="group flex items-center p-5 bg-white border border-emerald-100 rounded-2xl shadow-sm hover:shadow-md hover:border-emerald-300 transition-all duration-300">
+            <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mr-5 group-hover:bg-emerald-100 transition-colors">
+                {% heroicon_outline "book-open" size="24" class="text-emerald-600" %}
+            </div>
+            <div class="flex-grow">
+                <h3 class="text-lg font-bold text-emerald-900">Journal Entries</h3>
+                <p class="text-sm text-emerald-600">General ledger and transaction logs</p>
+            </div>
+            {% heroicon_outline "chevron-right" size="20" class="text-emerald-400 group-hover:translate-x-1 transition-transform" %}
+        </a>
+
+        <!-- Materials Cost Tracker (Coming Soon) -->
+        <div class="group relative flex items-center p-5 bg-slate-50 border border-slate-200 rounded-2xl opacity-75 cursor-not-allowed">
+            <div class="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mr-5">
+                {% heroicon_outline "cube" size="24" class="text-slate-400" %}
+            </div>
+            <div class="flex-grow">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-lg font-bold text-slate-500">Materials Cost Tracker</h3>
+                    <span class="px-2 py-0.5 text-xs font-semibold bg-slate-200 text-slate-600 rounded-full">Coming Soon</span>
+                </div>
+                <p class="text-sm text-slate-400">Track material usage and costs</p>
+            </div>
+        </div>
+
+        <!-- Subcontractor Cost Tracker -->
+        <a href="{% url 'project:profitability-subcontractor-list' project.pk %}"
+           class="group flex items-center p-5 bg-white border border-emerald-100 rounded-2xl shadow-sm hover:shadow-md hover:border-emerald-300 transition-all duration-300">
+            <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mr-5 group-hover:bg-emerald-100 transition-colors">
+                {% heroicon_outline "briefcase" size="24" class="text-emerald-600" %}
+            </div>
+            <div class="flex-grow">
+                <h3 class="text-lg font-bold text-emerald-900">Subcontractor Cost Tracker</h3>
+                <p class="text-sm text-emerald-600">Manage subcontractor agreements and payments</p>
+            </div>
+            {% heroicon_outline "chevron-right" size="20" class="text-emerald-400 group-hover:translate-x-1 transition-transform" %}
+        </a>
+
+        <!-- Labour Cost Tracker -->
+        <a href="{% url 'project:profitability-labour-list' project.pk %}"
+           class="group flex items-center p-5 bg-white border border-amber-100 rounded-2xl shadow-sm hover:shadow-md hover:border-amber-300 transition-all duration-300">
+            <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center mr-5 group-hover:bg-amber-100 transition-colors">
+                {% heroicon_outline "users" size="24" class="text-amber-600" %}
+            </div>
+            <div class="flex-grow">
+                <h3 class="text-lg font-bold text-amber-900">Labour Cost Tracker</h3>
+                <p class="text-sm text-amber-600">Track worker productivity and salary costs</p>
+            </div>
+            {% heroicon_outline "chevron-right" size="20" class="text-amber-400 group-hover:translate-x-1 transition-transform" %}
+        </a>
+
+        <!-- Overheads Cost Tracker -->
+        <a href="{% url 'project:profitability-overhead-list' project.pk %}"
+           class="group flex items-center p-5 bg-white border border-orange-100 rounded-2xl shadow-sm hover:shadow-md hover:border-orange-300 transition-all duration-300">
+            <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center mr-5 group-hover:bg-orange-100 transition-colors">
+                {% heroicon_outline "home" size="24" class="text-orange-600" %}
+            </div>
+            <div class="flex-grow">
+                <h3 class="text-lg font-bold text-orange-900">Overheads Cost Tracker</h3>
+                <p class="text-sm text-orange-600">Monitor indirect costs and site expenses</p>
+            </div>
+            {% heroicon_outline "chevron-right" size="20" class="text-orange-400 group-hover:translate-x-1 transition-transform" %}
+        </a>
+
+        <!-- Baseline Assumptions (Coming Soon) -->
+        <div class="group relative flex items-center p-5 bg-orange-50 border border-orange-100 rounded-2xl opacity-75 cursor-not-allowed">
+            <div class="w-12 h-12 bg-orange-100/50 rounded-xl flex items-center justify-center mr-5">
+                {% heroicon_outline "home" size="24" class="text-orange-400" %}
+            </div>
+            <div class="flex-grow">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-lg font-bold text-orange-500">Baseline Assumptions</h3>
+                    <span class="px-2 py-0.5 text-xs font-semibold bg-orange-100 text-orange-600 rounded-full">Coming Soon</span>
+                </div>
+                <p class="text-sm text-orange-400">Initial profitability targets and metrics</p>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
