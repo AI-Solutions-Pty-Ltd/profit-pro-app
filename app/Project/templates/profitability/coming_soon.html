@@ -1,26 +1,30 @@
 {% extends "profitability/base_profitability.html" %}
 {% load heroicons %}
+
 {% block title %}Coming Soon - {{ feature_name }}{% endblock %}
+
 {% block profitability_content %}
-    <div class="flex flex-col items-center justify-center min-h-[60vh] bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
-        <div class="p-4 mb-6 bg-gray-100 rounded-full">
-            {% heroicon_outline "rocket-launch" class="w-8 h-8 text-gray-500" %}
-        </div>
-        <h1 class="mb-4 text-xl font-semibold text-gray-900">{{ feature_name }}</h1>
-        <p class="mx-auto mb-8 max-w-md text-sm text-gray-500">
-            We're working hard to bring this feature to the Profitability Management module. Check back soon for updates!
-        </p>
-        <div class="flex items-center space-x-4">
-            <a href="{% url 'project:company-management' project.pk %}"
-               class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700">
-                {% heroicon_outline "home" class="mr-3 w-5 h-5" %}
-                Return to Business Management
-            </a>
-            <a href="#"
-               onclick="history.back(); return false;"
-               class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50">
-                Go Back
-            </a>
-        </div>
+<div class="flex flex-col items-center justify-center min-h-[60vh] bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+    <div class="p-4 mb-6 bg-gray-100 rounded-full">
+        {% heroicon_outline "rocket-launch" class="w-8 h-8 text-gray-500" %}
     </div>
+    
+    <h1 class="mb-4 text-xl font-semibold text-gray-900">{{ feature_name }}</h1>
+    
+    <p class="mx-auto mb-8 max-w-md text-sm text-gray-500">
+        We're working hard to bring this feature to the Profitability Management module. Check back soon for updates!
+    </p>
+
+    <div class="flex items-center space-x-4">
+        <a href="{% url 'project:profitability-dashboard' project.pk %}" 
+           class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700">
+            {% heroicon_outline "home" class="mr-3 w-5 h-5" %}
+            Return to Dashboard
+        </a>
+        <a href="javascript:history.back()" 
+           class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50">
+            Go Back
+        </a>
+    </div>
+</div>
 {% endblock profitability_content %}
