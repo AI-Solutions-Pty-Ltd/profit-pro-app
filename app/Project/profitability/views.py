@@ -20,6 +20,7 @@ from .utils import (
     import_overhead_logs_to_profitability,
     import_plant_logs_to_profitability,
     import_subcontractor_logs_to_profitability,
+    import_material_logs_to_profitability,
 )
 
 

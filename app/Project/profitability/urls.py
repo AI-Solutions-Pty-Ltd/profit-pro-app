@@ -8,6 +8,7 @@ from .overheads import views as overhead_views
 from .plant_equipment import views as plant_views
 from .reports import views as report_views
 from .subcontractor import views as subcontractor_views
+from .plant_equipment import views as plant_views
 from .views import ComingSoonView, ImportLogsView
 
 urlpatterns = [
