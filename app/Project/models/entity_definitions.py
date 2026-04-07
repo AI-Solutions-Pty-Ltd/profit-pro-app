@@ -1,8 +1,17 @@
-"""Project Entity Definitions for centralized resource management."""
+import os
 
 from django.db import models
 
 from app.core.Utilities.models import BaseModel
+
+
+def material_entity_invoice_path(instance, filename):
+    """
+    Generate upload path for material entity invoices.
+    Organizes files by project ID.
+    """
+    base_filename = os.path.basename(filename)
+    return f"entity_management/materials/invoices/{instance.project.pk}/{base_filename}"
 
 
 class BaseProjectEntity(BaseModel):
@@ -97,6 +106,12 @@ class MaterialEntity(BaseProjectEntity):
     )
     date_received = models.DateField(
         null=True, blank=True, help_text="Initial receipt date"
+    )
+    invoice_attachment = models.FileField(
+        upload_to=material_entity_invoice_path,
+        null=True,
+        blank=True,
+        help_text="Attach a copy of the invoice (PDF or Image)",
     )
 
     class Meta:
