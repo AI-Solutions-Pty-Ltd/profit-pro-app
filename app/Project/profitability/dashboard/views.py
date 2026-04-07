@@ -63,17 +63,22 @@ class ProfitabilityDashboardView(LoginRequiredMixin, DetailView):
         # Baseline structuring (Mocked for now)
         # In a real scenario, these would come from the BaselineAssumption model
         # We'll use the total actual cost as a base for mock revenue to keep the UI sensible
-        planned_total = context["total_project_expenditure"] * 1.1 if context["total_project_expenditure"] > 0 else 100000
+        from decimal import Decimal
+        
+        if context["total_project_expenditure"] > 0:
+            planned_total = context["total_project_expenditure"] * Decimal("1.1")
+        else:
+            planned_total = Decimal("100000.00")
         
         context['baseline'] = {
-            'planned_revenue': planned_total * 1.25,
-            'planned_labour_cost': planned_total * 0.4,
-            'planned_material_cost': planned_total * 0.3,
-            'planned_subcontractor_cost': planned_total * 0.2,
-            'planned_overhead_cost': planned_total * 0.1,
+            'planned_revenue': planned_total * Decimal("1.25"),
+            'planned_labour_cost': planned_total * Decimal("0.4"),
+            'planned_material_cost': planned_total * Decimal("0.3"),
+            'planned_subcontractor_cost': planned_total * Decimal("0.2"),
+            'planned_overhead_cost': planned_total * Decimal("0.1"),
             'target_margin_percentage': 20.0,
             'total_planned_cost': planned_total,
-            'planned_profit': planned_total * 0.25,
+            'planned_profit': planned_total * Decimal("0.25"),
         }
 
         # Actuals structuring
