@@ -123,7 +123,7 @@ class MaterialEntityCreateView(ProjectEntityMixin, CreateView):
         if "header_form" in kwargs:
             context["header_form"] = kwargs["header_form"]
         elif self.request.POST:
-            context["header_form"] = MaterialHeaderForm(self.request.POST)
+            context["header_form"] = MaterialHeaderForm(self.request.POST, self.request.FILES)
         else:
             context["header_form"] = MaterialHeaderForm()
 
@@ -141,7 +141,7 @@ class MaterialEntityCreateView(ProjectEntityMixin, CreateView):
 
     def post(self, request, *args, **kwargs):
         self.object = None
-        header_form = MaterialHeaderForm(request.POST)
+        header_form = MaterialHeaderForm(request.POST, request.FILES)
         formset = MaterialItemFormSet(request.POST)
 
         if header_form.is_valid() and formset.is_valid():
@@ -155,6 +155,7 @@ class MaterialEntityCreateView(ProjectEntityMixin, CreateView):
         supplier = header_form.cleaned_data["supplier"]
         invoice_number = header_form.cleaned_data["invoice_number"]
         date_received = header_form.cleaned_data["date_received"]
+        invoice_attachment = header_form.cleaned_data.get("invoice_attachment")
 
         instances = formset.save(commit=False)
         for instance in instances:
@@ -162,6 +163,8 @@ class MaterialEntityCreateView(ProjectEntityMixin, CreateView):
             instance.supplier = supplier
             instance.invoice_number = invoice_number
             instance.date_received = date_received
+            if invoice_attachment:
+                instance.invoice_attachment = invoice_attachment
             instance.save()
 
         # Handle deletions if any (though usually not in a pure CreateView)

@@ -62,6 +62,7 @@ class MaterialEntityForm(BaseEntityForm):
             "supplier",
             "items_received",
             "invoice_number",
+            "invoice_attachment",
             "quantity",
             "unit",
             "rate",
@@ -84,11 +85,12 @@ class MaterialHeaderForm(forms.ModelForm):
 
     class Meta:
         model = MaterialEntity
-        fields = ["supplier", "invoice_number", "date_received"]
+        fields = ["supplier", "invoice_number", "date_received", "invoice_attachment"]
         widgets = {
             "supplier": forms.TextInput(attrs=COMMON_WIDGET_ATTRS),
             "invoice_number": forms.TextInput(attrs=COMMON_WIDGET_ATTRS),
             "date_received": forms.DateInput(attrs={**COMMON_WIDGET_ATTRS, "type": "date"}),
+            "invoice_attachment": forms.FileInput(attrs=COMMON_WIDGET_ATTRS),
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

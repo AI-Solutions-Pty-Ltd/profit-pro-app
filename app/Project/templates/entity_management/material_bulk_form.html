@@ -28,20 +28,44 @@
         </div>
 
         <!-- Form Body -->
-        <form method="post" id="bulk-material-form" class="p-6">
+        <form method="post" id="bulk-material-form" class="p-6" enctype="multipart/form-data">
             {% csrf_token %}
             
             <!-- Shared Header Info -->
             
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2">
+                    <!-- Row 1: Supplier -->
                     <div class="md:col-span-2">
                         {{ header_form.supplier|as_crispy_field }}
                     </div>
-                    <div>
+                    
+                    <!-- Row 2: Metadata & Attachment -->
+                    <div class="col-span-1">
                         {{ header_form.invoice_number|as_crispy_field }}
                     </div>
-                    <div>
+                    <div class="col-span-1">
                         {{ header_form.date_received|as_crispy_field }}
+                    </div>
+                    <div class="md:col-span-2">
+                        <!-- Custom Styled File Input -->
+                        <div class="form-group">
+                            <label for="id_invoice_attachment" class="block mb-1 text-sm font-medium text-gray-700">
+                                Invoice attachment
+                            </label>
+                            <div class="relative">
+                                <input type="file" name="invoice_attachment" id="id_invoice_attachment" 
+                                       class="sr-only peer" accept="image/*,.pdf">
+                                <label for="id_invoice_attachment" 
+                                       class="flex justify-between items-center px-4 py-2 w-full text-sm text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-all duration-200 cursor-pointer hover:bg-gray-50 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                    <span id="file-name" class="italic text-gray-500 truncate">No file chosen...</span>
+                                    <div class="flex items-center ml-2 font-semibold text-indigo-600">
+                                        {% heroicon_outline "paper-clip" size="18" class="mr-1" %}
+                                        Browse
+                                    </div>
+                                </label>
+                            </div>
+                            <p class="mt-1 text-xs italic text-gray-500">Attach a copy of the invoice (PDF or Image)</p>
+                        </div>
                     </div>
                 </div>
          
@@ -203,6 +227,19 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Handle Custom File Input Filename Display
+    const fileInput = document.querySelector('#id_invoice_attachment');
+    const fileNameDisplay = document.querySelector('#file-name');
+
+    if (fileInput && fileNameDisplay) {
+        fileInput.addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : "No file chosen...";
+            fileNameDisplay.textContent = fileName;
+            fileNameDisplay.classList.remove('text-gray-500', 'italic');
+            fileNameDisplay.classList.add('text-indigo-900', 'font-medium');
+        });
+    }
+
     const formContainer = document.querySelector('#formset-container');
     const addBtn = document.querySelector('#add-item-btn');
     const totalForms = document.querySelector('#id_form-TOTAL_FORMS');
