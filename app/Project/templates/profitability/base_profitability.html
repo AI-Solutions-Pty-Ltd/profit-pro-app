@@ -35,7 +35,14 @@
         
         <!-- Navigation Tabs -->
         <div class="px-4 sm:px-6 lg:px-8">
-            <nav class="flex overflow-x-auto -mb-px space-x-8" aria-label="Tabs">
+            <nav class="flex overflow-x-auto -mb-px space-x-8 pb-1 
+                        scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100
+                        [&::-webkit-scrollbar]:h-1
+                        [&::-webkit-scrollbar-track]:bg-slate-100
+                        [&::-webkit-scrollbar-thumb]:bg-slate-300
+                        [&::-webkit-scrollbar-thumb]:rounded-full
+                        hover:[&::-webkit-scrollbar-thumb]:bg-slate-400" 
+                 aria-label="Tabs">
                 {% with current_url=request.resolver_match.url_name %}
                 <a href="{% url 'project:profitability-coming-soon' project.pk 'Journal Entries' %}" 
                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'journal' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
