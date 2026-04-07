@@ -108,7 +108,7 @@
     <!-- Baseline BoQ Table -->
     <div class="bg-white shadow-sm rounded-lg">
         <div class="overflow-x-auto">
-            <table class="text-xs" style="min-width: 1200px;">
+            <table class="text-xs min-w-[1200px]">
                 <thead>
                     <tr class="border-b border-gray-200">
                         <th colspan="2"
@@ -128,52 +128,60 @@
                         </th>
                     </tr>
                     <tr class="border-b-2 border-gray-300">
-                        <th class="bg-gray-50 py-2 pl-3 pr-1 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600"
-                            style="width:110px">Section</th>
-                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 border-r border-gray-200"
-                            style="width:100px">Bill</th>
-                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600"
-                            style="width:70px">Item No.</th>
-                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600"
-                            style="width:70px">Pay Ref</th>
-                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 border-r border-gray-200"
-                            style="width:280px">Description</th>
-                        <th class="bg-gray-50 px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-600"
-                            style="width:60px">Unit</th>
-                        <th class="bg-gray-50 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-600"
-                            style="width:90px">Qty</th>
-                        <th class="bg-gray-50 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-600"
-                            style="width:90px">Rate</th>
-                        <th class="bg-gray-50 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-600"
-                            style="width:110px">Amount</th>
+                        <th class="bg-gray-50 py-2 pl-3 pr-1 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 w-[110px]">
+                            Section
+                        </th>
+                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 border-r border-gray-200 w-[100px]">
+                            Bill
+                        </th>
+                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 w-[70px]">
+                            Item No.
+                        </th>
+                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 w-[70px]">
+                            Pay Ref
+                        </th>
+                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 border-r border-gray-200 w-[280px]">
+                            Description
+                        </th>
+                        <th class="bg-gray-50 px-1 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-gray-600 w-[60px]">
+                            Unit
+                        </th>
+                        <th class="bg-gray-50 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-600 w-[90px]">
+                            Qty
+                        </th>
+                        <th class="bg-gray-50 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-600 w-[90px]">
+                            Rate
+                        </th>
+                        <th class="bg-gray-50 px-1 py-2 text-right text-[10px] font-semibold uppercase tracking-wider text-gray-600 w-[110px]">
+                            Amount
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     {% for item in items %}
                         {% if item.is_work %}
                             <tr class="hover:bg-gray-50/50 align-top">
-                                <td class="py-1.5 pl-3 pr-1 text-gray-400 whitespace-normal break-words text-[10px]"
-                                    style="width:110px">{{ item.bill.structure.name|default:"—" }}</td>
-                                <td class="px-1 py-1.5 text-gray-400 whitespace-normal break-words text-[10px] border-r border-gray-100"
-                                    style="width:100px">{{ item.bill.name|default:"—" }}</td>
-                                <td class="px-1 py-1.5 text-gray-500" style="width:70px;">{{ item.item_number|default:"—" }}</td>
-                                <td class="px-1 py-1.5 text-gray-500" style="width:70px;">{{ item.payment_reference|default:"—" }}</td>
-                                <td class="px-1 py-1.5 whitespace-normal break-words text-gray-700 border-r border-gray-100"
-                                    style="width:280px">
+                                <td class="py-1.5 pl-3 pr-1 text-gray-400 whitespace-normal break-words text-[10px] w-[110px]">
+                                    {{ item.bill.structure.name|default:"—" }}
+                                </td>
+                                <td class="px-1 py-1.5 text-gray-400 whitespace-normal break-words text-[10px] border-r border-gray-100 w-[100px]">
+                                    {{ item.bill.name|default:"—" }}
+                                </td>
+                                <td class="px-1 py-1.5 text-gray-500 w-[70px]">{{ item.item_number|default:"—" }}</td>
+                                <td class="px-1 py-1.5 text-gray-500 w-[70px]">{{ item.payment_reference|default:"—" }}</td>
+                                <td class="px-1 py-1.5 whitespace-normal break-words text-gray-700 border-r border-gray-100 w-[280px]">
                                     <div class="text-gray-600 text-[11px]">{{ item.description|default:"—" }}</div>
                                 </td>
-                                <td class="px-1 py-1.5 text-center text-gray-500" style="width:60px;">{{ item.unit_measurement }}</td>
-                                <td class="px-1 py-1.5 text-right tabular-nums text-gray-700"
-                                    style="width:90px">{{ item.budgeted_quantity|qty }}</td>
-                                <td class="px-1 py-1.5 text-right tabular-nums text-gray-700"
-                                    style="width:90px">{{ item.unit_price|currency }}</td>
-                                <td class="px-1 py-1.5 text-right tabular-nums font-medium text-gray-900"
-                                    style="width:110px">{{ item.total_price|currency }}</td>
+                                <td class="px-1 py-1.5 text-center text-gray-500 w-[60px]">{{ item.unit_measurement }}</td>
+                                <td class="px-1 py-1.5 text-right tabular-nums text-gray-700 w-[90px]">{{ item.budgeted_quantity|qty }}</td>
+                                <td class="px-1 py-1.5 text-right tabular-nums text-gray-700 w-[90px]">{{ item.unit_price|currency }}</td>
+                                <td class="px-1 py-1.5 text-right tabular-nums font-medium text-gray-900 w-[110px]">
+                                    {{ item.total_price|currency }}
+                                </td>
                             </tr>
                         {% else %}
                             <tr class="bg-gray-50/50">
-                                <td class="py-1.5 pl-3 pr-1 text-gray-400 text-[10px]"
-                                    style="width:110px">{{ item.bill.structure.name|default:"" }}</td>
+                                <td class="py-1.5 pl-3 pr-1 text-gray-400 text-[10px] w-[110px]">{{ item.bill.structure.name|default:"" }}</td>
                                 <td colspan="8" class="px-1 py-1.5 text-gray-500 font-medium text-[11px]">{{ item.description }}</td>
                             </tr>
                         {% endif %}

@@ -77,32 +77,38 @@
             <table class="min-w-full text-xs whitespace-nowrap">
                 <thead>
                     <tr class="border-b border-gray-200">
-                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 180px">Structure</th>
-                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 120px">Bill No.</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 140px">{{ amount_a_label }}</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 140px">{{ amount_b_label }}</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 140px">Variance Amount</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 100px">% Variance</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 100px">Material Costs %</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 100px">Labour %</th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[180px]">
+                            Structure
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[120px]">
+                            Bill No.
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[140px]">
+                            {{ amount_a_label }}
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[140px]">
+                            {{ amount_b_label }}
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[140px]">
+                            Variance Amount
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[100px]">
+                            % Variance
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[100px]">
+                            Material Costs %
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[100px]">
+                            Labour %
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     {% for row in report_rows %}
                         <tr class="hover:bg-gray-50/50">
-                            <td class="px-3 py-1.5 text-gray-700 truncate"
-                                style="max-width: 180px"
+                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[180px]"
                                 title="{{ row.section }}">{{ row.section }}</td>
-                            <td class="px-3 py-1.5 text-gray-700 truncate"
-                                style="max-width: 120px"
+                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[120px]"
                                 title="{{ row.bill_no }}">{{ row.bill_no }}</td>
                             <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.amount_a|currency }}</td>
                             <td class="px-3 py-1.5 text-right tabular-nums text-indigo-700 font-medium">{{ row.amount_b|currency }}</td>

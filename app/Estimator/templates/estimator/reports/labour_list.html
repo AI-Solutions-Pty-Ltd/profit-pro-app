@@ -26,14 +26,14 @@
             <!-- Cost by Crew Type Donut -->
             <div class="bg-white shadow-sm rounded-lg p-4">
                 <h3 class="text-sm font-semibold text-gray-900 mb-3">Cost by Crew Type</h3>
-                <div class="relative" style="height: 280px;">
+                <div class="relative h-[280px]">
                     <canvas id="crewDonut"></canvas>
                 </div>
             </div>
             <!-- Crew Composition Stacked Bar -->
             <div class="bg-white shadow-sm rounded-lg p-4">
                 <h3 class="text-sm font-semibold text-gray-900 mb-3">Crew Composition</h3>
-                <div class="relative" style="height: 280px;">
+                <div class="relative h-[280px]">
                     <canvas id="crewCompBar"></canvas>
                 </div>
             </div>
@@ -76,44 +76,52 @@
     <!-- Data Table -->
     <div class="bg-white shadow-sm rounded-lg">
         <div class="overflow-x-auto">
-            <table class="text-xs whitespace-nowrap" style="min-width: 1100px;">
+            <table class="text-xs whitespace-nowrap min-w-[1100px]">
                 <thead>
                     <tr class="border-b border-gray-200">
-                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 150px">Structure</th>
-                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 100px">Bill No.</th>
-                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 140px">Crew Type</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 70px">No. Crews</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 100px">Rate/Unit</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 90px">BoQ Qty</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 120px">Amount</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 70px">% of Total</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 border-l border-gray-200"
-                            style="width: 70px">Skilled</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 80px">Semi-Skilled</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 70px">General</th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[150px]">
+                            Structure
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[100px]">
+                            Bill No.
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[140px]">
+                            Crew Type
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[70px]">
+                            No. Crews
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[100px]">
+                            Rate/Unit
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[90px]">
+                            BoQ Qty
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[120px]">
+                            Amount
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[70px]">
+                            % of Total
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 border-l border-gray-200 w-[70px]">
+                            Skilled
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[80px]">
+                            Semi-Skilled
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[70px]">
+                            General
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     {% for row in report_rows %}
                         <tr class="hover:bg-gray-50/50">
-                            <td class="px-3 py-1.5 text-gray-700 truncate"
-                                style="max-width: 150px"
+                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[150px]"
                                 title="{{ row.section }}">{{ row.section }}</td>
-                            <td class="px-3 py-1.5 text-gray-700 truncate"
-                                style="max-width: 100px"
+                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[100px]"
                                 title="{{ row.bill_no }}">{{ row.bill_no }}</td>
-                            <td class="px-3 py-1.5 text-gray-700 truncate"
-                                style="max-width: 140px"
+                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[140px]"
                                 title="{{ row.crew_type }}">{{ row.crew_type }}</td>
                             <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.no_of_crews }}</td>
                             <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.crew_rate_per_unit|currency }}</td>

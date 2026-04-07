@@ -26,14 +26,14 @@
             <!-- Cost by Section Donut -->
             <div class="bg-white shadow-sm rounded-lg p-4">
                 <h3 class="text-sm font-semibold text-gray-900 mb-3">Cost by Section</h3>
-                <div class="relative" style="height: 280px;">
+                <div class="relative h-[280px]">
                     <canvas id="sectionDonut"></canvas>
                 </div>
             </div>
             <!-- Top Materials Bar -->
             <div class="bg-white shadow-sm rounded-lg p-4">
                 <h3 class="text-sm font-semibold text-gray-900 mb-3">Top Materials by Cost</h3>
-                <div class="relative" style="height: 280px;">
+                <div class="relative h-[280px]">
                     <canvas id="materialBar"></canvas>
                 </div>
             </div>
@@ -79,35 +79,40 @@
             <table class="min-w-full text-xs whitespace-nowrap">
                 <thead>
                     <tr class="border-b border-gray-200">
-                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 160px">Structure</th>
-                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 120px">Bill No.</th>
-                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 200px">Material List</th>
-                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 60px">Unit</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 100px">Quantity</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 120px">Rate</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 140px">Amount</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                            style="width: 80px">% of Total</th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[160px]">
+                            Structure
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[120px]">
+                            Bill No.
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[200px]">
+                            Material List
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[60px]">
+                            Unit
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[100px]">
+                            Quantity
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[120px]">
+                            Rate
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[140px]">
+                            Amount
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[80px]">
+                            % of Total
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     {% for row in report_rows %}
                         <tr class="hover:bg-gray-50/50">
-                            <td class="px-3 py-1.5 text-gray-700 truncate"
-                                style="max-width: 160px"
+                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[160px]"
                                 title="{{ row.section }}">{{ row.section }}</td>
-                            <td class="px-3 py-1.5 text-gray-700 truncate"
-                                style="max-width: 120px"
+                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[120px]"
                                 title="{{ row.bill_no }}">{{ row.bill_no }}</td>
-                            <td class="px-3 py-1.5 text-gray-700 truncate"
-                                style="max-width: 200px"
+                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[200px]"
                                 title="{{ row.material_name }}">{{ row.material_name }}</td>
                             <td class="px-3 py-1.5 text-gray-500">{{ row.unit }}</td>
                             <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.quantity|qty }}</td>
