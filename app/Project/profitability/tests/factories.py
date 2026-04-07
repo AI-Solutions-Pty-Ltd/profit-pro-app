@@ -7,6 +7,8 @@ from app.Project.models import (
     JournalEntry,
     LabourCostTracker,
     LabourEntity,
+    MaterialCostTracker,
+    MaterialEntity,
     OverheadCostTracker,
     OverheadEntity,
     SubcontractorCostTracker,
@@ -32,6 +34,16 @@ class SubcontractorEntityFactory(DjangoModelFactory):
     project = SubFactory(ProjectFactory)
     name = Faker("company")
     rate = 500.00
+
+
+class MaterialEntityFactory(DjangoModelFactory):
+    class Meta:
+        model = MaterialEntity
+
+    project = SubFactory(ProjectFactory)
+    name = Sequence(lambda n: f"Material {n}")
+    rate = 50.00
+    supplier = Faker("company")
 
 
 class OverheadEntityFactory(DjangoModelFactory):
@@ -75,6 +87,17 @@ class LabourCostTrackerFactory(DjangoModelFactory):
     date = factory.Faker("date_this_month")
     amount_of_days = 5
     salary = 150.00
+
+
+class MaterialCostTrackerFactory(DjangoModelFactory):
+    class Meta:
+        model = MaterialCostTracker
+
+    project = SubFactory(ProjectFactory)
+    material_entity = SubFactory(MaterialEntityFactory)
+    date = factory.Faker("date_this_month")
+    quantity = 10
+    rate = 50.00
 
 
 class OverheadCostTrackerFactory(DjangoModelFactory):
