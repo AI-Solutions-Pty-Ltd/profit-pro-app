@@ -5,7 +5,7 @@ from .journal import views as journal_views
 from .labour import views as labour_views
 from .overheads import views as overhead_views
 from .subcontractor import views as subcontractor_views
-from .views import ImportLogsView
+from .views import ComingSoonView, ImportLogsView
 
 urlpatterns = [
     # Dashboard
@@ -13,6 +13,11 @@ urlpatterns = [
         "<int:project_pk>/profitability/",
         dashboard_views.ProfitabilityDashboardView.as_view(),
         name="profitability-dashboard",
+    ),
+    path(
+        "<int:project_pk>/profitability/coming-soon/<str:feature_name>/",
+        ComingSoonView.as_view(),
+        name="profitability-coming-soon",
     ),
     path(
         "<int:project_pk>/profitability/import/",
