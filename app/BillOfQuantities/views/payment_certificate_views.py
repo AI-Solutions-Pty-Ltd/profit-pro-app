@@ -29,6 +29,7 @@ from app.BillOfQuantities.models.ledger_models import (
     Escalation,
     MaterialsOnSite,
     Retention,
+    SpecialItemTransaction,
 )
 from app.BillOfQuantities.tasks import (
     generate_pdf_async,
@@ -287,6 +288,12 @@ class PaymentCertificateDetailView(
             },
         ]
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add special item types for the ledger totals table
+        context["special_item_types"] = SpecialItemTransaction.SpecialItemType.choices
+        return context
+
     def dispatch(self, request, *args, **kwargs):
         dispatch = super().dispatch(request, *args, **kwargs)
         if dispatch.status_code > 299:
@@ -472,6 +479,9 @@ class PaymentCertificateEditView(PaymentCertificateMixin, TemplateView):
         escalation_transactions, escalation_balance = (
             get_ledger_transactions_with_balance(Escalation, project)
         )
+        special_item_transactions, special_item_balance = (
+            get_ledger_transactions_with_balance(SpecialItemTransaction, project)
+        )
 
         context = {
             "project": project,
@@ -501,6 +511,13 @@ class PaymentCertificateEditView(PaymentCertificateMixin, TemplateView):
             "materials_balance": materials_balance,
             "escalation_transactions": escalation_transactions,
             "escalation_balance": escalation_balance,
+            "special_item_transactions": special_item_transactions,
+            "special_item_balance": special_item_balance,
+            # Additional context for special items modal
+            "payment_certificates": project.payment_certificates.all().order_by(
+                "-certificate_number"
+            ),
+            "special_item_types": SpecialItemTransaction.SpecialItemType.choices,
         }
         return render(request, str(self.template_name), context)
 

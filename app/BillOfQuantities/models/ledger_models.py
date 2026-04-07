@@ -414,10 +414,8 @@ class SpecialItemTransaction(BaseLedgerItem):
         DAYWORK = "DAYWORK", "Daywork"
         PRIME_COST = "PRIME_COST", "Prime Cost Sum"
         PROVISIONAL = "PROVISIONAL", "Provisional Sum"
-        CONTINGENCY = "CONTINGENCY", "Contingency"
         PENALTY = "PENALTY", "Penalty/Liquidated Damages"
         BONUS = "BONUS", "Bonus/Incentive"
-        INSURANCE = "INSURANCE", "Insurance"
         OTHER = "OTHER", "Other"
 
     special_item_type = models.CharField(

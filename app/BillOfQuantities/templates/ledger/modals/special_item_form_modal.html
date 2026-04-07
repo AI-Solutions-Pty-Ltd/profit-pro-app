@@ -1,0 +1,158 @@
+<!-- Special Item Form Modal -->
+<div id="special_item_form_modal"
+     class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="relative top-10 mx-auto p-5 border max-w-2xl shadow-lg rounded-md bg-white">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Add Special Item</h3>
+            <button onclick="closeSpecialItemFormModal()"
+                    class="text-gray-400 hover:text-gray-500">{% heroicon_outline "x-mark" class="w-6 h-6" %}</button>
+        </div>
+        <form method="post"
+              action="{% url 'bill_of_quantities:special-item-ledger-create' project.pk %}">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <!-- Special Item Type -->
+                <div>
+                    <label for="special_item_type"
+                           class="block text-sm font-medium text-gray-700">Special Item Type</label>
+                    <select name="special_item_type"
+                            id="special_item_type"
+                            required
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="">Select type...</option>
+                        {% for type_code, type_name in special_item_types %}
+                            <option value="{{ type_code }}">{{ type_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- Date -->
+                <div>
+                    <label for="date" class="block text-sm font-medium text-gray-700">Date</label>
+                    <input type="date"
+                           name="date"
+                           id="date"
+                           required
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <!-- Payment Certificate -->
+                <div>
+                    <label for="payment_certificate"
+                           class="block text-sm font-medium text-gray-700">Payment Certificate (Optional)</label>
+                    <select name="payment_certificate"
+                            id="payment_certificate"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="">No certificate</option>
+                        {% for cert in payment_certificates %}
+                            <option value="{{ cert.pk }}">#{{ cert.certificate_number }} - {{ cert.certificate_date|date:"d M Y" }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- Item Reference -->
+                <div>
+                    <label for="item_reference" class="block text-sm font-medium text-gray-700">Item Reference (Optional)</label>
+                    <input type="text"
+                           name="item_reference"
+                           id="item_reference"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           placeholder="Contract clause or BOQ item reference">
+                </div>
+                <!-- Budget Amount -->
+                <div>
+                    <label for="budget_amount" class="block text-sm font-medium text-gray-700">Budget Amount (Optional)</label>
+                    <input type="number"
+                           name="budget_amount"
+                           id="budget_amount"
+                           step="0.01"
+                           min="0"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           placeholder="0.00">
+                </div>
+                <!-- Transaction Type -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Transaction Type</label>
+                    <div class="mt-2 space-y-2">
+                        <label class="flex items-center">
+                            <input type="radio"
+                                   name="transaction_type"
+                                   value="DEBIT"
+                                   required
+                                   class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
+                            <span class="ml-2 text-sm text-gray-700">Debit (Increase value)</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio"
+                                   name="transaction_type"
+                                   value="CREDIT"
+                                   required
+                                   class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300">
+                            <span class="ml-2 text-sm text-gray-700">Credit (Decrease value)</span>
+                        </label>
+                    </div>
+                </div>
+                <!-- Amount -->
+                <div>
+                    <label for="amount" class="block text-sm font-medium text-gray-700">Amount</label>
+                    <input type="number"
+                           name="amount"
+                           id="amount"
+                           required
+                           step="0.01"
+                           min="0"
+                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                           placeholder="0.00">
+                </div>
+                <!-- Description -->
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                    <textarea name="description"
+                              id="description"
+                              required
+                              rows="3"
+                              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                              placeholder="Enter description..."></textarea>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button type="button"
+                        onclick="closeSpecialItemFormModal()"
+                        class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Add Special Item
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+function openSpecialItemFormModal() {
+    document.getElementById('special_item_form_modal').classList.remove('hidden');
+    // Set default date to today
+    document.getElementById('date').valueAsDate = new Date();
+}
+
+function closeSpecialItemFormModal() {
+    document.getElementById('special_item_form_modal').classList.add('hidden');
+}
+
+// Close modal when clicking outside
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('special_item_form_modal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeSpecialItemFormModal();
+            }
+        });
+    }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeSpecialItemFormModal();
+    }
+});
+</script>
