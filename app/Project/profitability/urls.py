@@ -5,8 +5,8 @@ from .journal import views as journal_views
 from .labour import views as labour_views
 from .materials import views as material_views
 from .overheads import views as overhead_views
-from .subcontractor import views as subcontractor_views
 from .plant_equipment import views as plant_views
+from .subcontractor import views as subcontractor_views
 from .views import ComingSoonView, ImportLogsView
 
 urlpatterns = [

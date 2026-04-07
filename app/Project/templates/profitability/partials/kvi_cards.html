@@ -1,0 +1,70 @@
+{% load heroicons %}
+{% load humanize %}
+{% load mathfilters %}
+
+<div class="grid grid-cols-1 gap-6 mb-6 md:grid-cols-3">
+    <!-- Card 1: Actual Total Cost -->
+    <div class="overflow-hidden relative p-6 bg-white rounded-xl border border-red-200 shadow-sm">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-sm font-medium text-gray-500">Actual Total Cost</p>
+                <p class="mt-2 text-3xl font-bold text-gray-900" title="R{{ kvi_total_cost|floatformat:2|intcomma }}">
+                    {% if kvi_total_cost > 100000 %}
+                        R{{ kvi_total_cost|intword }}
+                    {% else %}
+                        R{{ kvi_total_cost|floatformat:2|intcomma|default:"0.00" }}
+                    {% endif %}
+                </p>
+            </div>
+            <div class="p-3 bg-red-100 rounded-xl">
+                {% heroicon_outline "shopping-cart" class="w-6 h-6 text-red-600" %}
+            </div>
+        </div>
+        <div class="mt-4">
+            <p class="text-sm font-medium {% if kvi_under_budget >= 0 %}text-indigo-600{% else %}text-red-600{% endif %}" title="R{{ kvi_under_budget|abs|floatformat:2|intcomma }}">
+                {% if kvi_under_budget|abs > 100000 %}
+                    R{{ kvi_under_budget|abs|intword }}
+                {% else %}
+                    R{{ kvi_under_budget|abs|floatformat:2|intcomma }}
+                {% endif %}
+                {% if kvi_under_budget >= 0 %}under budget{% else %}over budget{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Card 2: Actual Profit -->
+    <div class="overflow-hidden relative p-6 bg-white rounded-xl border border-green-200 shadow-sm">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-sm font-medium text-gray-500">Actual Profit</p>
+                <p class="mt-2 text-2xl font-bold text-gray-900" title="R{{ kvi_actual_profit|floatformat:2|intcomma }}">
+                    {% if kvi_actual_profit > 100000 %}
+                        R{{ kvi_actual_profit|intword }}
+                    {% else %}
+                        R{{ kvi_actual_profit|floatformat:2|intcomma|default:"0.00" }}
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="p-3 bg-green-100 rounded-xl">
+                {% heroicon_outline "calculator" class="w-6 h-6 text-green-600" %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 3: Actual Margin -->
+    <div class="overflow-hidden relative p-6 bg-white rounded-xl border border-yellow-200 shadow-sm">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-sm font-medium text-gray-500">Actual Margin</p>
+                <p class="mt-2 text-2xl font-bold text-gray-900">{{ kvi_actual_margin|floatformat:1|default:"0.0" }}%</p>
+            </div>
+            <div class="p-3 bg-yellow-100 rounded-xl">
+                {% heroicon_outline "arrow-trending-up" class="w-6 h-6 text-yellow-600" %}
+            </div>
+        </div>
+        <div class="mt-4">
+            <p class="text-sm font-medium text-gray-400">Target: {{ kvi_target_margin|floatformat:1|default:"20.0" }}%</p>
+        </div>
+    </div>
+</div>
