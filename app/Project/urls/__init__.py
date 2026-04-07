@@ -48,4 +48,5 @@ urlpatterns = [
     path("signatory/", include(signatory_urls)),
     path("user/", include(user_urls)),
     path("production/", include(production_urls)),
+    path("", include("app.Project.profitability.urls")),
 ]
