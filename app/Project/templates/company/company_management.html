@@ -27,7 +27,7 @@
                     {% endif %}
                     <a href="{% url 'project:project-management' company.pk %}"
                        class="inline-flex items-center p-2 border border-purple-600 rounded-md shadow-sm font-medium text-purple-600 bg-white hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors">
-                        {% heroicon_outline "folder-open" size="16" %} Project Management
+                        {% heroicon_outline "folder-open" size="16" class="mr-1.5" %} Project Management
                     </a>
                 </div>
             </div>
@@ -52,8 +52,7 @@
                    data-tip="Production Planning"
                    class="tooltip w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "document-text" class="w-4 h-4 text-blue-500 mr-2"
-                        %}
+                        {% heroicon_outline "document-text" class="w-4 h-4 text-blue-500 mr-2" %}
                         <span class="text-sm font-medium text-blue-700">Planning</span>
                     </div>
                 </a>
@@ -61,8 +60,7 @@
                    data-tip="Production Cost Breakdown Structure"
                    class="tooltip w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "document-currency-dollar" class="w-4 h-4
-                        text-indigo-500 mr-2" %}
+                        {% heroicon_outline "document-currency-dollar" class="w-4 h-4 text-indigo-500 mr-2" %}
                         <span class="text-sm font-medium text-indigo-700">Costing</span>
                     </div>
                 </a>
@@ -70,8 +68,7 @@
                    data-tip="Production & Productivity Analysis"
                    class="tooltip w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "presentation-chart-line" class="w-4 h-4
-                        text-green-500 mr-2" %}
+                        {% heroicon_outline "presentation-chart-line" class="w-4 h-4 text-green-500 mr-2" %}
                         <span class="text-sm font-medium text-green-700">Analysis</span>
                     </div>
                 </a>
@@ -79,8 +76,7 @@
                    data-tip="Progress Tracker"
                    class="tooltip w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "arrow-trending-up" class="w-4 h-4 text-cyan-500
-                        mr-2" %}
+                        {% heroicon_outline "arrow-trending-up" class="w-4 h-4 text-cyan-500 mr-2" %}
                         <span class="text-sm font-medium text-cyan-700">Progress Tracker</span>
                     </div>
                 </a>
@@ -88,8 +84,7 @@
                    data-tip="Activity Costing Forecast"
                    class="tooltip w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "information-circle" class="w-4 h-4 text-amber-500
-                        mr-2" %}
+                        {% heroicon_outline "information-circle" class="w-4 h-4 text-amber-500 mr-2" %}
                         <span class="text-sm font-medium text-amber-700">Costing Forecast</span>
                     </div>
                 </a>
@@ -97,8 +92,7 @@
                    data-tip="Log Daily Progress Tracking"
                    class="tooltip w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "plus-circle" class="w-4 h-4 text-emerald-500
-                        mr-2" %}
+                        {% heroicon_outline "plus-circle" class="w-4 h-4 text-emerald-500 mr-2" %}
                         <span class="text-sm font-medium text-emerald-700">Log Progress</span>
                     </div>
                 </a>
@@ -176,58 +170,57 @@
         {% endcomment %}
         <!-- Row 3: Payments and Invoices -->
         <div class="group relative bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-5 border border-emerald-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-            <div class="flex items-center mb-4">
-                <div class="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center mr-3">
+            <a href="{% url 'project:profitability-dashboard' company.pk %}" class="flex items-center mb-4 group/header hover:opacity-80 transition-opacity">
+                <div class="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center mr-3 group-hover/header:rotate-12 transition-transform">
                     {% heroicon_outline "chart-pie" class="w-6 h-6 text-white" %}
                 </div>
                 <div>
-                    <h3 class="text-lg font-bold text-emerald-900">Profitability Management</h3>
+                    <h3 class="text-lg font-bold text-emerald-900 group-hover/header:text-emerald-700">Profitability Management</h3>
+                    <p class="text-xs text-emerald-600">Financial Performance Trackers</p>
                 </div>
-            </div>
+            </a>
             <div class="space-y-2">
-                <a href="#"
+                <a href="{% url 'project:profitability-journal-list' company.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "book-open" class="w-4 h-4 text-emerald-500 mr-2"
-                        %}
+                        {% heroicon_outline "book-open" class="w-4 h-4 text-emerald-500 mr-2" %}
                         <span class="text-sm font-medium text-emerald-700">Journal Entries</span>
                     </div>
                 </a>
-                <a href="#"
-                   class="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-teal-200 hover:bg-teal-50 transition-colors group/btn">
+                <a href="#" class="w-full flex items-center justify-between px-3 py-2.5 bg-gray-50 rounded-lg border border-gray-200 cursor-not-allowed opacity-60" data-tip="Coming Soon">
                     <div class="flex items-center">
-                        {% heroicon_outline "cube" class="w-4 h-4 text-teal-500 mr-2" %}
-                        <span class="text-sm font-medium text-teal-700">Materials Cost Tracker</span>
+                        {% heroicon_outline "cube" class="w-4 h-4 text-gray-400 mr-2" %}
+                        <span class="text-sm font-medium text-gray-500">Materials Cost Tracker</span>
                     </div>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Soon</span>
                 </a>
-                <a href="#"
+                <a href="{% url 'project:profitability-subcontractor-list' company.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "briefcase" class="w-4 h-4 text-green-500 mr-2" %}
                         <span class="text-sm font-medium text-green-700">Subcontractor Cost Tracker</span>
                     </div>
                 </a>
-                <a href="#"
+                <a href="{% url 'project:profitability-labour-list' company.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-yellow-200 hover:bg-yellow-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "user-group" class="w-4 h-4 text-yellow-500 mr-2"
-                        %}
+                        {% heroicon_outline "user-group" class="w-4 h-4 text-yellow-500 mr-2" %}
                         <span class="text-sm font-medium text-yellow-700">Labour Cost Tracker</span>
                     </div>
                 </a>
-                <a href="#"
+                <a href="{% url 'project:profitability-overhead-list' company.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "home" class="w-4 h-4 text-orange-500 mr-2" %}
                         <span class="text-sm font-medium text-orange-700">Overheads Cost Tracker</span>
                     </div>
                 </a>
-                <a href="#"
-                   class="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
+                <a href="#" class="w-full flex items-center justify-between px-3 py-2.5 bg-gray-50 rounded-lg border border-gray-200 cursor-not-allowed opacity-60" data-tip="Coming Soon">
                     <div class="flex items-center">
-                        {% heroicon_outline "home" class="w-4 h-4 text-orange-500 mr-2" %}
-                        <span class="text-sm font-medium text-orange-700">Baseline Assumptions</span>
+                        {% heroicon_outline "adjustments-horizontal" class="w-4 h-4 text-gray-400 mr-2" %}
+                        <span class="text-sm font-medium text-gray-500">Baseline Assumptions</span>
                     </div>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Soon</span>
                 </a>
             </div>
         </div>
@@ -246,8 +239,7 @@
                 <a href="#"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "cog-6-tooth" class="w-4 h-4 text-purple-500 mr-2"
-                        %}
+                        {% heroicon_outline "cog-6-tooth" class="w-4 h-4 text-purple-500 mr-2" %}
                         <span class="text-sm font-medium text-purple-700">Project Assumptions</span>
                     </div>
                 </a>
@@ -261,24 +253,21 @@
                 <a href="#"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-violet-200 hover:bg-violet-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "user-group" class="w-4 h-4 text-violet-500 mr-2"
-                        %}
+                        {% heroicon_outline "user-group" class="w-4 h-4 text-violet-500 mr-2" %}
                         <span class="text-sm font-medium text-violet-700">Resources Specifications</span>
                     </div>
                 </a>
                 <a href="#"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-rose-200 hover:bg-rose-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "shield-exclamation" class="w-4 h-4 text-rose-500
-                        mr-2" %}
+                        {% heroicon_outline "shield-exclamation" class="w-4 h-4 text-rose-500 mr-2" %}
                         <span class="text-sm font-medium text-rose-700">Baseline Risk Report</span>
                     </div>
                 </a>
                 <a href="#"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "arrow-path" class="w-4 h-4 text-amber-500 mr-2"
-                        %}
+                        {% heroicon_outline "arrow-path" class="w-4 h-4 text-amber-500 mr-2" %}
                         <span class="text-sm font-medium text-amber-700">Progress Risk Report</span>
                     </div>
                 </a>
@@ -312,40 +301,35 @@
                 <a href="#"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-emerald-200 hover:bg-emerald-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "user-group" class="w-4 h-4 text-emerald-500 mr-2"
-                        %}
+                        {% heroicon_outline "user-group" class="w-4 h-4 text-emerald-500 mr-2" %}
                         <span class="text-sm font-medium text-emerald-700">Labours</span>
                     </div>
                 </a>
                 <a href="{% url 'ledger:ledger-list' company.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "briefcase" class="w-4 h-4 text-purple-500 mr-2"
-                        %}
+                        {% heroicon_outline "briefcase" class="w-4 h-4 text-purple-500 mr-2" %}
                         <span class="text-sm font-medium text-purple-700">Subcontractors</span>
                     </div>
                 </a>
                 <a href="{% url 'ledger:ledger-list' company.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-orange-200 hover:bg-orange-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "cog-6-tooth" class="w-4 h-4 text-orange-500 mr-2"
-                        %}
+                        {% heroicon_outline "cog-6-tooth" class="w-4 h-4 text-orange-500 mr-2" %}
                         <span class="text-sm font-medium text-orange-700">Plant and Equipment</span>
                     </div>
                 </a>
                 <a href="{% url 'ledger:ledger-list' company.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-rose-200 hover:bg-rose-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "shield-check" class="w-4 h-4 text-rose-500 mr-2"
-                        %}
+                        {% heroicon_outline "shield-check" class="w-4 h-4 text-rose-500 mr-2" %}
                         <span class="text-sm font-medium text-rose-700">PPE</span>
                     </div>
                 </a>
                 <a href="{% url 'ledger:ledger-list' company.pk %}"
                    class="w-full flex items-center justify-between px-3 py-2.5 bg-white/70 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "archive-box" class="w-4 h-4 text-indigo-500 mr-2"
-                        %}
+                        {% heroicon_outline "archive-box" class="w-4 h-4 text-indigo-500 mr-2" %}
                         <span class="text-sm font-medium text-indigo-700">Stores</span>
                     </div>
                 </a>
@@ -374,92 +358,77 @@
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <a href="{% url 'site_management:materials-log-list' company.pk %}"
                class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-blue-200 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                {% heroicon_outline "cube" class="w-6 h-6 text-blue-500 mb-2
-                group-hover:scale-110 transition-transform" %}
+                {% heroicon_outline "cube" class="w-6 h-6 text-blue-500 mb-2 group-hover:scale-110 transition-transform" %}
                 <span class="text-sm font-medium text-gray-700 group-hover:text-blue-700 transition-colors">Materials Log</span>
             </a>
             <a href="{% url 'site_management:daily-diary-list' company.pk %}"
                class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-emerald-200 hover:border-emerald-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                {% heroicon_outline "book-open" class="w-6 h-6 text-emerald-500 mb-2
-                group-hover:scale-110 transition-transform" %}
+                {% heroicon_outline "book-open" class="w-6 h-6 text-emerald-500 mb-2 group-hover:scale-110 transition-transform" %}
                 <span class="text-sm font-medium text-gray-700 group-hover:text-emerald-700 transition-colors">Daily Diaries</span>
             </a>
             <a href="{% url 'site_management:productivity-log-list' company.pk %}"
                class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-purple-200 hover:border-purple-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                {% heroicon_outline "chart-bar" class="w-6 h-6 text-purple-500 mb-2
-                group-hover:scale-110 transition-transform" %}
+                {% heroicon_outline "chart-bar" class="w-6 h-6 text-purple-500 mb-2 group-hover:scale-110 transition-transform" %}
                 <span class="text-sm font-medium text-gray-700 group-hover:text-purple-700 transition-colors">Productivity Log</span>
             </a>
             <a href="{% url 'site_management:subcontractor-log-list' company.pk %}"
                class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-orange-200 hover:border-orange-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                {% heroicon_outline "briefcase" class="w-6 h-6 text-orange-500 mb-2
-                group-hover:scale-110 transition-transform" %}
+                {% heroicon_outline "briefcase" class="w-6 h-6 text-orange-500 mb-2 group-hover:scale-110 transition-transform" %}
                 <span class="text-sm font-medium text-gray-700 group-hover:text-orange-700 transition-colors">Subcontractor Log</span>
             </a>
             <a href="{% url 'site_management:snag-list-list' company.pk %}"
                class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-red-200 hover:border-red-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                {% heroicon_outline "exclamation-circle" class="w-6 h-6 text-red-500 mb-2
-                group-hover:scale-110 transition-transform" %}
+                {% heroicon_outline "exclamation-circle" class="w-6 h-6 text-red-500 mb-2 group-hover:scale-110 transition-transform" %}
                 <span class="text-sm font-medium text-gray-700 group-hover:text-red-700 transition-colors">Snag List</span>
             </a>
             <a href="{% url 'site_management:progress-tracker-list' company.pk %}"
                class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-cyan-200 hover:border-cyan-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                {% heroicon_outline "chart-pie" class="w-6 h-6 text-cyan-500 mb-2
-                group-hover:scale-110 transition-transform" %}
+                {% heroicon_outline "chart-pie" class="w-6 h-6 text-cyan-500 mb-2 group-hover:scale-110 transition-transform" %}
                 <span class="text-sm font-medium text-gray-700 group-hover:text-cyan-700 transition-colors">Progress Tracker</span>
             </a>
             <a href="{% url 'site_management:delay-log-list' company.pk %}"
                class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-yellow-200 hover:border-yellow-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                {% heroicon_outline "clock" class="w-6 h-6 text-yellow-500 mb-2
-                group-hover:scale-110 transition-transform" %}
+                {% heroicon_outline "clock" class="w-6 h-6 text-yellow-500 mb-2 group-hover:scale-110 transition-transform" %}
                 <span class="text-sm font-medium text-gray-700 group-hover:text-yellow-700 transition-colors">Delays Log</span>
             </a>
             <a href="{% url 'site_management:photo-log-list' company.pk %}"
                class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-pink-200 hover:border-pink-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                {% heroicon_outline "camera" class="w-6 h-6 text-pink-500 mb-2
-                group-hover:scale-110 transition-transform" %}
+                {% heroicon_outline "camera" class="w-6 h-6 text-pink-500 mb-2 group-hover:scale-110 transition-transform" %}
                 <span class="text-sm font-medium text-gray-700 group-hover:text-pink-700 transition-colors">Photo Log</span>
             </a>
             <a href="{% url 'site_management:procurement-tracker-list' company.pk %}"
                class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-indigo-200 hover:border-indigo-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                {% heroicon_outline "shopping-cart" class="w-6 h-6 text-indigo-500 mb-2
-                group-hover:scale-110 transition-transform" %}
+                {% heroicon_outline "shopping-cart" class="w-6 h-6 text-indigo-500 mb-2 group-hover:scale-110 transition-transform" %}
                 <span class="text-sm font-medium text-gray-700 group-hover:text-indigo-700 transition-colors">Procurement Tracker</span>
             </a>
             <a href="{% url 'site_management:delivery-tracker-list' company.pk %}"
                class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-green-200 hover:border-green-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                {% heroicon_outline "truck" class="w-6 h-6 text-green-500 mb-2
-                group-hover:scale-110 transition-transform" %}
+                {% heroicon_outline "truck" class="w-6 h-6 text-green-500 mb-2 group-hover:scale-110 transition-transform" %}
                 <span class="text-sm font-medium text-gray-700 group-hover:text-green-700 transition-colors">Delivery Tracker</span>
             </a>
             <a href="{% url 'site_management:plant-equipment-list' company.pk %}"
                class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                {% heroicon_outline "cog-6-tooth" class="w-6 h-6 text-slate-500 mb-2
-                group-hover:scale-110 transition-transform" %}
+                {% heroicon_outline "cog-6-tooth" class="w-6 h-6 text-slate-500 mb-2 group-hover:scale-110 transition-transform" %}
                 <span class="text-sm font-medium text-gray-700 group-hover:text-slate-700 transition-colors">Plant & Equipment</span>
             </a>
             <a href="{% url 'site_management:quality-control-list' company.pk %}"
                class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-teal-200 hover:border-teal-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                {% heroicon_outline "shield-check" class="w-6 h-6 text-teal-500 mb-2
-                group-hover:scale-110 transition-transform" %}
+                {% heroicon_outline "shield-check" class="w-6 h-6 text-teal-500 mb-2 group-hover:scale-110 transition-transform" %}
                 <span class="text-sm font-medium text-gray-700 group-hover:text-teal-700 transition-colors">Quality Control</span>
             </a>
             <a href="{% url 'site_management:labour-log-list' company.pk %}"
                class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-violet-200 hover:border-violet-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                {% heroicon_outline "user-group" class="w-6 h-6 text-violet-500 mb-2
-                group-hover:scale-110 transition-transform" %}
+                {% heroicon_outline "user-group" class="w-6 h-6 text-violet-500 mb-2 group-hover:scale-110 transition-transform" %}
                 <span class="text-sm font-medium text-gray-700 group-hover:text-violet-700 transition-colors">Labour Log</span>
             </a>
             <a href="{% url 'site_management:offsite-log-list' company.pk %}"
                class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-lime-200 hover:border-lime-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                {% heroicon_outline "arrow-right-on-rectangle" class="w-6 h-6
-                text-lime-500 mb-2 group-hover:scale-110 transition-transform" %}
+                {% heroicon_outline "arrow-right-on-rectangle" class="w-6 h-6 text-lime-500 mb-2 group-hover:scale-110 transition-transform" %}
                 <span class="text-sm font-medium text-gray-700 group-hover:text-lime-700 transition-colors">Off-Site Log</span>
             </a>
             <a href="{% url 'site_management:safety-observation-list' company.pk %}"
                class="group flex flex-col items-center justify-center px-4 py-4 bg-white rounded-xl border border-red-200 hover:border-red-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                {% heroicon_outline "shield-exclamation" class="w-6 h-6 text-red-500 mb-2
-                group-hover:scale-110 transition-transform" %}
+                {% heroicon_outline "shield-exclamation" class="w-6 h-6 text-red-500 mb-2 group-hover:scale-110 transition-transform" %}
                 <span class="text-sm font-medium text-gray-700 group-hover:text-red-700 transition-colors">Safety Observations</span>
             </a>
         </div>
@@ -469,8 +438,7 @@
         <div class="flex justify-between items-center">
             <a href="{% url 'project:company-dashboard' %}"
                class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %} Back to
-                Business Dashboard
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1.5" %} Back to Business Dashboard
             </a>
         </div>
     </div>

@@ -45,6 +45,12 @@ from .project_roles_models import ProjectRole, Role
 from .risk_models import Risk, RiskStatus
 from .signatories_models import Signatories
 
+# Profitability Management Submodule
+from ..profitability.journal.models import JournalEntry
+from ..profitability.labour.models import LabourCostTracker
+from ..profitability.overheads.models import OverheadCostTracker
+from ..profitability.subcontractor.models import SubcontractorCostTracker
+
 __all__ = [
     "AdministrativeCompliance",
     "AdministrativeComplianceDialog",
@@ -83,4 +89,8 @@ __all__ = [
     "PlantEntity",
     "SubcontractorEntity",
     "OverheadEntity",
+    "JournalEntry",
+    "LabourCostTracker",
+    "OverheadCostTracker",
+    "SubcontractorCostTracker",
 ]
