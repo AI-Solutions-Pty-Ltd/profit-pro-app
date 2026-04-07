@@ -3,6 +3,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 
+from django.views.generic import TemplateView
+
 from app.Project.projects.projects_models import Project
 
 from .utils import (
@@ -36,6 +38,19 @@ class ProfitabilityMixin(LoginRequiredMixin):
         kwargs = super().get_form_kwargs()
         kwargs["project"] = self.project
         return kwargs
+
+
+class ComingSoonView(ProfitabilityMixin, TemplateView):
+    """
+    Placeholder view for features that are still in development.
+    """
+
+    template_name = "profitability/coming_soon.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["feature_name"] = self.kwargs.get("feature_name", "Feature")
+        return context
 
 
 class ImportLogsView(ProfitabilityMixin, View):
