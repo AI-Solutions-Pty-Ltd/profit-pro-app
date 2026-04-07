@@ -2,6 +2,7 @@ from django import forms
 from app.Project.models import (
     JournalEntry, 
     LabourCostTracker, 
+    MaterialCostTracker,
     OverheadCostTracker, 
     SubcontractorCostTracker
 )
@@ -69,3 +70,17 @@ class OverheadCostTrackerForm(ProfitabilityBaseForm):
         super().__init__(*args, **kwargs)
         if project:
             self.fields['overhead_entity'].queryset = project.overheadentity_entities.all()
+
+class MaterialCostTrackerForm(ProfitabilityBaseForm):
+    class Meta:
+        model = MaterialCostTracker
+        fields = ['material_entity', 'date', 'invoice_number', 'quantity', 'rate']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        project = kwargs.pop('project', None)
+        super().__init__(*args, **kwargs)
+        if project:
+            self.fields['material_entity'].queryset = project.materialentity_entities.all()
