@@ -192,6 +192,7 @@
                         {% heroicon_outline "cube" class="mr-2 w-4 h-4 text-cyan-500" %}
                         <span class="text-sm font-medium text-cyan-700">Materials Cost Tracker</span>
                     </div>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Soon</span>
                 </a>
                 <a href="{% url 'project:profitability-subcontractor-list' company.pk %}"
                    class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-green-200 transition-colors bg-white/70 hover:bg-green-50 group/btn">
@@ -228,6 +229,7 @@
                         {% heroicon_outline "cog-6-tooth" class="mr-2 w-4 h-4 text-indigo-500" %}
                         <span class="text-sm font-medium text-indigo-700">Setup Entities</span>
                     </div>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Soon</span>
                 </a>
             </div>
         </div>
@@ -445,11 +447,6 @@
                 {% heroicon_outline "shield-exclamation" class="mb-2 w-6 h-6 text-red-500 transition-transform group-hover:scale-110" %}
                 <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-red-700">Safety Observations</span>
             </a>
-            <a href="{% url 'site_management:overhead-log-list' company.pk %}"
-               class="flex flex-col justify-center items-center px-4 py-4 bg-white rounded-xl border border-amber-200 transition-all duration-200 group hover:border-amber-300 hover:shadow-md hover:-translate-y-0.5">
-                {% heroicon_outline "banknotes" class="mb-2 w-6 h-6 text-amber-500 transition-transform group-hover:scale-110" %}
-                <span class="text-sm font-medium text-gray-700 transition-colors group-hover:text-amber-700">Overhead Log</span>
-            </a>
         </div>
     </div>
     <!-- Footer -->
@@ -457,7 +454,8 @@
         <div class="flex justify-between items-center">
             <a href="{% url 'project:company-dashboard' %}"
                class="inline-flex items-center text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600">
-                {% heroicon_outline "chevron-left" class="mr-1.5 w-4 h-4" %} Back to Business Dashboard
+                {% heroicon_outline "chevron-left" class="mr-1 w-4 h-4" %} Back to
+                Business Dashboard
             </a>
         </div>
     </div>
