@@ -46,6 +46,11 @@
                     {% heroicon_outline "briefcase" class="w-4 h-4 inline-block mr-1" %}
                     Subcontractors
                 </a>
+                <a href="{% url 'project:profitability-plant-list' project.pk %}" 
+                   class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'plant' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                    {% heroicon_outline "truck" class="w-4 h-4 inline-block mr-1" %}
+                    Plant Equipment
+                </a>
                 <a href="{% url 'project:profitability-labour-list' project.pk %}" 
                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'labour' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
                     {% heroicon_outline "user-group" class="w-4 h-4 inline-block mr-1" %}

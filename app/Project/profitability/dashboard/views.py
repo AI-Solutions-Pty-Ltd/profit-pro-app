@@ -45,12 +45,19 @@ class ProfitabilityDashboardView(LoginRequiredMixin, DetailView):
             )["total"]
             or 0
         )
-        context["total_material_cost"] = (
+        material_logs_cost = (
             project.material_cost_logs.aggregate(
                 total=Sum(F("quantity") * F("rate"))
             )["total"]
             or 0
         )
+        plant_logs_cost = (
+            project.plant_cost_logs.aggregate(
+                total=Sum(F("usage_hours") * F("hourly_rate"))
+            )["total"]
+            or 0
+        )
+        context["total_material_cost"] = material_logs_cost + plant_logs_cost
 
         context["total_project_expenditure"] = (
             context["total_journal_amount"]

@@ -22,6 +22,8 @@
                     {% heroicon_outline "home" size="24" class="text-white" %}
                 {% elif "material" in request.path %}
                     {% heroicon_outline "cube" size="24" class="text-white" %}
+                {% elif "plant" in request.path %}
+                    {% heroicon_outline "truck" size="24" class="text-white" %}
                 {% else %}
                     {% heroicon_outline "calculator" size="24" class="text-white" %}
                 {% endif %}
@@ -34,6 +36,7 @@
                     {% elif "labour" in request.path %}Labour Record
                     {% elif "overhead" in request.path %}Overhead Record
                     {% elif "material" in request.path %}Material Record
+                    {% elif "plant" in request.path %}Plant Equipment Record
                     {% endif %}
                 </h1>
                 <p class="text-sm text-gray-600 mt-0.5">{{ project.name }}</p>

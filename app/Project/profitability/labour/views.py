@@ -36,7 +36,7 @@ class LabourCostTrackerUpdateView(ProfitabilityMixin, UpdateView):
 
 class LabourCostTrackerDeleteView(ProfitabilityMixin, DeleteView):
     model = LabourCostTracker
-    template_name = "profitability/labour/confirm_delete.html"
+    template_name = "profitability/confirm_delete.html"
 
     def get_success_url(self):
         return reverse(
