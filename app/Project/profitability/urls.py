@@ -3,6 +3,7 @@ from django.urls import path
 from .dashboard import views as dashboard_views
 from .journal import views as journal_views
 from .labour import views as labour_views
+from .materials import views as material_views
 from .overheads import views as overhead_views
 from .subcontractor import views as subcontractor_views
 from .views import ComingSoonView, ImportLogsView
@@ -44,6 +45,27 @@ urlpatterns = [
         "<int:project_pk>/profitability/journal/<int:pk>/delete/",
         journal_views.JournalEntryDeleteView.as_view(),
         name="profitability-journal-delete",
+    ),
+    # Material Tracker
+    path(
+        "<int:project_pk>/profitability/material/",
+        material_views.MaterialCostTrackerListView.as_view(),
+        name="profitability-material-list",
+    ),
+    path(
+        "<int:project_pk>/profitability/material/create/",
+        material_views.MaterialCostTrackerCreateView.as_view(),
+        name="profitability-material-create",
+    ),
+    path(
+        "<int:project_pk>/profitability/material/<int:pk>/update/",
+        material_views.MaterialCostTrackerUpdateView.as_view(),
+        name="profitability-material-update",
+    ),
+    path(
+        "<int:project_pk>/profitability/material/<int:pk>/delete/",
+        material_views.MaterialCostTrackerDeleteView.as_view(),
+        name="profitability-material-delete",
     ),
     # Subcontractor Tracker
     path(
