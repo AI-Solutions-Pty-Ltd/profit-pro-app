@@ -185,18 +185,25 @@
                         <span class="text-sm font-medium text-emerald-700">Journal Entries</span>
                     </div>
                 </a>
-                <a href="#" class="flex justify-between items-center px-3 py-2.5 w-full bg-gray-50 rounded-lg border border-gray-200 opacity-60 cursor-not-allowed" data-tip="Coming Soon">
+                <a href="{% url 'project:profitability-material-list' company.pk %}" 
+                   class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-cyan-200 transition-colors bg-white/70 hover:bg-cyan-50 group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "cube" class="mr-2 w-4 h-4 text-gray-400" %}
-                        <span class="text-sm font-medium text-gray-500">Materials Cost Tracker</span>
+                        {% heroicon_outline "cube" class="mr-2 w-4 h-4 text-cyan-500" %}
+                        <span class="text-sm font-medium text-cyan-700">Materials Cost Tracker</span>
                     </div>
-                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Soon</span>
                 </a>
                 <a href="{% url 'project:profitability-subcontractor-list' company.pk %}"
                    class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-green-200 transition-colors bg-white/70 hover:bg-green-50 group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "briefcase" class="mr-2 w-4 h-4 text-green-500" %}
                         <span class="text-sm font-medium text-green-700">Subcontractor Cost Tracker</span>
+                    </div>
+                </a>
+                <a href="{% url 'project:profitability-plant-list' company.pk %}"
+                   class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-blue-200 transition-colors bg-white/70 hover:bg-blue-50 group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "truck" class="mr-2 w-4 h-4 text-blue-500" %}
+                        <span class="text-sm font-medium text-blue-700">Plant Cost Tracker</span>
                     </div>
                 </a>
                 <a href="{% url 'project:profitability-labour-list' company.pk %}"
@@ -213,12 +220,13 @@
                         <span class="text-sm font-medium text-orange-700">Overheads Cost Tracker</span>
                     </div>
                 </a>
-                <a href="#" class="flex justify-between items-center px-3 py-2.5 w-full bg-gray-50 rounded-lg border border-gray-200 opacity-60 cursor-not-allowed" data-tip="Coming Soon">
+                  <!-- Setup Entities (Master Definitions) -->
+                <a href="{% url 'project:entity-labour-list' company.pk %}"
+                   class="flex justify-between items-center px-3 py-2.5 w-full bg-indigo-50 rounded-lg border border-indigo-200 transition-colors hover:bg-indigo-100 group/btn">
                     <div class="flex items-center">
-                        {% heroicon_outline "adjustments-horizontal" class="mr-2 w-4 h-4 text-gray-400" %}
-                        <span class="text-sm font-medium text-gray-500">Baseline Assumptions</span>
+                        {% heroicon_outline "cog-6-tooth" class="mr-2 w-4 h-4 text-indigo-500" %}
+                        <span class="text-sm font-medium text-indigo-700">Setup Entities</span>
                     </div>
-                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Soon</span>
                 </a>
             </div>
         </div>
@@ -269,6 +277,8 @@
                         <span class="text-sm font-medium text-amber-700">Progress Risk Report</span>
                     </div>
                 </a>
+                <a href="#"
+                   class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-cyan-200 transition-colors bg-white/70 hover:bg-cyan-50 group/btn">
                 <a href="{% url 'estimator:trade_codes' project_pk=company.pk %}"
                    class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-cyan-200 transition-colors bg-white/70 hover:bg-cyan-50 group/btn">
                     <div class="flex items-center">
