@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 pb-12">
+    <!-- Submodule Header -->
+    <div class="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div class="px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-indigo-600 p-2 rounded-lg">
+                        {% heroicon_outline "chart-pie" class="w-6 h-6 text-white" %}
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">Profitability Management</h1>
+                        <p class="text-sm text-gray-500">{{ project.name }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <a href="{% url 'project:profitability-dashboard' project.pk %}" 
+                       class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
+                        {% heroicon_outline "home" class="w-4 h-4 mr-2" %}
+                        Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation Tabs -->
+        <div class="px-4 sm:px-6 lg:px-8">
+            <nav class="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
+                {% with current_url=request.resolver_match.url_name %}
+                <a href="{% url 'project:profitability-coming-soon' project.pk 'Journal Entries' %}" 
+                   class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'journal' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                    {% heroicon_outline "book-open" class="w-4 h-4 inline-block mr-1" %}
+                    Journal Entries
+                </a>
+                <a href="{% url 'project:profitability-coming-soon' project.pk 'Materials' %}" 
+                   class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'material' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                    {% heroicon_outline "cube" class="w-4 h-4 inline-block mr-1" %}
+                    Materials
+                </a>
+                <a href="{% url 'project:profitability-subcontractor-list' project.pk %}" 
+                   class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'subcontractor' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                    {% heroicon_outline "briefcase" class="w-4 h-4 inline-block mr-1" %}
+                    Subcontractors
+                </a>
+                <a href="{% url 'project:profitability-labour-list' project.pk %}" 
+                   class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'labour' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                    {% heroicon_outline "user-group" class="w-4 h-4 inline-block mr-1" %}
+                    Labour
+                </a>
+                <a href="{% url 'project:profitability-overhead-list' project.pk %}" 
+                   class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'overhead' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                    {% heroicon_outline "home" class="w-4 h-4 inline-block mr-1" %}
+                    Overheads
+                </a>
+                <a href="{% url 'project:profitability-coming-soon' project.pk 'Baseline' %}" 
+                   class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'baseline' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                    {% heroicon_outline "calculator" class="w-4 h-4 inline-block mr-1" %}
+                    Baseline
+                </a>
+                {% endwith %}
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="px-4 sm:px-6 lg:px-8 py-8">
+        {% block profitability_content %}
+        {% endblock profitability_content %}
+    </div>
+</div>
+{% endblock content %}
