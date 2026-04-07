@@ -4,6 +4,14 @@ from app.core.Utilities.models import BaseModel
 from app.Project.projects.projects_models import Project
 
 
+def material_invoice_upload_path(instance, filename):
+    """
+    STUB: Kept for migration compatibility (see migration 0074).
+    The field was moved to MaterialEntity in migration 0075.
+    """
+    return f"profitability/materials/invoices/{instance.project.pk}/{filename}"
+
+
 class MaterialCostTracker(BaseModel):
     """
     Material cost tracking log for monitoring project expenditures.
