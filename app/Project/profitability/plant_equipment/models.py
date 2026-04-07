@@ -1,11 +1,14 @@
 from django.db import models
+
 from app.core.Utilities.models import BaseModel
 from app.Project.projects.projects_models import Project
+
 
 class PlantCostTracker(BaseModel):
     """
     Plant and equipment cost tracking log for monitoring project expenditures.
     """
+
     project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,

@@ -2,15 +2,15 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.views import View
-
 from django.views.generic import TemplateView
 
 from app.Project.projects.projects_models import Project
 
 from .utils import (
+    get_project_profitability_metrics,
     import_labour_logs_to_profitability,
-    import_subcontractor_logs_to_profitability,
     import_material_logs_to_profitability,
+    import_subcontractor_logs_to_profitability,
 )
 
 
@@ -29,10 +29,18 @@ class ProfitabilityMixin(LoginRequiredMixin):
     def get_context_data(self, **kwargs) -> dict:
         context = super().get_context_data(**kwargs)
         context["project"] = self.project
+
+        # Add KVI project-level metrics
+        metrics = get_project_profitability_metrics(self.project)
+        context["kvi_actual_profit"] = metrics["actual_profit"]
+        context["kvi_actual_margin"] = metrics["actual_margin"]
+        context["kvi_target_margin"] = metrics["target_margin"]
+
         return context
 
     def form_valid(self, form):
         from django.views.generic.edit import DeleteView
+
         if not isinstance(self, DeleteView):
             form.instance.project = self.project
         return super().form_valid(form)
@@ -40,6 +48,7 @@ class ProfitabilityMixin(LoginRequiredMixin):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         from django.views.generic.edit import DeleteView
+
         if not isinstance(self, DeleteView):
             kwargs["project"] = self.project
         return kwargs
@@ -93,6 +102,7 @@ class ImportLogsView(ProfitabilityMixin, View):
             )
         elif import_type == "plant":
             from .utils import import_plant_logs_to_profitability
+
             count = import_plant_logs_to_profitability(self.project)
             messages.success(
                 request, f"Successfully imported {count} plant log entries."

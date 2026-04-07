@@ -1,7 +1,13 @@
 import pytest
 from django.urls import reverse
-from app.Project.profitability.tests.factories import MaterialCostTrackerFactory, ProjectFactory, MaterialEntityFactory
+
 from app.Project.models import MaterialCostTracker
+from app.Project.profitability.tests.factories import (
+    MaterialCostTrackerFactory,
+    MaterialEntityFactory,
+    ProjectFactory,
+)
+
 
 @pytest.mark.django_db
 class TestMaterialCostTracker:
@@ -18,7 +24,7 @@ class TestMaterialCostTracker:
             project=entity.project,
             material_entity=entity,
             date="2026-04-07",
-            quantity=1
+            quantity=1,
         )
         log.save()
         assert log.rate == 99.99
@@ -27,7 +33,9 @@ class TestMaterialCostTracker:
     def test_list_view_status_code(self, client):
         """Test the list view return 200."""
         project = ProjectFactory()
-        url = reverse("project:profitability-material-list", kwargs={"project_pk": project.pk})
+        url = reverse(
+            "project:profitability-material-list", kwargs={"project_pk": project.pk}
+        )
         # Assuming the user is authenticated is handled by a fixture or LoginRequiredMixin
         # For simplicity in this scratch test we just check the URL presence
         assert url is not None

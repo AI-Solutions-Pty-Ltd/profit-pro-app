@@ -46,9 +46,9 @@ class ProfitabilityDashboardView(LoginRequiredMixin, DetailView):
             or 0
         )
         material_logs_cost = (
-            project.material_cost_logs.aggregate(
-                total=Sum(F("quantity") * F("rate"))
-            )["total"]
+            project.material_cost_logs.aggregate(total=Sum(F("quantity") * F("rate")))[
+                "total"
+            ]
             or 0
         )
         plant_logs_cost = (
@@ -71,46 +71,54 @@ class ProfitabilityDashboardView(LoginRequiredMixin, DetailView):
         # In a real scenario, these would come from the BaselineAssumption model
         # We'll use the total actual cost as a base for mock revenue to keep the UI sensible
         from decimal import Decimal
-        
+
         if context["total_project_expenditure"] > 0:
             planned_total = context["total_project_expenditure"] * Decimal("1.1")
         else:
             planned_total = Decimal("100000.00")
-        
-        context['baseline'] = {
-            'planned_revenue': planned_total * Decimal("1.25"),
-            'planned_labour_cost': planned_total * Decimal("0.4"),
-            'planned_material_cost': planned_total * Decimal("0.3"),
-            'planned_subcontractor_cost': planned_total * Decimal("0.2"),
-            'planned_overhead_cost': planned_total * Decimal("0.1"),
-            'target_margin_percentage': 20.0,
-            'total_planned_cost': planned_total,
-            'planned_profit': planned_total * Decimal("0.25"),
+
+        context["baseline"] = {
+            "planned_revenue": planned_total * Decimal("1.25"),
+            "planned_labour_cost": planned_total * Decimal("0.4"),
+            "planned_material_cost": planned_total * Decimal("0.3"),
+            "planned_subcontractor_cost": planned_total * Decimal("0.2"),
+            "planned_overhead_cost": planned_total * Decimal("0.1"),
+            "target_margin_percentage": 20.0,
+            "total_planned_cost": planned_total,
+            "planned_profit": planned_total * Decimal("0.25"),
         }
 
         # Actuals structuring
         total_actual_cost = context["total_project_expenditure"]
-        context['actuals'] = {
-            'labour': context["total_labour_cost"],
-            'material': context["total_material_cost"],
-            'subcontractor': context["total_subcontractor_cost"],
-            'overhead': context["total_overhead_cost"],
-            'total_cost': total_actual_cost,
+        context["actuals"] = {
+            "labour": context["total_labour_cost"],
+            "material": context["total_material_cost"],
+            "subcontractor": context["total_subcontractor_cost"],
+            "overhead": context["total_overhead_cost"],
+            "total_cost": total_actual_cost,
         }
 
         # Variance Analysis
-        context['variance'] = {
-            'labour': context['baseline']['planned_labour_cost'] - context['actuals']['labour'],
-            'material': context['baseline']['planned_material_cost'] - context['actuals']['material'],
-            'subcontractor': context['baseline']['planned_subcontractor_cost'] - context['actuals']['subcontractor'],
-            'overhead': context['baseline']['planned_overhead_cost'] - context['actuals']['overhead'],
-            'total_cost': context['baseline']['total_planned_cost'] - total_actual_cost,
+        context["variance"] = {
+            "labour": context["baseline"]["planned_labour_cost"]
+            - context["actuals"]["labour"],
+            "material": context["baseline"]["planned_material_cost"]
+            - context["actuals"]["material"],
+            "subcontractor": context["baseline"]["planned_subcontractor_cost"]
+            - context["actuals"]["subcontractor"],
+            "overhead": context["baseline"]["planned_overhead_cost"]
+            - context["actuals"]["overhead"],
+            "total_cost": context["baseline"]["total_planned_cost"] - total_actual_cost,
         }
-        
-        context['actual_profit'] = context['baseline']['planned_revenue'] - total_actual_cost
-        if context['baseline']['planned_revenue'] > 0:
-            context['actual_margin'] = (context['actual_profit'] / context['baseline']['planned_revenue']) * 100
+
+        context["actual_profit"] = (
+            context["baseline"]["planned_revenue"] - total_actual_cost
+        )
+        if context["baseline"]["planned_revenue"] > 0:
+            context["actual_margin"] = (
+                context["actual_profit"] / context["baseline"]["planned_revenue"]
+            ) * 100
         else:
-            context['actual_margin'] = 0
+            context["actual_margin"] = 0
 
         return context

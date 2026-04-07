@@ -1,4 +1,6 @@
+from decimal import Decimal
 from django.db import transaction
+from django.db.models import F, Sum
 
 from app.Project.models import LabourCostTracker, SubcontractorCostTracker
 from app.SiteManagement.models import LabourLog, SubcontractorLog
@@ -70,6 +72,7 @@ def import_labour_logs_to_profitability(project):
                 count += 1
     return count
 
+
 def import_material_logs_to_profitability(project):
     """
     Import material site logs into the profitability cost tracker.
@@ -83,7 +86,9 @@ def import_material_logs_to_profitability(project):
     with transaction.atomic():
         for log in logs:
             exists = MaterialCostTracker.objects.filter(
-                project=project, material_entity=log.material_entity, date=log.date_received
+                project=project,
+                material_entity=log.material_entity,
+                date=log.date_received,
             ).exists()
 
             if not exists:
@@ -92,11 +97,17 @@ def import_material_logs_to_profitability(project):
                     material_entity=log.material_entity,
                     date=log.date_received,
                     quantity=log.quantity,
-                    invoice_number=log.invoice_number or (log.material_entity.invoice_number if log.material_entity else ""),
+                    invoice_number=log.invoice_number
+                    or (
+                        log.material_entity.invoice_number
+                        if log.material_entity
+                        else ""
+                    ),
                     rate=log.material_entity.rate if log.material_entity else 0,
                 )
                 count += 1
     return count
+
 
 def import_plant_logs_to_profitability(project):
     """
@@ -130,3 +141,79 @@ def import_plant_logs_to_profitability(project):
                 )
                 count += 1
     return count
+
+
+def get_project_profitability_metrics(project):
+    """
+    Calculate and return key profitability metrics for a project.
+    """
+    # Summary Costs
+    journal_total = project.journal_entries.aggregate(total=Sum("amount"))["total"] or 0
+    subcontractor_total = (
+        project.subcontractor_cost_logs.aggregate(
+            total=Sum(F("amount_of_days") * F("rate"))
+        )["total"]
+        or 0
+    )
+    labour_total = (
+        project.labour_cost_logs.aggregate(total=Sum(F("amount_of_days") * F("salary")))[
+            "total"
+        ]
+        or 0
+    )
+    overhead_total = (
+        project.overhead_cost_logs.aggregate(total=Sum(F("amount_of_days") * F("rate")))[
+            "total"
+        ]
+        or 0
+    )
+    material_total = (
+        project.material_cost_logs.aggregate(total=Sum(F("quantity") * F("rate")))[
+            "total"
+        ]
+        or 0
+    )
+    plant_total = (
+        project.plant_cost_logs.aggregate(
+            total=Sum(F("usage_hours") * F("hourly_rate"))
+        )["total"]
+        or 0
+    )
+
+    total_actual_cost = (
+        Decimal(journal_total)
+        + Decimal(subcontractor_total)
+        + Decimal(labour_total)
+        + Decimal(overhead_total)
+        + Decimal(material_total)
+        + Decimal(plant_total)
+    )
+
+    # Revenue / Baseline
+    # We use contract value as planned revenue, or fall back to dashboard logic
+    revenue = project.total_contract_value or Decimal("0.00")
+
+    # If revenue is 0, we can't calculate margin reasonably, so we use a fallback if needed
+    # for UI display purposes similar to the dashboard.
+    if revenue == 0:
+        if total_actual_cost > 0:
+            revenue = total_actual_cost * Decimal("1.25")
+        else:
+            revenue = Decimal("100000.00")
+
+    actual_profit = revenue - total_actual_cost
+    actual_margin = (actual_profit / revenue * 100) if revenue > 0 else 0
+
+    return {
+        "revenue": revenue,
+        "total_actual_cost": total_actual_cost,
+        "actual_profit": actual_profit,
+        "actual_margin": actual_margin,
+        "target_margin": 20.0,  # Default target
+        "costs": {
+            "labour": labour_total,
+            "material": material_total + plant_total,
+            "subcontractor": subcontractor_total,
+            "overhead": overhead_total,
+        },
+    }
