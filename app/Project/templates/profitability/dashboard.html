@@ -7,126 +7,148 @@
 {% block profitability_content %}
 <div class="space-y-6">
     <!-- Summary Header Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <!-- Revenue Card -->
-        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-indigo-500">
-            <div class="flex items-center justify-between">
+        <div class="p-6 bg-white rounded-xl border border-indigo-200 shadow-sm">
+            <div class="flex justify-between items-center">
                 <div>
-                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Planned Revenue</p>
-                    <h3 class="text-2xl font-bold text-gray-900 mt-1">${{ baseline.planned_revenue|floatformat:2 }}</h3>
+                    <p class="text-sm font-medium text-gray-500">Planned Revenue</p>
+                    <h3 class="mt-1 text-2xl font-bold text-gray-900" title="R{{ baseline.planned_revenue|floatformat:2|intcomma }}">
+                        {% if baseline.planned_revenue > 100000 %}
+                            R{{ baseline.planned_revenue|intword }}
+                        {% else %}
+                            R{{ baseline.planned_revenue|floatformat:2|intcomma }}
+                        {% endif %}
+                    </h3>
                 </div>
-                <div class="bg-indigo-100 p-2 rounded-lg">
+                <div class="p-2 bg-indigo-100 rounded-lg">
                     {% heroicon_outline "banknotes" class="w-6 h-6 text-indigo-600" %}
                 </div>
             </div>
         </div>
 
         <!-- Total Actual Cost Card -->
-        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-red-500">
-            <div class="flex items-center justify-between">
+        <div class="p-6 bg-white rounded-xl border border-red-200 shadow-sm">
+            <div class="flex justify-between items-center">
                 <div>
-                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Actual Total Cost</p>
-                    <h3 class="text-2xl font-bold text-gray-900 mt-1">${{ actuals.total_cost|floatformat:2 }}</h3>
+                    <p class="text-sm font-medium text-gray-500">Actual Total Cost</p>
+                    <h3 class="mt-1 text-2xl font-bold text-gray-900" title="R{{ actuals.total_cost|floatformat:2|intcomma }}">
+                        {% if actuals.total_cost > 100000 %}
+                            R{{ actuals.total_cost|intword }}
+                        {% else %}
+                            R{{ actuals.total_cost|floatformat:2|intcomma }}
+                        {% endif %}
+                    </h3>
                 </div>
-                <div class="bg-red-100 p-2 rounded-lg">
+                <div class="p-2 bg-red-100 rounded-lg">
                     {% heroicon_outline "shopping-cart" class="w-6 h-6 text-red-600" %}
                 </div>
             </div>
-            <div class="mt-4 flex items-center text-xs">
-                <span class="font-medium {% if variance.total_cost >= 0 %}text-indigo-600{% else %}text-red-600{% endif %}">
-                    ${{ variance.total_cost|floatformat:2 }} 
+            <div class="flex items-center mt-4 text-xs">
+                <span class="font-medium {% if variance.total_cost >= 0 %}text-indigo-600{% else %}text-red-600{% endif %}" title="R{{ variance.total_cost|abs|floatformat:2|intcomma }}">
+                    {% if variance.total_cost|abs > 100000 %}
+                        R{{ variance.total_cost|abs|intword }}
+                    {% else %}
+                        R{{ variance.total_cost|abs|floatformat:2|intcomma }}
+                    {% endif %}
                     {% if variance.total_cost >= 0 %} under budget {% else %} over budget {% endif %}
                 </span>
             </div>
         </div>
 
         <!-- Actual Profit Card -->
-        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-indigo-500">
-            <div class="flex items-center justify-between">
+        <div class="p-6 bg-white rounded-xl border border-green-200 shadow-sm">
+            <div class="flex justify-between items-center">
                 <div>
-                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Actual Profit</p>
-                    <h3 class="text-2xl font-bold text-gray-900 mt-1">${{ actual_profit|floatformat:2 }}</h3>
+                    <p class="text-sm font-medium text-gray-500">Actual Profit</p>
+                    <h3 class="mt-1 text-2xl font-bold text-gray-900" title="R{{ actual_profit|floatformat:2|intcomma }}">
+                        {% if actual_profit > 100000 %}
+                            R{{ actual_profit|intword }}
+                        {% else %}
+                            R{{ actual_profit|floatformat:2|intcomma }}
+                        {% endif %}
+                    </h3>
                 </div>
-                <div class="bg-indigo-100 p-2 rounded-lg">
-                    {% heroicon_outline "calculator" class="w-6 h-6 text-indigo-600" %}
+                <div class="p-2 bg-green-100 rounded-lg">
+                    {% heroicon_outline "calculator" class="w-6 h-6 text-green-600" %}
                 </div>
             </div>
         </div>
 
         <!-- Profit Margin Card -->
-        <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-amber-500">
-            <div class="flex items-center justify-between">
+        <div class="p-6 bg-white rounded-xl border border-amber-200 shadow-sm">
+            <div class="flex justify-between items-center">
                 <div>
-                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Actual Margin</p>
-                    <h3 class="text-2xl font-bold text-gray-900 mt-1">{{ actual_margin|floatformat:1 }}%</h3>
+                    <p class="text-sm font-medium text-gray-500">Actual Margin</p>
+                    <h3 class="mt-1 text-2xl font-bold text-gray-900">{{ actual_margin|floatformat:1 }}%</h3>
                 </div>
-                <div class="bg-amber-100 p-2 rounded-lg">
+                <div class="p-2 bg-amber-100 rounded-lg">
                     {% heroicon_outline "arrow-trending-up" class="w-6 h-6 text-amber-600" %}
                 </div>
             </div>
-            <div class="mt-4 flex items-center text-xs">
+            <div class="flex items-center mt-4 text-xs">
                  <span class="text-gray-500">Target: {{ baseline.target_margin_percentage }}%</span>
             </div>
         </div>
     </div>
 
     <!-- Detail Breakdown -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <!-- Cost Breakdown Table (Actual vs Planned) -->
-        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <div class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm lg:col-span-2">
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
                 <h3 class="text-lg font-bold text-gray-900">Cost Baseline vs Actuals</h3>
             </div>
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Planned</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actual</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Variance</th>
+                        <th class="px-6 py-3 text-xs font-medium text-left text-gray-500">Category</th>
+                        <th class="px-6 py-3 text-xs font-medium text-right text-gray-500">Planned</th>
+                        <th class="px-6 py-3 text-xs font-medium text-right text-gray-500">Actual</th>
+                        <th class="px-6 py-3 text-xs font-medium text-right text-gray-500">Variance</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Labour</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">${{ baseline.planned_labour_cost|floatformat:2 }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">${{ actuals.labour|floatformat:2 }}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">Labour</td>
+                        <td class="px-6 py-4 text-sm text-right text-gray-500 whitespace-nowrap">R{{ baseline.planned_labour_cost|floatformat:2|intcomma }}</td>
+                        <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">R{{ actuals.labour|floatformat:2|intcomma }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium {% if variance.labour >= 0 %}text-indigo-600{% else %}text-red-600{% endif %}">
-                            ${{ variance.labour|floatformat:2 }}
+                            {% if variance.labour < 0 %}-{% endif %}R{{ variance.labour|abs|floatformat:2|intcomma }}
                         </td>
                     </tr>
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Materials & Plant</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">${{ baseline.planned_material_cost|floatformat:2 }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">${{ actuals.material|floatformat:2 }}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">Materials & Plant</td>
+                        <td class="px-6 py-4 text-sm text-right text-gray-500 whitespace-nowrap">R{{ baseline.planned_material_cost|floatformat:2|intcomma }}</td>
+                        <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">R{{ actuals.material|floatformat:2|intcomma }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium {% if variance.material >= 0 %}text-indigo-600{% else %}text-red-600{% endif %}">
-                            ${{ variance.material|floatformat:2 }}
+                            {% if variance.material < 0 %}-{% endif %}R{{ variance.material|abs|floatformat:2|intcomma }}
                         </td>
                     </tr>
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Subcontractors</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">${{ baseline.planned_subcontractor_cost|floatformat:2 }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">${{ actuals.subcontractor|floatformat:2 }}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">Subcontractors</td>
+                        <td class="px-6 py-4 text-sm text-right text-gray-500 whitespace-nowrap">R{{ baseline.planned_subcontractor_cost|floatformat:2|intcomma }}</td>
+                        <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">R{{ actuals.subcontractor|floatformat:2|intcomma }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium {% if variance.subcontractor >= 0 %}text-indigo-600{% else %}text-red-600{% endif %}">
-                            ${{ variance.subcontractor|floatformat:2 }}
+                            {% if variance.subcontractor < 0 %}-{% endif %}R{{ variance.subcontractor|abs|floatformat:2|intcomma }}
                         </td>
                     </tr>
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Overheads</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500">${{ baseline.planned_overhead_cost|floatformat:2 }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">${{ actuals.overhead|floatformat:2 }}</td>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">Overheads</td>
+                        <td class="px-6 py-4 text-sm text-right text-gray-500 whitespace-nowrap">R{{ baseline.planned_overhead_cost|floatformat:2|intcomma }}</td>
+                        <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">R{{ actuals.overhead|floatformat:2|intcomma }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium {% if variance.overhead >= 0 %}text-indigo-600{% else %}text-red-600{% endif %}">
-                            ${{ variance.overhead|floatformat:2 }}
+                            {% if variance.overhead < 0 %}-{% endif %}R{{ variance.overhead|abs|floatformat:2|intcomma }}
                         </td>
                     </tr>
                 </tbody>
                 <tfoot class="bg-gray-50">
                     <tr class="font-bold">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Total Project Cost</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">${{ baseline.total_planned_cost|floatformat:2 }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">${{ actuals.total_cost|floatformat:2 }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">Total Project Cost</td>
+                        <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">R{{ baseline.total_planned_cost|floatformat:2|intcomma }}</td>
+                        <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">R{{ actuals.total_cost|floatformat:2|intcomma }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-right {% if variance.total_cost >= 0 %}text-indigo-600{% else %}text-red-600{% endif %}">
-                            ${{ variance.total_cost|floatformat:2 }}
+                            {% if variance.total_cost < 0 %}-{% endif %}R{{ variance.total_cost|abs|floatformat:2|intcomma }}
                         </td>
                     </tr>
                 </tfoot>
@@ -134,30 +156,30 @@
         </div>
 
         <!-- Profitability Analysis Side Card -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col justify-between">
+        <div class="flex flex-col justify-between p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
             <div>
-                <h3 class="text-lg font-bold text-gray-900 mb-6">Profitability Analysis</h3>
+                <h3 class="mb-6 text-lg font-bold text-gray-900">Profitability Analysis</h3>
                 
                 <div class="space-y-4">
                     <div>
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="text-gray-500">Planned Profit</span>
-                            <span class="font-medium text-gray-900">${{ baseline.planned_profit|floatformat:2 }}</span>
+                        <div class="flex justify-between mb-1 text-sm">
+                            <span class="text-gray-600">Planned Profit</span>
+                            <span class="font-medium text-gray-900">R{{ baseline.planned_profit|floatformat:2|intcomma }}</span>
                         </div>
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="text-gray-500">Actual Profit</span>
-                            <span class="font-medium text-gray-900">${{ actual_profit|floatformat:2 }}</span>
+                        <div class="flex justify-between mb-1 text-sm">
+                            <span class="text-gray-600">Actual Profit</span>
+                            <span class="font-medium text-gray-900">R{{ actual_profit|floatformat:2|intcomma }}</span>
                         </div>
                     </div>
 
                     <div class="pt-4 border-t border-gray-100">
-                        <div class="flex justify-between text-sm mb-2">
-                             <span class="text-gray-500">Margin Variance</span>
+                        <div class="flex justify-between mb-2 text-sm">
+                             <span class="text-gray-600">Margin Variance</span>
                              <span class="font-bold {% if actual_margin >= baseline.target_margin_percentage %}text-indigo-600{% else %}text-red-600{% endif %}">
                                  {{ actual_margin|floatformat:1 }}% vs {{ baseline.target_margin_percentage }}%
                              </span>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="w-full h-2 bg-gray-200 rounded-full">
                             <div class="h-2 rounded-full {% if actual_margin >= baseline.target_margin_percentage %}bg-indigo-500{% else %}bg-red-500{% endif %}" 
                                  style="width: {{ actual_margin|default:0 }}%"></div>
                         </div>
@@ -166,18 +188,18 @@
             </div>
 
             <div class="mt-8">
-                <div class="grid grid-cols-1 gap-3">
+                {% comment %} <div class="grid grid-cols-1 gap-3">
                     <a href="{% url 'project:profitability-subcontractor-list' project.pk %}"
-                       class="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                        {% heroicon_outline "briefcase" class="w-4 h-4 mr-2 text-indigo-500" %}
+                       class="flex justify-center items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 transition-colors hover:bg-gray-50">
+                        {% heroicon_outline "briefcase" class="mr-2 w-4 h-4 text-indigo-500" %}
                         Manage Subcontractors
                     </a>
                     <a href="{% url 'project:profitability-labour-list' project.pk %}"
-                       class="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                        {% heroicon_outline "user-group" class="w-4 h-4 mr-2 text-indigo-500" %}
+                       class="flex justify-center items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 transition-colors hover:bg-gray-50">
+                        {% heroicon_outline "user-group" class="mr-2 w-4 h-4 text-indigo-500" %}
                         Manage Labour
                     </a>
-                </div>
+                </div> {% endcomment %}
             </div>
         </div>
     </div>

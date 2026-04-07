@@ -1,10 +1,12 @@
 import pytest
+
 from app.Project.profitability.tests.factories import (
     JournalEntryFactory,
-    SubcontractorCostTrackerFactory,
     LabourCostTrackerFactory,
     OverheadCostTrackerFactory,
+    SubcontractorCostTrackerFactory,
 )
+
 
 @pytest.mark.django_db
 class TestProfitabilityModels:

@@ -5,6 +5,8 @@
 {% block title %}Labour Cost Tracker - {{ project.name }}{% endblock %}
 
 {% block profitability_content %}
+{% include "profitability/partials/kvi_cards.html" %}
+
 <div class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm">
     <!-- List Header -->
     <div class="flex justify-between items-center px-6 py-4 bg-gray-50 border-b border-gray-200">
@@ -38,8 +40,8 @@
                     <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Labour / Worker</th>
                     <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">ID Reference</th>
                     <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Days</th>
-                    <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Salary / Rate</th>
-                    <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Total Cost</th>
+                    <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Rate</th>
+                    <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Amount Paid</th>
                     <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Actions</th>
                 </tr>
             </thead>
@@ -59,10 +61,14 @@
                         {{ log.amount_of_days|floatformat:1 }}
                     </td>
                     <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">
-                        ${{ log.salary|floatformat:2 }}
+                        R{{ log.salary|floatformat:2|intcomma }}
                     </td>
-                    <td class="px-6 py-4 text-sm font-bold text-right text-indigo-600 whitespace-nowrap">
-                        ${{ log.cost|floatformat:2 }}
+                    <td class="px-6 py-4 text-sm font-bold text-right text-indigo-600 whitespace-nowrap" title="R{{ log.cost|floatformat:2|intcomma }}">
+                        {% if log.cost > 100000 %}
+                            R{{ log.cost|intword }}
+                        {% else %}
+                            R{{ log.cost|floatformat:2|intcomma }}
+                        {% endif %}
                     </td>
                     <td class="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                         <div class="flex justify-end items-center space-x-3">
