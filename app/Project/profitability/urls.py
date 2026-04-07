@@ -6,6 +6,7 @@ from .labour import views as labour_views
 from .materials import views as material_views
 from .overheads import views as overhead_views
 from .subcontractor import views as subcontractor_views
+from .plant_equipment import views as plant_views
 from .views import ComingSoonView, ImportLogsView
 
 urlpatterns = [
@@ -129,5 +130,26 @@ urlpatterns = [
         "<int:project_pk>/profitability/overhead/<int:pk>/delete/",
         overhead_views.OverheadCostTrackerDeleteView.as_view(),
         name="profitability-overhead-delete",
+    ),
+    # Plant Equipment Tracker
+    path(
+        "<int:project_pk>/profitability/plant/",
+        plant_views.PlantCostTrackerListView.as_view(),
+        name="profitability-plant-list",
+    ),
+    path(
+        "<int:project_pk>/profitability/plant/create/",
+        plant_views.PlantCostTrackerCreateView.as_view(),
+        name="profitability-plant-create",
+    ),
+    path(
+        "<int:project_pk>/profitability/plant/<int:pk>/update/",
+        plant_views.PlantCostTrackerUpdateView.as_view(),
+        name="profitability-plant-update",
+    ),
+    path(
+        "<int:project_pk>/profitability/plant/<int:pk>/delete/",
+        plant_views.PlantCostTrackerDeleteView.as_view(),
+        name="profitability-plant-delete",
     ),
 ]

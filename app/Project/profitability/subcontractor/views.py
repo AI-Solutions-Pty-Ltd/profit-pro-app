@@ -38,7 +38,7 @@ class SubcontractorCostTrackerUpdateView(ProfitabilityMixin, UpdateView):
 
 class SubcontractorCostTrackerDeleteView(ProfitabilityMixin, DeleteView):
     model = SubcontractorCostTracker
-    template_name = "profitability/subcontractor/confirm_delete.html"
+    template_name = "profitability/confirm_delete.html"
 
     def get_success_url(self):
         return reverse(

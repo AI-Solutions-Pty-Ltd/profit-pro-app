@@ -69,3 +69,64 @@ def import_labour_logs_to_profitability(project):
                 )
                 count += 1
     return count
+
+def import_material_logs_to_profitability(project):
+    """
+    Import material site logs into the profitability cost tracker.
+    """
+    from app.Project.models import MaterialCostTracker
+    from app.SiteManagement.models import MaterialsLog
+
+    logs = MaterialsLog.objects.filter(project=project)
+    count = 0
+
+    with transaction.atomic():
+        for log in logs:
+            exists = MaterialCostTracker.objects.filter(
+                project=project, material_entity=log.material_entity, date=log.date_received
+            ).exists()
+
+            if not exists:
+                MaterialCostTracker.objects.create(
+                    project=project,
+                    material_entity=log.material_entity,
+                    date=log.date_received,
+                    quantity=log.quantity,
+                    invoice_number=log.invoice_number or (log.material_entity.invoice_number if log.material_entity else ""),
+                    rate=log.material_entity.rate if log.material_entity else 0,
+                )
+                count += 1
+    return count
+
+def import_plant_logs_to_profitability(project):
+    """
+    Import plant equipment site logs into the profitability cost tracker.
+    """
+    from app.Project.models import PlantCostTracker
+    from app.SiteManagement.models import PlantEquipment
+
+    # Only import logs that are linked to a master plant definition (PlantEntity)
+    logs = PlantEquipment.objects.filter(project=project, plant_entity__isnull=False)
+    count = 0
+
+    with transaction.atomic():
+        for log in logs:
+            exists = PlantCostTracker.objects.filter(
+                project=project, plant_entity=log.plant_entity, date=log.date
+            ).exists()
+
+            if not exists:
+                rate = log.plant_entity.rate if log.plant_entity else 0
+                # Fallback to hourly_rate if specifically defined on PlantType (optional)
+                if rate == 0 and log.plant_entity and log.plant_entity.plant_type:
+                    rate = log.plant_entity.plant_type.hourly_rate
+
+                PlantCostTracker.objects.create(
+                    project=project,
+                    plant_entity=log.plant_entity,
+                    date=log.date,
+                    usage_hours=log.usage_hours or 0,
+                    hourly_rate=rate,
+                )
+                count += 1
+    return count

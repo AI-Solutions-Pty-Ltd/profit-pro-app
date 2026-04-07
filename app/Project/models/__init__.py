@@ -49,9 +49,10 @@ from .signatories_models import Signatories
 # Profitability Management Submodule
 from ..profitability.journal.models import JournalEntry
 from ..profitability.labour.models import LabourCostTracker
-from ..profitability.materials.models import MaterialCostTracker
-from ..profitability.overheads.models import OverheadCostTracker
-from ..profitability.subcontractor.models import SubcontractorCostTracker
+from app.Project.profitability.materials.models import MaterialCostTracker
+from app.Project.profitability.overheads.models import OverheadCostTracker
+from app.Project.profitability.subcontractor.models import SubcontractorCostTracker
+from app.Project.profitability.plant_equipment.models import PlantCostTracker
 
 __all__ = [
     "AdministrativeCompliance",
@@ -97,4 +98,5 @@ __all__ = [
     "MaterialCostTracker",
     "OverheadCostTracker",
     "SubcontractorCostTracker",
+    "PlantCostTracker",
 ]

@@ -10,6 +10,7 @@ from app.Project.projects.projects_models import Project
 from .utils import (
     import_labour_logs_to_profitability,
     import_subcontractor_logs_to_profitability,
+    import_material_logs_to_profitability,
 )
 
 
@@ -31,12 +32,16 @@ class ProfitabilityMixin(LoginRequiredMixin):
         return context
 
     def form_valid(self, form):
-        form.instance.project = self.project
+        from django.views.generic.edit import DeleteView
+        if not isinstance(self, DeleteView):
+            form.instance.project = self.project
         return super().form_valid(form)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["project"] = self.project
+        from django.views.generic.edit import DeleteView
+        if not isinstance(self, DeleteView):
+            kwargs["project"] = self.project
         return kwargs
 
 
@@ -77,6 +82,23 @@ class ImportLogsView(ProfitabilityMixin, View):
             )
             return redirect(
                 "project:profitability-labour-list", project_pk=self.project.pk
+            )
+        elif import_type == "material":
+            count = import_material_logs_to_profitability(self.project)
+            messages.success(
+                request, f"Successfully imported {count} material log entries."
+            )
+            return redirect(
+                "project:profitability-material-list", project_pk=self.project.pk
+            )
+        elif import_type == "plant":
+            from .utils import import_plant_logs_to_profitability
+            count = import_plant_logs_to_profitability(self.project)
+            messages.success(
+                request, f"Successfully imported {count} plant log entries."
+            )
+            return redirect(
+                "project:profitability-plant-list", project_pk=self.project.pk
             )
 
         return redirect("project:profitability-dashboard", project_pk=self.project.pk)
