@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% block title %}
+    Delete Overhead Entry - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
+                <div class="flex items-center">
+                    {% heroicon_outline "exclamation-triangle" class="w-6 h-6 text-red-600 mr-3" %}
+                    <h1 class="text-xl font-bold text-red-900">Confirm Deletion</h1>
+                </div>
+            </div>
+            <div class="px-6 py-8">
+                <p class="text-gray-700 mb-6">
+                    Are you sure you want to delete the overhead log entry for <span class="font-bold">"{{ object.description }}"</span> on <span class="font-bold">{{ object.date }}</span>?
+                </p>
+                <div class="bg-gray-50 rounded-lg p-4 mb-8">
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li><span class="font-medium text-gray-900">Category:</span> {{ object.category }}</li>
+                        <li><span class="font-medium text-gray-900">Quantity:</span> {{ object.quantity }}</li>
+                        {% if object.remarks %}
+                            <li><span class="font-medium text-gray-900">Remarks:</span> {{ object.remarks }}</li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <form method="post" class="flex justify-end space-x-3">
+                    {% csrf_token %}
+                    <a href="{% url 'site_management:overhead-log-list' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        Keep Entry
+                    </a>
+                    <button type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                        {% heroicon_outline "trash" class="w-5 h-5 mr-2" %}
+                        Confirm Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

@@ -5,6 +5,7 @@ from app.SiteManagement.models import (
     EarlyWarning,
     LabourLog,
     Meeting,
+    OverheadDailyLog,
     SiteInstruction,
     SkillType,
 )
@@ -111,3 +112,11 @@ class SkillTypeAdmin(admin.ModelAdmin):
     list_display = ["project", "name", "hourly_rate"]
     list_filter = ["project"]
     search_fields = ["name"]
+
+
+@admin.register(OverheadDailyLog)
+class OverheadDailyLogAdmin(admin.ModelAdmin):
+    list_display = ["project", "date", "description", "category", "quantity"]
+    list_filter = ["project", "date", "category"]
+    search_fields = ["description", "remarks"]
+    readonly_fields = ["description", "category"]

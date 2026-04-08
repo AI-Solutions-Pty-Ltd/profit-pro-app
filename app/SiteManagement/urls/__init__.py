@@ -475,4 +475,25 @@ urlpatterns = [
         views.SafetyObservationDeleteView.as_view(),
         name="safety-observation-delete",
     ),
+    # Overhead Daily Log
+    path(
+        "project/<int:project_pk>/overhead-log/",
+        views.OverheadDailyLogListView.as_view(),
+        name="overhead-log-list",
+    ),
+    path(
+        "project/<int:project_pk>/overhead-log/create/",
+        views.OverheadDailyLogCreateView.as_view(),
+        name="overhead-log-create",
+    ),
+    path(
+        "project/<int:project_pk>/overhead-log/<int:pk>/update/",
+        views.OverheadDailyLogUpdateView.as_view(),
+        name="overhead-log-update",
+    ),
+    path(
+        "project/<int:project_pk>/overhead-log/<int:pk>/delete/",
+        views.OverheadDailyLogDeleteView.as_view(),
+        name="overhead-log-delete",
+    ),
 ]

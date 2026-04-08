@@ -384,6 +384,31 @@
             </div>
         </div>
     </div>
+    <!-- Row 6 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Overhead Daily Log -->
+        <div class="group relative bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-5 border border-amber-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+            <div class="flex items-center mb-4">
+                <div class="w-12 h-12 bg-amber-500 rounded-lg flex items-center justify-center mr-3">
+                    {% heroicon_outline "banknotes" class="w-6 h-6 text-white" %}
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-amber-900">Overhead Daily Log</h3>
+                    <p class="text-sm text-amber-600">Track Daily Overheads</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <a href="{% url 'site_management:overhead-log-list' project.pk %}"
+                   class="w-full flex items-center justify-between px-3 py-2.5 bg-white rounded-lg border border-amber-200 hover:bg-amber-50 transition-colors group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "clipboard-document-list" class="w-4 h-4 text-amber-500 mr-2" %}
+                        <span class="text-sm font-medium text-amber-700">View Overhead Log</span>
+                    </div>
+                    {% heroicon_outline "chevron-right" class="w-4 h-4 text-amber-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                </a>
+            </div>
+        </div>
+    </div>
     <!-- Footer -->
     <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
         <div class="flex justify-between items-center">
