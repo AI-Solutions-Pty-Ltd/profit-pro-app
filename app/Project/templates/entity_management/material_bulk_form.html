@@ -98,6 +98,23 @@
                                 </label>
                             </div>
                             <p class="mt-1 text-xs italic text-gray-500">Attach a copy of the invoice (PDF or Image)</p>
+                            
+                            <!-- Attachment Preview Container -->
+                            <div id="attachment-preview-container" class="hidden mt-4 duration-300 animate-in fade-in">
+                                <div class="inline-block relative group">
+                                    <div class="flex overflow-hidden justify-center items-center w-48 bg-gray-50 rounded-lg border border-gray-200 shadow-sm aspect-video">
+                                        <img id="image-preview" src="" alt="Invoice Preview" class="hidden object-cover w-full h-full">
+                                        <div id="pdf-preview" class="hidden flex-col items-center text-gray-400">
+                                            {% heroicon_outline "document-text" size="48" %}
+                                            <span class="mt-1 text-xs font-bold uppercase">PDF DOCUMENT</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" id="remove-attachment-btn"
+                                            class="absolute -top-2 -right-2 p-1 text-gray-400 bg-white rounded-full border border-gray-100 shadow-md transition-colors hover:text-red-500">
+                                        {% heroicon_outline "x-mark" size="16" %}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

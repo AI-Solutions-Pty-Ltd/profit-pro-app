@@ -55,6 +55,7 @@ class SubcontractorCostTrackerListView(ProfitabilityMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from decimal import Decimal
+
         from django.db.models import F, Sum
 
         # Entity-specific Total Cost
