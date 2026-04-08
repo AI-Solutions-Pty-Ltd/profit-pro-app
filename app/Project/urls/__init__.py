@@ -20,6 +20,7 @@ from .project_role_urls import urlpatterns as project_role_urls
 from .report_urls import urlpatterns as report_urls
 from .risk_urls import urlpatterns as risk_urls
 from .signatory_urls import urlpatterns as signatory_urls
+from .unit_urls import urlpatterns as unit_urls
 from .user_urls import urlpatterns as user_urls
 
 app_name = "project"
@@ -48,5 +49,6 @@ urlpatterns = [
     path("signatory/", include(signatory_urls)),
     path("user/", include(user_urls)),
     path("production/", include(production_urls)),
+    path("", include(unit_urls)),
     path("", include("app.Project.profitability.urls")),
 ]

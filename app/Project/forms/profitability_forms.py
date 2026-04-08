@@ -1,86 +1,104 @@
-from django import forms
-from app.Project.models import (
-    JournalEntry, 
-    LabourCostTracker, 
-    MaterialCostTracker,
-    OverheadCostTracker, 
-    SubcontractorCostTracker
-)
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Row, Column, Submit
+from django import forms
+
+from app.Project.models import (
+    JournalEntry,
+    LabourCostTracker,
+    MaterialCostTracker,
+    OverheadCostTracker,
+    SubcontractorCostTracker,
+)
+
 
 class ProfitabilityBaseForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_method = 'post'
-        # Tailwind classes are handled by crispy-tailwind if configured, 
+        self.helper.form_method = "post"
+        # Tailwind classes are handled by crispy-tailwind if configured,
         # but we can add specific ones here if needed.
+
 
 class JournalEntryForm(ProfitabilityBaseForm):
     def __init__(self, *args, **kwargs):
-        project = kwargs.pop('project', None)
+        # project = kwargs.pop('project', None)
         super().__init__(*args, **kwargs)
 
     class Meta:
         model = JournalEntry
-        fields = ['date', 'category', 'description', 'amount', 'transaction_type']
+        fields = ["date", "category", "description", "amount", "transaction_type"]
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
+            "date": forms.DateInput(attrs={"type": "date"}),
         }
+
 
 class LabourCostTrackerForm(ProfitabilityBaseForm):
     class Meta:
         model = LabourCostTracker
-        fields = ['labour_entity', 'date', 'amount_of_days', 'salary']
+        fields = ["labour_entity", "date", "amount_of_days", "salary"]
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
+            "date": forms.DateInput(attrs={"type": "date"}),
         }
-    
+
     def __init__(self, *args, **kwargs):
-        project = kwargs.pop('project', None)
+        project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
         if project:
-            self.fields['labour_entity'].queryset = project.labourentity_entities.all()
+            self.fields["labour_entity"].queryset = project.labourentity_entities.all()
+
 
 class SubcontractorCostTrackerForm(ProfitabilityBaseForm):
     class Meta:
         model = SubcontractorCostTracker
-        fields = ['subcontractor_entity', 'date', 'reference_no', 'amount_of_days', 'rate']
+        fields = [
+            "subcontractor_entity",
+            "date",
+            "reference_no",
+            "amount_of_days",
+            "rate",
+        ]
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
+            "date": forms.DateInput(attrs={"type": "date"}),
         }
 
     def __init__(self, *args, **kwargs):
-        project = kwargs.pop('project', None)
+        project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
         if project:
-            self.fields['subcontractor_entity'].queryset = project.subcontractorentity_entities.all()
+            self.fields[
+                "subcontractor_entity"
+            ].queryset = project.subcontractorentity_entities.all()
+
 
 class OverheadCostTrackerForm(ProfitabilityBaseForm):
     class Meta:
         model = OverheadCostTracker
-        fields = ['overhead_entity', 'date', 'amount_of_days', 'rate']
+        fields = ["overhead_entity", "date", "amount_of_days", "rate"]
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
+            "date": forms.DateInput(attrs={"type": "date"}),
         }
 
     def __init__(self, *args, **kwargs):
-        project = kwargs.pop('project', None)
+        project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
         if project:
-            self.fields['overhead_entity'].queryset = project.overheadentity_entities.all()
+            self.fields[
+                "overhead_entity"
+            ].queryset = project.overheadentity_entities.all()
+
 
 class MaterialCostTrackerForm(ProfitabilityBaseForm):
     class Meta:
         model = MaterialCostTracker
-        fields = ['material_entity', 'date', 'invoice_number', 'quantity', 'rate']
+        fields = ["material_entity", "date", "invoice_number", "quantity", "rate"]
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
+            "date": forms.DateInput(attrs={"type": "date"}),
         }
 
     def __init__(self, *args, **kwargs):
-        project = kwargs.pop('project', None)
+        project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
         if project:
-            self.fields['material_entity'].queryset = project.materialentity_entities.all()
+            self.fields[
+                "material_entity"
+            ].queryset = project.materialentity_entities.all()

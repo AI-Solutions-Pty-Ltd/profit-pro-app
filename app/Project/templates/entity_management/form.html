@@ -61,6 +61,33 @@
                                     {% if field.help_text %}
                                         <p class="mt-1 text-xs text-gray-500 italic">{{ field.help_text }}</p>
                                     {% endif %}
+
+                                    <!-- Attachment Preview Container -->
+                                    <div id="attachment-preview-container" class="{% if not field.value %}hidden{% endif %} mt-4 animate-in fade-in duration-300">
+                                        <div class="relative inline-block group">
+                                            <div class="overflow-hidden rounded-lg border border-gray-200 shadow-sm bg-gray-50 aspect-video w-48 flex items-center justify-center">
+                                                <img id="image-preview" src="{% if field.value and field.value.url and not field.value.url|lower|slice:'-3:' == 'pdf' %}{{ field.value.url }}{% endif %}" 
+                                                     alt="Invoice Preview" class="{% if not field.value or field.value.url|lower|slice:'-3:' == 'pdf' %}hidden{% endif %} object-cover w-full h-full">
+                                                <div id="pdf-preview" class="{% if not field.value or not field.value.url|lower|slice:'-3:' == 'pdf' %}hidden{% endif %} flex flex-col items-center text-gray-400">
+                                                    {% heroicon_outline "document-text" size="48" %}
+                                                    <span class="mt-1 text-xs font-bold uppercase">PDF DOCUMENT</span>
+                                                </div>
+                                            </div>
+                                            <button type="button" id="remove-attachment-btn"
+                                                    class="absolute -top-2 -right-2 p-1 bg-white rounded-full shadow-md text-gray-400 hover:text-red-500 border border-gray-100 transition-colors">
+                                                {% heroicon_outline "x-mark" size="16" %}
+                                            </button>
+                                        </div>
+                                        {% if field.value %}
+                                            <div class="mt-2">
+                                                <a href="{{ field.value.url }}" target="_blank" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center">
+                                                    {% heroicon_outline "arrow-top-right-on-square" size="14" class="mr-1" %}
+                                                    View Original Attachment
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
                                     {% if field.errors %}
                                         <div class="mt-1 text-xs font-medium text-red-600">{{ field.errors.0 }}</div>
                                     {% endif %}
@@ -106,20 +133,54 @@
 document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.querySelector('input[type="file"][name="invoice_attachment"]');
     const fileNameDisplay = document.querySelector('#file-name');
+    const previewContainer = document.querySelector('#attachment-preview-container');
+    const imagePreview = document.querySelector('#image-preview');
+    const pdfPreview = document.querySelector('#pdf-preview');
+    const removeBtn = document.querySelector('#remove-attachment-btn');
 
     if (fileInput && fileNameDisplay) {
         fileInput.addEventListener('change', function(e) {
-            const fileName = e.target.files[0] ? e.target.files[0].name : "No file chosen...";
-            fileNameDisplay.textContent = fileName;
-            fileNameDisplay.classList.remove('text-gray-500', 'italic');
-            fileNameDisplay.classList.add('text-indigo-900', 'font-medium');
-            
-            // Update browse button text
-            const browseBtnText = fileNameDisplay.nextElementSibling;
-            if (browseBtnText) {
-                browseBtnText.innerHTML = '{% heroicon_outline "paper-clip" size="18" class="mr-1" %} Change';
+            const file = e.target.files[0];
+            if (file) {
+                // Update Name
+                fileNameDisplay.textContent = file.name;
+                fileNameDisplay.classList.remove('text-gray-500', 'italic');
+                fileNameDisplay.classList.add('text-indigo-900', 'font-medium');
+                
+                // Show Preview Container
+                previewContainer.classList.remove('hidden');
+                
+                // Update browse button text
+                const browseBtnText = fileNameDisplay.nextElementSibling;
+                if (browseBtnText) browseBtnText.innerHTML = '{% heroicon_outline "paper-clip" size="18" class="mr-1" %} Change';
+
+                // Detect type and show preview
+                if (file.type.startsWith('image/')) {
+                    imagePreview.src = URL.createObjectURL(file);
+                    imagePreview.classList.remove('hidden');
+                    pdfPreview.classList.add('hidden');
+                } else if (file.type === 'application/pdf') {
+                    imagePreview.classList.add('hidden');
+                    pdfPreview.classList.remove('hidden', 'flex-col');
+                    pdfPreview.classList.add('flex');
+                }
             }
         });
+
+        // Remove handling
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                fileInput.value = '';
+                fileNameDisplay.textContent = "No file chosen...";
+                fileNameDisplay.classList.add('text-gray-500', 'italic');
+                fileNameDisplay.classList.remove('text-indigo-900', 'font-medium');
+                previewContainer.classList.add('hidden');
+                
+                // Reset browse button text
+                const browseBtnText = fileNameDisplay.nextElementSibling;
+                if (browseBtnText) browseBtnText.innerHTML = '{% heroicon_outline "paper-clip" size="18" class="mr-1" %} Browse';
+            });
+        }
     }
 });
 </script>

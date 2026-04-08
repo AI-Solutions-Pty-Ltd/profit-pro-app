@@ -1,7 +1,10 @@
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+
 from app.Project.profitability.views import ProfitabilityMixin
+
 from .models import PlantCostTracker
+
 
 class PlantCostTrackerListView(ProfitabilityMixin, ListView):
     model = PlantCostTracker
@@ -11,6 +14,7 @@ class PlantCostTrackerListView(ProfitabilityMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from decimal import Decimal
+
         from django.db.models import F, Sum
 
         # Entity-specific Total Cost
@@ -30,13 +34,17 @@ class PlantCostTrackerListView(ProfitabilityMixin, ListView):
 
         return context
 
+
 class PlantCostTrackerCreateView(ProfitabilityMixin, CreateView):
     model = PlantCostTracker
     template_name = "profitability/form.html"
     fields = ["plant_entity", "date", "usage_hours", "hourly_rate"]
 
     def get_success_url(self):
-        return reverse_lazy("project:profitability-plant-list", kwargs={"project_pk": self.project.pk})
+        return reverse_lazy(
+            "project:profitability-plant-list", kwargs={"project_pk": self.project.pk}
+        )
+
 
 class PlantCostTrackerUpdateView(ProfitabilityMixin, UpdateView):
     model = PlantCostTracker
@@ -44,11 +52,16 @@ class PlantCostTrackerUpdateView(ProfitabilityMixin, UpdateView):
     fields = ["plant_entity", "date", "usage_hours", "hourly_rate"]
 
     def get_success_url(self):
-        return reverse_lazy("project:profitability-plant-list", kwargs={"project_pk": self.project.pk})
+        return reverse_lazy(
+            "project:profitability-plant-list", kwargs={"project_pk": self.project.pk}
+        )
+
 
 class PlantCostTrackerDeleteView(ProfitabilityMixin, DeleteView):
     model = PlantCostTracker
     template_name = "profitability/confirm_delete.html"
 
     def get_success_url(self):
-        return reverse_lazy("project:profitability-plant-list", kwargs={"project_pk": self.project.pk})
+        return reverse_lazy(
+            "project:profitability-plant-list", kwargs={"project_pk": self.project.pk}
+        )

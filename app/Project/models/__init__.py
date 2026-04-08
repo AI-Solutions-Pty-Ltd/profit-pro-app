@@ -5,6 +5,10 @@ from app.Project.categories.category_models import (
 )
 from app.Project.company.company_models import Company
 from app.Project.documents.document_models import ProjectDocument
+from app.Project.profitability.materials.models import MaterialCostTracker
+from app.Project.profitability.overheads.models import OverheadCostTracker
+from app.Project.profitability.plant_equipment.models import PlantCostTracker
+from app.Project.profitability.subcontractor.models import SubcontractorCostTracker
 from app.Project.projects.projects_models import (
     Category,
     Discipline,
@@ -19,6 +23,10 @@ from ..production_progress.models.production_models import (
     ProductionPlan,
     ProductionResource,
 )
+
+# Profitability Management Submodule
+from ..profitability.journal.models import JournalEntry
+from ..profitability.labour.models import LabourCostTracker
 from .compliance_models import (
     AdministrativeCompliance,
     AdministrativeComplianceDialog,
@@ -44,14 +52,7 @@ from .portfolio_models import Portfolio
 from .project_roles_models import ProjectRole, Role
 from .risk_models import Risk, RiskStatus
 from .signatories_models import Signatories
-
-# Profitability Management Submodule
-from ..profitability.journal.models import JournalEntry
-from ..profitability.labour.models import LabourCostTracker
-from app.Project.profitability.materials.models import MaterialCostTracker
-from app.Project.profitability.overheads.models import OverheadCostTracker
-from app.Project.profitability.subcontractor.models import SubcontractorCostTracker
-from app.Project.profitability.plant_equipment.models import PlantCostTracker
+from .unit_models import UnitOfMeasure
 
 __all__ = [
     "AdministrativeCompliance",
@@ -97,4 +98,5 @@ __all__ = [
     "OverheadCostTracker",
     "SubcontractorCostTracker",
     "PlantCostTracker",
+    "UnitOfMeasure",
 ]

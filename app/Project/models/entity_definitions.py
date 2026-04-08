@@ -28,6 +28,14 @@ class BaseProjectEntity(BaseModel):
         max_length=100, blank=True, unique=True, help_text="Unique reference number"
     )
     unit = models.CharField(max_length=50, blank=True, help_text="Unit of measure")
+    unit_of_measure = models.ForeignKey(
+        "Project.UnitOfMeasure",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="%(class)s_entities",
+        help_text="Centralized unit of measure",
+    )
     rate = models.DecimalField(
         max_digits=12, decimal_places=2, default=0, help_text="Rate per unit"
     )
