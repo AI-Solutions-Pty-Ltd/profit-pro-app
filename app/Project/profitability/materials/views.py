@@ -60,7 +60,7 @@ class MaterialCostTrackerListView(ProfitabilityMixin, ListView):
 
         # Entity-specific Total Cost
         context["kvi_total_cost"] = (
-            self.project.material_cost_logs.aggregate(
+            self.project.material_cost_logs.aggregate(  # type: ignore
                 total=Sum(F("quantity") * F("rate"))
             )["total"]
             or 0

@@ -9,7 +9,6 @@ from app.Project.profitability.tests.factories import (
 from app.Project.tests.factories import OverheadEntityFactory, ProjectFactory
 
 
-
 @pytest.mark.django_db
 class TestProfitabilityModels:
     """Test cases for Profitability submodule models."""

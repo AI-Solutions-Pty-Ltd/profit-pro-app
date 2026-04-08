@@ -60,7 +60,7 @@ class OverheadCostTrackerListView(ProfitabilityMixin, ListView):
 
         # Entity-specific Total Cost
         context["kvi_total_cost"] = (
-            self.project.overhead_cost_logs.aggregate(
+            self.project.overhead_cost_logs.aggregate(  # type: ignore
                 total=Sum(F("amount_of_days") * F("rate"))
             )["total"]
             or 0

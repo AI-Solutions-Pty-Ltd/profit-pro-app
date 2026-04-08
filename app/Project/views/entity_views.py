@@ -59,7 +59,7 @@ class ProjectEntityMixin(LoginRequiredMixin):
     def form_valid(self, form):
         if hasattr(form, "instance"):
             form.instance.project = self.project
-        return super().form_valid(form)
+        return super().form_valid(form)  # type: ignore
 
     def get_success_url(self):
         """Redirect to the list view of the current entity type."""

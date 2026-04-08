@@ -60,7 +60,7 @@ class PlantCostTrackerListView(ProfitabilityMixin, ListView):
 
         # Entity-specific Total Cost
         context["kvi_total_cost"] = (
-            self.project.plant_cost_logs.aggregate(
+            self.project.plant_cost_logs.aggregate(  # type: ignore
                 total=Sum(F("usage_hours") * F("hourly_rate"))
             )["total"]
             or 0
