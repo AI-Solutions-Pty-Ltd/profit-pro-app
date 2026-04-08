@@ -31,7 +31,7 @@ class PlantEquipmentMixin(
 
     def get_form(self, form_class=None):
         """Filter plant_entity to only show entities for the current project."""
-        form = super().get_form(form_class)
+        form = super().get_form(form_class)  # type: ignore
         project = self.get_project()
         if "plant_entity" in form.fields:
             form.fields["plant_entity"].queryset = PlantEntity.objects.filter(

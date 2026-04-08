@@ -19,7 +19,7 @@ class LabourCostTrackerListView(ProfitabilityMixin, ListView):
 
         # Entity-specific Total Cost
         context["kvi_total_cost"] = (
-            self.project.labour_cost_logs.aggregate(
+            self.project.labour_cost_logs.aggregate(  # type: ignore
                 total=Sum(F("amount_of_days") * F("salary"))
             )["total"]
             or 0
