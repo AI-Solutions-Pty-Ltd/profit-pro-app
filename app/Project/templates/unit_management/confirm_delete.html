@@ -4,19 +4,19 @@
     Delete Unit - {{ object.name }}
 {% endblock title %}
 {% block content %}
-    <div class="max-w-2xl mx-auto">
-        <div class="bg-white shadow-sm rounded-lg overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-200 bg-red-50">
+    <div class="mx-auto max-w-2xl">
+        <div class="overflow-hidden bg-white rounded-lg shadow-sm">
+            <div class="px-6 py-4 bg-red-50 border-b border-gray-200">
                 <div class="flex items-center">
-                    {% heroicon_outline "exclamation-triangle" class="w-6 h-6 text-red-600 mr-3" %}
+                    {% heroicon_outline "exclamation-triangle" class="mr-3 w-6 h-6 text-red-600" %}
                     <h1 class="text-xl font-bold text-red-900">Confirm Deletion</h1>
                 </div>
             </div>
             <div class="px-6 py-8">
-                <p class="text-gray-700 mb-6">
+                <p class="mb-6 text-gray-700">
                     Are you sure you want to delete the unit definition for <span class="font-bold">"{{ object.name }}"</span> ({{ object.short_name }})?
                 </p>
-                <div class="bg-gray-50 rounded-lg p-4 mb-8">
+                <div class="p-4 mb-8 bg-gray-50 rounded-lg">
                     <ul class="space-y-2 text-sm text-gray-600">
                         <li>
                             <span class="font-medium text-gray-900">Category:</span> {{ object.get_category_display }}
@@ -35,12 +35,12 @@
                 <form method="post" class="flex justify-end space-x-3">
                     {% csrf_token %}
                     <a href="{% url 'project:unit-list' %}"
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Keep Unit
                     </a>
                     <button type="submit"
-                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
-                        {% heroicon_outline "trash" class="w-5 h-5 mr-2" %}
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        {% heroicon_outline "trash" class="mr-2 w-5 h-5" %}
                         Confirm Delete
                     </button>
                 </form>
