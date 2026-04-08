@@ -118,6 +118,48 @@ urlpatterns = [
         views.SiteInstructionDeleteView.as_view(),
         name="site-instruction-delete",
     ),
+    # Bi-Weekly Safety Reports
+    path(
+        "project/<int:project_pk>/biweekly-safety/",
+        views.BiWeeklySafetyReportListView.as_view(),
+        name="biweekly-safety-list",
+    ),
+    path(
+        "project/<int:project_pk>/biweekly-safety/create/",
+        views.BiWeeklySafetyReportCreateView.as_view(),
+        name="biweekly-safety-create",
+    ),
+    path(
+        "project/<int:project_pk>/biweekly-safety/<int:pk>/update/",
+        views.BiWeeklySafetyReportUpdateView.as_view(),
+        name="biweekly-safety-update",
+    ),
+    path(
+        "project/<int:project_pk>/biweekly-safety/<int:pk>/delete/",
+        views.BiWeeklySafetyReportDeleteView.as_view(),
+        name="biweekly-safety-delete",
+    ),
+    # Bi-Weekly Quality Reports
+    path(
+        "project/<int:project_pk>/biweekly-quality/",
+        views.BiWeeklyQualityReportListView.as_view(),
+        name="biweekly-quality-list",
+    ),
+    path(
+        "project/<int:project_pk>/biweekly-quality/create/",
+        views.BiWeeklyQualityReportCreateView.as_view(),
+        name="biweekly-quality-create",
+    ),
+    path(
+        "project/<int:project_pk>/biweekly-quality/<int:pk>/update/",
+        views.BiWeeklyQualityReportUpdateView.as_view(),
+        name="biweekly-quality-update",
+    ),
+    path(
+        "project/<int:project_pk>/biweekly-quality/<int:pk>/delete/",
+        views.BiWeeklyQualityReportDeleteView.as_view(),
+        name="biweekly-quality-delete",
+    ),
     # Materials Log
     path(
         "project/<int:project_pk>/materials-log/",

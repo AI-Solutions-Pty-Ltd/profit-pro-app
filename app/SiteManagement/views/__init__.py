@@ -87,6 +87,18 @@ from .quality_control_views import (
     QualityControlListView,
     QualityControlUpdateView,
 )
+from .biweekly_safety_views import (
+    BiWeeklySafetyReportCreateView,
+    BiWeeklySafetyReportDeleteView,
+    BiWeeklySafetyReportListView,
+    BiWeeklySafetyReportUpdateView,
+)
+from .biweekly_quality_views import (
+    BiWeeklyQualityReportCreateView,
+    BiWeeklyQualityReportDeleteView,
+    BiWeeklyQualityReportListView,
+    BiWeeklyQualityReportUpdateView,
+)
 from .rfi_views import (
     RFICreateView,
     RFIDeleteView,
@@ -175,6 +187,14 @@ __all__ = [
     "QualityControlCreateView",
     "QualityControlUpdateView",
     "QualityControlDeleteView",
+    "BiWeeklySafetyReportListView",
+    "BiWeeklySafetyReportCreateView",
+    "BiWeeklySafetyReportUpdateView",
+    "BiWeeklySafetyReportDeleteView",
+    "BiWeeklyQualityReportListView",
+    "BiWeeklyQualityReportCreateView",
+    "BiWeeklyQualityReportUpdateView",
+    "BiWeeklyQualityReportDeleteView",
     "LabourLogListView",
     "LabourLogCreateView",
     "LabourLogUpdateView",

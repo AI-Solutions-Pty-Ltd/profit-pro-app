@@ -1,0 +1,583 @@
+{% extends "base_full.html" %}
+{% load humanize %}
+
+{% block content %}
+    <div class="bg-white rounded-lg shadow-sm mb-6 sticky top-0 z-10">
+        <div class="px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200">
+            {% include "project/reports_nav.html" with tab="contractual_report" %}
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <a href="{% url 'project:project-management' project.pk %}"
+           class="inline-flex items-center gap-2 text-sm font-medium text-indigo-700 hover:text-indigo-900">
+            <span aria-hidden="true">←</span>
+            Back to Project Management
+        </a>
+    </div>
+
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Construction Contractual Report</h1>
+                    <p class="text-sm text-gray-600 mt-1">
+                        Reporting Window: <span class="font-medium text-gray-700">{{ period_start|date:"Y-m-d" }} to {{ period_end|date:"Y-m-d" }}</span>
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <form method="get" class="flex items-center gap-2 flex-wrap justify-end">
+                        <label class="text-xs font-medium text-gray-600">Window</label>
+                        <select name="period"
+                                class="text-gray-800 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                            <option value="1m" {% if period_key == "1m" %}selected{% endif %}>1 Month</option>
+                            <option value="3m" {% if period_key == "3m" %}selected{% endif %}>3 Months</option>
+                            <option value="6m" {% if period_key == "6m" %}selected{% endif %}>6 Months</option>
+                            <option value="12m" {% if period_key == "12m" %}selected{% endif %}>12 Months</option>
+                        </select>
+                        <button type="submit"
+                                class="text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg px-3 py-2">
+                            Apply Filters
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-6 py-4 space-y-6">
+
+            {# -------------------------- #}
+            {# 1. Project Information       #}
+            {# -------------------------- #}
+            <section>
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">1. Project Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Project Name</p>
+                        <p class="font-medium text-gray-900">{{ project.name }}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Contract Reference</p>
+                        <p class="font-medium text-gray-900">{{ contract_reference }}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Reporting Period</p>
+                        <p class="font-medium text-gray-900">{{ period_label }} ({{ period_start|date:"Y-m-d" }} - {{ period_end|date:"Y-m-d" }})</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Client / Employer</p>
+                        <p class="font-medium text-gray-900">{{ client }}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Contractor</p>
+                        <p class="font-medium text-gray-900">{{ contractor }}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-3 md:col-span-2">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Consultant(s)</p>
+                        <p class="font-medium text-gray-900">{{ consultants }}</p>
+                    </div>
+                </div>
+            </section>
+
+            {# -------------------------- #}
+            {# 2. Executive Summary       #}
+            {# -------------------------- #}
+            <section>
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">2. Executive Summary</h2>
+
+                <div class="space-y-4 text-sm">
+                    <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                        <h3 class="font-medium text-indigo-900 mb-2">Key highlights of the reporting period</h3>
+                        <p class="text-indigo-900">
+                            {# keep this MVP descriptive and derived #}
+                            {{ risks_open_count|default:0 }} open risk(s), {{ variations_open_count|default:0 }} pending variation(s), and {{ early_warnings_open_count|default:0 }} open early warning(s) were recorded within the window.
+                        </p>
+                    </div>
+
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                        <h3 class="font-medium text-amber-900 mb-2">Major risks/issues identified</h3>
+                        {% if exec_major_risks %}
+                            <ul class="list-disc pl-5 text-amber-900 space-y-1">
+                                {% for r in exec_major_risks %}
+                                    <li>
+                                        <span class="font-medium">{{ r.reference_number }}</span> - {{ r.description }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-amber-900">No open risks found for this reporting window.</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                        <h3 class="font-medium text-emerald-900 mb-2">Progress against contractual milestones</h3>
+                        <p class="text-emerald-900">
+                            {{ report_overview.completed_milestones|default:0 }} milestone(s) were completed in the reporting window.
+                        </p>
+                    </div>
+
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <h3 class="font-medium text-purple-900 mb-2">Summary of compensation events</h3>
+                        <p class="text-purple-900">
+                            Total items: <span class="font-medium">{{ exec_compensation_summary.total|default:0 }}</span>,
+                            Approved: <span class="font-medium">{{ exec_compensation_summary.approved|default:0 }}</span>,
+                            Rejected: <span class="font-medium">{{ exec_compensation_summary.rejected|default:0 }}</span>.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            {# -------------------------- #}
+            {# 3. Registers Overview      #}
+            {# -------------------------- #}
+            <section id="overview-register">
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">3. Contractual Registers Overview</h2>
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr class="text-left">
+                                <th class="px-4 py-2 font-semibold text-gray-600">Register Type</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Total Entries to Date</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Current Entries (Window)</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Open Items (Window)</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Closed % (vs Open)</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Impact Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in register_overview %}
+                                <tr class="border-b border-gray-100">
+                                    <td class="px-4 py-2 font-medium text-gray-900">{{ row.register_type }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ row.total_to_date }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ row.current_entries }}</td>
+                                    <td class="px-4 py-2 text-gray-700">
+                                        {% if row.tab_url %}
+                                            <a href="{{ row.tab_url }}" class="text-indigo-700 hover:text-indigo-900 underline">{{ row.open_items }}</a>
+                                        {% else %}
+                                            {{ row.open_items }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-2 text-gray-700">{{ row.closed_percentage }}% closed</td>
+                                    <td class="px-4 py-2 text-gray-700">{% if row.impact_value is not None %}{{ row.impact_value|intcomma }}{% else %}-{% endif %}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="px-4 py-3 text-gray-500">No data available for the selected window.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            {# -------------------------- #}
+            {# 4. Risk Register (Extract) #}
+            {# -------------------------- #}
+            <section id="risk-register">
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">4. Risk Register (Extract)</h2>
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr class="text-left">
+                                <th class="px-4 py-2 font-semibold text-gray-600">Risk ID</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Description</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Owner</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Status</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Impact Value</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Mitigation Action</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Action</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Target Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in risks %}
+                                <tr class="border-b border-gray-100">
+                                    <td class="px-4 py-2 font-medium text-gray-900">{{ r.reference_number }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ r.description }}</td>
+                                    <td class="px-4 py-2 text-gray-700">
+                                        {% if r.raised_by %}{{ r.raised_by.get_full_name|default:r.raised_by.email }}{% else %}-{% endif %}
+                                    </td>
+                                    <td class="px-4 py-2 text-gray-700">{{ r.status }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ r.cost_impact|intcomma }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ r.mitigation_action }}</td>
+                                    <td class="px-4 py-2 text-gray-700">-</td>
+                                    <td class="px-4 py-2 text-gray-700">{% if r.date_closed %}{{ r.date_closed|date:"Y-m-d" }}{% else %}-{% endif %}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="8" class="px-4 py-3 text-gray-500">No risks in the selected window.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            {# -------------------------- #}
+            {# 5. Compensation Event/Variations Register #}
+            {# -------------------------- #}
+            <section id="variations-register">
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">5. Compensation Event / Variations Register</h2>
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr class="text-left">
+                                <th class="px-4 py-2 font-semibold text-gray-600">CE No.</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Description</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Date Notified</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Status</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Time Impact</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Impact Value</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Decision</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for v in variations %}
+                                <tr class="border-b border-gray-100">
+                                    <td class="px-4 py-2 font-medium text-gray-900">{{ v.variation_number }}</td>
+                                    <td class="px-4 py-2 text-gray-700">
+                                        <div class="font-medium">{{ v.title }}</div>
+                                        {% if v.description %}<div class="text-xs text-gray-500 mt-1">{{ v.description }}</div>{% endif %}
+                                    </td>
+                                    <td class="px-4 py-2 text-gray-700">{% if v.date_identified %}{{ v.date_identified|date:"Y-m-d" }}{% else %}-{% endif %}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ v.status }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{% if v.time_extension_days %}{{ v.time_extension_days }}d{% else %}-{% endif %}</td>
+                                    <td class="px-4 py-2 text-gray-700">{% if v.variation_amount %}{{ v.variation_amount|intcomma }}{% else %}-{% endif %}</td>
+                                    <td class="px-4 py-2 text-gray-700">
+                                        {% if v.status == "APPROVED" %}Approved{% elif v.status == "REJECTED" %}Rejected{% else %}Pending{% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="7" class="px-4 py-3 text-gray-500">No compensation events found in the selected window.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            {# -------------------------- #}
+            {# 6. Early Warning Register #}
+            {# -------------------------- #}
+            <section id="early-warning-register">
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">6. Early Warning Register</h2>
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr class="text-left">
+                                <th class="px-4 py-2 font-semibold text-gray-600">EW No.</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Description</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Raised By</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Date</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Status</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Action Taken</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ew in early_warnings %}
+                                <tr class="border-b border-gray-100">
+                                    <td class="px-4 py-2 font-medium text-gray-900">{{ ew.reference_number }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ ew.subject }}</td>
+                                    <td class="px-4 py-2 text-gray-700">
+                                        {% if ew.submitted_by %}{{ ew.from_display }}{% else %}-{% endif %}
+                                    </td>
+                                    <td class="px-4 py-2 text-gray-700">{{ ew.date|date:"Y-m-d" }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ ew.status }}</td>
+                                    <td class="px-4 py-2 text-gray-700">
+                                        {% if ew.response %}{{ ew.response }}{% else %}-{% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="px-4 py-3 text-gray-500">No early warnings found in the selected window.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            {# -------------------------- #}
+            {# 7. Specifications & Drawings #}
+            {# -------------------------- #}
+            <section id="documents-register">
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">7. Specifications and Drawings</h2>
+                <p class="text-sm text-gray-600 mb-3">Approved documents are taken from uploaded `ProjectDocument` items in categories `DRAWINGS` and `SPECIFICATIONS`.</p>
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr class="text-left">
+                                <th class="px-4 py-2 font-semibold text-gray-600">Ref No.</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Document Title</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Revision Date</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Issued Status</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for d in documents %}
+                                <tr class="border-b border-gray-100">
+                                    <td class="px-4 py-2 font-medium text-gray-900">DOC-{{ d.pk }}</td>
+                                    <td class="px-4 py-2 text-gray-700">
+                                        <div class="font-medium">{{ d.title }}</div>
+                                        <div class="text-xs text-gray-500 mt-1">{{ d.get_category_display }}</div>
+                                    </td>
+                                    <td class="px-4 py-2 text-gray-700">{{ d.created_at|date:"Y-m-d" }}</td>
+                                    <td class="px-4 py-2 text-gray-700">-</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ d.notes|default:"-" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="5" class="px-4 py-3 text-gray-500">No drawings/specifications found in the selected window.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            {# -------------------------- #}
+            {# 8. Communications           #}
+            {# -------------------------- #}
+            <section id="communications-register">
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">8. Communications</h2>
+                <div class="space-y-4">
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h3 class="font-medium text-gray-900 mb-2">Notices Issued with dates</h3>
+                        {% if notices %}
+                            <ul class="list-disc pl-5 text-sm text-gray-800 space-y-1">
+                                {% for c in notices %}
+                                    <li>
+                                        <span class="font-medium">{{ c.date_of_correspondence|date:"Y-m-d" }}</span> - {{ c.subject }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-sm text-gray-600">No notices in this window.</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h3 class="font-medium text-gray-900 mb-2">Instructions</h3>
+                        {% if instructions %}
+                            <ul class="list-disc pl-5 text-sm text-gray-800 space-y-1">
+                                {% for c in instructions %}
+                                    <li>
+                                        <span class="font-medium">{{ c.date_of_correspondence|date:"Y-m-d" }}</span> - {{ c.subject }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-sm text-gray-600">No instructions in this window.</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h3 class="font-medium text-gray-900 mb-2">Outstanding Responses</h3>
+                        {% if outstanding_responses %}
+                            <ul class="list-disc pl-5 text-sm text-gray-800 space-y-1">
+                                {% for c in outstanding_responses %}
+                                    <li>
+                                        <span class="font-medium">{{ c.date_of_correspondence|date:"Y-m-d" }}</span> - {{ c.subject }}
+                                        {% if c.response_due_date %}<span class="text-xs text-gray-500">(Due {{ c.response_due_date|date:"Y-m-d" }})</span>{% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-sm text-gray-600">No outstanding responses in this window.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+
+            {# -------------------------- #}
+            {# 9. Key Issues + Recommendations #}
+            {# -------------------------- #}
+            <section>
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">9. Key Issues and Recommendations</h2>
+
+                <div class="space-y-4 text-sm">
+                    <div class="bg-rose-50 border border-rose-200 rounded-lg p-4">
+                        <h3 class="font-medium text-rose-700 mb-2">Summary of unresolved contractual matters</h3>
+                        <p class="text-rose-700">
+                            Open risks, pending variations, open early warnings, and outstanding responses are summarized in the registers above.
+                        </p>
+                    </div>
+
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                        <h3 class="font-medium text-emerald-900 mb-2">Recommendations</h3>
+                        <div class="space-y-2">
+                            {% for rec in key_recommendations.recommendations %}
+                                <div class="bg-white/60 border border-emerald-200 rounded-lg p-3">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <p class="font-semibold text-emerald-900">{{ rec.title }}</p>
+                                            <p class="text-xs text-emerald-900 mt-1">{{ rec.details }}</p>
+                                        </div>
+                                        <div class="shrink-0 text-sm font-semibold text-emerald-900">
+                                            {{ rec.count }}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <p class="text-sm text-emerald-900">No recommendations generated for this window.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                        <h3 class="font-medium text-indigo-900 mb-2">Decisions required</h3>
+                        <p class="text-indigo-900">
+                            Prioritize decisions on pending compensation events/variations and closure actions for open early warnings.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            {# -------------------------- #}
+            {# 10. Appendices             #}
+            {# -------------------------- #}
+            <section>
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">10. Appendices</h2>
+
+                <div class="space-y-6">
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h3 class="font-medium text-gray-900 mb-2">Detailed registers (full versions)</h3>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div>
+                                <h4 class="text-sm font-semibold text-gray-800 mb-2">Risk Register</h4>
+                                <ul class="text-sm text-gray-700 space-y-1">
+                                    {% for r in risks %}
+                                        <li><span class="font-medium">{{ r.reference_number }}</span>: {{ r.description }}</li>
+                                    {% empty %}
+                                        <li class="text-gray-500">None</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-semibold text-gray-800 mb-2">Compensation Events / Variations</h4>
+                                <ul class="text-sm text-gray-700 space-y-1">
+                                    {% for v in variations %}
+                                        <li><span class="font-medium">{{ v.variation_number }}</span>: {{ v.title }}</li>
+                                    {% empty %}
+                                        <li class="text-gray-500">None</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-semibold text-gray-800 mb-2">Early Warning Register</h4>
+                                <ul class="text-sm text-gray-700 space-y-1">
+                                    {% for ew in early_warnings %}
+                                        <li><span class="font-medium">{{ ew.reference_number }}</span>: {{ ew.subject }}</li>
+                                    {% empty %}
+                                        <li class="text-gray-500">None</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-semibold text-gray-800 mb-2">Specifications and Drawings</h4>
+                                <ul class="text-sm text-gray-700 space-y-1">
+                                    {% for d in documents %}
+                                        <li><span class="font-medium">DOC-{{ d.pk }}</span>: {{ d.title }} <span class="text-xs text-gray-500">({{ d.get_category_display }})</span></li>
+                                    {% empty %}
+                                        <li class="text-gray-500">None</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h3 class="font-medium text-gray-900 mb-3">Register Actions</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                            <div class="border border-gray-200 rounded-lg p-3 bg-white">
+                                <p class="font-medium text-gray-900 mb-2">Risk Register</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="{{ appendix_links.risk_register }}" class="text-indigo-700 hover:text-indigo-900">View tab</a>
+                                    <a href="#risk-register" class="text-indigo-700 hover:text-indigo-900">View in report</a>
+                                    <a href="?period={{ period_key }}&export=csv&register=risk" class="text-indigo-700 hover:text-indigo-900">Download CSV</a>
+                                    <a href="?period={{ period_key }}&export=pdf&register=risk" class="text-indigo-700 hover:text-indigo-900">Download PDF</a>
+                                </div>
+                            </div>
+                            <div class="border border-gray-200 rounded-lg p-3 bg-white">
+                                <p class="font-medium text-gray-900 mb-2">Variations Register</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="{{ appendix_links.variations_register }}" class="text-indigo-700 hover:text-indigo-900">View tab</a>
+                                    <a href="#variations-register" class="text-indigo-700 hover:text-indigo-900">View in report</a>
+                                    <a href="?period={{ period_key }}&export=csv&register=variations" class="text-indigo-700 hover:text-indigo-900">Download CSV</a>
+                                    <a href="?period={{ period_key }}&export=pdf&register=variations" class="text-indigo-700 hover:text-indigo-900">Download PDF</a>
+                                </div>
+                            </div>
+                            <div class="border border-gray-200 rounded-lg p-3 bg-white">
+                                <p class="font-medium text-gray-900 mb-2">Early Warning Register</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="{{ appendix_links.early_warning_register }}" class="text-indigo-700 hover:text-indigo-900">View tab</a>
+                                    <a href="#early-warning-register" class="text-indigo-700 hover:text-indigo-900">View in report</a>
+                                    <a href="?period={{ period_key }}&export=csv&register=early-warning" class="text-indigo-700 hover:text-indigo-900">Download CSV</a>
+                                    <a href="?period={{ period_key }}&export=pdf&register=early-warning" class="text-indigo-700 hover:text-indigo-900">Download PDF</a>
+                                </div>
+                            </div>
+                            <div class="border border-gray-200 rounded-lg p-3 bg-white">
+                                <p class="font-medium text-gray-900 mb-2">Documents Register</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="{{ appendix_links.documents_register }}" class="text-indigo-700 hover:text-indigo-900">View tab</a>
+                                    <a href="#documents-register" class="text-indigo-700 hover:text-indigo-900">View in report</a>
+                                    <a href="?period={{ period_key }}&export=csv&register=documents" class="text-indigo-700 hover:text-indigo-900">Download CSV</a>
+                                    <a href="?period={{ period_key }}&export=pdf&register=documents" class="text-indigo-700 hover:text-indigo-900">Download PDF</a>
+                                </div>
+                            </div>
+                            <div class="border border-gray-200 rounded-lg p-3 bg-white md:col-span-2">
+                                <p class="font-medium text-gray-900 mb-2">Communications Register</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="{{ appendix_links.communications_register }}" class="text-indigo-700 hover:text-indigo-900">View tab</a>
+                                    <a href="#communications-register" class="text-indigo-700 hover:text-indigo-900">View in report</a>
+                                    <a href="?period={{ period_key }}&export=csv&register=communications" class="text-indigo-700 hover:text-indigo-900">Download CSV</a>
+                                    <a href="?period={{ period_key }}&export=pdf&register=communications" class="text-indigo-700 hover:text-indigo-900">Download PDF</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <h3 class="font-medium text-gray-900 mb-2">Updated programme extracts</h3>
+                        <div class="overflow-x-auto rounded-lg border border-gray-200">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-100 border-b border-gray-200">
+                                    <tr class="text-left">
+                                        <th class="px-3 py-2 font-semibold text-gray-600">Milestone</th>
+                                        <th class="px-3 py-2 font-semibold text-gray-600">Planned</th>
+                                        <th class="px-3 py-2 font-semibold text-gray-600">Forecast</th>
+                                        <th class="px-3 py-2 font-semibold text-gray-600">Actual</th>
+                                        <th class="px-3 py-2 font-semibold text-gray-600">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for m in milestones_in_window %}
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-3 py-2 font-medium text-gray-900">{{ m.name }}</td>
+                                            <td class="px-3 py-2 text-gray-700">{{ m.planned_date|date:"Y-m-d" }}</td>
+                                            <td class="px-3 py-2 text-gray-700">
+                                                {% if m.forecast_date %}{{ m.forecast_date|date:"Y-m-d" }}{% else %}-{% endif %}
+                                            </td>
+                                            <td class="px-3 py-2 text-gray-700">
+                                                {% if m.actual_date %}{{ m.actual_date|date:"Y-m-d" }}{% else %}-{% endif %}
+                                            </td>
+                                            <td class="px-3 py-2 text-gray-700">{{ m.status }}</td>
+                                        </tr>
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="5" class="px-3 py-3 text-gray-500">No programme changes in this window.</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+{% endblock content %}
+

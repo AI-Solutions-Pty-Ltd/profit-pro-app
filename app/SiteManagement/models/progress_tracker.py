@@ -4,7 +4,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from app.core.Utilities.models import BaseModel
-from app.Project.models import Project
+from app.Project.models import Project, Milestone
 
 
 class ProgressTracker(BaseModel):
@@ -15,6 +15,14 @@ class ProgressTracker(BaseModel):
         on_delete=models.CASCADE,
         related_name="progress_trackers",
         help_text="Project this progress tracker belongs to",
+    )
+    milestone = models.ForeignKey(
+        Milestone,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="progress_activities",
+        help_text="Milestone this activity contributes to",
     )
     activity = models.CharField(max_length=255, help_text="Activity name")
     planned_start_date = models.DateField(help_text="Planned start date")
@@ -31,6 +39,12 @@ class ProgressTracker(BaseModel):
         default=0,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         help_text="Percentage completion (0-100)",
+    )
+    impact_description = models.CharField(
+        max_length=255,
+        blank=True,
+        default="On track",
+        help_text="Impact on milestone (e.g., 'On track', 'At risk', 'Delayed')",
     )
     remarks = models.TextField(blank=True, help_text="Additional remarks")
 

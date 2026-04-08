@@ -5,12 +5,12 @@
         {% heroicon_outline "chart-bar" class="w-5 h-5 inline mr-2" %}
         Project Dashboard
     </a>
-    <a href="#"
+    <a href="{% url 'project:contractual-report' project.pk %}"
        class="border-b-2 {% if tab == 'contractual_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
         {% heroicon_outline "chart-bar" class="w-5 h-5 inline mr-2" %}
         Contractual Report
     </a>
-    <a href="#"
+    <a href="{% url 'project:construction-progress-report' project.pk %}"
        class="border-b-2 {% if tab == 'progress_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
         {% heroicon_outline "banknotes" class="w-5 h-5 inline mr-2" %}
         Progress Report
@@ -20,9 +20,8 @@
         {% heroicon_outline "clock" class="w-5 h-5 inline mr-2" %}
         Compliance Report
     </a>
-    <a href="#"
+    <a href="{% url 'project:contractors-report' project.pk %}"
        class="border-b-2 {% if tab == 'contractors_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
         {% heroicon_outline "chart-bar-square" class="w-5 h-5 inline mr-2" %}
         Contractor’s Report
-    </a>
-</nav>
+    </a></nav>
