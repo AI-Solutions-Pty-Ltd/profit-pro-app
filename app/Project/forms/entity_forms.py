@@ -39,7 +39,7 @@ class LabourEntityForm(BaseEntityForm):
             "trade",
             "skill_type",
             "date_joined",
-            "unit",
+            "unit_of_measure",
             "rate",
             "description",
         ]
@@ -64,7 +64,7 @@ class MaterialEntityForm(BaseEntityForm):
             "invoice_number",
             "invoice_attachment",
             "quantity",
-            "unit",
+            "unit_of_measure",
             "rate",
             "date_received",
             "description",
@@ -89,9 +89,12 @@ class MaterialHeaderForm(forms.ModelForm):
         widgets = {
             "supplier": forms.TextInput(attrs=COMMON_WIDGET_ATTRS),
             "invoice_number": forms.TextInput(attrs=COMMON_WIDGET_ATTRS),
-            "date_received": forms.DateInput(attrs={**COMMON_WIDGET_ATTRS, "type": "date"}),
+            "date_received": forms.DateInput(
+                attrs={**COMMON_WIDGET_ATTRS, "type": "date"}
+            ),
             "invoice_attachment": forms.FileInput(attrs=COMMON_WIDGET_ATTRS),
         }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Ensure header fields are required for bulk creation
@@ -112,7 +115,7 @@ class MaterialItemForm(forms.ModelForm):
 
     class Meta:
         model = MaterialEntity
-        fields = ["name", "unit", "quantity", "rate", "description"]
+        fields = ["name", "unit_of_measure", "quantity", "rate", "description"]
         widgets = {
             "name": forms.TextInput(
                 attrs={
@@ -120,9 +123,8 @@ class MaterialItemForm(forms.ModelForm):
                     "class": "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
             ),
-            "unit": forms.TextInput(
+            "unit_of_measure": forms.Select(
                 attrs={
-                    "placeholder": "Unit",
                     "class": "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
             ),
@@ -174,7 +176,7 @@ class PlantEntityForm(BaseEntityForm):
             "supplier",
             "breakdown_status",
             "date",
-            "unit",
+            "unit_of_measure",
             "rate",
             "description",
         ]
@@ -199,7 +201,7 @@ class SubcontractorEntityForm(BaseEntityForm):
             "start_date",
             "planned_finish_date",
             "actual_finish_date",
-            "unit",
+            "unit_of_measure",
             "rate",
             "description",
         ]
@@ -224,7 +226,7 @@ class OverheadEntityForm(BaseEntityForm):
         fields = [
             "name",
             "category",
-            "unit",
+            "unit_of_measure",
             "rate",
             "description",
         ]

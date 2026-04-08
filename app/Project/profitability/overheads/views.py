@@ -14,6 +14,7 @@ class OverheadCostTrackerListView(ProfitabilityMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from decimal import Decimal
+
         from django.db.models import F, Sum
 
         # Entity-specific Total Cost
@@ -25,7 +26,9 @@ class OverheadCostTrackerListView(ProfitabilityMixin, ListView):
         )
 
         # Entity budget (look for a Category named "Overhead")
-        budget_query = self.project.categories.filter(name__icontains="Overhead").first()
+        budget_query = self.project.categories.filter(
+            name__icontains="Overhead"
+        ).first()
         context["kvi_budget"] = budget_query.budget if budget_query else Decimal("0.00")
         context["kvi_under_budget"] = context["kvi_budget"] - Decimal(
             context["kvi_total_cost"]

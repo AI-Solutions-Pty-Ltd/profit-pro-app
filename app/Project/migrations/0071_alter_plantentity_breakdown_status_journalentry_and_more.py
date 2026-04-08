@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("Project", "0070_labourentity_materialentity_overheadentity_and_more"),
     ]

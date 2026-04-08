@@ -34,12 +34,17 @@ class SubcontractorLogMixin(
         form = super().get_form(form_class)
         project = self.get_project()
         if "subcontractor_entity" in form.fields:
-            form.fields["subcontractor_entity"].queryset = (
-                SubcontractorEntity.objects.filter(project=project)
-            )
+            form.fields[
+                "subcontractor_entity"
+            ].queryset = SubcontractorEntity.objects.filter(project=project)
 
         # Apply date widgets
-        date_fields = ["date", "start_date", "planned_finish_date", "actual_finish_date"]
+        date_fields = [
+            "date",
+            "start_date",
+            "planned_finish_date",
+            "actual_finish_date",
+        ]
         for field_name in date_fields:
             if field_name in form.fields:
                 form.fields[field_name].widget = DateInput(attrs={"type": "date"})
