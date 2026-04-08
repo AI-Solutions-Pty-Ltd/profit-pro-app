@@ -109,7 +109,7 @@ class _BiWeeklyQualityReportBaseFormView(BiWeeklyQualityReportMixin):
     }
 
     def get_form(self, form_class=None):
-        form = super().get_form(form_class)
+        form = super().get_form(form_class)  # type: ignore
         for field_name, widget in self.widgets.items():
             form.fields[field_name].widget = widget
         return form
@@ -117,16 +117,20 @@ class _BiWeeklyQualityReportBaseFormView(BiWeeklyQualityReportMixin):
     def _get_formsets(self):
         return {
             "activity_formset": ActivityInspectionFormSet(
-                self.request.POST or None, instance=self.object
+                self.request.POST or None,
+                instance=self.object,  # type: ignore
             ),
             "materials_formset": MaterialDeliveryFormSet(
-                self.request.POST or None, instance=self.object
+                self.request.POST or None,
+                instance=self.object,  # type: ignore
             ),
             "workmanship_formset": WorkmanshipFormSet(
-                self.request.POST or None, instance=self.object
+                self.request.POST or None,
+                instance=self.object,  # type: ignore
             ),
             "audits_formset": SiteAuditFormSet(
-                self.request.POST or None, instance=self.object
+                self.request.POST or None,
+                instance=self.object,  # type: ignore
             ),
         }
 
@@ -145,12 +149,12 @@ class _BiWeeklyQualityReportBaseFormView(BiWeeklyQualityReportMixin):
             context["audits_formset"],
         ]
         if not all(fs.is_valid() for fs in formsets):
-            return self.form_invalid(form)
+            return self.form_invalid(form)  # type: ignore
 
         with transaction.atomic():
-            response = super().form_valid(form)
+            response = super().form_valid(form)  # type: ignore
             for fs in formsets:
-                fs.instance = self.object
+                fs.instance = self.object  # type: ignore
                 fs.save()
         return response
 
@@ -164,7 +168,7 @@ class _BiWeeklyQualityReportBaseFormView(BiWeeklyQualityReportMixin):
 class BiWeeklyQualityReportCreateView(_BiWeeklyQualityReportBaseFormView, CreateView):
     def form_valid(self, form):
         form.instance.project = self.get_project()
-        form.instance.submitted_by = self.request.user  # type: ignore
+        form.instance.submitted_by = self.request.user
         messages.success(self.request, "Bi-weekly quality report created.")
         return super().form_valid(form)
 
@@ -189,4 +193,3 @@ class BiWeeklyQualityReportDeleteView(BiWeeklyQualityReportMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         return context
-

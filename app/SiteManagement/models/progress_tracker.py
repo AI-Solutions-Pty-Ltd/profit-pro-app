@@ -4,7 +4,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from app.core.Utilities.models import BaseModel
-from app.Project.models import Project, Milestone
+from app.Project.models import Milestone, Project
 
 
 class ProgressTracker(BaseModel):

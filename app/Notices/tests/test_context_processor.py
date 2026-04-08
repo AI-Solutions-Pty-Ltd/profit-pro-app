@@ -15,7 +15,7 @@ class TestNoticesContextProcessor(TestCase):
     def setUp(self):
         """Set up test data."""
         self.factory = RequestFactory()
-        self.user = Account.objects.create_user(  # type: ignore[attr-defined]
+        self.user = Account.objects.create_user(  # type: ignore
             email="test@example.com",
             password="testpass123",
             first_name="Test",

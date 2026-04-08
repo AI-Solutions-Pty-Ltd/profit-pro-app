@@ -5,21 +5,32 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0061_category_budget_group_budget_subcategory_budget'),
-        ('SiteManagement', '0009_biweeklyqualityreport_biweeklysafetyreport_and_more'),
+        ("Project", "0061_category_budget_group_budget_subcategory_budget"),
+        ("SiteManagement", "0009_biweeklyqualityreport_biweeklysafetyreport_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='progresstracker',
-            name='impact_description',
-            field=models.CharField(blank=True, default='On track', help_text="Impact on milestone (e.g., 'On track', 'At risk', 'Delayed')", max_length=255),
+            model_name="progresstracker",
+            name="impact_description",
+            field=models.CharField(
+                blank=True,
+                default="On track",
+                help_text="Impact on milestone (e.g., 'On track', 'At risk', 'Delayed')",
+                max_length=255,
+            ),
         ),
         migrations.AddField(
-            model_name='progresstracker',
-            name='milestone',
-            field=models.ForeignKey(blank=True, help_text='Milestone this activity contributes to', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='progress_activities', to='Project.milestone'),
+            model_name="progresstracker",
+            name="milestone",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Milestone this activity contributes to",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="progress_activities",
+                to="Project.milestone",
+            ),
         ),
     ]

@@ -1,10 +1,10 @@
 """Views for Portfolio Reports."""
 
-import json
 import csv
-from io import BytesIO
+import json
 from datetime import datetime, timedelta
 from decimal import Decimal
+from io import BytesIO
 from typing import Any
 
 from dateutil.relativedelta import relativedelta
@@ -18,8 +18,8 @@ from reportlab.pdfgen import canvas
 from app.Account.models import Account
 from app.Account.subscription_config import Subscription
 from app.BillOfQuantities.models import (
-    ContractVariation,
     ContractualCorrespondence,
+    ContractVariation,
     Forecast,
     PaymentCertificate,
 )
@@ -29,7 +29,9 @@ from app.core.Utilities.mixins import (
     BreadcrumbMixin,
 )
 from app.core.Utilities.permissions import UserHasGroupGenericMixin
-from app.core.Utilities.subscription_and_role_mixin import SubscriptionAndRoleRequiredMixin
+from app.core.Utilities.subscription_and_role_mixin import (
+    SubscriptionAndRoleRequiredMixin,
+)
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import (
     Milestone,
@@ -49,7 +51,6 @@ from app.SiteManagement.models import (
     EarlyWarning,
     EarlyWarningStatus,
     Incident,
-    IncidentStatus,
     IncidentType,
     LabourLog,
     MaterialsLog,
@@ -60,10 +61,6 @@ from app.SiteManagement.models import (
     ProductivityLog,
     ProgressTracker,
     QualityControl,
-    QualityActivityInspection,
-    QualityMaterialDelivery,
-    QualitySiteAudit,
-    QualityWorkmanship,
 )
 
 
@@ -124,7 +121,7 @@ class FinancialReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListVie
 
         self.filter_form = ProjectFilterForm(
             request.GET or {},
-            user=self.request.user,  # type: ignore[arg-type]
+            user=self.request.user,  # type: ignore
             projects_queryset=projects,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
@@ -376,7 +373,7 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
 
         self.filter_form = ProjectFilterForm(
             request.GET or {},
-            user=self.request.user,  # type: ignore[arg-type]
+            user=self.request.user,  # type: ignore
             projects_queryset=projects,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
@@ -580,7 +577,7 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
 
         self.filter_form = ProjectFilterForm(
             request.GET or {},
-            user=self.request.user,  # type: ignore[arg-type]
+            user=self.request.user,  # type: ignore
             projects_queryset=projects,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
@@ -786,7 +783,7 @@ class TrendReportView(SubscriptionRequiredMixin, ProjectAccessMixin, TemplateVie
 
         self.filter_form = ProjectFilterForm(
             request.GET or {},
-            user=self.request.user,  # type: ignore[arg-type]
+            user=self.request.user,  # type: ignore
             projects_queryset=projects,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
@@ -1206,9 +1203,7 @@ class ContractualReportView(ContractualReportMixin, TemplateView):
         project = self.get_project()
 
         period_key = (self.request.GET.get("period") or "1m").lower()
-        period_start, period_end, period_label = self._get_reporting_window(
-            period_key
-        )
+        period_start, period_end, period_label = self._get_reporting_window(period_key)
         # Calendar month comparison windows (previous month vs current month)
         current_month_start = period_end.replace(day=1)
         current_month_end = (
@@ -1238,10 +1233,7 @@ class ContractualReportView(ContractualReportMixin, TemplateView):
         # -----------------------------
         consultants = project.lead_consultants.all()
         context["consultants"] = ", ".join(
-            [
-                (c.get_full_name() or c.email or str(c.pk))
-                for c in consultants
-            ]
+            [(c.get_full_name() or c.email or str(c.pk)) for c in consultants]
         )
         context["client"] = project.client.name if project.client else "-"
         context["contractor"] = project.contractor.name if project.contractor else "-"
@@ -1283,19 +1275,17 @@ class ContractualReportView(ContractualReportMixin, TemplateView):
             risks_current_month_qs.aggregate(total=Sum("cost_impact")).get("total") or 0
         )
         risks_previous_month_cost = (
-            risks_previous_month_qs.aggregate(total=Sum("cost_impact")).get("total") or 0
+            risks_previous_month_qs.aggregate(total=Sum("cost_impact")).get("total")
+            or 0
         )
         risks_window_cost = risks.aggregate(total=Sum("cost_impact")).get("total") or 0
 
         # Contractual Variations / Compensation Events (Section 5)
-        variations = (
-            ContractVariation.objects.filter(
-                project=project,
-                date_identified__isnull=False,
-                date_identified__range=(period_start, period_end),
-            )
-            .order_by("-created_at")
-        )
+        variations = ContractVariation.objects.filter(
+            project=project,
+            date_identified__isnull=False,
+            date_identified__range=(period_start, period_end),
+        ).order_by("-created_at")
         variations_closed_qs = variations.filter(
             status__in=[
                 ContractVariation.Status.APPROVED,
@@ -1382,17 +1372,14 @@ class ContractualReportView(ContractualReportMixin, TemplateView):
 
         # Drawings + Specifications (Section 7)
         # NOTE: ProjectDocument does not store revision/issued-state; we use created_at as "Revision Date".
-        documents_qs = (
-            ProjectDocument.objects.filter(
-                project=project,
-                category__in=[
-                    ProjectDocument.DocumentCategory.DRAWINGS,
-                    ProjectDocument.DocumentCategory.SPECIFICATIONS,
-                ],
-                created_at__date__range=(period_start, period_end),
-            )
-            .order_by("-created_at")
-        )
+        documents_qs = ProjectDocument.objects.filter(
+            project=project,
+            category__in=[
+                ProjectDocument.DocumentCategory.DRAWINGS,
+                ProjectDocument.DocumentCategory.SPECIFICATIONS,
+            ],
+            created_at__date__range=(period_start, period_end),
+        ).order_by("-created_at")
         documents_to_date = ProjectDocument.objects.filter(
             project=project,
             category__in=[
@@ -1447,18 +1434,17 @@ class ContractualReportView(ContractualReportMixin, TemplateView):
         ).count()
 
         # Milestones / progress (Section 2 + Section 10 appendices)
-        milestones = (
-            Milestone.objects.filter(project=project)
-            .order_by("planned_date", "sequence")
+        milestones = Milestone.objects.filter(project=project).order_by(
+            "planned_date", "sequence"
         )
         milestones_completed_in_period = milestones.filter(
             actual_date__range=(period_start, period_end)
         )
         milestones_completed_in_period_count = milestones_completed_in_period.count()
-        milestones_in_window = milestones.filter(
-            actual_date__range=(period_start, period_end)
-        ) | milestones.filter(forecast_date__range=(period_start, period_end)) | milestones.filter(
-            planned_date__range=(period_start, period_end)
+        milestones_in_window = (
+            milestones.filter(actual_date__range=(period_start, period_end))
+            | milestones.filter(forecast_date__range=(period_start, period_end))
+            | milestones.filter(planned_date__range=(period_start, period_end))
         )
         milestones_current_month_count = (
             Milestone.objects.filter(
@@ -1514,7 +1500,9 @@ class ContractualReportView(ContractualReportMixin, TemplateView):
                         )
                         if risks.count()
                         else 0,
-                        "open_percentage": round((risks_open_count / risks.count() * 100), 1)
+                        "open_percentage": round(
+                            (risks_open_count / risks.count() * 100), 1
+                        )
                         if risks.count()
                         else 0,
                         "impact_value": risks_window_cost,
@@ -1544,12 +1532,18 @@ class ContractualReportView(ContractualReportMixin, TemplateView):
                         "current_entries": early_warnings.count(),
                         "open_items": early_warnings_open_count,
                         "closed_percentage": round(
-                            (early_warnings_closed_count / early_warnings.count() * 100), 1
+                            (
+                                early_warnings_closed_count
+                                / early_warnings.count()
+                                * 100
+                            ),
+                            1,
                         )
                         if early_warnings.count()
                         else 0,
                         "open_percentage": round(
-                            (early_warnings_open_count / early_warnings.count() * 100), 1
+                            (early_warnings_open_count / early_warnings.count() * 100),
+                            1,
                         )
                         if early_warnings.count()
                         else 0,
@@ -1559,7 +1553,10 @@ class ContractualReportView(ContractualReportMixin, TemplateView):
                         "register_type": "Drawings and Specifications",
                         "tab_url": reverse(
                             "project:document-list",
-                            args=[project.pk, ProjectDocument.DocumentCategory.DRAWINGS],
+                            args=[
+                                project.pk,
+                                ProjectDocument.DocumentCategory.DRAWINGS,
+                            ],
                         ),
                         "total_to_date": documents_to_date.count(),
                         "current_entries": documents_qs.count(),
@@ -1587,8 +1584,7 @@ class ContractualReportView(ContractualReportMixin, TemplateView):
                 },
                 # Simple text blocks for executive summary (Section 2)
                 "exec_major_risks": list(
-                    risks.filter(status=RiskStatus.OPEN)
-                    .order_by("-cost_impact")[:5]
+                    risks.filter(status=RiskStatus.OPEN).order_by("-cost_impact")[:5]
                 ),
                 "exec_compensation_summary": {
                     "total": variations.count(),
@@ -1611,9 +1607,6 @@ class ContractualReportView(ContractualReportMixin, TemplateView):
         # -----------------------------
         # Recommendations (Section 9) - derived from outstanding items, prioritized.
         delayed_milestones = [m for m in milestones_in_window if m.is_delayed]
-        outstanding_milestone_count = len(
-            [m for m in milestones_in_window if not m.is_completed]
-        )
 
         def _priority_rank(priority: str) -> int:
             return {"P1": 1, "P2": 2, "P3": 3}.get(priority, 99)
@@ -1737,7 +1730,8 @@ class ContractualReportView(ContractualReportMixin, TemplateView):
             "variations_register": {
                 "current": variations_current_month_count,
                 "previous": variations_previous_month_count,
-                "diff": variations_current_month_count - variations_previous_month_count,
+                "diff": variations_current_month_count
+                - variations_previous_month_count,
                 "current_open": variations_current_month_open,
                 "previous_open": variations_previous_month_open,
                 "current_closed": variations_current_month_closed,
@@ -1750,7 +1744,8 @@ class ContractualReportView(ContractualReportMixin, TemplateView):
             "early_warning_register": {
                 "current": early_warnings_current_month_count,
                 "previous": early_warnings_previous_month_count,
-                "diff": early_warnings_current_month_count - early_warnings_previous_month_count,
+                "diff": early_warnings_current_month_count
+                - early_warnings_previous_month_count,
             },
             "drawings_specs": {
                 "current": documents_current_month_count,
@@ -1760,12 +1755,14 @@ class ContractualReportView(ContractualReportMixin, TemplateView):
             "communications": {
                 "current": correspondences_current_month_count,
                 "previous": correspondences_previous_month_count,
-                "diff": correspondences_current_month_count - correspondences_previous_month_count,
+                "diff": correspondences_current_month_count
+                - correspondences_previous_month_count,
             },
             "programme_extracts": {
                 "current": milestones_current_month_count,
                 "previous": milestones_previous_month_count,
-                "diff": milestones_current_month_count - milestones_previous_month_count,
+                "diff": milestones_current_month_count
+                - milestones_previous_month_count,
             },
             "current_month_label": current_month_start.strftime("%b %Y"),
             "previous_month_label": previous_month_start.strftime("%b %Y"),
@@ -1801,8 +1798,8 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
         project = self.get_project()
 
         period_key = (self.request.GET.get("period") or "2w").lower()
-        period_start, period_end, period_label = ContractualReportView._get_reporting_window(
-            period_key
+        period_start, period_end, period_label = (
+            ContractualReportView._get_reporting_window(period_key)
         )
 
         # Calendar period comparison (for 2-week, use previous 2 weeks; for months, use previous month)
@@ -1817,9 +1814,9 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
             current_period_end = (
                 current_period_start + relativedelta(months=1) - timedelta(days=1)
             )
-            previous_period_start = (current_period_start - relativedelta(months=1)).replace(
-                day=1
-            )
+            previous_period_start = (
+                current_period_start - relativedelta(months=1)
+            ).replace(day=1)
             previous_period_end = (
                 previous_period_start + relativedelta(months=1) - timedelta(days=1)
             )
@@ -1829,20 +1826,26 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
         client = project.client.name if project.client else "-"
         contractor = project.contractor.name if project.contractor else "-"
 
-        milestones = Milestone.objects.filter(project=project).order_by("planned_date", "sequence")
-        milestones_achieved = milestones.filter(actual_date__range=(period_start, period_end))
-        upcoming_milestones = milestones.filter(
-            planned_date__gt=period_end
-        )[:10]
+        milestones = Milestone.objects.filter(project=project).order_by(
+            "planned_date", "sequence"
+        )
+        milestones_achieved = milestones.filter(
+            actual_date__range=(period_start, period_end)
+        )
+        upcoming_milestones = milestones.filter(planned_date__gt=period_end)[:10]
         delayed_milestones = [m for m in milestones if m.is_delayed]
 
         # Window-specific risks for reporting section
-        risks = Risk.objects.filter(project=project, date__range=(period_start, period_end)).select_related("raised_by")
+        risks = Risk.objects.filter(
+            project=project, date__range=(period_start, period_end)
+        ).select_related("raised_by")
         open_risks = risks.filter(status=RiskStatus.OPEN)
         closed_risks = risks.filter(status=RiskStatus.CLOSED)
-        
+
         # All open risks (not period-filtered) for dashboard
-        all_open_risks = Risk.objects.filter(project=project, status=RiskStatus.OPEN).select_related("raised_by")
+        all_open_risks = Risk.objects.filter(
+            project=project, status=RiskStatus.OPEN
+        ).select_related("raised_by")
 
         variations = ContractVariation.objects.filter(
             project=project,
@@ -1854,10 +1857,16 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
             date_identified__isnull=False,
         )
         pending_variations = variations.exclude(
-            status__in=[ContractVariation.Status.APPROVED, ContractVariation.Status.REJECTED]
+            status__in=[
+                ContractVariation.Status.APPROVED,
+                ContractVariation.Status.REJECTED,
+            ]
         )
         all_pending_variations = all_variations.exclude(
-            status__in=[ContractVariation.Status.APPROVED, ContractVariation.Status.REJECTED]
+            status__in=[
+                ContractVariation.Status.APPROVED,
+                ContractVariation.Status.REJECTED,
+            ]
         )
 
         early_warnings = EarlyWarning.objects.filter(
@@ -1888,17 +1897,19 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
         all_claims_value = sum((v.variation_amount or 0) for v in all_variations)
 
         latest_forecast = (
-            project.forecasts.filter(status=Forecast.Status.APPROVED, period__lte=period_end)
+            project.forecasts.filter(
+                status=Forecast.Status.APPROVED, period__lte=period_end
+            )
             .order_by("-period")
             .first()
         )
         forecast_to_completion = (
             latest_forecast.total_forecast if latest_forecast else "-"
         )
-        
+
         # Get project actual completion/actual end date
         project_actual_end = getattr(project, "actual_end_date", None) or "-"
-        
+
         # Period comparison data
         risks_current = Risk.objects.filter(
             project=project, date__range=(current_period_start, current_period_end)
@@ -1907,37 +1918,62 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
             project=project, date__range=(previous_period_start, previous_period_end)
         ).count()
         risks_current_open = Risk.objects.filter(
-            project=project, date__range=(current_period_start, current_period_end), status=RiskStatus.OPEN
+            project=project,
+            date__range=(current_period_start, current_period_end),
+            status=RiskStatus.OPEN,
         ).count()
         risks_previous_open = Risk.objects.filter(
-            project=project, date__range=(previous_period_start, previous_period_end), status=RiskStatus.OPEN
+            project=project,
+            date__range=(previous_period_start, previous_period_end),
+            status=RiskStatus.OPEN,
         ).count()
         risk_cost_current = (
             Risk.objects.filter(
                 project=project, date__range=(current_period_start, current_period_end)
-            ).aggregate(total=Sum("cost_impact")).get("total") or 0
+            )
+            .aggregate(total=Sum("cost_impact"))
+            .get("total")
+            or 0
         )
         risk_cost_previous = (
             Risk.objects.filter(
-                project=project, date__range=(previous_period_start, previous_period_end)
-            ).aggregate(total=Sum("cost_impact")).get("total") or 0
+                project=project,
+                date__range=(previous_period_start, previous_period_end),
+            )
+            .aggregate(total=Sum("cost_impact"))
+            .get("total")
+            or 0
         )
 
         variations_current = ContractVariation.objects.filter(
-            project=project, date_identified__range=(current_period_start, current_period_end), date_identified__isnull=False
+            project=project,
+            date_identified__range=(current_period_start, current_period_end),
+            date_identified__isnull=False,
         ).count()
         variations_previous = ContractVariation.objects.filter(
-            project=project, date_identified__range=(previous_period_start, previous_period_end), date_identified__isnull=False
+            project=project,
+            date_identified__range=(previous_period_start, previous_period_end),
+            date_identified__isnull=False,
         ).count()
         variations_current_cost = (
             ContractVariation.objects.filter(
-                project=project, date_identified__range=(current_period_start, current_period_end), date_identified__isnull=False
-            ).aggregate(total=Sum("variation_amount")).get("total") or 0
+                project=project,
+                date_identified__range=(current_period_start, current_period_end),
+                date_identified__isnull=False,
+            )
+            .aggregate(total=Sum("variation_amount"))
+            .get("total")
+            or 0
         )
         variations_previous_cost = (
             ContractVariation.objects.filter(
-                project=project, date_identified__range=(previous_period_start, previous_period_end), date_identified__isnull=False
-            ).aggregate(total=Sum("variation_amount")).get("total") or 0
+                project=project,
+                date_identified__range=(previous_period_start, previous_period_end),
+                date_identified__isnull=False,
+            )
+            .aggregate(total=Sum("variation_amount"))
+            .get("total")
+            or 0
         )
 
         # ── Bi-weekly reports (Safety / Quality) ─────────────────────
@@ -1973,7 +2009,9 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
         progress_trackers_in_window = [
             p
             for p in progress_trackers
-            if not (p.planned_end_date < period_start or p.planned_start_date > period_end)
+            if not (
+                p.planned_end_date < period_start or p.planned_start_date > period_end
+            )
         ][:50]
 
         def _planned_pct(p: ProgressTracker) -> float:
@@ -2004,11 +2042,15 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
                 }
             )
 
-        labour_qs = LabourLog.objects.filter(project=project, date__range=(period_start, period_end))
+        labour_qs = LabourLog.objects.filter(
+            project=project, date__range=(period_start, period_end)
+        )
         labour_hours = labour_qs.aggregate(total=Sum("hours_worked"))["total"] or 0
         labour_people = labour_qs.values("id_number").distinct().count()
 
-        plant_qs = PlantEquipment.objects.filter(project=project, date__range=(period_start, period_end))
+        plant_qs = PlantEquipment.objects.filter(
+            project=project, date__range=(period_start, period_end)
+        )
         plant_hours = plant_qs.aggregate(total=Sum("usage_hours"))["total"] or 0
         plant_breakdowns = plant_qs.filter(
             breakdown_status=PlantEquipment.BreakdownStatus.BREAKDOWN
@@ -2017,7 +2059,9 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
         materials_qs = MaterialsLog.objects.filter(
             project=project, date_received__range=(period_start, period_end)
         )
-        materials_total_qty = materials_qs.aggregate(total=Sum("quantity"))["total"] or 0
+        materials_total_qty = (
+            materials_qs.aggregate(total=Sum("quantity"))["total"] or 0
+        )
         materials_units = list(
             materials_qs.values_list("unit", flat=True).distinct()[:5]
         )
@@ -2150,8 +2194,12 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
                     "all_variants_total": all_claims_value,
                     "variations_count": all_variations.count(),
                     "pending_count": all_pending_variations.count(),
-                    "approved_count": all_variations.filter(status=ContractVariation.Status.APPROVED).count(),
-                    "rejected_count": all_variations.filter(status=ContractVariation.Status.REJECTED).count(),
+                    "approved_count": all_variations.filter(
+                        status=ContractVariation.Status.APPROVED
+                    ).count(),
+                    "rejected_count": all_variations.filter(
+                        status=ContractVariation.Status.REJECTED
+                    ).count(),
                     "forecast_completion": forecast_to_completion,
                     "actual_completion": project_actual_end,
                 },
@@ -2186,7 +2234,8 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
                             {
                                 "label": "Detailed CE / Variations Register",
                                 "url": reverse(
-                                    "bill_of_quantities:variation-list", args=[project.pk]
+                                    "bill_of_quantities:variation-list",
+                                    args=[project.pk],
                                 ),
                             },
                             {
@@ -2199,7 +2248,8 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
                             {
                                 "label": "Supporting Correspondence",
                                 "url": reverse(
-                                    "bill_of_quantities:correspondence-list", args=[project.pk]
+                                    "bill_of_quantities:correspondence-list",
+                                    args=[project.pk],
                                 ),
                             },
                         ],
@@ -2396,12 +2446,11 @@ class ConstructionProgressReportView(ContractualReportMixin, TemplateView):
         project = self.get_project()
 
         period_key = (self.request.GET.get("period") or "2w").lower()
-        period_start, period_end, period_label = ContractualReportView._get_reporting_window(
-            period_key
+        period_start, period_end, period_label = (
+            ContractualReportView._get_reporting_window(period_key)
         )
 
         # ── Project Information ──────────────────────────────────────
-        consultants = project.lead_consultants.all()
         client = project.client.name if project.client else "-"
         contractor = project.contractor.name if project.contractor else "-"
         project_manager = (
@@ -2421,9 +2470,7 @@ class ConstructionProgressReportView(ContractualReportMixin, TemplateView):
             actual_date__isnull=True,
             forecast_date__lte=period_end,
         )
-        milestones_upcoming = all_milestones.filter(
-            planned_date__gt=period_end
-        )
+        milestones_upcoming = all_milestones.filter(planned_date__gt=period_end)
         delayed_milestones = [m for m in all_milestones if m.is_delayed]
 
         # ── Schedule Status ──────────────────────────────────────────
@@ -2495,23 +2542,19 @@ class ConstructionProgressReportView(ContractualReportMixin, TemplateView):
         forecast_status = (
             "On Track"
             if cpi >= 0.95 and spent_to_date <= budget_spend_pct * contract_value
-            else (
-                "At Risk"
-                if cpi >= 0.90
-                else "Over Budget"
-            )
+            else ("At Risk" if cpi >= 0.90 else "Over Budget")
         )
 
         # ── Risks ────────────────────────────────────────────────────
         all_open_risks = Risk.objects.filter(
             project=project, status=RiskStatus.OPEN
         ).select_related("raised_by")
-        critical_risks_count = all_open_risks.filter(
-            cost_impact__gte=500000
-        ).count()
-        high_risks_count = all_open_risks.filter(cost_impact__gte=100000).exclude(
-            cost_impact__gte=500000
-        ).count()
+        critical_risks_count = all_open_risks.filter(cost_impact__gte=500000).count()
+        high_risks_count = (
+            all_open_risks.filter(cost_impact__gte=100000)
+            .exclude(cost_impact__gte=500000)
+            .count()
+        )
         top_open_risks = all_open_risks.order_by("-cost_impact")[:5]
 
         # ── Safety & Quality ─────────────────────────────────────────

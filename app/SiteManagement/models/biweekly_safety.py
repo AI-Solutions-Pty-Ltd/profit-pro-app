@@ -42,4 +42,6 @@ class BiWeeklySafetyReport(BaseModel):
         ordering = ["-period_end", "-created_at"]
 
     def __str__(self) -> str:
-        return f"Safety Report: {self.period_start} – {self.period_end} ({self.project})"
+        return (
+            f"Safety Report: {self.period_start} – {self.period_end} ({self.project})"
+        )

@@ -1,5 +1,17 @@
 """Site Management Views."""
 
+from .biweekly_quality_views import (
+    BiWeeklyQualityReportCreateView,
+    BiWeeklyQualityReportDeleteView,
+    BiWeeklyQualityReportListView,
+    BiWeeklyQualityReportUpdateView,
+)
+from .biweekly_safety_views import (
+    BiWeeklySafetyReportCreateView,
+    BiWeeklySafetyReportDeleteView,
+    BiWeeklySafetyReportListView,
+    BiWeeklySafetyReportUpdateView,
+)
 from .daily_diary_views import (
     DailyDiaryCreateView,
     DailyDiaryDeleteView,
@@ -86,18 +98,6 @@ from .quality_control_views import (
     QualityControlDeleteView,
     QualityControlListView,
     QualityControlUpdateView,
-)
-from .biweekly_safety_views import (
-    BiWeeklySafetyReportCreateView,
-    BiWeeklySafetyReportDeleteView,
-    BiWeeklySafetyReportListView,
-    BiWeeklySafetyReportUpdateView,
-)
-from .biweekly_quality_views import (
-    BiWeeklyQualityReportCreateView,
-    BiWeeklyQualityReportDeleteView,
-    BiWeeklyQualityReportListView,
-    BiWeeklyQualityReportUpdateView,
 )
 from .rfi_views import (
     RFICreateView,

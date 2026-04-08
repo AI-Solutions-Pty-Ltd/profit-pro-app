@@ -79,7 +79,7 @@ class BiWeeklySafetyReportCreateView(BiWeeklySafetyReportMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.project = self.get_project()
-        form.instance.submitted_by = self.request.user  # type: ignore
+        form.instance.submitted_by = self.request.user
         messages.success(self.request, "Bi-weekly safety report created.")
         return super().form_valid(form)
 
@@ -139,4 +139,3 @@ class BiWeeklySafetyReportDeleteView(BiWeeklySafetyReportMixin, DeleteView):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
         return context
-

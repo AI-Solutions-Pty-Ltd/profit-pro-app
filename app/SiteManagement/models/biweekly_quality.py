@@ -35,7 +35,9 @@ class BiWeeklyQualityReport(BaseModel):
         ordering = ["-period_end", "-created_at"]
 
     def __str__(self) -> str:
-        return f"Quality Report: {self.period_start} – {self.period_end} ({self.project})"
+        return (
+            f"Quality Report: {self.period_start} – {self.period_end} ({self.project})"
+        )
 
 
 class QualityActivityInspection(BaseModel):
@@ -70,7 +72,7 @@ class QualityActivityInspection(BaseModel):
         verbose_name_plural = "Quality Activity Inspections"
 
     def __str__(self) -> str:
-        return f"{self.activity_or_work_package} – {self.get_approval_status_display()}"
+        return f"{self.activity_or_work_package} – {self.get_approval_status_display()}"  # type: ignore
 
 
 class QualityMaterialDelivery(BaseModel):

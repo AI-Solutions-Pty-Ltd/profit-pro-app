@@ -87,7 +87,7 @@ class NonConformance(BaseModel):
 
     def _photo_upload_to(self, filename: str) -> str:
         base = os.path.basename(filename)
-        return f"ncr_photos/{self.project_id}/{self.ncr_type}/{base}"
+        return f"ncr_photos/{self.project_id}/{self.ncr_type}/{base}"  # type: ignore
 
     photo = models.ImageField(
         upload_to=_photo_upload_to,
@@ -106,7 +106,7 @@ class NonConformance(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.reference_number} – {self.get_ncr_type_display()} NCR ({self.status})"
+        return f"{self.reference_number} – {self.get_ncr_type_display()} NCR ({self.status})"  # type: ignore
 
     def save(self, *args, **kwargs) -> None:
         """Auto-generate reference number and handle close timestamp."""

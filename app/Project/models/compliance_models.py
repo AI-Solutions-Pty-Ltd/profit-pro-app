@@ -369,7 +369,7 @@ class FinalAccountCompliance(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.get_document_type_display()}: {self.description[:50]}"  # type: ignore[attr-defined]
+        return f"{self.get_document_type_display()}: {self.description[:50]}"  # type: ignore
 
     @property
     def filename(self) -> str:

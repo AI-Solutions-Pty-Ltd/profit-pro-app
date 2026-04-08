@@ -1,5 +1,7 @@
 {% extends "base.html" %}
-{% block title %}Bi-Weekly Safety Reports - {{ project.name }}{% endblock title %}
+{% block title %}
+    Bi-Weekly Safety Reports - {{ project.name }}
+{% endblock title %}
 {% block content %}
     <div class="bg-white shadow-sm rounded-lg mb-6">
         <div class="px-6 py-4 flex items-center justify-between">
@@ -8,12 +10,9 @@
                 <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
             </div>
             <a href="{% url 'site_management:biweekly-safety-create' project.pk %}"
-               class="px-4 py-2 rounded-md text-sm text-white bg-indigo-600 hover:bg-indigo-700">
-                Add Report
-            </a>
+               class="px-4 py-2 rounded-md text-sm text-white bg-indigo-600 hover:bg-indigo-700">Add Report</a>
         </div>
     </div>
-
     <div class="bg-white shadow-sm rounded-lg overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200 text-sm">
             <thead class="bg-gray-50">
@@ -26,12 +25,8 @@
             <tbody class="bg-white divide-y divide-gray-200">
                 {% for r in reports %}
                     <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            {{ r.period_start }} → {{ r.period_end }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-gray-600">
-                            {{ r.created_at|date:"Y-m-d H:i" }}
-                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ r.period_start }} → {{ r.period_end }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ r.created_at|date:"Y-m-d H:i" }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right">
                             <a href="{% url 'site_management:biweekly-safety-update' project.pk r.pk %}"
                                class="text-indigo-700 hover:text-indigo-900 mr-3">Edit</a>
@@ -41,13 +36,10 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="3" class="px-6 py-10 text-center text-gray-500">
-                            No bi-weekly safety reports yet.
-                        </td>
+                        <td colspan="3" class="px-6 py-10 text-center text-gray-500">No bi-weekly safety reports yet.</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 {% endblock content %}
-

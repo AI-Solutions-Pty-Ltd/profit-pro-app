@@ -94,14 +94,12 @@ class Incident(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.reference_number} – {self.get_incident_type_display()} ({self.date})"
+        return f"{self.reference_number} – {self.get_incident_type_display()} ({self.date})"  # type: ignore
 
     def save(self, *args, **kwargs) -> None:
         """Auto-generate reference number and handle status timestamps."""
         if not self.reference_number:
-            count = (
-                Incident.all_objects.filter(project=self.project).count() + 1
-            )
+            count = Incident.all_objects.filter(project=self.project).count() + 1
             prefix = "INC" if self.incident_type == IncidentType.INCIDENT else "NM"
             self.reference_number = f"{prefix}-{self.project.pk:04d}-{count:04d}"
 

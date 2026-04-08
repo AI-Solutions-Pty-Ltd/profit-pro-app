@@ -1,14 +1,22 @@
 """Site Management Models"""
 
+from .biweekly_quality import (
+    BiWeeklyQualityReport,
+    QualityActivityInspection,
+    QualityMaterialDelivery,
+    QualitySiteAudit,
+    QualityWorkmanship,
+)
+from .biweekly_safety import BiWeeklySafetyReport
 from .daily_diary import DailyDiary
 from .delay_log import DelayLog
 from .delivery_tracker import DeliveryTracker
 from .early_warning import EarlyWarning, EarlyWarningStatus
 from .incident import Incident, IncidentStatus, IncidentType
-from .non_conformance import NCRStatus, NCRType, NonConformance
 from .labour_log import LabourLog
 from .materials_log import MaterialsLog
 from .meeting import Meeting, MeetingStatus, MeetingType
+from .non_conformance import NCRStatus, NCRType, NonConformance
 from .offsite_log import OffsiteLog
 from .photo_log import PhotoLog
 from .plant_equipment import PlantEquipment
@@ -16,14 +24,6 @@ from .procurement_tracker import ProcurementTracker
 from .productivity_log import ProductivityLog
 from .progress_tracker import ProgressTracker
 from .quality_control import QualityControl
-from .biweekly_safety import BiWeeklySafetyReport
-from .biweekly_quality import (
-    BiWeeklyQualityReport,
-    QualityActivityInspection,
-    QualityMaterialDelivery,
-    QualityWorkmanship,
-    QualitySiteAudit,
-)
 from .rfi import RFI, RFIStatus
 from .safety_observation import SafetyObservation
 from .site_instruction import SiteInstruction, SiteInstructionStatus

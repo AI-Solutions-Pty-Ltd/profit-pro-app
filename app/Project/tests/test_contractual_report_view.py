@@ -10,7 +10,7 @@ from app.BillOfQuantities.tests.factories import (
     ContractualCorrespondenceFactory,
     ContractVariationFactory,
 )
-from app.Project.models import ProjectDocument, ProjectRole, Role, Risk, RiskStatus
+from app.Project.models import ProjectDocument, ProjectRole, Risk, RiskStatus, Role
 from app.Project.tests.factories import (
     MilestoneFactory,
     ProjectDocumentFactory,
@@ -68,11 +68,11 @@ class TestContractualReportView(TestCase):
         )
 
         # Documents in drawings/specifications categories
-        d1 = ProjectDocumentFactory.create(
+        ProjectDocumentFactory.create(
             project=self.project,
             category=ProjectDocument.DocumentCategory.DRAWINGS,
         )
-        d2 = ProjectDocumentFactory.create(
+        ProjectDocumentFactory.create(
             project=self.project,
             category=ProjectDocument.DocumentCategory.SPECIFICATIONS,
         )
@@ -119,4 +119,3 @@ class TestContractualReportView(TestCase):
         self.assertIn("4. Risk Register (Extract)", html)
         self.assertIn("Impact Value", html)
         self.assertIn("Recommendations", html)
-
