@@ -1,14 +1,11 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% load heroicons %}
+
 {% block title %}
-    {% if object %}
-        Edit
-    {% else %}
-        New
-    {% endif %}
-    Unit - Profit Pro
+    {% if object %}Edit{% else %}New{% endif %} Unit - Profit Pro
 {% endblock %}
+
 {% block content %}
     <div class="mx-auto max-w-3xl">
         <div class="mb-6 bg-white rounded-lg shadow-sm">
