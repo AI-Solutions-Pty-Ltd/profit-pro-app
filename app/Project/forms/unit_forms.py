@@ -32,6 +32,6 @@ class UnitOfMeasureForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Ensure only units of the same category can be selected as reference
         if self.instance and self.instance.pk:
-            self.fields["reference_unit"].queryset = UnitOfMeasure.objects.exclude(
+            self.fields["reference_unit"].queryset = UnitOfMeasure.objects.exclude(  # type: ignore
                 pk=self.instance.pk
             )

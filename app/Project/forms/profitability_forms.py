@@ -44,7 +44,7 @@ class LabourCostTrackerForm(ProfitabilityBaseForm):
         project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
         if project:
-            self.fields["labour_entity"].queryset = project.labourentity_entities.all()
+            self.fields["labour_entity"].queryset = project.labourentity_entities.all()  # type: ignore
 
 
 class SubcontractorCostTrackerForm(ProfitabilityBaseForm):
@@ -67,7 +67,7 @@ class SubcontractorCostTrackerForm(ProfitabilityBaseForm):
         if project:
             self.fields[
                 "subcontractor_entity"
-            ].queryset = project.subcontractorentity_entities.all()
+            ].queryset = project.subcontractorentity_entities.all()  # type: ignore
 
 
 class OverheadCostTrackerForm(ProfitabilityBaseForm):
@@ -84,7 +84,7 @@ class OverheadCostTrackerForm(ProfitabilityBaseForm):
         if project:
             self.fields[
                 "overhead_entity"
-            ].queryset = project.overheadentity_entities.all()
+            ].queryset = project.overheadentity_entities.all()  # type: ignore
 
 
 class MaterialCostTrackerForm(ProfitabilityBaseForm):
@@ -101,4 +101,4 @@ class MaterialCostTrackerForm(ProfitabilityBaseForm):
         if project:
             self.fields[
                 "material_entity"
-            ].queryset = project.materialentity_entities.all()
+            ].queryset = project.materialentity_entities.all()  # type: ignore

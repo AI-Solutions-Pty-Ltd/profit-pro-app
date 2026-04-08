@@ -24,10 +24,10 @@ class ProfitabilityMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        return super().get_queryset().filter(project=self.project)
+        return super().get_queryset().filter(project=self.project)  # type: ignore
 
     def get_context_data(self, **kwargs) -> dict:
-        context = super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)  # type: ignore
         context["project"] = self.project
 
         # Add KVI project-level metrics
@@ -43,10 +43,10 @@ class ProfitabilityMixin(LoginRequiredMixin):
 
         if not isinstance(self, DeleteView):
             form.instance.project = self.project
-        return super().form_valid(form)
+        return super().form_valid(form)  # type: ignore
 
     def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
+        kwargs = super().get_form_kwargs()  # type: ignore
         from django.views.generic.edit import DeleteView
 
         if not isinstance(self, DeleteView):

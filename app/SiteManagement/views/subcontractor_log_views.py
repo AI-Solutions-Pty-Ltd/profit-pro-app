@@ -31,7 +31,7 @@ class SubcontractorLogMixin(
 
     def get_form(self, form_class=None):
         """Filter subcontractor_entity and apply date widgets."""
-        form = super().get_form(form_class)
+        form = super().get_form(form_class)  # type: ignore
         project = self.get_project()
         if "subcontractor_entity" in form.fields:
             form.fields[

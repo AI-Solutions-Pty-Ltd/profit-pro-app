@@ -38,10 +38,10 @@ class ProjectEntityMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        return super().get_queryset().filter(project=self.project)
+        return super().get_queryset().filter(project=self.project)  # type: ignore
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)  # type: ignore
         context["project"] = self.project
         context["entity_name"] = self.entity_name
         context["entity_type"] = self.entity_type
@@ -52,7 +52,7 @@ class ProjectEntityMixin(LoginRequiredMixin):
     def form_valid(self, form):
         if hasattr(form, "instance"):
             form.instance.project = self.project
-        return super().form_valid(form)
+        return super().form_valid(form)  # type: ignore
 
     def get_success_url(self):
         """Redirect to the list view of the current entity type."""

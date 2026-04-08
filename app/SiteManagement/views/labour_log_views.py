@@ -31,7 +31,7 @@ class LabourLogMixin(
 
     def get_form(self, form_class=None):
         """Filter labour_entity to only show entities for the current project."""
-        form = super().get_form(form_class)
+        form = super().get_form(form_class)  # type: ignore
         project = self.get_project()
         if "labour_entity" in form.fields:
             form.fields["labour_entity"].queryset = LabourEntity.objects.filter(

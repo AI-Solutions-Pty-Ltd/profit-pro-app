@@ -1,215 +1,192 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% load heroicons %}
-
 {% block title %}
-    {% if object %}Edit{% else %}New{% endif %} Unit - Profit Pro
+    {% if object %}
+        Edit
+    {% else %}
+        New
+    {% endif %}
+    Unit - Profit Pro
 {% endblock %}
-
 {% block content %}
-<div class="max-w-2xl mx-auto py-12 px-4">
-    <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
-        <!-- Header -->
-        <div class="px-8 py-6 bg-gradient-to-r from-indigo-600 to-indigo-700">
-            <h3 class="text-xl font-bold text-white flex items-center">
-                {% if object %}
-                    {% heroicon_outline "pencil-square" size="24" class="mr-2" %}
-                    Update Unit Definition
-                {% else %}
-                    {% heroicon_outline "plus-circle" size="24" class="mr-2" %}
-                    New Unit of Measure
-                {% endif %}
-            </h3>
-            <p class="text-indigo-100 text-sm mt-1 opacity-90">Standardize measurements across all projects.</p>
-        </div>
-
-        <!-- Form -->
-        <div class="px-8 py-10">
-            <form method="post" class="space-y-8">
-                {% csrf_token %}
-                
-                <div class="space-y-6">
-                    <!-- Unit Name Section -->
-                    <div class="form-group">
-                        <label for="{{ form.name.id_for_label }}" class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
-                            Unit Name
-                        </label>
-                        {{ form.name }}
-                        {% if form.name.errors %}
-                            <p class="mt-2 text-sm text-red-600">{{ form.name.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="max-w-2xl mx-auto py-12 px-4">
+        <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
+            <!-- Header -->
+            <div class="px-8 py-6 bg-gradient-to-r from-indigo-600 to-indigo-700">
+                <h3 class="text-xl font-bold text-white flex items-center">
+                    {% if object %}
+                        {% heroicon_outline "pencil-square" size="24" class="mr-2" %}
+                        Update Unit Definition
+                    {% else %}
+                        {% heroicon_outline "plus-circle" size="24" class="mr-2" %}
+                        New Unit of Measure
+                    {% endif %}
+                </h3>
+                <p class="text-indigo-100 text-sm mt-1 opacity-90">Standardize measurements across all projects.</p>
+            </div>
+            <!-- Form -->
+            <div class="px-8 py-10">
+                <form method="post" class="space-y-8">
+                    {% csrf_token %}
+                    <div class="space-y-6">
+                        <!-- Unit Name Section -->
                         <div class="form-group">
-                            <label for="{{ form.short_name.id_for_label }}" class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
-                                Abbreviation
+                            <label for="{{ form.name.id_for_label }}"
+                                   class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
+                                Unit Name
                             </label>
-                            {{ form.short_name }}
+                            {{ form.name }}
+                            {% if form.name.errors %}<p class="mt-2 text-sm text-red-600">{{ form.name.errors.0 }}</p>{% endif %}
                         </div>
-                        <div class="form-group">
-                            <label for="{{ form.category.id_for_label }}" class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
-                                Category
-                            </label>
-                            {{ form.category }}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="form-group">
+                                <label for="{{ form.short_name.id_for_label }}"
+                                       class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
+                                    Abbreviation
+                                </label>
+                                {{ form.short_name }}
+                            </div>
+                            <div class="form-group">
+                                <label for="{{ form.category.id_for_label }}"
+                                       class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
+                                    Category
+                                </label>
+                                {{ form.category }}
+                            </div>
                         </div>
-                    </div>
-
-                    <!-- Conversion Logic Section (Matches Screenshot) -->
-                    <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
-                        <div class="flex items-center mb-4">
-                            {% heroicon_outline "arrows-right-left" size="18" class="text-indigo-500 mr-2" %}
-                            <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Conversion Logic</h4>
-                        </div>
-                        
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
-                            <div class="flex-1 w-full">
-                                <div class="relative rounded-md shadow-sm">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span class="text-gray-500 sm:text-sm">1 [Unit] = </span>
+                        <!-- Conversion Logic Section (Matches Screenshot) -->
+                        <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                            <div class="flex items-center mb-4">
+                                {% heroicon_outline "arrows-right-left" size="18" class="text-indigo-500 mr-2" %}
+                                <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Conversion Logic</h4>
+                            </div>
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                                <div class="flex-1 w-full">
+                                    <div class="relative rounded-md shadow-sm">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span class="text-gray-500 sm:text-sm">1 [Unit] =</span>
+                                        </div>
+                                        <input type="number"
+                                               name="{{ form.conversion_factor.name }}"
+                                               id="{{ form.conversion_factor.id_for_label }}"
+                                               step="0.000001"
+                                               value="{{ form.conversion_factor.value|default:'1.000000' }}"
+                                               class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-20 sm:text-sm border-gray-300 rounded-md"
+                                               placeholder="1.000000">
                                     </div>
-                                    <input type="number" name="{{ form.conversion_factor.name }}" 
-                                           id="{{ form.conversion_factor.id_for_label }}"
-                                           step="0.000001"
-                                           value="{{ form.conversion_factor.value|default:'1.000000' }}"
-                                           class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-20 sm:text-sm border-gray-300 rounded-md"
-                                           placeholder="1.000000">
+                                    <p class="mt-1 text-xs text-gray-500 italic">Quantity relative to reference</p>
                                 </div>
-                                <p class="mt-1 text-xs text-gray-500 italic">Quantity relative to reference</p>
-                            </div>
-                            
-                            <div class="hidden sm:block text-gray-400">
-                                {% heroicon_outline "arrow-right" size="20" %}
-                            </div>
-
-                            <div class="flex-1 w-full">
-                                {{ form.reference_unit }}
-                                <p class="mt-1 text-xs text-gray-500 italic">Reference Unit</p>
-<div class="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8 animate-in fade-in zoom-in-95 duration-500">
-    <!-- Form Header -->
-    <div class="mb-10 text-center">
-        <div class="inline-flex p-3 bg-indigo-50 rounded-2xl mb-4 text-indigo-600">
-            {% heroicon_outline "variable" size="32" %}
-        </div>
-        <h1 class="text-3xl font-black text-slate-900">
-            {% if object %}Update Definition{% else %}New Unit Specification{% endif %}
-        </h1>
-        <p class="mt-2 text-slate-500">
-            Standardize how your organization measures production, time, and materials.
-        </p>
-    </div>
-
-    <form method="post" class="space-y-8">
-        {% csrf_token %}
-        
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Primary Details -->
-            <div class="lg:col-span-2 space-y-6">
-                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
-                    <h2 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">
-                        Core Identity
-                    </h2>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="md:col-span-2">
-                            {{ form.name|as_crispy_field }}
-                        </div>
-                        <div>
-                            {{ form.short_name|as_crispy_field }}
-                        </div>
-                        <div>
-                            {{ form.category|as_crispy_field }}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
-                    <h2 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">
-                        Mathematical Logic
-                    </h2>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            {{ form.reference_unit|as_crispy_field }}
-                        </div>
-                        <div>
-                            {{ form.conversion_factor|as_crispy_field }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Contextual Help / Sidebar -->
-            <div class="lg:col-span-1 space-y-6">
-                <!-- Info Card -->
-                <div class="bg-indigo-600 rounded-3xl p-8 text-white shadow-xl shadow-indigo-200 relative overflow-hidden">
-                    <div class="relative z-10">
-                        <h3 class="text-xl font-bold mb-4">Conversion Guide</h3>
-                        <p class="text-indigo-100 text-sm leading-relaxed mb-6">
-                            Determine the relationship between this unit and a standard reference unit. 
-                        </p>
-                        
-                        <div id="conversion-helper" class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20">
-                            <div class="text-xs font-black text-indigo-200 uppercase tracking-widest mb-3">Formula Preview</div>
-                            <div class="flex flex-col items-center justify-center p-4 bg-white/5 rounded-xl border border-white/10">
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-2xl font-black">1</span>
-                                    <span id="preview-self" class="text-indigo-200 font-bold uppercase italic">[Unit]</span>
-                                </div>
-                                <div class="my-2">
-                                    {% heroicon_mini "chevron-double-down" class="w-4 h-4 text-indigo-300" %}
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    <span id="preview-factor" class="text-2xl font-black">1.00</span>
-                                    <span id="preview-ref" class="text-indigo-200 font-bold uppercase italic">[Ref]</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Decorative background icon -->
-                    <div class="absolute -bottom-10 -right-10 opacity-10">
-                        {% heroicon_outline "calculator" size="120" %}
-                    </div>
-                </div>
-
-                <!-- Best Practices -->
-                <div class="bg-slate-50 rounded-3xl p-6 border border-slate-200">
-                    <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Best Practices</h4>
-                    <ul class="space-y-3">
-                        <li class="flex items-start">
-                            {% heroicon_mini "check-circle" class="w-4 h-4 text-emerald-500 mr-2 mt-0.5" %}
-                            <span class="text-xs text-slate-600">Use short, clear abbreviations (e.g., kg, hrs, m2).</span>
-                        </li>
-                        <li class="flex items-start">
-                            {% heroicon_mini "check-circle" class="w-4 h-4 text-emerald-500 mr-2 mt-0.5" %}
-                            <span class="text-xs text-slate-600">Base units (Reference = None) should be the smallest practical measure.</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Form Actions -->
-        <div class="flex items-center justify-between pt-8 border-t border-slate-100">
-            <a href="{% url 'project:unit-list' %}" 
-               class="text-slate-400 hover:text-slate-600 font-bold text-sm flex items-center transition-colors">
-                {% heroicon_mini "arrow-left" class="w-4 h-4 mr-2" %}
-                Return to Registry
-            </a>
-            
-            <div class="flex space-x-4">
-                <button type="submit" 
-                        class="px-8 py-3 bg-indigo-600 hover:bg-slate-900 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center">
-                    {% heroicon_mini "check-badge" class="w-5 h-5 mr-2" %}
-                    {% if object %}Commit Updates{% else %}Finalize Definition{% endif %}
-                </button>
-            </div>
-        </div>
-    </form>
-</div>
-
-<script>
+                                <div class="hidden sm:block text-gray-400">{% heroicon_outline "arrow-right" size="20" %}</div>
+                                <div class="flex-1 w-full">
+                                    {{ form.reference_unit }}
+                                    <p class="mt-1 text-xs text-gray-500 italic">Reference Unit</p>
+                                    <div class="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8 animate-in fade-in zoom-in-95 duration-500">
+                                        <!-- Form Header -->
+                                        <div class="mb-10 text-center">
+                                            <div class="inline-flex p-3 bg-indigo-50 rounded-2xl mb-4 text-indigo-600">
+                                                {% heroicon_outline "variable" size="32" %}
+                                            </div>
+                                            <h1 class="text-3xl font-black text-slate-900">
+                                                {% if object %}
+                                                    Update Definition
+                                                {% else %}
+                                                    New Unit Specification
+                                                {% endif %}
+                                            </h1>
+                                            <p class="mt-2 text-slate-500">Standardize how your organization measures production, time, and materials.</p>
+                                        </div>
+                                        <form method="post" class="space-y-8">
+                                            {% csrf_token %}
+                                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                                <!-- Primary Details -->
+                                                <div class="lg:col-span-2 space-y-6">
+                                                    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
+                                                        <h2 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">
+                                                            Core Identity
+                                                        </h2>
+                                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                            <div class="md:col-span-2">{{ form.name|as_crispy_field }}</div>
+                                                            <div>{{ form.short_name|as_crispy_field }}</div>
+                                                            <div>{{ form.category|as_crispy_field }}</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-8">
+                                                        <h2 class="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">
+                                                            Mathematical Logic
+                                                        </h2>
+                                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                            <div>{{ form.reference_unit|as_crispy_field }}</div>
+                                                            <div>{{ form.conversion_factor|as_crispy_field }}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!-- Contextual Help / Sidebar -->
+                                                <div class="lg:col-span-1 space-y-6">
+                                                    <!-- Info Card -->
+                                                    <div class="bg-indigo-600 rounded-3xl p-8 text-white shadow-xl shadow-indigo-200 relative overflow-hidden">
+                                                        <div class="relative z-10">
+                                                            <h3 class="text-xl font-bold mb-4">Conversion Guide</h3>
+                                                            <p class="text-indigo-100 text-sm leading-relaxed mb-6">
+                                                                Determine the relationship between this unit and a standard reference unit.
+                                                            </p>
+                                                            <div id="conversion-helper"
+                                                                 class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20">
+                                                                <div class="text-xs font-black text-indigo-200 uppercase tracking-widest mb-3">Formula Preview</div>
+                                                                <div class="flex flex-col items-center justify-center p-4 bg-white/5 rounded-xl border border-white/10">
+                                                                    <div class="flex items-center space-x-2">
+                                                                        <span class="text-2xl font-black">1</span>
+                                                                        <span id="preview-self" class="text-indigo-200 font-bold uppercase italic">[Unit]</span>
+                                                                    </div>
+                                                                    <div class="my-2">{% heroicon_mini "chevron-double-down" class="w-4 h-4 text-indigo-300" %}</div>
+                                                                    <div class="flex items-center space-x-2">
+                                                                        <span id="preview-factor" class="text-2xl font-black">1.00</span>
+                                                                        <span id="preview-ref" class="text-indigo-200 font-bold uppercase italic">[Ref]</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <!-- Decorative background icon -->
+                                                        <div class="absolute -bottom-10 -right-10 opacity-10">{% heroicon_outline "calculator" size="120" %}</div>
+                                                    </div>
+                                                    <!-- Best Practices -->
+                                                    <div class="bg-slate-50 rounded-3xl p-6 border border-slate-200">
+                                                        <h4 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Best Practices</h4>
+                                                        <ul class="space-y-3">
+                                                            <li class="flex items-start">
+                                                                {% heroicon_mini "check-circle" class="w-4 h-4 text-emerald-500 mr-2 mt-0.5" %}
+                                                                <span class="text-xs text-slate-600">Use short, clear abbreviations (e.g., kg, hrs, m2).</span>
+                                                            </li>
+                                                            <li class="flex items-start">
+                                                                {% heroicon_mini "check-circle" class="w-4 h-4 text-emerald-500 mr-2 mt-0.5" %}
+                                                                <span class="text-xs text-slate-600">Base units (Reference = None) should be the smallest practical measure.</span>
+                                                            </li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Form Actions -->
+                                            <div class="flex items-center justify-between pt-8 border-t border-slate-100">
+                                                <a href="{% url 'project:unit-list' %}"
+                                                   class="text-slate-400 hover:text-slate-600 font-bold text-sm flex items-center transition-colors">
+                                                    {% heroicon_mini "arrow-left" class="w-4 h-4 mr-2" %}
+                                                    Return to Registry
+                                                </a>
+                                                <div class="flex space-x-4">
+                                                    <button type="submit"
+                                                            class="px-8 py-3 bg-indigo-600 hover:bg-slate-900 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center">
+                                                        {% heroicon_mini "check-badge" class="w-5 h-5 mr-2" %}
+                                                        {% if object %}
+                                                            Commit Updates
+                                                        {% else %}
+                                                            Finalize Definition
+                                                        {% endif %}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <script>
     document.addEventListener('DOMContentLoaded', function() {
         const shortNameInput = document.getElementById('id_short_name');
         const refUnitSelect = document.getElementById('id_reference_unit');
@@ -241,9 +218,8 @@
         // Initial run
         updatePreview();
     });
-</script>
-
-<style>
+                                    </script>
+                                    <style>
     /* Premium style overrides for Crispy Fields */
     .form-group label {
         font-weight: 800 !important;
@@ -267,5 +243,5 @@
         box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
         background-color: #ffffff !important;
     }
-</style>
-{% endblock %}
+                                    </style>
+                                {% endblock %}

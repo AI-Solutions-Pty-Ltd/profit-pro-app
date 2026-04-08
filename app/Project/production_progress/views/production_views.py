@@ -564,10 +564,10 @@ class DailyProductivityCreateView(
                 )
 
             for f in p_formset.forms:
-                f.fields["resource"].queryset = planned_plants  # type: ignore[attr]
+                f.fields["resource"].queryset = planned_plants  # type: ignore[unresolved-attribute]
                 # Ensure activity hidden field is set
                 f.fields["activity"].initial = plan.id
-                f.fields["activity"].queryset = ProductionPlan.objects.filter(  # type: ignore[attr]
+                f.fields["activity"].queryset = ProductionPlan.objects.filter(  # type: ignore[unresolved-attribute]
                     id=plan.id
                 )
             plant_formsets[plan.id] = p_formset
@@ -589,7 +589,7 @@ class DailyProductivityCreateView(
             )
 
         for form, plan in zip(labour_formset.forms, selected_plans, strict=False):
-            form.fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)  # type: ignore[attr]
+            form.fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)  # type: ignore[unresolved-attribute]
             res_info = plan_resources[plan.id]
             if not res_info["skilled"]:
                 form.fields["skilled_number"].disabled = True
@@ -643,7 +643,7 @@ class DailyProductivityCreateView(
                 f"labour-{form.prefix}-activity"
             ) or form.initial.get("activity")
             if str(act_id) in plan_map:
-                form.fields["activity"].queryset = ProductionPlan.objects.filter(  # type: ignore[attr]
+                form.fields["activity"].queryset = ProductionPlan.objects.filter(  # type: ignore[unresolved-attribute]
                     id=act_id
                 )
 
@@ -664,8 +664,8 @@ class DailyProductivityCreateView(
                 production_plan=plan, resource_type="PLANT"
             )
             for f in p_formset.forms:
-                f.fields["resource"].queryset = planned_plants  # type: ignore[attr]
-                f.fields["activity"].queryset = ProductionPlan.objects.filter(  # type: ignore[attr]
+                f.fields["resource"].queryset = planned_plants  # type: ignore[unresolved-attribute]
+                f.fields["activity"].queryset = ProductionPlan.objects.filter(  # type: ignore[unresolved-attribute]
                     id=plan.id
                 )
 
@@ -988,8 +988,8 @@ class PlanResourcesAjaxView(
                 prefix=f"plant_{plan.id}", initial=plant_initial
             )
             for f in plant_formset.forms:
-                f.fields["resource"].queryset = planned_plants  # type: ignore[att]
-                f.fields["activity"].queryset = ProductionPlan.objects.filter(  # type: ignore[att]
+                f.fields["resource"].queryset = planned_plants  # type: ignore[unresolved-attribute]
+                f.fields["activity"].queryset = ProductionPlan.objects.filter(  # type: ignore[unresolved-attribute]
                     id=plan.id
                 )
             plant_formsets[plan.id] = plant_formset
@@ -1000,7 +1000,7 @@ class PlanResourcesAjaxView(
         )
 
         for form, plan in zip(labour_formset.forms, selected_plans, strict=True):
-            form.fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)  # type: ignore[att]
+            form.fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)  # type: ignore[unresolved-attribute]
             if not plan_resources[plan.id]["skilled"]:
                 form.fields["skilled_number"].disabled = True
             if not plan_resources[plan.id]["semi_skilled"]:
