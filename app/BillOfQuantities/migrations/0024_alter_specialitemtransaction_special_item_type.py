@@ -4,15 +4,26 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('BillOfQuantities', '0023_alter_forecasttransaction_options_and_more'),
+        ("BillOfQuantities", "0023_alter_forecasttransaction_options_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='specialitemtransaction',
-            name='special_item_type',
-            field=models.CharField(choices=[('DAYWORK', 'Daywork'), ('PRIME_COST', 'Prime Cost Sum'), ('PROVISIONAL', 'Provisional Sum'), ('PENALTY', 'Penalty/Liquidated Damages'), ('BONUS', 'Bonus/Incentive'), ('OTHER', 'Other')], default='OTHER', help_text='Type of special item', max_length=20),
+            model_name="specialitemtransaction",
+            name="special_item_type",
+            field=models.CharField(
+                choices=[
+                    ("DAYWORK", "Daywork"),
+                    ("PRIME_COST", "Prime Cost Sum"),
+                    ("PROVISIONAL", "Provisional Sum"),
+                    ("PENALTY", "Penalty/Liquidated Damages"),
+                    ("BONUS", "Bonus/Incentive"),
+                    ("OTHER", "Other"),
+                ],
+                default="OTHER",
+                help_text="Type of special item",
+                max_length=20,
+            ),
         ),
     ]
