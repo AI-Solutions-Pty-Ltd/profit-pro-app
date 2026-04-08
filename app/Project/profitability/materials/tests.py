@@ -34,7 +34,8 @@ class TestMaterialCostTracker:
         """Test the list view return 200."""
         project = ProjectFactory()
         url = reverse(
-            "project:profitability-material-list", kwargs={"project_pk": project.pk}  # type: ignore
+            "project:profitability-material-list",
+            kwargs={"project_pk": project.pk},  # type: ignore
         )
         # Assuming the user is authenticated is handled by a fixture or LoginRequiredMixin
         # For simplicity in this scratch test we just check the URL presence

@@ -81,7 +81,8 @@
                                                     <img id="image-preview"
                                                          src="{% if field.value and field.value.url and not field.value.url|lower|slice:'-3:' == 'pdf' %}{{ field.value.url }}{% endif %}"
                                                          alt="Invoice Preview"
-                                                         width="192" height="108"
+                                                         width="192"
+                                                         height="108"
                                                          class="{% if not field.value or field.value.url|lower|slice:'-3:' == 'pdf' %}hidden{% endif %} object-cover w-full h-full">
                                                     <div id="pdf-preview"
                                                          class="{% if not field.value or not field.value.url|lower|slice:'-3:' == 'pdf' %}hidden{% endif %} flex flex-col items-center text-gray-400">
@@ -147,7 +148,7 @@
         </div>
     </div>
     {% block scripts %}
-            <script>
+        <script>
 document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.querySelector('input[type="file"][name="invoice_attachment"]');
     const fileNameDisplay = document.querySelector('#file-name');
@@ -201,6 +202,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
-            </script>
-        {% endblock %}
+        </script>
     {% endblock %}
+{% endblock %}

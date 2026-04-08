@@ -75,6 +75,12 @@ from .offsite_log_views import (
     OffsiteLogListView,
     OffsiteLogUpdateView,
 )
+from .overhead_daily_log_views import (
+    OverheadDailyLogCreateView,
+    OverheadDailyLogDeleteView,
+    OverheadDailyLogListView,
+    OverheadDailyLogUpdateView,
+)
 from .photo_log_views import (
     PhotoLogCreateView,
     PhotoLogDeleteView,
@@ -235,6 +241,10 @@ __all__ = [
     "OffsiteLogCreateView",
     "OffsiteLogUpdateView",
     "OffsiteLogDeleteView",
+    "OverheadDailyLogListView",
+    "OverheadDailyLogCreateView",
+    "OverheadDailyLogUpdateView",
+    "OverheadDailyLogDeleteView",
     "SafetyObservationListView",
     "SafetyObservationCreateView",
     "SafetyObservationUpdateView",
