@@ -25,6 +25,7 @@ from .meeting import (
 )
 from .non_conformance import NCRStatus, NCRType, NonConformance
 from .offsite_log import OffsiteLog
+from .overhead_daily_log import OverheadDailyLog
 from .photo_log import PhotoLog
 from .plant_equipment import PlantEquipment
 from .plant_type import PlantType
@@ -62,6 +63,7 @@ __all__ = [
     "RFIStatus",
     "MaterialsLog",
     "OffsiteLog",
+    "OverheadDailyLog",
     "PhotoLog",
     "PlantEquipment",
     "ProcurementTracker",
