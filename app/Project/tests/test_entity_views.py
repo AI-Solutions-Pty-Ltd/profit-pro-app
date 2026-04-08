@@ -14,7 +14,7 @@ class TestMaterialEntityBulkCreate:
         self.user = AccountFactory()
         self.project.users.add(self.user)
         self.url = reverse(
-            "project:entity-material-create", kwargs={"project_pk": self.project.pk}
+            "project:entity-material-create", kwargs={"project_pk": self.project.pk}  # type: ignore
         )
 
     def test_bulk_create_get(self, client):

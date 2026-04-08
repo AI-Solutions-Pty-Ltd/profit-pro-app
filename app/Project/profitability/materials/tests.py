@@ -14,8 +14,8 @@ class TestMaterialCostTracker:
     def test_model_creation(self):
         """Test creating a material cost tracker entry."""
         log = MaterialCostTrackerFactory(quantity=10, rate=50)
-        assert log.id is not None
-        assert log.cost == 500
+        assert log.id is not None  # type: ignore
+        assert log.cost == 500  # type: ignore
 
     def test_auto_populate_rate(self):
         """Test that rate/invoice are auto-populated from entity if not provided."""
@@ -34,7 +34,7 @@ class TestMaterialCostTracker:
         """Test the list view return 200."""
         project = ProjectFactory()
         url = reverse(
-            "project:profitability-material-list", kwargs={"project_pk": project.pk}
+            "project:profitability-material-list", kwargs={"project_pk": project.pk}  # type: ignore
         )
         # Assuming the user is authenticated is handled by a fixture or LoginRequiredMixin
         # For simplicity in this scratch test we just check the URL presence
