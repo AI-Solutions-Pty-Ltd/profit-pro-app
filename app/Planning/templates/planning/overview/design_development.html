@@ -1,246 +1,590 @@
 {% extends "base.html" %}
 {% load heroicons %}
+{% load static %}
 {% block title %}
-    Design Development Overview - {{ project.name }} - {{ block.super }}
+    Design Development - {{ project.name }} - {{ block.super }}
 {% endblock title %}
 {% block content %}
-    <div class="bg-white shadow-sm rounded-lg mb-6">
-        <div class="px-6 py-4 border-b border-gray-200">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 shadow-lg rounded-xl mb-6">
+        <div class="px-8 py-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Design Development Overview</h1>
-                    <p class="text-sm text-gray-600 mt-1">{{ project.name }} - Track design progress across all work packages</p>
+                    <h1 class="text-3xl font-bold text-white">Design Development</h1>
+                    <p class="text-sm text-indigo-100 mt-2 flex items-center">
+                        {% heroicon_outline "document-text" size="16" class="mr-1.5" %}
+                        {{ project.name }} - Track design progress across all Procurement Package
+                    </p>
                 </div>
                 <div class="flex items-center space-x-3">
                     <a href="{% url 'project:project-management' project.pk %}"
-                       class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                        {% heroicon_outline "arrow-left" size="16" class="mr-1" %}
-                        Back
+                       class="inline-flex items-center px-5 py-2.5 border border-white/20 text-sm font-semibold rounded-lg text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200 shadow-lg">
+                        {% heroicon_outline "arrow-left" size="18" class="mr-2" %}
+                        Back to Project
                     </a>
                 </div>
             </div>
         </div>
     </div>
-    {% if work_packages %}
-        {% for wp in work_packages %}
-            <div class="space-y-4 mb-4">
-                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300">
-                    <!-- Header -->
-                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-gray-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-1">
-                                    {% if wp.package_number %}
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                            {{ wp.package_number }}
-                                        </span>
-                                    {% endif %}
-                                    <h3 class="text-lg font-bold text-gray-900">{{ wp.name }}</h3>
-                                </div>
-                                {% if wp.site_inspection_start_date or wp.site_inspection_end_date %}
-                                    <p class="text-xs text-gray-600 flex items-center">
-                                        {% heroicon_outline "calendar" size="12" class="mr-1" %}
-                                        {{ wp.site_inspection_start_date|date:"M d, Y"|default:"TBD" }} – {{ wp.site_inspection_end_date|date:"M d, Y"|default:"TBD" }}
-                                    </p>
-                                {% endif %}
-                            </div>
-                            <a href="{% url 'planning:design-list' project.pk wp.pk %}"
-                               class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                                {% heroicon_outline "arrow-right" size="14" class="mr-1" %}
-                                Manage
-                            </a>
-                        </div>
-                    </div>
-                    <!-- Hierarchical Design Content -->
-                    <div class="p-4 space-y-4">
-                        {% if wp.design_categories.exists %}
-                            {% for design_category in wp.design_categories.all %}
-                                <!-- L1 Category Section -->
-                                <div class="border border-blue-200 rounded-lg overflow-hidden">
-                                    <div class="bg-blue-50 px-4 py-2 flex items-center justify-between">
-                                        <span class="text-sm font-semibold text-blue-900">L1: {{ design_category }}</span>
-                                        <a href="{% url 'planning:design-category-upload' project.pk wp.pk design_category.pk %}?category={{ design_category.pk }}"
-                                           class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded transition-colors">
-                                            {% heroicon_outline "plus" size="14" class="mr-1" %}
-                                            Add
-                                        </a>
+    {% if project %}
+        <div class="space-y-6">
+            {% for category in project.categories.all %}
+                <!-- Category Card -->
+                <div class="bg-white shadow-lg rounded-xl overflow-hidden border-l-4 border-blue-500 hover:border-blue-600 transition-colors">
+                    <!-- Card Header: Category name + its own design docs -->
+                    <div id="header">
+                        <div class="px-8 py-5 bg-gradient-to-r from-blue-50 to-blue-50/50">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center space-x-4">
+                                    <div class="p-2 bg-blue-100 rounded-lg">{% heroicon_outline "rectangle-stack" size="20" class="text-blue-600" %}</div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-blue-900">L1: {{ category.name }}</h3>
+                                        <p class="text-sm text-blue-600 mt-0.5">Category Level Design Items</p>
                                     </div>
-                                    <div class="p-3 space-y-3">
-                                        <!-- L1 DesignCategory items for this category -->
-                                        {% if design_category.files.exists %}
-                                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                                                <div class="p-3 bg-white border border-blue-100 rounded-lg">
-                                                    <div class="flex items-center justify-between mb-1">
-                                                        <span class="text-xs font-medium text-gray-800">{{ design_category.get_stage_display }}</span>
-                                                        {% if design_category.approved %}
-                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700">Approved</span>
+                                </div>
+                                <button onclick="toggleElement(this, 'category-{{ category.id }}')"
+                                        class="p-2 hover:bg-blue-100 rounded-lg transition-colors"
+                                        type="button"
+                                        data-hidden="true"
+                                        title="Toggle section">
+                                    {% heroicon_outline "chevron-right" size="20" class="text-blue-600" %}
+                                </button>
+                            </div>
+                        </div>
+                        <div id="category-{{ category.id }}"
+                             class="category-content hidden transition-all duration-300 ease-in-out">
+                            <div class="px-8 py-4 bg-gray-50">
+                                <table class="min-w-full">
+                                    <thead>
+                                        <tr class="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                            <th class="pb-3 text-left">Document Type</th>
+                                            <th class="pb-3 text-left">Progress</th>
+                                            <th class="pb-3 text-left">Status</th>
+                                            <th class="pb-3 text-left">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200">
+                                        {% for dc in category.design_categories.all %}
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="py-3 pr-4 text-sm text-gray-700">{{ dc.get_stage_display }}</td>
+                                                <td class="py-3 pr-4">
+                                                    <div class="flex items-center">
+                                                        <div class="w-24 bg-blue-100 rounded-full h-2 mr-2">
+                                                            <div class="bg-emerald-500 h-2 rounded-full"
+                                                                 style="width: {{ dc.progress }}%"></div>
+                                                        </div>
+                                                        <span class="text-sm text-gray-600">{{ dc.progress }}%</span>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3 pr-4">
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {% if dc.approved %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                                        {% if dc.approved %}
+                                                            Approved
                                                         {% else %}
-                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">Pending</span>
+                                                            Pending
                                                         {% endif %}
+                                                    </span>
+                                                </td>
+                                                <td class="py-2 ">
+                                                    <div class="flex items-center space-x-2">
+                                                        <a href="{% url 'planning:design-category-upload' project.pk dc.pk %}"
+                                                           class="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                                                           title="Upload file">{% heroicon_outline "arrow-up-tray" size="14" %}</a>
+                                                        <a href="{% url 'planning:design-category-edit' project.pk dc.pk %}"
+                                                           class="p-1 text-indigo-600 hover:bg-indigo-50 rounded"
+                                                           title="Edit">{% heroicon_outline "pencil" size="14" %}</a>
+                                                        <a href="{% url 'planning:design-category-delete' project.pk dc.pk %}"
+                                                           class="p-1 text-red-600 hover:bg-red-50 rounded"
+                                                           title="Delete">{% heroicon_outline "trash" size="14" %}</a>
                                                     </div>
-                                                    <div class="flex items-center justify-between text-[10px] text-gray-500 mb-1">
-                                                        <span>{{ design_category.files.count }} / {{ design_category.required_quantity }} files</span>
-                                                        <span>{{ design_category.progress }}%</span>
-                                                    </div>
-                                                    <div class="w-full bg-blue-100 rounded-full h-1.5">
-                                                        <div class="bg-blue-500 h-1.5 rounded-full"
-                                                             style="width: {{ design_category.progress }}%"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="p-2 bg-gray-50 border border-gray-100 rounded flex left-content-stacked">
-                                                    {% for file in design_category.files.all %}
-                                                        <span class="text-xs text-gray-700 truncate left-content">{{ file.file.name|slice:"-30:" }}
-                                                            <a href="{{ file.file.url }}"
-                                                               download
-                                                               class="inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-800">
-                                                                {% heroicon_outline "arrow-down-tray" size="14" %}
-                                                            </a>
-                                                        </span>
-                                                    {% endfor %}
-                                                </div>
-                                            </div>
-                                        {% endif %}
-                                        <!-- L2 SubCategories -->
-                                        {% for subdesign_category in design_category.subcats %}
-                                            <div class="border border-emerald-200 rounded-lg overflow-hidden">
-                                                <div class="bg-emerald-50 px-3 py-1.5 flex items-center justify-between">
-                                                    <span class="text-xs font-semibold text-emerald-900">{{ subdesign_category.subcat.name }}</span>
-                                                    <span class="text-[10px] text-emerald-600">L2 SubCategory</span>
-                                                </div>
-                                                <div class="p-3 space-y-3">
-                                                    {% if subdesign_category.designs %}
-                                                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                                                            {% for dsc in subdesign_category.designs %}
-                                                                <div class="p-3 bg-white border border-emerald-100 rounded-lg">
-                                                                    <div class="flex items-center justify-between mb-1">
-                                                                        <span class="text-xs font-medium text-gray-800">{{ dsc.get_stage_display }}</span>
-                                                                        {% if dsc.approved %}
-                                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700">Approved</span>
-                                                                        {% else %}
-                                                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">Pending</span>
-                                                                        {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% if dc.files.exists %}
+                                                <tr>
+                                                    <td colspan="4" class="py-2 px-4 bg-blue-50/50">
+                                                        <div class="flex items-center justify-between mb-2">
+                                                            <div class="text-xs font-medium text-blue-700">Uploaded Files ({{ dc.files.count }})</div>
+                                                            <button onclick="toggleElement(this, 'category-files-{{ dc.id }}')"
+                                                                    class="p-1 hover:bg-blue-100 rounded transition-colors"
+                                                                    type="button"
+                                                                    data-hidden="true"
+                                                                    title="Toggle files">
+                                                                {% heroicon_outline "chevron-right" size="12" class="text-blue-600" %}
+                                                            </button>
+                                                        </div>
+                                                        <div id="category-files-{{ dc.id }}"
+                                                             class="files-content hidden transition-all duration-300 ease-in-out space-y-1">
+                                                            {% for file in dc.files.all %}
+                                                                <div class="flex items-center justify-between bg-white rounded px-3 py-2 border border-blue-100">
+                                                                    <div class="flex items-center space-x-2 flex-1 min-w-0">
+                                                                        {% heroicon_outline "document" size="14" class="text-blue-500 flex-shrink-0" %}
+                                                                        <div class="flex-1 min-w-0">
+                                                                            <div class="text-xs font-medium text-gray-700 truncate">{{ file.file.name|slice:"20:" }}</div>
+                                                                            {% if file.description %}<div class="text-xs text-gray-500 truncate">{{ file.description }}</div>{% endif %}
+                                                                        </div>
                                                                     </div>
-                                                                    <div class="flex items-center justify-between text-[10px] text-gray-500 mb-1">
-                                                                        <span>{{ dsc.files.count }} / {{ dsc.required_quantity }} files</span>
-                                                                        <span>{{ dsc.progress }}%</span>
-                                                                    </div>
-                                                                    <div class="w-full bg-emerald-100 rounded-full h-1.5">
-                                                                        <div class="bg-emerald-500 h-1.5 rounded-full"
-                                                                             style="width: {{ dsc.progress }}%"></div>
+                                                                    <div class="flex items-center space-x-1 ml-2">
+                                                                        <a href="{{ file.file.url }}"
+                                                                           download
+                                                                           class="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                                                                           title="Download">
+                                                                            {% heroicon_outline "arrow-down-tray" size="14" %}
+                                                                        </a>
+                                                                        <button onclick="deleteFile({{ file.id }}, '{% url 'planning:design-category-file-delete' project.pk file.pk %}', {{ project.pk }})"
+                                                                                class="p-1 text-red-600 hover:bg-red-50 rounded"
+                                                                                title="Delete">
+                                                                            {% heroicon_outline "trash" size="14" %}
+                                                                        </button>
                                                                     </div>
                                                                 </div>
                                                             {% endfor %}
                                                         </div>
-                                                    {% endif %}
-                                                    <!-- L3 Groups -->
-                                                    {% for group_data in subdesign_category.groups %}
-                                                        <div class="border border-amber-200 rounded-lg overflow-hidden">
-                                                            <div class="bg-amber-50 px-3 py-1.5 flex items-center justify-between">
-                                                                <span class="text-xs font-semibold text-amber-900">{{ group_data.group.name }}</span>
-                                                                <span class="text-[10px] text-amber-600">L3 Group</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="py-2 text-gray-400 italic">No design items for this category</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            <div class="pt-2 pb-1">
+                                <a href="{% url 'planning:design-category-create' project.pk %}"
+                                   class="inline-flex items-center text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded transition-colors">
+                                    {% heroicon_outline "plus" size="12" class="mr-1" %}
+                                    Add L1 Design Item
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card Body: Subcategories and Groups -->
+                <div class="divide-y divide-gray-100">
+                    {% for subcategory in category.subcategories.all %}
+                        <!-- Subcategory Section -->
+                        <div class="border-l-4 border-green-400 ml-6 my-4 mr-4 rounded-lg overflow-hidden">
+                            <div class="bg-green-50 px-4 py-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center">
+                                        {% heroicon_outline "tag" size="16" class="mr-2 text-green-600" %}
+                                        <span class="font-semibold text-green-900">L2: {{ subcategory.name }}</span>
+                                    </div>
+                                    <button onclick="toggleElement(this, 'subcategory-{{ subcategory.id }}')"
+                                            class="p-1 hover:bg-green-100 rounded transition-colors"
+                                            type="button"
+                                            data-hidden="true"
+                                            title="Toggle section">
+                                        {% heroicon_outline "chevron-right" size="16" class="text-green-600" %}
+                                    </button>
+                                </div>
+                                <div id="subcategory-{{ subcategory.id }}"
+                                     class="subcategory-content hidden transition-all duration-300 ease-in-out">
+                                    <table class="min-w-full">
+                                        <thead>
+                                            <tr class="text-xs font-medium text-green-500 uppercase tracking-wider">
+                                                <th class="pb-2 text-left">Document Type</th>
+                                                <th class="pb-2 text-left">Progress</th>
+                                                <th class="pb-2 text-left">Status</th>
+                                                <th class="pb-2 text-left">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-green-100">
+                                            {% for dsc in subcategory.design_subcategories.all %}
+                                                <tr>
+                                                    <td class="py-2 pr-4 text-gray-500">{{ dsc.get_stage_display }}</td>
+                                                    <td class="py-2 pr-4">
+                                                        <div class="flex items-center">
+                                                            <div class="w-24 bg-green-100 rounded-full h-1.5 mr-2">
+                                                                <div class="bg-emerald-500 h-1.5 rounded-full"
+                                                                     style="width: {{ dsc.progress }}%"></div>
                                                             </div>
-                                                            <div class="p-3">
-                                                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                                                                    {% for dg in group_data.designs %}
-                                                                        <div class="p-3 bg-white border border-amber-100 rounded-lg">
-                                                                            <div class="flex items-center justify-between mb-1">
-                                                                                <span class="text-xs font-medium text-gray-800">{{ dg.get_stage_display }}</span>
-                                                                                {% if dg.approved %}
-                                                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700">Approved</span>
-                                                                                {% else %}
-                                                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">Pending</span>
-                                                                                {% endif %}
-                                                                            </div>
-                                                                            <div class="flex items-center justify-between text-[10px] text-gray-500 mb-1">
-                                                                                <span>{{ dg.files.count }} / {{ dg.required_quantity }} files</span>
-                                                                                <span>{{ dg.progress }}%</span>
-                                                                            </div>
-                                                                            <div class="w-full bg-amber-100 rounded-full h-1.5">
-                                                                                <div class="bg-amber-500 h-1.5 rounded-full"
-                                                                                     style="width: {{ dg.progress }}%">
-                                                                                </div>
+                                                            <span class="text-xs text-gray-500">{{ dsc.progress }}%</span>
+                                                        </div>
+                                                    </td>
+                                                    <td class="py-2 pr-4">
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {% if dsc.approved %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                                            {% if dsc.approved %}
+                                                                Approved
+                                                            {% else %}
+                                                                Pending
+                                                            {% endif %}
+                                                        </span>
+                                                    </td>
+                                                    <td class="py-2 ">
+                                                        <div class="flex items-center space-x-2">
+                                                            <a href="{% url 'planning:design-subcategory-upload' project.pk dsc.pk %}"
+                                                               class="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                                                               title="Upload file">
+                                                                {% heroicon_outline "arrow-up-tray" size="14" %}
+                                                            </a>
+                                                            <a href="{% url 'planning:design-subcategory-edit' project.pk dsc.pk %}"
+                                                               class="p-1 text-indigo-600 hover:bg-indigo-50 rounded"
+                                                               title="Edit">{% heroicon_outline "pencil" size="14" %}</a>
+                                                            <a href="{% url 'planning:design-subcategory-delete' project.pk dsc.pk %}"
+                                                               class="p-1 text-red-600 hover:bg-red-50 rounded"
+                                                               title="Delete">{% heroicon_outline "trash" size="14" %}</a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {% if dsc.files.exists %}
+                                                    <tr>
+                                                        <td colspan="4" class="py-2 px-4 bg-green-50/50">
+                                                            <div class="flex items-center justify-between mb-2">
+                                                                <div class="text-xs font-medium text-green-700">Uploaded Files ({{ dsc.files.count }})</div>
+                                                                <button onclick="toggleElement(this, 'subcategory-files-{{ dsc.id }}')"
+                                                                        class="p-1 hover:bg-green-100 rounded transition-colors"
+                                                                        type="button"
+                                                                        data-hidden="true"
+                                                                        title="Toggle files">
+                                                                    {% heroicon_outline "chevron-right" size="12" class="text-green-600" %}
+                                                                </button>
+                                                            </div>
+                                                            <div id="subcategory-files-{{ dsc.id }}"
+                                                                 class="files-content hidden transition-all duration-300 ease-in-out space-y-1">
+                                                                {% for file in dsc.files.all %}
+                                                                    <div class="flex items-center justify-between bg-white rounded px-3 py-2 border border-green-100">
+                                                                        <div class="flex items-center space-x-2 flex-1 min-w-0">
+                                                                            {% heroicon_outline "document" size="14" class="text-green-500 flex-shrink-0" %}
+                                                                            <div class="flex-1 min-w-0">
+                                                                                <div class="text-xs font-medium text-gray-700 truncate">{{ file.file.name|slice:"20:" }}</div>
+                                                                                {% if file.description %}<div class="text-xs text-gray-500 truncate">{{ file.description }}</div>{% endif %}
                                                                             </div>
                                                                         </div>
-                                                                    {% endfor %}
-                                                                </div>
+                                                                        <div class="flex items-center space-x-1 ml-2">
+                                                                            <a href="{{ file.file.url }}"
+                                                                               download
+                                                                               class="p-1 text-green-600 hover:bg-green-50 rounded"
+                                                                               title="Download">
+                                                                                {% heroicon_outline "arrow-down-tray" size="14" %}
+                                                                            </a>
+                                                                            <button onclick="deleteFile({{ file.id }}, '{% url 'planning:design-subcategory-file-delete' project.pk file.pk %}', {{ project.pk }})"
+                                                                                    class="p-1 text-red-600 hover:bg-red-50 rounded"
+                                                                                    title="Delete">
+                                                                                {% heroicon_outline "trash" size="14" %}
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                {% endfor %}
                                                             </div>
-                                                        </div>
-                                                    {% endfor %}
-                                                </div>
-                                            </div>
-                                        {% endfor %}
+                                                        </td>
+                                                    </tr>
+                                                {% endif %}
+                                            {% empty %}
+                                                <tr>
+                                                    <td colspan="4" class="py-2 text-gray-400 italic">No design items for this subcategory</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                    <div class="pt-2 pb-1">
+                                        <a href="{% url 'planning:design-subcategory-create' project.pk %}"
+                                           class="inline-flex items-center text-xs text-green-600 hover:text-green-800 hover:bg-green-50 px-2 py-1 rounded transition-colors">
+                                            {% heroicon_outline "plus" size="12" class="mr-1" %}
+                                            Add L2 Design Item
+                                        </a>
                                     </div>
                                 </div>
-                            {% endfor %}
-                            <!-- L4 Disciplines (standalone) -->
-                            {% if wp.disciplines_data %}
-                                <div class="border border-purple-200 rounded-lg overflow-hidden">
-                                    <div class="bg-purple-50 px-4 py-2 flex items-center justify-between">
-                                        <span class="text-sm font-semibold text-purple-900">Disciplines</span>
-                                        <span class="text-xs text-purple-600">L4</span>
-                                    </div>
-                                    <div class="p-3">
-                                        <div class="space-y-3">
-                                            {% for disc_data in wp.disciplines_data %}
-                                                <div>
-                                                    <p class="text-xs font-semibold text-purple-800 mb-2">{{ disc_data.discipline.name }}</p>
-                                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                                                        {% for dd in disc_data.designs %}
-                                                            <div class="p-3 bg-white border border-purple-100 rounded-lg">
-                                                                <div class="flex items-center justify-between mb-1">
-                                                                    <span class="text-xs font-medium text-gray-800">{{ dd.get_stage_display }}</span>
-                                                                    {% if dd.approved %}
-                                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700">Approved</span>
+                            </div>
+                            <!-- Added closing div tag here -->
+                            <!-- Groups within subcategory -->
+                            {% for group in subcategory.groups.all %}
+                                <div class="border-l-4 border-purple-400 ml-6 my-3 mr-3 rounded-lg overflow-hidden">
+                                    <div class="bg-purple-50 px-4 py-3">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="flex items-center">
+                                                {% heroicon_outline "folder" size="14" class="mr-2 text-purple-600" %}
+                                                <span class="font-semibold text-purple-900">L3: {{ group.name }}</span>
+                                            </div>
+                                            <button onclick="toggleElement(this, 'group-{{ group.id }}')"
+                                                    class="p-1 hover:bg-purple-100 rounded transition-colors"
+                                                    type="button"
+                                                    data-hidden="true"
+                                                    title="Toggle section">
+                                                {% heroicon_outline "chevron-right" size="14" class="text-purple-600" %}
+                                            </button>
+                                        </div>
+                                        <div id="group-{{ group.id }}"
+                                             class="group-content hidden transition-all duration-300 ease-in-out">
+                                            <table class="min-w-full">
+                                                <thead>
+                                                    <tr class="text-xs font-medium text-purple-500 uppercase tracking-wider">
+                                                        <th class="pb-2 text-left">Document Type</th>
+                                                        <th class="pb-2 text-left">Progress</th>
+                                                        <th class="pb-2 text-left">Status</th>
+                                                        <th class="pb-2 text-left">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-purple-100">
+                                                    {% for dg in group.design_groups.all %}
+                                                        <tr>
+                                                            <td class="py-2 pr-4 text-gray-500">{{ dg.get_stage_display }}</td>
+                                                            <td class="py-2 pr-4">
+                                                                <div class="flex items-center">
+                                                                    <div class="w-24 bg-purple-100 rounded-full h-1.5 mr-2">
+                                                                        <div class="bg-emerald-500 h-1.5 rounded-full"
+                                                                             style="width: {{ dg.progress }}%"></div>
+                                                                    </div>
+                                                                    <span class="text-xs text-gray-500">{{ dg.progress }}%</span>
+                                                                </div>
+                                                            </td>
+                                                            <td class="py-2 pr-4">
+                                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {% if dg.approved %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                                                    {% if dg.approved %}
+                                                                        Approved
                                                                     {% else %}
-                                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">Pending</span>
+                                                                        Pending
                                                                     {% endif %}
+                                                                </span>
+                                                            </td>
+                                                            <td class="py-2 ">
+                                                                <div class="flex items-center space-x-2">
+                                                                    <a href="{% url 'planning:design-group-upload' project.pk dg.pk %}"
+                                                                       class="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                                                                       title="Upload file">
+                                                                        {% heroicon_outline "arrow-up-tray" size="14" %}
+                                                                    </a>
+                                                                    <a href="{% url 'planning:design-group-edit' project.pk dg.pk %}"
+                                                                       class="p-1 text-indigo-600 hover:bg-indigo-50 rounded"
+                                                                       title="Edit">
+                                                                        {% heroicon_outline "pencil" size="14" %}
+                                                                    </a>
+                                                                    <a href="{% url 'planning:design-group-delete' project.pk dg.pk %}"
+                                                                       class="p-1 text-red-600 hover:bg-red-50 rounded"
+                                                                       title="Delete">
+                                                                        {% heroicon_outline "trash" size="14" %}
+                                                                    </a>
                                                                 </div>
-                                                                <div class="flex items-center justify-between text-[10px] text-gray-500 mb-1">
-                                                                    <span>{{ dd.files.count }} / {{ dd.required_quantity }} files</span>
-                                                                    <span>{{ dd.progress }}%</span>
-                                                                </div>
-                                                                <div class="w-full bg-purple-100 rounded-full h-1.5">
-                                                                    <div class="bg-purple-500 h-1.5 rounded-full"
-                                                                         style="width: {{ dd.progress }}%"></div>
-                                                                </div>
-                                                            </div>
-                                                        {% endfor %}
-                                                    </div>
-                                                </div>
-                                            {% endfor %}
+                                                            </td>
+                                                        </tr>
+                                                        {% if dg.files.exists %}
+                                                            <tr>
+                                                                <td colspan="4" class="py-2 px-4 bg-purple-50/50">
+                                                                    <div class="flex items-center justify-between mb-2">
+                                                                        <div class="text-xs font-medium text-purple-700">Uploaded Files ({{ dg.files.count }})</div>
+                                                                        <button onclick="toggleElement(this, 'group-files-{{ dg.id }}')"
+                                                                                class="p-1 hover:bg-purple-100 rounded transition-colors"
+                                                                                type="button"
+                                                                                data-hidden="true"
+                                                                                title="Toggle files">
+                                                                            {% heroicon_outline "chevron-right" size="12" class="text-purple-600" %}
+                                                                        </button>
+                                                                    </div>
+                                                                    <div id="group-files-{{ dg.id }}"
+                                                                         class="files-content hidden transition-all duration-300 ease-in-out space-y-1">
+                                                                        {% for file in dg.files.all %}
+                                                                            <div class="flex items-center justify-between bg-white rounded px-3 py-2 border border-purple-100">
+                                                                                <div class="flex items-center space-x-2 flex-1 min-w-0">
+                                                                                    {% heroicon_outline "document" size="14" class="text-purple-500 flex-shrink-0" %}
+                                                                                    <div class="flex-1 min-w-0">
+                                                                                        <div class="text-xs font-medium text-gray-700 truncate">{{ file.file.name|slice:"20:" }}</div>
+                                                                                        {% if file.description %}<div class="text-xs text-gray-500 truncate">{{ file.description }}</div>{% endif %}
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="flex items-center space-x-1 ml-2">
+                                                                                    <a href="{{ file.file.url }}"
+                                                                                       download
+                                                                                       class="p-1 text-purple-600 hover:bg-purple-50 rounded"
+                                                                                       title="Download">
+                                                                                        {% heroicon_outline "arrow-down-tray" size="14" %}
+                                                                                    </a>
+                                                                                    <button onclick="deleteFile({{ file.id }}, '{% url 'planning:design-group-file-delete' project.pk file.pk %}', {{ project.pk }})"
+                                                                                            class="p-1 text-red-600 hover:bg-red-50 rounded"
+                                                                                            title="Delete">
+                                                                                        {% heroicon_outline "trash" size="14" %}
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        {% endfor %}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        {% endif %}
+                                                    {% empty %}
+                                                        <tr>
+                                                            <td colspan="4" class="py-2 text-gray-400 italic">No design items for this group</td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                            <div class="pt-2 pb-1">
+                                                <a href="{% url 'planning:design-group-create' project.pk %}"
+                                                   class="inline-flex items-center text-xs text-purple-600 hover:text-purple-800 hover:bg-purple-50 px-2 py-1 rounded transition-colors">
+                                                    {% heroicon_outline "plus" size="12" class="mr-1" %}
+                                                    Add L3 Design Item
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            {% endif %}
-                        {% else %}
-                            <div class="text-center py-8 text-gray-500">
-                                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    {% heroicon_outline "pencil-square" size="20" class="text-gray-400" %}
-                                </div>
-                                <p class="text-sm mb-2">No design items yet</p>
-                                <a href="{% url 'planning:design-list' project.pk wp.pk %}"
-                                   class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors">
-                                    {% heroicon_outline "plus" size="14" class="mr-1" %}
-                                    Add design items
-                                </a>
-                            </div>
-                        {% endif %}
-                    </div>
+                            {% endfor %}
+                        </div>
+                    {% empty %}
+                        <p class="text-center text-gray-500 py-8">No categories found for this project</p>
+                    {% endfor %}
+                    <!-- Closes space-y-6 div -->
                 </div>
-            </div>
-        {% endfor %}
-    {% else %}
-        <div class="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                {% heroicon_outline "pencil-square" size="32" class="text-blue-500" %}
-            </div>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">No Work Packages Yet</h3>
-            <p class="text-sm text-gray-500 mb-4">Create work packages to start tracking design development.</p>
-            <a href="{% url 'planning:work-package-list' project.pk %}"
-               class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-md hover:bg-gray-50 transition-colors text-sm font-medium">
-                {% heroicon_outline "clipboard-document-list" size="16" class="mr-1" %}
-                Go to Work Packages
-            </a>
+            {% endfor %}
         </div>
+        <!-- Disciplines Table -->
+        <div class="bg-white shadow-sm rounded-lg overflow-hidden mt-8">
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                    {% heroicon_outline "beaker" size="24" class="mr-2 text-indigo-600" %}
+                    Disciplines
+                </h2>
+            </div>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for discipline in project.disciplines.all %}
+                        <tr class="bg-indigo-50 border-l-4 border-indigo-500">
+                            <td colspan="5" class="px-6 py-3 font-bold text-indigo-900">
+                                <div class="flex justify-between">
+                                    <div class="flex items-center">
+                                        {% heroicon_outline "academic-cap" size="18" class="mr-2 text-indigo-600" %}
+                                        {{ discipline.name }}
+                                    </div>
+                                    <button onclick="toggleElement(this, 'discipline-{{ discipline.id }}-children')"
+                                            class="p-1 hover:bg-indigo-100 rounded transition-colors"
+                                            type="button"
+                                            data-hidden="true"
+                                            title="Toggle discipline">
+                                        {% heroicon_outline "chevron-right" class="text-indigo-600" %}
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tbody id="discipline-{{ discipline.id }}-children" class="hidden">
+                            {% for design_discipline in discipline.design_disciplines.all %}
+                                <tr class="hover:bg-indigo-50/30 border-l-4 border-indigo-200">
+                                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">{{ design_discipline.stage }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="w-24 bg-gray-200 rounded-full h-2 mr-2">
+                                                <div class="bg-emerald-500 h-2 rounded-full"
+                                                     style="width: {{ design_discipline.progress }}%"></div>
+                                            </div>
+                                            <span class="text-gray-600">{{ design_discipline.progress }}%</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if design_discipline.approved %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                            {% if design_discipline.approved %}
+                                                Approved
+                                            {% else %}
+                                                Pending
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap ">
+                                        <div class="flex items-center space-x-2">
+                                            <a href="{% url 'planning:design-discipline-upload' project.pk design_discipline.pk %}"
+                                               class="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                                               title="Upload file">{% heroicon_outline "arrow-up-tray" size="14" %}</a>
+                                            <a href="{% url 'planning:design-discipline-edit' project.pk design_discipline.pk %}"
+                                               class="p-1 text-indigo-600 hover:bg-indigo-50 rounded"
+                                               title="Edit">{% heroicon_outline "pencil" size="14" %}</a>
+                                            <a href="{% url 'planning:design-discipline-delete' project.pk design_discipline.pk %}"
+                                               class="p-1 text-red-600 hover:bg-red-50 rounded"
+                                               title="Delete">{% heroicon_outline "trash" size="14" %}</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% if design_discipline.files.exists %}
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-3 bg-indigo-50/50">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <div class="text-xs font-medium text-indigo-700">Uploaded Files ({{ design_discipline.files.count }})</div>
+                                                <button onclick="toggleElement(this, 'discipline-files-{{ design_discipline.id }}')"
+                                                        class="p-1 hover:bg-indigo-100 rounded transition-colors"
+                                                        type="button"
+                                                        data-hidden="true"
+                                                        title="Toggle files">
+                                                    {% heroicon_outline "chevron-right" size="12" class="text-indigo-600" %}
+                                                </button>
+                                            </div>
+                                            <div id="discipline-files-{{ design_discipline.id }}"
+                                                 class="files-content hidden transition-all duration-300 ease-in-out space-y-1">
+                                                {% for file in design_discipline.files.all %}
+                                                    <div class="justify-between bg-white rounded px-3 py-2 border border-indigo-100">
+                                                        <div class="items-center space-x-2 flex-1 min-w-0">
+                                                            {% heroicon_outline "document" size="14" class="text-indigo-500 flex-shrink-0" %}
+                                                            <div class="flex-1 min-w-0">
+                                                                <div class="text-xs font-medium text-gray-700 truncate">{{ file.file.name|slice:"20:" }}</div>
+                                                                {% if file.description %}<div class="text-xs text-gray-500 truncate">{{ file.description }}</div>{% endif %}
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex items-center space-x-1 ml-2">
+                                                            <a href="{{ file.file.url }}"
+                                                               download
+                                                               class="p-1 text-indigo-600 hover:bg-indigo-50 rounded"
+                                                               title="Download">
+                                                                {% heroicon_outline "arrow-down-tray" size="14" %}
+                                                            </a>
+                                                            <button onclick="deleteFile({{ file.id }}, '{% url 'planning:design-discipline-file-delete' project.pk file.pk %}', {{ project.pk }})"
+                                                                    class="p-1 text-red-600 hover:bg-red-50 rounded"
+                                                                    title="Delete">
+                                                                {% heroicon_outline "trash" size="14" %}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4" class="px-6 py-4 text-gray-500 text-center">No design items for this discipline</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-center text-gray-500 py-8">No project found</p>
     {% endif %}
 {% endblock content %}
+{% block extra_js %}
+    {% load static %}
+    <script src="{% static 'js/toggle-utils.js' %}"></script>
+    <script>
+        function deleteFile(fileId, deleteUrl, projectPk) {
+            if (!confirm("Are you sure you want to delete this file?")) {
+                return;
+            }
+
+            fetch(deleteUrl, {
+                method: "DELETE",
+                headers: {
+                    "X-CSRFToken": "{{ CSRF_TOKEN }}",
+                    "Content-Type": "application/json",
+                },
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.success) {
+                    // Reload the page to show updated file list
+                    window.location.reload();
+                } else {
+                    alert("Error deleting file");
+                }
+                })
+            .catch((error) => {
+                console.error("Error:", error);
+                alert("Error deleting file");
+            });
+        }
+    </script>
+{% endblock extra_js %}

@@ -1,0 +1,235 @@
+{% extends parent_template|default:"estimator/base_materials_estimator.html" %}
+{% load estimator_tags %}
+{% block title %}{{ report_title }} - Project Resource Estimator{% endblock %}
+{% block sub_content %}
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">{{ report_title }}</h1>
+    </div>
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+        <div class="rounded-lg bg-white shadow p-4">
+            <div class="min-w-0">
+                <p class="text-xs font-medium text-gray-500 truncate">Grand Total</p>
+                <p class="text-base font-bold text-gray-900 truncate">{{ grand_total|currency }}</p>
+            </div>
+        </div>
+        <div class="rounded-lg bg-white shadow p-4">
+            <div class="min-w-0">
+                <p class="text-xs font-medium text-gray-500 truncate">Items</p>
+                <p class="text-base font-bold text-gray-900 truncate">{{ report_rows|length }}</p>
+            </div>
+        </div>
+    </div>
+    <!-- Charts -->
+    {% if report_rows %}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Cost by Section Donut -->
+            <div class="bg-white shadow-sm rounded-lg p-4">
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">Cost by Section</h3>
+                <div class="relative h-[280px]">
+                    <canvas id="sectionDonut"></canvas>
+                </div>
+            </div>
+            <!-- Top Materials Bar -->
+            <div class="bg-white shadow-sm rounded-lg p-4">
+                <h3 class="text-sm font-semibold text-gray-900 mb-3">Top Materials by Cost</h3>
+                <div class="relative h-[280px]">
+                    <canvas id="materialBar"></canvas>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    <!-- Filters -->
+    <div class="bg-white shadow-sm rounded-lg p-4 mb-4">
+        <form method="get" id="filter-form" class="flex flex-wrap items-end gap-3">
+            <div class="min-w-0">
+                <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Section</label>
+                <select name="section"
+                        onchange="this.form.submit()"
+                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                    <option value="">All Sections</option>
+                    {% for s in sections %}
+                        <option value="{{ s }}" {% if f_section == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="min-w-0">
+                <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Trade Name</label>
+                <select name="trade_code"
+                        onchange="this.form.submit()"
+                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                    <option value="">All Trades</option>
+                    {% for tc in trade_codes %}
+                        <option value="{{ tc.id }}"
+                                {% if f_trade_code == tc.id|stringformat:"d" %}selected{% endif %}>{{ tc }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if f_section or f_trade_code %}
+                <a href="{{ request.path }}"
+                   class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 ring-1 ring-inset ring-gray-300">
+                    Clear
+                </a>
+            {% endif %}
+        </form>
+    </div>
+    <!-- Data Table -->
+    <div class="bg-white shadow-sm rounded-lg">
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-xs whitespace-nowrap">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[160px]">
+                            Structure
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[120px]">
+                            Bill No.
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[200px]">
+                            Material List
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[60px]">
+                            Unit
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[100px]">
+                            Quantity
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[120px]">
+                            Rate
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[140px]">
+                            Amount
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[80px]">
+                            % of Total
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for row in report_rows %}
+                        <tr class="hover:bg-gray-50/50">
+                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[160px]"
+                                title="{{ row.section }}">{{ row.section }}</td>
+                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[120px]"
+                                title="{{ row.bill_no }}">{{ row.bill_no }}</td>
+                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[200px]"
+                                title="{{ row.material_name }}">{{ row.material_name }}</td>
+                            <td class="px-3 py-1.5 text-gray-500">{{ row.unit }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.quantity|qty }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.rate|currency }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-900 font-medium">{{ row.amount|currency }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.pct_of_total|pct }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="px-3 py-8 text-center text-gray-500">No material data available for this report.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                {% if report_rows %}
+                    <tfoot>
+                        <tr class="border-t-2 border-gray-300 bg-gray-50 font-semibold">
+                            <td class="px-3 py-2 text-gray-900" colspan="6">Grand Total</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-gray-900">{{ grand_total|currency }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-gray-600">100.0%</td>
+                        </tr>
+                    </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+    {% if report_rows %}
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+        <script>
+(function() {
+    const COLORS = [
+        '#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6',
+        '#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16',
+        '#e11d48', '#7c3aed', '#0ea5e9', '#d946ef', '#facc15',
+    ];
+
+    function currencyFormat(val) {
+        return 'R ' + val.toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    // Section Donut
+    const sectionLabels = {{ chart_section_labels|safe }};
+    const sectionValues = {{ chart_section_values|safe }};
+
+    new Chart(document.getElementById('sectionDonut'), {
+        type: 'doughnut',
+        data: {
+            labels: sectionLabels,
+            datasets: [{
+                data: sectionValues,
+                backgroundColor: COLORS.slice(0, sectionLabels.length),
+                borderWidth: 1,
+                borderColor: '#fff',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { font: { size: 11 }, boxWidth: 12, padding: 8 }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = ((ctx.parsed / total) * 100).toFixed(1);
+                            return ctx.label + ': ' + currencyFormat(ctx.parsed) + ' (' + pct + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Top Materials Bar
+    const matLabels = {{ chart_material_labels|safe }};
+    const matValues = {{ chart_material_values|safe }};
+
+    new Chart(document.getElementById('materialBar'), {
+        type: 'bar',
+        data: {
+            labels: matLabels,
+            datasets: [{
+                data: matValues,
+                backgroundColor: '#f59e0b',
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) { return currencyFormat(ctx.parsed.x); }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        callback: function(val) { return 'R ' + (val / 1000).toFixed(0) + 'k'; },
+                        font: { size: 10 }
+                    },
+                    grid: { display: false }
+                },
+                y: {
+                    ticks: { font: { size: 10 } },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+})();
+        </script>
+    {% endif %}
+{% endblock %}

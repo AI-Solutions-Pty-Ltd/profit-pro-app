@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+{% block title %}
+    Progress Tracker - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Header Card -->
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6">
+            <div class="px-6 py-4">
+                <div class="flex items-center justify-between mb-4">
+                    <a href="{% url 'project:company-management' project.pk %}"
+                       class="inline-flex items-center py-2  rounded-md  text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        {% heroicon_outline "chevron-left" size="20" %}
+                        <span class="ml-2">Back</span>
+                    </a>
+                    <div class="flex items-center space-x-3">
+                        <a href="."
+                           class="p-2 text-gray-500 hover:text-indigo-600 hover:bg-gray-50 rounded-md transition-colors border border-gray-200"
+                           title="Refresh Data">{% heroicon_outline "arrow-path" size="18" %}</a>
+                        {% comment %} <div class="flex items-center bg-gray-50 rounded-md border border-gray-200 p-1">
+                        <a href="{% url 'project:plan-productivity-dashboard' project.pk %}" class="px-3 py-1.5 text-xs font-bold text-indigo-600 hover:bg-white hover:shadow-sm rounded transition-colors flex items-center">
+                            {% heroicon_outline "chart-bar" size="14" class="mr-1.5" %}
+                            Productivity Analytics
+                        </a>
+                        <button class="px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-white hover:shadow-sm rounded transition-colors flex items-center border-l border-gray-200 ml-1 pl-2">
+                            {% heroicon_outline "document-arrow-down" size="14" class="mr-1.5" %}
+                            PDF
+                        </button>
+                        </div> {% endcomment %}
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Production Progress Tracker</h1>
+                        <p class="text-sm text-gray-600 mt-1">High-level overview and performance metrics for {{ project.name }}</p>
+                    </div>
+                    {% comment %} <div class="flex items-center space-x-3">
+                    <form method="GET" class="flex items-center space-x-2 bg-white px-3 py-2 rounded-md border border-gray-300 shadow-sm focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500">
+                        <input type="date" name="start_date" value="{{ start_date|default:'' }}" class="text-xs border-0 p-0 focus:ring-0">
+                        <span class="text-gray-400">to</span>
+                        <input type="date" name="end_date" value="{{ end_date|default:'' }}" class="text-xs border-0 p-0 focus:ring-0">
+                        <button type="submit" class="ml-1 text-gray-400 hover:text-indigo-600">
+                            {% heroicon_outline "magnifying-glass" size="16" %}
+                        </button>
+                    </form>
+                    <a href="{% url 'project:production-create' project.pk %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        {% heroicon_solid "plus" class="w-4 h-4 mr-2" %}
+                        Log Production
+                    </a>
+                    </div> {% endcomment %}
+                </div>
+            </div>
+        </div>
+        <!-- Overall Summary Section  -->
+        <div class="bg-white rounded-lg p-8 mb-8 text-gray-800 shadow-sm border border-gray-200 relative overflow-hidden">
+            <div class="flex flex-col gap-8 items-start relative z-10">
+                <div class="w-full">
+                    <div class="flex items-center justify-between space-x-5 mb-8">
+                        <div class="flex flex-1 items-center justify-between gap-2">
+                            <div class="flex-1">
+                                <h2 class="text-2xl font-bold">Production Progress Overview</h2>
+                                <p class="text-gray-600 text-sm mt-1">Overall production metrics</p>
+                            </div>
+                            <div>
+                                <div class="text-4xl font-bold text-indigo-600 tracking-tighter">{{ overall_progress_pct }}%</div>
+                                <div class="text-gray-600 text-sm mt-1 ">Complete</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Progress Bar Section -->
+                    <div class="mb-8">
+                        <div class="h-3 w-full overflow-hidden rounded-full bg-gray-200">
+                            <div class="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500 transition-all duration-500"
+                                 style="width:{{ overall_progress_pct }}%"></div>
+                        </div>
+                        {% comment %} <div class="mt-2 flex justify-between text-sm font-semibold text-slate-400">
+                        <span>{{ total_produced|floatformat:0 }} produced</span>
+                        <span>{{ total_planned|floatformat:0 }} planned</span>
+                        </div> {% endcomment %}
+                    </div>
+                    <!-- Metric Tiles -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <!-- Spent -->
+                        <div class="bg-emerald-50 border border-emerald-200 p-5 rounded-md hover:bg-emerald-200 transition-colors">
+                            <div class="text-emerald-400 mb-2 -l">{% heroicon_outline "currency-dollar" size="24" %}</div>
+                            <div class="text-xl font-bold">R {{ total_spent|default:"0"|floatformat:0 }}</div>
+                            <div class="text-gray-600 text-sm mt-1  font-semiboldd">Total Spent</div>
+                        </div>
+                        <!-- Hours -->
+                        <div class="bg-blue-50 border border-blue-200 p-5 rounded-md hover:bg-blue-200 transition-colors">
+                            <div class="text-blue-400 mb-2">{% heroicon_outline "clock" size="24" %}</div>
+                            <div class="text-xl font-bold">{{ total_hours|floatformat:0 }}h</div>
+                            <div class="text-gray-600 text-sm mt-1  font-semiboldd">Total Hours</div>
+                        </div>
+                        <!-- Worker Days -->
+                        <div class="bg-amber-50 border border-amber-200 p-5 rounded-md hover:bg-amber-200 transition-colors">
+                            <div class="text-amber-400 mb-2">{% heroicon_outline "users" size="24" %}</div>
+                            <div class="text-xl font-bold">{{ worker_days }}</div>
+                            <div class="text-gray-600 text-sm mt-1  font-semiboldd">Worker Days</div>
+                        </div>
+                        <!-- Active Items -->
+                        <div class="bg-purple-50 border border-purple-200 p-5 rounded-md hover:bg-purple-200 transition-colors">
+                            <div class="text-purple-400 mb-2">{% heroicon_outline "cube" size="24" %}</div>
+                            <div class="text-xl font-bold">{{ active_items_count }}</div>
+                            <div class="text-gray-600 text-sm mt-1  font-semiboldd">Active Items</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Active Item Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for item in item_cards %}
+                <div class="bg-white rounded-lg border border-gray-100 shadow-sm hover:shadow-md transition-shadow group relative">
+                    <div class="p-4">
+                        <div class="mb-3 flex items-start justify-between">
+                            <div class="flex items-center gap-3">
+                                <div>
+                                    <h3 class="font-bold capitalize text-slate-800">{{ item.plan.activity }}</h3>
+                                    <div class="flex items-center gap-2">
+                                        <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium {% if item.status_color == 'green' %}bg-emerald-100 text-emerald-700{% elif item.status_color == 'yellow' %}bg-amber-100 text-amber-700{% else %}bg-rose-100 text-rose-700{% endif %}">
+                                            <span class="h-1.5 w-1.5 rounded-full {% if item.status_color == 'green' %}bg-emerald-500{% elif item.status_color == 'yellow' %}bg-amber-500{% else %}bg-rose-500{% endif %}"></span>{{ item.status_text }}
+                                        </span>
+                                        <span class="text-[10px] text-slate-400">Day {{ item.day_indicator|slice:"1:" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-lg font-bold text-slate-800">{{ item.completion_pct|floatformat:0 }}%</p>
+                                <p class="text-[10px] text-slate-500">complete</p>
+                            </div>
+                        </div>
+                        <div class="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                            <div class="{% if item.status_color == 'green' %}bg-emerald-500{% elif item.status_color == 'yellow' %}bg-amber-500{% else %}bg-rose-500{% endif %} h-full rounded-full transition-all duration-700"
+                                 style="width: {{ item.completion_pct }}%"></div>
+                        </div>
+                        <div class="mt-1.5 flex justify-between text-[10px] text-slate-500">
+                            <span>{{ item.produced_qty|floatformat:0 }} {{ item.plan.unit }}</span>
+                            <span>{{ item.remaining_qty|floatformat:0 }} {{ item.plan.unit }} remaining</span>
+                        </div>
+                        <!-- Metrics Grid -->
+                        <div class="mt-4 grid grid-cols-4 gap-2">
+                            <div class="text-center">
+                                <p class="text-sm font-bold text-slate-800">R {{ item.spent|floatformat:1 }}</p>
+                                <p class="text-[10px] text-slate-500">Spent</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-sm font-bold text-slate-800">{{ item.hours|floatformat:0 }}h</p>
+                                <p class="text-[10px] text-slate-500">Hours</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-sm font-bold text-slate-800">{{ item.umh }}</p>
+                                <p class="text-[10px] text-slate-500">U/MH</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-sm font-bold {% if item.trend_positive %}text-emerald-500{% else %}text-rose-500{% endif %}">
+                                    {% if item.trend_positive %}+{% endif %}
+                                    {{ item.trend_val }}%
+                                </p>
+                                <p class="text-[10px] text-slate-500">Trend</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Hidden detail link for accessibility/functionality -->
+                    <a href="{% url 'project:activity-detail' project.pk item.plan.pk %}"
+                       class="absolute inset-0 z-0"></a>
+                </div>
+            {% empty %}
+                <div class="col-span-full bg-white rounded-3xl border border-dashed border-gray-300 p-16 text-center shadow-sm">
+                    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 mb-4">
+                        {% heroicon_outline "clipboard-document-list" size="24" %}
+                    </div>
+                    <h3 class="text-base font-bold text-gray-900">No active production items found</h3>
+                    <p class="mt-1 text-sm text-gray-500 italic">Try adjusting your filters or search criteria.</p>
+                    <div class="mt-8">
+                        <a href="{% url 'project:production-planning' project.pk %}"
+                           class="text-indigo-600 font-bold border-b-2 border-indigo-100 hover:border-indigo-600 transition-colors">Start a new production plan</a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock content %}

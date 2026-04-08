@@ -391,6 +391,27 @@ urlpatterns = [
         views.PlantEquipmentDeleteView.as_view(),
         name="plant-equipment-delete",
     ),
+    # Plant Types
+    path(
+        "project/<int:project_pk>/plant-types/",
+        views.PlantTypeListView.as_view(),
+        name="plant-type-list",
+    ),
+    path(
+        "project/<int:project_pk>/plant-types/create/",
+        views.PlantTypeCreateView.as_view(),
+        name="plant-type-create",
+    ),
+    path(
+        "project/<int:project_pk>/plant-types/<int:pk>/update/",
+        views.PlantTypeUpdateView.as_view(),
+        name="plant-type-update",
+    ),
+    path(
+        "project/<int:project_pk>/plant-types/<int:pk>/delete/",
+        views.PlantTypeDeleteView.as_view(),
+        name="plant-type-delete",
+    ),
     # Quality Control
     path(
         "project/<int:project_pk>/quality-control/",
@@ -411,6 +432,27 @@ urlpatterns = [
         "project/<int:project_pk>/quality-control/<int:pk>/delete/",
         views.QualityControlDeleteView.as_view(),
         name="quality-control-delete",
+    ),
+    # Skill Types
+    path(
+        "project/<int:project_pk>/skill-types/",
+        views.SkillTypeListView.as_view(),
+        name="skill-type-list",
+    ),
+    path(
+        "project/<int:project_pk>/skill-types/create/",
+        views.SkillTypeCreateView.as_view(),
+        name="skill-type-create",
+    ),
+    path(
+        "project/<int:project_pk>/skill-types/<int:pk>/update/",
+        views.SkillTypeUpdateView.as_view(),
+        name="skill-type-update",
+    ),
+    path(
+        "project/<int:project_pk>/skill-types/<int:pk>/delete/",
+        views.SkillTypeDeleteView.as_view(),
+        name="skill-type-delete",
     ),
     # Labour Log
     path(

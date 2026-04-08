@@ -22,5 +22,14 @@
   "djlint.extendExclude": [
     "htmlcov,.venv,documentation,app/theme,app/core/templates/auth/password_reset_email.html"
   ],
-  "windsurfPyright.analysis.typeCheckingMode": "basic"
+  "windsurfPyright.analysis.typeCheckingMode": "basic",
+  /*
+Source - https://stackoverflow.com/a/60677394
+Posted by ultraGentle
+Retrieved 2026-03-24, License - CC BY-SA 4.0
+*/
+
+  "[django-html]": {
+    "editor.defaultFormatter": "monosans.djlint"
+  }
 }

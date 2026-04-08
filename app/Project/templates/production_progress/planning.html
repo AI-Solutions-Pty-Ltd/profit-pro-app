@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+{% load crispy_forms_tags %}
+{% block title %}
+    Production Planning - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <!-- Header -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <a href="{% url 'project:company-management' project.pk %}"
+               class="inline-flex items-center py-2  rounded-md  text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                {% heroicon_outline "chevron-left" size="20" %}
+                <span class="ml-2">Back</span>
+            </a>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        {% if is_update %}
+                            Edit Production Plan
+                        {% else %}
+                            Production Planning
+                        {% endif %}
+                    </h1>
+                    <p class="text-sm text-gray-600 mt-1">Project: {{ project.name }}</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:production-dashboard' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        {% heroicon_outline "chart-bar" size="20" %}
+                        <span class="ml-2">View Dashboard</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Form -->
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Planning Item Details</h2>
+            <p class="text-sm text-gray-600">Enter the planning item information below</p>
+        </div>
+        <form method="post" action="" class="p-6">
+            {% csrf_token %}
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    <!-- Activity -->
+                    <div class="md:col-span-2">{{ form.activity|as_crispy_field }}</div>
+                    <!-- Start Date -->
+                    <div>{{ form.start_date|as_crispy_field }}</div>
+                    <!-- Finish Date -->
+                    <div>{{ form.finish_date|as_crispy_field }}</div>
+                    <!-- Duration (Auto Calculated) -->
+                    <div>{{ form.duration|as_crispy_field }}</div>
+                    <!-- Quantity -->
+                    <div>{{ form.quantity|as_crispy_field }}</div>
+                    <!-- Unit -->
+                    <div>{{ form.unit|as_crispy_field }}</div>
+                </div>
+            </div>
+            <!-- Form Actions -->
+            <div class="mt-8 flex items-center justify-end space-x-3">
+                <a href="#"
+                   onclick="window.history.back(); return false;"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    {% heroicon_solid "check" class="w-4 h-4 mr-2" %}
+                    {% if is_update %}
+                        Update Item
+                    {% else %}
+                        Save Item
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-white rounded-lg mt-6">
+        <div class="flex justify-between items-center">
+            <a href="{% url 'project:company-management' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                Business Management
+            </a>
+            <a href="{% url 'project:production-dashboard' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                Production Dashboard
+                {% heroicon_outline "chevron-right" class="w-4 h-4 mr-1" %}
+            </a>
+        </div>
+    </div>
+{% endblock content %}
+{% block extra_js %}
+    {{ block.super }}
+    <script>
+  function calculateDuration() {
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('finish_date');
+    const durationInput = document.getElementById('duration');
+    
+    // Automatically set the minimum finish date based on the start date
+    if (startDateInput.value) {
+      endDateInput.min = startDateInput.value;
+    }
+
+    if (startDateInput.value && endDateInput.value) {
+      const start = new Date(startDateInput.value);
+      const end = new Date(endDateInput.value);
+      
+      // Date Validation
+      if (end < start) {
+        endDateInput.setCustomValidity("Finish date cannot be before start date.");
+        endDateInput.reportValidity();
+        durationInput.value = '';
+        return;
+      } else {
+        endDateInput.setCustomValidity("");
+      }
+
+      // Calculate the difference in dates in days
+      // (Difference calculated as: end date - start date)
+      const diffTime = Math.abs(end - start);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      
+      durationInput.value = diffDays;
+    } else {
+      durationInput.value = '';
+    }
+  }
+
+  // Pre-calculate duration if form loads with populated data
+  document.addEventListener('DOMContentLoaded', calculateDuration);
+    </script>
+{% endblock extra_js %}

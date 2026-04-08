@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% block title %}
+    Plant Types - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Plant Types</h1>
+                    <p class="text-sm text-gray-600 mt-1">Manage equipment categories and hourly rates for {{ project.name }}</p>
+                </div>
+                <a href="{% url 'site_management:plant-type-create' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                    {% heroicon_outline "plus" class="w-5 h-5 mr-2" %}
+                    Add Plant Type
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hourly Rate</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for type in plant_types %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ type.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ type.hourly_rate }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                <a href="{% url 'site_management:plant-type-update' project.pk type.pk %}"
+                                   class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                <a href="{% url 'site_management:plant-type-delete' project.pk type.pk %}"
+                                   class="text-red-600 hover:text-red-900">Delete</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3" class="px-6 py-12 text-center text-sm text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    {% heroicon_outline "tag" class="w-12 h-12 text-gray-400 mb-3" %}
+                                    <p class="font-medium">No plant types defined</p>
+                                    <p class="mt-1">Define types to categorize your equipment and manage costs.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+        <div class="flex justify-between items-center">
+            <a href="{% url 'site_management:plant-equipment-list' project.pk %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+                Back to Equipment List
+            </a>
+        </div>
+    </div>
+{% endblock content %}

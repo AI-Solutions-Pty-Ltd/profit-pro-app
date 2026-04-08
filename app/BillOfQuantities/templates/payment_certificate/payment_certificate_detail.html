@@ -249,6 +249,13 @@
             </h2>
             {% include "payment_certificate/tables/special_items.html" with special_line_items=special_line_items special_line_items_total=payment_certificate.special_items_current_claim_total %}
         </div>
+        <!-- Ledger Totals Section -->
+        <div id="ledger-totals" class="mb-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                {% heroicon_outline "calculator" size="20" class="text-indigo-600" %} Ledger Totals
+            </h2>
+            {% include "payment_certificate/tables/ledger_totals.html" %}
+        </div>
     </div>
 {% endblock content %}
 {% block extra_js %}

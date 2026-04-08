@@ -75,6 +75,12 @@ from .plant_equipment_views import (
     PlantEquipmentListView,
     PlantEquipmentUpdateView,
 )
+from .plant_type_views import (
+    PlantTypeCreateView,
+    PlantTypeDeleteView,
+    PlantTypeListView,
+    PlantTypeUpdateView,
+)
 from .procurement_tracker_views import (
     ProcurementTrackerCreateView,
     ProcurementTrackerDeleteView,
@@ -118,6 +124,12 @@ from .site_instruction_views import (
     SiteInstructionDetailView,
     SiteInstructionListView,
     SiteInstructionUpdateView,
+)
+from .skill_type_views import (
+    SkillTypeCreateView,
+    SkillTypeDeleteView,
+    SkillTypeListView,
+    SkillTypeUpdateView,
 )
 from .snag_list_views import (
     SnagListCreateView,
@@ -222,4 +234,9 @@ __all__ = [
     "SiteInstructionDetailView",
     "SiteInstructionUpdateView",
     "SiteInstructionDeleteView",
+    "SkillTypeDeleteView",
+    "PlantTypeListView",
+    "PlantTypeCreateView",
+    "PlantTypeUpdateView",
+    "PlantTypeDeleteView",
 ]

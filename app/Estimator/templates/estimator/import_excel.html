@@ -1,0 +1,93 @@
+{% extends "estimator/base.html" %}
+{% block title %}Import Excel - Project Resource Estimator{% endblock %}
+{% block estimator_content %}
+    <div class="sm:flex sm:items-center sm:justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Import Excel File</h1>
+            <p class="mt-1 text-sm text-gray-500">Upload a Resources Estimator Excel file to import project data.</p>
+        </div>
+    </div>
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="mb-4 rounded-lg p-4 {% if message.tags == 'success' %}bg-green-50 ring-1 ring-green-200{% elif message.tags == 'error' %}bg-red-50 ring-1 ring-red-200{% else %}bg-blue-50 ring-1 ring-blue-200{% endif %}">
+                <div class="flex items-start gap-3">
+                    {% if message.tags == 'success' %}
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             fill="none"
+                             viewBox="0 0 24 24"
+                             stroke-width="1.5"
+                             stroke="currentColor"
+                             class="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                        <p class="text-sm text-green-800">{{ message }}</p>
+                    {% elif message.tags == 'error' %}
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             fill="none"
+                             viewBox="0 0 24 24"
+                             stroke-width="1.5"
+                             stroke="currentColor"
+                             class="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                        </svg>
+                        <p class="text-sm text-red-800">{{ message }}</p>
+                    {% else %}
+                        <p class="text-sm text-blue-800">{{ message }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+    <!-- Upload Form -->
+    <div class="overflow-hidden bg-white shadow-sm rounded-lg overflow-hidden">
+        <div class="px-4 py-5 sm:p-6">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% if form.errors %}
+                    <div class="rounded-md bg-red-50 p-4 mb-4">
+                        <div class="text-sm text-red-700">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}<p>{{ error }}</p>{% endfor %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                <div class="mb-4">
+                    <label for="id_file" class="block text-sm font-medium text-gray-700 mb-2">Select Excel File (.xlsx)</label>
+                    {{ form.file }}
+                </div>
+                <div class="flex items-center gap-4">
+                    <button type="submit"
+                            class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             fill="none"
+                             viewBox="0 0 24 24"
+                             stroke-width="1.5"
+                             stroke="currentColor"
+                             class="w-5 h-5 mr-1.5 -ml-0.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                        </svg>
+                        Import
+                    </button>
+                    <p class="text-xs text-gray-400">This will replace all existing data.</p>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Expected Sheets -->
+    <div class="mt-6 overflow-hidden bg-white shadow-sm rounded-lg overflow-hidden">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-3">Expected Sheets</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <div class="rounded bg-gray-50 px-3 py-2 text-gray-700 ring-1 ring-gray-200">Trade Code</div>
+                <div class="rounded bg-gray-50 px-3 py-2 text-gray-700 ring-1 ring-gray-200">Material Costs</div>
+                <div class="rounded bg-gray-50 px-3 py-2 text-gray-700 ring-1 ring-gray-200">Material Specification</div>
+                <div class="rounded bg-gray-50 px-3 py-2 text-gray-700 ring-1 ring-gray-200">Labour Costs</div>
+                <div class="rounded bg-gray-50 px-3 py-2 text-gray-700 ring-1 ring-gray-200">Labour Specification</div>
+                <div class="rounded bg-gray-50 px-3 py-2 text-gray-700 ring-1 ring-gray-200">Baseline BoQ</div>
+                <div class="rounded bg-gray-50 px-3 py-2 text-gray-700 ring-1 ring-gray-200">Output BoQ</div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

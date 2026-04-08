@@ -1,40 +1,18 @@
 """URL configuration for Planning & Procurement app."""
 
-from django.urls import path
+from django.urls import include, path
 
-from app.Planning.views import (
-    DesignCategoryCreateView,
-    DesignCategoryDeleteView,
-    DesignCategoryFileUploadView,
-    DesignCategoryUpdateView,
-    DesignDevelopmentOverviewView,
-    DesignDisciplineCreateView,
-    DesignDisciplineDeleteView,
-    DesignDisciplineFileUploadView,
-    DesignDisciplineUpdateView,
-    DesignGroupCreateView,
-    DesignGroupDeleteView,
-    DesignGroupFileUploadView,
-    DesignGroupUpdateView,
-    DesignListView,
-    DesignSubCategoryCreateView,
-    DesignSubCategoryDeleteView,
-    DesignSubCategoryFileUploadView,
-    DesignSubCategoryUpdateView,
-    TenderDocumentationOverviewView,
-    TenderDocumentCreateView,
-    TenderDocumentDeleteView,
-    TenderDocumentFileUploadView,
-    TenderDocumentUpdateView,
-    TenderProcessOverviewView,
-    TenderProcessSectionCompleteAPIView,
-    TenderProcessUpdateView,
-    WorkPackageCreateView,
-    WorkPackageDeleteView,
-    WorkPackageDetailView,
-    WorkPackageListView,
-    WorkPackageProcessUpdateView,
-    WorkPackageUpdateView,
+from .views import (
+    BudgetPlanningView,
+    CategoryFileDeleteView,
+    CategoryFileUploadView,
+    DisciplineFileDeleteView,
+    DisciplineFileUploadView,
+    GroupFileDeleteView,
+    GroupFileUploadView,
+    ScopePlanningView,
+    SubCategoryFileDeleteView,
+    SubCategoryFileUploadView,
 )
 
 app_name = "planning"
@@ -42,170 +20,59 @@ app_name = "planning"
 urlpatterns = [
     # Overview Pages
     path(
-        "<int:project_pk>/overview/design-development/",
-        DesignDevelopmentOverviewView.as_view(),
-        name="design-development-overview",
+        "<int:project_pk>/scope-planning/",
+        ScopePlanningView.as_view(),
+        name="scope-planning",
     ),
     path(
-        "<int:project_pk>/overview/tender-documentation/",
-        TenderDocumentationOverviewView.as_view(),
-        name="tender-documentation-overview",
+        "<int:project_pk>/overview/budget-planning/",
+        BudgetPlanningView.as_view(),
+        name="budget-planning",
+    ),
+    # Scope File Uploads
+    path(
+        "<int:project_pk>/scope/category/<int:pk>/upload/",
+        CategoryFileUploadView.as_view(),
+        name="scope-category-upload",
     ),
     path(
-        "<int:project_pk>/overview/tender-process/",
-        TenderProcessOverviewView.as_view(),
-        name="tender-process-overview",
+        "<int:project_pk>/scope/subcategory/<int:pk>/upload/",
+        SubCategoryFileUploadView.as_view(),
+        name="scope-subcategory-upload",
     ),
     path(
-        "<int:project_pk>/overview/tender-process/api/work-packages/<int:wp_pk>/section-complete/",
-        TenderProcessSectionCompleteAPIView.as_view(),
-        name="tender-process-section-complete-api",
-    ),
-    # Work Packages
-    path(
-        "<int:project_pk>/work-packages/",
-        WorkPackageListView.as_view(),
-        name="work-package-list",
+        "<int:project_pk>/scope/group/<int:pk>/upload/",
+        GroupFileUploadView.as_view(),
+        name="scope-group-upload",
     ),
     path(
-        "<int:project_pk>/work-packages/create/",
-        WorkPackageCreateView.as_view(),
-        name="work-package-create",
+        "<int:project_pk>/scope/discipline/<int:pk>/upload/",
+        DisciplineFileUploadView.as_view(),
+        name="scope-discipline-upload",
+    ),
+    # Scope File Deletes
+    path(
+        "<int:project_pk>/scope/category/file/<int:pk>/delete/",
+        CategoryFileDeleteView.as_view(),
+        name="scope-category-file-delete",
     ),
     path(
-        "<int:project_pk>/work-packages/<int:pk>/",
-        WorkPackageDetailView.as_view(),
-        name="work-package-detail",
+        "<int:project_pk>/scope/subcategory/file/<int:pk>/delete/",
+        SubCategoryFileDeleteView.as_view(),
+        name="scope-subcategory-file-delete",
     ),
     path(
-        "<int:project_pk>/work-packages/<int:pk>/edit/",
-        WorkPackageUpdateView.as_view(),
-        name="work-package-update",
+        "<int:project_pk>/scope/group/file/<int:pk>/delete/",
+        GroupFileDeleteView.as_view(),
+        name="scope-group-file-delete",
     ),
     path(
-        "<int:project_pk>/work-packages/<int:pk>/delete/",
-        WorkPackageDeleteView.as_view(),
-        name="work-package-delete",
+        "<int:project_pk>/scope/discipline/file/<int:pk>/delete/",
+        DisciplineFileDeleteView.as_view(),
+        name="scope-discipline-file-delete",
     ),
-    path(
-        "<int:project_pk>/work-packages/<int:pk>/edit-process/",
-        WorkPackageProcessUpdateView.as_view(),
-        name="work-package-edit-process",
-    ),
-    path(
-        "<int:project_pk>/work-packages/<int:pk>/edit-tender-process/",
-        TenderProcessUpdateView.as_view(),
-        name="work-package-edit-tender-process",
-    ),
-    # Tender Documents
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/documents/create/",
-        TenderDocumentCreateView.as_view(),
-        name="tender-document-create",
-    ),
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/documents/<int:pk>/edit/",
-        TenderDocumentUpdateView.as_view(),
-        name="tender-document-update",
-    ),
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/documents/<int:pk>/delete/",
-        TenderDocumentDeleteView.as_view(),
-        name="tender-document-delete",
-    ),
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/documents/<int:doc_pk>/upload/",
-        TenderDocumentFileUploadView.as_view(),
-        name="tender-document-upload",
-    ),
-    # Design Development
-    path(
-        "<int:project_pk>/work-packages/<int:pk>/design/",
-        DesignListView.as_view(),
-        name="design-list",
-    ),
-    # Design Category (L1)
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/design/category/create/",
-        DesignCategoryCreateView.as_view(),
-        name="design-category-create",
-    ),
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/design/category/<int:design_pk>/upload/",
-        DesignCategoryFileUploadView.as_view(),
-        name="design-category-upload",
-    ),
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/design/category/<int:pk>/edit/",
-        DesignCategoryUpdateView.as_view(),
-        name="design-category-edit",
-    ),
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/design/category/<int:pk>/delete/",
-        DesignCategoryDeleteView.as_view(),
-        name="design-category-delete",
-    ),
-    # Design SubCategory (L2)
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/design/subcategory/create/",
-        DesignSubCategoryCreateView.as_view(),
-        name="design-subcategory-create",
-    ),
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/design/subcategory/<int:design_pk>/upload/",
-        DesignSubCategoryFileUploadView.as_view(),
-        name="design-subcategory-upload",
-    ),
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/design/subcategory/<int:pk>/edit/",
-        DesignSubCategoryUpdateView.as_view(),
-        name="design-subcategory-edit",
-    ),
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/design/subcategory/<int:pk>/delete/",
-        DesignSubCategoryDeleteView.as_view(),
-        name="design-subcategory-delete",
-    ),
-    # Design Group (L3)
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/design/group/create/",
-        DesignGroupCreateView.as_view(),
-        name="design-group-create",
-    ),
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/design/group/<int:design_pk>/upload/",
-        DesignGroupFileUploadView.as_view(),
-        name="design-group-upload",
-    ),
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/design/group/<int:pk>/edit/",
-        DesignGroupUpdateView.as_view(),
-        name="design-group-edit",
-    ),
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/design/group/<int:pk>/delete/",
-        DesignGroupDeleteView.as_view(),
-        name="design-group-delete",
-    ),
-    # Design Discipline (L4)
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/design/discipline/create/",
-        DesignDisciplineCreateView.as_view(),
-        name="design-discipline-create",
-    ),
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/design/discipline/<int:design_pk>/upload/",
-        DesignDisciplineFileUploadView.as_view(),
-        name="design-discipline-upload",
-    ),
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/design/discipline/<int:pk>/edit/",
-        DesignDisciplineUpdateView.as_view(),
-        name="design-discipline-edit",
-    ),
-    path(
-        "<int:project_pk>/work-packages/<int:wp_pk>/design/discipline/<int:pk>/delete/",
-        DesignDisciplineDeleteView.as_view(),
-        name="design-discipline-delete",
-    ),
+    path("work-packages/", include("app.Planning.work_packages.urls")),
+    path("design-documentation/", include("app.Planning.design_documentation.urls")),
+    path("tender-process/", include("app.Planning.tender_process.urls")),
+    path("tender-documents/", include("app.Planning.tender_documents.urls")),
 ]

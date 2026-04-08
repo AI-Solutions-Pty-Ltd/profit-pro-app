@@ -703,6 +703,41 @@ class ForecastListView(ForecastMixin, ListView):
             status=Forecast.Status.APPROVED
         )
 
+        # Calculate month-to-month variances
+        month_to_month_variances = {}
+        previous_forecast_total = None
+
+        for forecast in context["forecasts"]:
+            forecast_total = forecast.forecast_transactions.aggregate(
+                total=Sum("total_price")
+            )["total"] or Decimal("0.00")
+
+            if previous_forecast_total is not None:
+                month_to_month_variance = forecast_total - previous_forecast_total
+                month_to_month_variances[forecast.pk] = {
+                    "variance": month_to_month_variance,
+                    "variance_percentage": (
+                        month_to_month_variance / previous_forecast_total * 100
+                    )
+                    if previous_forecast_total != 0
+                    else Decimal("0.00"),
+                }
+            else:
+                # First forecast - variance from original budget
+                month_to_month_variance = forecast_total - original_budget
+                month_to_month_variances[forecast.pk] = {
+                    "variance": month_to_month_variance,
+                    "variance_percentage": (
+                        month_to_month_variance / original_budget * 100
+                    )
+                    if original_budget != 0
+                    else Decimal("0.00"),
+                }
+
+            previous_forecast_total = forecast_total
+
+        context["month_to_month_variances"] = month_to_month_variances
+
         # Latest approved forecast total
         latest_approved = approved_forecasts.order_by("-period").first()
         latest_forecast_total = Decimal("0.00")
@@ -785,31 +820,21 @@ class ForecastListView(ForecastMixin, ListView):
 
                 current_month = current_month + relativedelta(months=1)
 
-        # Build waterfall data structure using monthly forecast values
-        # Use month-by-month data for waterfall chart
-        colors = [
-            "#3B82F6",  # Blue
-            "#10B981",  # Green
-            "#8B5CF6",  # Purple
-            "#F59E0B",  # Amber
-            "#EC4899",  # Pink
-            "#06B6D4",  # Cyan
-            "#84CC16",  # Lime
-            "#F97316",  # Orange
-            "#6366F1",  # Indigo
-            "#14B8A6",  # Teal
-            "#A855F7",  # Violet
-            "#EF4444",  # Red
-        ]
-        for i, (label, value) in enumerate(
-            zip(chart_labels, forecast_values, strict=False)
-        ):
+        # Build waterfall data structure using variance from original contract
+        # Each bar shows the variance from original contract value for that month
+        for label, value in zip(chart_labels, forecast_values, strict=False):
             if value is not None:
+                # Calculate variance from original contract value
+                variance = value - float(original_budget)
+
                 waterfall_labels.append(label)
                 waterfall_data.append(
                     {
-                        "value": value,
-                        "color": colors[i % len(colors)],
+                        "value": variance,  # Variance from original contract
+                        "forecast_value": value,  # Actual forecast value for tooltip
+                        "color": "#EF4444"
+                        if variance >= 0
+                        else "#10B981",  # Red for positive (over budget), green for negative (under budget)
                     }
                 )
 

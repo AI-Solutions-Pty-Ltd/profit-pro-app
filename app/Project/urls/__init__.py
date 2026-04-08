@@ -9,6 +9,7 @@ from ..categories.subcategory_urls import urlpatterns as subcategory_urls
 from ..company.company_urls import urlpatterns as company_urls
 from ..documents.document_urls import urlpatterns as document_urls
 from ..milestone_schedules.milestone_urls import urlpatterns as milestone_urls
+from ..production_progress.urls.production_urls import urlpatterns as production_urls
 from ..projects.category_urls import urlpatterns as project_category_urls
 from ..projects.project_urls import urlpatterns as project_urls
 from .compliance_urls import urlpatterns as compliance_urls
@@ -44,4 +45,5 @@ urlpatterns = [
     path("risk/", include(risk_urls)),
     path("signatory/", include(signatory_urls)),
     path("user/", include(user_urls)),
+    path("production/", include(production_urls)),
 ]

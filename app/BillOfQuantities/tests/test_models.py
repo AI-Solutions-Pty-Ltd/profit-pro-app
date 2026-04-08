@@ -71,7 +71,9 @@ class TestStructureModel:
         structure_id = structure.pk
 
         structure.soft_delete()
-        structure.restore()
+        # Use all_objects to find and restore the soft-deleted structure
+        deleted_structure = Structure.all_objects.get(pk=structure_id)
+        deleted_structure.restore()
 
         assert Structure.objects.filter(id=structure_id).count() == 1
 

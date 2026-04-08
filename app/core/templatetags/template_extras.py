@@ -126,3 +126,48 @@ def get(obj, key):
 def lookup(dictionary, key):
     """Lookup a key in a dictionary, useful for template context."""
     return dictionary.get(key, [])
+
+
+@register.filter(name="abs")
+def abs_filter(value):
+    """Return the absolute value of a number."""
+    try:
+        return abs(float(value))
+    except (ValueError, TypeError):
+        return value
+
+
+@register.filter
+def multiply(value, arg):
+    """Multiply a value by an argument."""
+    try:
+        return float(value) * float(arg)
+    except (ValueError, TypeError):
+        return value
+
+
+@register.filter
+def divide(value, arg):
+    """Divide a value by an argument."""
+    try:
+        return float(value) / float(arg) if float(arg) != 0 else 0
+    except (ValueError, TypeError):
+        return value
+
+
+@register.filter
+def subtract(value, arg):
+    """Subtract an argument from a value."""
+    try:
+        return float(value) - float(arg)
+    except (ValueError, TypeError):
+        return value
+
+
+@register.filter
+def subtract_from(value, arg):
+    """Subtract a value from an argument."""
+    try:
+        return float(arg) - float(value)
+    except (ValueError, TypeError):
+        return value

@@ -22,9 +22,10 @@ else:
     DB_HOST = os.getenv("DB_HOST")
     DB_USER_PWD = os.getenv("DB_USER_PWD")
     DB_USER = os.getenv("DB_USER")
+    DB_ENGINE = os.getenv("DB_ENGINE", "django.db.backends.mysql")
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.mysql",
+            "ENGINE": DB_ENGINE,
             "NAME": DB,
             "USER": DB_USER,
             "PASSWORD": DB_USER_PWD,
@@ -37,3 +38,5 @@ INSTALLED_APPS += ["django_browser_reload"]  # noqa: F405
 MIDDLEWARE += [  # noqa: F405
     "django_browser_reload.middleware.BrowserReloadMiddleware",
 ]
+
+# EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"

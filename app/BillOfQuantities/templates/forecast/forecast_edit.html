@@ -147,8 +147,8 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Budgeted Quantity</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Budgeted Amount</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Forecast Quantity</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Forecast Quantity</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Price</th>
                             </tr>
                         </thead>
@@ -219,20 +219,14 @@
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     R {{ transaction.line_item.total_price|default:0|floatformat:2|intcomma }}
                                                 </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    R {{ transaction.line_item.unit_price|floatformat:2|intcomma }}
+                                                </td>
                                                 <td class="px-6 py-4 whitespace-nowrap">
                                                     <input type="number"
                                                            name="quantity_{{ transaction.id }}"
                                                            id="quantity_{{ transaction.id }}"
                                                            value="{{ transaction.quantity }}"
-                                                           step="0.01"
-                                                           class="w-24 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                           onchange="updateTotal({{ transaction.id }})">
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <input type="number"
-                                                           name="unit_price_{{ transaction.id }}"
-                                                           id="unit_price_{{ transaction.id }}"
-                                                           value="{{ transaction.unit_price }}"
                                                            step="0.01"
                                                            class="w-24 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                                                            onchange="updateTotal({{ transaction.id }})">

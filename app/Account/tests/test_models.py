@@ -68,9 +68,10 @@ class TestSuburbModel:
         """Test soft delete functionality."""
         suburb = SuburbFactory.create()
         suburb.soft_delete()
-        suburb.refresh_from_db()
-        assert suburb.deleted is True
-        assert suburb.is_deleted is True
+        # Use all_objects to find the soft-deleted suburb
+        deleted_suburb = Suburb.all_objects.get(pk=suburb.pk)
+        assert deleted_suburb.deleted is True
+        assert deleted_suburb.is_deleted is True
 
 
 class TestTownModel:
@@ -110,9 +111,10 @@ class TestTownModel:
         """Test soft delete functionality."""
         town = TownFactory.create()
         town.soft_delete()
-        town.refresh_from_db()
-        assert town.deleted is True
-        assert town.is_deleted is True
+        # Use all_objects to find the soft-deleted town
+        deleted_town = Town.all_objects.get(pk=town.pk)
+        assert deleted_town.deleted is True
+        assert deleted_town.is_deleted is True
 
 
 class TestAccountModel:

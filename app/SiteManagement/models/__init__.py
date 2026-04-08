@@ -20,6 +20,7 @@ from .non_conformance import NCRStatus, NCRType, NonConformance
 from .offsite_log import OffsiteLog
 from .photo_log import PhotoLog
 from .plant_equipment import PlantEquipment
+from .plant_type import PlantType
 from .procurement_tracker import ProcurementTracker
 from .productivity_log import ProductivityLog
 from .progress_tracker import ProgressTracker
@@ -27,6 +28,7 @@ from .quality_control import QualityControl
 from .rfi import RFI, RFIStatus
 from .safety_observation import SafetyObservation
 from .site_instruction import SiteInstruction, SiteInstructionStatus
+from .skill_type import SkillType
 from .snag_list import SnagList
 from .subcontractor_log import SubcontractorLog
 
@@ -67,4 +69,6 @@ __all__ = [
     "SiteInstructionStatus",
     "SnagList",
     "SubcontractorLog",
+    "SkillType",
+    "PlantType",
 ]
