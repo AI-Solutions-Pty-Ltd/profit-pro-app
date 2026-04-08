@@ -1,4 +1,5 @@
 from decimal import Decimal
+
 from django.db import transaction
 from django.db.models import F, Sum
 
@@ -156,15 +157,15 @@ def get_project_profitability_metrics(project):
         or 0
     )
     labour_total = (
-        project.labour_cost_logs.aggregate(total=Sum(F("amount_of_days") * F("salary")))[
-            "total"
-        ]
+        project.labour_cost_logs.aggregate(
+            total=Sum(F("amount_of_days") * F("salary"))
+        )["total"]
         or 0
     )
     overhead_total = (
-        project.overhead_cost_logs.aggregate(total=Sum(F("amount_of_days") * F("rate")))[
-            "total"
-        ]
+        project.overhead_cost_logs.aggregate(
+            total=Sum(F("amount_of_days") * F("rate"))
+        )["total"]
         or 0
     )
     material_total = (

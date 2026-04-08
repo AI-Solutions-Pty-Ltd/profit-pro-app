@@ -123,7 +123,9 @@ class MaterialEntityCreateView(ProjectEntityMixin, CreateView):
         if "header_form" in kwargs:
             context["header_form"] = kwargs["header_form"]
         elif self.request.POST:
-            context["header_form"] = MaterialHeaderForm(self.request.POST, self.request.FILES)
+            context["header_form"] = MaterialHeaderForm(
+                self.request.POST, self.request.FILES
+            )
         else:
             context["header_form"] = MaterialHeaderForm()
 
@@ -174,6 +176,7 @@ class MaterialEntityCreateView(ProjectEntityMixin, CreateView):
         # We return HttpResponseRedirect instead of calling super().form_valid(header_form)
         # to avoid CreateView potentially saving the header form as a separate MaterialEntity
         from django.http import HttpResponseRedirect
+
         return HttpResponseRedirect(self.get_success_url())
 
 

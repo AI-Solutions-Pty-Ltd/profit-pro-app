@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("Project", "0071_alter_plantentity_breakdown_status_journalentry_and_more"),
     ]
