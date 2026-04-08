@@ -39,6 +39,7 @@ urlpatterns = (
             "planning/",
             include("app.Planning.urls", namespace="planning"),
         ),
+        path("estimator/", include("app.Estimator.urls", namespace="estimator")),
     ]
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

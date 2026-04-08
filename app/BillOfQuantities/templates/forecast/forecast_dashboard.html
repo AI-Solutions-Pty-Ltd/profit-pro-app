@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load humanize %}
 {% load heroicons %}
+{% load project_tags %}
 {% block title %}
     Cost Forecast - {{ project.name }}
 {% endblock title %}
@@ -58,20 +59,20 @@
             </nav>
         </div>
     </div>
-    <!-- Chart Section - Waterfall -->
+    <!-- Chart Section - Variance Bar Chart -->
     <div class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-xl shadow-xl mb-6 p-1">
         <div class="bg-white rounded-lg overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900">Monthly Forecast Waterfall</h2>
-                        <p class="text-sm text-gray-600">Approved cost forecasts by month</p>
+                        <h2 class="text-xl font-bold text-gray-900">Monthly Forecast Variance Trend</h2>
+                        <p class="text-sm text-gray-600">Variance from original contract over time</p>
                     </div>
                     {% if has_waterfall_data %}
-                        <div class="flex items-center space-x-4 text-sm">
+                        <div class="flex items-center space-x-6 text-sm">
                             <div class="flex items-center">
                                 <div class="w-8 border-t-2 border-dashed border-indigo-500 mr-2"></div>
-                                <span class="text-gray-600">Contract Value</span>
+                                <span class="text-gray-600">R0 = Original Contract Value (R {{ project.original_contract_value|floatformat:0|intcomma }})</span>
                             </div>
                         </div>
                     {% endif %}
@@ -200,8 +201,13 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Forecast</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Variance Amount</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Variance Percentage</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Variance</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <div class="flex items-center justify-end">
+                                    <span>Month-to-Month</span>
+                                    {% heroicon_outline "information-circle" class="w-4 h-4 ml-1 text-gray-400" title="Difference from previous forecast (or original budget for first month)" %}
+                                </div>
+                            </th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -229,17 +235,32 @@
                                 </td>
                                 <td id="variance-amount" class="px-6 py-4 whitespace-nowrap text-right">
                                     {% define original_budget|sub:forecast.total_forecast as variance %}
-                                    <span class="text-sm {{ variance|numsign:'text-green-600,text-red-600,text-gray-600' }}">
-                                        {{ variance|numsign:'-R,+R,-' }} {{ variance|abs|floatformat:2|intcomma }}
-                                    </span>
+                                    <div class="text-sm">
+                                        <div class="{{ variance|numsign:'text-red-600,text-green-600,text-gray-600' }} font-medium">
+                                            {{ variance|numsign:'-R,+R,-' }} {{ variance|abs|floatformat:0|intcomma }}
+                                        </div>
+                                        <div class="{{ variance|numsign:'text-red-600,text-green-600,text-gray-600' }} text-xs">
+                                            {% define variance|div:original_budget|mul:100 as variance_percentage %}
+                                            {{ variance_percentage|floatformat:1|intcomma }}%
+                                        </div>
+                                    </div>
                                 </td>
-                                <td id="variance-percentage"
+                                <td id="month-to-month-variance"
                                     class="px-6 py-4 whitespace-nowrap text-right">
-                                    {% define variance|div:original_budget|mul:100 as variance_percentage %}
-                                    <span class="text-sm {{ variance_percentage|numsign:'text-green-600,text-red-600,text-gray-600' }}">
-                                        {{ variance_percentage|floatformat:2|intcomma }}
-                                        %
-                                    </span>
+                                    {% with month_to_month_variances|get_item:forecast.pk as m2m_variance %}
+                                        {% if m2m_variance %}
+                                            <div class="text-sm">
+                                                <div class="{{ m2m_variance.variance|numsign:'text-red-600,text-green-600,text-gray-600' }} font-medium">
+                                                    {{ m2m_variance.variance|numsign:'-R,+R,-' }} {{ m2m_variance.variance|abs|floatformat:0|intcomma }}
+                                                </div>
+                                                <div class="{{ m2m_variance.variance_percentage|numsign:'text-red-600,text-green-600,text-gray-600' }} text-xs">
+                                                    {{ m2m_variance.variance_percentage|floatformat:1|intcomma }}%
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-sm text-gray-400">-</span>
+                                        {% endif %}
+                                    {% endwith %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
@@ -301,6 +322,7 @@
 {% endblock content %}
 {% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         {% if has_waterfall_data %}
@@ -308,56 +330,52 @@
         const waterfallData = {{ waterfall_data|safe }};
         const waterfallLabels = {{ waterfall_labels|safe }};
         
-        // Calculate cumulative values and prepare waterfall data
-        let cumulative = 0;
-        const visibleData = [];
-        const invisibleData = [];
-        const colors = [];
-        const totalValues = [];
+        // Original contract value (baseline at R0)
+        const originalContractValue = {{ project.original_contract_value|default:0 }};
+        console.log('originalContractValue:', originalContractValue);
+        console.log('waterfallData:', waterfallData);
         
-        waterfallData.forEach((item, index) => {
-            const value = item.value;
-            const color = item.color;
-            
-            if (index === 0) {
-                // First item - starts from 0
-                visibleData.push(value);
-                invisibleData.push(0);
-                cumulative = value;
-            } else if (index === waterfallData.length - 1) {
-                // Last item (Total) - show as full bar from 0
-                visibleData.push(value);
-                invisibleData.push(0);
-                cumulative = value;
-            } else {
-                // Middle items - float at cumulative position
-                visibleData.push(value);
-                invisibleData.push(cumulative);
-                cumulative += value;
-            }
-            
-            colors.push(color);
-            totalValues.push(cumulative);
-        });
+        // Prepare data for the chart - each point shows variance from original contract
+        const chartData = [];
+        const colors = [];
+        const forecastValues = [];
+        
+        if (waterfallData && waterfallData.length > 0) {
+            waterfallData.forEach((item) => {
+                // Variance is already calculated in the backend
+                const variance = item.value || 0;
+                const forecastValue = item.forecast_value || 0;
+                
+                chartData.push(variance);
+                colors.push(item.color || (variance >= 0 ? '#10b981' : '#ef4444'));
+                forecastValues.push(forecastValue);
+            });
+        }
+        
+        console.log('chartData (variances from original contract):', chartData);
+        console.log('forecastValues:', forecastValues);
         
         new Chart(ctx, {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: waterfallLabels,
                 datasets: [
                     {
-                        label: 'Invisible',
-                        data: invisibleData,
-                        backgroundColor: 'transparent',
-                        borderColor: 'transparent',
-                        borderWidth: 0
-                    },
-                    {
-                        label: 'Waterfall',
-                        data: visibleData,
-                        backgroundColor: colors,
-                        borderColor: colors,
-                        borderWidth: 2
+                        label: 'Variance from Original Contract',
+                        data: chartData,
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.1,
+                        pointBackgroundColor: function(context) {
+                            const value = context.parsed.y;
+                            return value >= 0 ? '#EF4444' : '#10B981';
+                        },
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
                     }
                 ]
             },
@@ -379,13 +397,38 @@
                         bodyFont: { size: 12 },
                         callbacks: {
                             label: function(context) {
-                                if (context.datasetIndex === 0) return null; // Hide invisible dataset
-                                const value = context.parsed.y;
-                                const total = totalValues[context.dataIndex];
+                                const index = context.dataIndex;
+                                const variance = chartData[index];
+                                const forecastValue = forecastValues[index];
+                                const variancePercent = originalContractValue > 0 ? (variance / originalContractValue * 100) : 0;
+                                
                                 return [
-                                    `Change: R ${value.toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`,
-                                    `Total: R ${total.toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`
+                                    `Forecast: R ${forecastValue.toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`,
+                                    `Original Contract: R ${originalContractValue.toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`,
+                                    `Variance: R ${variance.toLocaleString('en-ZA', {minimumFractionDigits: 0, maximumFractionDigits: 0})} (${variancePercent > 0 ? '+' : ''}${variancePercent.toFixed(1)}%)`
                                 ];
+                            }
+                        }
+                    }
+                },
+                annotation: {
+                    annotations: {
+                        zeroLine: {
+                            type: 'line',
+                            yMin: 0,
+                            yMax: 0,
+                            borderColor: '#ef4444',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            label: {
+                                content: 'R0 - Baseline',
+                                enabled: true,
+                                position: 'center',
+                                backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
                             }
                         }
                     }
@@ -402,7 +445,7 @@
                     },
                     y: {
                         stacked: true,
-                        beginAtZero: true,
+                        beginAtZero: false,
                         grid: {
                             color: 'rgba(0, 0, 0, 0.05)'
                         },

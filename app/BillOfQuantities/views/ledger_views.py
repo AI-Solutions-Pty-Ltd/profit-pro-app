@@ -932,6 +932,11 @@ class SpecialItemTransactionListView(SubscriptionAndRoleRequiredMixin, ListView)
         balance = SpecialItemTransaction.get_balance_for_project(project)
         context["current_balance"] = balance
 
+        # Add payment certificates for the form
+        context["payment_certificates"] = project.payment_certificates.all().order_by(
+            "-certificate_number"
+        )
+
         # Get ledger with running balances
         transactions = list(self.get_queryset())
         running_balance = Decimal("0.00")

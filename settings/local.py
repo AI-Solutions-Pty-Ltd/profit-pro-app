@@ -38,3 +38,5 @@ INSTALLED_APPS += ["django_browser_reload"]  # noqa: F405
 MIDDLEWARE += [  # noqa: F405
     "django_browser_reload.middleware.BrowserReloadMiddleware",
 ]
+
+# EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
