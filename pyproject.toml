@@ -34,6 +34,14 @@ section-order = [
 [tool.ty.environment]
 root = ["."]
 
+[tool.ty.rules]
+# ty cannot resolve Django's runtime-generated attributes (reverse FKs,
+# _id fields, CBV mixins, form field types). django-stubs covers these
+# for mypy/pyright but ty doesn't fully support them yet.
+# Revisit when ty adds Django support.
+unresolved-attribute = "warn"
+invalid-argument-type = "warn"
+
 # Pytest configuration
 [tool.pytest.ini_options]
 addopts = "--ds=settings.test --reuse-db --strict-markers"
