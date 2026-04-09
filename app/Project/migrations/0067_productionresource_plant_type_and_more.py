@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
         ("Project", "0066_alter_productionresource_resource_type_and_more"),
         (
             "SiteManagement",
-            "0011_alter_plantequipment_equipment_name_planttype_and_more",
+            "0014_alter_plantequipment_equipment_name_planttype_and_more",
         ),
     ]
 

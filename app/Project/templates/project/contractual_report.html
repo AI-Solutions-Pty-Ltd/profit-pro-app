@@ -84,8 +84,11 @@
                     <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
                         <h3 class="font-medium text-indigo-900 mb-2">Key highlights of the reporting period</h3>
                         <p class="text-indigo-900">
-                            {# keep this MVP descriptive and derived #}
-                            {{ risks_open_count|default:0 }} open risk(s), {{ variations_open_count|default:0 }} pending variation(s), and {{ early_warnings_open_count|default:0 }} open early warning(s) were recorded within the window.
+                            {% if project_status_summary %}
+                                {{ project_status_summary }}
+                            {% else %}
+                                {{ risks_open_count|default:0 }} open risk(s), {{ variations_open_count|default:0 }} pending variation(s), and {{ early_warnings_open_count|default:0 }} open early warning(s) were recorded within the window.
+                            {% endif %}
                         </p>
                     </div>
                     <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">

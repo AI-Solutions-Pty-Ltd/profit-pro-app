@@ -66,6 +66,48 @@ urlpatterns = [
         views.MeetingDeleteView.as_view(),
         name="meeting-delete",
     ),
+    # Non-Conformance Reports (NCR)
+    path(
+        "project/<int:project_pk>/ncrs/",
+        views.NCRListView.as_view(),
+        name="ncr-list",
+    ),
+    path(
+        "project/<int:project_pk>/ncrs/create/",
+        views.NCRCreateView.as_view(),
+        name="ncr-create",
+    ),
+    path(
+        "project/<int:project_pk>/ncrs/<int:pk>/update/",
+        views.NCRUpdateView.as_view(),
+        name="ncr-update",
+    ),
+    path(
+        "project/<int:project_pk>/ncrs/<int:pk>/delete/",
+        views.NCRDeleteView.as_view(),
+        name="ncr-delete",
+    ),
+    # Incidents
+    path(
+        "project/<int:project_pk>/incidents/",
+        views.IncidentListView.as_view(),
+        name="incident-list",
+    ),
+    path(
+        "project/<int:project_pk>/incidents/create/",
+        views.IncidentCreateView.as_view(),
+        name="incident-create",
+    ),
+    path(
+        "project/<int:project_pk>/incidents/<int:pk>/update/",
+        views.IncidentUpdateView.as_view(),
+        name="incident-update",
+    ),
+    path(
+        "project/<int:project_pk>/incidents/<int:pk>/delete/",
+        views.IncidentDeleteView.as_view(),
+        name="incident-delete",
+    ),
     # Requests for Information
     path(
         "project/<int:project_pk>/rfis/",

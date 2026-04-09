@@ -12,6 +12,11 @@ urlpatterns = [
         name="contractual-report",
     ),
     path(
+        "project/<int:project_pk>/compliance/",
+        report_views.ComplianceReportView.as_view(),
+        name="compliance-report",
+    ),
+    path(
         "project/<int:project_pk>/contractors/",
         report_views.ContractorsReportView.as_view(),
         name="contractors-report",

@@ -22,21 +22,27 @@
                         Reporting Window: <span class="font-medium text-gray-700">{{ period_start|date:"Y-m-d" }} to {{ period_end|date:"Y-m-d" }}</span>
                     </p>
                 </div>
-                <form method="get" class="flex items-center gap-2">
-                    <label class="text-xs font-medium text-gray-600">Window</label>
-                    <select name="period"
-                            class="text-gray-800 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
-                        <option value="2w" {% if period_key == "2w" %}selected{% endif %}>2 Weeks</option>
-                        <option value="1m" {% if period_key == "1m" %}selected{% endif %}>1 Month</option>
-                        <option value="3m" {% if period_key == "3m" %}selected{% endif %}>3 Months</option>
-                        <option value="6m" {% if period_key == "6m" %}selected{% endif %}>6 Months</option>
-                        <option value="12m" {% if period_key == "12m" %}selected{% endif %}>12 Months</option>
-                    </select>
-                    <button type="submit"
-                            class="text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg px-3 py-2">
-                        Apply
-                    </button>
-                </form>
+                <div class="flex items-center gap-2">
+                    <form method="get" class="flex items-center gap-2">
+                        <label class="text-xs font-medium text-gray-600">Window</label>
+                        <select name="period"
+                                class="text-gray-800 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                            <option value="2w" {% if period_key == "2w" %}selected{% endif %}>2 Weeks</option>
+                            <option value="1m" {% if period_key == "1m" %}selected{% endif %}>1 Month</option>
+                            <option value="3m" {% if period_key == "3m" %}selected{% endif %}>3 Months</option>
+                            <option value="6m" {% if period_key == "6m" %}selected{% endif %}>6 Months</option>
+                            <option value="12m" {% if period_key == "12m" %}selected{% endif %}>12 Months</option>
+                        </select>
+                        <button type="submit"
+                                class="text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg px-3 py-2">
+                            Apply
+                        </button>
+                    </form>
+                    <a href="?export=pdf"
+                       class="text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg px-3 py-2">
+                        Export PDF
+                    </a>
+                </div>
             </div>
         </div>
         <div class="px-6 py-4 space-y-8">
@@ -90,13 +96,16 @@
                         <span class="font-semibold">Overall project status:</span> {{ overall_status }}
                     </p>
                     <p>
+                        <span class="font-semibold">Project status summary:</span> {{ project_status_summary }}
+                    </p>
+                    <p>
+                        <span class="font-semibold">Contractor's report summary:</span> {{ contractor_summary }}
+                    </p>
+                    <p>
                         <span class="font-semibold">Key achievements this period:</span> {{ milestones_achieved|length }} milestone(s) achieved.
                     </p>
                     <p>
                         <span class="font-semibold">Major challenges encountered:</span> {{ all_open_risks_count }} open risk(s), {{ all_pending_variations|length }} pending variation(s), {{ open_early_warnings_count }} open early warning(s), {{ incidents_count }} incident(s), {{ near_misses_count }} near miss(es).
-                    </p>
-                    <p>
-                        <span class="font-semibold">Actions planned for next period:</span> See upcoming milestones below. Production planning integration pending.
                     </p>
                 </div>
                 {# Period Comparison Summary #}

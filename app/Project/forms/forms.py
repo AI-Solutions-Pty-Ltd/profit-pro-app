@@ -1,7 +1,10 @@
 """Forms for Project app."""
 
+from typing import cast
+
 from django import forms
 from django.core.exceptions import ValidationError
+from django.forms import ModelChoiceField
 
 from app.Account.models import Account
 from app.Project.models import (
@@ -55,7 +58,49 @@ class ProjectContractorForm(forms.ModelForm):
         # Type: ModelChoiceField has queryset attribute
         contractor_field = self.fields["contractor"]
         if hasattr(contractor_field, "queryset"):
-            contractor_field.queryset = queryset.distinct()  # type: ignore
+            cast(ModelChoiceField, contractor_field).queryset = queryset.distinct()
+
+
+class ProjectLeadConsultantForm(forms.ModelForm):
+    """Form for updating the project lead consultant."""
+
+    class Meta:
+        model = Project
+        fields = ["lead_consultant"]
+        widgets = {
+            "lead_consultant": forms.Select(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                }
+            ),
+        }
+        labels = {
+            "lead_consultant": "Lead Consultant",
+        }
+        help_texts = {
+            "lead_consultant": "Select the lead consultant company for this project",
+        }
+
+    def __init__(self, *args, **kwargs):
+        project = kwargs.pop("project", None)
+        user: Account = kwargs.pop("user", None)
+        projects = user.get_projects
+
+        super().__init__(*args, **kwargs)
+
+        # Filter to only show consultant companies
+        queryset = Company.objects.filter(
+            lead_consultant_projects__in=projects, type=Company.Type.LEAD_CONSULTANT
+        ).order_by("name")
+
+        # Exclude the currently assigned lead consultant if project is provided
+        if project and project.lead_consultant:
+            queryset = queryset.exclude(pk=project.lead_consultant.pk)
+
+        # Type: ModelChoiceField has queryset attribute
+        lead_consultant_field = self.fields["lead_consultant"]
+        if hasattr(lead_consultant_field, "queryset"):
+            cast(ModelChoiceField, lead_consultant_field).queryset = queryset.distinct()
 
 
 class ClientCreateUpdateForm(forms.ModelForm):
@@ -89,7 +134,7 @@ class ClientCreateUpdateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Filter consultants to only show users with type CONSULTANT
         consultant_users = Account.objects.filter(groups__name="consultant")
-        self.fields["consultants"].queryset = consultant_users  # type: ignore
+        cast(ModelChoiceField, self.fields["consultants"]).queryset = consultant_users
         self.fields["consultants"].required = False
 
 
@@ -438,7 +483,9 @@ class ContractualComplianceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["responsible_party"].queryset = Account.objects.filter(  # type: ignore
+        cast(
+            ModelChoiceField, self.fields["responsible_party"]
+        ).queryset = Account.objects.filter(
             groups__name__in=["contractor", "consultant"]
         ).distinct()
         self.fields["responsible_party"].required = False
@@ -541,7 +588,9 @@ class AdministrativeComplianceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["responsible_party"].queryset = Account.objects.filter(  # type: ignore
+        cast(
+            ModelChoiceField, self.fields["responsible_party"]
+        ).queryset = Account.objects.filter(
             groups__name__in=["contractor", "consultant", "client"]
         ).distinct()
         self.fields["responsible_party"].required = False
@@ -638,7 +687,9 @@ class FinalAccountComplianceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["responsible_party"].queryset = Account.objects.filter(  # type: ignore
+        cast(
+            ModelChoiceField, self.fields["responsible_party"]
+        ).queryset = Account.objects.filter(
             groups__name__in=["contractor", "consultant"]
         ).distinct()
         self.fields["responsible_party"].required = False

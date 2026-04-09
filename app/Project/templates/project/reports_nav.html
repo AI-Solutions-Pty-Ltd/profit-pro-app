@@ -15,7 +15,7 @@
         {% heroicon_outline "banknotes" class="w-5 h-5 inline mr-2" %}
         Progress Report
     </a>
-    <a href="#"
+    <a href="{% url 'project:compliance-report' project.pk %}"
        class="border-b-2 {% if tab == 'compliance_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
         {% heroicon_outline "clock" class="w-5 h-5 inline mr-2" %}
         Compliance Report

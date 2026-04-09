@@ -8,7 +8,7 @@ from io import BytesIO
 from typing import Any
 
 from dateutil.relativedelta import relativedelta
-from django.db.models import QuerySet, Sum
+from django.db.models import Q, QuerySet, Sum
 from django.http import HttpResponse
 from django.urls import reverse
 from django.views.generic import ListView, TemplateView
@@ -34,23 +34,29 @@ from app.core.Utilities.subscription_and_role_mixin import (
 )
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import (
+    AdministrativeCompliance,
+    ContractualCompliance,
+    FinalAccountCompliance,
     Milestone,
+    PlannedValue,
     Portfolio,
     Project,
     ProjectCategory,
     ProjectDocument,
+    ProjectReportSummary,
     Risk,
     RiskStatus,
     Role,
 )
-from app.Project.models.planned_value_models import PlannedValue
 from app.Project.projects.project_forms import ProjectFilterForm
 from app.SiteManagement.models import (
+    RFI,
     BiWeeklyQualityReport,
     BiWeeklySafetyReport,
     EarlyWarning,
     EarlyWarningStatus,
     Incident,
+    IncidentStatus,
     IncidentType,
     LabourLog,
     MaterialsLog,
@@ -61,6 +67,9 @@ from app.SiteManagement.models import (
     ProductivityLog,
     ProgressTracker,
     QualityControl,
+    RFIStatus,
+    SiteInstruction,
+    SiteInstructionStatus,
 )
 
 
@@ -1231,6 +1240,17 @@ class ContractualReportView(ContractualReportMixin, TemplateView):
         # -----------------------------
         # Project Information (Section 1)
         # -----------------------------
+        # Get Report Summary for qualitative data
+        summary = ProjectReportSummary.objects.filter(
+            project=project, period_start__lte=period_end, period_end__gte=period_start
+        ).first()
+
+        context["project_status_summary"] = (
+            summary.project_status_summary
+            if summary and summary.project_status_summary
+            else None
+        )
+
         consultants = project.lead_consultants.all()
         context["consultants"] = ", ".join(
             [(c.get_full_name() or c.email or str(c.pk)) for c in consultants]
@@ -1776,6 +1796,69 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
 
     template_name = "project/contractors_report.html"
 
+    def get(self, request, *args, **kwargs):
+        export_type = (request.GET.get("export") or "").lower()
+        if export_type == "pdf":
+            return self._export_pdf()
+        return super().get(request, *args, **kwargs)
+
+    def _export_pdf(self) -> HttpResponse:
+        context = self.get_context_data()
+        project = context["project"]
+
+        buffer = BytesIO()
+        pdf = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
+        y = height - 40
+
+        pdf.setFont("Helvetica-Bold", 14)
+        pdf.drawString(40, y, f"Contractor's Report: {project.name}")
+        y -= 25
+        pdf.setFont("Helvetica", 10)
+        pdf.drawString(
+            40,
+            y,
+            f"Period: {context['period_label']} ({context['period_start']} to {context['period_end']})",
+        )
+        y -= 30
+
+        sections = [
+            ("Project Status", context["project_status_summary"]),
+            ("Contractor Summary", context["contractor_summary"]),
+            (
+                "Financial Status",
+                f"Contract Value: {context['contract_value']}, Claims this period: {context['financial_summary']['claims_this_period']}",
+            ),
+            (
+                "Health & Safety",
+                f"Incidents: {context['incidents_count']}, Near Misses: {context['near_misses_count']}",
+            ),
+        ]
+
+        for title, text in sections:
+            if y < 100:
+                pdf.showPage()
+                y = height - 40
+            pdf.setFont("Helvetica-Bold", 11)
+            pdf.drawString(40, y, title)
+            y -= 15
+            pdf.setFont("Helvetica", 9)
+            lines = [str(text)[i : i + 90] for i in range(0, len(str(text)), 90)]
+            for line in lines:
+                pdf.drawString(50, y, line)
+                y -= 12
+            y -= 10
+
+        pdf.save()
+        data = buffer.getvalue()
+        buffer.close()
+
+        filename = f"Contractors_Report_{project.pk}_{context['period_start']}.pdf"
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        response.write(data)
+        return response
+
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
         return [
@@ -1821,6 +1904,11 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
                 previous_period_start + relativedelta(months=1) - timedelta(days=1)
             )
             comparison_label = "Month"
+
+        # Get Report Summary for qualitative data
+        summary = ProjectReportSummary.objects.filter(
+            project=project, period_start__lte=period_end, period_end__gte=period_start
+        ).first()
 
         consultants = project.lead_consultants.all()
         client = project.client.name if project.client else "-"
@@ -2104,6 +2192,18 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
             project=project, date__range=(period_start, period_end)
         )
 
+        # Determine dynamic summaries from ProjectReportSummary
+        status_summary = (
+            summary.project_status_summary
+            if summary and summary.project_status_summary
+            else f"Works are {overall_status}. {milestones_achieved.count()} milestones achieved."
+        )
+        contractor_summary = (
+            summary.contractor_summary
+            if summary and summary.contractor_summary
+            else "Contractor's periodic progress update and key highlights."
+        )
+
         context.update(
             {
                 "project": project,
@@ -2121,6 +2221,8 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
                     [(c.get_full_name() or c.email or str(c.pk)) for c in consultants]
                 ),
                 "overall_status": overall_status,
+                "project_status_summary": status_summary,
+                "contractor_summary": contractor_summary,
                 "milestones_achieved": milestones_achieved,
                 "upcoming_milestones": upcoming_milestones,
                 "delayed_milestones": delayed_milestones,
@@ -2422,6 +2524,66 @@ class ConstructionProgressReportView(ContractualReportMixin, TemplateView):
 
     template_name = "project/construction_progress_report.html"
 
+    def get(self, request, *args, **kwargs):
+        export_type = (request.GET.get("export") or "").lower()
+        if export_type == "pdf":
+            return self._export_pdf()
+        return super().get(request, *args, **kwargs)
+
+    def _export_pdf(self) -> HttpResponse:
+        context = self.get_context_data()
+        project = context["project"]
+
+        buffer = BytesIO()
+        pdf = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
+        y = height - 40
+
+        pdf.setFont("Helvetica-Bold", 14)
+        pdf.drawString(40, y, f"Construction Progress Report: {project.name}")
+        y -= 25
+        pdf.setFont("Helvetica", 10)
+        pdf.drawString(
+            40,
+            y,
+            f"Period: {context['period_label']} ({context['period_start']} to {context['period_end']})",
+        )
+        y -= 30
+
+        sections = [
+            ("Project Status", context["project_status_summary"]),
+            ("Key Achievements", context["key_achievements_text"]),
+            ("Current Focus", context["current_focus_text"]),
+            ("Financial Summary", context["financial_summary_text"]),
+            ("HSQ Summary", context["hsq_summary_text"]),
+            ("Recommendations", context["recommendations_text"]),
+        ]
+
+        for title, text in sections:
+            if y < 100:
+                pdf.showPage()
+                y = height - 40
+            pdf.setFont("Helvetica-Bold", 11)
+            pdf.drawString(40, y, title)
+            y -= 15
+            pdf.setFont("Helvetica", 9)
+            # Simple text wrapping for PDF
+            lines = [text[i : i + 90] for i in range(0, len(text), 90)]
+            for line in lines:
+                pdf.drawString(50, y, line)
+                y -= 12
+            y -= 10
+
+        pdf.save()
+        data = buffer.getvalue()
+        buffer.close()
+
+        filename = f"Progress_Report_{project.pk}_{context['period_start']}.pdf"
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        response.write(data)
+        return response
+
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
         return [
@@ -2449,6 +2611,11 @@ class ConstructionProgressReportView(ContractualReportMixin, TemplateView):
         period_start, period_end, period_label = (
             ContractualReportView._get_reporting_window(period_key)
         )
+
+        # Get Report Summary for qualitative data
+        summary = ProjectReportSummary.objects.filter(
+            project=project, period_start__lte=period_end, period_end__gte=period_start
+        ).first()
 
         # ── Project Information ──────────────────────────────────────
         client = project.client.name if project.client else "-"
@@ -2522,7 +2689,8 @@ class ConstructionProgressReportView(ContractualReportMixin, TemplateView):
 
         # ── Financial Status ─────────────────────────────────────────
         contract_value = project.total_contract_value
-        spent_to_date = Decimal("0")  # Would come from payment/invoice tracking
+        # Real spent to date from project model
+        spent_to_date = project.get_actual_cost(period_end)
         remaining_budget = contract_value - spent_to_date
         budget_spend_pct = (
             (spent_to_date / contract_value * 100) if contract_value else Decimal("0")
@@ -2533,15 +2701,15 @@ class ConstructionProgressReportView(ContractualReportMixin, TemplateView):
         )
         total_variations = sum((v.variation_amount or 0) for v in all_variations)
         forecast_at_completion = contract_value + total_variations
-        cpi = (
-            spent_to_date / (overall_progress_pct / 100 * forecast_at_completion)
-            if overall_progress_pct > 0 and forecast_at_completion > 0
-            else Decimal("1.0")
-        )
+
+        # Real CPI/SPI from project model
+        cpi = project.get_cost_performance_index(period_end) or Decimal("1.0")
+        spi = project.get_schedule_performance_index(period_end) or Decimal("1.0")
 
         forecast_status = (
             "On Track"
-            if cpi >= 0.95 and spent_to_date <= budget_spend_pct * contract_value
+            if cpi >= 0.95
+            and spent_to_date <= (budget_spend_pct / 100) * contract_value
             else ("At Risk" if cpi >= 0.90 else "Over Budget")
         )
 
@@ -2587,6 +2755,33 @@ class ConstructionProgressReportView(ContractualReportMixin, TemplateView):
         )
         qc_passed = qc_records.filter(result="PASS")
 
+        # Determine dynamic summaries from ProjectReportSummary
+        status_summary = (
+            summary.project_status_summary
+            if summary and summary.project_status_summary
+            else f"Works are {overall_progress_pct:.1f}% complete. {schedule_status}."
+        )
+        achievements_text = (
+            summary.key_achievements
+            if summary and summary.key_achievements
+            else f"Completed {milestones_achieved.count()} milestone(s) and {completed_activities.count()} activity(ies) this period."
+        )
+        focus_text = (
+            summary.current_focus
+            if summary and summary.current_focus
+            else f"Working on {milestones_in_progress.count()} milestone(s) and {upcoming_activities.count()} upcoming activity(ies)."
+        )
+        hsq_summary_text = (
+            summary.hsq_summary
+            if summary and summary.hsq_summary
+            else f"{site_incidents.count()} incident(s), {near_misses.count()} near miss(es) this period. Quality pass rate: {(qc_passed.count() / qc_records.count() * 100) if qc_records.count() else 100:.1f}%."
+        )
+        recommendations_text = (
+            summary.recommendations
+            if summary and summary.recommendations
+            else "Continue current work plan. Monitor schedule and budget."
+        )
+
         context.update(
             {
                 "project": project,
@@ -2604,15 +2799,9 @@ class ConstructionProgressReportView(ContractualReportMixin, TemplateView):
                 "overall_progress_pct": overall_progress_pct,
                 "schedule_status": schedule_status,
                 "milestones_achieved": milestones_achieved,
-                "project_status_summary": f"Works are {overall_progress_pct:.1f}% complete. {schedule_status}.",
-                "key_achievements_text": (
-                    f"Completed {milestones_achieved.count()} milestone(s) and "
-                    f"{completed_activities.count()} activity(ies) this period."
-                ),
-                "current_focus_text": (
-                    f"Working on {milestones_in_progress.count()} milestone(s) and "
-                    f"{upcoming_activities.count()} upcoming activity(ies)."
-                ),
+                "project_status_summary": status_summary,
+                "key_achievements_text": achievements_text,
+                "current_focus_text": focus_text,
                 "major_risks_summary": f"{critical_risks_count} critical risk(s), {high_risks_count} high risk(s).",
                 # Milestones
                 "all_milestones": all_milestones,
@@ -2674,6 +2863,7 @@ class ConstructionProgressReportView(ContractualReportMixin, TemplateView):
                     "forecast_at_completion": int(forecast_at_completion),
                     "total_variations": int(total_variations),
                     "cpi": cpi,
+                    "spi": spi,
                     "forecast_status": forecast_status,
                 },
                 "financial_summary_text": f"Contract: {contract_value:,}. Spent: {spent_to_date:,}. Forecast: {forecast_at_completion:,}",
@@ -2689,9 +2879,826 @@ class ConstructionProgressReportView(ContractualReportMixin, TemplateView):
                 "qc_records_count": qc_records.count(),
                 "qc_passed_count": qc_passed.count(),
                 "quality_ncrs_open_count": quality_ncrs_open.count(),
-                "hsq_summary_text": "Zero incidents this period. Quality inspections show excellent pass rate.",
+                "hsq_summary_text": hsq_summary_text,
                 # Next Steps
-                "recommendations_text": "Continue current work plan. Monitor schedule and budget.",
+                "recommendations_text": recommendations_text,
+            }
+        )
+
+        return context
+
+
+class ComplianceReportView(ContractualReportView):
+    """Comprehensive Project Compliance Report (Contractual, Administrative, Final Account, Quality, Safety, etc.)."""
+
+    template_name = "project/compliance_report.html"
+
+    def get(self, request, *args, **kwargs):
+        export_type = (request.GET.get("export") or "").lower()
+        register = (request.GET.get("register") or "").lower()
+        if export_type == "csv" and register:
+            return self._export_register_csv(register)
+        if export_type == "pdf" and register:
+            return self._export_register_pdf(register)
+        return super().get(request, *args, **kwargs)
+
+    def _build_register_export_data(
+        self, register: str
+    ) -> tuple[list[str], list[list[Any]], str] | None:
+        project = self.get_project()
+        period_key = (self.request.GET.get("period") or "1m").lower()
+        period_start, period_end, _ = self._get_reporting_window(period_key)
+
+        rows: list[list[Any]] = []
+        headers: list[str] = []
+        filename = f"{register}_{project.pk}_{period_start}_{period_end}"
+
+        if register == "contractual":
+            headers = [
+                "ID",
+                "Obligation",
+                "Responsible Party",
+                "Contract Reference",
+                "Due Date",
+                "Status",
+                "Notes",
+            ]
+            queryset = ContractualCompliance.objects.filter(
+                project=project, deleted=False
+            ).filter(due_date__range=(period_start, period_end))
+            for item in queryset:
+                responsible = "-"
+                if item.responsible_party:
+                    responsible = (
+                        item.responsible_party.get_full_name()
+                        or item.responsible_party.email
+                    )
+                rows.append(
+                    [
+                        f"CC-{item.pk}",
+                        item.obligation_description,
+                        responsible,
+                        item.contract_reference,
+                        item.due_date.isoformat() if item.due_date else "",
+                        item.get_status_display(),
+                        item.notes,
+                    ]
+                )
+        elif register == "administrative":
+            headers = [
+                "ID",
+                "Type",
+                "Reference",
+                "Description",
+                "Responsible Party",
+                "Submission Due",
+                "Submission Date",
+                "Approval Due",
+                "Approval Date",
+                "Status",
+            ]
+            queryset = AdministrativeCompliance.objects.filter(
+                project=project, deleted=False
+            ).filter(
+                Q(submission_due_date__range=(period_start, period_end))
+                | Q(approval_due_date__range=(period_start, period_end))
+            )
+            for item in queryset:
+                responsible = "-"
+                if item.responsible_party:
+                    responsible = (
+                        item.responsible_party.get_full_name()
+                        or item.responsible_party.email
+                    )
+                rows.append(
+                    [
+                        f"AC-{item.pk}",
+                        item.get_item_type_display(),
+                        item.reference_number,
+                        item.description,
+                        responsible,
+                        item.submission_due_date.isoformat()
+                        if item.submission_due_date
+                        else "",
+                        item.submission_date.isoformat()
+                        if item.submission_date
+                        else "",
+                        item.approval_due_date.isoformat()
+                        if item.approval_due_date
+                        else "",
+                        item.approval_date.isoformat() if item.approval_date else "",
+                        item.get_status_display(),
+                    ]
+                )
+        elif register == "final_account":
+            headers = [
+                "ID",
+                "Document Type",
+                "Description",
+                "Responsible Party",
+                "Submission Date",
+                "Approval Date",
+                "Status",
+                "Notes",
+            ]
+            queryset = FinalAccountCompliance.objects.filter(
+                project=project, deleted=False
+            ).filter(
+                Q(submission_date__range=(period_start, period_end))
+                | Q(approval_date__range=(period_start, period_end))
+            )
+            for item in queryset:
+                responsible = "-"
+                if item.responsible_party:
+                    responsible = (
+                        item.responsible_party.get_full_name()
+                        or item.responsible_party.email
+                    )
+                rows.append(
+                    [
+                        f"FA-{item.pk}",
+                        item.get_document_type_display(),
+                        item.description,
+                        responsible,
+                        item.submission_date.isoformat()
+                        if item.submission_date
+                        else "",
+                        item.approval_date.isoformat() if item.approval_date else "",
+                        item.get_status_display(),
+                        item.notes,
+                    ]
+                )
+        elif register == "ncr":
+            headers = [
+                "NCR No.",
+                "Description",
+                "Date",
+                "Category",
+                "Severity",
+                "Status",
+                "Responsible Party",
+                "Due Date",
+                "Closed Date",
+            ]
+            queryset = NonConformance.objects.filter(
+                project=project, date__range=(period_start, period_end)
+            )
+            for ncr in queryset:
+                responsible = "-"
+                if ncr.responsible_party:
+                    responsible = (
+                        ncr.responsible_party.get_full_name()
+                        or ncr.responsible_party.email
+                    )
+                rows.append(
+                    [
+                        ncr.reference_number,
+                        ncr.description,
+                        ncr.date.isoformat() if ncr.date else "",
+                        ncr.get_ncr_type_display(),
+                        ncr.get_status_display(),
+                        ncr.get_status_display(),
+                        responsible,
+                        "",  # NonConformance doesn't have a due_date field in the choices provided earlier
+                        ncr.date_closed.isoformat() if ncr.date_closed else "",
+                    ]
+                )
+        elif register == "incidents":
+            headers = [
+                "Incident No.",
+                "Description",
+                "Date",
+                "Type",
+                "Severity",
+                "Status",
+                "Reported By",
+                "Investigation Due",
+                "Closed Date",
+            ]
+            queryset = Incident.objects.filter(
+                project=project, date__range=(period_start, period_end)
+            )
+            for incident in queryset:
+                reported_by = "-"
+                if incident.reported_by:
+                    reported_by = (
+                        incident.reported_by.get_full_name()
+                        or incident.reported_by.email
+                    )
+                rows.append(
+                    [
+                        incident.reference_number,
+                        incident.description,
+                        incident.date.isoformat() if incident.date else "",
+                        incident.get_type_display(),
+                        incident.get_severity_display(),
+                        incident.get_status_display(),
+                        reported_by,
+                        incident.investigation_due_date.isoformat()
+                        if incident.investigation_due_date
+                        else "",
+                        incident.date_closed.isoformat()
+                        if incident.date_closed
+                        else "",
+                    ]
+                )
+        elif register == "early_warnings":
+            headers = [
+                "EW No.",
+                "Subject",
+                "Raised By",
+                "Date",
+                "Status",
+                "Response",
+            ]
+            queryset = EarlyWarning.objects.filter(
+                project=project, date__range=(period_start, period_end)
+            )
+            for ew in queryset:
+                raised_by = "-"
+                if ew.submitted_by:
+                    raised_by = ew.submitted_by.get_full_name() or ew.submitted_by.email
+                rows.append(
+                    [
+                        ew.reference_number,
+                        ew.subject,
+                        raised_by,
+                        ew.date.isoformat() if ew.date else "",
+                        ew.get_status_display(),
+                        ew.response or "",
+                    ]
+                )
+        elif register == "quality_reports":
+            headers = [
+                "Period Start",
+                "Period End",
+                "Submitted By",
+                "Notes",
+            ]
+            queryset = BiWeeklyQualityReport.objects.filter(
+                project=project, period_end__range=(period_start, period_end)
+            )
+            for report in queryset:
+                submitted_by = "-"
+                if report.submitted_by:
+                    submitted_by = (
+                        report.submitted_by.get_full_name() or report.submitted_by.email
+                    )
+                rows.append(
+                    [
+                        report.period_start.isoformat() if report.period_start else "",
+                        report.period_end.isoformat() if report.period_end else "",
+                        submitted_by,
+                        report.notes or "",
+                    ]
+                )
+        elif register == "safety_reports":
+            headers = [
+                "Period Start",
+                "Period End",
+                "Submitted By",
+                "Key Concerns",
+                "Notes",
+            ]
+            queryset = BiWeeklySafetyReport.objects.filter(
+                project=project, period_end__range=(period_start, period_end)
+            )
+            for report in queryset:
+                submitted_by = "-"
+                if report.submitted_by:
+                    submitted_by = (
+                        report.submitted_by.get_full_name() or report.submitted_by.email
+                    )
+                rows.append(
+                    [
+                        report.period_start.isoformat() if report.period_start else "",
+                        report.period_end.isoformat() if report.period_end else "",
+                        submitted_by,
+                        report.key_concerns or "",
+                        report.notes or "",
+                    ]
+                )
+        elif register == "rfis":
+            headers = [
+                "RFI No.",
+                "Subject",
+                "Issued Date",
+                "Status",
+                "Response Date",
+                "Days to Respond",
+            ]
+            queryset = RFI.objects.filter(
+                project=project, date_issued__range=(period_start, period_end)
+            )
+            for rfi in queryset:
+                days_to_respond = None
+                if rfi.date_issued and rfi.response_date:
+                    days_to_respond = (rfi.response_date - rfi.date_issued).days
+                rows.append(
+                    [
+                        rfi.reference_number,
+                        rfi.subject,
+                        rfi.date_issued.isoformat() if rfi.date_issued else "",
+                        rfi.get_status_display(),
+                        rfi.response_date.isoformat() if rfi.response_date else "",
+                        days_to_respond,
+                    ]
+                )
+        elif register == "site_instructions":
+            headers = [
+                "SI No.",
+                "Subject",
+                "Notified Date",
+                "Status",
+                "Closed Date",
+                "Days to Close",
+            ]
+            queryset = SiteInstruction.objects.filter(
+                project=project, date_notified__range=(period_start, period_end)
+            )
+            for si in queryset:
+                days_to_close = None
+                if si.date_notified and si.date_closed:
+                    days_to_close = (si.date_closed - si.date_notified).days
+                rows.append(
+                    [
+                        si.reference_number,
+                        si.subject,
+                        si.date_notified.isoformat() if si.date_notified else "",
+                        si.get_status_display(),
+                        si.date_closed.isoformat() if si.date_closed else "",
+                        days_to_close,
+                    ]
+                )
+        else:
+            return None
+
+        return headers, rows, filename
+
+    def _export_register_csv(self, register: str) -> HttpResponse:
+        export_data = self._build_register_export_data(register)
+        if export_data is None:
+            return HttpResponse(status=400)
+        headers, rows, filename = export_data
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="{filename}.csv"'
+        writer = csv.writer(response)
+        writer.writerow(headers)
+        writer.writerows(rows)
+        return response
+
+    def _export_register_pdf(self, register: str) -> HttpResponse:
+        export_data = self._build_register_export_data(register)
+        if export_data is None:
+            return HttpResponse(status=400)
+        headers, rows, filename = export_data
+
+        buffer = BytesIO()
+        pdf = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
+        y = height - 40
+
+        pdf.setFont("Helvetica-Bold", 11)
+        pdf.drawString(40, y, f"{register.title().replace('_', ' ')} Register Export")
+        y -= 18
+        pdf.setFont("Helvetica", 9)
+        pdf.drawString(40, y, " | ".join(headers))
+        y -= 14
+        pdf.line(40, y, width - 40, y)
+        y -= 12
+
+        for row in rows:
+            if y < 40:
+                pdf.showPage()
+                y = height - 40
+                pdf.setFont("Helvetica", 9)
+            row_text = " | ".join(str(v) for v in row)
+            if len(row_text) > 155:
+                row_text = f"{row_text[:152]}..."
+            pdf.drawString(40, y, row_text)
+            y -= 12
+
+        pdf.save()
+        data = buffer.getvalue()
+        buffer.close()
+
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{filename}.pdf"'
+        response.write(data)
+        return response
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        return [
+            BreadcrumbItem(
+                title="Portfolio",
+                url=reverse("project:portfolio-dashboard"),
+            ),
+            BreadcrumbItem(
+                title=project.name,
+                url=None,
+            ),
+            BreadcrumbItem(
+                title="Compliance Report",
+                url=None,
+            ),
+        ]
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+
+        project = self.get_project()
+
+        period_key = (self.request.GET.get("period") or "1m").lower()
+        period_start, period_end, period_label = self._get_reporting_window(period_key)
+
+        context.update(
+            {
+                "project": project,
+                "period_key": period_key,
+                "period_label": period_label,
+                "period_start": period_start,
+                "period_end": period_end,
+                "tab": "compliance_report",
+            }
+        )
+
+        # Get Report Summary for qualitative data
+        summary = ProjectReportSummary.objects.filter(
+            project=project, period_start__lte=period_end, period_end__gte=period_start
+        ).first()
+
+        # -----------------------------
+        # Project Information (Section 1)
+        # -----------------------------
+        consultants = project.lead_consultants.all()
+        context["consultants"] = ", ".join(
+            [(c.get_full_name() or c.email or str(c.pk)) for c in consultants]
+        )
+        context["client"] = project.client.name if project.client else "-"
+        context["contractor"] = project.contractor.name if project.contractor else "-"
+        context["contract_reference"] = project.contract_number or "-"
+
+        # Determine dynamic summaries from ProjectReportSummary
+        status_summary = (
+            summary.project_status_summary
+            if summary and summary.project_status_summary
+            else f"Compliance review for {period_label}. All registers active."
+        )
+        recommendations_text = (
+            summary.recommendations
+            if summary and summary.recommendations
+            else "Ensure all compliance documents are updated."
+        )
+
+        context.update(
+            {
+                "project_status_summary": status_summary,
+                "recommendations_text": recommendations_text,
+            }
+        )
+
+        # -----------------------------
+        # Compliance Registers
+        # -----------------------------
+
+        # Contractual Compliance
+        contractual_items = ContractualCompliance.objects.filter(
+            project=project, deleted=False
+        )
+        contractual_in_period = contractual_items.filter(
+            due_date__range=(period_start, period_end)
+        )
+        contractual_completed = contractual_in_period.filter(
+            status=ContractualCompliance.Status.COMPLETED
+        )
+        contractual_overdue = contractual_in_period.filter(
+            status=ContractualCompliance.Status.OVERDUE
+        )
+
+        # Administrative Compliance
+        admin_items = AdministrativeCompliance.objects.filter(
+            project=project, deleted=False
+        )
+        admin_in_period = admin_items.filter(
+            Q(submission_due_date__range=(period_start, period_end))
+            | Q(approval_due_date__range=(period_start, period_end))
+        )
+        admin_approved = admin_in_period.filter(
+            status=AdministrativeCompliance.Status.APPROVED
+        )
+        admin_overdue = admin_in_period.filter(
+            status=AdministrativeCompliance.Status.OVERDUE
+        )
+
+        # Final Account Compliance
+        final_items = FinalAccountCompliance.objects.filter(
+            project=project, deleted=False
+        )
+        final_in_period = final_items.filter(
+            Q(submission_date__range=(period_start, period_end))
+            | Q(approval_date__range=(period_start, period_end))
+        )
+        final_approved = final_in_period.filter(
+            status=FinalAccountCompliance.Status.APPROVED
+        )
+
+        # Non-Conformances (NCRs)
+        ncrs = NonConformance.objects.filter(project=project).order_by("-date")
+        ncrs_in_period = ncrs.filter(date__range=(period_start, period_end))
+        ncrs_open = ncrs_in_period.filter(status=NCRStatus.OPEN)
+        ncrs_closed = ncrs_in_period.filter(status=NCRStatus.CLOSED)
+
+        # Incidents
+        incidents = Incident.objects.filter(project=project)
+        incidents_in_period = incidents.filter(date__range=(period_start, period_end))
+        incidents_open = incidents_in_period.filter(status=IncidentStatus.OPEN)
+        incidents_closed = incidents_in_period.filter(status=IncidentStatus.CLOSED)
+
+        # Early Warnings
+        early_warnings = EarlyWarning.objects.filter(project=project)
+        early_warnings_in_period = early_warnings.filter(
+            date__range=(period_start, period_end)
+        )
+        early_warnings_open = early_warnings_in_period.filter(
+            status=EarlyWarningStatus.OPEN
+        )
+        early_warnings_closed = early_warnings_in_period.filter(
+            status=EarlyWarningStatus.CLOSED
+        )
+
+        # Quality Reports
+        quality_reports = BiWeeklyQualityReport.objects.filter(project=project)
+        quality_reports_in_period = quality_reports.filter(
+            period_end__range=(period_start, period_end)
+        )
+
+        # Safety Reports
+        safety_reports = BiWeeklySafetyReport.objects.filter(project=project)
+        safety_reports_in_period = safety_reports.filter(
+            period_end__range=(period_start, period_end)
+        )
+
+        # RFIs
+        rfis = RFI.objects.filter(project=project)
+        rfis_in_period = rfis.filter(date_issued__range=(period_start, period_end))
+        rfis_responded = rfis_in_period.filter(status=RFIStatus.CLOSED)
+
+        # Site Instructions
+        site_instructions = SiteInstruction.objects.filter(project=project)
+        site_instructions_in_period = site_instructions.filter(
+            date_notified__range=(period_start, period_end)
+        )
+        site_instructions_confirmed = site_instructions_in_period.filter(
+            status=SiteInstructionStatus.CLOSED
+        )
+
+        # Build register overview
+        context["register_overview"] = [
+            {
+                "register_type": "Contractual Compliance",
+                "tab_url": reverse(
+                    "project:contractual-compliance-list", args=[project.pk]
+                ),
+                "total_to_date": contractual_items.count(),
+                "current_entries": contractual_in_period.count(),
+                "open_items": contractual_in_period.exclude(
+                    status__in=[
+                        ContractualCompliance.Status.COMPLETED,
+                        ContractualCompliance.Status.NOT_APPLICABLE,
+                    ]
+                ).count(),
+                "closed_percentage": round(
+                    (
+                        contractual_completed.count()
+                        / contractual_in_period.count()
+                        * 100
+                    ),
+                    1,
+                )
+                if contractual_in_period.count()
+                else 0,
+                "open_percentage": round(
+                    (contractual_overdue.count() / contractual_in_period.count() * 100),
+                    1,
+                )
+                if contractual_in_period.count()
+                else 0,
+                "impact_value": None,
+            },
+            {
+                "register_type": "Administrative Compliance",
+                "tab_url": reverse(
+                    "project:administrative-compliance-list", args=[project.pk]
+                ),
+                "total_to_date": admin_items.count(),
+                "current_entries": admin_in_period.count(),
+                "open_items": admin_in_period.exclude(
+                    status=AdministrativeCompliance.Status.APPROVED
+                ).count(),
+                "closed_percentage": round(
+                    (admin_approved.count() / admin_in_period.count() * 100), 1
+                )
+                if admin_in_period.count()
+                else 0,
+                "open_percentage": round(
+                    (admin_overdue.count() / admin_in_period.count() * 100), 1
+                )
+                if admin_in_period.count()
+                else 0,
+                "impact_value": None,
+            },
+            {
+                "register_type": "Final Account Compliance",
+                "tab_url": reverse(
+                    "project:final-account-compliance-list", args=[project.pk]
+                ),
+                "total_to_date": final_items.count(),
+                "current_entries": final_in_period.count(),
+                "open_items": final_in_period.exclude(
+                    status=FinalAccountCompliance.Status.APPROVED
+                ).count(),
+                "closed_percentage": round(
+                    (final_approved.count() / final_in_period.count() * 100), 1
+                )
+                if final_in_period.count()
+                else 0,
+                "open_percentage": 0,  # Final account items don't have overdue status
+                "impact_value": None,
+            },
+            {
+                "register_type": "Non-Conformance Reports",
+                "tab_url": reverse("site_management:ncr-list", args=[project.pk]),
+                "total_to_date": ncrs.count(),
+                "current_entries": ncrs_in_period.count(),
+                "open_items": ncrs_open.count(),
+                "closed_percentage": round(
+                    (ncrs_closed.count() / ncrs_in_period.count() * 100), 1
+                )
+                if ncrs_in_period.count()
+                else 0,
+                "open_percentage": round(
+                    (ncrs_open.count() / ncrs_in_period.count() * 100), 1
+                )
+                if ncrs_in_period.count()
+                else 0,
+                "impact_value": None,
+            },
+            {
+                "register_type": "Incidents",
+                "tab_url": reverse("site_management:incident-list", args=[project.pk]),
+                "total_to_date": incidents.count(),
+                "current_entries": incidents_in_period.count(),
+                "open_items": incidents_open.count(),
+                "closed_percentage": round(
+                    (incidents_closed.count() / incidents_in_period.count() * 100), 1
+                )
+                if incidents_in_period.count()
+                else 0,
+                "open_percentage": round(
+                    (incidents_open.count() / incidents_in_period.count() * 100), 1
+                )
+                if incidents_in_period.count()
+                else 0,
+                "impact_value": None,
+            },
+            {
+                "register_type": "Early Warnings",
+                "tab_url": reverse(
+                    "site_management:early-warning-list", args=[project.pk]
+                ),
+                "total_to_date": early_warnings.count(),
+                "current_entries": early_warnings_in_period.count(),
+                "open_items": early_warnings_open.count(),
+                "closed_percentage": round(
+                    (
+                        early_warnings_closed.count()
+                        / early_warnings_in_period.count()
+                        * 100
+                    ),
+                    1,
+                )
+                if early_warnings_in_period.count()
+                else 0,
+                "open_percentage": round(
+                    (
+                        early_warnings_open.count()
+                        / early_warnings_in_period.count()
+                        * 100
+                    ),
+                    1,
+                )
+                if early_warnings_in_period.count()
+                else 0,
+                "impact_value": None,
+            },
+            {
+                "register_type": "Quality Reports",
+                "tab_url": reverse(
+                    "site_management:biweekly-quality-list", args=[project.pk]
+                ),
+                "total_to_date": quality_reports.count(),
+                "current_entries": quality_reports_in_period.count(),
+                "open_items": quality_reports_in_period.count(),  # All reports are "open" until period ends
+                "closed_percentage": 0,
+                "open_percentage": 100,
+                "impact_value": None,
+            },
+            {
+                "register_type": "Safety Reports",
+                "tab_url": reverse(
+                    "site_management:biweekly-safety-list", args=[project.pk]
+                ),
+                "total_to_date": safety_reports.count(),
+                "current_entries": safety_reports_in_period.count(),
+                "open_items": safety_reports_in_period.count(),  # All reports are "open" until period ends
+                "closed_percentage": 0,
+                "open_percentage": 100,
+                "impact_value": None,
+            },
+            {
+                "register_type": "RFIs",
+                "tab_url": reverse("site_management:rfi-list", args=[project.pk]),
+                "total_to_date": rfis.count(),
+                "current_entries": rfis_in_period.count(),
+                "open_items": rfis_in_period.exclude(status=RFIStatus.CLOSED).count(),
+                "closed_percentage": round(
+                    (rfis_responded.count() / rfis_in_period.count() * 100), 1
+                )
+                if rfis_in_period.count()
+                else 0,
+                "open_percentage": round(
+                    (
+                        rfis_in_period.exclude(status=RFIStatus.CLOSED).count()
+                        / rfis_in_period.count()
+                        * 100
+                    ),
+                    1,
+                )
+                if rfis_in_period.count()
+                else 0,
+                "impact_value": None,
+            },
+            {
+                "register_type": "Site Instructions",
+                "tab_url": reverse(
+                    "site_management:site-instruction-list", args=[project.pk]
+                ),
+                "total_to_date": site_instructions.count(),
+                "current_entries": site_instructions_in_period.count(),
+                "open_items": site_instructions_in_period.exclude(
+                    status=SiteInstructionStatus.CLOSED
+                ).count(),
+                "closed_percentage": round(
+                    (
+                        site_instructions_confirmed.count()
+                        / site_instructions_in_period.count()
+                        * 100
+                    ),
+                    1,
+                )
+                if site_instructions_in_period.count()
+                else 0,
+                "open_percentage": round(
+                    (
+                        site_instructions_in_period.exclude(
+                            status=SiteInstructionStatus.CLOSED
+                        ).count()
+                        / site_instructions_in_period.count()
+                        * 100
+                    ),
+                    1,
+                )
+                if site_instructions_in_period.count()
+                else 0,
+                "impact_value": None,
+            },
+        ]
+
+        # Extract small sets for template display
+        context.update(
+            {
+                "contractual_compliance": contractual_in_period.order_by("-due_date")[
+                    :10
+                ],
+                "administrative_compliance": admin_in_period.order_by(
+                    "-submission_due_date"
+                )[:10],
+                "final_account_compliance": final_in_period.order_by(
+                    "-submission_date"
+                )[:10],
+                "ncrs": ncrs_in_period.order_by("-date")[:10],
+                "incidents": incidents_in_period.order_by("-date")[:10],
+                "early_warnings": early_warnings_in_period.order_by("-date")[:10],
+                "quality_reports": quality_reports_in_period.order_by("-period_end")[
+                    :5
+                ],
+                "safety_reports": safety_reports_in_period.order_by("-period_end")[:5],
+                "rfis": rfis_in_period.order_by("-date_issued")[:10],
+                "site_instructions": site_instructions_in_period.order_by(
+                    "-date_notified"
+                )[:10],
             }
         )
 
