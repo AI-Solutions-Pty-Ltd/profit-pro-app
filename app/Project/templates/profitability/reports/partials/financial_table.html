@@ -1,0 +1,81 @@
+<div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50/50">
+            <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Financial Line Item</th>
+                <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Actual to Date</th>
+                <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Planned to Date</th>
+                <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-indigo-500 uppercase tracking-widest bg-indigo-50/30">Actual this Month</th>
+                <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-amber-500 uppercase tracking-widest bg-amber-50/30">Forecast</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-100">
+            <!-- Revenue -->
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 flex items-center">
+                    <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 mr-2"></span>
+                    Revenue
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">R {{ financial_table.revenue.actual_to_date|floatformat:0|intcomma }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">R {{ financial_table.revenue.planned_to_date|floatformat:0|intcomma }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-indigo-600 text-right bg-indigo-50/30">R {{ financial_table.revenue.actual_this_month|floatformat:0|intcomma }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-amber-600 text-right bg-amber-50/30">R {{ financial_table.revenue.forecast|floatformat:0|intcomma }}</td>
+            </tr>
+            
+            <!-- Cost of Sales -->
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-600 pl-10">Cost of Sales (COGS)</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800 text-right">R {{ financial_table.cost_of_sales.actual_to_date|floatformat:0|intcomma }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400 text-right">R {{ financial_table.cost_of_sales.planned_to_date|floatformat:0|intcomma }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700 text-right bg-indigo-50/20">R {{ financial_table.cost_of_sales.actual_this_month|floatformat:0|intcomma }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700 text-right bg-amber-50/20">R {{ financial_table.cost_of_sales.forecast|floatformat:0|intcomma }}</td>
+            </tr>
+            
+            <!-- Gross Profit -->
+            <tr class="bg-gray-50/50">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-black text-gray-900 uppercase">Gross Profit</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-black text-gray-900 text-right">R {{ financial_table.gross_profit.actual_to_date|floatformat:0|intcomma }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-400 text-right">R {{ financial_table.gross_profit.planned_to_date|floatformat:0|intcomma }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-black text-indigo-700 text-right bg-indigo-100/30">R {{ financial_table.gross_profit.actual_this_month|floatformat:0|intcomma }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-black text-amber-700 text-right bg-amber-100/30">R {{ financial_table.gross_profit.forecast|floatformat:0|intcomma }}</td>
+            </tr>
+            
+            <!-- Operating Expenses -->
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-600 pl-10">Operating Expenses (OpEx)</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800 text-right">R {{ financial_table.operating_expenses.actual_to_date|floatformat:0|intcomma }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400 text-right">R {{ financial_table.operating_expenses.planned_to_date|floatformat:0|intcomma }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700 text-right bg-indigo-50/20">R {{ financial_table.operating_expenses.actual_this_month|floatformat:0|intcomma }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-700 text-right bg-amber-50/20">R {{ financial_table.operating_expenses.forecast|floatformat:0|intcomma }}</td>
+            </tr>
+            
+            <!-- Net Profit -->
+            <tr class="bg-indigo-600 text-white">
+                <td class="px-6 py-5 whitespace-nowrap text-sm font-black uppercase tracking-widest">Net Profit</td>
+                <td class="px-6 py-5 whitespace-nowrap text-base font-black text-right">R {{ financial_table.net_profit.actual_to_date|floatformat:0|intcomma }}</td>
+                <td class="px-6 py-5 whitespace-nowrap text-sm font-bold text-indigo-200 text-right">R {{ financial_table.net_profit.planned_to_date|floatformat:0|intcomma }}</td>
+                <td class="px-6 py-5 whitespace-nowrap text-base font-black text-white text-right bg-indigo-700">R {{ financial_table.net_profit.actual_this_month|floatformat:0|intcomma }}</td>
+                <td class="px-6 py-5 whitespace-nowrap text-base font-black text-white text-right bg-indigo-800">R {{ financial_table.net_profit.forecast|floatformat:0|intcomma }}</td>
+            </tr>
+            
+            <!-- Margins Section -->
+            <tr class="bg-gray-50/30">
+                <td colspan="5" class="px-6 py-2 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Efficiency Ratios / Margins</td>
+            </tr>
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-700 pl-10">GP Margin</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-black text-gray-900 text-right">{{ financial_table.gp_margin.actual_to_date|floatformat:1 }}%</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-400 text-right">{{ financial_table.gp_margin.planned_to_date|floatformat:1 }}%</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-black text-indigo-600 text-right bg-indigo-50/30">{{ financial_table.gp_margin.actual_this_month|floatformat:1 }}%</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-black text-amber-600 text-right bg-amber-50/30">{{ financial_table.gp_margin.forecast|floatformat:1 }}%</td>
+            </tr>
+            <tr class="hover:bg-gray-50 transition-colors border-b border-gray-100">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-700 pl-10">NP Margin</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-black text-gray-900 text-right">{{ financial_table.np_margin.actual_to_date|floatformat:1 }}%</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-400 text-right">{{ financial_table.np_margin.planned_to_date|floatformat:1 }}%</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-black text-indigo-600 text-right bg-indigo-50/30">{{ financial_table.np_margin.actual_this_month|floatformat:1 }}%</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-black text-amber-600 text-right bg-amber-50/30">{{ financial_table.np_margin.forecast|floatformat:1 }}%</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

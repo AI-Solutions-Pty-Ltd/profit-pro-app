@@ -1,0 +1,43 @@
+<!-- Header Card -->
+<div class="mb-6 bg-white rounded-lg border border-gray-200 shadow-sm">
+    <div class="px-6 py-4">
+        <div class="flex justify-between items-center mb-4">
+            <a href="{% url 'project:company-management' project.pk %}"
+               class="inline-flex items-center py-2 text-sm font-medium text-gray-700 bg-white transition-colors hover:text-indigo-600 focus:outline-none">
+                {% heroicon_outline "chevron-left" size="20" %}
+                <span class="ml-2">Back to Profitability Dashboard</span>
+            </a>
+            <div class="flex items-center space-x-3">
+                <a href="."
+                   class="p-2 text-gray-500 rounded-md border border-gray-200 transition-colors hover:text-indigo-600 hover:bg-gray-50"
+                   title="Refresh Data">{% heroicon_outline "arrow-path" size="18" %}</a>
+            </div>
+        </div>
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Financial Performance Reports</h1>
+                <p class="mt-1 text-sm text-gray-600">Real-time profitability tracking and financial metrics for {{ project.name }}</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <form method="GET" class="flex items-center px-3 py-2 space-x-2 bg-white rounded-md border border-gray-300 shadow-sm focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500">
+                    <input type="date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" class="p-0 text-xs border-0 focus:ring-0">
+                    <span class="text-gray-400">to</span>
+                    <input type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" class="p-0 text-xs border-0 focus:ring-0">
+                    <button type="submit" class="ml-1 text-gray-400 hover:text-indigo-600">
+                        {% heroicon_outline "magnifying-glass" size="16" %}
+                    </button>
+                </form>
+                {% comment %} <div class="flex items-center p-1 bg-gray-50 rounded-md border border-gray-200">
+                    <button onclick="window.print()" class="flex items-center px-3 py-1.5 text-xs font-bold text-gray-600 rounded transition-colors hover:bg-white hover:shadow-sm">
+                        {% heroicon_outline "document-arrow-down" size="14" class="mr-1.5" %}
+                        PDF Report
+                    </button>
+                    <button class="flex items-center px-3 py-1.5 pl-2 ml-1 text-xs font-bold text-gray-600 rounded border-l border-gray-200 transition-colors hover:bg-white hover:shadow-sm">
+                        {% heroicon_outline "share" size="14" class="mr-1.5" %}
+                        Export
+                    </button>
+                </div> {% endcomment %}
+            </div>
+        </div>
+    </div>
+</div>

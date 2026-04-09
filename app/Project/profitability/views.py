@@ -110,5 +110,15 @@ class ImportLogsView(ProfitabilityMixin, View):
             return redirect(
                 "project:profitability-plant-list", project_pk=self.project.pk
             )
+        elif import_type == "certificate":
+            from .utils import import_certificates_to_journal
+
+            count = import_certificates_to_journal(self.project)
+            messages.success(
+                request, f"Successfully imported {count} journal entries from certificates."
+            )
+            return redirect(
+                "project:profitability-journal-list", project_pk=self.project.pk
+            )
 
         return redirect("project:profitability-dashboard", project_pk=self.project.pk)

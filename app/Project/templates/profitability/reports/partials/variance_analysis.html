@@ -1,0 +1,49 @@
+<div class="grid grid-cols-2 gap-4 lg:grid-cols-6">
+    {% for item in variance_analysis %}
+    <div class="border border-gray-200 rounded-lg p-5 hover:shadow-md transition-all group {% if item.status == 'Critical' %} bg-rose-50/20{% elif item.status == 'At Risk' %}bg-amber-50/20{% else %}bg-emerald-50/20{% endif %} {% if forloop.counter <= 3 %}lg:col-span-2{% else %}lg:col-span-3{% endif %}">
+        <div class="flex justify-between items-center mb-3">
+            <div class="p-2 rounded-lg {% if item.status == 'Critical' %}bg-rose-100 text-rose-600{% elif item.status == 'At Risk' %}bg-amber-100 text-amber-600{% else %}bg-emerald-100 text-emerald-600{% endif %}">
+                {% if item.label == 'Revenue' %}
+                    {% heroicon_outline "banknotes" size="20" %}
+                {% elif item.label == 'Cost Of Sales' %}
+                    {% heroicon_outline "shopping-cart" size="20" %}
+                {% elif item.label == 'Gross Profit' %}
+                    {% heroicon_outline "calculator" size="20" %}
+                {% elif item.label == 'Operating Expenses' %}
+                    {% heroicon_outline "briefcase" size="20" %}
+                {% else %}
+                    {% heroicon_outline "chart-pie" size="20" %}
+                {% endif %}
+            </div>
+            <span class="px-2 py-1 rounded-full border text-xs font-semibold {% if item.status == 'Critical' %}bg-rose-50 border-rose-200 text-rose-700{% elif item.status == 'At Risk' %}bg-amber-50 border-amber-200 text-amber-700{% else %}bg-emerald-50 border-emerald-200 text-emerald-700{% endif %}">
+                {{ item.status }}
+            </span>
+        </div>
+        
+        <div>
+            <h3 class="text-sm font-semibold text-gray-600">{{ item.label }}</h3>
+            <div class="mt-1 text-xl font-bold text-gray-900">R {{ item.actual|floatformat:0|intcomma }}</div>
+            
+            <div class="flex items-center mt-2 text-xs font-bold">
+                <span class="{% if item.variance_pct > 0 and item.label == 'Cost Of Sales' or item.variance_pct < 0 and item.label == 'Revenue' %}text-rose-600{% else %}text-emerald-600{% endif %} flex items-center">
+                    {% if item.variance_pct > 0 %}
+                        {% heroicon_solid "arrow-trending-up" size="14" class="mr-1" %}
+                    {% else %}
+                        {% heroicon_solid "arrow-trending-down" size="14" class="mr-1" %}
+                    {% endif %}
+                    {{ item.variance_pct_abs|floatformat:1 }}%
+                </span>
+                <span class="ml-1.5 font-normal text-gray-400">vs Plan</span>
+            </div>
+        </div>
+        
+        <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-[10px] font-bold text-gray-400 ">
+            <div class="flex flex-col">
+                <span>Planned</span>
+                <span class="text-gray-600">R {{ item.planned|floatformat:0|intcomma }}</span>
+            </div>
+           
+        </div>
+    </div>
+    {% endfor %}
+</div>

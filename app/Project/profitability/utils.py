@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import F, Sum
+from django.db.models import F, Sum, Q
 
 from app.Project.models import LabourCostTracker, SubcontractorCostTracker
 from app.SiteManagement.models import LabourLog, SubcontractorLog
@@ -218,3 +218,43 @@ def get_project_profitability_metrics(project):
             "overhead": overhead_total,
         },
     }
+
+
+def import_certificates_to_journal(project):
+    """
+    Import approved payment certificates into the journal as revenue.
+    """
+    from app.BillOfQuantities.models import PaymentCertificate
+    from app.Project.models import JournalEntry
+
+    certificates = PaymentCertificate.objects.filter(
+        project=project, status=PaymentCertificate.Status.APPROVED
+    )
+    count = 0
+
+    with transaction.atomic():
+        for cert in certificates:
+            # Check if an entry already exists for this certificate
+            exists = JournalEntry.objects.filter(
+                project=project,
+                source_log_id=cert.id,
+                source_log_type="PaymentCertificate",
+            ).exists()
+
+            if not exists:
+                # Use current claim total as the revenue amount for this certificate's period
+                amount = cert.work_current_claim_total
+
+                if amount > 0:
+                    JournalEntry.objects.create(
+                        project=project,
+                        date=cert.approved_on.date() if cert.approved_on else cert.created_at.date(),
+                        category=JournalEntry.Category.REVENUE,
+                        description=f"Revenue from Payment Certificate #{cert.certificate_number}",
+                        amount=amount,
+                        transaction_type=JournalEntry.EntryType.CREDIT,
+                        source_log_id=cert.id,
+                        source_log_type="PaymentCertificate",
+                    )
+                    count += 1
+    return count
