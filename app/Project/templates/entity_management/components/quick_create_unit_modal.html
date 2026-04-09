@@ -2,15 +2,15 @@
 {% load crispy_forms_tags %}
 <dialog id="quick-create-unit-modal"
         class="modal modal-bottom sm:modal-middle">
-    <div class="modal-box p-0 w-11/12 max-w-2xl bg-white border border-gray-100 shadow-2xl overflow-hidden">
+    <div class="overflow-hidden p-0 w-11/12 max-w-2xl bg-white border border-gray-100 shadow-2xl modal-box">
         <!-- Header -->
         <div class="flex justify-between items-center px-6 py-5 bg-white border-b border-gray-100">
             <div class="flex items-center">
-                <div class="p-2 mr-3 rounded-lg bg-indigo-50 text-indigo-600">{% heroicon_outline "plus-circle" size="24" %}</div>
+                <div class="p-2 mr-3 text-indigo-600 bg-indigo-50 rounded-lg">{% heroicon_outline "plus-circle" size="24" %}</div>
                 <h3 class="text-xl font-bold tracking-tight text-gray-900">New Unit of Measure</h3>
             </div>
             <form method="dialog">
-                <button class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors bg-gray-50 hover:bg-gray-100">
+                <button class="p-2 text-gray-400 bg-gray-50 rounded-lg transition-colors hover:text-gray-600 hover:bg-gray-100">
                     {% heroicon_outline "x-mark" size="20" %}
                 </button>
             </form>
@@ -30,18 +30,18 @@
                     </div>
                 </div>
                 <!-- Shared Form Fields -->
-                <div class="p-4 bg-gray-50/50 border border-gray-100 rounded-xl">
+                <div class="p-4 rounded-xl border border-gray-100 bg-gray-50/50">
                     {% include "unit_management/partials/unit_form_fields.html" with form=unit_form %}
                 </div>
             </div>
             <!-- Footer Actions -->
-            <div class="modal-action mt-0 px-8 py-5 bg-gray-50 border-t border-gray-100 flex justify-end space-x-3">
+            <div class="flex justify-end px-8 py-5 mt-0 space-x-3 bg-gray-50 border-t border-gray-100 modal-action">
                 <button type="button"
                         onclick="closeQuickCreateModal()"
-                        class="btn btn-ghost bg-white border-gray-300 text-gray-700 hover:bg-gray-50">Cancel</button>
+                        class="text-gray-700 bg-white border-gray-300 btn btn-ghost hover:bg-gray-50">Cancel</button>
                 <button type="submit"
                         id="quick-unit-submit"
-                        class="btn btn-primary px-8 bg-indigo-600 hover:bg-indigo-700 border-none text-white shadow-lg shadow-indigo-200/50">
+                        class="px-8 text-white bg-indigo-600 border-none shadow-lg btn btn-primary hover:bg-indigo-700 shadow-indigo-200/50">
                     <span id="submit-text">Create & Select Unit</span>
                     <div id="submit-spinner" class="hidden ml-2">
                         <svg class="w-4 h-4 text-white animate-spin"
