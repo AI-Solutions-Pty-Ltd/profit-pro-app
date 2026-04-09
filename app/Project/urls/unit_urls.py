@@ -21,4 +21,9 @@ urlpatterns = [
         unit_views.UnitOfMeasureDeleteView.as_view(),
         name="unit-delete",
     ),
+    path(
+        "units/create-ajax/",
+        unit_views.UnitOfMeasureCreateAJAXView.as_view(),
+        name="unit-create-ajax",
+    ),
 ]

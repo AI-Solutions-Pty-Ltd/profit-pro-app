@@ -185,8 +185,18 @@ class SubcontractorEntity(BaseProjectEntity):
 class OverheadEntity(BaseProjectEntity):
     """Overhead entity definition."""
 
+    class ExpenseCode(models.TextChoices):
+        OPEX = "OPEX", "Operating Expenses"
+        COS = "COS", "Cost of Sales"
+
     category = models.CharField(
-        max_length=100, blank=True, help_text="Overhead category"
+        max_length=100, blank=True, help_text="Overhead category (e.g., Office, Site)"
+    )
+    expense_code = models.CharField(
+        max_length=20,
+        choices=ExpenseCode.choices,
+        default=ExpenseCode.OPEX,
+        help_text="Accounting classification",
     )
 
     class Meta:
