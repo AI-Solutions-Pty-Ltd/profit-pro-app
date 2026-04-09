@@ -10,7 +10,7 @@ class CompanyFilterForm(forms.Form):
     company = forms.ModelChoiceField(
         queryset=Project.objects.none(),
         required=False,
-        label="Jump to Company",
+        label="Go to project",
         widget=forms.Select(
             attrs={
                 "onchange": "this.form.submit()",

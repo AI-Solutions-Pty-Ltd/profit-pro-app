@@ -275,6 +275,13 @@
                                 {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
                             </a>
                         {% endif %}
+                        {% if request.user|projectroles:project|userhasrole:'COST_FORECASTS,ADMIN,User' %}
+                            <a href="{% url 'project:time-forecast' project.pk %}"
+                               class="w-full flex items-center justify-between px-3 py-2 bg-white/70 rounded-lg border border-green-200 hover:bg-green-50 transition-colors group/btn">
+                                <span class="text-sm font-medium text-green-700">Time Forecast</span>
+                                {% heroicon_outline "arrow-right" size="16" class="text-green-500 opacity-0 group-hover/btn:opacity-100 transition-opacity" %}
+                            </a>
+                        {% endif %}
                     {% else %}
                         <a href="{% url 'bill_of_quantities:structure-upload' project.pk %}"
                            class="w-full flex items-center justify-between px-3 py-2 bg-white rounded-lg border border-red-200 hover:bg-red-50 transition-colors group/btn">
