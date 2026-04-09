@@ -1,7 +1,5 @@
-from typing import cast
-
 from django import forms
-from django.forms import ModelChoiceField, inlineformset_factory
+from django.forms import inlineformset_factory
 
 from .models import (
     ProjectAssumptions,
@@ -79,9 +77,9 @@ class SpecificationForm(forms.ModelForm):
     def __init__(self, *args, project=None, **kwargs):
         super().__init__(*args, **kwargs)
         if project:
-            cast(
-                ModelChoiceField, self.fields["trade_code"]
-            ).queryset = ProjectTradeCode.objects.filter(project=project)
+            self.fields["trade_code"].queryset = ProjectTradeCode.objects.filter(
+                project=project
+            )
 
 
 class SpecificationComponentForm(forms.ModelForm):
@@ -108,9 +106,9 @@ class SpecificationComponentForm(forms.ModelForm):
     def __init__(self, *args, project=None, **kwargs):
         super().__init__(*args, **kwargs)
         if project:
-            cast(
-                ModelChoiceField, self.fields["material"]
-            ).queryset = ProjectMaterial.objects.filter(project=project)
+            self.fields["material"].queryset = ProjectMaterial.objects.filter(
+                project=project
+            )
 
 
 SpecificationComponentFormSet = inlineformset_factory(
@@ -221,9 +219,9 @@ class LabourSpecificationForm(forms.ModelForm):
     def __init__(self, *args, project=None, **kwargs):
         super().__init__(*args, **kwargs)
         if project:
-            cast(
-                ModelChoiceField, self.fields["crew"]
-            ).queryset = ProjectLabourCrew.objects.filter(project=project)
+            self.fields["crew"].queryset = ProjectLabourCrew.objects.filter(
+                project=project
+            )
 
 
 class SystemTradeCodeForm(forms.ModelForm):
@@ -361,9 +359,7 @@ class SystemLabourSpecificationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        cast(
-            ModelChoiceField, self.fields["crew"]
-        ).queryset = SystemLabourCrew.objects.all()
+        self.fields["crew"].queryset = SystemLabourCrew.objects.all()
 
 
 class SystemSpecificationForm(forms.ModelForm):
@@ -385,9 +381,7 @@ class SystemSpecificationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        cast(
-            ModelChoiceField, self.fields["trade_code"]
-        ).queryset = SystemTradeCode.objects.all()
+        self.fields["trade_code"].queryset = SystemTradeCode.objects.all()
 
 
 class SystemSpecificationComponentForm(forms.ModelForm):
@@ -413,9 +407,7 @@ class SystemSpecificationComponentForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        cast(
-            ModelChoiceField, self.fields["material"]
-        ).queryset = SystemMaterial.objects.all()
+        self.fields["material"].queryset = SystemMaterial.objects.all()
 
 
 SystemSpecificationComponentFormSet = inlineformset_factory(

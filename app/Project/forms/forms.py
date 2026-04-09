@@ -1,10 +1,7 @@
 """Forms for Project app."""
 
-from typing import cast
-
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms import ModelChoiceField
 
 from app.Account.models import Account
 from app.Project.models import (
@@ -58,7 +55,7 @@ class ProjectContractorForm(forms.ModelForm):
         # Type: ModelChoiceField has queryset attribute
         contractor_field = self.fields["contractor"]
         if hasattr(contractor_field, "queryset"):
-            cast(ModelChoiceField, contractor_field).queryset = queryset.distinct()
+            contractor_field.queryset = queryset.distinct()  # type: ignore
 
 
 class ProjectLeadConsultantForm(forms.ModelForm):
@@ -88,9 +85,9 @@ class ProjectLeadConsultantForm(forms.ModelForm):
 
         super().__init__(*args, **kwargs)
 
-        # Filter to only show consultant companies
+        # Filter to only show lead consultant companies
         queryset = Company.objects.filter(
-            lead_consultant_projects__in=projects, type=Company.Type.LEAD_CONSULTANT
+            contractor_projects__in=projects, type=Company.Type.LEAD_CONSULTANT
         ).order_by("name")
 
         # Exclude the currently assigned lead consultant if project is provided
@@ -98,9 +95,9 @@ class ProjectLeadConsultantForm(forms.ModelForm):
             queryset = queryset.exclude(pk=project.lead_consultant.pk)
 
         # Type: ModelChoiceField has queryset attribute
-        lead_consultant_field = self.fields["lead_consultant"]
+        lead_consultant_field: forms.ModelChoiceField = self.fields["lead_consultant"]  # type: ignore
         if hasattr(lead_consultant_field, "queryset"):
-            cast(ModelChoiceField, lead_consultant_field).queryset = queryset.distinct()
+            lead_consultant_field.queryset = queryset.distinct()
 
 
 class ClientCreateUpdateForm(forms.ModelForm):
@@ -134,7 +131,7 @@ class ClientCreateUpdateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Filter consultants to only show users with type CONSULTANT
         consultant_users = Account.objects.filter(groups__name="consultant")
-        cast(ModelChoiceField, self.fields["consultants"]).queryset = consultant_users
+        self.fields["consultants"].queryset = consultant_users  # type: ignore
         self.fields["consultants"].required = False
 
 
@@ -483,9 +480,7 @@ class ContractualComplianceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        cast(
-            ModelChoiceField, self.fields["responsible_party"]
-        ).queryset = Account.objects.filter(
+        self.fields["responsible_party"].queryset = Account.objects.filter(  # type: ignore
             groups__name__in=["contractor", "consultant"]
         ).distinct()
         self.fields["responsible_party"].required = False
@@ -588,9 +583,7 @@ class AdministrativeComplianceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        cast(
-            ModelChoiceField, self.fields["responsible_party"]
-        ).queryset = Account.objects.filter(
+        self.fields["responsible_party"].queryset = Account.objects.filter(  # type: ignore
             groups__name__in=["contractor", "consultant", "client"]
         ).distinct()
         self.fields["responsible_party"].required = False
@@ -687,9 +680,7 @@ class FinalAccountComplianceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        cast(
-            ModelChoiceField, self.fields["responsible_party"]
-        ).queryset = Account.objects.filter(
+        self.fields["responsible_party"].queryset = Account.objects.filter(  # type: ignore
             groups__name__in=["contractor", "consultant"]
         ).distinct()
         self.fields["responsible_party"].required = False

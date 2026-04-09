@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("SiteManagement", "0012_skilltype_labourlog_skill_type"),
+        ("SiteManagement", "0009_skilltype_labourlog_skill_type"),
     ]
 
     operations = [

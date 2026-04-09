@@ -14,7 +14,6 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, ListView, TemplateView
-from django.views.generic.base import ContextMixin
 
 from app.BillOfQuantities.models.structure_models import LineItem
 from app.Project.models import Project
@@ -59,19 +58,18 @@ from .models import (
 )
 
 
-class ProjectEstimatorMixin(ContextMixin):
+class ProjectEstimatorMixin:
     """Mixin that loads the project from URL kwargs and adds it to context."""
 
     def get_project(self):
         if not hasattr(self, "_project"):
-            kwargs = getattr(self, "kwargs", {})
-            self._project = get_object_or_404(Project, pk=kwargs.get("project_pk"))
+            self._project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
         return self._project
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
-        context["project_pk"] = getattr(self, "kwargs", {}).get("project_pk")
+        context["project_pk"] = self.kwargs["project_pk"]
         return context
 
 
@@ -317,7 +315,7 @@ class SpecificationListView(ProjectEstimatorMixin, TemplateView):
 
         groups = OrderedDict()
         for boq in qs.order_by("section", "specification__name"):
-            key = (boq.section, getattr(boq, "specification_id", None))
+            key = (boq.section, boq.specification_id)
             if key not in groups:
                 groups[key] = {
                     "section": boq.section,
@@ -610,7 +608,7 @@ class LabourSpecificationListView(ProjectEstimatorMixin, TemplateView):
 
         groups = OrderedDict()
         for boq in qs.order_by("section", "labour_specification__name"):
-            key = (boq.section, getattr(boq, "labour_specification_id", None))
+            key = (boq.section, boq.labour_specification_id)
             if key not in groups:
                 groups[key] = {
                     "section": boq.section,
@@ -2164,12 +2162,11 @@ class InitializeEstimatorView(ProjectEstimatorMixin, View):
 # ══════════════════════════════════════════════════════════════════════
 
 
-class SystemLibraryMixin(UserPassesTestMixin, ContextMixin):
+class SystemLibraryMixin(UserPassesTestMixin):
     """Mixin for system library views: requires staff."""
 
     def test_func(self):
-        request = getattr(self, "request", None)
-        return request and request.user.is_staff
+        return self.request.user.is_staff
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

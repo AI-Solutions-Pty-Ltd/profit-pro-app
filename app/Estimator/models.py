@@ -1,10 +1,6 @@
 from decimal import Decimal
-from typing import TYPE_CHECKING
 
 from django.db import models
-
-if TYPE_CHECKING:
-    from django.db.models import Manager
 
 from app.BillOfQuantities.models.structure_models import LineItem
 from app.Estimator.calculations import (
@@ -77,9 +73,6 @@ class SystemSpecification(models.Model):
         db_table = "estimator_specification"
         ordering = ["section", "name"]
 
-    if TYPE_CHECKING:
-        spec_components: "Manager[SystemSpecificationComponent]"
-
     def __str__(self):
         return self.name
 
@@ -114,7 +107,7 @@ class SystemSpecification(models.Model):
         for sc in self.spec_components.select_related("material").all():
             results.append(
                 {
-                    "id": sc.pk,
+                    "id": sc.id,
                     "label": sc.label,
                     "qty_per_unit": sc.qty_per_unit,
                     "total_quantity": calculate_total_quantity(
@@ -232,7 +225,8 @@ class SystemLabourSpecification(models.Model):
 
     @property
     def baseline_boq_quantity(self):
-        return self.boq_quantity or Decimal("0")
+        total = self.boq_items.aggregate(total=models.Sum("contract_quantity"))["total"]
+        return total or Decimal("0")
 
 
 class SystemMaterialSpec(models.Model):
@@ -245,9 +239,6 @@ class SystemMaterialSpec(models.Model):
         verbose_name = "System Material Spec"
         verbose_name_plural = "System Material Specs"
         ordering = ["name"]
-
-    if TYPE_CHECKING:
-        system_spec_components: "Manager[SystemMaterialSpecComponent]"
 
     def __str__(self):
         return self.name
@@ -322,9 +313,6 @@ class ProjectTradeCode(models.Model):
         ordering = ["prefix"]
         unique_together = [("project", "prefix")]
 
-    if TYPE_CHECKING:
-        boq_items: "Manager[BOQItem]"
-
     def __str__(self):
         return self.trade_code
 
@@ -387,10 +375,6 @@ class ProjectSpecification(models.Model):
         ordering = ["section", "name"]
         unique_together = [("project", "name")]
 
-    if TYPE_CHECKING:
-        spec_components: "Manager[ProjectSpecificationComponent]"
-        boq_items: "Manager[BOQItem]"
-
     def __str__(self):
         return self.name
 
@@ -426,7 +410,7 @@ class ProjectSpecification(models.Model):
         for sc in self.spec_components.select_related("material").all():
             results.append(
                 {
-                    "id": sc.pk,
+                    "id": sc.id,
                     "label": sc.label,
                     "qty_per_unit": sc.qty_per_unit,
                     "total_quantity": calculate_total_quantity(
@@ -535,9 +519,6 @@ class ProjectLabourSpecification(models.Model):
         unique_together = [("project", "name")]
         verbose_name = "Project Labour Specification"
 
-    if TYPE_CHECKING:
-        boq_items: "Manager[BOQItem]"
-
     def __str__(self):
         return self.name
 
@@ -569,7 +550,7 @@ class ProjectLabourSpecification(models.Model):
 
     @property
     def baseline_boq_quantity(self):
-        total = self.boq_items.aggregate(total=models.Sum("contract_quantity"))["total"]  # type: ignore[unresolved-attribute]
+        total = self.boq_items.aggregate(total=models.Sum("contract_quantity"))["total"]
         return total or Decimal("0")
 
 
@@ -759,7 +740,7 @@ def sync_boq_from_lineitems(project):
     )
 
     existing = {
-        boq.source_line_item.pk: boq
+        boq.source_line_item_id: boq
         for boq in BOQItem.objects.filter(
             project=project, source_line_item__isnull=False
         )

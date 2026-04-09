@@ -201,9 +201,7 @@ DEFAULT_EMAIL_HOST = os.getenv("DEFAULT_EMAIL_HOST", "")
 EMAIL_HOST = os.getenv("EMAIL_HOST", "")
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
-EMAIL_PORT = int(
-    os.getenv("EMAIL_PORT") or "587"
-)  # Empty env must not override default
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))  # Default to standard TLS port
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "")
 
 
