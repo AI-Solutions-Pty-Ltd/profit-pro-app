@@ -1,7 +1,6 @@
 """Factories for SiteManagement models."""
 
-import factory
-from factory.declarations import Sequence, SubFactory
+from factory.declarations import SubFactory
 from factory.django import DjangoModelFactory
 from factory.faker import Faker
 
