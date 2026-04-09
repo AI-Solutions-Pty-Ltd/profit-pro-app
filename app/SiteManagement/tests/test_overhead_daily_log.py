@@ -16,7 +16,9 @@ class TestOverheadDailyLogModel:
     def test_overhead_daily_log_creation(self):
         """Test creating an overhead daily log with valid data."""
         project = ProjectFactory()
-        entity = OverheadEntityFactory(project=project, name="Test Overhead", category="Utilities")
+        entity = OverheadEntityFactory(
+            project=project, name="Test Overhead", category="Utilities"
+        )
         log = OverheadDailyLogFactory(project=project, overhead_entity=entity)
 
         assert log.id is not None
@@ -28,7 +30,9 @@ class TestOverheadDailyLogModel:
     def test_overhead_daily_log_sync_on_save(self):
         """Test that fields are synchronized from entity on save."""
         project = ProjectFactory()
-        entity = OverheadEntityFactory(project=project, name="Sync Test", category="Sync Cat")
+        entity = OverheadEntityFactory(
+            project=project, name="Sync Test", category="Sync Cat"
+        )
         log = OverheadDailyLog(
             project=project,
             overhead_entity=entity,
@@ -55,12 +59,14 @@ class TestOverheadDailyLogViews:
         project = ProjectFactory()
         # Add user to project to pass permission checks
         project.users.add(superuser)
-        
+
         OverheadDailyLogFactory(project=project)
-        
-        url = reverse("site_management:overhead-log-list", kwargs={"project_pk": project.pk})
+
+        url = reverse(
+            "site_management:overhead-log-list", kwargs={"project_pk": project.pk}
+        )
         response = client.get(url)
-        
+
         assert response.status_code == 200
         assert "overhead_logs" in response.context
         assert len(response.context["overhead_logs"]) == 1
@@ -71,8 +77,10 @@ class TestOverheadDailyLogViews:
         project = ProjectFactory()
         project.users.add(superuser)
         entity = OverheadEntityFactory(project=project)
-        
-        url = reverse("site_management:overhead-log-create", kwargs={"project_pk": project.pk})
+
+        url = reverse(
+            "site_management:overhead-log-create", kwargs={"project_pk": project.pk}
+        )
         data = {
             "overhead_entity": entity.pk,
             "date": "2023-01-01",
@@ -80,7 +88,7 @@ class TestOverheadDailyLogViews:
             "remarks": "Test Remarks",
         }
         response = client.post(url, data)
-        
+
         assert response.status_code == 302
         assert OverheadDailyLog.objects.filter(remarks="Test Remarks").exists()
 
@@ -93,8 +101,11 @@ class TestOverheadDailyLogViews:
         log = OverheadDailyLogFactory(
             project=project, overhead_entity__project=project, remarks="Old Remarks"
         )
-        
-        url = reverse("site_management:overhead-log-update", kwargs={"project_pk": project.pk, "pk": log.pk})
+
+        url = reverse(
+            "site_management:overhead-log-update",
+            kwargs={"project_pk": project.pk, "pk": log.pk},
+        )
         data = {
             "overhead_entity": log.overhead_entity.pk,
             "date": "2023-01-01",
@@ -102,7 +113,7 @@ class TestOverheadDailyLogViews:
             "remarks": "New Remarks",
         }
         response = client.post(url, data)
-        
+
         assert response.status_code == 302
         log.refresh_from_db()
         assert log.remarks == "New Remarks"
@@ -114,10 +125,13 @@ class TestOverheadDailyLogViews:
         project = ProjectFactory()
         project.users.add(superuser)
         log = OverheadDailyLogFactory(project=project)
-        
-        url = reverse("site_management:overhead-log-delete", kwargs={"project_pk": project.pk, "pk": log.pk})
+
+        url = reverse(
+            "site_management:overhead-log-delete",
+            kwargs={"project_pk": project.pk, "pk": log.pk},
+        )
         response = client.post(url)
-        
+
         assert response.status_code == 302
         # Check for soft delete - refresh_from_db fails if objects manager filters it out
         # We use all_objects to check the state
