@@ -8,8 +8,8 @@
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-bold text-gray-800">Overview</h2>
             <a href="{% url 'project:profitability-performance-report' project.pk %}" 
-               class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-all transform hover:scale-105">
-                {% heroicon_outline "chart-bar" class="w-5 h-5 mr-2" %}
+               class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg border border-transparent shadow-sm transition-all transform hover:bg-indigo-700 hover:scale-105">
+                {% heroicon_outline "chart-bar" class="mr-2 w-5 h-5" %}
                 View Detailed Performance Report
             </a>
         </div>
@@ -33,7 +33,7 @@
                     <div class="p-2 bg-indigo-100 rounded-lg">{% heroicon_outline "banknotes" class="w-6 h-6 text-indigo-600" %}</div>
                 </div>
                 <div class="flex items-center mt-4 text-xs">
-                    <span class="text-gray-500">Planned: R{{ baseline.planned_revenue|floatformat:0|intcomma }}</span>
+                    <span class="text-gray-500">Original Contract: R{{ baseline.planned_revenue|floatformat:0|intcomma }}</span>
                 </div>
             </div>
             <!-- Total Actual Cost Card -->
@@ -53,7 +53,7 @@
                     <div class="p-2 bg-red-100 rounded-lg">{% heroicon_outline "shopping-cart" class="w-6 h-6 text-red-600" %}</div>
                 </div>
                 <div class="flex items-center mt-4 text-xs">
-                    <span class="font-medium {% if variance.total_cost >= 0 %}text-indigo-600{% else %}text-red-600{% endif %}"
+                    {% comment %} <span class="font-medium {% if variance.total_cost >= 0 %}text-indigo-600{% else %}text-red-600{% endif %}"
                           title="R{{ variance.total_cost|abs|floatformat:2|intcomma }}">
                         {% if variance.total_cost|abs > 100000 %}
                             R{{ variance.total_cost|abs|intword }}
@@ -65,7 +65,7 @@
                         {% else %}
                             over budget
                         {% endif %}
-                    </span>
+                    </span> {% endcomment %}
                 </div>
             </div>
             <!-- Actual Profit Card -->

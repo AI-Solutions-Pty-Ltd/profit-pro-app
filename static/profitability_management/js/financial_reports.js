@@ -4,7 +4,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 async function fetchFinancialData() {
     try {
-        const response = await fetch('data/');
+        const queryParams = window.location.search;
+        const response = await fetch('data/' + queryParams);
         const data = await response.json();
 
         initCharts(data);
@@ -175,7 +176,7 @@ function initCharts(data) {
                             if (data.labels.length && data.datasets.length) {
                                 return data.labels.map((label, i) => {
                                     const value = data.datasets[0].data[i];
-                                    const percentage = ((value / compositionTotal) * 100).toFixed(0);
+                                    const percentage = compositionTotal > 0 ? ((value / compositionTotal) * 100).toFixed(0) : 0;
                                     return {
                                         text: `${label} (${percentage}%)`,
                                         fillStyle: data.datasets[0].backgroundColor[i],
@@ -195,7 +196,7 @@ function initCharts(data) {
                     callbacks: {
                         label: function (context) {
                             const value = context.parsed;
-                            const percentage = ((value / compositionTotal) * 100).toFixed(1);
+                            const percentage = compositionTotal > 0 ? ((value / compositionTotal) * 100).toFixed(1) : 0;
                             return `${context.label}: R${value.toLocaleString()} (${percentage}%)`;
                         }
                     }
@@ -238,10 +239,10 @@ function initCharts(data) {
     new Chart(opexCtx, {
         type: 'pie',
         data: {
-            labels: ['Personnel', 'Rent & Utils'],
+            labels: ['Overheads', 'Journal Entries'],
             datasets: [{
                 data: ds.opex_breakdown,
-                backgroundColor: ['#6366f1', '#818cf8', '#c7d2fe'],
+                backgroundColor: ['#6366f1', '#818cf8'],
                 borderWidth: 0
             }]
         },

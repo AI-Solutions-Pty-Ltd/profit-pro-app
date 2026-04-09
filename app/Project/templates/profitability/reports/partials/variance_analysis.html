@@ -1,8 +1,20 @@
 <div class="grid grid-cols-2 gap-4 lg:grid-cols-6">
     {% for item in variance_analysis %}
-    <div class="border border-gray-200 rounded-lg p-5 hover:shadow-md transition-all group {% if item.status == 'Critical' %} bg-rose-50/20{% elif item.status == 'At Risk' %}bg-amber-50/20{% else %}bg-emerald-50/20{% endif %} {% if forloop.counter <= 3 %}lg:col-span-2{% else %}lg:col-span-3{% endif %}">
+    <div class="border border-gray-200 rounded-lg p-5 hover:shadow-md transition-all group 
+        {% if item.label == 'Revenue' %}bg-indigo-50/30
+        {% elif item.label == 'Cost Of Sales' %}bg-amber-50/30
+        {% elif item.label == 'Gross Profit' %}bg-teal-50/30
+        {% elif item.label == 'Operating Expenses' %}bg-rose-50/30
+        {% else %}bg-violet-50/30{% endif %} 
+        {% if forloop.counter <= 3 %}lg:col-span-2{% else %}lg:col-span-3{% endif %}">
+        
         <div class="flex justify-between items-center mb-3">
-            <div class="p-2 rounded-lg {% if item.status == 'Critical' %}bg-rose-100 text-rose-600{% elif item.status == 'At Risk' %}bg-amber-100 text-amber-600{% else %}bg-emerald-100 text-emerald-600{% endif %}">
+            <div class="p-2 rounded-lg 
+                {% if item.label == 'Revenue' %}bg-indigo-100 text-indigo-600
+                {% elif item.label == 'Cost Of Sales' %}bg-amber-100 text-amber-600
+                {% elif item.label == 'Gross Profit' %}bg-teal-100 text-teal-600
+                {% elif item.label == 'Operating Expenses' %}bg-rose-100 text-rose-600
+                {% else %}bg-violet-100 text-violet-600{% endif %}">
                 {% if item.label == 'Revenue' %}
                     {% heroicon_outline "banknotes" size="20" %}
                 {% elif item.label == 'Cost Of Sales' %}
@@ -15,7 +27,10 @@
                     {% heroicon_outline "chart-pie" size="20" %}
                 {% endif %}
             </div>
-            <span class="px-2 py-1 rounded-full border text-xs font-semibold {% if item.status == 'Critical' %}bg-rose-50 border-rose-200 text-rose-700{% elif item.status == 'At Risk' %}bg-amber-50 border-amber-200 text-amber-700{% else %}bg-emerald-50 border-emerald-200 text-emerald-700{% endif %}">
+            <span class="px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider shadow-sm
+                {% if item.status == 'Critical' %}bg-rose-50 border-rose-200 text-rose-700
+                {% elif item.status == 'At Risk' %}bg-amber-50 border-amber-200 text-amber-700
+                {% else %}bg-emerald-50 border-emerald-200 text-emerald-700{% endif %}">
                 {{ item.status }}
             </span>
         </div>
