@@ -10,41 +10,49 @@
     {{ entity_name }} - {{ project.name }}
 {% endblock %}
 {% block content %}
-    <div class="max-w-4xl mx-auto py-8">
-        <div class="bg-white shadow sm:rounded-lg overflow-hidden border border-gray-200">
+    <div class="py-8 mx-auto max-w-4xl">
+        <div class="overflow-hidden bg-white border border-gray-200 shadow sm:rounded-lg">
+            
             <!-- Form Header -->
-            <div class="px-6 py-5 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-                <div>
-                    <h3 class="text-xl font-bold text-gray-900">
+            <div class="px-6 py-5 bg-gray-50 border-b border-gray-200">
+                <a href="{% url 'project:entity-'|add:entity_type|add:'-list' project.pk %}"
+                   class="inline-flex items-center text-gray-400 transition-colors hover:text-gray-500">
+                    {% heroicon_outline "chevron-left" size="24" %}
+                    Back
+                </a>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">
+                            {% if object %}
+                                Update
+                            {% else %}
+                                New
+                            {% endif %}
+                            {{ entity_name }} Definition
+                        </h3>
+                        <p class="mt-1 text-sm text-gray-600">{{ project.name }}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
                         {% if object %}
-                            Update
-                        {% else %}
-                            New
+                            <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-indigo-800 bg-indigo-100 rounded-full">
+                                {{ object.reference_no }}
+                            </span>
                         {% endif %}
-                        {{ entity_name }} Definition
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-600">{{ project.name }}</p>
-                </div>
-                <div class="flex items-center space-x-2">
-                    {% if object %}
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                            {{ object.reference_no }}
-                        </span>
-                    {% endif %}
+                    </div>
                 </div>
             </div>
             <!-- Form Body -->
             <div class="px-6 py-8">
                 <form method="post" class="space-y-6" enctype="multipart/form-data">
                     {% csrf_token %}
-                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                        <div class="sm:col-span-6 space-y-4">
+                    <div class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-6">
+                        <div class="space-y-4 sm:col-span-6">
                             {% for field in form %}
                                 {% if field.name == 'invoice_attachment' %}
                                     <!-- Custom Styled File Input -->
                                     <div class="form-group">
                                         <label for="{{ field.id_for_label }}"
-                                               class="block text-sm font-medium text-gray-700 mb-1">
+                                               class="block mb-1 text-sm font-medium text-gray-700">
                                             {{ field.label }}
                                         </label>
                                         <div class="relative">
@@ -54,15 +62,15 @@
                                                    class="sr-only peer"
                                                    accept="image/*,.pdf">
                                             <label for="{{ field.id_for_label }}"
-                                                   class="flex items-center justify-between w-full px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm cursor-pointer hover:bg-gray-50 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500 transition-all duration-200">
-                                                <span id="file-name" class="truncate text-gray-500 italic">
+                                                   class="flex justify-between items-center px-4 py-2 w-full text-sm text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-all duration-200 cursor-pointer hover:bg-gray-50 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                                <span id="file-name" class="italic text-gray-500 truncate">
                                                     {% if field.value %}
                                                         {{ field.value.name|cut:"entity_management/materials/invoices/" }}
                                                     {% else %}
                                                         No file chosen...
                                                     {% endif %}
                                                 </span>
-                                                <div class="flex items-center text-indigo-600 font-semibold ml-2">
+                                                <div class="flex items-center ml-2 font-semibold text-indigo-600">
                                                     {% heroicon_outline "paper-clip" size="18" class="mr-1" %}
                                                     {% if field.value %}
                                                         Change
@@ -72,12 +80,12 @@
                                                 </div>
                                             </label>
                                         </div>
-                                        {% if field.help_text %}<p class="mt-1 text-xs text-gray-500 italic">{{ field.help_text }}</p>{% endif %}
+                                        {% if field.help_text %}<p class="mt-1 text-xs italic text-gray-500">{{ field.help_text }}</p>{% endif %}
                                         <!-- Attachment Preview Container -->
                                         <div id="attachment-preview-container"
                                              class="{% if not field.value %}hidden{% endif %} mt-4 animate-in fade-in duration-300">
-                                            <div class="relative inline-block group">
-                                                <div class="overflow-hidden rounded-lg border border-gray-200 shadow-sm bg-gray-50 aspect-video w-48 flex items-center justify-center">
+                                            <div class="inline-block relative group">
+                                                <div class="flex overflow-hidden justify-center items-center w-48 bg-gray-50 rounded-lg border border-gray-200 shadow-sm aspect-video">
                                                     <img id="image-preview"
                                                          src="{% if field.value and field.value.url and not field.value.url|lower|slice:'-3:' == 'pdf' %}{{ field.value.url }}{% endif %}"
                                                          alt="Invoice Preview"
@@ -92,7 +100,7 @@
                                                 </div>
                                                 <button type="button"
                                                         id="remove-attachment-btn"
-                                                        class="absolute -top-2 -right-2 p-1 bg-white rounded-full shadow-md text-gray-400 hover:text-red-500 border border-gray-100 transition-colors">
+                                                        class="absolute -top-2 -right-2 p-1 text-gray-400 bg-white rounded-full border border-gray-100 shadow-md transition-colors hover:text-red-500">
                                                     {% heroicon_outline "x-mark" size="16" %}
                                                 </button>
                                             </div>
@@ -100,7 +108,7 @@
                                                 <div class="mt-2">
                                                     <a href="{{ field.value.url }}"
                                                        target="_blank"
-                                                       class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center">
+                                                       class="flex items-center text-xs font-medium text-indigo-600 hover:text-indigo-800">
                                                         {% heroicon_outline "arrow-top-right-on-square" size="14" class="mr-1" %}
                                                         View Original Attachment
                                                     </a>
@@ -109,6 +117,8 @@
                                         </div>
                                         {% if field.errors %}<div class="mt-1 text-xs font-medium text-red-600">{{ field.errors.0 }}</div>{% endif %}
                                     </div>
+                                {% elif field.name == 'unit_of_measure' %}
+                                    {% include "entity_management/components/searchable_select.html" with field=field id_prefix="unit_of_measure" create_url=True %}
                                 {% else %}
                                     {{ field|as_crispy_field }}
                                 {% endif %}
@@ -116,13 +126,13 @@
                         </div>
                     </div>
                     <!-- Form Actions -->
-                    <div class="flex justify-end items-center pt-6 border-t border-gray-200 space-x-4">
+                    <div class="flex justify-end items-center pt-6 space-x-4 border-t border-gray-200">
                         <a href="{% url 'project:entity-'|add:entity_type|add:'-list' project.pk %}"
-                           class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                           class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             Cancel
                         </a>
                         <button type="submit"
-                                class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-bold rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
+                                class="inline-flex items-center px-6 py-2 text-sm font-bold text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "check" size="18" class="mr-2" %}
                             {% if object %}
                                 Update
@@ -135,20 +145,85 @@
                 </form>
             </div>
         </div>
-        <!-- Help Box -->
-        <div class="mt-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-md shadow-sm">
-            <div class="flex">
-                <div class="flex-shrink-0">{% heroicon_outline "information-circle" size="20" class="text-blue-400" %}</div>
-                <div class="ml-3">
-                    <p class="text-sm text-blue-700">
-                        <span class="font-bold">Pro Tip:</span> This definition will serve as the source of truth for rate and unit when recording transactional logs for {{ project.name }}.
-                    </p>
-                </div>
-            </div>
-        </div>
+
+        {% include "entity_management/components/quick_create_unit_modal.html" %}
     </div>
-    {% block scripts %}
-        <script>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+// --- SEARCHABLE SELECT LOGIC ---
+function toggleSearchableDropdown(prefix) {
+    const dropdown = document.getElementById(`${prefix}-dropdown`);
+    const arrow = document.getElementById(`${prefix}-selector-arrow`);
+    const isHidden = dropdown.classList.contains('hidden');
+    
+    // Close other dropdowns first
+    document.querySelectorAll('[id$="-dropdown"]').forEach(d => {
+        if (d.id !== `${prefix}-dropdown`) d.classList.add('hidden');
+    });
+
+    if (isHidden) {
+        dropdown.classList.remove('hidden');
+        arrow.classList.add('rotate-180');
+        document.getElementById(`${prefix}-search`).focus();
+    } else {
+        dropdown.classList.add('hidden');
+        arrow.classList.remove('rotate-180');
+    }
+}
+
+function filterSearchableOptions(prefix) {
+    const search = document.getElementById(`${prefix}-search`).value.toLowerCase();
+    const items = document.querySelectorAll(`#${prefix}-options-list .option-item`);
+    const noResults = document.getElementById(`${prefix}-no-results`);
+    let hasResults = false;
+
+    items.forEach(item => {
+        const label = item.dataset.label;
+        if (label.includes(search)) {
+            item.style.display = 'flex';
+            hasResults = true;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+
+    if (noResults) {
+        noResults.classList.toggle('hidden', hasResults);
+    }
+}
+
+function selectSearchableOption(prefix, id, label) {
+    const labelDisplay = document.getElementById(`${prefix}-selector-label`);
+    const dropdown = document.getElementById(`${prefix}-dropdown`);
+    const arrow = document.getElementById(`${prefix}-selector-arrow`);
+    
+    // Find the hidden original select or input
+    const container = document.getElementById(`${prefix}-selector-container`);
+    if (!container) return; // Silent return if container doesn't exist
+
+    const nativeInput = container.querySelector(`[name="${prefix}"]`) || container.querySelector('select');
+
+    if (nativeInput) {
+        nativeInput.value = id;
+        // Trigger change event for any listeners
+        nativeInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    if (labelDisplay) labelDisplay.textContent = label;
+    if (dropdown) dropdown.classList.add('hidden');
+    if (arrow) arrow.classList.remove('rotate-180');
+}
+
+// Close on click outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.searchable-select-container')) {
+        document.querySelectorAll('[id$="-dropdown"]').forEach(d => d.classList.add('hidden'));
+        document.querySelectorAll('[id$="-selector-arrow"]').forEach(a => a.classList.remove('rotate-180'));
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.querySelector('input[type="file"][name="invoice_attachment"]');
     const fileNameDisplay = document.querySelector('#file-name');
@@ -171,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Update browse button text
                 const browseBtnText = fileNameDisplay.nextElementSibling;
-                if (browseBtnText) browseBtnText.innerHTML = '{% heroicon_outline "paper-clip" size="18" class="mr-1" %} Change';
+                if (browseBtnText) browseBtnText.innerHTML = `{% heroicon_outline "paper-clip" size="18" class="mr-1" %} Change`;
 
                 // Detect type and show preview
                 if (file.type.startsWith('image/')) {
@@ -197,11 +272,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Reset browse button text
                 const browseBtnText = fileNameDisplay.nextElementSibling;
-                if (browseBtnText) browseBtnText.innerHTML = '{% heroicon_outline "paper-clip" size="18" class="mr-1" %} Browse';
+                if (browseBtnText) browseBtnText.innerHTML = `{% heroicon_outline "paper-clip" size="18" class="mr-1" %} Browse`;
             });
         }
     }
 });
         </script>
     {% endblock %}
-{% endblock %}

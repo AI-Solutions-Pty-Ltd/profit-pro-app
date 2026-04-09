@@ -319,10 +319,14 @@ class OverheadEntityForm(BaseEntityForm):
         fields = [
             "name",
             "category",
+            "expense_code",
             "unit_of_measure",
             "rate",
             "description",
         ]
+        labels = {
+            "expense_code": "Expense Classification",
+        }
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
         }
