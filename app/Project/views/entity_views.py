@@ -48,11 +48,12 @@ class ProjectEntityMixin(LoginRequiredMixin):
         context["entity_type"] = self.entity_type
         # Add a flag to identify the entity type in the template if needed
         context[f"is_{self.entity_type}"] = True
-        
+
         # Add UnitOfMeasureForm for the quick create modal
         from ..forms.unit_forms import UnitOfMeasureForm
+
         context["unit_form"] = UnitOfMeasureForm()
-        
+
         return context
 
     def form_valid(self, form):

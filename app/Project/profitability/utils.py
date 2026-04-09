@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import F, Sum, Q
+from django.db.models import F, Sum
 
 from app.Project.models import LabourCostTracker, SubcontractorCostTracker
 from app.SiteManagement.models import LabourLog, SubcontractorLog
@@ -248,7 +248,9 @@ def import_certificates_to_journal(project):
                 if amount > 0:
                     JournalEntry.objects.create(
                         project=project,
-                        date=cert.approved_on.date() if cert.approved_on else cert.created_at.date(),
+                        date=cert.approved_on.date()
+                        if cert.approved_on
+                        else cert.created_at.date(),
                         category=JournalEntry.Category.REVENUE,
                         description=f"Revenue from Payment Certificate #{cert.certificate_number}",
                         amount=amount,

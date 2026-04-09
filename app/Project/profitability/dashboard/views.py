@@ -1,4 +1,5 @@
 from decimal import Decimal
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
 from django.views.generic import DetailView
@@ -70,12 +71,14 @@ class ProfitabilityDashboardView(LoginRequiredMixin, DetailView):
 
         # Baseline structuring
         planned_total_revenue = project.total_contract_value
-        planned_total_cost = project.original_contract_value # Or use a specific baseline cost model if available
-        
+        planned_total_cost = (
+            project.original_contract_value
+        )  # Or use a specific baseline cost model if available
+
         # If no baseline is set, provide a sensible default or zero
         if planned_total_revenue == 0:
             planned_total_revenue = Decimal("0.00")
-            
+
         context["baseline"] = {
             "planned_revenue": planned_total_revenue,
             "planned_labour_cost": planned_total_cost * Decimal("0.4"),
@@ -111,9 +114,7 @@ class ProfitabilityDashboardView(LoginRequiredMixin, DetailView):
         }
 
         context["actual_revenue"] = project.total_certified_to_date
-        context["actual_profit"] = (
-            context["actual_revenue"] - total_actual_cost
-        )
+        context["actual_profit"] = context["actual_revenue"] - total_actual_cost
         if context["actual_revenue"] > 0:
             context["actual_margin"] = (
                 context["actual_profit"] / context["actual_revenue"]
