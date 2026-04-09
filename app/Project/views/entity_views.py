@@ -24,6 +24,7 @@ from app.Project.models.entity_definitions import (
     PlantEntity,
     SubcontractorEntity,
 )
+from app.Project.models.unit_models import UnitOfMeasure
 
 
 class ProjectEntityMixin(LoginRequiredMixin):
@@ -139,6 +140,7 @@ class MaterialEntityCreateView(ProjectEntityMixin, CreateView):
             context["formset"] = MaterialItemFormSet(
                 queryset=MaterialEntity.objects.none()
             )
+        context["units"] = UnitOfMeasure.objects.all()
         return context
 
     def post(self, request, *args, **kwargs):
@@ -147,11 +149,18 @@ class MaterialEntityCreateView(ProjectEntityMixin, CreateView):
         formset = MaterialItemFormSet(request.POST)
 
         if header_form.is_valid() and formset.is_valid():
+            # Check if at least one item exists and is not deleted
+            if not any(
+                form.cleaned_data and not form.cleaned_data.get("DELETE", False)
+                for form in formset.forms
+            ):
+                from django.contrib import messages
+
+                messages.error(request, "You must add at least one material item.")
+                return self.render_to_response(
+                    self.get_context_data(header_form=header_form, formset=formset)
+                )
             return self.formset_valid(header_form, formset)
-        else:
-            return self.render_to_response(
-                self.get_context_data(header_form=header_form, formset=formset)
-            )
 
     def formset_valid(self, header_form, formset):
         supplier = header_form.cleaned_data["supplier"]
