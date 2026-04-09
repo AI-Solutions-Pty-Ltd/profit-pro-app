@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
 from django.views.generic import DetailView
@@ -67,25 +68,23 @@ class ProfitabilityDashboardView(LoginRequiredMixin, DetailView):
             + context["total_material_cost"]
         )
 
-        # Baseline structuring (Mocked for now)
-        # In a real scenario, these would come from the BaselineAssumption model
-        # We'll use the total actual cost as a base for mock revenue to keep the UI sensible
-        from decimal import Decimal
-
-        if context["total_project_expenditure"] > 0:
-            planned_total = context["total_project_expenditure"] * Decimal("1.1")
-        else:
-            planned_total = Decimal("100000.00")
-
+        # Baseline structuring
+        planned_total_revenue = project.total_contract_value
+        planned_total_cost = project.original_contract_value # Or use a specific baseline cost model if available
+        
+        # If no baseline is set, provide a sensible default or zero
+        if planned_total_revenue == 0:
+            planned_total_revenue = Decimal("0.00")
+            
         context["baseline"] = {
-            "planned_revenue": planned_total * Decimal("1.25"),
-            "planned_labour_cost": planned_total * Decimal("0.4"),
-            "planned_material_cost": planned_total * Decimal("0.3"),
-            "planned_subcontractor_cost": planned_total * Decimal("0.2"),
-            "planned_overhead_cost": planned_total * Decimal("0.1"),
+            "planned_revenue": planned_total_revenue,
+            "planned_labour_cost": planned_total_cost * Decimal("0.4"),
+            "planned_material_cost": planned_total_cost * Decimal("0.3"),
+            "planned_subcontractor_cost": planned_total_cost * Decimal("0.2"),
+            "planned_overhead_cost": planned_total_cost * Decimal("0.1"),
             "target_margin_percentage": 20.0,
-            "total_planned_cost": planned_total,
-            "planned_profit": planned_total * Decimal("0.25"),
+            "total_planned_cost": planned_total_cost,
+            "planned_profit": planned_total_revenue - planned_total_cost,
         }
 
         # Actuals structuring
@@ -111,12 +110,13 @@ class ProfitabilityDashboardView(LoginRequiredMixin, DetailView):
             "total_cost": context["baseline"]["total_planned_cost"] - total_actual_cost,
         }
 
+        context["actual_revenue"] = project.total_certified_to_date
         context["actual_profit"] = (
-            context["baseline"]["planned_revenue"] - total_actual_cost
+            context["actual_revenue"] - total_actual_cost
         )
-        if context["baseline"]["planned_revenue"] > 0:
+        if context["actual_revenue"] > 0:
             context["actual_margin"] = (
-                context["actual_profit"] / context["baseline"]["planned_revenue"]
+                context["actual_profit"] / context["actual_revenue"]
             ) * 100
         else:
             context["actual_margin"] = 0
