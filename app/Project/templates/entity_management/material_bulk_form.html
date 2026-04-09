@@ -56,9 +56,9 @@
                             <p class="mt-1 text-xs italic text-gray-500">Attach a copy of the invoice (PDF or Image)</p>
                             <!-- Attachment Preview Container -->
                             <div id="attachment-preview-container"
-                                 class="hidden mt-4 animate-in fade-in duration-300">
-                                <div class="relative inline-block group">
-                                    <div class="overflow-hidden rounded-lg border border-gray-200 shadow-sm bg-gray-50 aspect-video w-48 flex items-center justify-center">
+                                 class="hidden mt-4 duration-300 animate-in fade-in">
+                                <div class="inline-block relative group">
+                                    <div class="flex overflow-hidden justify-center items-center w-48 bg-gray-50 rounded-lg border border-gray-200 shadow-sm aspect-video">
                                         <img id="image-preview"
                                              src=""
                                              alt="Invoice Preview"
@@ -72,7 +72,7 @@
                                     </div>
                                     <button type="button"
                                             id="remove-attachment-btn"
-                                            class="absolute -top-2 -right-2 p-1 bg-white rounded-full shadow-md text-gray-400 hover:text-red-500 border border-gray-100 transition-colors">
+                                            class="absolute -top-2 -right-2 p-1 text-gray-400 bg-white rounded-full border border-gray-100 shadow-md transition-colors hover:text-red-500">
                                         {% heroicon_outline "x-mark" size="16" %}
                                     </button>
                                 </div>
@@ -132,48 +132,56 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200" id="formset-container">
+                                <!-- Empty State Row -->
+                                <tr id="empty-state-row" class="{% if formset.total_form_count > 0 %}hidden{% endif %}">
+                                    <td colspan="7" class="px-6 py-4 text-center">
+                                        <div class="flex flex-col items-center">
+                                          
+                                            <h5 class="mb-1 text-sm font-bold text-gray-900">No items added yet</h5>
+                                            <p class="mx-auto max-w-xs text-xs text-gray-500">Click the <span class="font-bold text-indigo-600">Add Item</span> button above to start building your material batch.</p>
+                                        </div>
+                                    </td>
+                                </tr>
                                 {% for form in formset %}
                                     <tr class="transition-colors form-row group hover:bg-gray-50/50">
                                         {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
                                         <td class="px-3 py-4 align-top">
-                                            {{ form.name|as_crispy_field }}
-                                            {% if form.name.errors %}<div class="mt-1 text-xs font-medium text-red-600">{{ form.name.errors.0 }}</div>{% endif %}
+                                            <input type="text" name="{{ form.name.html_name }}" value="{{ form.name.value|default:'' }}" readonly class="px-0 w-full text-sm font-medium text-gray-900 bg-transparent border-transparent cursor-default focus:ring-0">
                                         </td>
                                         <td class="px-3 py-4 align-top">
-                                            {{ form.unit|as_crispy_field }}
-                                            {% if form.unit.errors %}<div class="mt-1 text-xs font-medium text-red-600">{{ form.unit.errors.0 }}</div>{% endif %}
+                                            <div class="pt-1 text-xs text-gray-500 humanized-unit" data-unit-id="{{ form.unit_of_measure.value }}">
+                                                {% if form.instance.pk and form.instance.unit_of_measure %}
+                                                    {{ form.instance.unit_of_measure.short_name }}
+                                                {% else %}
+                                                    {{ form.unit_of_measure.value|default:"" }}
+                                                {% endif %}
+                                            </div>
+                                            <div class="hidden">{{ form.unit_of_measure }}</div>
                                         </td>
                                         <td class="px-3 py-4 align-top">
-                                            {{ form.quantity|as_crispy_field }}
-                                            {% if form.quantity.errors %}
-                                                <div class="mt-1 text-xs font-medium text-red-600">{{ form.quantity.errors.0 }}</div>
-                                            {% endif %}
+                                            <div class="pt-1 text-sm text-gray-600 humanized-number" data-value="{{ form.quantity.value|default:'0' }}">
+                                                {{ form.quantity.value|default:'0' }}
+                                            </div>
+                                            <div class="hidden">{{ form.quantity }}</div>
                                         </td>
                                         <td class="px-3 py-4 align-top">
-                                            {{ form.rate|as_crispy_field }}
-                                            {% if form.rate.errors %}<div class="mt-1 text-xs font-medium text-red-600">{{ form.rate.errors.0 }}</div>{% endif %}
+                                            <div class="pt-1 text-sm text-gray-600 humanized-number" data-value="{{ form.rate.value|default:'0' }}">
+                                                {{ form.rate.value|default:'0' }}
+                                            </div>
+                                            <div class="hidden">{{ form.rate }}</div>
                                         </td>
                                         <td class="px-3 py-4 align-top">
-                                            {{ form.description|as_crispy_field }}
-                                            {% if form.description.errors %}
-                                                <div class="mt-1 text-xs font-medium text-red-600">{{ form.description.errors.0 }}</div>
-                                            {% endif %}
+                                            <div class="pt-1 text-sm text-gray-500">{{ form.description.value|default:'' }}</div>
+                                            <div class="hidden">{{ form.description }}</div>
                                         </td>
                                         <td class="px-3 py-4 align-top">
-                                            <div class="relative">
-                                                <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                                                    <span class="text-gray-500 sm:text-sm">$</span>
-                                                </div>
-                                                <input type="text"
-                                                       readonly
-                                                       tabindex="-1"
-                                                       class="block pr-3 pl-7 w-full rounded-md cursor-not-allowed item-total focus:ring-0 active:ring-0 focus:outline-none active:outline-none sm:text-sm"
-                                                       value="0.00">
+                                            <div class="flex items-center text-sm font-bold text-gray-900">
+                                                <span class="mr-1">R</span>
+                                                <input type="text" readonly tabindex="-1" class="p-0 w-24 bg-transparent border-transparent cursor-default focus:ring-0 item-total" value="0.00">
                                             </div>
                                         </td>
                                         <td class="px-3 py-4 text-center align-top">
-                                            <button type="button"
-                                                    class="p-1 text-gray-300 rounded-full transition-colors remove-item-btn hover:text-red-500 hover:bg-red-50">
+                                            <button type="button" class="p-1 text-gray-300 rounded-full transition-colors remove-item-btn hover:text-red-500 hover:bg-red-50">
                                                 {% heroicon_outline "trash" size="20" %}
                                             </button>
                                             <div class="hidden">{{ form.DELETE }}</div>
@@ -187,40 +195,54 @@
                 <!-- Empty Form Template -->
                 <template id="empty-form-template">
                     <tr class="transition-colors duration-300 form-row group hover:bg-gray-50/50 animate-in fade-in slide-in-from-left-2">
-                        <td class="px-3 py-4 align-top">{{ formset.empty_form.name|as_crispy_field }}</td>
-                        <td class="px-3 py-4 align-top">{{ formset.empty_form.unit|as_crispy_field }}</td>
-                        <td class="px-3 py-4 align-top">{{ formset.empty_form.quantity|as_crispy_field }}</td>
-                        <td class="px-3 py-4 align-top">{{ formset.empty_form.rate|as_crispy_field }}</td>
-                        <td class="px-3 py-4 align-top">{{ formset.empty_form.description|as_crispy_field }}</td>
                         <td class="px-3 py-4 align-top">
-                            <div class="relative">
-                                <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
-                                    <span class="text-gray-500 sm:text-sm">$</span>
-                                </div>
-                                <input type="text"
-                                       readonly
-                                       tabindex="-1"
-                                       class="block pr-3 pl-7 w-full bg-gray-50 rounded-md border-gray-200 cursor-not-allowed item-total focus:ring-0 sm:text-sm"
-                                       value="0.00">
+                            <input type="text" name="form-__prefix__-name" readonly class="px-0 w-full text-sm font-medium text-gray-900 bg-transparent border-transparent cursor-default focus:ring-0">
+                        </td>
+                        <td class="px-3 py-4 align-top">
+                            <div class="pt-1 text-sm text-gray-500 unit-display-shorthand"></div>
+                            <input type="hidden" name="form-__prefix__-unit_of_measure">
+                        </td>
+                        <td class="px-3 py-4 align-top">
+                            <div class="pt-1 text-sm text-gray-600 qty-display-human"></div>
+                            <input type="hidden" name="form-__prefix__-quantity">
+                        </td>
+                        <td class="px-3 py-4 align-top">
+                            <div class="pt-1 text-sm text-gray-600 rate-display-human"></div>
+                            <input type="hidden" name="form-__prefix__-rate">
+                        </td>
+                        <td class="px-3 py-4 align-top">
+                            <div class="pt-1 text-sm text-gray-500 desc-display-text"></div>
+                            <input type="hidden" name="form-__prefix__-description">
+                        </td>
+                        <td class="px-3 py-4 align-top">
+                            <div class="flex items-center text-sm font-bold text-gray-900">
+                                <span class="mr-1">R</span>
+                                <input type="text" readonly tabindex="-1" class="p-0 w-24 bg-transparent border-transparent cursor-default focus:ring-0 item-total" value="0.00">
                             </div>
                         </td>
                         <td class="px-3 py-4 text-center align-top">
-                            <button type="button"
-                                    class="p-1 text-gray-300 rounded-full transition-colors remove-item-btn hover:text-red-500 hover:bg-red-50">
+                            <button type="button" class="p-1 text-gray-300 rounded-full transition-colors remove-item-btn hover:text-red-500 hover:bg-red-50">
                                 {% heroicon_outline "trash" size="20" %}
                             </button>
-                            <div class="hidden">{{ formset.empty_form.DELETE }}</div>
+                            <div class="hidden"><input type="checkbox" name="form-__prefix__-DELETE"></div>
                         </td>
                     </tr>
                 </template>
                 <!-- Form Actions -->
-                <div class="flex justify-end items-center pt-8 mt-10 border-t border-gray-200">
+                <div class="flex flex-col pt-8 mt-10 space-y-4 border-t border-gray-200">
+                    <!-- Submission Validation Message -->
+                    <div id="submit-error" class="flex hidden items-center self-end p-4 text-sm font-semibold text-rose-700 bg-rose-50 rounded-lg border border-rose-100 animate-in fade-in slide-in-from-right-4">
+                        {% heroicon_outline "x-circle" size="20" class="mr-2" %}
+                        You must add at least one material item before saving the batch.
+                    </div>
+
+                    <div class="flex justify-end items-center">
                     <a href="{% url 'project:entity-material-list' project.pk %}"
                        class="inline-flex items-center px-6 py-2 mr-4 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Discard Batch
                     </a>
                     <button type="submit"
-                            class="inline-flex items-center px-8 py-2 text-sm font-bold text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-indigo-200">
+                            class="inline-flex items-center px-8 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-indigo-200">
                         {% heroicon_outline "check-circle" size="20" class="mr-2" %}
                         Save Batch Materials
                     </button>
@@ -228,9 +250,84 @@
             </form>
         </div>
     </div>
+        <!-- Add Item Modal -->
+        <div id="item-modal" class="hidden overflow-y-auto fixed inset-0 z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <!-- Modal Wrapper with Backdrop Blur -->
+            <div class="flex justify-center items-center p-4 min-h-screen text-center sm:p-0">
+                <!-- Overlay -->
+                <div class="fixed inset-0 transition-opacity bg-gray-500/50" aria-hidden="true" id="modal-overlay"></div>
+
+                <!-- Centering Trick -->
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <!-- Modal Content -->
+                <div class="relative inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.15)] transform transition-all sm:my-8 sm:max-w-2xl sm:w-full border border-white/20">
+                    <div class="flex justify-between items-center px-6 py-5 bg-gray-50 border-b border-gray-200">
+                        <div>
+                             <h3 class="flex items-center text-2xl font-bold text-gray-900">
+                                    {% heroicon_outline "plus" size="28" class="mr-3 text-indigo-600" %}
+                                Add New Material Item
+                            </h3>
+                            <p class="mt-1 text-sm text-gray-600">Fill in the details below to add a new material item to the batch.</p>
+                        </div>
+                        <button type="button" class="p-2 text-white rounded-full transition-all bg-white/10 hover:bg-white/20 close-modal">
+                            {% heroicon_outline "x-mark" size="20" %}
+                        </button>
+                    </div>
+                    
+                    <div class="p-8 bg-white">
+                        <div id="modal-error" class="flex hidden items-center p-4 mb-6 text-sm font-semibold text-rose-700 bg-rose-50 rounded-xl border border-rose-100">
+                            {% heroicon_outline "exclamation-triangle" size="20" class="mr-2" %}
+                            All marked fields (*) are required.
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                            <div class="sm:col-span-2">
+                                {{ formset.empty_form.name|as_crispy_field }}
+                            </div>
+                            
+                            <div>
+                                {{ formset.empty_form.unit_of_measure|as_crispy_field }}
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    {{ formset.empty_form.quantity|as_crispy_field }}
+                                </div>
+                                <div>
+                                    {{ formset.empty_form.rate|as_crispy_field }}
+                                </div>
+                            </div>
+
+                            <div class="sm:col-span-2">
+                                {{ formset.empty_form.description|as_crispy_field }}
+                            </div>
+
+                            <div class="flex justify-between items-center p-2 rounded-md border border-indigo-100 transition-colors sm:col-span-2 bg-indigo-50/50 group hover:bg-indigo-50">
+                                <div>
+                                    <span class="block mb-1 text-xs font-bold text-indigo-400">Live Calculation</span>
+                                    <span class="text-sm font-semibold text-gray-700">Estimated Transaction Total</span>
+                                </div>
+                                <span class="text-lg font-bold tabular-nums text-indigo-600" id="modal-total-display">R0.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end px-8 py-6 space-x-4 border-t border-gray-100 bg-gray-50/50">
+                        <button type="button" class="px-6 py-2.5 text-sm font-bold text-gray-500 rounded-md transition-all hover:text-gray-700 hover:bg-gray-100 close-modal">
+                            Discard
+                        </button>
+                        <button type="button" id="confirm-add-item" class="flex items-center px-10 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-md transition-all transform hover:bg-indigo-700 active:scale-95">
+                            {% heroicon_outline "plus" size="18" class="mr-2" %}
+                            Add to Batch
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Handle Custom File Input Filename Display & Previews
+    // === FILE ATTACHMENT HANDLERS ===
     const fileInput = document.querySelector('#id_invoice_attachment');
     const fileNameDisplay = document.querySelector('#file-name');
     const previewContainer = document.querySelector('#attachment-preview-container');
@@ -242,15 +339,11 @@ document.addEventListener('DOMContentLoaded', function() {
         fileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
-                // Update Name
                 fileNameDisplay.textContent = file.name;
                 fileNameDisplay.classList.remove('text-gray-500', 'italic');
                 fileNameDisplay.classList.add('text-indigo-900', 'font-medium');
-                
-                // Show Preview Container
                 previewContainer.classList.remove('hidden');
                 
-                // Detect type
                 if (file.type.startsWith('image/')) {
                     imagePreview.src = URL.createObjectURL(file);
                     imagePreview.classList.remove('hidden');
@@ -266,7 +359,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Remove handling
         if (removeBtn) {
             removeBtn.addEventListener('click', function() {
                 fileInput.value = '';
@@ -278,65 +370,148 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // === UNIT MAPPING & FORMATTING ===
+    const unitMap = {
+        {% for unit in units %}
+        "{{ unit.id }}": "{{ unit.short_name }}",
+        {% endfor %}
+    };
+
+    const currencyFormatter = new Intl.NumberFormat('en-ZA', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+
+    const numberFormatter = new Intl.NumberFormat('en-ZA', {
+        maximumFractionDigits: 2
+    });
+
+    function formatCurrency(val) {
+        return currencyFormatter.format(val);
+    }
+
+    function formatNumber(val) {
+        return numberFormatter.format(val);
+    }
+
+    // === MODAL & FORMSET HANDLERS ===
+    const bulkForm = document.querySelector('#bulk-material-form');
     const formContainer = document.querySelector('#formset-container');
     const addBtn = document.querySelector('#add-item-btn');
     const totalForms = document.querySelector('#id_form-TOTAL_FORMS');
     const template = document.querySelector('#empty-form-template');
+    const emptyStateRow = document.querySelector('#empty-state-row');
+    const submitError = document.querySelector('#submit-error');
+    
+    // Modal Elements ...
+    const itemModal = document.querySelector('#item-modal');
+    const closeModalBtns = document.querySelectorAll('.close-modal');
+    const confirmAddBtn = document.querySelector('#confirm-add-item');
+    const modalError = document.querySelector('#modal-error');
+    const modalTotalDisplay = document.querySelector('#modal-total-display');
+    
+    // Modal Inputs ...
+    const modalName = itemModal.querySelector('[name*="name"]');
+    const modalUnit = itemModal.querySelector('[name*="unit_of_measure"]');
+    const modalQty = itemModal.querySelector('[name*="quantity"]');
+    const modalRate = itemModal.querySelector('[name*="rate"]');
+    const modalDesc = itemModal.querySelector('[name*="description"]');
 
-    // Function to calculate row total
-    function calculateTotal(row) {
-        const qtyInput = row.querySelector('input[name*="quantity"]');
-        const rateInput = row.querySelector('input[name*="rate"]');
-        const totalDisplay = row.querySelector('.item-total');
-
-        const qty = parseFloat(qtyInput.value) || 0;
-        const rate = parseFloat(rateInput.value) || 0;
-        const total = (qty * rate).toFixed(2);
-        
-        totalDisplay.value = total;
-    }
-
-    // Function to update row indexes
-    function updateIndexes() {
-        const rows = formContainer.querySelectorAll('.form-row');
-        rows.forEach((row, index) => {
-            row.querySelectorAll('input, select, textarea').forEach(input => {
-                if (input.name) {
-                    input.name = input.name.replace(/form-\d+-/, `form-${index}-`);
-                }
-                if (input.id) {
-                    input.id = input.id.replace(/id_form-\d+-/, `id_form-${index}-`);
-                }
-            });
-        });
-        totalForms.value = rows.length;
-    }
-
-    // Delegate calculations to rows
-    formContainer.addEventListener('input', function(e) {
-        if (e.target.name.includes('quantity') || e.target.name.includes('rate')) {
-            const row = e.target.closest('.form-row');
-            calculateTotal(row);
+    function toggleEmptyState() {
+        if (!emptyStateRow) return;
+        const actualRows = formContainer.querySelectorAll('.form-row:not([style*="display: none"])');
+        if (actualRows.length > 0) {
+            emptyStateRow.classList.add('hidden');
+        } else {
+            emptyStateRow.classList.remove('hidden');
         }
+    }
+
+    // Modal Total Calculation
+    function updateModalTotal() {
+        const qty = parseFloat(modalQty.value) || 0;
+        const rate = parseFloat(modalRate.value) || 0;
+        modalTotalDisplay.textContent = `R ${formatCurrency(qty * rate)}`;
+    }
+
+    modalQty.addEventListener('input', updateModalTotal);
+    modalRate.addEventListener('input', updateModalTotal);
+
+    // Open Modal
+    addBtn.addEventListener('click', () => {
+        itemModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        modalName.focus();
     });
 
-    // Add row
-    addBtn.addEventListener('click', function() {
+    // Close Modal
+    function closeModal() {
+        itemModal.classList.add('hidden');
+        document.body.style.overflow = '';
+        // Reset fields
+        modalName.value = '';
+        modalQty.value = '';
+        modalRate.value = '';
+        modalDesc.value = '';
+        modalError.classList.add('hidden');
+        modalTotalDisplay.textContent = 'R0.00';
+    }
+
+    closeModalBtns.forEach(btn => btn.addEventListener('click', closeModal));
+
+    // Confirm Add from Modal
+    confirmAddBtn.addEventListener('click', () => {
+        // Simple Validation
+        if (!modalName.value || !modalUnit.value || !modalQty.value || !modalRate.value) {
+            modalError.classList.remove('hidden');
+            return;
+        }
+
         const nextIndex = parseInt(totalForms.value);
         const clone = template.content.cloneNode(true);
+        const row = clone.querySelector('.form-row');
+
+        // Map values to hidden/readonly inputs in the row
+        const rowName = row.querySelector('[name*="-name"]');
+        const rowUnitInput = row.querySelector('[name*="-unit_of_measure"]');
+        const rowUnitDisplay = row.querySelector('.unit-display-shorthand');
+        const rowQtyInput = row.querySelector('[name*="-quantity"]');
+        const rowQtyDisplay = row.querySelector('.qty-display-human');
+        const rowRateInput = row.querySelector('[name*="-rate"]');
+        const rowRateDisplay = row.querySelector('.rate-display-human');
+        const rowDescInput = row.querySelector('[name*="-description"]');
+        const rowDescDisplay = row.querySelector('.desc-display-text');
+        const rowTotal = row.querySelector('.item-total');
+
+        // Set value and display
+        rowName.value = modalName.value;
+        rowUnitInput.value = modalUnit.value;
+        rowUnitDisplay.textContent = unitMap[modalUnit.value] || modalUnit.options[modalUnit.selectedIndex].text;
         
-        // Update index in the clone
-        clone.querySelectorAll('input, select, textarea').forEach(input => {
-            if (input.name) {
-                input.name = input.name.replace('__prefix__', nextIndex);
-            }
-            if (input.id) {
-                input.id = input.id.replace('__prefix__', nextIndex);
-            }
+        rowQtyInput.value = modalQty.value;
+        rowQtyDisplay.textContent = formatNumber(modalQty.value);
+        
+        rowRateInput.value = modalRate.value;
+        rowRateDisplay.textContent = formatNumber(modalRate.value);
+        
+        rowDescInput.value = modalDesc.value;
+        rowDescDisplay.textContent = modalDesc.value;
+        
+        const totalValue = (parseFloat(modalQty.value) * parseFloat(modalRate.value));
+        rowTotal.value = formatCurrency(totalValue);
+
+        // Update indexes in the clone
+        row.querySelectorAll('input, select, textarea').forEach(input => {
+            if (input.name) input.name = input.name.replace('__prefix__', nextIndex);
+            if (input.id) input.id = input.id.replace('__prefix__', nextIndex);
         });
 
-        formContainer.appendChild(clone);
+        formContainer.appendChild(row);
         totalForms.value = nextIndex + 1;
+        
+        submitError.classList.add('hidden');
+        toggleEmptyState();
+        closeModal();
     });
 
     // Remove row
@@ -344,29 +519,63 @@ document.addEventListener('DOMContentLoaded', function() {
         const removeBtn = e.target.closest('.remove-item-btn');
         if (removeBtn) {
             const row = removeBtn.closest('.form-row');
-            // If it's a model instance, mark for deletion, otherwise just remove from DOM
             const deleteInput = row.querySelector('input[name*="DELETE"]');
-            if (deleteInput && deleteInput.name.includes('form-')) {
-                // If the row has an ID field (hidden), it's in the DB
-                const idField = row.querySelector('input[name*="-id"]');
-                if (idField && idField.value) {
-                    row.style.display = 'none';
-                    if (deleteInput) deleteInput.checked = true;
-                } else {
-                    row.remove();
-                    updateIndexes();
-                }
+            const idField = row.querySelector('input[name*="-id"]');
+            
+            if (idField && idField.value) {
+                row.style.display = 'none';
+                if (deleteInput) deleteInput.checked = true;
             } else {
                 row.remove();
-                updateIndexes();
+                updateTotalFormsCount();
             }
+            toggleEmptyState();
         }
     });
 
+    function updateTotalFormsCount() {
+        totalForms.value = formContainer.querySelectorAll('.form-row').length;
+    }
+
+    // Form Submission Validation
+    if (bulkForm) {
+        bulkForm.addEventListener('submit', function(e) {
+            const actualRows = formContainer.querySelectorAll('.form-row:not([style*="display: none"])');
+            if (actualRows.length === 0) {
+                e.preventDefault();
+                submitError.classList.remove('hidden');
+                submitError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    }
+
     // Initial calculation for existing rows
-    formContainer.querySelectorAll('.form-row').forEach(row => {
-        calculateTotal(row);
-    });
+    function initRows() {
+        // Handle humanized numbers
+        formContainer.querySelectorAll('.humanized-number').forEach(el => {
+            const val = parseFloat(el.dataset.value) || 0;
+            el.textContent = formatNumber(val);
+        });
+
+        // Handle unit shorthand
+        formContainer.querySelectorAll('.humanized-unit').forEach(el => {
+            const unitId = el.dataset.unitId;
+            el.textContent = unitMap[unitId] || el.textContent;
+        });
+
+        formContainer.querySelectorAll('.form-row').forEach(row => {
+            const qtyInput = row.querySelector('input[name*="quantity"]');
+            const rateInput = row.querySelector('input[name*="rate"]');
+            const totalDisplay = row.querySelector('.item-total');
+            if (qtyInput && rateInput && totalDisplay) {
+                const qty = parseFloat(qtyInput.value) || 0;
+                const rate = parseFloat(rateInput.value) || 0;
+                totalDisplay.value = formatCurrency(qty * rate);
+            }
+        });
+        toggleEmptyState();
+    }
+    initRows();
 });
-    </script>
+</script>
 {% endblock %}

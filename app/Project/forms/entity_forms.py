@@ -1,7 +1,9 @@
 """Forms for Project Entity Management."""
 
 from django import forms
+from django.core.exceptions import ValidationError
 from django.forms import modelformset_factory
+from django.utils import timezone
 
 from app.Project.models.entity_definitions import (
     LabourEntity,
@@ -52,6 +54,22 @@ class LabourEntityForm(BaseEntityForm):
             "id_number": "ID / Passport Number",
             "date_joined": "Joining Date",
         }
+        error_messages = {
+            "person_name": {"required": "Please enter the worker's full name."},
+            "rate": {"min_value": "Rate must be greater than zero."},
+        }
+
+    def clean_rate(self):
+        rate = self.cleaned_data.get("rate")
+        if rate is not None and rate <= 0:
+            raise ValidationError("Rate must be a positive value greater than zero.")
+        return rate
+
+    def clean_date_joined(self):
+        date_joined = self.cleaned_data.get("date_joined")
+        if date_joined and date_joined > timezone.now().date():
+            raise ValidationError("Joining date cannot be in the future.")
+        return date_joined
 
 
 class MaterialEntityForm(BaseEntityForm):
@@ -78,6 +96,24 @@ class MaterialEntityForm(BaseEntityForm):
             "items_received": "Items / Specifications",
             "date_received": "Receipt Date",
         }
+
+    def clean_rate(self):
+        rate = self.cleaned_data.get("rate")
+        if rate is not None and rate <= 0:
+            raise ValidationError("Rate must be a positive value.")
+        return rate
+
+    def clean_quantity(self):
+        qty = self.cleaned_data.get("quantity")
+        if qty is not None and qty <= 0:
+            raise ValidationError("Quantity must be greater than zero.")
+        return qty
+
+    def clean_date_received(self):
+        date_received = self.cleaned_data.get("date_received")
+        if date_received and date_received > timezone.now().date():
+            raise ValidationError("Receipt date cannot be in the future.")
+        return date_received
 
 
 class MaterialHeaderForm(forms.ModelForm):
@@ -109,6 +145,12 @@ class MaterialHeaderForm(forms.ModelForm):
                 f"{existing_class} {COMMON_WIDGET_ATTRS['class']}".strip()
             )
 
+    def clean_date_received(self):
+        date_received = self.cleaned_data.get("date_received")
+        if date_received and date_received > timezone.now().date():
+            raise ValidationError("Receipt date cannot be in the future.")
+        return date_received
+
 
 class MaterialItemForm(forms.ModelForm):
     """Form for individual material items in bulk create."""
@@ -116,6 +158,13 @@ class MaterialItemForm(forms.ModelForm):
     class Meta:
         model = MaterialEntity
         fields = ["name", "unit_of_measure", "quantity", "rate", "description"]
+        labels = {
+            "name": "Item Name",
+            "unit_of_measure": "Unit",
+            "quantity": "Quantity",
+            "rate": "Rate (per unit)",
+            "description": "Additional Description",
+        }
         widgets = {
             "name": forms.TextInput(
                 attrs={
@@ -150,18 +199,26 @@ class MaterialItemForm(forms.ModelForm):
             ),
         }
 
+    def clean_rate(self):
+        rate = self.cleaned_data.get("rate")
+        if rate is not None and rate <= 0:
+            raise ValidationError("Rate must be positive.")
+        return rate
+
+    def clean_quantity(self):
+        qty = self.cleaned_data.get("quantity")
+        if qty is not None and qty <= 0:
+            raise ValidationError("Qty must be greater than zero.")
+        return qty
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Clear labels and help texts for clean layout in table
-        for field in self.fields.values():
-            field.label = ""
-            field.help_text = ""
 
 
 MaterialItemFormSet = modelformset_factory(
     MaterialEntity,
     form=MaterialItemForm,
-    extra=1,
+    extra=0,
     can_delete=True,
 )
 
@@ -189,6 +246,18 @@ class PlantEntityForm(BaseEntityForm):
             "specific_info": "Specific Info (S/N, etc.)",
             "breakdown_status": "Operational Status",
         }
+
+    def clean_rate(self):
+        rate = self.cleaned_data.get("rate")
+        if rate is not None and rate <= 0:
+            raise ValidationError("Usage rate must be greater than zero.")
+        return rate
+
+    def clean_date(self):
+        date = self.cleaned_data.get("date")
+        if date and date > timezone.now().date():
+            raise ValidationError("Record date cannot be in the future.")
+        return date
 
 
 class SubcontractorEntityForm(BaseEntityForm):
@@ -219,6 +288,30 @@ class SubcontractorEntityForm(BaseEntityForm):
             "actual_finish_date": "Actual Finish",
         }
 
+    def clean_rate(self):
+        rate = self.cleaned_data.get("rate")
+        if rate is not None and rate <= 0:
+            raise ValidationError("Contract rate must be greater than zero.")
+        return rate
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get("start_date")
+        planned_finish = cleaned_data.get("planned_finish_date")
+        actual_finish = cleaned_data.get("actual_finish_date")
+
+        if start_date:
+            if planned_finish and planned_finish < start_date:
+                self.add_error(
+                    "planned_finish_date", "Planned finish cannot be before start date."
+                )
+            if actual_finish and actual_finish < start_date:
+                self.add_error(
+                    "actual_finish_date", "Actual finish cannot be before start date."
+                )
+
+        return cleaned_data
+
 
 class OverheadEntityForm(BaseEntityForm):
     class Meta:
@@ -233,3 +326,9 @@ class OverheadEntityForm(BaseEntityForm):
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
         }
+
+    def clean_rate(self):
+        rate = self.cleaned_data.get("rate")
+        if rate is not None and rate <= 0:
+            raise ValidationError("Overhead rate must be a positive value.")
+        return rate
