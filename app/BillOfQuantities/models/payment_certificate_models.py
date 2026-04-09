@@ -312,6 +312,141 @@ class PaymentCertificate(BaseModel):
         # regardless of approval status (for reporting purposes)
         return self.progressive_previous + self.current_claim_total
 
+    # add properties
+
+    # Helper functions for ledger totals
+    def get_advance_payment_total(self) -> Decimal:
+        """Get total advance payment transactions for this certificate."""
+        from .ledger_models import AdvancePayment
+
+        advance_payments = AdvancePayment.objects.filter(payment_certificate=self)
+        return sum_queryset(advance_payments, "amount")
+
+    def get_retention_total(self) -> Decimal:
+        """Get total retention transactions for this certificate."""
+        from .ledger_models import Retention
+
+        retention_items = Retention.objects.filter(payment_certificate=self)
+        return sum_queryset(retention_items, "amount")
+
+    def get_materials_on_site_total(self) -> Decimal:
+        """Get total materials on site transactions for this certificate."""
+        from .ledger_models import MaterialsOnSite
+
+        materials = MaterialsOnSite.objects.filter(payment_certificate=self)
+        return sum_queryset(materials, "amount")
+
+    def get_escalation_total(self) -> Decimal:
+        """Get total escalation transactions for this certificate."""
+        from .ledger_models import Escalation
+
+        escalations = Escalation.objects.filter(payment_certificate=self)
+        return sum_queryset(escalations, "amount")
+
+    def get_special_item_total(self) -> Decimal:
+        """Get total special item transactions for this certificate."""
+        from .ledger_models import SpecialItemTransaction
+
+        special_items = SpecialItemTransaction.objects.filter(payment_certificate=self)
+        return sum_queryset(special_items, "amount")
+
+    def get_special_item_totals_by_type(self) -> dict:
+        """Get special item totals grouped by type for this certificate."""
+        from .ledger_models import SpecialItemTransaction
+
+        totals = {}
+        for item_type, _ in SpecialItemTransaction.SpecialItemType.choices:
+            items_by_type = SpecialItemTransaction.objects.filter(
+                payment_certificate=self, special_item_type=item_type
+            )
+            totals[item_type] = sum_queryset(items_by_type, "amount")
+
+        return totals
+
+    def get_all_ledger_totals(self) -> dict:
+        """Get all ledger totals for this certificate."""
+        return {
+            "advance_payments": self.get_advance_payment_total(),
+            "retention": self.get_retention_total(),
+            "materials_on_site": self.get_materials_on_site_total(),
+            "escalation": self.get_escalation_total(),
+            "special_items": self.get_special_item_total(),
+            "special_items_by_type": self.get_special_item_totals_by_type(),
+        }
+
+    # Helper functions for previous certificate totals
+    @property
+    def previous_advance_payment_total(self) -> Decimal:
+        """Get total advance payment transactions from previous certificates."""
+        from .ledger_models import AdvancePayment
+
+        previous_certificates = self.previous_certificates
+        advance_payments = AdvancePayment.objects.filter(
+            payment_certificate__in=previous_certificates
+        )
+        return sum_queryset(advance_payments, "amount")
+
+    @property
+    def previous_retention_total(self) -> Decimal:
+        """Get total retention transactions from previous certificates."""
+        from .ledger_models import Retention
+
+        previous_certificates = self.previous_certificates
+        retention_items = Retention.objects.filter(
+            payment_certificate__in=previous_certificates
+        )
+        return sum_queryset(retention_items, "amount")
+
+    @property
+    def previous_materials_on_site_total(self) -> Decimal:
+        """Get total materials on site transactions from previous certificates."""
+        from .ledger_models import MaterialsOnSite
+
+        previous_certificates = self.previous_certificates
+        materials = MaterialsOnSite.objects.filter(
+            payment_certificate__in=previous_certificates
+        )
+        return sum_queryset(materials, "amount")
+
+    @property
+    def previous_escalation_total(self) -> Decimal:
+        """Get total escalation transactions from previous certificates."""
+        from .ledger_models import Escalation
+
+        previous_certificates = self.previous_certificates
+        escalations = Escalation.objects.filter(
+            payment_certificate__in=previous_certificates
+        )
+        return sum_queryset(escalations, "amount")
+
+    @property
+    def previous_special_item_total(self) -> Decimal:
+        """Get total special item transactions from previous certificates."""
+        from .ledger_models import SpecialItemTransaction
+
+        previous_certificates = self.previous_certificates
+        special_items = SpecialItemTransaction.objects.filter(
+            payment_certificate__in=previous_certificates
+        )
+        return sum_queryset(special_items, "amount")
+
+    @property
+    def previous_special_item_totals_by_type(self) -> dict:
+        """Get special item totals grouped by type from previous certificates."""
+        from .ledger_models import SpecialItemTransaction
+
+        previous_certificates = self.previous_certificates
+
+        totals = {}
+        for item_type, _ in SpecialItemTransaction.SpecialItemType.choices:
+            items_by_type = SpecialItemTransaction.objects.filter(
+                payment_certificate__in=previous_certificates,
+                special_item_type=item_type,
+            )
+            totals[item_type] = sum_queryset(items_by_type, "amount")
+
+        return totals
+
 
 class ActualTransaction(BaseModel):
     """Capture actual work completed against a line item"""

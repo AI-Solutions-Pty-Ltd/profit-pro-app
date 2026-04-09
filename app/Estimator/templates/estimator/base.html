@@ -1,0 +1,43 @@
+{% extends "base_full.html" %}
+{% load estimator_tags %}
+{% block title %}Project Resource Estimator{% endblock %}
+{% block content %}
+    <!-- Estimator Main Navigation — 7 Tabs -->
+    <div class="mb-6 border-b border-gray-200">
+        <nav class="flex space-x-8 overflow-x-auto"
+             aria-label="Estimator sections">
+            {% with url_name=request.resolver_match.url_name %}
+                <a href="{% url 'estimator:project_assumptions' project_pk=project_pk %}"
+                   class="{% if url_name == 'project_assumptions' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium">
+                    Project Assumptions
+                </a>
+                <a href="{% url 'estimator:baseline' project_pk=project_pk %}"
+                   class="{% if url_name == 'baseline' or url_name == 'sync_boq' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium">
+                    Progress Claims &amp; Forecasts
+                </a>
+                <a href="{% url 'estimator:dashboard' project_pk=project_pk %}"
+                   class="{% if url_name == 'dashboard' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium">
+                    Project Estimator
+                </a>
+                <a href="{% url 'estimator:report_material_list_progress_contract' project_pk=project_pk %}"
+                   class="{% if 'contract' in url_name or url_name == 'material_specs' or url_name == 'specifications' or url_name == 'material_spec_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium">
+                    Baseline Estimator
+                </a>
+                <a href="{% url 'estimator:report_labour_list_progress' project_pk=project_pk %}"
+                   class="{% if url_name == 'labour_spec_defs' or url_name == 'labour_specs' or url_name == 'labour_spec_upload' or 'report_material_list_baseline' == url_name or 'report_material_list_progress' == url_name or 'report_material_list_forecast' == url_name or 'report_labour_list_baseline' == url_name or 'report_labour_list_progress' == url_name or 'report_labour_list_forecast' == url_name %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium">
+                    Resource Estimator
+                </a>
+                <a href="{% url 'estimator:trade_codes' project_pk=project_pk %}"
+                   class="{% if url_name == 'trade_codes' or url_name == 'materials' or url_name == 'labour_costs' or url_name == 'material_cost_upload' or url_name == 'labour_cost_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium">
+                    Baseline Resources Costs
+                </a>
+                <a href="{% url 'estimator:report_baseline_assessment' project_pk=project_pk %}"
+                   class="{% if url_name == 'report_baseline_assessment' or url_name == 'report_progress_assessment' or url_name == 'report_forecast_assessment' or url_name == 'report_key_rates_assessment' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium">
+                    Financial Risk Report
+                </a>
+            {% endwith %}
+        </nav>
+    </div>
+    <!-- Child page content -->
+    {% block estimator_content %}{% endblock %}
+{% endblock %}

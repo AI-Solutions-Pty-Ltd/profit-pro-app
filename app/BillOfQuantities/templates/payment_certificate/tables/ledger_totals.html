@@ -1,0 +1,129 @@
+{% load project_tags %}
+<!-- Ledger Totals Table -->
+<div class="overflow-x-auto">
+    <table class="w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ledger Item</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cumulative to Date</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Previously Certified</th>
+                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount Due</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            <!-- Advance Payments -->
+            {% with current=payment_certificate.get_advance_payment_total prev=payment_certificate.previous_advance_payment_total %}
+                {% if current > 0 or prev > 0 %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm text-gray-900 font-medium">Advance Payments</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-right">
+                            {% with total=current|add:prev %}R {{ total|floatformat:2|intcomma }}{% endwith %}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-right">R {{ prev|floatformat:2|intcomma }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-right">R {{ current|floatformat:2|intcomma }}</td>
+                    </tr>
+                {% endif %}
+            {% endwith %}
+            <!-- Retention -->
+            {% with current=payment_certificate.get_retention_total prev=payment_certificate.previous_retention_total %}
+                {% if current > 0 or prev > 0 %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm text-gray-900 font-medium">Retention</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-right">
+                            {% with total=current|add:prev %}R {{ total|floatformat:2|intcomma }}{% endwith %}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-right">R {{ prev|floatformat:2|intcomma }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-right">R {{ current|floatformat:2|intcomma }}</td>
+                    </tr>
+                {% endif %}
+            {% endwith %}
+            <!-- Materials on Site -->
+            {% with current=payment_certificate.get_materials_on_site_total prev=payment_certificate.previous_materials_on_site_total %}
+                {% if current > 0 or prev > 0 %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm text-gray-900 font-medium">Materials on Site</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-right">
+                            {% with total=current|add:prev %}R {{ total|floatformat:2|intcomma }}{% endwith %}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-right">R {{ prev|floatformat:2|intcomma }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-right">R {{ current|floatformat:2|intcomma }}</td>
+                    </tr>
+                {% endif %}
+            {% endwith %}
+            <!-- Escalation -->
+            {% with current=payment_certificate.get_escalation_total prev=payment_certificate.previous_escalation_total %}
+                {% if current > 0 or prev > 0 %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm text-gray-900 font-medium">Escalation</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-right">
+                            {% with total=current|add:prev %}R {{ total|floatformat:2|intcomma }}{% endwith %}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-right">R {{ prev|floatformat:2|intcomma }}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-right">R {{ current|floatformat:2|intcomma }}</td>
+                    </tr>
+                {% endif %}
+            {% endwith %}
+        </tbody>
+        <!-- Special Items by Type -->
+        {% with special_totals=payment_certificate.get_special_item_totals_by_type %}
+            {% for type_code, type_name in special_item_types %}
+                {% with current=special_totals|get_item:type_code prev=payment_certificate.previous_special_item_totals_by_type|get_item:type_code %}
+                    {% if current > 0 or prev > 0 %}
+                        <tbody class="bg-orange-50 divide-y divide-orange-200">
+                            <tr class="hover:bg-orange-100">
+                                <td class="px-4 py-3 text-sm text-gray-900 font-medium">{{ type_name }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-right">
+                                    {% with total=current|add:prev %}R {{ total|floatformat:2|intcomma }}{% endwith %}
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-right">R {{ prev|floatformat:2|intcomma }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-right">R {{ current|floatformat:2|intcomma }}</td>
+                            </tr>
+                        </tbody>
+                    {% endif %}
+                {% endwith %}
+            {% endfor %}
+        {% endwith %}
+        <!-- Totals Footer -->
+        <tfoot class="bg-gray-100">
+            <tr>
+                <td class="px-4 py-3 text-sm font-bold text-gray-900">Total</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-right">
+                    {% with all_totals=payment_certificate.get_all_ledger_totals %}
+                        {% with current_total=all_totals.advance_payments|add:all_totals.retention|add:all_totals.materials_on_site|add:all_totals.escalation|add:all_totals.special_items %}
+                            {% with prev_total=payment_certificate.previous_advance_payment_total|add:payment_certificate.previous_retention_total|add:payment_certificate.previous_materials_on_site_total|add:payment_certificate.previous_escalation_total|add:payment_certificate.previous_special_item_total %}
+                                {% with grand_total=current_total|add:prev_total %}R {{ grand_total|floatformat:2|intcomma }}{% endwith %}
+                            {% endwith %}
+                        {% endwith %}
+                    {% endwith %}
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-right">
+                    {% with prev_total=payment_certificate.previous_advance_payment_total|add:payment_certificate.previous_retention_total|add:payment_certificate.previous_materials_on_site_total|add:payment_certificate.previous_escalation_total|add:payment_certificate.previous_special_item_total %}
+                        R {{ prev_total|floatformat:2|intcomma }}
+                    {% endwith %}
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-right">
+                    {% with all_totals=payment_certificate.get_all_ledger_totals %}
+                        {% with current_total=all_totals.advance_payments|add:all_totals.retention|add:all_totals.materials_on_site|add:all_totals.escalation|add:all_totals.special_items %}
+                            R {{ current_total|floatformat:2|intcomma }}
+                        {% endwith %}
+                    {% endwith %}
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+<!-- Notes -->
+<div class="mt-4 p-4 bg-blue-50 rounded-lg">
+    <div class="flex">
+        <div class="flex-shrink-0">{% heroicon_outline "information-circle" class="h-5 w-5 text-blue-400" %}</div>
+        <div class="ml-3">
+            <h3 class="text-sm font-medium text-blue-800">Special Items Summary</h3>
+            <div class="mt-2 text-sm text-blue-700">
+                <p>
+                    This table shows all special items (advance payments, retention, materials on site, escalation, and other special items) for this payment certificate.
+                </p>
+                <p class="mt-1">Special items are broken down by type for better tracking and reporting.</p>
+            </div>
+        </div>
+    </div>
+</div>
