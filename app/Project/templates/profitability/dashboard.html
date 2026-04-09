@@ -20,17 +20,20 @@
             <div class="p-6 bg-white rounded-xl border border-indigo-200 shadow-sm">
                 <div class="flex justify-between items-center">
                     <div>
-                        <p class="text-sm font-medium text-gray-500">Planned Revenue</p>
+                        <p class="text-sm font-medium text-gray-500">Actual Revenue (Certified)</p>
                         <h3 class="mt-1 text-2xl font-bold text-gray-900"
-                            title="R{{ baseline.planned_revenue|floatformat:2|intcomma }}">
-                            {% if baseline.planned_revenue > 100000 %}
-                                R{{ baseline.planned_revenue|intword }}
+                            title="R{{ actual_revenue|floatformat:2|intcomma }}">
+                            {% if actual_revenue > 100000 %}
+                                R{{ actual_revenue|intword }}
                             {% else %}
-                                R{{ baseline.planned_revenue|floatformat:2|intcomma }}
+                                R{{ actual_revenue|floatformat:2|intcomma }}
                             {% endif %}
                         </h3>
                     </div>
                     <div class="p-2 bg-indigo-100 rounded-lg">{% heroicon_outline "banknotes" class="w-6 h-6 text-indigo-600" %}</div>
+                </div>
+                <div class="flex items-center mt-4 text-xs">
+                    <span class="text-gray-500">Planned: R{{ baseline.planned_revenue|floatformat:0|intcomma }}</span>
                 </div>
             </div>
             <!-- Total Actual Cost Card -->
