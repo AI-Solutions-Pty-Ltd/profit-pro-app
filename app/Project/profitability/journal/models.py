@@ -20,6 +20,7 @@ class JournalEntry(BaseModel):
         SUBCONTRACTOR = "SUBCONTRACTOR", "Subcontractor"
         OVERHEAD = "OVERHEAD", "Overhead"
         PLANT = "PLANT", "Plant"
+        REVENUE = "REVENUE", "Revenue"
         OTHER = "OTHER", "Other"
 
     project = models.ForeignKey(
