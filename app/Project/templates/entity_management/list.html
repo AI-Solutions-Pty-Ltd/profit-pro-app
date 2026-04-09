@@ -42,6 +42,12 @@
                                 class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                                 Name
                             </th>
+                            {% if is_material %}
+                                <th scope="col"
+                                    class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                    Ref No
+                                </th>
+                            {% endif %}
                             {% if is_labour %}
                                 <th scope="col"
                                     class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
@@ -62,15 +68,32 @@
                                     class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                                     Trade
                                 </th>
+                            {% elif is_overhead %}
+                                <th scope="col"
+                                    class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                    Expense Code
+                                </th>
                             {% endif %}
                             <th scope="col"
                                 class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                                 Unit
                             </th>
+                            {% if is_material %}
+                                <th scope="col"
+                                    class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                    Qty
+                                </th>
+                            {% endif %}
                             <th scope="col"
                                 class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
                                 Rate
                             </th>
+                            {% if is_material %}
+                                <th scope="col"
+                                    class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                                 Cost
+                                </th>
+                            {% endif %}
                             <th scope="col"
                                 class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">
                                 Actions
@@ -88,6 +111,9 @@
                                         {{ entity.name }}
                                     {% endif %}
                                 </td>
+                                {% if is_material %}
+                                    <td class="px-6 py-4 text-xs font-medium text-gray-500 whitespace-nowrap">{{ entity.invoice_number|default:"-" }}</td>
+                                {% endif %}
                                 {% if is_labour %}
                                     <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ entity.skill_type }}</td>
                                 {% elif is_material %}
@@ -96,11 +122,33 @@
                                     <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ entity.plant_type }}</td>
                                 {% elif is_subcontractor %}
                                     <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ entity.trade }}</td>
+                                {% elif is_overhead %}
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs rounded-full {% if entity.expense_code == 'OPEX' %}bg-blue-100 text-blue-800{% else %}bg-purple-100 text-purple-800{% endif %}">
+                                            {{ entity.get_expense_code_display }}
+                                        </span>
+                                    </td>
                                 {% endif %}
-                                <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ entity.unit }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                                    {% if entity.unit_of_measure %}
+                                        {{ entity.unit_of_measure.short_name }}
+                                    {% else %}
+                                        {{ entity.unit|default:"-" }}
+                                    {% endif %}
+                                </td>
+                                {% if is_material %}
+                                    <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                                        {{ entity.quantity|floatformat:2|intcomma }}
+                                    </td>
+                                {% endif %}
                                 <td class="px-6 py-4 text-sm font-semibold text-gray-900 whitespace-nowrap">
                                     R {{ entity.rate|floatformat:2|intcomma }}
                                 </td>
+                                {% if is_material %}
+                                    <td class="px-6 py-4 text-xs font-bold text-indigo-900 whitespace-nowrap">
+                                        R {{ entity.quantity|mul:entity.rate|floatformat:2|intcomma }}
+                                    </td>
+                                {% endif %}
                                 <td class="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
                                     <div class="flex justify-end items-center space-x-3">
                                         <a href="{% url 'project:entity-'|add:entity_type|add:'-update' project.pk entity.pk %}"
@@ -115,7 +163,7 @@
                             </tr>
                         {% empty %}
                             <tr>
-                                <td colspan="7"
+                                <td colspan="{% if is_material %}10{% elif is_overhead %}8{% else %}7{% endif %}"
                                     class="px-6 py-12 text-sm font-medium text-center text-gray-500 whitespace-nowrap">
                                     <div class="flex flex-col items-center">
                                         {% heroicon_outline "folder-open" size="48" class="mb-2 text-gray-300" %}

@@ -1,7 +1,9 @@
 """Views for Centralized Unit Management."""
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from ..forms.unit_forms import UnitOfMeasureForm
@@ -51,3 +53,20 @@ class UnitOfMeasureDeleteView(LoginRequiredMixin, DeleteView):
     model = UnitOfMeasure
     template_name = "unit_management/confirm_delete.html"
     success_url = reverse_lazy("project:unit-list")
+
+
+class UnitOfMeasureCreateAJAXView(LoginRequiredMixin, View):
+    """AJAX view for quick unit creation."""
+
+    def post(self, request, *args, **kwargs):
+        form = UnitOfMeasureForm(request.POST)
+        if form.is_valid():
+            unit = form.save()
+            return JsonResponse(
+                {
+                    "success": True,
+                    "id": unit.id,
+                    "name": str(unit),
+                }
+            )
+        return JsonResponse({"success": False, "errors": form.errors})

@@ -1,0 +1,45 @@
+<script>
+(function() {
+    function initUnitPreview() {
+        const shortNameInput = document.getElementById('id_short_name');
+        const refUnitSelect = document.getElementById('id_reference_unit');
+        const factorInput = document.getElementById('id_conversion_factor');
+        
+        const previewSelf = document.getElementById('preview-self');
+        const previewRef = document.getElementById('preview-ref');
+        const previewFactor = document.getElementById('preview-factor');
+        
+        // Safety check
+        if (!shortNameInput || !previewSelf) return;
+
+        function updatePreview() {
+            previewSelf.textContent = shortNameInput.value || "[Unit]";
+            
+            if (refUnitSelect && refUnitSelect.value) {
+                const selectedOption = refUnitSelect.options[refUnitSelect.selectedIndex].text;
+                // Try to extract the short name from "Name (Short)" format
+                const match = selectedOption.match(/\(([^)]+)\)/);
+                previewRef.textContent = match ? match[1] : selectedOption;
+                previewFactor.textContent = parseFloat(factorInput.value || 0).toFixed(4);
+            } else {
+                if (previewRef) previewRef.textContent = "BASE";
+                if (previewFactor) previewFactor.textContent = "1.0000";
+            }
+        }
+        
+        shortNameInput.addEventListener('input', updatePreview);
+        if (refUnitSelect) refUnitSelect.addEventListener('change', updatePreview);
+        if (factorInput) factorInput.addEventListener('input', updatePreview);
+        
+        // Initial run
+        updatePreview();
+    }
+
+    // Run on DOMContentLoaded or immediately if already loaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initUnitPreview);
+    } else {
+        initUnitPreview();
+    }
+})();
+</script>

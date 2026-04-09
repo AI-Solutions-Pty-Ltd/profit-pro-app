@@ -1,0 +1,32 @@
+{% load crispy_forms_tags %}
+{% load heroicons %}
+
+<!-- Core Details -->
+<div class="space-y-6">
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div class="md:col-span-2">
+            {{ form.name|as_crispy_field }}
+        </div>
+        <div>
+            {{ form.short_name|as_crispy_field }}
+        </div>
+        <div>
+            {{ form.category|as_crispy_field }}
+        </div>
+    </div>
+</div>
+
+<!-- Mathematical Logic -->
+<div class="pt-6 space-y-6 border-t border-gray-100">
+    <h3 class="text-sm font-bold tracking-wider text-gray-900 uppercase">Mathematical Logic</h3>
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <div>
+            {{ form.reference_unit|as_crispy_field }}
+        </div>
+        <div>
+            {{ form.conversion_factor|as_crispy_field }}
+        </div>
+    </div>
+
+   
+</div>

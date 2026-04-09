@@ -27,54 +27,7 @@
                 <form method="post" class="space-y-8">
                     {% csrf_token %}
                     
-                    <!-- Core Details -->
-                    <div class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="md:col-span-2">
-                                {{ form.name|as_crispy_field }}
-                            </div>
-                            <div>
-                                {{ form.short_name|as_crispy_field }}
-                            </div>
-                            <div>
-                                {{ form.category|as_crispy_field }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Mathematical Logic -->
-                    <div class="pt-6 border-t border-gray-100 space-y-6">
-                        <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Mathematical Logic</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                {{ form.reference_unit|as_crispy_field }}
-                            </div>
-                            <div>
-                                {{ form.conversion_factor|as_crispy_field }}
-                            </div>
-                        </div>
-
-                        <!-- Conversion Helper -->
-                        <div id="conversion-helper" class="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                            <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Formula Preview</div>
-                            <div class="flex flex-col items-center justify-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm">
-                                <div class="flex items-center space-x-3">
-                                    <span class="text-2xl font-bold text-gray-900">1</span>
-                                    <span id="preview-self" class="text-lg font-medium text-indigo-600 uppercase italic">[Unit]</span>
-                                </div>
-                                <div class="my-3 text-gray-400">
-                                    {% heroicon_mini "chevron-double-down" class="w-5 h-5" %}
-                                </div>
-                                <div class="flex items-center space-x-3">
-                                    <span id="preview-factor" class="text-2xl font-bold text-gray-900">1.0000</span>
-                                    <span id="preview-ref" class="text-lg font-medium text-emerald-600 uppercase italic">[Ref]</span>
-                                </div>
-                            </div>
-                            <p class="mt-4 text-xs text-gray-500 leading-relaxed text-center">
-                                This formula determines how this unit relates to its reference base.
-                            </p>
-                        </div>
-                    </div>
+                    {% include "unit_management/partials/unit_form_fields.html" %}
 
                     <div class="flex items-center justify-end space-x-4 pt-8 border-t border-gray-200">
                         <a href="{% url 'project:unit-list' %}"
@@ -97,37 +50,5 @@
     </div>
 {% endblock %}
 {% block scripts %}
-    <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const shortNameInput = document.getElementById('id_short_name');
-    const refUnitSelect = document.getElementById('id_reference_unit');
-    const factorInput = document.getElementById('id_conversion_factor');
-    
-    const previewSelf = document.getElementById('preview-self');
-    const previewRef = document.getElementById('preview-ref');
-    const previewFactor = document.getElementById('preview-factor');
-    
-    function updatePreview() {
-        previewSelf.textContent = shortNameInput.value || "[Unit]";
-        
-        if (refUnitSelect.value) {
-            const selectedOption = refUnitSelect.options[refUnitSelect.selectedIndex].text;
-            // Try to extract the short name from "Name (Short)" format
-            const match = selectedOption.match(/\(([^)]+)\)/);
-            previewRef.textContent = match ? match[1] : selectedOption;
-            previewFactor.textContent = parseFloat(factorInput.value || 0).toFixed(4);
-        } else {
-            previewRef.textContent = "BASE";
-            previewFactor.textContent = "1.0000";
-        }
-    }
-    
-    if (shortNameInput) shortNameInput.addEventListener('input', updatePreview);
-    if (refUnitSelect) refUnitSelect.addEventListener('change', updatePreview);
-    if (factorInput) factorInput.addEventListener('input', updatePreview);
-    
-    // Initial run
-    updatePreview();
-});
-    </script>
+    {% include "unit_management/partials/unit_form_js.html" %}
 {% endblock %}
