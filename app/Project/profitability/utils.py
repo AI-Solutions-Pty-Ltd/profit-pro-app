@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import F, Sum, Q
+from django.db.models import F, Sum
 
 from app.Project.models import LabourCostTracker, SubcontractorCostTracker
 from app.SiteManagement.models import LabourLog, SubcontractorLog
