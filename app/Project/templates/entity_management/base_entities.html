@@ -20,6 +20,11 @@
                         </div>
                     </div>
                     <div class="flex items-center space-x-3">
+                        <a href="{% url 'project:unit-list' %}"
+                           class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "scale" class="mr-2 w-4 h-4 text-gray-400" %}
+                            Manage Units
+                        </a>
                         {% block header_actions %}{% endblock %}
                     </div>
                 </div>
