@@ -81,7 +81,9 @@ def initialize_project_estimator(project):
             trade_name=sls.trade_name,
             name=sls.name,
             unit=sls.unit,
-            crew=crew_map.get(sls.crew_id) if sls.crew_id else None,
+            crew=crew_map.get(getattr(sls, "crew_id", None))
+            if getattr(sls, "crew_id", None)
+            else None,
             daily_production=sls.daily_production,
             team_mix=sls.team_mix,
             site_factor=sls.site_factor,
@@ -102,14 +104,18 @@ def initialize_project_estimator(project):
             if hasattr(ss, "system_spec") and ss.system_spec
             else None,
             section=ss.section,
-            trade_code=tc_map.get(ss.trade_code_id) if ss.trade_code_id else None,
+            trade_code=tc_map.get(getattr(ss, "trade_code_id", None))
+            if getattr(ss, "trade_code_id", None)
+            else None,
             unit_label=ss.unit_label,
             name=ss.name,
         )
         for comp in ss.spec_components.all():
             ProjectSpecificationComponent.objects.create(
                 specification=ps,
-                material=mat_map.get(comp.material_id) if comp.material_id else None,
+                material=mat_map.get(getattr(comp, "material_id", None))
+                if getattr(comp, "material_id", None)
+                else None,
                 label=comp.label,
                 qty_per_unit=comp.qty_per_unit,
                 sort_order=comp.sort_order,

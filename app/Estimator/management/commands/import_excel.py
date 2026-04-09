@@ -78,18 +78,23 @@ class ExcelImporter:
 
     def _import_trade_codes(self, ws):
         count = 0
-        model = ProjectTradeCode if self.project else SystemTradeCode
         for row in ws.iter_rows(min_row=2, values_only=True):
             vals = (row + (None,) * 4)[:4]
             prefix, trade_name, _, _ = vals
             if not prefix:
                 continue
-            lookup = {"prefix": str(prefix).strip()}
+            prefix_str = str(prefix).strip()
             if self.project:
-                lookup["project"] = self.project
-            model.objects.update_or_create(
-                **lookup, defaults={"trade_name": str(trade_name or "").strip()}
-            )
+                ProjectTradeCode.objects.update_or_create(
+                    project=self.project,
+                    prefix=prefix_str,
+                    defaults={"trade_name": str(trade_name or "").strip()},
+                )
+            else:
+                SystemTradeCode.objects.update_or_create(
+                    prefix=prefix_str,
+                    defaults={"trade_name": str(trade_name or "").strip()},
+                )
             count += 1
         self.log(f"  Trade Codes: {count}")
         return count
@@ -98,7 +103,6 @@ class ExcelImporter:
 
     def _import_materials(self, ws):
         count = 0
-        model = ProjectMaterial if self.project else SystemMaterial
         for row in ws.iter_rows(min_row=2, values_only=True):
             vals = (row + (None,) * 6)[:6]
             trade_name, mat_code, unit, rate, variety, spec = vals
@@ -106,19 +110,22 @@ class ExcelImporter:
                 continue
 
             mat_code_str = self._safe_str(mat_code)
-            lookup = {"material_code": mat_code_str}
+            defaults = {
+                "trade_name": self._safe_str(trade_name),
+                "unit": self._safe_str(unit),
+                "market_rate": self._safe_decimal(rate) or Decimal("0"),
+                "material_variety": self._safe_str(variety),
+                "market_spec": self._safe_str(spec),
+            }
+
             if self.project:
-                lookup["project"] = self.project
-            model.objects.update_or_create(
-                **lookup,
-                defaults={
-                    "trade_name": self._safe_str(trade_name),
-                    "unit": self._safe_str(unit),
-                    "market_rate": self._safe_decimal(rate) or Decimal("0"),
-                    "material_variety": self._safe_str(variety),
-                    "market_spec": self._safe_str(spec),
-                },
-            )
+                ProjectMaterial.objects.update_or_create(
+                    project=self.project, material_code=mat_code_str, defaults=defaults
+                )
+            else:
+                SystemMaterial.objects.update_or_create(
+                    material_code=mat_code_str, defaults=defaults
+                )
             count += 1
         self.log(f"  Materials: {count}")
         return count

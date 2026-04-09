@@ -34,6 +34,7 @@ from .impact_models import ProjectImpact
 from .planned_value_models import PlannedValue
 from .portfolio_models import Portfolio
 from .project_roles_models import ProjectRole, Role
+from .report_summary_models import ProjectReportSummary
 from .risk_models import Risk, RiskStatus
 from .signatories_models import Signatories
 
@@ -63,6 +64,7 @@ __all__ = [
     "ProjectImpact",
     "ProjectRole",
     "Role",
+    "ProjectReportSummary",
     "Risk",
     "RiskStatus",
     "Signatories",

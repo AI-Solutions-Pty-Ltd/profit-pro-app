@@ -1,5 +1,17 @@
 """Site Management Views."""
 
+from .biweekly_quality_views import (
+    BiWeeklyQualityReportCreateView,
+    BiWeeklyQualityReportDeleteView,
+    BiWeeklyQualityReportListView,
+    BiWeeklyQualityReportUpdateView,
+)
+from .biweekly_safety_views import (
+    BiWeeklySafetyReportCreateView,
+    BiWeeklySafetyReportDeleteView,
+    BiWeeklySafetyReportListView,
+    BiWeeklySafetyReportUpdateView,
+)
 from .daily_diary_views import (
     DailyDiaryCreateView,
     DailyDiaryDeleteView,
@@ -25,6 +37,12 @@ from .early_warning_views import (
     EarlyWarningListView,
     EarlyWarningUpdateView,
 )
+from .incident_views import (
+    IncidentCreateView,
+    IncidentDeleteView,
+    IncidentListView,
+    IncidentUpdateView,
+)
 from .labour_log_views import (
     LabourLogCreateView,
     LabourLogDeleteView,
@@ -44,6 +62,12 @@ from .meeting_views import (
     MeetingDetailView,
     MeetingListView,
     MeetingUpdateView,
+)
+from .ncr_views import (
+    NCRCreateView,
+    NCRDeleteView,
+    NCRListView,
+    NCRUpdateView,
 )
 from .offsite_log_views import (
     OffsiteLogCreateView,
@@ -139,6 +163,14 @@ __all__ = [
     "MeetingDetailView",
     "MeetingUpdateView",
     "MeetingDeleteView",
+    "NCRListView",
+    "NCRCreateView",
+    "NCRUpdateView",
+    "NCRDeleteView",
+    "IncidentListView",
+    "IncidentCreateView",
+    "IncidentUpdateView",
+    "IncidentDeleteView",
     "MaterialsLogListView",
     "MaterialsLogCreateView",
     "MaterialsLogUpdateView",
@@ -187,6 +219,14 @@ __all__ = [
     "QualityControlCreateView",
     "QualityControlUpdateView",
     "QualityControlDeleteView",
+    "BiWeeklySafetyReportListView",
+    "BiWeeklySafetyReportCreateView",
+    "BiWeeklySafetyReportUpdateView",
+    "BiWeeklySafetyReportDeleteView",
+    "BiWeeklyQualityReportListView",
+    "BiWeeklyQualityReportCreateView",
+    "BiWeeklyQualityReportUpdateView",
+    "BiWeeklyQualityReportDeleteView",
     "LabourLogListView",
     "LabourLogCreateView",
     "LabourLogUpdateView",

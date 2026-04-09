@@ -1,0 +1,762 @@
+{% extends "base_full.html" %}
+{% load humanize %}
+{% block content %}
+    <div class="bg-white rounded-lg shadow-sm mb-6 sticky top-0 z-10">
+        <div class="px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200">
+            {% include "project/reports_nav.html" with tab="contractors_report" %}
+        </div>
+    </div>
+    <div class="mb-3">
+        <a href="{% url 'project:project-management' project.pk %}"
+           class="inline-flex items-center gap-2 text-sm font-medium text-indigo-700 hover:text-indigo-900">
+            <span aria-hidden="true">←</span>
+            Back to Project Management
+        </a>
+    </div>
+    <div class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Contractor's Report</h1>
+                    <p class="text-sm text-gray-600 mt-1">
+                        Reporting Window: <span class="font-medium text-gray-700">{{ period_start|date:"Y-m-d" }} to {{ period_end|date:"Y-m-d" }}</span>
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <form method="get" class="flex items-center gap-2">
+                        <label class="text-xs font-medium text-gray-600">Window</label>
+                        <select name="period"
+                                class="text-gray-800 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                            <option value="2w" {% if period_key == "2w" %}selected{% endif %}>2 Weeks</option>
+                            <option value="1m" {% if period_key == "1m" %}selected{% endif %}>1 Month</option>
+                            <option value="3m" {% if period_key == "3m" %}selected{% endif %}>3 Months</option>
+                            <option value="6m" {% if period_key == "6m" %}selected{% endif %}>6 Months</option>
+                            <option value="12m" {% if period_key == "12m" %}selected{% endif %}>12 Months</option>
+                        </select>
+                        <button type="submit"
+                                class="text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg px-3 py-2">
+                            Apply
+                        </button>
+                    </form>
+                    <a href="?export=pdf"
+                       class="text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg px-3 py-2">
+                        Export PDF
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="px-6 py-4 space-y-8">
+            {# ── 1. Project Information ── #}
+            <section>
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">1. Project Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Project Name</p>
+                        <p class="font-medium text-gray-900">{{ project.name }}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Contract Reference</p>
+                        <p class="font-medium text-gray-900">{{ contract_reference }}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Contract Value</p>
+                        <p class="font-medium text-gray-900">{{ contract_value|intcomma }}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Client / Employer</p>
+                        <p class="font-medium text-gray-900">{{ client }}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Contractor</p>
+                        <p class="font-medium text-gray-900">{{ contractor }}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-3 md:col-span-2">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Consultant(s)</p>
+                        <p class="font-medium text-gray-900">{{ consultants|default:"-" }}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Forecast Completion</p>
+                        <p class="font-medium text-gray-900">{{ forecast_to_completion|default:"-" }}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Actual Completion</p>
+                        <p class="font-medium text-gray-900">{{ project_actual_end|date:"Y-m-d"|default:"-" }}</p>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                        <p class="text-xs uppercase tracking-wide text-gray-500">Reporting Period</p>
+                        <p class="font-medium text-gray-900">{{ period_label }}</p>
+                    </div>
+                </div>
+            </section>
+            {# ── 2. Executive Summary ── #}
+            <section>
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">2. Executive Summary</h2>
+                <div class="space-y-2 text-sm text-gray-800 mb-4">
+                    <p>
+                        <span class="font-semibold">Overall project status:</span> {{ overall_status }}
+                    </p>
+                    <p>
+                        <span class="font-semibold">Project status summary:</span> {{ project_status_summary }}
+                    </p>
+                    <p>
+                        <span class="font-semibold">Contractor's report summary:</span> {{ contractor_summary }}
+                    </p>
+                    <p>
+                        <span class="font-semibold">Key achievements this period:</span> {{ milestones_achieved|length }} milestone(s) achieved.
+                    </p>
+                    <p>
+                        <span class="font-semibold">Major challenges encountered:</span> {{ all_open_risks_count }} open risk(s), {{ all_pending_variations|length }} pending variation(s), {{ open_early_warnings_count }} open early warning(s), {{ incidents_count }} incident(s), {{ near_misses_count }} near miss(es).
+                    </p>
+                </div>
+                {# Period Comparison Summary #}
+                {% if period_comparison %}
+                    <div class="mt-4 p-3 bg-indigo-50 border border-indigo-200 rounded-lg text-xs">
+                        <p class="font-semibold text-indigo-900 mb-2">
+                            {{ comparison_label }} Comparison: {{ period_comparison.previous_period_label }} vs {{ period_comparison.current_period_label }}
+                        </p>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <div>
+                                <p class="text-indigo-700 font-medium">Risks</p>
+                                <p class="text-gray-600">
+                                    Prev: {{ period_comparison.risk_register.previous }} | Now: {{ period_comparison.risk_register.current }}
+                                    {% if period_comparison.risk_register.diff > 0 %}
+                                        <span class="text-red-600 ml-1">+{{ period_comparison.risk_register.diff }}</span>
+                                    {% elif period_comparison.risk_register.diff < 0 %}
+                                        <span class="text-emerald-600 ml-1">{{ period_comparison.risk_register.diff }}</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-indigo-700 font-medium">Variations</p>
+                                <p class="text-gray-600">
+                                    Prev: {{ period_comparison.variations_register.previous }} | Now: {{ period_comparison.variations_register.current }}
+                                    {% if period_comparison.variations_register.diff > 0 %}
+                                        <span class="text-red-600 ml-1">+{{ period_comparison.variations_register.diff }}</span>
+                                    {% elif period_comparison.variations_register.diff < 0 %}
+                                        <span class="text-emerald-600 ml-1">{{ period_comparison.variations_register.diff }}</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-indigo-700 font-medium">Risk Cost Impact</p>
+                                <p class="text-gray-600">
+                                    Prev: {{ period_comparison.risk_register.previous_cost|intcomma }} | Now: {{ period_comparison.risk_register.current_cost|intcomma }}
+                                    {% if period_comparison.risk_register.diff_cost > 0 %}
+                                        <span class="text-red-600 ml-1">+{{ period_comparison.risk_register.diff_cost|intcomma }}</span>
+                                    {% elif period_comparison.risk_register.diff_cost < 0 %}
+                                        <span class="text-emerald-600 ml-1">{{ period_comparison.risk_register.diff_cost|intcomma }}</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-indigo-700 font-medium">Variation Cost Impact</p>
+                                <p class="text-gray-600">
+                                    Prev: {{ period_comparison.variations_register.previous_cost|intcomma }} | Now: {{ period_comparison.variations_register.current_cost|intcomma }}
+                                    {% if period_comparison.variations_register.diff_cost > 0 %}
+                                        <span class="text-red-600 ml-1">+{{ period_comparison.variations_register.diff_cost|intcomma }}</span>
+                                    {% elif period_comparison.variations_register.diff_cost < 0 %}
+                                        <span class="text-emerald-600 ml-1">{{ period_comparison.variations_register.diff_cost|intcomma }}</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </section>
+            {# ── 3. Progress Report ── #}
+            <section>
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">3. Progress Report</h2>
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr class="text-left">
+                                <th class="px-4 py-2 font-semibold text-gray-600">Activity / Work Package</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Milestone</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Planned Progress</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Actual Progress</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Variance</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Impact</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Comments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in progress_rows %}
+                                <tr class="border-b border-gray-100">
+                                    <td class="px-4 py-2 font-medium text-gray-900">{{ m.activity }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ m.milestone|default:"-" }}</td>
+                                    <td class="px-4 py-2 text-gray-700">
+                                        {{ m.planned_pct|floatformat:0 }}% ({{ m.planned_start|date:"Y-m-d" }} → {{ m.planned_end|date:"Y-m-d" }})
+                                    </td>
+                                    <td class="px-4 py-2 text-gray-700">{{ m.actual_pct|floatformat:0 }}%</td>
+                                    <td class="px-4 py-2">
+                                        {% if m.variance_pct < 0 %}
+                                            <span class="text-red-600 font-medium">{{ m.variance_pct|floatformat:0 }}%</span>
+                                        {% elif m.variance_pct > 0 %}
+                                            <span class="text-emerald-600 font-medium">+{{ m.variance_pct|floatformat:0 }}%</span>
+                                        {% else %}
+                                            <span class="text-gray-500">0%</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-2 text-gray-700">{{ m.impact|default:"-" }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ m.remarks|default:"-" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="7" class="px-4 py-3 text-gray-400 italic">No progress tracker activities in this reporting window.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            {# ── 4. Programme and Milestones ── #}
+            <section>
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">4. Programme and Milestones</h2>
+                {# Summary cards #}
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm mb-4">
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-center">
+                        <p class="text-2xl font-bold text-emerald-700">{{ milestones_achieved|length }}</p>
+                        <p class="text-xs text-emerald-700 mt-1">Milestones Achieved (Period)</p>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+                        <p class="text-2xl font-bold text-blue-700">{{ upcoming_milestones|length }}</p>
+                        <p class="text-xs text-blue-700 mt-1">Upcoming Milestones</p>
+                    </div>
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                        <p class="text-2xl font-bold text-red-700">{{ delayed_milestones|length }}</p>
+                        <p class="text-xs text-red-700 mt-1">Delayed Milestones</p>
+                    </div>
+                </div>
+                {# Upcoming Milestones List #}
+                {% if upcoming_milestones %}
+                    <h3 class="text-sm font-semibold text-gray-700 mb-2">Upcoming Milestones</h3>
+                    <div class="overflow-x-auto rounded-lg border border-gray-200 mb-5">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr class="text-left">
+                                    <th class="px-4 py-2 font-semibold text-gray-600">Milestone</th>
+                                    <th class="px-4 py-2 font-semibold text-gray-600">Planned Date</th>
+                                    <th class="px-4 py-2 font-semibold text-gray-600">Forecast Date</th>
+                                    <th class="px-4 py-2 font-semibold text-gray-600">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for m in upcoming_milestones %}
+                                    <tr class="border-b border-gray-100">
+                                        <td class="px-4 py-2 font-medium text-gray-900">{{ m.name }}</td>
+                                        <td class="px-4 py-2 text-gray-700">{{ m.planned_date|date:"Y-m-d" }}</td>
+                                        <td class="px-4 py-2 text-gray-700">{{ m.forecast_date|date:"Y-m-d"|default:"-" }}</td>
+                                        <td class="px-4 py-2 text-gray-700">{{ m.status|default:"Planned" }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+                {# Delayed Milestones #}
+                {% if delayed_milestones %}
+                    <h3 class="text-sm font-semibold text-red-700 mb-2">Delayed Milestones – Recovery Measures</h3>
+                    <ul class="list-disc pl-5 text-sm text-gray-800 space-y-1">
+                        {% for m in delayed_milestones %}
+                            <li>
+                                <span class="font-medium">{{ m.name }}</span> — planned {{ m.planned_date|date:"Y-m-d" }}; forecast {{ m.forecast_date|date:"Y-m-d"|default:"TBD" }}; recovery plan to be captured via production planning module.
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </section>
+            {# ── 5. Resources ── #}
+            <section>
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">5. Resources</h2>
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr class="text-left">
+                                <th class="px-4 py-2 font-semibold text-gray-600">Resources</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Planned</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Actual</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Variance</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Comments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in resources_rows %}
+                                <tr class="border-b border-gray-100">
+                                    <td class="px-4 py-2 font-medium text-gray-900">{{ row.resource }}</td>
+                                    <td class="px-4 py-2 text-gray-500">{{ row.planned }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ row.actual }}</td>
+                                    <td class="px-4 py-2 text-gray-500">{{ row.variance }}</td>
+                                    <td class="px-4 py-2 text-gray-500 text-xs">{{ row.comments }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            {# ── 6. Safety ── #}
+            <section id="safety">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">6. Safety</h2>
+                {# Dashboard cards #}
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5 text-sm">
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                        <p class="text-2xl font-bold text-gray-900">{{ total_risks_count }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Total Risks (window)</p>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center">
+                        <p class="text-2xl font-bold text-amber-700">{{ open_risks_count }}</p>
+                        <p class="text-xs text-amber-700 mt-1">Open Risks</p>
+                    </div>
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                        <p class="text-2xl font-bold text-red-700">{{ incidents_count }}</p>
+                        <p class="text-xs text-red-700 mt-1">Incidents</p>
+                    </div>
+                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center">
+                        <p class="text-2xl font-bold text-orange-700">{{ near_misses_count }}</p>
+                        <p class="text-xs text-orange-700 mt-1">Near Misses</p>
+                    </div>
+                </div>
+                {# Incidents register #}
+                <h3 class="text-sm font-semibold text-gray-800 mb-2">Incident Register</h3>
+                <div class="overflow-x-auto rounded-lg border border-gray-200 mb-5">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr class="text-left">
+                                <th class="px-4 py-2 font-semibold text-gray-600">Ref</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Type</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Date</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Description</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Root Cause</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Corrective Action</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Action Date</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inc in site_incidents %}
+                                <tr class="border-b border-gray-100">
+                                    <td class="px-4 py-2 font-medium text-gray-900">{{ inc.reference_number }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ inc.get_incident_type_display }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ inc.date|date:"Y-m-d" }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ inc.description }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ inc.root_cause|default:"-" }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ inc.corrective_action|default:"-" }}</td>
+                                    <td class="px-4 py-2 text-gray-700">
+                                        {% if inc.corrective_action_date %}
+                                            {{ inc.corrective_action_date|date:"Y-m-d" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-2">
+                                        {% if inc.status == "OPEN" %}
+                                            <span class="text-red-600 font-medium">Open</span>
+                                        {% else %}
+                                            <span class="text-emerald-600 font-medium">Closed</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="8" class="px-4 py-3 text-gray-400 italic">No incidents recorded in this reporting window.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {# Near-Misses register #}
+                <h3 class="text-sm font-semibold text-gray-800 mb-2">Near Miss Register</h3>
+                <div class="overflow-x-auto rounded-lg border border-gray-200 mb-5">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr class="text-left">
+                                <th class="px-4 py-2 font-semibold text-gray-600">Ref</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Date</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Description</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Root Cause</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Corrective Action</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for nm in near_misses %}
+                                <tr class="border-b border-gray-100">
+                                    <td class="px-4 py-2 font-medium text-gray-900">{{ nm.reference_number }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ nm.date|date:"Y-m-d" }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ nm.description }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ nm.root_cause|default:"-" }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ nm.corrective_action|default:"-" }}</td>
+                                    <td class="px-4 py-2">
+                                        {% if nm.status == "OPEN" %}
+                                            <span class="text-red-600 font-medium">Open</span>
+                                        {% else %}
+                                            <span class="text-emerald-600 font-medium">Closed</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="px-4 py-3 text-gray-400 italic">No near misses recorded in this reporting window.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {# Bi-weekly Safety notes #}
+                <div class="mt-5 bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-semibold text-indigo-900">Bi-Weekly Safety Notes</h3>
+                        <a href="{% url 'site_management:biweekly-safety-list' project.pk %}"
+                           class="text-xs text-indigo-700 hover:text-indigo-900">View / Add</a>
+                    </div>
+                    {% if biweekly_safety %}
+                        <p class="text-xs text-indigo-800 mb-2">
+                            Period: {{ biweekly_safety.period_start }} → {{ biweekly_safety.period_end }}
+                        </p>
+                        <div class="text-sm text-gray-800 space-y-2">
+                            <div>
+                                <div class="text-xs font-semibold text-gray-600">Key concerns</div>
+                                <div class="whitespace-pre-line">{{ biweekly_safety.key_concerns|default:"-" }}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs font-semibold text-gray-600">Notes</div>
+                                <div class="whitespace-pre-line">{{ biweekly_safety.notes|default:"-" }}</div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-sm text-indigo-900">No bi-weekly safety report captured for this reporting window yet.</p>
+                    {% endif %}
+                </div>
+                {# Safety NCRs #}
+                <h3 class="text-sm font-semibold text-gray-800 mb-2">
+                    Safety Non-Conformances
+                    <span class="ml-2 text-xs font-normal text-gray-500">{{ safety_ncrs_open_count }} open / {{ safety_ncrs_closed_count }} closed</span>
+                </h3>
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr class="text-left">
+                                <th class="px-4 py-2 font-semibold text-gray-600">Ref</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Description</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Root Cause</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Corrective Action</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Date Closed</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ncr in safety_ncrs %}
+                                <tr class="border-b border-gray-100">
+                                    <td class="px-4 py-2 font-medium text-gray-900">{{ ncr.reference_number }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ ncr.description }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ ncr.root_cause|default:"-" }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ ncr.corrective_action|default:"-" }}</td>
+                                    <td class="px-4 py-2 text-gray-700">
+                                        {% if ncr.date_closed %}
+                                            {{ ncr.date_closed|date:"Y-m-d" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-2">
+                                        {% if ncr.status == "OPEN" %}
+                                            <span class="text-red-600 font-medium">Open</span>
+                                        {% else %}
+                                            <span class="text-emerald-600 font-medium">Closed</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="px-4 py-3 text-gray-400 italic">No safety non-conformances in this reporting window.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            {# ── 7. Quality Assurance ── #}
+            <section id="quality">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">7. Quality Assurance</h2>
+                {# Quality NCR table #}
+                <h3 class="text-sm font-semibold text-gray-800 mb-2">
+                    Quality Non-Conformance Reports
+                    <span class="ml-2 text-xs font-normal text-gray-500">{{ quality_ncrs_open_count }} open / {{ quality_ncrs_closed_count }} closed</span>
+                </h3>
+                <div class="overflow-x-auto rounded-lg border border-gray-200 mb-5">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr class="text-left">
+                                <th class="px-4 py-2 font-semibold text-gray-600">Ref</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Description</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Root Cause</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Responsible Person</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Corrective Action</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Preventative Action</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Date Closed</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ncr in quality_ncrs %}
+                                <tr class="border-b border-gray-100">
+                                    <td class="px-4 py-2 font-medium text-gray-900">{{ ncr.reference_number }}</td>
+                                    <td class="px-4 py-2 text-gray-700">
+                                        <div>{{ ncr.description }}</div>
+                                        {% if ncr.defect_description %}<div class="text-xs text-gray-500 mt-0.5">{{ ncr.defect_description }}</div>{% endif %}
+                                    </td>
+                                    <td class="px-4 py-2 text-gray-700">{{ ncr.root_cause|default:"-" }}</td>
+                                    <td class="px-4 py-2 text-gray-700">
+                                        {% if ncr.responsible_person %}
+                                            {{ ncr.responsible_person.get_full_name|default:ncr.responsible_person.email }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-2 text-gray-700">{{ ncr.corrective_action|default:"-" }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ ncr.preventative_action|default:"-" }}</td>
+                                    <td class="px-4 py-2 text-gray-700">
+                                        {% if ncr.date_closed %}
+                                            {{ ncr.date_closed|date:"Y-m-d" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-2">
+                                        {% if ncr.status == "OPEN" %}
+                                            <span class="text-red-600 font-medium">Open</span>
+                                        {% else %}
+                                            <span class="text-emerald-600 font-medium">Closed</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="8" class="px-4 py-3 text-gray-400 italic">No quality NCRs in this reporting window.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {# QC Inspections (from existing QualityControl model) #}
+                <h3 class="text-sm font-semibold text-gray-800 mb-2">QC Inspections / Site Audits</h3>
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr class="text-left">
+                                <th class="px-4 py-2 font-semibold text-gray-600">Date</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Activity / QC Item</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Area / Location</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Inspector</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Result</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Rectification</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for qc in qc_records %}
+                                <tr class="border-b border-gray-100">
+                                    <td class="px-4 py-2 text-gray-700">{{ qc.date|date:"Y-m-d" }}</td>
+                                    <td class="px-4 py-2 font-medium text-gray-900">{{ qc.qc_item }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ qc.area_location }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ qc.inspector }}</td>
+                                    <td class="px-4 py-2">
+                                        {% if qc.result == "PASS" %}
+                                            <span class="text-emerald-600 font-medium">Pass</span>
+                                        {% elif qc.result == "FAIL" %}
+                                            <span class="text-red-600 font-medium">Fail</span>
+                                        {% elif qc.result == "CONDITIONAL" %}
+                                            <span class="text-amber-600 font-medium">Conditional</span>
+                                        {% else %}
+                                            <span class="text-gray-500">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-2 text-gray-700">{{ qc.rectification_needed|default:"-" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="6" class="px-4 py-3 text-gray-400 italic">No QC inspections recorded in this reporting window.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {# Bi-weekly Quality report extract #}
+                <div class="mt-5 bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-semibold text-indigo-900">Bi-Weekly Quality Summary</h3>
+                        <a href="{% url 'site_management:biweekly-quality-list' project.pk %}"
+                           class="text-xs text-indigo-700 hover:text-indigo-900">View / Add</a>
+                    </div>
+                    {% if biweekly_quality %}
+                        <p class="text-xs text-indigo-800 mb-2">
+                            Period: {{ biweekly_quality.period_start }} → {{ biweekly_quality.period_end }}
+                        </p>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3 text-sm">
+                            <div class="bg-white border border-indigo-100 rounded-lg p-3 text-center">
+                                <div class="text-lg font-bold text-indigo-900">{{ biweekly_quality.activity_inspections.count }}</div>
+                                <div class="text-xs text-indigo-700">Activity inspections</div>
+                            </div>
+                            <div class="bg-white border border-indigo-100 rounded-lg p-3 text-center">
+                                <div class="text-lg font-bold text-indigo-900">{{ biweekly_quality.material_deliveries.count }}</div>
+                                <div class="text-xs text-indigo-700">Material deliveries</div>
+                            </div>
+                            <div class="bg-white border border-indigo-100 rounded-lg p-3 text-center">
+                                <div class="text-lg font-bold text-indigo-900">{{ biweekly_quality.workmanship_records.count }}</div>
+                                <div class="text-xs text-indigo-700">Workmanship checks</div>
+                            </div>
+                            <div class="bg-white border border-indigo-100 rounded-lg p-3 text-center">
+                                <div class="text-lg font-bold text-indigo-900">{{ biweekly_quality.site_audits.count }}</div>
+                                <div class="text-xs text-indigo-700">Site audits</div>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-800">
+                            <div class="text-xs font-semibold text-gray-600 mb-1">Notes</div>
+                            <div class="whitespace-pre-line">{{ biweekly_quality.notes|default:"-" }}</div>
+                        </div>
+                    {% else %}
+                        <p class="text-sm text-indigo-900">No bi-weekly quality report captured for this reporting window yet.</p>
+                    {% endif %}
+                </div>
+            </section>
+            {# ── 8. Contractual Matters ── #}
+            <section>
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">8. Contractual Matters</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4 text-sm">
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                        <p class="text-2xl font-bold text-gray-900">{{ variations|length }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Variations (Period)</p>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                        <p class="text-2xl font-bold text-gray-900">{{ all_pending_variations|length }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Pending All Time</p>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                        <p class="text-2xl font-bold text-gray-900">{{ instructions|length }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Instructions (Period)</p>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                        <p class="text-2xl font-bold text-gray-900">{{ outstanding_responses|length }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Outstanding Responses</p>
+                    </div>
+                </div>
+                <ul class="list-disc pl-5 text-sm text-gray-800 space-y-1">
+                    <li>Compensation events notified: {{ variations|length }} this period / {{ all_variations|length }} total</li>
+                    <li>Pending variations: {{ all_pending_variations|length }}</li>
+                    <li>Instructions received: {{ instructions|length }}</li>
+                    <li>Outstanding responses: {{ outstanding_responses|length }}</li>
+                </ul>
+            </section>
+            {# ── 9. Open Risks (All Time) ── #}
+            <section id="all-open-risks">
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">9. Open Risks (All Time - Not Period Specific)</h2>
+                <div class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p class="text-sm text-amber-900">
+                        <span class="font-semibold">Note:</span> This section shows all open risks regardless of reporting period to ensure complete visibility of project risk exposure.
+                    </p>
+                </div>
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr class="text-left">
+                                <th class="px-4 py-2 font-semibold text-gray-600">Risk ID</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Description</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Owner</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Status</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Cost Impact</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Mitigation Action</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">Date Raised</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in all_open_risks %}
+                                <tr class="border-b border-gray-100">
+                                    <td class="px-4 py-2 font-medium text-gray-900">{{ r.reference_number }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ r.description }}</td>
+                                    <td class="px-4 py-2 text-gray-700">
+                                        {% if r.raised_by %}
+                                            {{ r.raised_by.get_full_name|default:r.raised_by.email }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-2 text-gray-700">{{ r.status }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ r.cost_impact|intcomma|default:"-" }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ r.mitigation_action|default:"-" }}</td>
+                                    <td class="px-4 py-2 text-gray-700">{{ r.date|date:"Y-m-d"|default:"-" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="7" class="px-4 py-3 text-gray-400 italic">No open risks found.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            {# ── 10. Financial Summary ── #}
+            <section>
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">10. Financial Summary</h2>
+                {# Summary cards #}
+                {% if financial_summary %}
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <p class="text-xs uppercase tracking-wide text-blue-600">Contract Value</p>
+                            <p class="text-2xl font-bold text-blue-900">{{ financial_summary.contract_value|intcomma }}</p>
+                        </div>
+                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                            <p class="text-xs uppercase tracking-wide text-purple-600">Total Variations</p>
+                            <p class="text-2xl font-bold text-purple-900">{{ financial_summary.all_variants_total|intcomma }}</p>
+                            <p class="text-xs text-purple-700 mt-1">
+                                {{ financial_summary.variations_count }} variations ({{ financial_summary.approved_count }} approved, {{ financial_summary.rejected_count }} rejected, {{ financial_summary.pending_count }} pending)
+                            </p>
+                        </div>
+                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                            <p class="text-xs uppercase tracking-wide text-amber-600">Forecast Completion</p>
+                            <p class="text-lg font-bold text-amber-900">{{ financial_summary.forecast_completion|default:"-" }}</p>
+                            <p class="text-xs text-amber-700 mt-1">Actual: {{ financial_summary.actual_completion|date:"Y-m-d"|default:"-" }}</p>
+                        </div>
+                    </div>
+                    {# Financial breakdown #}
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm space-y-2">
+                        <div class="flex justify-between items-center border-b border-gray-200 pb-2">
+                            <span class="font-semibold text-gray-900">Contract Value (Base)</span>
+                            <span class="font-semibold text-gray-900">{{ financial_summary.contract_value|intcomma }}</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-gray-200 pb-2">
+                            <span class="text-gray-700">Total Variations Notified</span>
+                            <span class="text-gray-700">{{ financial_summary.all_variants_total|intcomma }}</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-gray-200 pb-2 font-semibold">
+                            <span class="text-gray-900">Adjusted Contract Value</span>
+                            <span class="text-gray-900">{{ financial_summary.contract_value|add:financial_summary.all_variants_total|intcomma }}</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-500 px-0 py-1">
+                            <span>Breakdown: {{ financial_summary.approved_count }} Approved | {{ financial_summary.rejected_count }} Rejected | {{ financial_summary.pending_count }} Pending</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-500 px-0 pt-1">
+                            <span>Claims This Reporting Period: {{ claims_value|intcomma }}</span>
+                        </div>
+                    </div>
+                {% endif %}
+            </section>
+            {# ── 11. Appendices ── #}
+            <section>
+                <h2 class="text-lg font-semibold text-gray-900 mb-3">11. Appendices</h2>
+                <div class="space-y-6">
+                    {% for group in appendix_groups %}
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800 mb-2">{{ group.title }}</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                {% for link in group.links %}
+                                    <a href="{{ link.url }}"
+                                       class="border border-gray-200 rounded-lg p-3 bg-white text-indigo-700 hover:text-indigo-900 hover:border-indigo-300">
+                                        {{ link.label }}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+    </div>
+{% endblock content %}

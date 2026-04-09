@@ -3,8 +3,10 @@ from django.contrib import admin
 from app.SiteManagement.models import (
     RFI,
     EarlyWarning,
+    Incident,
     LabourLog,
     Meeting,
+    NonConformance,
     SiteInstruction,
     SkillType,
 )
@@ -111,3 +113,34 @@ class SkillTypeAdmin(admin.ModelAdmin):
     list_display = ["project", "name", "hourly_rate"]
     list_filter = ["project"]
     search_fields = ["name"]
+
+
+@admin.register(Incident)
+class IncidentAdmin(admin.ModelAdmin):
+    list_display = [
+        "reference_number",
+        "project",
+        "incident_type",
+        "date",
+        "location",
+        "reported_by",
+        "status",
+    ]
+    list_filter = ["incident_type", "status", "project"]
+    search_fields = ["reference_number", "description", "location"]
+    readonly_fields = ["reference_number", "date_closed"]
+
+
+@admin.register(NonConformance)
+class NonConformanceAdmin(admin.ModelAdmin):
+    list_display = [
+        "reference_number",
+        "project",
+        "ncr_type",
+        "date",
+        "responsible_person",
+        "status",
+    ]
+    list_filter = ["ncr_type", "status", "project"]
+    search_fields = ["reference_number", "description", "defect_description"]
+    readonly_fields = ["reference_number", "date", "date_closed"]
