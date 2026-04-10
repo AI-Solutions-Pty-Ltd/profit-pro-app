@@ -17,6 +17,10 @@ def material_entity_invoice_path(instance, filename):
 class BaseProjectEntity(BaseModel):
     """Abstract base model for all project-scoped entities."""
 
+    class ExpenseCode(models.TextChoices):
+        OPEX = "OPEX", "Operating Expenses"
+        COS = "COS", "Cost of Sales"
+
     project = models.ForeignKey(
         "Project.Project",
         on_delete=models.CASCADE,
@@ -38,6 +42,12 @@ class BaseProjectEntity(BaseModel):
     )
     rate = models.DecimalField(
         max_digits=12, decimal_places=2, default=0, help_text="Rate per unit"
+    )
+    expense_code = models.CharField(
+        max_length=20,
+        choices=ExpenseCode.choices,
+        default=ExpenseCode.COS,
+        help_text="Accounting classification",
     )
     description = models.TextField(blank=True, help_text="General description")
 
@@ -185,17 +195,13 @@ class SubcontractorEntity(BaseProjectEntity):
 class OverheadEntity(BaseProjectEntity):
     """Overhead entity definition."""
 
-    class ExpenseCode(models.TextChoices):
-        OPEX = "OPEX", "Operating Expenses"
-        COS = "COS", "Cost of Sales"
-
     category = models.CharField(
         max_length=100, blank=True, help_text="Overhead category (e.g., Office, Site)"
     )
     expense_code = models.CharField(
         max_length=20,
-        choices=ExpenseCode.choices,
-        default=ExpenseCode.OPEX,
+        choices=BaseProjectEntity.ExpenseCode.choices,
+        default=BaseProjectEntity.ExpenseCode.OPEX,
         help_text="Accounting classification",
     )
 
