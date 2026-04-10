@@ -10,6 +10,7 @@ class SubcontractorCostTrackerListView(ProfitabilityMixin, ListView):
     model = SubcontractorCostTracker
     template_name = "profitability/subcontractor/list.html"
     context_object_name = "logs"
+    auto_import_type = "subcontractor"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

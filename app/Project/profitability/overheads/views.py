@@ -10,6 +10,7 @@ class OverheadCostTrackerListView(ProfitabilityMixin, ListView):
     model = OverheadCostTracker
     template_name = "profitability/overheads/list.html"
     context_object_name = "logs"
+    auto_import_type = "overhead"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

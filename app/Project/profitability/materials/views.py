@@ -10,6 +10,7 @@ class MaterialCostTrackerListView(ProfitabilityMixin, ListView):
     model = MaterialCostTracker
     template_name = "profitability/materials/list.html"
     context_object_name = "logs"
+    auto_import_type = "material"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

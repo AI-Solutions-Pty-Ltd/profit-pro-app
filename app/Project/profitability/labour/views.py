@@ -10,6 +10,7 @@ class LabourCostTrackerListView(ProfitabilityMixin, ListView):
     model = LabourCostTracker
     template_name = "profitability/labour/list.html"
     context_object_name = "logs"
+    auto_import_type = "labour"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
