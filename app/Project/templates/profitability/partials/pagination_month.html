@@ -1,19 +1,19 @@
-<div class="flex items-center space-x-2 bg-white rounded-lg border border-gray-200 shadow-sm p-1">
+<div class="flex items-center p-1 space-x-2 bg-white rounded-lg border border-gray-200 shadow-sm">
     <!-- Prev Month -->
     <a href="?month={{ prev_month }}&year={{ prev_year }}"
-       class="p-2 text-gray-500 rounded-md hover:bg-gray-100 hover:text-indigo-600 transition-colors"
+       class="p-2 text-gray-500 rounded-md transition-colors hover:bg-gray-100 hover:text-indigo-600"
        title="Previous Month">{% heroicon_outline "chevron-left" size="18" %}</a>
     <!-- Current Display -->
     <div class="px-4 py-1 flex flex-col items-center min-w-[140px]">
-        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">{{ display_date|date:"Y" }}</span>
+        <span class="text-xs font-bold tracking-widest text-gray-400 uppercase">{{ display_date|date:"Y" }}</span>
         <span class="text-sm font-bold text-gray-900 border-none">{{ display_date|date:"F" }}</span>
     </div>
     <!-- Next Month -->
     <a href="?month={{ next_month }}&year={{ next_year }}"
-       class="p-2 text-gray-500 rounded-md hover:bg-gray-100 hover:text-indigo-600 transition-colors"
+       class="p-2 text-gray-500 rounded-md transition-colors hover:bg-gray-100 hover:text-indigo-600"
        title="Next Month">{% heroicon_outline "chevron-right" size="18" %}</a>
     <!-- Reset to Today (Optional but helpful) -->
     <a href="?"
-       class="p-2 text-gray-400 rounded-md hover:bg-gray-100 hover:text-gray-600 transition-colors border-l border-gray-100 ml-1"
+       class="p-2 ml-1 text-gray-400 rounded-md border-l border-gray-100 transition-colors hover:bg-gray-100 hover:text-gray-600"
        title="Current Month">{% heroicon_outline "calendar" size="16" %}</a>
 </div>

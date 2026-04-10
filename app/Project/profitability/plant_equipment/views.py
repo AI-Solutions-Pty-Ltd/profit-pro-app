@@ -51,7 +51,6 @@ class PlantCostTrackerListView(ProfitabilityMixin, ListView):
 
         return context
 
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from decimal import Decimal
