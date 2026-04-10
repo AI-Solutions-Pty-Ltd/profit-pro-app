@@ -38,7 +38,7 @@ class FinancialBaseView(ProfitabilityMixin, TemplateView):
         today = date.today()
 
         # Defaults
-        default_end_date = today.replace(day=1) - timedelta(days=1)
+        default_end_date = today
         default_start_date = (
             project.start_date if project.start_date else date(today.year, 1, 1)
         )
@@ -89,14 +89,25 @@ class FinancialBaseView(ProfitabilityMixin, TemplateView):
         project = self.project
 
         # --- REVENUE ---
-        actual_revenue_to_date = project.total_certified_to_date
+        # Sum of actual transactions in APPROVED certificates up to end_date
+        actual_revenue_to_date = (
+            ActualTransaction.objects.filter(
+                line_item__project=project,
+                payment_certificate__status=PaymentCertificate.Status.APPROVED,
+                payment_certificate__approved_on__date__lte=end_date,
+            ).aggregate(total=Sum("total_price"))["total"]
+            or Decimal("0.00")
+        )
 
         this_month_start = date.today().replace(day=1)
-        actual_revenue_this_month = ActualTransaction.objects.filter(
-            line_item__project=project,
-            payment_certificate__status=PaymentCertificate.Status.APPROVED,
-            payment_certificate__approved_on__gte=this_month_start,
-        ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
+        actual_revenue_this_month = (
+            ActualTransaction.objects.filter(
+                line_item__project=project,
+                payment_certificate__status=PaymentCertificate.Status.APPROVED,
+                payment_certificate__approved_on__gte=this_month_start,
+            ).aggregate(total=Sum("total_price"))["total"]
+            or Decimal("0.00")
+        )
 
         planned_revenue_to_date = BaselineCashflow.objects.filter(
             project=project,
@@ -109,80 +120,56 @@ class FinancialBaseView(ProfitabilityMixin, TemplateView):
             status=CashflowForecast.Status.APPROVED,
         ).aggregate(total=Sum("forecast_value"))["total"] or Decimal("0.00")
 
-        # --- COST OF SALES (COGS) ---
-        material_actual = (
-            MaterialCostTracker.objects.filter(
-                project=project, date__lte=end_date
-            ).aggregate(total=Sum(F("quantity") * F("rate")))["total"]
-            or 0
-        )
-        labour_actual = (
-            LabourCostTracker.objects.filter(
-                project=project, date__lte=end_date
-            ).aggregate(total=Sum(F("amount_of_days") * F("salary")))["total"]
-            or 0
-        )
-        subcon_actual = (
-            SubcontractorCostTracker.objects.filter(
-                project=project, date__lte=end_date
-            ).aggregate(total=Sum(F("amount_of_days") * F("rate")))["total"]
-            or 0
-        )
-        plant_actual = (
-            PlantCostTracker.objects.filter(
-                project=project, date__lte=end_date
-            ).aggregate(total=Sum(F("usage_hours") * F("hourly_rate")))["total"]
-            or 0
-        )
+        # --- COST CALCULATIONS (SEGMENTED BY COS/OPEX) ---
+        from app.Project.models.entity_definitions import BaseProjectEntity
 
-        actual_cogs_to_date = (
-            Decimal(material_actual)
-            + Decimal(labour_actual)
-            + Decimal(subcon_actual)
-            + Decimal(plant_actual)
-        )
+        COS = BaseProjectEntity.ExpenseCode.COS
+        OPEX = BaseProjectEntity.ExpenseCode.OPEX
 
-        material_month = (
-            MaterialCostTracker.objects.filter(
-                project=project, date__gte=this_month_start
-            ).aggregate(total=Sum(F("quantity") * F("rate")))["total"]
-            or 0
-        )
-        labour_month = (
-            LabourCostTracker.objects.filter(
-                project=project, date__gte=this_month_start
-            ).aggregate(total=Sum(F("amount_of_days") * F("salary")))["total"]
-            or 0
-        )
-        subcon_month = (
-            SubcontractorCostTracker.objects.filter(
-                project=project, date__gte=this_month_start
-            ).aggregate(total=Sum(F("amount_of_days") * F("rate")))["total"]
-            or 0
-        )
-        plant_month = (
-            PlantCostTracker.objects.filter(
-                project=project, date__gte=this_month_start
-            ).aggregate(total=Sum(F("usage_hours") * F("hourly_rate")))["total"]
-            or 0
-        )
+        def get_tracker_totals(start=None, end=None, code=COS):
+            """Internal helper to sum costs from all trackers for a given classification."""
+            filters = {"project": project}
+            if start:
+                filters["date__gte"] = start
+            if end:
+                filters["date__lte"] = end
 
-        actual_cogs_this_month = (
-            Decimal(material_month)
-            + Decimal(labour_month)
-            + Decimal(subcon_month)
-            + Decimal(plant_month)
-        )
+            mat = (
+                MaterialCostTracker.objects.filter(
+                    **filters, material_entity__expense_code=code
+                ).aggregate(total=Sum(F("quantity") * F("rate")))["total"]
+                or 0
+            )
+            lab = (
+                LabourCostTracker.objects.filter(
+                    **filters, labour_entity__expense_code=code
+                ).aggregate(total=Sum(F("amount_of_days") * F("salary")))["total"]
+                or 0
+            )
+            sub = (
+                SubcontractorCostTracker.objects.filter(
+                    **filters, subcontractor_entity__expense_code=code
+                ).aggregate(total=Sum(F("amount_of_days") * F("rate")))["total"]
+                or 0
+            )
+            plt = (
+                PlantCostTracker.objects.filter(
+                    **filters, plant_entity__expense_code=code
+                ).aggregate(total=Sum(F("usage_hours") * F("hourly_rate")))["total"]
+                or 0
+            )
+            ovh = (
+                OverheadCostTracker.objects.filter(
+                    **filters, overhead_entity__expense_code=code
+                ).aggregate(total=Sum(F("amount_of_days") * F("rate")))["total"]
+                or 0
+            )
+            return Decimal(str(mat)) + Decimal(str(lab)) + Decimal(str(sub)) + Decimal(str(plt)) + Decimal(str(ovh))
 
-        planned_cogs_to_date = planned_revenue_to_date * Decimal("0.60")
+        # 1. Totals to Date
+        actual_cogs_to_date = get_tracker_totals(end=end_date, code=COS)
+        actual_opex_trackers_to_date = get_tracker_totals(end=end_date, code=OPEX)
 
-        # --- OPERATING EXPENSES (OPEX) ---
-        overhead_tracker_actual = (
-            OverheadCostTracker.objects.filter(
-                project=project, date__lte=end_date
-            ).aggregate(total=Sum(F("amount_of_days") * F("rate")))["total"]
-            or 0
-        )
         journal_overhead_actual = (
             JournalEntry.objects.filter(
                 project=project,
@@ -191,17 +178,16 @@ class FinancialBaseView(ProfitabilityMixin, TemplateView):
             ).aggregate(total=Sum("amount"))["total"]
             or 0
         )
-
-        actual_opex_to_date = Decimal(overhead_tracker_actual) + Decimal(
-            journal_overhead_actual
+        actual_opex_to_date = actual_opex_trackers_to_date + Decimal(
+            str(journal_overhead_actual)
         )
 
-        overhead_tracker_month = (
-            OverheadCostTracker.objects.filter(
-                project=project, date__gte=this_month_start
-            ).aggregate(total=Sum(F("amount_of_days") * F("rate")))["total"]
-            or 0
+        # 2. This Month Totals
+        actual_cogs_this_month = get_tracker_totals(start=this_month_start, code=COS)
+        actual_opex_trackers_month = get_tracker_totals(
+            start=this_month_start, code=OPEX
         )
+
         journal_overhead_month = (
             JournalEntry.objects.filter(
                 project=project,
@@ -210,11 +196,11 @@ class FinancialBaseView(ProfitabilityMixin, TemplateView):
             ).aggregate(total=Sum("amount"))["total"]
             or 0
         )
-
-        actual_opex_this_month = Decimal(overhead_tracker_month) + Decimal(
-            journal_overhead_month
+        actual_opex_this_month = actual_opex_trackers_month + Decimal(
+            str(journal_overhead_month)
         )
 
+        planned_cogs_to_date = planned_revenue_to_date * Decimal("0.60")
         planned_opex_to_date = planned_revenue_to_date * Decimal("0.12")
 
         # --- CALCULATIONS ---
@@ -360,9 +346,9 @@ class FinancialPerformanceView(FinancialBaseView):
             {"label": "Revenue", "description": "Certified to date - Cumulative"},
             {
                 "label": "COGS",
-                "description": "Material + Labour + Subcontractor + Plant trackers",
+                "description": "All tracker items classified as 'Cost of Sales' (including Labour, Materials, etc.)",
             },
-            {"label": "OpEx", "description": "Overhead tracker + Journal Entries"},
+            {"label": "OpEx", "description": "All tracker items classified as 'Operating Expense' + Journal Overheads"},
             {
                 "label": "Planned",
                 "description": "Calculated from baseline assumptions (60% COGS, 12% OpEx)",
@@ -440,12 +426,17 @@ class FinancialPerformanceDataView(ProfitabilityMixin, TemplateView):
         cost_actual = []
         cost_planned = []
         profit_actual = []
+        gross_profit_actual = []  # Added
+        opex_actual = []          # Added
+
+        from app.Project.models.entity_definitions import BaseProjectEntity
+        COS_CODE = BaseProjectEntity.ExpenseCode.COS
+        OPEX_CODE = BaseProjectEntity.ExpenseCode.OPEX
 
         for m_start in months:
             m_end = (m_start + relativedelta(months=1)) - timedelta(days=1)
 
             # --- Actual Revenue ---
-            # Sum of actual transactions in APPROVED certificates in this month
             rev_act = ActualTransaction.objects.filter(
                 line_item__project=project,
                 payment_certificate__status=PaymentCertificate.Status.APPROVED,
@@ -459,73 +450,101 @@ class FinancialPerformanceDataView(ProfitabilityMixin, TemplateView):
             ).aggregate(total=Sum("value"))["total"] or Decimal("0.00")
             revenue_planned.append(float(rev_plan))
 
-            # --- Actual Cost (Sum of all trackers) ---
-            cost_m = (
-                MaterialCostTracker.objects.filter(
-                    project=project, date__range=(m_start, m_end)
-                ).aggregate(total=Sum(F("quantity") * F("rate")))["total"]
-                or 0
+            # --- Actual Cost (COS only for comparison with Planned COS) ---
+            def get_m_total(model, attr, start, end, code, field1, field2):
+                filters = {
+                    "project": project,
+                    "date__range": (start, end),
+                    f"{attr}__expense_code": code,
+                }
+                return (
+                    model.objects.filter(**filters).aggregate(
+                        total=Sum(F(field1) * F(field2))
+                    )["total"]
+                    or 0
+                )
+
+            c_mat = get_m_total(
+                MaterialCostTracker, "material_entity", m_start, m_end, COS_CODE, "quantity", "rate"
             )
-            cost_l = (
-                LabourCostTracker.objects.filter(
-                    project=project, date__range=(m_start, m_end)
-                ).aggregate(total=Sum(F("amount_of_days") * F("salary")))["total"]
-                or 0
+            c_lab = get_m_total(
+                LabourCostTracker, "labour_entity", m_start, m_end, COS_CODE, "amount_of_days", "salary"
             )
-            cost_s = (
-                SubcontractorCostTracker.objects.filter(
-                    project=project, date__range=(m_start, m_end)
-                ).aggregate(total=Sum(F("amount_of_days") * F("rate")))["total"]
-                or 0
+            c_sub = get_m_total(
+                SubcontractorCostTracker, "subcontractor_entity", m_start, m_end, COS_CODE, "amount_of_days", "rate"
             )
-            cost_p = (
-                PlantCostTracker.objects.filter(
-                    project=project, date__range=(m_start, m_end)
-                ).aggregate(total=Sum(F("usage_hours") * F("hourly_rate")))["total"]
-                or 0
+            c_plt = get_m_total(
+                PlantCostTracker, "plant_entity", m_start, m_end, COS_CODE, "usage_hours", "hourly_rate"
             )
-            total_cost_m = Decimal(str(cost_m + cost_l + cost_s + cost_p))
-            cost_actual.append(float(total_cost_m))
+            c_ovh = get_m_total(
+                OverheadCostTracker, "overhead_entity", m_start, m_end, COS_CODE, "amount_of_days", "rate"
+            )
+
+            total_cos_m = Decimal(str(c_mat + c_lab + c_sub + c_plt + c_ovh))
+            cost_actual.append(float(total_cos_m))
 
             # --- Planned Cost (Assumption: 60% of planned revenue) ---
             cost_plan = rev_plan * Decimal("0.60")
             cost_planned.append(float(cost_plan))
 
-            # --- Monthly Profit ---
-            profit_actual.append(float(rev_act - total_cost_m))
+            # --- Monthly Profit (Revenue - Total Cost [COS + OPEX]) ---
+            o_mat = get_m_total(
+                MaterialCostTracker, "material_entity", m_start, m_end, OPEX_CODE, "quantity", "rate"
+            )
+            o_lab = get_m_total(
+                LabourCostTracker, "labour_entity", m_start, m_end, OPEX_CODE, "amount_of_days", "salary"
+            )
+            o_sub = get_m_total(
+                SubcontractorCostTracker, "subcontractor_entity", m_start, m_end, OPEX_CODE, "amount_of_days", "rate"
+            )
+            o_plt = get_m_total(
+                PlantCostTracker, "plant_entity", m_start, m_end, OPEX_CODE, "usage_hours", "hourly_rate"
+            )
+            o_ovh = get_m_total(
+                OverheadCostTracker, "overhead_entity", m_start, m_end, OPEX_CODE, "amount_of_days", "rate"
+            )
+            o_journal = (
+                JournalEntry.objects.filter(
+                    project=project,
+                    category=JournalEntry.Category.OVERHEAD,
+                    date__range=(m_start, m_end),
+                ).aggregate(total=Sum("amount"))["total"]
+                or 0
+            )
+
+            total_opex_m = Decimal(str(o_mat + o_lab + o_sub + o_plt + o_ovh + o_journal))
+            
+            gross_profit_actual.append(float(rev_act - total_cos_m))
+            opex_actual.append(float(total_opex_m))
+            profit_actual.append(float(rev_act - total_cos_m - total_opex_m))
 
         # 3. Overall Totals for Breakdowns (Current Project Total)
-        total_materials = (
-            MaterialCostTracker.objects.filter(project=project).aggregate(
-                total=Sum(F("quantity") * F("rate"))
-            )["total"]
-            or 0
-        )
-        total_labour = (
-            LabourCostTracker.objects.filter(project=project).aggregate(
-                total=Sum(F("amount_of_days") * F("salary"))
-            )["total"]
-            or 0
-        )
-        total_subcon = (
-            SubcontractorCostTracker.objects.filter(project=project).aggregate(
-                total=Sum(F("amount_of_days") * F("rate"))
-            )["total"]
-            or 0
-        )
-        total_plant = (
-            PlantCostTracker.objects.filter(project=project).aggregate(
-                total=Sum(F("usage_hours") * F("hourly_rate"))
-            )["total"]
-            or 0
-        )
+        def get_total_breakdown(source, field1, field2):
+            """Helper to sum costs from either a model class or a pre-filtered queryset."""
+            if hasattr(source, "_default_manager"):
+                qs = source.objects.filter(project=project)
+            else:
+                qs = source # It's already a queryset
+            return (
+                qs.aggregate(total=Sum(F(field1) * F(field2)))["total"]
+                or 0
+            )
 
-        total_overheads = (
-            OverheadCostTracker.objects.filter(project=project).aggregate(
-                total=Sum(F("amount_of_days") * F("rate"))
-            )["total"]
-            or 0
-        )
+        total_materials = get_total_breakdown(MaterialCostTracker, "quantity", "rate")
+        total_labour = get_total_breakdown(LabourCostTracker, "amount_of_days", "salary")
+        total_subcon = get_total_breakdown(SubcontractorCostTracker, "amount_of_days", "rate")
+        total_plant = get_total_breakdown(PlantCostTracker, "usage_hours", "hourly_rate")
+        total_overheads_all = get_total_breakdown(OverheadCostTracker, "amount_of_days", "rate")
+
+        # OPEX specifically (Overheads + Journals + Any tracker items marked OPEX)
+        o_mat_total = get_total_breakdown(MaterialCostTracker.objects.filter(project=project, material_entity__expense_code=OPEX_CODE), "quantity", "rate")
+        o_lab_total = get_total_breakdown(LabourCostTracker.objects.filter(project=project, labour_entity__expense_code=OPEX_CODE), "amount_of_days", "salary")
+        o_sub_total = get_total_breakdown(SubcontractorCostTracker.objects.filter(project=project, subcontractor_entity__expense_code=OPEX_CODE), "amount_of_days", "rate")
+        o_plt_total = get_total_breakdown(PlantCostTracker.objects.filter(project=project, plant_entity__expense_code=OPEX_CODE), "usage_hours", "hourly_rate")
+        o_ovh_total = get_total_breakdown(OverheadCostTracker.objects.filter(project=project, overhead_entity__expense_code=OPEX_CODE), "amount_of_days", "rate")
+        
+        total_opex_trackers = Decimal(str(o_mat_total + o_lab_total + o_sub_total + o_plt_total + o_ovh_total))
+        
         total_journals = (
             JournalEntry.objects.filter(
                 project=project, category=JournalEntry.Category.OVERHEAD
@@ -542,13 +561,16 @@ class FinancialPerformanceDataView(ProfitabilityMixin, TemplateView):
                     "cost_actual": cost_actual,
                     "cost_planned": cost_planned,
                     "profit_actual": profit_actual,
+                    "gross_profit_actual": gross_profit_actual,
+                    "opex_actual": opex_actual,
                     "cost_breakdown": [
                         float(total_materials),
                         float(total_labour),
                         float(total_subcon),
                         float(total_plant),
+                        float(total_overheads_all),
                     ],
-                    "opex_breakdown": [float(total_overheads), float(total_journals)],
+                    "opex_breakdown": [float(total_opex_trackers), float(total_journals)],
                 },
             }
         )

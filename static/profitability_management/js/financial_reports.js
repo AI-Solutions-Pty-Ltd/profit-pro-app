@@ -125,25 +125,51 @@ function initCharts(data) {
         }
     });
 
-    // 2. Net Profit Trend
+    // 2. Profitability Trend (Multi-series)
     const profitCtx = document.getElementById('netProfitChart').getContext('2d');
     new Chart(profitCtx, {
-        type: 'line',
+        type: 'bar',
         data: {
             labels: labels,
-            datasets: [{
-                label: 'Net Profit',
-                data: ds.profit_actual,
-                borderColor: '#10b981',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                fill: true,
-                borderWidth: 3,
-                pointRadius: 3,
-                pointBackgroundColor: '#fff',
-                pointBorderWidth: 2
-            }]
+            datasets: [
+                {
+                    label: 'Gross Profit',
+                    data: ds.gross_profit_actual,
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                    borderRadius: 4,
+                },
+                {
+                    label: 'Operating Expense',
+                    data: ds.opex_actual,
+                    backgroundColor: 'rgba(244, 63, 94, 0.7)',
+                    borderRadius: 4,
+                },
+                {
+                    label: 'Net Profit',
+                    data: ds.profit_actual,
+                    type: 'line',
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    borderWidth: 3,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#fff',
+                    pointBorderWidth: 2,
+                    tension: 0.4
+                }
+            ]
         },
-        options: commonOptions
+        options: {
+            ...commonOptions,
+            plugins: {
+                ...commonOptions.plugins,
+                tooltip: {
+                    ...commonOptions.plugins.tooltip,
+                    mode: 'index',
+                    intersect: false
+                }
+            }
+        }
     });
 
     // 3. Cost Composition (Donut)
@@ -153,10 +179,10 @@ function initCharts(data) {
     new Chart(compositionCtx, {
         type: 'doughnut',
         data: {
-            labels: ['Materials', 'Labour', 'Subcon', 'Plant'],
+            labels: ['Materials', 'Labour', 'Subcon', 'Plant', 'Overheads'],
             datasets: [{
                 data: ds.cost_breakdown,
-                backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444'],
+                backgroundColor: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
                 borderWidth: 0,
                 cutout: '75%'
             }]

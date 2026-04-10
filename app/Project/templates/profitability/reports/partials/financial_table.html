@@ -59,7 +59,7 @@
             </tr>
             
             <!-- Margins Section -->
-            <tr class="bg-gray-50/30">
+            {% comment %} <tr class="bg-gray-50/30">
                 <td colspan="5" class="px-6 py-2 text-xs font-bold text-gray-500">Efficiency Ratios / Margins</td>
             </tr>
             <tr class="transition-colors hover:bg-gray-50">
@@ -75,7 +75,7 @@
                 <td class="px-6 py-4 text-sm font-semibold text-right text-gray-400 whitespace-nowrap">{{ financial_table.np_margin.planned_to_date|floatformat:1 }}%</td>
                 <td class="px-6 py-4 text-sm font-black text-right text-indigo-600 whitespace-nowrap bg-indigo-50/30">{{ financial_table.np_margin.actual_this_month|floatformat:1 }}%</td>
                 <td class="px-6 py-4 text-sm font-black text-right text-amber-600 whitespace-nowrap bg-amber-50/30">{{ financial_table.np_margin.forecast|floatformat:1 }}%</td>
-            </tr>
+            </tr> {% endcomment %}
         </tbody>
     </table>
 </div>
