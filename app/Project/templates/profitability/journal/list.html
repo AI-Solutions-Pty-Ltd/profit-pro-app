@@ -10,80 +10,61 @@
         <div class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm">
             <div class="flex flex-col gap-4 justify-between items-start px-6 py-5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 md:flex-row">
                 <div class="flex-1">
-                    <h3 class="flex items-center text-xl font-bold text-gray-900">
-                       
-                        Journal Entries
-                    </h3>
-                    <p class="text-sm text-gray-500">
-                        General Ledger Transactions for {{ project.name }}
-                    </p>
+                    <h3 class="flex items-center text-xl font-bold text-gray-900">Journal Entries</h3>
+                    <p class="text-sm text-gray-500">General Ledger Transactions for {{ project.name }}</p>
                 </div>
                 <div class="flex flex-col gap-3 items-end">
-                   
-                     <div class="flex gap-3 items-center">
-                    <form action="{% url 'project:profitability-import-logs' project.pk %}"
-                          method="post"
-                          class="m-0">
-                        {% csrf_token %}
-                        <input type="hidden" name="import_type" value="bulk_journal">
-                        <button type="submit"
-                                title="Sync all historical cost tracker data to Journal"
-                                class="inline-flex items-center px-4 py-2 text-sm font-bold text-gray-700 bg-white rounded-lg border border-gray-300 transition-all hover:bg-gray-50 hover:shadow-md">
-                            {% heroicon_outline "arrows-right-left" class="mr-2 w-4 h-4 text-indigo-500" %}
-                            Sync Trackers
-                        </button>
-                    </form>
-                    <form action="{% url 'project:profitability-import-logs' project.pk %}"
-                          method="post"
-                          class="m-0">
-                        {% csrf_token %}
-                        <input type="hidden" name="import_type" value="certificate">
-                        <button type="submit"
-                                title="Import revenue from approved payment certificates"
-                                class="inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-indigo-600 rounded-lg transition-all hover:bg-indigo-700 hover:shadow-md">
-                            {% heroicon_outline "cloud-arrow-down" class="mr-2 w-4 h-4" %}
-                            Sync Revenue
-                        </button>
-                    </form>
-                    <a href="{% url 'project:profitability-journal-create' project.pk %}"
-                       class="inline-flex items-center px-4 py-2 text-sm font-bold text-gray-700 bg-white rounded-lg border border-gray-300 transition-all hover:bg-gray-50 hover:shadow-md active:scale-95">
-                        {% heroicon_outline "plus" class="mr-2 w-4 h-4" %}
-                        New Entry
-                    </a>
+                    <div class="flex gap-3 items-center">
+                        <form action="{% url 'project:profitability-import-logs' project.pk %}"
+                              method="post"
+                              class="m-0">
+                            {% csrf_token %}
+                            <input type="hidden" name="import_type" value="bulk_journal">
+                            <button type="submit"
+                                    title="Sync all historical cost tracker data to Journal"
+                                    class="inline-flex items-center px-4 py-2 text-sm font-bold text-gray-700 bg-white rounded-lg border border-gray-300 transition-all hover:bg-gray-50 hover:shadow-md">
+                                {% heroicon_outline "arrows-right-left" class="mr-2 w-4 h-4 text-indigo-500" %}
+                                Sync Trackers
+                            </button>
+                        </form>
+                        <form action="{% url 'project:profitability-import-logs' project.pk %}"
+                              method="post"
+                              class="m-0">
+                            {% csrf_token %}
+                            <input type="hidden" name="import_type" value="certificate">
+                            <button type="submit"
+                                    title="Import revenue from approved payment certificates"
+                                    class="inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-indigo-600 rounded-lg transition-all hover:bg-indigo-700 hover:shadow-md">
+                                {% heroicon_outline "cloud-arrow-down" class="mr-2 w-4 h-4" %}
+                                Sync Revenue
+                            </button>
+                        </form>
+                        <a href="{% url 'project:profitability-journal-create' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 text-sm font-bold text-gray-700 bg-white rounded-lg border border-gray-300 transition-all hover:bg-gray-50 hover:shadow-md active:scale-95">
+                            {% heroicon_outline "plus" class="mr-2 w-4 h-4" %}
+                            New Entry
+                        </a>
                     </div>
-                     {% include "profitability/partials/pagination_month.html" %}
+                    {% include "profitability/partials/pagination_month.html" %}
                 </div>
             </div>
-             
             <!-- Table Container -->
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead>
                         <tr class="bg-gray-50/50">
                             <th scope="col"
-                                class="px-6 py-3.5 text-sm font-bold text-left text-gray-400">
-                                Date
-                            </th>
+                                class="px-6 py-3.5 text-sm font-bold text-left text-gray-400">Date</th>
                             <th scope="col"
-                                class="px-6 py-3.5 text-sm font-bold text-left text-gray-400">
-                                Category
-                            </th>
+                                class="px-6 py-3.5 text-sm font-bold text-left text-gray-400">Category</th>
                             <th scope="col"
-                                class="px-6 py-3.5 text-sm font-bold text-left text-gray-400">
-                                Description
-                            </th>
+                                class="px-6 py-3.5 text-sm font-bold text-left text-gray-400">Description</th>
                             <th scope="col"
-                                class="px-6 py-3.5 text-sm font-bold text-right text-gray-400">
-                                Amount
-                            </th>
+                                class="px-6 py-3.5 text-sm font-bold text-right text-gray-400">Amount</th>
                             <th scope="col"
-                                class="px-6 py-3.5 text-sm font-bold text-center text-gray-400">
-                                Type
-                            </th>
+                                class="px-6 py-3.5 text-sm font-bold text-center text-gray-400">Type</th>
                             <th scope="col"
-                                class="px-6 py-3.5 text-sm font-bold text-right text-gray-400">
-                                Actions
-                            </th>
+                                class="px-6 py-3.5 text-sm font-bold text-right text-gray-400">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100">
@@ -93,9 +74,7 @@
                                     <span class="text-sm font-bold text-gray-900">{{ entry.date|date:"d M Y" }}</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 py-1 text-sm font-bold text-gray-600 bg-gray-100 rounded-md">
-                                        {{ entry.get_category_display }}
-                                    </span>
+                                    <span class="px-2 py-1 text-sm font-bold text-gray-600 bg-gray-100 rounded-md">{{ entry.get_category_display }}</span>
                                 </td>
                                 <td class="px-6 py-4 max-w-xs">
                                     <div class="text-sm text-gray-600 truncate transition-colors group-hover:text-gray-900">{{ entry.description }}</div>
