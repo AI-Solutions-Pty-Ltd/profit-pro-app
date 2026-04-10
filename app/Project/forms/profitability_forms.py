@@ -12,6 +12,7 @@ from app.Project.models import (
 
 class ProfitabilityBaseForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
+        self.project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = "post"
@@ -20,10 +21,6 @@ class ProfitabilityBaseForm(forms.ModelForm):
 
 
 class JournalEntryForm(ProfitabilityBaseForm):
-    def __init__(self, *args, **kwargs):
-        # project = kwargs.pop('project', None)
-        super().__init__(*args, **kwargs)
-
     class Meta:
         model = JournalEntry
         fields = ["date", "category", "description", "amount", "transaction_type"]
@@ -41,10 +38,11 @@ class LabourCostTrackerForm(ProfitabilityBaseForm):
         }
 
     def __init__(self, *args, **kwargs):
-        project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
-        if project:
-            self.fields["labour_entity"].queryset = project.labourentity_entities.all()  # type: ignore
+        if self.project:
+            self.fields[
+                "labour_entity"
+            ].queryset = self.project.labourentity_entities.all()  # type: ignore
 
 
 class SubcontractorCostTrackerForm(ProfitabilityBaseForm):
@@ -62,12 +60,11 @@ class SubcontractorCostTrackerForm(ProfitabilityBaseForm):
         }
 
     def __init__(self, *args, **kwargs):
-        project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
-        if project:
+        if self.project:
             self.fields[
                 "subcontractor_entity"
-            ].queryset = project.subcontractorentity_entities.all()  # type: ignore
+            ].queryset = self.project.subcontractorentity_entities.all()  # type: ignore
 
 
 class OverheadCostTrackerForm(ProfitabilityBaseForm):
@@ -79,12 +76,11 @@ class OverheadCostTrackerForm(ProfitabilityBaseForm):
         }
 
     def __init__(self, *args, **kwargs):
-        project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
-        if project:
+        if self.project:
             self.fields[
                 "overhead_entity"
-            ].queryset = project.overheadentity_entities.all()  # type: ignore
+            ].queryset = self.project.overheadentity_entities.all()  # type: ignore
 
 
 class MaterialCostTrackerForm(ProfitabilityBaseForm):
@@ -96,9 +92,8 @@ class MaterialCostTrackerForm(ProfitabilityBaseForm):
         }
 
     def __init__(self, *args, **kwargs):
-        project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
-        if project:
+        if self.project:
             self.fields[
                 "material_entity"
-            ].queryset = project.materialentity_entities.all()  # type: ignore
+            ].queryset = self.project.materialentity_entities.all()  # type: ignore

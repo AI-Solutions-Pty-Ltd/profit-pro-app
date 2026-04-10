@@ -1,38 +1,16 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from app.Project.forms.profitability_forms import JournalEntryForm
-from app.Project.models import JournalEntry, Project
-
-
-class ProfitabilityMixin(LoginRequiredMixin):
-    """Mixin for profitability submodule views scoping to project."""
-
-    project: Project
-
-    def dispatch(self, request, *args, **kwargs):
-        self.project = get_object_or_404(Project, pk=kwargs.get("project_pk"))
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_queryset(self):
-        return super().get_queryset().filter(project=self.project)  # type: ignore
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)  # type: ignore
-        context["project"] = self.project
-        return context
-
-    def form_valid(self, form):
-        form.instance.project = self.project
-        return super().form_valid(form)  # type: ignore
+from app.Project.models import JournalEntry
+from app.Project.profitability.views import ProfitabilityMixin
 
 
 class JournalEntryListView(ProfitabilityMixin, ListView):
     model = JournalEntry
     template_name = "profitability/journal/list.html"
     context_object_name = "entries"
+    auto_import_type = "certificate"
 
 
 class JournalEntryCreateView(ProfitabilityMixin, CreateView):
