@@ -66,6 +66,21 @@ urlpatterns = [
         views.MeetingDeleteView.as_view(),
         name="meeting-delete",
     ),
+    path(
+        "project/<int:project_pk>/meetings/<int:pk>/add-decision/",
+        views.MeetingAddDecisionView.as_view(),
+        name="meeting-add-decision",
+    ),
+    path(
+        "project/<int:project_pk>/meetings/<int:pk>/add-action/",
+        views.MeetingAddActionView.as_view(),
+        name="meeting-add-action",
+    ),
+    path(
+        "project/<int:project_pk>/meetings/<int:pk>/actions/<int:action_pk>/update-status/",
+        views.MeetingUpdateActionStatusView.as_view(),
+        name="meeting-update-action-status",
+    ),
     # Non-Conformance Reports (NCR)
     path(
         "project/<int:project_pk>/ncrs/",

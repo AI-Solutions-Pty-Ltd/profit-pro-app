@@ -82,6 +82,14 @@ class SiteInstruction(BaseModel):
         editable=False,
         help_text="Date this instruction was closed (auto-set)",
     )
+    source_decision = models.ForeignKey(
+        "MeetingDecision",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="linked_site_instructions",
+        help_text="Meeting decision that triggered this SI",
+    )
 
     def save(self, *args, **kwargs):
         """Auto-generate reference number and handle status timestamps."""
