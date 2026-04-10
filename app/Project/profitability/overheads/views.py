@@ -56,9 +56,12 @@ class OverheadCostTrackerListView(ProfitabilityMixin, ListView):
         context = super().get_context_data(**kwargs)
         from decimal import Decimal
 
-        from django.db.models import F, Sum
+        from django.db.models import Avg, F, Max, Min, Sum
 
-        # Entity-specific Total Cost
+        # Current monthly queryset (already filtered by self.get_queryset via ProfitabilityMixin)
+        logs_qs = self.get_queryset()
+
+        # 1. Total Monthly Cost
         context["kvi_total_cost"] = (
             self.project.overhead_cost_logs.aggregate(  # type: ignore
                 total=Sum(F("amount_of_days") * F("rate"))
