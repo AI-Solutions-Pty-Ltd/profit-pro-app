@@ -18,10 +18,16 @@
                 </p>
                 <div class="bg-gray-50 rounded-lg p-4 mb-8">
                     <ul class="space-y-2 text-sm text-gray-600">
-                        <li><span class="font-medium text-gray-900">Category:</span> {{ object.category }}</li>
-                        <li><span class="font-medium text-gray-900">Quantity:</span> {{ object.quantity }}</li>
+                        <li>
+                            <span class="font-medium text-gray-900">Category:</span> {{ object.category }}
+                        </li>
+                        <li>
+                            <span class="font-medium text-gray-900">Quantity:</span> {{ object.quantity }}
+                        </li>
                         {% if object.remarks %}
-                            <li><span class="font-medium text-gray-900">Remarks:</span> {{ object.remarks }}</li>
+                            <li>
+                                <span class="font-medium text-gray-900">Remarks:</span> {{ object.remarks }}
+                            </li>
                         {% endif %}
                     </ul>
                 </div>

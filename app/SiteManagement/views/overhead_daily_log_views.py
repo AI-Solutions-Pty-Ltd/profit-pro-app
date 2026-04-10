@@ -2,6 +2,7 @@
 
 from django.contrib import messages
 from django.forms import DateInput
+from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
@@ -145,6 +146,11 @@ class OverheadDailyLogDeleteView(OverheadDailyLogMixin, DeleteView):
             "site_management:overhead-log-list",
             kwargs={"project_pk": self.get_project().pk},
         )
+
+    def form_valid(self, form):
+        success_url = self.get_success_url()
+        self.object.soft_delete()
+        return HttpResponseRedirect(success_url)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

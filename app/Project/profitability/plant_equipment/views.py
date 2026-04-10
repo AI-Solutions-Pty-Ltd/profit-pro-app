@@ -29,10 +29,14 @@ class PlantCostTrackerListView(ProfitabilityMixin, ListView):
 
         # 2. Total Monthly Hours
         context["kvi_metric_name"] = "Total Usage Hours"
-        context["kvi_metric_value"] = logs_qs.aggregate(total=Sum("usage_hours"))["total"] or 0
+        context["kvi_metric_value"] = (
+            logs_qs.aggregate(total=Sum("usage_hours"))["total"] or 0
+        )
 
         # 3. Rate Statistics (Average, High, Low)
-        rate_stats = logs_qs.aggregate(avg=Avg("hourly_rate"), max=Max("hourly_rate"), min=Min("hourly_rate"))
+        rate_stats = logs_qs.aggregate(
+            avg=Avg("hourly_rate"), max=Max("hourly_rate"), min=Min("hourly_rate")
+        )
         context["kvi_avg_rate"] = rate_stats["avg"] or 0
         context["kvi_max_rate"] = rate_stats["max"] or 0
         context["kvi_min_rate"] = rate_stats["min"] or 0

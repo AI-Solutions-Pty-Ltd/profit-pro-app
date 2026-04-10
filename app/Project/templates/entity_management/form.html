@@ -12,7 +12,6 @@
 {% block content %}
     <div class="py-8 mx-auto max-w-4xl">
         <div class="overflow-hidden bg-white border border-gray-200 shadow sm:rounded-lg">
-            
             <!-- Form Header -->
             <div class="px-6 py-5 bg-gray-50 border-b border-gray-200">
                 <a href="{% url 'project:entity-'|add:entity_type|add:'-list' project.pk %}"
@@ -145,11 +144,9 @@
                 </form>
             </div>
         </div>
-
         {% include "entity_management/components/quick_create_unit_modal.html" %}
     </div>
 {% endblock %}
-
 {% block extra_js %}
     <script>
 // --- SEARCHABLE SELECT LOGIC ---
@@ -277,5 +274,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
-        </script>
-    {% endblock %}
+    </script>
+{% endblock %}
