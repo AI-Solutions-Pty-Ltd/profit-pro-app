@@ -35,15 +35,12 @@
             </p>
         </div>
     </div>
-
     <!-- Card 2: Volume Metric (Hours, Days, Qty) -->
     <div class="overflow-hidden relative p-6 bg-white rounded-xl border border-indigo-200 shadow-sm">
         <div class="flex justify-between items-start">
             <div>
                 <p class="text-sm font-medium text-gray-500">{{ kvi_metric_name|default:"Total Volume" }}</p>
-                <p class="mt-2 text-3xl font-bold text-gray-900">
-                    {{ kvi_metric_value|floatformat:2|intcomma|default:"0" }}
-                </p>
+                <p class="mt-2 text-3xl font-bold text-gray-900">{{ kvi_metric_value|floatformat:2|intcomma|default:"0" }}</p>
             </div>
             <div class="p-3 bg-indigo-100 rounded-xl">{% heroicon_outline "chart-bar" class="w-6 h-6 text-indigo-600" %}</div>
         </div>
@@ -52,7 +49,6 @@
             <p class="text-sm font-medium text-gray-600">{{ display_date|date:"F Y" }}</p>
         </div>
     </div>
-
     <!-- Card 3: Performance (Average, Min, Max) -->
     <div class="overflow-hidden relative p-6 bg-white rounded-xl border border-amber-200 shadow-sm">
         <div class="flex justify-between items-start">
@@ -66,15 +62,15 @@
             <div class="p-3 bg-amber-100 rounded-xl">{% heroicon_outline "receipt-percent" class="w-6 h-6 text-amber-600" %}</div>
         </div>
         <div class="mt-4 flex items-center space-x-4">
-           <div>
-               <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Lowest</p>
-               <p class="text-sm font-bold text-emerald-600">R{{ kvi_min_rate|floatformat:0|intcomma }}</p>
-           </div>
-           <div class="w-px h-8 bg-gray-200"></div>
-           <div>
-               <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Highest</p>
-               <p class="text-sm font-bold text-red-600">R{{ kvi_max_rate|floatformat:0|intcomma }}</p>
-           </div>
+            <div>
+                <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Lowest</p>
+                <p class="text-sm font-bold text-emerald-600">R{{ kvi_min_rate|floatformat:0|intcomma }}</p>
+            </div>
+            <div class="w-px h-8 bg-gray-200"></div>
+            <div>
+                <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Highest</p>
+                <p class="text-sm font-bold text-red-600">R{{ kvi_max_rate|floatformat:0|intcomma }}</p>
+            </div>
         </div>
     </div>
 </div>

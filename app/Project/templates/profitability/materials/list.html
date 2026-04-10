@@ -11,10 +11,8 @@
                 <h3 class="text-lg font-bold text-gray-900">Material Cost Tracker</h3>
                 <p class="text-sm text-gray-500">Manage and track material expenses for this project.</p>
             </div>
-            
             <div class="flex items-center space-x-3">
                 {% include "profitability/partials/pagination_month.html" %}
-
                 <form action="{% url 'project:profitability-import-logs' project.pk %}"
                       method="post"
                       class="m-0">
@@ -124,21 +122,22 @@
                     {% endfor %}
                 </tbody>
                 {% if logs %}
-                <tfoot class="bg-indigo-50/50 border-t-2 border-indigo-100">
-                    <tr>
-                        <td colspan="3" class="px-6 py-4 text-sm font-bold text-gray-900 uppercase tracking-wider">
-                            Monthly Totals
-                        </td>
-                        <td class="px-6 py-4 text-sm font-black text-right text-gray-900 whitespace-nowrap">
-                            {{ kvi_metric_value|floatformat:2|intcomma }}
-                        </td>
-                        <td class="px-6 py-4"></td>
-                        <td class="px-6 py-4 text-sm font-black text-right text-indigo-700 whitespace-nowrap">
-                            R{{ kvi_total_cost|floatformat:2|intcomma }}
-                        </td>
-                        <td class="px-6 py-4"></td>
-                    </tr>
-                </tfoot>
+                    <tfoot class="bg-indigo-50/50 border-t-2 border-indigo-100">
+                        <tr>
+                            <td colspan="3"
+                                class="px-6 py-4 text-sm font-bold text-gray-900 uppercase tracking-wider">
+                                Monthly Totals
+                            </td>
+                            <td class="px-6 py-4 text-sm font-black text-right text-gray-900 whitespace-nowrap">
+                                {{ kvi_metric_value|floatformat:2|intcomma }}
+                            </td>
+                            <td class="px-6 py-4"></td>
+                            <td class="px-6 py-4 text-sm font-black text-right text-indigo-700 whitespace-nowrap">
+                                R{{ kvi_total_cost|floatformat:2|intcomma }}
+                            </td>
+                            <td class="px-6 py-4"></td>
+                        </tr>
+                    </tfoot>
                 {% endif %}
             </table>
         </div>

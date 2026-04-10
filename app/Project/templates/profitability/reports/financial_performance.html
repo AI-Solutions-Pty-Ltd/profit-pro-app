@@ -2,11 +2,9 @@
 {% load static %}
 {% load heroicons %}
 {% load humanize %}
-
 {% block title %}
     Financial Performance - {{ project.name }} - {{ block.super }}
 {% endblock title %}
-
 {% block extra_css %}
     <style>
     .glass-card {
@@ -30,57 +28,49 @@
     }
     </style>
 {% endblock extra_css %}
-
 {% block content %}
-<div class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
-    <!-- Header Card -->
-    {% include "profitability/reports/partials/filters.html" %}
-
-    <!-- Overall Summary Section -->
-    <div class="overflow-hidden relative p-8 mb-8 text-gray-800 bg-white rounded-lg border border-gray-200 shadow-sm">
-        <div class="flex relative z-10 flex-col gap-8 items-start">
-            <div class="w-full">
-                <div class="flex justify-between items-center mb-8 space-x-5">
-                    <div class="flex flex-1 gap-2 justify-between items-center">
-                        <div class="flex-1">
-                            <h2 class="text-2xl font-bold">Financial Performance Overview</h2>
-                            <p class="mt-1 text-sm text-gray-600">Status as of {{ end_date|date:"M d, Y" }}</p>
-                        </div>
-                        {% comment %} <div class="text-right">
+    <div class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <!-- Header Card -->
+        {% include "profitability/reports/partials/filters.html" %}
+        <!-- Overall Summary Section -->
+        <div class="overflow-hidden relative p-8 mb-8 text-gray-800 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div class="flex relative z-10 flex-col gap-8 items-start">
+                <div class="w-full">
+                    <div class="flex justify-between items-center mb-8 space-x-5">
+                        <div class="flex flex-1 gap-2 justify-between items-center">
+                            <div class="flex-1">
+                                <h2 class="text-2xl font-bold">Financial Performance Overview</h2>
+                                <p class="mt-1 text-sm text-gray-600">Status as of {{ end_date|date:"M d, Y" }}</p>
+                            </div>
+                            {% comment %} <div class="text-right">
                             <div class="text-4xl font-bold tracking-tighter text-indigo-600">{{ financial_table.gp_margin.actual_to_date|floatformat:1 }}%</div>
                             <div class="mt-1 text-sm text-gray-600">GP Margin</div>
-                        </div> {% endcomment %}
-                         <a href="{% url 'project:profitability-performance-breakdown' project.pk %}" 
-               class="flex items-center text-indigo-600 transition-colors hover:text-indigo-800 f group">
-                Full Breakdown
-                {% heroicon_outline "chevron-right" size="12" class="ml-1 transition-transform group-hover:translate-x-0.5" %}
-            </a>
+                            </div> {% endcomment %}
+                            <a href="{% url 'project:profitability-performance-breakdown' project.pk %}"
+                               class="flex items-center text-indigo-600 transition-colors hover:text-indigo-800 f group">
+                                Full Breakdown
+                                {% heroicon_outline "chevron-right" size="12" class="ml-1 transition-transform group-hover:translate-x-0.5" %}
+                            </a>
+                        </div>
                     </div>
+                    <!-- Metric Tiles (KPIs) -->
+                    {% include "profitability/reports/partials/variance_analysis.html" %}
                 </div>
-
-                <!-- Metric Tiles (KPIs) -->
-                {% include "profitability/reports/partials/variance_analysis.html" %}
             </div>
         </div>
+        <!-- Charts Grid -->
+        {% include "profitability/reports/partials/charts_grid.html" %}
     </div>
-
-    <!-- Charts Grid -->
-    {% include "profitability/reports/partials/charts_grid.html" %}
-
-  
-</div>
-
 {% endblock content %}
-
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{% static 'profitability_management/js/financial_reports.js' %}"></script>
-<script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'profitability_management/js/financial_reports.js' %}"></script>
+    <script>
     function openDrillDown() {
         document.getElementById('drill-down-modal').classList.remove('hidden');
     }
     function closeDrillDown() {
         document.getElementById('drill-down-modal').classList.add('hidden');
     }
-</script>
+    </script>
 {% endblock extra_js %}

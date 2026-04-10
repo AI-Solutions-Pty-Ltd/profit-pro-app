@@ -21,11 +21,11 @@ class TestOverheadDailyLogModel:
         )
         log = OverheadDailyLogFactory(project=project, overhead_entity=entity)
 
-        assert log.id is not None
+        assert log.id is not None  # type: ignore
         assert log.project == project
         assert log.overhead_entity == entity
-        assert log.description == "Test Overhead"
-        assert log.category == "Utilities"
+        assert log.description == "Test Overhead"  # type: ignore
+        assert log.category == "Utilities"  # type: ignore
 
     def test_overhead_daily_log_sync_on_save(self):
         """Test that fields are synchronized from entity on save."""
@@ -63,7 +63,8 @@ class TestOverheadDailyLogViews:
         OverheadDailyLogFactory(project=project)
 
         url = reverse(
-            "site_management:overhead-log-list", kwargs={"project_pk": project.pk}
+            "site_management:overhead-log-list",
+            kwargs={"project_pk": project.pk},  # type: ignore
         )
         response = client.get(url)
 
@@ -79,10 +80,11 @@ class TestOverheadDailyLogViews:
         entity = OverheadEntityFactory(project=project)
 
         url = reverse(
-            "site_management:overhead-log-create", kwargs={"project_pk": project.pk}
+            "site_management:overhead-log-create",
+            kwargs={"project_pk": project.pk},  # type: ignore
         )
         data = {
-            "overhead_entity": entity.pk,
+            "overhead_entity": entity.pk,  # type: ignore
             "date": "2023-01-01",
             "quantity": "150.00",
             "remarks": "Test Remarks",
@@ -104,10 +106,10 @@ class TestOverheadDailyLogViews:
 
         url = reverse(
             "site_management:overhead-log-update",
-            kwargs={"project_pk": project.pk, "pk": log.pk},
+            kwargs={"project_pk": project.pk, "pk": log.pk},  # type: ignore
         )
         data = {
-            "overhead_entity": log.overhead_entity.pk,
+            "overhead_entity": log.overhead_entity.pk,  # type: ignore
             "date": "2023-01-01",
             "quantity": "200.00",
             "remarks": "New Remarks",
@@ -115,7 +117,7 @@ class TestOverheadDailyLogViews:
         response = client.post(url, data)
 
         assert response.status_code == 302
-        log.refresh_from_db()
+        log.refresh_from_db()  # type: ignore
         assert log.remarks == "New Remarks"
         assert log.quantity == 200
 
@@ -128,12 +130,12 @@ class TestOverheadDailyLogViews:
 
         url = reverse(
             "site_management:overhead-log-delete",
-            kwargs={"project_pk": project.pk, "pk": log.pk},
+            kwargs={"project_pk": project.pk, "pk": log.pk},  # type: ignore
         )
         response = client.post(url)
 
         assert response.status_code == 302
         # Check for soft delete - refresh_from_db fails if objects manager filters it out
         # We use all_objects to check the state
-        deleted_log = OverheadDailyLog.all_objects.get(pk=log.pk)
+        deleted_log = OverheadDailyLog.all_objects.get(pk=log.pk)  # type: ignore
         assert deleted_log.deleted is True

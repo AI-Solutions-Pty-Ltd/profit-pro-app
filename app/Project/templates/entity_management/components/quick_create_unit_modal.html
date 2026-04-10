@@ -1,17 +1,13 @@
 {% load heroicons %}
 {% load crispy_forms_tags %}
-
-<dialog id="quick-create-unit-modal" class="modal modal-bottom sm:modal-middle">
+<dialog id="quick-create-unit-modal"
+        class="modal modal-bottom sm:modal-middle">
     <div class="modal-box p-0 w-11/12 max-w-2xl bg-white border border-gray-100 shadow-2xl overflow-hidden">
         <!-- Header -->
         <div class="flex justify-between items-center px-6 py-5 bg-white border-b border-gray-100">
             <div class="flex items-center">
-                <div class="p-2 mr-3 rounded-lg bg-indigo-50 text-indigo-600">
-                    {% heroicon_outline "plus-circle" size="24" %}
-                </div>
-                <h3 class="text-xl font-bold tracking-tight text-gray-900">
-                    New Unit of Measure
-                </h3>
+                <div class="p-2 mr-3 rounded-lg bg-indigo-50 text-indigo-600">{% heroicon_outline "plus-circle" size="24" %}</div>
+                <h3 class="text-xl font-bold tracking-tight text-gray-900">New Unit of Measure</h3>
             </div>
             <form method="dialog">
                 <button class="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors bg-gray-50 hover:bg-gray-100">
@@ -19,12 +15,12 @@
                 </button>
             </form>
         </div>
-        
         <form id="quick-unit-form" onsubmit="submitQuickUnit(event)">
             {% csrf_token %}
             <!-- Scrollable Content Area -->
             <div class="px-8 py-6 space-y-5 max-h-[60vh] overflow-y-auto custom-scrollbar">
-                <div id="quick-unit-errors" class="hidden p-4 bg-red-50 rounded-xl border border-red-200 shadow-sm duration-300 animate-in slide-in-from-top-2">
+                <div id="quick-unit-errors"
+                     class="hidden p-4 bg-red-50 rounded-xl border border-red-200 shadow-sm duration-300 animate-in slide-in-from-top-2">
                     <div class="flex">
                         <div class="flex-shrink-0">{% heroicon_solid "x-circle" class="w-5 h-5 text-red-500" %}</div>
                         <div class="ml-3">
@@ -33,26 +29,29 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Shared Form Fields -->
                 <div class="p-4 bg-gray-50/50 border border-gray-100 rounded-xl">
                     {% include "unit_management/partials/unit_form_fields.html" with form=unit_form %}
                 </div>
             </div>
-            
             <!-- Footer Actions -->
             <div class="modal-action mt-0 px-8 py-5 bg-gray-50 border-t border-gray-100 flex justify-end space-x-3">
-                <button type="button" 
+                <button type="button"
                         onclick="closeQuickCreateModal()"
-                        class="btn btn-ghost bg-white border-gray-300 text-gray-700 hover:bg-gray-50">
-                    Cancel
-                </button>
-                <button type="submit" 
+                        class="btn btn-ghost bg-white border-gray-300 text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="submit"
                         id="quick-unit-submit"
                         class="btn btn-primary px-8 bg-indigo-600 hover:bg-indigo-700 border-none text-white shadow-lg shadow-indigo-200/50">
                     <span id="submit-text">Create & Select Unit</span>
                     <div id="submit-spinner" class="hidden ml-2">
-                         <svg class="w-4 h-4 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <svg class="w-4 h-4 text-white animate-spin"
+                             xmlns="http://www.w3.org/2000/svg"
+                             fill="none"
+                             viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
                     </div>
                 </button>
             </div>
@@ -62,9 +61,7 @@
         <button>close</button>
     </form>
 </dialog>
-
 {% include "unit_management/partials/unit_form_js.html" %}
-
 <script>
     let activeSelectId = null;
 
@@ -186,5 +183,3 @@
         });
     }
 </script>
-
-
