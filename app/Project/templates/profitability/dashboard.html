@@ -174,7 +174,6 @@
             </div>
             {% include "profitability/reports/partials/financial_table.html" %}
         </div>
-
         <!-- Detail Breakdown -->
         <div class="grid grid-cols-1 gap-6">
             <!-- Cost Breakdown Table (Actual vs Planned) -->
@@ -200,7 +199,7 @@
                             </td>
                             <td class="px-6 py-4 text-sm text-right text-gray-500 whitespace-nowrap">
                                 R{{ baseline.planned_labour_cost|floatformat:2|intcomma }}
-                            </td> 
+                            </td>
                             <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">
                                 R{{ actuals.labour|floatformat:2|intcomma }}
                             </td>
