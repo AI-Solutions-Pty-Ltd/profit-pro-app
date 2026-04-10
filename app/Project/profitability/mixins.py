@@ -32,9 +32,7 @@ class FinancialCalculationMixin:
 
     def get_financial_table_data(self, start_date=None, end_date=None):
         """Calculate values for the financial performance table."""
-        project = (
-            self.project
-        )  # Assumes self.project is available (from ProfitabilityMixin)
+        project = self.project  # type: ignore
 
         if not end_date:
             end_date = date.today()
@@ -283,7 +281,7 @@ class FinancialCalculationMixin:
 
     def get_monthly_category_summaries(self):
         """Calculate monthly totals for each cost category and high-level performace."""
-        project = self.project
+        project = self.project  # type: ignore
         this_month_start = date.today().replace(day=1)
 
         # Helper to get monthly total for a category
