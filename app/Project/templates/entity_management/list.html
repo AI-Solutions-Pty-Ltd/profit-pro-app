@@ -91,7 +91,7 @@
                             {% if is_material %}
                                 <th scope="col"
                                     class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                 Cost
+                                    Cost
                                 </th>
                             {% endif %}
                             <th scope="col"
@@ -137,9 +137,7 @@
                                     {% endif %}
                                 </td>
                                 {% if is_material %}
-                                    <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
-                                        {{ entity.quantity|floatformat:2|intcomma }}
-                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ entity.quantity|floatformat:2|intcomma }}</td>
                                 {% endif %}
                                 <td class="px-6 py-4 text-sm font-semibold text-gray-900 whitespace-nowrap">
                                     R {{ entity.rate|floatformat:2|intcomma }}

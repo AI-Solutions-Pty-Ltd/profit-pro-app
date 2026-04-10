@@ -304,6 +304,8 @@ class SubcontractorEntityForm(BaseEntityForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        if cleaned_data is None:
+            return cleaned_data
         start_date = cleaned_data.get("start_date")
         planned_finish = cleaned_data.get("planned_finish_date")
         actual_finish = cleaned_data.get("actual_finish_date")

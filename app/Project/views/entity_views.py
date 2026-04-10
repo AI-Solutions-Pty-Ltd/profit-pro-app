@@ -168,6 +168,10 @@ class MaterialEntityCreateView(ProjectEntityMixin, CreateView):
                 )
             return self.formset_valid(header_form, formset)
 
+        return self.render_to_response(
+            self.get_context_data(header_form=header_form, formset=formset)
+        )
+
     def formset_valid(self, header_form, formset):
         supplier = header_form.cleaned_data["supplier"]
         invoice_number = header_form.cleaned_data["invoice_number"]

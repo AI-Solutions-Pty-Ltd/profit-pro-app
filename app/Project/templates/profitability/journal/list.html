@@ -1,172 +1,186 @@
 {% extends "profitability/base_profitability.html" %}
 {% load humanize %}
 {% load heroicons %}
-
 {% block title %}
     Journal Entries - {{ project.name }} - {{ block.super }}
 {% endblock title %}
-
 {% block profitability_content %}
-<div class="space-y-6">
-    <!-- List Header Card -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="px-6 py-5 flex flex-col md:flex-row items-center justify-between bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 gap-4">
-            <div class="flex-1">
-                <h3 class="text-lg font-bold text-gray-900 flex items-center">
-                    {% heroicon_outline "book-open" class="w-5 h-5 mr-2 text-indigo-600" %}
-                    Journal Entries
-                </h3>
-                <p class="text-xs text-gray-500 mt-1 uppercase tracking-wider font-bold">General Ledger Transactions for {{ project.name }}</p>
-            </div>
-            
-            <div class="flex items-center space-x-3">
-                {% include "profitability/partials/pagination_month.html" %}
-
-                <form action="{% url 'project:profitability-import-logs' project.pk %}"
-                      method="post"
-                      class="m-0">
-                    {% csrf_token %}
-                    <input type="hidden" name="import_type" value="bulk_journal">
-                    <button type="submit"
-                            title="Sync all historical cost tracker data to Journal"
-                            class="inline-flex items-center px-4 py-2 text-sm font-bold text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 transition-all hover:shadow-md">
-                        {% heroicon_outline "arrows-right-left" class="w-4 h-4 mr-2 text-indigo-500" %}
-                        Sync Trackers
-                    </button>
-                </form>
-
-                <form action="{% url 'project:profitability-import-logs' project.pk %}"
-                      method="post"
-                      class="m-0">
-                    {% csrf_token %}
-                    <input type="hidden" name="import_type" value="certificate">
-                    <button type="submit"
-                            title="Import revenue from approved payment certificates"
-                            class="inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all hover:shadow-md">
-                        {% heroicon_outline "cloud-arrow-down" class="w-4 h-4 mr-2" %}
-                        Sync Revenue
-                    </button>
-                </form>
-
-                <a href="{% url 'project:profitability-journal-create' project.pk %}"
-                   class="inline-flex items-center px-4 py-2 text-sm font-bold text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 transition-all hover:shadow-md active:scale-95">
-                    {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}
-                    New Entry
-                </a>
-            </div>
-        </div>
-
-        <!-- Table Container -->
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead>
-                    <tr class="bg-gray-50/50">
-                        <th scope="col" class="px-6 py-3.5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Date</th>
-                        <th scope="col" class="px-6 py-3.5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Category</th>
-                        <th scope="col" class="px-6 py-3.5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Description</th>
-                        <th scope="col" class="px-6 py-3.5 text-right text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Amount</th>
-                        <th scope="col" class="px-6 py-3.5 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Type</th>
-                        <th scope="col" class="px-6 py-3.5 text-right text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-100">
-                    {% for entry in entries %}
-                        <tr class="hover:bg-indigo-50/30 transition-colors group">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm font-bold text-gray-900">{{ entry.date|date:"d M Y" }}</span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 py-1 rounded-md bg-gray-100 text-[10px] font-bold text-gray-600 uppercase">
-                                    {{ entry.get_category_display }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 max-w-xs">
-                                <div class="text-sm text-gray-600 truncate group-hover:text-gray-900 transition-colors">{{ entry.description }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right">
-                                <span class="text-sm font-black text-gray-900">R {{ entry.amount|intcomma }}</span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center">
-                                {% if entry.transaction_type == 'credit' %}
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 uppercase tracking-tighter shadow-sm border border-emerald-200">
-                                        <span class="w-1 h-1 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
-                                        {{ entry.transaction_type }}
-                                    </span>
-                                {% else %}
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 uppercase tracking-tighter shadow-sm border border-rose-200">
-                                        <span class="w-1 h-1 rounded-full bg-rose-500 mr-1.5"></span>
-                                        {{ entry.transaction_type }}
-                                    </span>
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right space-x-2">
-                                <a href="{% url 'project:profitability-journal-update' project.pk entry.pk %}"
-                                   class="inline-flex items-center p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
-                                   title="Edit Entry">
-                                    {% heroicon_outline "pencil-square" class="w-4 h-4" %}
-                                </a>
-                                <button type="button"
-                                        onclick="openDeleteModal('{% url 'project:profitability-journal-delete' project.pk entry.pk %}', '{{ entry.date|date:'d M Y'|escapejs }}', '{{ entry.description|escapejs }}')"
-                                        class="inline-flex items-center p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
-                                        title="Delete Entry">
-                                    {% heroicon_outline "trash" class="w-4 h-4" %}
-                                </button>
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="6" class="px-6 py-20 text-center">
-                                <div class="flex flex-col items-center">
-                                    <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center border border-dashed border-gray-200 mb-4">
-                                        {% heroicon_outline "document-plus" class="w-8 h-8 text-gray-300" %}
-                                    </div>
-                                    <h3 class="text-sm font-bold text-gray-900">No Journal Entries Found</h3>
-                                    <p class="text-xs text-gray-500 mt-1 max-w-[240px] leading-relaxed">Financial general ledger records help you track overheads and adjustments.</p>
-                                    <a href="{% url 'project:profitability-journal-create' project.pk %}" class="mt-4 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">Start by creating an entry &rarr;</a>
-                                </div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- Delete Confirmation Modal (Premium Styled) -->
-<div id="deleteModal" class="hidden overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
-    <div class="relative w-auto my-6 mx-auto max-w-lg">
-        <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onclick="closeDeleteModal()"></div>
-        <div class="relative flex flex-col w-full bg-white border-0 rounded-2xl shadow-2xl outline-none focus:outline-none transform transition-all scale-100">
-            <div class="p-8 text-center">
-                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-rose-50 mb-6">
-                    {% heroicon_outline "exclamation-triangle" class="h-8 w-8 text-rose-600" %}
+    <div class="space-y-6">
+        <!-- List Header Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-5 flex flex-col md:flex-row items-center justify-between bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 gap-4">
+                <div class="flex-1">
+                    <h3 class="text-lg font-bold text-gray-900 flex items-center">
+                        {% heroicon_outline "book-open" class="w-5 h-5 mr-2 text-indigo-600" %}
+                        Journal Entries
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-1 uppercase tracking-wider font-bold">
+                        General Ledger Transactions for {{ project.name }}
+                    </p>
                 </div>
-                <h3 class="text-xl font-black text-gray-900 mb-2">Delete Journal Entry?</h3>
-                <p class="text-sm text-gray-500 leading-relaxed">
-                    You're about to remove the entry from <span id="deleteReference" class="font-bold text-gray-900"></span>: 
-                    <span id="deleteName" class="italic"></span>. This action cannot be undone.
-                </p>
-
-                <div class="mt-8 flex items-center justify-center space-x-3">
-                    <button type="button" onclick="closeDeleteModal()" 
-                            class="px-6 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-all">
-                        Keep Entry
-                    </button>
-                    <form id="deleteForm" method="post" action="" class="inline-block">
+                <div class="flex items-center space-x-3">
+                    {% include "profitability/partials/pagination_month.html" %}
+                    <form action="{% url 'project:profitability-import-logs' project.pk %}"
+                          method="post"
+                          class="m-0">
                         {% csrf_token %}
-                        <button type="submit" 
-                                class="px-6 py-2.5 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-all shadow-lg shadow-rose-200">
-                            Delete Permanently
+                        <input type="hidden" name="import_type" value="bulk_journal">
+                        <button type="submit"
+                                title="Sync all historical cost tracker data to Journal"
+                                class="inline-flex items-center px-4 py-2 text-sm font-bold text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 transition-all hover:shadow-md">
+                            {% heroicon_outline "arrows-right-left" class="w-4 h-4 mr-2 text-indigo-500" %}
+                            Sync Trackers
                         </button>
                     </form>
+                    <form action="{% url 'project:profitability-import-logs' project.pk %}"
+                          method="post"
+                          class="m-0">
+                        {% csrf_token %}
+                        <input type="hidden" name="import_type" value="certificate">
+                        <button type="submit"
+                                title="Import revenue from approved payment certificates"
+                                class="inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all hover:shadow-md">
+                            {% heroicon_outline "cloud-arrow-down" class="w-4 h-4 mr-2" %}
+                            Sync Revenue
+                        </button>
+                    </form>
+                    <a href="{% url 'project:profitability-journal-create' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 text-sm font-bold text-gray-700 bg-white rounded-lg border border-gray-300 hover:bg-gray-50 transition-all hover:shadow-md active:scale-95">
+                        {% heroicon_outline "plus" class="w-4 h-4 mr-2" %}
+                        New Entry
+                    </a>
+                </div>
+            </div>
+            <!-- Table Container -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead>
+                        <tr class="bg-gray-50/50">
+                            <th scope="col"
+                                class="px-6 py-3.5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                Date
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3.5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                Category
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3.5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                Description
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3.5 text-right text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                Amount
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3.5 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                Type
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3.5 text-right text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        {% for entry in entries %}
+                            <tr class="hover:bg-indigo-50/30 transition-colors group">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-sm font-bold text-gray-900">{{ entry.date|date:"d M Y" }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 rounded-md bg-gray-100 text-[10px] font-bold text-gray-600 uppercase">
+                                        {{ entry.get_category_display }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 max-w-xs">
+                                    <div class="text-sm text-gray-600 truncate group-hover:text-gray-900 transition-colors">{{ entry.description }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right">
+                                    <span class="text-sm font-black text-gray-900">R {{ entry.amount|intcomma }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    {% if entry.transaction_type == 'credit' %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 uppercase tracking-tighter shadow-sm border border-emerald-200">
+                                            <span class="w-1 h-1 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                                            {{ entry.transaction_type }}
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 uppercase tracking-tighter shadow-sm border border-rose-200">
+                                            <span class="w-1 h-1 rounded-full bg-rose-500 mr-1.5"></span>
+                                            {{ entry.transaction_type }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right space-x-2">
+                                    <a href="{% url 'project:profitability-journal-update' project.pk entry.pk %}"
+                                       class="inline-flex items-center p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                       title="Edit Entry">{% heroicon_outline "pencil-square" class="w-4 h-4" %}</a>
+                                    <button type="button"
+                                            onclick="openDeleteModal('{% url 'project:profitability-journal-delete' project.pk entry.pk %}', '{{ entry.date|date:'d M Y'|escapejs }}', '{{ entry.description|escapejs }}')"
+                                            class="inline-flex items-center p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                                            title="Delete Entry">
+                                        {% heroicon_outline "trash" class="w-4 h-4" %}
+                                    </button>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="6" class="px-6 py-20 text-center">
+                                    <div class="flex flex-col items-center">
+                                        <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center border border-dashed border-gray-200 mb-4">
+                                            {% heroicon_outline "document-plus" class="w-8 h-8 text-gray-300" %}
+                                        </div>
+                                        <h3 class="text-sm font-bold text-gray-900">No Journal Entries Found</h3>
+                                        <p class="text-xs text-gray-500 mt-1 max-w-[240px] leading-relaxed">
+                                            Financial general ledger records help you track overheads and adjustments.
+                                        </p>
+                                        <a href="{% url 'project:profitability-journal-create' project.pk %}"
+                                           class="mt-4 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">Start by creating an entry →</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- Delete Confirmation Modal (Premium Styled) -->
+    <div id="deleteModal"
+         class="hidden overflow-x-hidden overflow-y-auto fixed inset-0 z-50 outline-none focus:outline-none">
+        <div class="relative w-auto my-6 mx-auto max-w-lg">
+            <div class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity"
+                 onclick="closeDeleteModal()"></div>
+            <div class="relative flex flex-col w-full bg-white border-0 rounded-2xl shadow-2xl outline-none focus:outline-none transform transition-all scale-100">
+                <div class="p-8 text-center">
+                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-rose-50 mb-6">
+                        {% heroicon_outline "exclamation-triangle" class="h-8 w-8 text-rose-600" %}
+                    </div>
+                    <h3 class="text-xl font-black text-gray-900 mb-2">Delete Journal Entry?</h3>
+                    <p class="text-sm text-gray-500 leading-relaxed">
+                        You're about to remove the entry from <span id="deleteReference" class="font-bold text-gray-900"></span>:
+                        <span id="deleteName" class="italic"></span>. This action cannot be undone.
+                    </p>
+                    <div class="mt-8 flex items-center justify-center space-x-3">
+                        <button type="button"
+                                onclick="closeDeleteModal()"
+                                class="px-6 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-all">
+                            Keep Entry
+                        </button>
+                        <form id="deleteForm" method="post" action="" class="inline-block">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="px-6 py-2.5 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-all shadow-lg shadow-rose-200">
+                                Delete Permanently
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<script>
+    <script>
 function openDeleteModal(url, ref, name) {
     const modal = document.getElementById('deleteModal');
     const form = document.getElementById('deleteForm');
@@ -192,5 +206,5 @@ document.addEventListener('keydown', function(event) {
         closeDeleteModal();
     }
 });
-</script>
+    </script>
 {% endblock profitability_content %}

@@ -89,7 +89,7 @@ class ProfitabilityMixin(LoginRequiredMixin):
                     context[self.context_object_name] = context["object_list"]
 
                 messages.info(
-                    self.request,
+                    self.request,  # type: ignore
                     f"Automatically synced {count} new entries from project records.",
                 )
 

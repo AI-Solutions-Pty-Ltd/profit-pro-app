@@ -18,11 +18,17 @@
                 </p>
                 <div class="bg-gray-50 rounded-lg p-4 mb-8">
                     <ul class="space-y-2 text-sm text-gray-600">
-                        <li><span class="font-medium text-gray-900">Category:</span> {{ object.get_category_display }}</li>
+                        <li>
+                            <span class="font-medium text-gray-900">Category:</span> {{ object.get_category_display }}
+                        </li>
                         {% if object.reference_unit %}
-                            <li><span class="font-medium text-gray-900">Conversion:</span> 1 {{ object.short_name }} = {{ object.conversion_factor|floatformat:4 }} {{ object.reference_unit.short_name }}</li>
+                            <li>
+                                <span class="font-medium text-gray-900">Conversion:</span> 1 {{ object.short_name }} = {{ object.conversion_factor|floatformat:4 }} {{ object.reference_unit.short_name }}
+                            </li>
                         {% else %}
-                            <li><span class="font-medium text-gray-900">Status:</span> Base Unit</li>
+                            <li>
+                                <span class="font-medium text-gray-900">Status:</span> Base Unit
+                            </li>
                         {% endif %}
                     </ul>
                 </div>

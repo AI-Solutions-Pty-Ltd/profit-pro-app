@@ -33,7 +33,9 @@ class SubcontractorCostTrackerListView(ProfitabilityMixin, ListView):
         )
 
         # 3. Rate Statistics (Average, High, Low)
-        rate_stats = logs_qs.aggregate(avg=Avg("rate"), max=Max("rate"), min=Min("rate"))
+        rate_stats = logs_qs.aggregate(
+            avg=Avg("rate"), max=Max("rate"), min=Min("rate")
+        )
         context["kvi_avg_rate"] = rate_stats["avg"] or 0
         context["kvi_max_rate"] = rate_stats["max"] or 0
         context["kvi_min_rate"] = rate_stats["min"] or 0

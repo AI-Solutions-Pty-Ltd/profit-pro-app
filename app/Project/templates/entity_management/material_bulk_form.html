@@ -133,12 +133,14 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200" id="formset-container">
                                 <!-- Empty State Row -->
-                                <tr id="empty-state-row" class="{% if formset.total_form_count > 0 %}hidden{% endif %}">
+                                <tr id="empty-state-row"
+                                    class="{% if formset.total_form_count > 0 %}hidden{% endif %}">
                                     <td colspan="7" class="px-6 py-4 text-center">
                                         <div class="flex flex-col items-center">
-                                          
                                             <h5 class="mb-1 text-sm font-bold text-gray-900">No items added yet</h5>
-                                            <p class="mx-auto max-w-xs text-xs text-gray-500">Click the <span class="font-bold text-indigo-600">Add Item</span> button above to start building your material batch.</p>
+                                            <p class="mx-auto max-w-xs text-xs text-gray-500">
+                                                Click the <span class="font-bold text-indigo-600">Add Item</span> button above to start building your material batch.
+                                            </p>
                                         </div>
                                     </td>
                                 </tr>
@@ -146,10 +148,15 @@
                                     <tr class="transition-colors form-row group hover:bg-gray-50/50">
                                         {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
                                         <td class="px-3 py-4 align-top">
-                                            <input type="text" name="{{ form.name.html_name }}" value="{{ form.name.value|default:'' }}" readonly class="px-0 w-full text-sm font-medium text-gray-900 bg-transparent border-transparent cursor-default focus:ring-0">
+                                            <input type="text"
+                                                   name="{{ form.name.html_name }}"
+                                                   value="{{ form.name.value|default:'' }}"
+                                                   readonly
+                                                   class="px-0 w-full text-sm font-medium text-gray-900 bg-transparent border-transparent cursor-default focus:ring-0">
                                         </td>
                                         <td class="px-3 py-4 align-top">
-                                            <div class="pt-1 text-xs text-gray-500 humanized-unit" data-unit-id="{{ form.unit_of_measure.value }}">
+                                            <div class="pt-1 text-xs text-gray-500 humanized-unit"
+                                                 data-unit-id="{{ form.unit_of_measure.value }}">
                                                 {% if form.instance.pk and form.instance.unit_of_measure %}
                                                     {{ form.instance.unit_of_measure.short_name }}
                                                 {% else %}
@@ -159,13 +166,15 @@
                                             <div class="hidden">{{ form.unit_of_measure }}</div>
                                         </td>
                                         <td class="px-3 py-4 align-top">
-                                            <div class="pt-1 text-sm text-gray-600 humanized-number" data-value="{{ form.quantity.value|default:'0' }}">
+                                            <div class="pt-1 text-sm text-gray-600 humanized-number"
+                                                 data-value="{{ form.quantity.value|default:'0' }}">
                                                 {{ form.quantity.value|default:'0' }}
                                             </div>
                                             <div class="hidden">{{ form.quantity }}</div>
                                         </td>
                                         <td class="px-3 py-4 align-top">
-                                            <div class="pt-1 text-sm text-gray-600 humanized-number" data-value="{{ form.rate.value|default:'0' }}">
+                                            <div class="pt-1 text-sm text-gray-600 humanized-number"
+                                                 data-value="{{ form.rate.value|default:'0' }}">
                                                 {{ form.rate.value|default:'0' }}
                                             </div>
                                             <div class="hidden">{{ form.rate }}</div>
@@ -177,11 +186,16 @@
                                         <td class="px-3 py-4 align-top">
                                             <div class="flex items-center text-sm font-bold text-gray-900">
                                                 <span class="mr-1">R</span>
-                                                <input type="text" readonly tabindex="-1" class="p-0 w-24 bg-transparent border-transparent cursor-default focus:ring-0 item-total" value="0.00">
+                                                <input type="text"
+                                                       readonly
+                                                       tabindex="-1"
+                                                       class="p-0 w-24 bg-transparent border-transparent cursor-default focus:ring-0 item-total"
+                                                       value="0.00">
                                             </div>
                                         </td>
                                         <td class="px-3 py-4 text-center align-top">
-                                            <button type="button" class="p-1 text-gray-300 rounded-full transition-colors remove-item-btn hover:text-red-500 hover:bg-red-50">
+                                            <button type="button"
+                                                    class="p-1 text-gray-300 rounded-full transition-colors remove-item-btn hover:text-red-500 hover:bg-red-50">
                                                 {% heroicon_outline "trash" size="20" %}
                                             </button>
                                             <div class="hidden">{{ form.DELETE }}</div>
@@ -196,7 +210,10 @@
                 <template id="empty-form-template">
                     <tr class="transition-colors duration-300 form-row group hover:bg-gray-50/50 animate-in fade-in slide-in-from-left-2">
                         <td class="px-3 py-4 align-top">
-                            <input type="text" name="form-__prefix__-name" readonly class="px-0 w-full text-sm font-medium text-gray-900 bg-transparent border-transparent cursor-default focus:ring-0">
+                            <input type="text"
+                                   name="form-__prefix__-name"
+                                   readonly
+                                   class="px-0 w-full text-sm font-medium text-gray-900 bg-transparent border-transparent cursor-default focus:ring-0">
                         </td>
                         <td class="px-3 py-4 align-top">
                             <div class="pt-1 text-sm text-gray-500 unit-display-shorthand"></div>
@@ -217,114 +234,116 @@
                         <td class="px-3 py-4 align-top">
                             <div class="flex items-center text-sm font-bold text-gray-900">
                                 <span class="mr-1">R</span>
-                                <input type="text" readonly tabindex="-1" class="p-0 w-24 bg-transparent border-transparent cursor-default focus:ring-0 item-total" value="0.00">
+                                <input type="text"
+                                       readonly
+                                       tabindex="-1"
+                                       class="p-0 w-24 bg-transparent border-transparent cursor-default focus:ring-0 item-total"
+                                       value="0.00">
                             </div>
                         </td>
                         <td class="px-3 py-4 text-center align-top">
-                            <button type="button" class="p-1 text-gray-300 rounded-full transition-colors remove-item-btn hover:text-red-500 hover:bg-red-50">
+                            <button type="button"
+                                    class="p-1 text-gray-300 rounded-full transition-colors remove-item-btn hover:text-red-500 hover:bg-red-50">
                                 {% heroicon_outline "trash" size="20" %}
                             </button>
-                            <div class="hidden"><input type="checkbox" name="form-__prefix__-DELETE"></div>
+                            <div class="hidden">
+                                <input type="checkbox" name="form-__prefix__-DELETE">
+                            </div>
                         </td>
                     </tr>
                 </template>
                 <!-- Form Actions -->
                 <div class="flex flex-col pt-8 mt-10 space-y-4 border-t border-gray-200">
                     <!-- Submission Validation Message -->
-                    <div id="submit-error" class="flex hidden items-center self-end p-4 text-sm font-semibold text-rose-700 bg-rose-50 rounded-lg border border-rose-100 animate-in fade-in slide-in-from-right-4">
+                    <div id="submit-error"
+                         class="flex hidden items-center self-end p-4 text-sm font-semibold text-rose-700 bg-rose-50 rounded-lg border border-rose-100 animate-in fade-in slide-in-from-right-4">
                         {% heroicon_outline "x-circle" size="20" class="mr-2" %}
                         You must add at least one material item before saving the batch.
                     </div>
-
                     <div class="flex justify-end items-center">
-                    <a href="{% url 'project:entity-material-list' project.pk %}"
-                       class="inline-flex items-center px-6 py-2 mr-4 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Discard Batch
-                    </a>
-                    <button type="submit"
-                            class="inline-flex items-center px-8 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-indigo-200">
-                        {% heroicon_outline "check-circle" size="20" class="mr-2" %}
-                        Save Batch Materials
-                    </button>
+                        <a href="{% url 'project:entity-material-list' project.pk %}"
+                           class="inline-flex items-center px-6 py-2 mr-4 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Discard Batch
+                        </a>
+                        <button type="submit"
+                                class="inline-flex items-center px-8 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-indigo-200">
+                            {% heroicon_outline "check-circle" size="20" class="mr-2" %}
+                            Save Batch Materials
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
-        <!-- Add Item Modal -->
-        <div id="item-modal" class="hidden overflow-y-auto fixed inset-0 z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <!-- Modal Wrapper with Backdrop Blur -->
-            <div class="flex justify-center items-center p-4 min-h-screen text-center sm:p-0">
-                <!-- Overlay -->
-                <div class="fixed inset-0 transition-opacity bg-gray-500/50" aria-hidden="true" id="modal-overlay"></div>
-
-                <!-- Centering Trick -->
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-                <!-- Modal Content -->
-                <div class="relative inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.15)] transform transition-all sm:my-8 sm:max-w-2xl sm:w-full border border-white/20">
-                    <div class="flex justify-between items-center px-6 py-5 bg-gray-50 border-b border-gray-200">
-                        <div>
-                             <h3 class="flex items-center text-2xl font-bold text-gray-900">
-                                    {% heroicon_outline "plus" size="28" class="mr-3 text-indigo-600" %}
-                                Add New Material Item
-                            </h3>
-                            <p class="mt-1 text-sm text-gray-600">Fill in the details below to add a new material item to the batch.</p>
-                        </div>
-                        <button type="button" class="p-2 text-white rounded-full transition-all bg-white/10 hover:bg-white/20 close-modal">
-                            {% heroicon_outline "x-mark" size="20" %}
-                        </button>
+    <!-- Add Item Modal -->
+    <div id="item-modal"
+         class="hidden overflow-y-auto fixed inset-0 z-50"
+         aria-labelledby="modal-title"
+         role="dialog"
+         aria-modal="true">
+        <!-- Modal Wrapper with Backdrop Blur -->
+        <div class="flex justify-center items-center p-4 min-h-screen text-center sm:p-0">
+            <!-- Overlay -->
+            <div class="fixed inset-0 transition-opacity bg-gray-500/50"
+                 aria-hidden="true"
+                 id="modal-overlay"></div>
+            <!-- Centering Trick -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen"
+                  aria-hidden="true">​</span>
+            <!-- Modal Content -->
+            <div class="relative inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.15)] transform transition-all sm:my-8 sm:max-w-2xl sm:w-full border border-white/20">
+                <div class="flex justify-between items-center px-6 py-5 bg-gray-50 border-b border-gray-200">
+                    <div>
+                        <h3 class="flex items-center text-2xl font-bold text-gray-900">
+                            {% heroicon_outline "plus" size="28" class="mr-3 text-indigo-600" %}
+                            Add New Material Item
+                        </h3>
+                        <p class="mt-1 text-sm text-gray-600">Fill in the details below to add a new material item to the batch.</p>
                     </div>
-                    
-                    <div class="p-8 bg-white">
-                        <div id="modal-error" class="flex hidden items-center p-4 mb-6 text-sm font-semibold text-rose-700 bg-rose-50 rounded-xl border border-rose-100">
-                            {% heroicon_outline "exclamation-triangle" size="20" class="mr-2" %}
-                            All marked fields (*) are required.
+                    <button type="button"
+                            class="p-2 text-white rounded-full transition-all bg-white/10 hover:bg-white/20 close-modal">
+                        {% heroicon_outline "x-mark" size="20" %}
+                    </button>
+                </div>
+                <div class="p-8 bg-white">
+                    <div id="modal-error"
+                         class="flex hidden items-center p-4 mb-6 text-sm font-semibold text-rose-700 bg-rose-50 rounded-xl border border-rose-100">
+                        {% heroicon_outline "exclamation-triangle" size="20" class="mr-2" %}
+                        All marked fields (*) are required.
+                    </div>
+                    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                        <div class="sm:col-span-2">{{ formset.empty_form.name|as_crispy_field }}</div>
+                        <div>{{ formset.empty_form.unit_of_measure|as_crispy_field }}</div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>{{ formset.empty_form.quantity|as_crispy_field }}</div>
+                            <div>{{ formset.empty_form.rate|as_crispy_field }}</div>
                         </div>
-
-                        <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
-                            <div class="sm:col-span-2">
-                                {{ formset.empty_form.name|as_crispy_field }}
-                            </div>
-                            
+                        <div class="sm:col-span-2">{{ formset.empty_form.description|as_crispy_field }}</div>
+                        <div class="flex justify-between items-center p-2 rounded-md border border-indigo-100 transition-colors sm:col-span-2 bg-indigo-50/50 group hover:bg-indigo-50">
                             <div>
-                                {{ formset.empty_form.unit_of_measure|as_crispy_field }}
+                                <span class="block mb-1 text-xs font-bold text-indigo-400">Live Calculation</span>
+                                <span class="text-sm font-semibold text-gray-700">Estimated Transaction Total</span>
                             </div>
-
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    {{ formset.empty_form.quantity|as_crispy_field }}
-                                </div>
-                                <div>
-                                    {{ formset.empty_form.rate|as_crispy_field }}
-                                </div>
-                            </div>
-
-                            <div class="sm:col-span-2">
-                                {{ formset.empty_form.description|as_crispy_field }}
-                            </div>
-
-                            <div class="flex justify-between items-center p-2 rounded-md border border-indigo-100 transition-colors sm:col-span-2 bg-indigo-50/50 group hover:bg-indigo-50">
-                                <div>
-                                    <span class="block mb-1 text-xs font-bold text-indigo-400">Live Calculation</span>
-                                    <span class="text-sm font-semibold text-gray-700">Estimated Transaction Total</span>
-                                </div>
-                                <span class="text-lg font-bold tabular-nums text-indigo-600" id="modal-total-display">R0.00</span>
-                            </div>
+                            <span class="text-lg font-bold tabular-nums text-indigo-600"
+                                  id="modal-total-display">R0.00</span>
                         </div>
                     </div>
-
-                    <div class="flex justify-end px-8 py-6 space-x-4 border-t border-gray-100 bg-gray-50/50">
-                        <button type="button" class="px-6 py-2.5 text-sm font-bold text-gray-500 rounded-md transition-all hover:text-gray-700 hover:bg-gray-100 close-modal">
-                            Discard
-                        </button>
-                        <button type="button" id="confirm-add-item" class="flex items-center px-10 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-md transition-all transform hover:bg-indigo-700 active:scale-95">
-                            {% heroicon_outline "plus" size="18" class="mr-2" %}
-                            Add to Batch
-                        </button>
-                    </div>
+                </div>
+                <div class="flex justify-end px-8 py-6 space-x-4 border-t border-gray-100 bg-gray-50/50">
+                    <button type="button"
+                            class="px-6 py-2.5 text-sm font-bold text-gray-500 rounded-md transition-all hover:text-gray-700 hover:bg-gray-100 close-modal">
+                        Discard
+                    </button>
+                    <button type="button"
+                            id="confirm-add-item"
+                            class="flex items-center px-10 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-md transition-all transform hover:bg-indigo-700 active:scale-95">
+                        {% heroicon_outline "plus" size="18" class="mr-2" %}
+                        Add to Batch
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
     <script>
 document.addEventListener('DOMContentLoaded', function() {
     // === FILE ATTACHMENT HANDLERS ===
@@ -577,5 +596,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     initRows();
 });
-</script>
+    </script>
 {% endblock %}

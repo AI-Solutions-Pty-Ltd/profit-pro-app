@@ -19,14 +19,11 @@
             </div>
         </div>
     </div>
-
     <!-- Stats Summary -->
     <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-3">
         <div class="p-6 bg-white rounded-lg border border-gray-100 shadow-sm">
             <div class="flex items-center">
-                <div class="p-3 bg-indigo-50 rounded-lg">
-                    {% heroicon_outline "scale" class="w-6 h-6 text-indigo-600" %}
-                </div>
+                <div class="p-3 bg-indigo-50 rounded-lg">{% heroicon_outline "scale" class="w-6 h-6 text-indigo-600" %}</div>
                 <div class="ml-4">
                     <p class="text-sm font-medium tracking-wider text-gray-500 uppercase">Registered Units</p>
                     <p class="text-2xl font-bold text-gray-900">{{ total_count }}</p>
@@ -35,9 +32,7 @@
         </div>
         <div class="p-6 bg-white rounded-lg border border-gray-100 shadow-sm">
             <div class="flex items-center">
-                <div class="p-3 bg-emerald-50 rounded-lg">
-                    {% heroicon_outline "bookmark" class="w-6 h-6 text-emerald-600" %}
-                </div>
+                <div class="p-3 bg-emerald-50 rounded-lg">{% heroicon_outline "bookmark" class="w-6 h-6 text-emerald-600" %}</div>
                 <div class="ml-4">
                     <p class="text-sm font-medium tracking-wider text-gray-500 uppercase">Base Units</p>
                     <p class="text-2xl font-bold text-gray-900">{{ base_units_count }}</p>
@@ -46,9 +41,7 @@
         </div>
         <div class="p-6 bg-white rounded-lg border border-gray-100 shadow-sm">
             <div class="flex items-center">
-                <div class="p-3 bg-amber-50 rounded-lg">
-                    {% heroicon_outline "tag" class="w-6 h-6 text-amber-600" %}
-                </div>
+                <div class="p-3 bg-amber-50 rounded-lg">{% heroicon_outline "tag" class="w-6 h-6 text-amber-600" %}</div>
                 <div class="ml-4">
                     <p class="text-sm font-medium tracking-wider text-gray-500 uppercase">Domains</p>
                     <p class="text-2xl font-bold text-gray-900">{{ categories_count }}</p>
@@ -56,7 +49,6 @@
             </div>
         </div>
     </div>
-
     <div class="overflow-hidden bg-white rounded-lg shadow-sm">
         <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
             <h2 class="text-sm font-bold tracking-wider text-gray-900 uppercase">Available Definitions</h2>
@@ -99,9 +91,7 @@
                                     {{ unit.short_name }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                                {{ unit.get_category_display }}
-                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ unit.get_category_display }}</td>
                             <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
                                 {% if unit.reference_unit %}
                                     <div class="flex items-center text-gray-600">
@@ -136,12 +126,9 @@
             </table>
         </div>
     </div>
-
     {% if is_paginated %}
         <div class="flex justify-between items-center px-6 py-4 mt-6 bg-gray-50 rounded-lg border-t border-gray-200">
-            <span class="text-sm font-medium text-gray-700">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-            </span>
+            <span class="text-sm font-medium text-gray-700">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
             <div class="inline-flex space-x-2">
                 {% if page_obj.has_previous %}
                     <a href="?page={{ page_obj.previous_page_number }}"
@@ -158,7 +145,6 @@
             </div>
         </div>
     {% endif %}
-
     <div class="px-6 py-4 mt-6 bg-gray-50 rounded-lg border-t border-gray-200">
         <div class="flex justify-between items-center">
             <a href="{% url 'project:company-dashboard' %}"
@@ -167,7 +153,6 @@
                 Back to Business Dashboard
             </a>
         </div>
-    </div>
     </div>
     <script>
     // Simple table search filter
