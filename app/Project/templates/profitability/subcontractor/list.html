@@ -6,13 +6,13 @@
     {% include "profitability/partials/kvi_cards.html" %}
     <div class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm">
         <!-- List Header -->
-        <div class="flex flex-col md:flex-row justify-between items-center px-6 py-4 bg-gray-50 border-b border-gray-200 gap-4">
+        <div class="flex flex-col gap-4 justify-between items-start px-6 py-4 bg-gray-50 border-b border-gray-200 md:flex-row">
             <div class="flex-1">
                 <h3 class="text-lg font-bold text-gray-900">Subcontractor Costs</h3>
                 <p class="text-sm text-gray-500">Manage all subcontractor payments and claims for this project.</p>
             </div>
-            <div class="flex items-center space-x-3">
-                {% include "profitability/partials/pagination_month.html" %}
+            <div class="flex flex-col gap-3 items-end">
+               
                 <form action="{% url 'project:profitability-import-logs' project.pk %}"
                       method="post"
                       class="m-0">
@@ -25,6 +25,7 @@
                         Sync Site Logs
                     </button>
                 </form>
+                 {% include "profitability/partials/pagination_month.html" %}
             </div>
         </div>
         <!-- Table -->
@@ -106,10 +107,10 @@
                     {% endfor %}
                 </tbody>
                 {% if logs %}
-                    <tfoot class="bg-indigo-50/50 border-t-2 border-indigo-100">
+                    <tfoot class="border-t-2 border-indigo-100 bg-indigo-50/50">
                         <tr>
                             <td colspan="3"
-                                class="px-6 py-4 text-sm font-bold text-gray-900 uppercase tracking-wider">
+                                class="px-6 py-4 text-sm font-bold tracking-wider text-gray-900 uppercase">
                                 Monthly Totals
                             </td>
                             <td class="px-6 py-4 text-sm font-black text-right text-gray-900 whitespace-nowrap">
