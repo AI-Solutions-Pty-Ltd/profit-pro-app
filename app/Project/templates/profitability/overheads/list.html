@@ -6,13 +6,14 @@
     {% include "profitability/partials/kvi_cards.html" %}
     <div class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm">
         <!-- List Header -->
-        <div class="flex flex-col md:flex-row justify-between items-center px-6 py-4 bg-gray-50 border-b border-gray-200 gap-4">
+        <div class="flex flex-col gap-4 justify-between items-start px-6 py-4 bg-gray-50 border-b border-gray-200 md:flex-row">
             <div class="flex-1">
                 <h3 class="text-lg font-bold text-gray-900">Overheads Cost Tracker</h3>
                 <p class="text-sm text-gray-500">Manage and track indirect costs for {{ project.name }}</p>
             </div>
-            <div class="flex items-center space-x-3">
-                {% include "profitability/partials/pagination_month.html" %}
+            <div class="flex flex-col gap-3 items-end">
+              
+                <div class="flex gap-3 items-center">
                 <form action="{% url 'project:profitability-import-logs' project.pk %}"
                       method="post"
                       class="m-0">
@@ -30,6 +31,8 @@
                     {% heroicon_outline "plus" class="mr-2 w-4 h-4" %}
                     Add Entry
                 </a>
+                </div>
+                {% include "profitability/partials/pagination_month.html" %}
             </div>
         </div>
         <!-- Table -->
@@ -104,10 +107,10 @@
                     {% endfor %}
                 </tbody>
                 {% if logs %}
-                    <tfoot class="bg-indigo-50/50 border-t-2 border-indigo-100">
+                    <tfoot class="border-t-2 border-indigo-100 bg-indigo-50/50">
                         <tr>
                             <td colspan="2"
-                                class="px-6 py-4 text-sm font-bold text-gray-900 uppercase tracking-wider">
+                                class="px-6 py-4 text-sm font-bold tracking-wider text-gray-900 uppercase">
                                 Monthly Totals
                             </td>
                             <td class="px-6 py-4 text-sm font-black text-right text-gray-900 whitespace-nowrap">

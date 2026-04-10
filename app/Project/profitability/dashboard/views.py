@@ -5,9 +5,12 @@ from django.shortcuts import get_object_or_404
 from django.views.generic import DetailView
 
 from app.Project.models import Project
+from app.Project.profitability.mixins import FinancialCalculationMixin
 
 
-class ProfitabilityDashboardView(LoginRequiredMixin, DetailView):
+class ProfitabilityDashboardView(
+    LoginRequiredMixin, FinancialCalculationMixin, DetailView
+):
     """
     Main dashboard for Project Profitability Management.
     """
@@ -22,6 +25,7 @@ class ProfitabilityDashboardView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         project = self.get_object()
+        self.project = project
 
         # Summary Metrics
         from django.db.models import F, Sum
@@ -121,5 +125,11 @@ class ProfitabilityDashboardView(LoginRequiredMixin, DetailView):
             ) * 100
         else:
             context["actual_margin"] = 0
+
+        # Financial Table Data (for partial)
+        context["financial_table"] = self.get_financial_table_data()
+
+        # Monthly Category Summaries (for KVI and details table)
+        context["monthly_actuals"] = self.get_monthly_category_summaries()
 
         return context

@@ -14,7 +14,11 @@
             </a>
         </div>
         <!-- Summary Header Cards -->
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {% comment %} <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <!-- Total to Date Header (Optional label if needed) -->
+             <div class="col-span-full mt-2 mb-1">
+                <h3 class="text-sm font-bold text-gray-500">Project Totals (Cumulative)</h3>
+            </div>
             <!-- Revenue Card -->
             <div class="p-6 bg-white rounded-xl border border-indigo-200 shadow-sm">
                 <div class="flex justify-between items-center">
@@ -51,20 +55,7 @@
                     </div>
                     <div class="p-2 bg-red-100 rounded-lg">{% heroicon_outline "shopping-cart" class="w-6 h-6 text-red-600" %}</div>
                 </div>
-                <div class="flex items-center mt-4 text-xs">
-                    {% comment %} <span class="font-medium {% if variance.total_cost >= 0 %}text-indigo-600{% else %}text-red-600{% endif %}" title="R{{ variance.total_cost|abs|floatformat:2|intcomma }}">
-                        {% if variance.total_cost|abs > 100000 %}
-                            R{{ variance.total_cost|abs|intword }}
-                        {% else %}
-                            R{{ variance.total_cost|abs|floatformat:2|intcomma }}
-                        {% endif %}
-                        {% if variance.total_cost >= 0 %}
-                            under budget
-                        {% else %}
-                            over budget
-                        {% endif %}
-                    </span> {% endcomment %}
-                </div>
+               
             </div>
             <!-- Actual Profit Card -->
             <div class="p-6 bg-white rounded-xl border border-green-200 shadow-sm">
@@ -98,29 +89,129 @@
                     <span class="text-gray-500">Target: {{ baseline.target_margin_percentage }}%</span>
                 </div>
             </div>
+        </div> {% endcomment %}
+
+        <!-- Monthly Performance KVIs -->
+        <div class="space-y-4">
+             <div class="mt-8 mb-1">
+                <h3 class="font-semibold text-gray-500">This Month Performance</h3>
+            </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <!-- Monthly Revenue Card -->
+                <div class="p-5 bg-white rounded-xl border border-indigo-100 shadow-sm transition-all hover:shadow-md">
+                   
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="p-2 text-indigo-600 bg-indigo-100 rounded-lg">
+                            {% heroicon_outline "banknotes" class="w-5 h-5" %}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-600">Monthly Revenue</h3>
+                        <div class="mt-1 text-2xl font-bold text-gray-900">R {{ monthly_actuals.revenue|floatformat:0|intcomma }}</div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-[10px] font-bold text-gray-400 ">
+                        <div class="flex flex-col">
+                            <span>Actual Revenue (Certified)</span>
+                            <span class="text-base text-gray-600"   title="R{{ actual_revenue|floatformat:2|intcomma }}">
+                                {% if actual_revenue > 100000 %}
+                                    R{{ actual_revenue|intword }}
+                                {% else %}
+                                    R{{ actual_revenue|floatformat:2|intcomma }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                   
+                </div>
+                <!-- Monthly Expense Card -->
+                <div class="p-5 bg-white rounded-xl border border-red-100 shadow-sm transition-all hover:shadow-md">
+                   
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="p-2 text-red-600 bg-red-100 rounded-lg">
+                            {% heroicon_outline "receipt-refund" class="w-5 h-5" %}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-600">Monthly Expenses</h3>
+                        <div class="mt-1 text-2xl font-bold text-gray-900">R {{  monthly_actuals.total_expense|floatformat:0|intcomma }}</div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-[10px] font-bold text-gray-400 ">
+                        <div class="flex flex-col">
+                            <span>Actual Total Cost</span>
+                            <span class="text-base text-gray-600"  title="R{{ actuals.total_cost|floatformat:2|intcomma }}">
+                            {% if actuals.total_cost > 100000 %}
+                                R{{ actuals.total_cost|intword }}
+                            {% else %}
+                                R{{ actuals.total_cost|floatformat:2|intcomma }}
+                            {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Monthly Profit Card -->
+                <div class="p-5 bg-white rounded-xl border border-green-100 shadow-sm transition-all hover:shadow-md">
+                    
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="p-2 text-emerald-600 bg-emerald-100 rounded-lg">
+                            {% heroicon_outline "currency-dollar" class="w-5 h-5" %}
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-600">Monthly Profit</h3>
+                        <div class="mt-1 text-2xl font-bold text-gray-900">R {{  monthly_actuals.profit|floatformat:0|intcomma }}</div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-[10px] font-bold text-gray-400 ">
+                        <div class="flex flex-col">
+                            <span>Actual Profit</span>
+                            <span class="text-base text-gray-600"  title="R{{ actual_profit|floatformat:2|intcomma }}">
+                            {% if actual_profit > 100000 %}
+                                R{{ actual_profit|intword }}
+                            {% else %}
+                                R{{ actual_profit|floatformat:2|intcomma }}
+                            {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+              
+            </div>
         </div>
+        <!-- Financial Summary Table -->
+        <div class="overflow-hidden mb-6 bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div class="flex justify-between items-center px-6 py-4 bg-gray-50 border-b border-gray-200">
+                <h3 class="text-lg font-bold text-gray-900">Project Financial Summary</h3>
+                <span class="text-xs font-semibold tracking-wider text-gray-500 uppercase">High-Level Performance</span>
+            </div>
+            {% include "profitability/reports/partials/financial_table.html" %}
+        </div>
+
         <!-- Detail Breakdown -->
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6">
             <!-- Cost Breakdown Table (Actual vs Planned) -->
             <div class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm lg:col-span-2">
                 <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
                     <h3 class="text-lg font-bold text-gray-900">Cost Baseline vs Actuals</h3>
                 </div>
                 <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                    <thead class="bg-gray-50/50">
                         <tr>
-                            <th class="px-6 py-3 text-xs font-medium text-left text-gray-500">Category</th>
-                            <th class="px-6 py-3 text-xs font-medium text-right text-gray-500">Planned</th>
-                            <th class="px-6 py-3 text-xs font-medium text-right text-gray-500">Actual</th>
-                            <th class="px-6 py-3 text-xs font-medium text-right text-gray-500">Variance</th>
+                            <th class="px-6 py-3 text-xs font-semibold text-left text-gray-600 uppercase">Category</th>                           
+                            <th class="px-6 py-3 text-xs font-semibold text-right text-indigo-500 uppercase bg-indigo-50/10">This Month</th>
+                             <th class="px-6 py-3 text-xs font-semibold text-right text-gray-400 uppercase">Planned</th> 
+                            <th class="px-6 py-3 text-xs font-semibold text-right text-gray-600 uppercase">Actual (Total)</th>
+                            <th class="px-6 py-3 text-xs font-semibold text-right text-gray-600 uppercase">Variance</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <tr>
                             <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">Labour</td>
-                            <td class="px-6 py-4 text-sm text-right text-gray-500 whitespace-nowrap">
-                                R{{ baseline.planned_labour_cost|floatformat:2|intcomma }}
+                          
+                            <td class="px-6 py-4 text-sm font-bold text-right text-indigo-600 whitespace-nowrap bg-indigo-50/10">
+                                R{{ monthly_actuals.labour|floatformat:2|intcomma }}
                             </td>
+                              <td class="px-6 py-4 text-sm text-right text-gray-500 whitespace-nowrap">
+                                R{{ baseline.planned_labour_cost|floatformat:2|intcomma }}
+                            </td> 
                             <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">
                                 R{{ actuals.labour|floatformat:2|intcomma }}
                             </td>
@@ -131,7 +222,11 @@
                         </tr>
                         <tr>
                             <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">Materials & Plant</td>
-                            <td class="px-6 py-4 text-sm text-right text-gray-500 whitespace-nowrap">
+                            
+                            <td class="px-6 py-4 text-sm font-bold text-right text-indigo-600 whitespace-nowrap bg-indigo-50/10">
+                                R{{ monthly_actuals.material|floatformat:2|intcomma }}
+                            </td>
+                             <td class="px-6 py-4 text-sm text-right text-gray-500 whitespace-nowrap">
                                 R{{ baseline.planned_material_cost|floatformat:2|intcomma }}
                             </td>
                             <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">
@@ -144,7 +239,11 @@
                         </tr>
                         <tr>
                             <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">Subcontractors</td>
-                            <td class="px-6 py-4 text-sm text-right text-gray-500 whitespace-nowrap">
+                             
+                            <td class="px-6 py-4 text-sm font-bold text-right text-indigo-600 whitespace-nowrap bg-indigo-50/10">
+                                R{{ monthly_actuals.subcontractor|floatformat:2|intcomma }}
+                            </td>
+                             <td class="px-6 py-4 text-sm text-right text-gray-500 whitespace-nowrap">
                                 R{{ baseline.planned_subcontractor_cost|floatformat:2|intcomma }}
                             </td>
                             <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">
@@ -157,7 +256,11 @@
                         </tr>
                         <tr>
                             <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">Overheads</td>
-                            <td class="px-6 py-4 text-sm text-right text-gray-500 whitespace-nowrap">
+                             
+                            <td class="px-6 py-4 text-sm font-bold text-right text-indigo-600 whitespace-nowrap bg-indigo-50/10">
+                                R{{ monthly_actuals.overhead|floatformat:2|intcomma }}
+                            </td>
+                             <td class="px-6 py-4 text-sm text-right text-gray-500 whitespace-nowrap">
                                 R{{ baseline.planned_overhead_cost|floatformat:2|intcomma }}
                             </td>
                             <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">
@@ -170,9 +273,13 @@
                         </tr>
                     </tbody>
                     <tfoot class="bg-gray-50">
-                        <tr class="font-bold">
+                         <tr class="font-bold bg-gray-50/30">
                             <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">Total Project Cost</td>
-                            <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">
+                           
+                            <td class="px-6 py-4 text-sm font-black text-right text-indigo-700 whitespace-nowrap bg-indigo-50/20">
+                                R{{ monthly_actuals.total_expense|floatformat:2|intcomma }}
+                            </td>
+                             <td class="px-6 py-4 text-sm text-right text-gray-500 whitespace-nowrap">
                                 R{{ baseline.total_planned_cost|floatformat:2|intcomma }}
                             </td>
                             <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">
@@ -187,7 +294,7 @@
                 </table>
             </div>
             <!-- Profitability Analysis Side Card -->
-            <div class="flex flex-col justify-between p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
+            {% comment %} <div class="flex flex-col justify-between p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
                 <div>
                     <h3 class="mb-6 text-lg font-bold text-gray-900">Profitability Analysis</h3>
                     <div class="space-y-4">
@@ -216,7 +323,7 @@
                     </div>
                 </div>
                 <div class="mt-8">
-                    {% comment %} <div class="grid grid-cols-1 gap-3">
+                   <div class="grid grid-cols-1 gap-3">
                     <a href="{% url 'project:profitability-subcontractor-list' project.pk %}" class="flex justify-center items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 transition-colors hover:bg-gray-50">
                         {% heroicon_outline "briefcase" class="mr-2 w-4 h-4 text-indigo-500" %}
                         Manage Subcontractors
@@ -225,9 +332,9 @@
                         {% heroicon_outline "user-group" class="mr-2 w-4 h-4 text-indigo-500" %}
                         Manage Labour
                     </a>
-                    </div> {% endcomment %}
+                    </div> 
                 </div>
-            </div>
+            </div> {% endcomment %}
         </div>
     </div>
 {% endblock profitability_content %}
