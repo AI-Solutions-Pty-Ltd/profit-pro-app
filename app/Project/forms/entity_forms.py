@@ -41,6 +41,7 @@ class LabourEntityForm(BaseEntityForm):
             "trade",
             "skill_type",
             "date_joined",
+            "expense_code",
             "unit_of_measure",
             "rate",
             "description",
@@ -53,6 +54,7 @@ class LabourEntityForm(BaseEntityForm):
             "person_name": "Full Name",
             "id_number": "ID / Passport Number",
             "date_joined": "Joining Date",
+            "expense_code": "Expense Classification",
         }
         error_messages = {
             "person_name": {"required": "Please enter the worker's full name."},
@@ -82,6 +84,7 @@ class MaterialEntityForm(BaseEntityForm):
             "invoice_number",
             "invoice_attachment",
             "quantity",
+            "expense_code",
             "unit_of_measure",
             "rate",
             "date_received",
@@ -95,6 +98,7 @@ class MaterialEntityForm(BaseEntityForm):
         labels = {
             "items_received": "Items / Specifications",
             "date_received": "Receipt Date",
+            "expense_code": "Expense Classification",
         }
 
     def clean_rate(self):
@@ -233,6 +237,7 @@ class PlantEntityForm(BaseEntityForm):
             "supplier",
             "breakdown_status",
             "date",
+            "expense_code",
             "unit_of_measure",
             "rate",
             "description",
@@ -245,6 +250,7 @@ class PlantEntityForm(BaseEntityForm):
         labels = {
             "specific_info": "Specific Info (S/N, etc.)",
             "breakdown_status": "Operational Status",
+            "expense_code": "Expense Classification",
         }
 
     def clean_rate(self):
@@ -270,6 +276,7 @@ class SubcontractorEntityForm(BaseEntityForm):
             "start_date",
             "planned_finish_date",
             "actual_finish_date",
+            "expense_code",
             "unit_of_measure",
             "rate",
             "description",
@@ -286,6 +293,7 @@ class SubcontractorEntityForm(BaseEntityForm):
             "start_date": "Contract Start Date",
             "planned_finish_date": "Planned Finish",
             "actual_finish_date": "Actual Finish",
+            "expense_code": "Expense Classification",
         }
 
     def clean_rate(self):
