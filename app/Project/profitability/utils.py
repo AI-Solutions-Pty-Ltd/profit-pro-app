@@ -144,6 +144,36 @@ def import_plant_logs_to_profitability(project):
     return count
 
 
+def import_overhead_logs_to_profitability(project):
+    """
+    Import overhead site logs into the profitability cost tracker.
+    """
+    from app.Project.models import OverheadCostTracker
+    from app.SiteManagement.models import OverheadDailyLog
+
+    logs = OverheadDailyLog.objects.filter(
+        project=project, overhead_entity__isnull=False
+    )
+    count = 0
+
+    with transaction.atomic():
+        for log in logs:
+            exists = OverheadCostTracker.objects.filter(
+                project=project, overhead_entity=log.overhead_entity, date=log.date
+            ).exists()
+
+            if not exists:
+                OverheadCostTracker.objects.create(
+                    project=project,
+                    overhead_entity=log.overhead_entity,
+                    date=log.date,
+                    amount_of_days=log.quantity,
+                    rate=log.overhead_entity.rate if log.overhead_entity else 0,
+                )
+                count += 1
+    return count
+
+
 def get_project_profitability_metrics(project):
     """
     Calculate and return key profitability metrics for a project.
@@ -223,6 +253,7 @@ def get_project_profitability_metrics(project):
 def import_certificates_to_journal(project):
     """
     Import approved payment certificates into the journal as revenue.
+    Ensures entries stay in sync with certificate changes.
     """
     from app.BillOfQuantities.models import PaymentCertificate
     from app.Project.models import JournalEntry
@@ -234,29 +265,179 @@ def import_certificates_to_journal(project):
 
     with transaction.atomic():
         for cert in certificates:
-            # Check if an entry already exists for this certificate
-            exists = JournalEntry.objects.filter(
-                project=project,
-                source_log_id=cert.id,
-                source_log_type="PaymentCertificate",
-            ).exists()
+            # Use current claim total as the revenue amount for this certificate's period
+            amount = cert.work_current_claim_total
 
-            if not exists:
-                # Use current claim total as the revenue amount for this certificate's period
-                amount = cert.work_current_claim_total
-
-                if amount > 0:
-                    JournalEntry.objects.create(
-                        project=project,
-                        date=cert.approved_on.date()
+            if amount > 0:
+                JournalEntry.objects.update_or_create(
+                    project=project,
+                    source_log_id=cert.id,
+                    source_log_type="PaymentCertificate",
+                    defaults={
+                        "date": cert.approved_on.date()
                         if cert.approved_on
                         else cert.created_at.date(),
-                        category=JournalEntry.Category.REVENUE,
-                        description=f"Revenue from Payment Certificate #{cert.certificate_number}",
-                        amount=amount,
-                        transaction_type=JournalEntry.EntryType.CREDIT,
-                        source_log_id=cert.id,
-                        source_log_type="PaymentCertificate",
-                    )
+                        "category": JournalEntry.Category.REVENUE,
+                        "description": f"Revenue from Payment Certificate #{cert.certificate_number}",
+                        "amount": amount,
+                        "transaction_type": JournalEntry.EntryType.CREDIT,
+                    },
+                )
+                count += 1
+            else:
+                # Remove entry if amount is zeroed out
+                JournalEntry.objects.filter(
+                    project=project,
+                    source_log_id=cert.id,
+                    source_log_type="PaymentCertificate",
+                ).delete()
+    return count
+
+
+def sync_tracker_to_journal(instance, deleted=False):
+    """
+    Synchronize cost tracker(s) for a specific item/entity with a single JournalEntry.
+    Consolidates multiple logs for the same entity on the same day into one aggregate entry.
+    """
+    from app.Project.models import JournalEntry
+
+    tracker_model = instance.__class__
+    tracker_model_name = tracker_model.__name__
+
+    # Map tracker class names to their parent Entity model names and attributes
+    mapping = {
+        "LabourCostTracker": (
+            JournalEntry.Category.LABOUR,
+            "Labour Cost",
+            "labour_entity",
+        ),
+        "MaterialCostTracker": (
+            JournalEntry.Category.MATERIAL,
+            "Material Cost",
+            "material_entity",
+        ),
+        "PlantCostTracker": (
+            JournalEntry.Category.PLANT,
+            "Plant/Equipment Cost",
+            "plant_entity",
+        ),
+        "OverheadCostTracker": (
+            JournalEntry.Category.OVERHEAD,
+            "Overhead Cost",
+            "overhead_entity",
+        ),
+        "SubcontractorCostTracker": (
+            JournalEntry.Category.SUBCONTRACTOR,
+            "Subcontractor Cost",
+            "subcontractor_entity",
+        ),
+    }
+
+    if tracker_model_name not in mapping:
+        return
+
+    category, prefix, entity_attr = mapping[tracker_model_name]
+    entity = getattr(instance, entity_attr, None)
+
+    if not entity:
+        return
+
+    # Use the Entity ID as the link so all logs for this entity share one entry
+    source_log_id = entity.id
+    source_log_type = entity.__class__.__name__
+    target_date = instance.date
+
+    # 1. Fetch all trackers for this Project, Date, and Entity
+    # (Checking against the date provided in the instance that triggered the sync)
+    filter_kwargs = {
+        "project": instance.project,
+        "date": target_date,
+        entity_attr: entity,
+    }
+    all_related_trackers = tracker_model.objects.filter(**filter_kwargs)
+
+    # 2. Calculate the aggregate amount
+    # Note: Using list comprehension + sum as 'cost' is often a @property
+    total_amount = sum(float(t.cost) for t in all_related_trackers)
+
+    if total_amount <= 0 or (deleted and all_related_trackers.count() == 0):
+        # Remove journal entry if no costs remain for this item on this day
+        JournalEntry.objects.filter(
+            project=instance.project,
+            date=target_date,
+            source_log_id=source_log_id,
+            source_log_type=source_log_type,
+        ).delete()
+        return
+
+    # 3. Create or update the consolidated journal entry
+    JournalEntry.objects.update_or_create(
+        project=instance.project,
+        date=target_date,
+        source_log_id=source_log_id,
+        source_log_type=source_log_type,
+        defaults={
+            "category": category,
+            "description": f"{prefix}: {entity.name} (Daily Total)",
+            "amount": Decimal(str(total_amount)),
+            "transaction_type": JournalEntry.EntryType.DEBIT,
+        },
+    )
+
+
+def bulk_sync_all_trackers_to_journal(project):
+    """
+    Process all existing tracker records for a project and sync them to the Journal.
+    Uses consolidated item grouping.
+    """
+    from app.Project.models import (
+        LabourCostTracker,
+        MaterialCostTracker,
+        OverheadCostTracker,
+        PlantCostTracker,
+        SubcontractorCostTracker,
+    )
+
+    tracker_models = [
+        LabourCostTracker,
+        MaterialCostTracker,
+        PlantCostTracker,
+        OverheadCostTracker,
+        SubcontractorCostTracker,
+    ]
+
+    count = 0
+    with transaction.atomic():
+        # First, we identify all unique (Date, Entity) combinations across all trackers
+        for model in tracker_models:
+            # We iterate through trackers and call the sync logic.
+            # Due to update_or_create, multiple logs for same date/entity will be handled correctly.
+            # However, for efficiency in bulk, we could unique them first if logs were massive.
+            instances = model.objects.filter(project=project)
+            processed_keys = set()
+            for instance in instances:
+                # Determine entity and attr for grouping
+                entity_attr = ""
+                if model == LabourCostTracker:
+                    entity_attr = "labour_entity"
+                elif model == MaterialCostTracker:
+                    entity_attr = "material_entity"
+                elif model == PlantCostTracker:
+                    entity_attr = "plant_entity"
+                elif model == OverheadCostTracker:
+                    entity_attr = "overhead_entity"
+                elif model == SubcontractorCostTracker:
+                    entity_attr = "subcontractor_entity"
+
+                entity = getattr(instance, entity_attr)
+                key = (instance.date, entity.id, model.__name__)
+
+                if key not in processed_keys:
+                    sync_tracker_to_journal(instance)
+                    processed_keys.add(key)
                     count += 1
+
+        # Also sync revenue certificates
+        count += import_certificates_to_journal(project)
+
     return count

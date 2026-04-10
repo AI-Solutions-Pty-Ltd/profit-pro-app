@@ -36,7 +36,7 @@ class FinancialBaseView(ProfitabilityMixin, TemplateView):
 
         # Date range for report (Project Start to End of Previous Month)
         today = date.today()
-        
+
         # Defaults
         default_end_date = today.replace(day=1) - timedelta(days=1)
         default_start_date = (
@@ -48,12 +48,20 @@ class FinancialBaseView(ProfitabilityMixin, TemplateView):
         end_date_param = request.GET.get("end_date")
 
         try:
-            start_date = date.fromisoformat(start_date_param) if start_date_param else default_start_date
+            start_date = (
+                date.fromisoformat(start_date_param)
+                if start_date_param
+                else default_start_date
+            )
         except (ValueError, TypeError):
             start_date = default_start_date
 
         try:
-            end_date = date.fromisoformat(end_date_param) if end_date_param else default_end_date
+            end_date = (
+                date.fromisoformat(end_date_param)
+                if end_date_param
+                else default_end_date
+            )
         except (ValueError, TypeError):
             end_date = default_end_date
 
@@ -388,7 +396,7 @@ class FinancialPerformanceDataView(ProfitabilityMixin, TemplateView):
 
         # 1. Period Setup
         today = date.today()
-        
+
         # Default: End of previous month
         default_end_date = today.replace(day=1) - timedelta(days=1)
         # Default: Start of 6 month period ending at previous month
@@ -399,12 +407,20 @@ class FinancialPerformanceDataView(ProfitabilityMixin, TemplateView):
         end_date_param = request.GET.get("end_date")
 
         try:
-            start_date = date.fromisoformat(start_date_param).replace(day=1) if start_date_param else default_start_date
+            start_date = (
+                date.fromisoformat(start_date_param).replace(day=1)
+                if start_date_param
+                else default_start_date
+            )
         except (ValueError, TypeError):
             start_date = default_start_date
 
         try:
-            end_date = date.fromisoformat(end_date_param) if end_date_param else default_end_date
+            end_date = (
+                date.fromisoformat(end_date_param)
+                if end_date_param
+                else default_end_date
+            )
         except (ValueError, TypeError):
             end_date = default_end_date
 
@@ -430,23 +446,17 @@ class FinancialPerformanceDataView(ProfitabilityMixin, TemplateView):
 
             # --- Actual Revenue ---
             # Sum of actual transactions in APPROVED certificates in this month
-            rev_act = (
-                ActualTransaction.objects.filter(
-                    line_item__project=project,
-                    payment_certificate__status=PaymentCertificate.Status.APPROVED,
-                    payment_certificate__approved_on__date__range=(m_start, m_end),
-                ).aggregate(total=Sum("total_price"))["total"]
-                or Decimal("0.00")
-            )
+            rev_act = ActualTransaction.objects.filter(
+                line_item__project=project,
+                payment_certificate__status=PaymentCertificate.Status.APPROVED,
+                payment_certificate__approved_on__date__range=(m_start, m_end),
+            ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
             revenue_actual.append(float(rev_act))
 
             # --- Planned Revenue ---
-            rev_plan = (
-                PlannedValue.objects.filter(project=project, period=m_start).aggregate(
-                    total=Sum("value")
-                )["total"]
-                or Decimal("0.00")
-            )
+            rev_plan = PlannedValue.objects.filter(
+                project=project, period=m_start
+            ).aggregate(total=Sum("value"))["total"] or Decimal("0.00")
             revenue_planned.append(float(rev_plan))
 
             # --- Actual Cost (Sum of all trackers) ---
