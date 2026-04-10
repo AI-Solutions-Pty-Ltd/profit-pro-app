@@ -8,7 +8,6 @@ from app.SiteManagement.models import (
     Meeting,
     NonConformance,
     OverheadDailyLog,
-    OverheadDailyLog,
     SiteInstruction,
     SkillType,
 )
@@ -156,9 +155,9 @@ class NonConformanceAdmin(admin.ModelAdmin):
     readonly_fields = ["reference_number", "date", "date_closed"]
 
 
-@admin.register(OverheadDailyLog)
-class OverheadDailyLogAdmin(admin.ModelAdmin):
-    list_display = ["project", "date", "description", "category", "quantity"]
-    list_filter = ["project", "date", "category"]
-    search_fields = ["description", "remarks"]
-    readonly_fields = ["description", "category"]
+# @admin.register(OverheadDailyLog)
+# class OverheadDailyLogAdmin(admin.ModelAdmin):
+#     list_display = ["project", "date", "description", "category", "quantity"]
+#     list_filter = ["project", "date", "category"]
+#     search_fields = ["description", "remarks"]
+#     readonly_fields = ["description", "category"]

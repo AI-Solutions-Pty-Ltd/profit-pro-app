@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("SiteManagement", "0012_progresstracker_impact_description_and_more"),
         ("SiteManagement", "0014_overheaddailylog"),

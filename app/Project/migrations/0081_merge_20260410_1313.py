@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("Project", "0070_projectreportsummary"),
         ("Project", "0080_labourentity_expense_code_and_more"),
