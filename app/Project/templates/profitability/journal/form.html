@@ -1,94 +1,48 @@
-{% extends "profitability/base_profitability.html" %}
+{% extends "profitability/base_form.html" %}
 {% load crispy_forms_tags %}
 {% load heroicons %}
-{% block title %}
-    {% if object %}
-        Edit
-    {% else %}
-        New
-    {% endif %}
-    Journal Entry - {{ project.name }} - {{ block.super }}
-{% endblock title %}
-{% block profitability_content %}
-    <div class="max-w-3xl mx-auto">
-        <!-- Form Header -->
-        <div class="mb-8 flex items-center justify-between">
-            <div>
-                <a href="{% url 'project:profitability-journal-list' project.pk %}"
-                   class="inline-flex items-center text-sm font-bold text-gray-500 hover:text-indigo-600 transition-colors mb-2 group">
-                    {% heroicon_outline "chevron-left" size="16" class="mr-1.5 transition-transform group-hover:-translate-x-1" %}
-                    Back to Journal
-                </a>
-                <h1 class="text-2xl font-black text-gray-900">
-                    {% if object %}
-                        Edit
-                    {% else %}
-                        Record New
-                    {% endif %}
-                    Entry
-                </h1>
-                <p class="text-sm text-gray-500 mt-1">Record a manual financial adjustment or overhead expense.</p>
-            </div>
-            <div class="hidden sm:block">
-                <div class="p-4 bg-indigo-50 rounded-2xl">{% heroicon_outline "document-plus" class="w-8 h-8 text-indigo-600" %}</div>
-            </div>
-        </div>
-        <!-- Form Card -->
-        <div class="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-            <form method="post" class="p-8">
-                {% csrf_token %}
-                <div class="space-y-6">
-                    <!-- Data Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-1">{{ form.date|as_crispy_field }}</div>
-                        <div class="space-y-1">{{ form.category|as_crispy_field }}</div>
-                    </div>
-                    <div class="space-y-1">{{ form.description|as_crispy_field }}</div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-1">{{ form.transaction_type|as_crispy_field }}</div>
-                        <div class="space-y-1">{{ form.amount|as_crispy_field }}</div>
-                    </div>
-                    {% if form.attachment %}
-                        <div class="pt-4 border-t border-gray-100">{{ form.attachment|as_crispy_field }}</div>
-                    {% endif %}
-                </div>
-                <!-- Form Actions -->
-                <div class="mt-10 pt-6 border-t border-gray-100 flex items-center justify-end space-x-4">
-                    <a href="{% url 'project:profitability-journal-list' project.pk %}"
-                       class="px-6 py-2.5 text-sm font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-xl transition-all">
-                        Cancel
-                    </a>
-                    <button type="submit"
-                            class="inline-flex items-center px-8 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all shadow-lg shadow-indigo-100 active:scale-95">
-                        {% heroicon_outline "check-circle" class="w-4 h-4 mr-2" %}
-                        {% if object %}
-                            Save Changes
-                        {% else %}
-                            Create Entry
-                        {% endif %}
-                    </button>
-                </div>
-            </form>
-        </div>
-        <!-- Help Card -->
-        <div class="mt-8 p-6 bg-gray-50 rounded-2xl border border-gray-100 flex items-start space-x-4">
-            <div class="p-2 bg-white rounded-lg shadow-sm">{% heroicon_outline "light-bulb" class="w-5 h-5 text-amber-500" %}</div>
-            <div>
-                <h4 class="text-sm font-bold text-gray-900">Pro Tip</h4>
-                <p class="text-xs text-gray-500 mt-1 leading-relaxed">
-                    Journal entries are used for costs that aren't captured via delivery logs or certificates, such as bank fees, generic overheads, or manual accounting corrections.
-                </p>
-            </div>
+
+{% block entity_name %}Journal Entry{% endblock %}
+{% block entity_display_name %}Journal Entry{% endblock %}
+{% block back_url %}{% url 'project:profitability-journal-list' project.pk %}{% endblock %}
+{% block cancel_url %}{% url 'project:profitability-journal-list' project.pk %}{% endblock %}
+
+{% block header_extra %}
+    <div class="hidden sm:block">
+        <div class="p-4 bg-indigo-50 rounded-2xl">
+            {% heroicon_outline "document-plus" class="w-8 h-8 text-indigo-600" %}
         </div>
     </div>
-    <style>
-    /* Premium Form Styling Overrides */
-    .asteriskField { display: none; }
-    input[type="text"], input[type="number"], input[type="date"], select, textarea {
-        @apply block w-full px-4 py-3 rounded-xl border-gray-200 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-all !important;
-    }
-    label {
-        @apply block text-xs font-black text-gray-500 uppercase tracking-widest mb-2 !important;
-    }
-    </style>
-{% endblock profitability_content %}
+{% endblock %}
+
+{% block form_fields %}
+    <div class="space-y-6">
+        <!-- Data Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-1">{{ form.date|as_crispy_field }}</div>
+            <div class="space-y-1">{{ form.category|as_crispy_field }}</div>
+        </div>
+        <div class="space-y-1">{{ form.description|as_crispy_field }}</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-1">{{ form.transaction_type|as_crispy_field }}</div>
+            <div class="space-y-1">{{ form.amount|as_crispy_field }}</div>
+        </div>
+        {% if form.attachment %}
+            <div class="pt-4 border-t border-gray-100">{{ form.attachment|as_crispy_field }}</div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block footer_help %}
+    <div class="mt-8 p-6 bg-gray-50/50 rounded-2xl border border-gray-100 flex items-start space-x-4">
+        <div class="p-2 bg-white rounded-xl shadow-sm">
+            {% heroicon_outline "light-bulb" class="w-5 h-5 text-amber-500" %}
+        </div>
+        <div>
+            <h4 class="text-sm font-bold text-gray-900">Pro Tip</h4>
+            <p class="text-xs text-gray-600 font-medium mt-1 leading-relaxed">
+                Journal entries are used for costs that aren't captured via delivery logs or certificates, such as bank fees, generic overheads, or manual accounting corrections.
+            </p>
+        </div>
+    </div>
+{% endblock %}

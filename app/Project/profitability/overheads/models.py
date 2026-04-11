@@ -28,6 +28,8 @@ class OverheadCostTracker(BaseModel):
     rate = models.DecimalField(
         max_digits=12, decimal_places=2, default=0, help_text="Daily rate/cost"
     )
+    remarks = models.TextField(blank=True, help_text="Additional remarks")
+
 
     @property
     def cost(self):

@@ -1,6 +1,7 @@
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
+from app.Project.forms.profitability_forms import PlantCostTrackerForm
 from app.Project.profitability.views import ProfitabilityMixin
 
 from .models import PlantCostTracker
@@ -54,8 +55,8 @@ class PlantCostTrackerListView(ProfitabilityMixin, ListView):
 
 class PlantCostTrackerCreateView(ProfitabilityMixin, CreateView):
     model = PlantCostTracker
+    form_class = PlantCostTrackerForm
     template_name = "profitability/form.html"
-    fields = ["plant_entity", "date", "usage_hours", "hourly_rate"]
 
     def get_success_url(self):
         return reverse_lazy(
@@ -65,13 +66,14 @@ class PlantCostTrackerCreateView(ProfitabilityMixin, CreateView):
 
 class PlantCostTrackerUpdateView(ProfitabilityMixin, UpdateView):
     model = PlantCostTracker
+    form_class = PlantCostTrackerForm
     template_name = "profitability/form.html"
-    fields = ["plant_entity", "date", "usage_hours", "hourly_rate"]
 
     def get_success_url(self):
         return reverse_lazy(
             "project:profitability-plant-list", kwargs={"project_pk": self.project.pk}
         )
+
 
 
 class PlantCostTrackerDeleteView(ProfitabilityMixin, DeleteView):

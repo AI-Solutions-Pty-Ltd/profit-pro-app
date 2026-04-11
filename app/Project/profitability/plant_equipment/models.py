@@ -31,6 +31,14 @@ class PlantCostTracker(BaseModel):
     hourly_rate = models.DecimalField(
         max_digits=12, decimal_places=2, default=0, help_text="Hourly rate"
     )
+    breakdown_status = models.CharField(
+        max_length=50,
+        blank=True,
+        help_text="Breakdown status during tracking",
+    )
+    maintenance_done = models.TextField(blank=True, help_text="Maintenance performed")
+    remarks = models.TextField(blank=True, help_text="Additional remarks")
+
 
     @property
     def cost(self):

@@ -1,29 +1,46 @@
-{% extends "profitability/base_profitability.html" %}
+{% extends "layout.html" %}
 {% load heroicons %}
-{% block title %}Delete Entry - {{ project.name }}{% endblock %}
-{% block profitability_content %}
-    <div class="max-w-xl mx-auto">
-        <div class="bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden">
-            <div class="p-8 text-center">
-                <div class="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                    {% heroicon_outline "exclamation-triangle" size="40" class="text-red-600" %}
+
+{% block title %}Delete Entry - {{ project.name }} - Profitability{% endblock %}
+
+{% block page_content %}
+    <div class="max-w-xl mx-auto px-4 py-24">
+        <!-- focused Header (Minimal) -->
+        <div class="mb-10 text-center">
+             <a href="#" 
+               onclick="history.back(); return false;"
+               class="inline-flex items-center text-sm font-bold text-gray-400 hover:text-indigo-600 transition-colors mb-6 group focus:outline-none">
+                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1 transform group-hover:-translate-x-1 transition-transform" %}
+                Cancel and return
+            </a>
+        </div>
+
+        <div class="bg-white shadow-[0_30px_60px_-15px_rgba(225,29,72,0.15)] rounded-[2.5rem] border border-gray-100/50 overflow-hidden">
+            <div class="p-10 md:p-12 text-center">
+                <div class="w-24 h-24 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-8">
+                    {% heroicon_outline "exclamation-triangle" size="48" class="text-rose-600" %}
                 </div>
-                <h1 class="text-2xl font-bold text-gray-900 mb-2">Delete Cost Entry?</h1>
-                <p class="text-gray-600 mb-8">Are you sure you want to delete this cost entry? This action cannot be undone.</p>
-                <form method="post" class="flex items-center justify-center space-x-4">
+                
+                <h1 class="text-3xl font-black text-gray-900 mb-3 tracking-tight">Delete Cost Entry?</h1>
+                <p class="text-gray-500 font-medium leading-relaxed mb-10">
+                    You're about to remove this record from <span class="text-gray-900 font-bold">{{ project.name }}</span>.
+                    This action is <span class="text-rose-600 font-black italic">permanent</span> and cannot be undone.
+                </p>
+
+                <form method="post" class="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
                     {% csrf_token %}
                     <a href="#"
                        onclick="history.back(); return false;"
-                       class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-md text-base font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                        Cancel
+                       class="w-full sm:w-auto px-8 py-3.5 text-sm font-bold text-gray-400 hover:text-gray-700 hover:bg-gray-50 rounded-2xl transition-all">
+                        Keep Entry
                     </a>
                     <button type="submit"
-                            class="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-bold text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all">
-                        {% heroicon_outline "trash" class="w-5 h-5 mr-2" %}
-                        Confirm Delete
+                            class="w-full sm:w-auto inline-flex items-center justify-center px-10 py-3.5 border border-transparent shadow-xl shadow-rose-100 text-sm font-black rounded-2xl text-white bg-rose-600 hover:bg-rose-700 transition-all active:scale-95">
+                        {% heroicon_outline "trash" class="w-4 h-4 mr-2" %}
+                        Delete Permanently
                     </button>
                 </form>
             </div>
         </div>
     </div>
-{% endblock profitability_content %}
+{% endblock page_content %}

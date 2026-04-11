@@ -1,7 +1,6 @@
 """CRUD views for Subcontractor Log."""
 
 from django.contrib import messages
-from django.forms import DateInput
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
@@ -9,7 +8,8 @@ from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Project.models import Project, Role, SubcontractorEntity
+from app.Project.models import Project, Role
+from app.SiteManagement.forms.log_forms import SubcontractorLogForm
 from app.SiteManagement.models import SubcontractorLog
 
 
@@ -22,6 +22,7 @@ class SubcontractorLogMixin(
     required_tiers = [Subscription.SITE_MANAGEMENT]
     roles = [Role.ADMIN, Role.USER]
     project_slug = "project_pk"
+    form_class = SubcontractorLogForm
 
     def get_project(self) -> Project:
         return Project.objects.get(pk=self.kwargs["project_pk"])
@@ -29,26 +30,11 @@ class SubcontractorLogMixin(
     def get_queryset(self):
         return SubcontractorLog.objects.filter(project=self.get_project())
 
-    def get_form(self, form_class=None):
-        """Filter subcontractor_entity and apply date widgets."""
-        form = super().get_form(form_class)  # type: ignore
-        project = self.get_project()
-        if "subcontractor_entity" in form.fields:
-            form.fields[
-                "subcontractor_entity"
-            ].queryset = SubcontractorEntity.objects.filter(project=project)
-
-        # Apply date widgets
-        date_fields = [
-            "date",
-            "start_date",
-            "planned_finish_date",
-            "actual_finish_date",
-        ]
-        for field_name in date_fields:
-            if field_name in form.fields:
-                form.fields[field_name].widget = DateInput(attrs={"type": "date"})
-        return form
+    def get_form_kwargs(self):
+        """Pass the project to the form for queryset filtering."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
@@ -92,15 +78,6 @@ class SubcontractorLogCreateView(SubcontractorLogMixin, CreateView):
     """Create a new subcontractor log."""
 
     template_name = "site_management/subcontractor_log/form.html"
-    fields = [
-        "subcontractor_entity",
-        "date",
-        "task",
-        "hours_worked",
-        "output",
-        "output_unit",
-        "remarks",
-    ]
 
     def form_valid(self, form):
         form.instance.project = self.get_project()
@@ -123,15 +100,6 @@ class SubcontractorLogUpdateView(SubcontractorLogMixin, UpdateView):
     """Update a labour log."""
 
     template_name = "site_management/subcontractor_log/form.html"
-    fields = [
-        "subcontractor_entity",
-        "date",
-        "task",
-        "hours_worked",
-        "output",
-        "output_unit",
-        "remarks",
-    ]
 
     def form_valid(self, form):
         messages.success(self.request, "Subcontractor log updated successfully!")

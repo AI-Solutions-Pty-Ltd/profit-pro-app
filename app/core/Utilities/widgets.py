@@ -10,7 +10,14 @@ class SearchableSelectWidget(forms.Widget):
 
     template_name = "widgets/searchable_select_widget.html"
 
-    def __init__(self, attrs=None, choices=(), create_url=None, resource_type=None):
+    def __init__(
+        self,
+        attrs=None,
+        choices=(),
+        create_url=None,
+        resource_type=None,
+        choice_data=None,
+    ):
         """
         Initialize the widget.
 
@@ -18,12 +25,14 @@ class SearchableSelectWidget(forms.Widget):
             attrs: Optional dictionary of attributes.
             choices: Optional list of choices.
             create_url: Optional boolean or URL string to enable the "Quick Create" button.
-            resource_type: Optional slug for dynamic modal loading (e.g., 'unit_of_measure', 'skill_type').
+            resource_type: Optional slug for dynamic modal loading.
+            choice_data: Optional dict mapping choice IDs to data attributes (e.g., {'1': {'data-rate': '100'}}).
         """
         super().__init__(attrs)
         self.choices = choices
         self.create_url = create_url
         self.resource_type = resource_type
+        self.choice_data = choice_data or {}
 
     def get_context(self, name, value, attrs):
         """
@@ -32,6 +41,8 @@ class SearchableSelectWidget(forms.Widget):
         context = super().get_context(name, value, attrs)
         context["widget"]["create_url"] = self.create_url
         context["widget"]["resource_type"] = self.resource_type
+        context["widget"]["choice_data"] = self.choice_data
+
 
         # Manually generate optgroups similar to ChoiceWidget
         # This allows our template to iterate through choices as it expects
@@ -54,6 +65,7 @@ class SearchableSelectWidget(forms.Widget):
                             "label": sub_label,
                             "selected": str(sub_val) == search_val,
                             "index": str(i),
+                            "data": self.choice_data.get(str(sub_val), {}),
                         }
                     )
                 groups.append((group_name, options, i))
@@ -69,8 +81,10 @@ class SearchableSelectWidget(forms.Widget):
                         "label": label,
                         "selected": str(val) == search_val,
                         "index": str(i),
+                        "data": self.choice_data.get(str(val), {}),
                     }
                 )
+
 
         context["widget"]["optgroups"] = groups
 

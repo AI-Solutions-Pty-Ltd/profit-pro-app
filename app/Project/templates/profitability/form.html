@@ -1,87 +1,43 @@
-{% extends "profitability/base_profitability.html" %}
-{% load crispy_forms_tags %}
-{% load heroicons %}
-{% block title %}
-    {% if object %}
-        Edit
+{% extends "profitability/base_form.html" %}
+
+{% block entity_name %}
+    {% if "journal" in request.path %}
+        Journal Entry
+    {% elif "subcontractor" in request.path %}
+        Subcontractor Record
+    {% elif "labour" in request.path %}
+        Labour Record
+    {% elif "overhead" in request.path %}
+        Overhead Record
+    {% elif "material" in request.path %}
+        Material Record
+    {% elif "plant" in request.path %}
+        Plant Equipment Record
     {% else %}
-        Add
+        Record
     {% endif %}
-    Entry - {{ project.name }} - Profitability
-{% endblock title %}
-{% block profitability_content %}
-    <div class="max-w-2xl mx-auto">
-        <!-- Page Header -->
-        <div class="mb-6 flex items-center justify-between">
-            <div class="flex items-center">
-                <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center mr-4 shadow-sm">
-                    {% if "journal" in request.path %}
-                        {% heroicon_outline "book-open" size="24" class="text-white" %}
-                    {% elif "subcontractor" in request.path %}
-                        {% heroicon_outline "briefcase" size="24" class="text-white" %}
-                    {% elif "labour" in request.path %}
-                        {% heroicon_outline "users" size="24" class="text-white" %}
-                    {% elif "overhead" in request.path %}
-                        {% heroicon_outline "home" size="24" class="text-white" %}
-                    {% elif "material" in request.path %}
-                        {% heroicon_outline "cube" size="24" class="text-white" %}
-                    {% elif "plant" in request.path %}
-                        {% heroicon_outline "truck" size="24" class="text-white" %}
-                    {% else %}
-                        {% heroicon_outline "calculator" size="24" class="text-white" %}
-                    {% endif %}
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold text-gray-900">
-                        {% if object %}
-                            Edit
-                        {% else %}
-                            New
-                        {% endif %}
-                        {% if "journal" in request.path %}
-                            Journal Entry
-                        {% elif "subcontractor" in request.path %}
-                            Subcontractor Record
-                        {% elif "labour" in request.path %}
-                            Labour Record
-                        {% elif "overhead" in request.path %}
-                            Overhead Record
-                        {% elif "material" in request.path %}
-                            Material Record
-                        {% elif "plant" in request.path %}
-                            Plant Equipment Record
-                        {% endif %}
-                    </h1>
-                    <p class="text-sm text-gray-600 mt-0.5">{{ project.name }}</p>
-                </div>
-            </div>
-            <a href="#"
-               onclick="history.back(); return false;"
-               class="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors">Cancel</a>
-        </div>
-        <!-- Form Card -->
-        <div class="bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden">
-            <div class="p-8">
-                <form method="post" class="space-y-6">
-                    {% csrf_token %}
-                    <div class="grid grid-cols-1 gap-6">{% crispy form %}</div>
-                    <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-100">
-                        <a href="#"
-                           onclick="history.back(); return false;"
-                           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                            Cancel
-                        </a>
-                        <button type="submit"
-                                class="inline-flex items-center px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all">
-                            {% if object %}
-                                Update Entry
-                            {% else %}
-                                Save Entry
-                            {% endif %}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-{% endblock profitability_content %}
+{% endblock %}
+
+{% block entity_display_name %}
+    {{ block.super }}
+{% endblock %}
+
+{% block back_url %}
+    {% if "journal" in request.path %}
+        {% url 'project:profitability-journal-list' project.pk %}
+    {% elif "subcontractor" in request.path %}
+        {% url 'project:profitability-subcontractor-list' project.pk %}
+    {% elif "labour" in request.path %}
+        {% url 'project:profitability-labour-list' project.pk %}
+    {% elif "overhead" in request.path %}
+        {% url 'project:profitability-overhead-list' project.pk %}
+    {% elif "material" in request.path %}
+        {% url 'project:profitability-material-list' project.pk %}
+    {% elif "plant" in request.path %}
+        {% url 'project:profitability-plant-list' project.pk %}
+    {% endif %}
+{% endblock %}
+
+{% block cancel_url %}
+    {{ block.super }}
+{% endblock %}

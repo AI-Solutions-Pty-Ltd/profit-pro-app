@@ -110,8 +110,25 @@ function selectSearchableOption(target, id, label) {
     }
     
     if (displayLabel) displayLabel.textContent = label;
+    
+    // Autofill Logic: Check for data attributes to populate other fields in the form
+    // We look for common field names like rate, salary, hourly_rate
+    const rate = target.dataset.rate;
+    if (rate) {
+        // Try various common rate-related field IDs
+        const rateFields = ['id_rate', 'id_salary', 'id_hourly_rate'];
+        rateFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.value = rate;
+                // Trigger change event if readonly needs to notify listeners
+                field.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+    }
 
     // Close the dropdown
+
     if (dropdown) dropdown.classList.add('hidden');
     if (arrow) arrow.classList.remove('rotate-180');
 }
