@@ -2,23 +2,25 @@
 <div class="relative searchable-select-container"
      id="{{ widget.attrs.id }}-selector-container"
      data-searchable-select-id="{{ widget.attrs.id }}">
-    
     <button type="button"
             onclick="toggleSearchableSelect(this)"
             id="{{ widget.attrs.id }}-selector-btn"
             class="flex justify-between items-center px-4 py-2.5 w-full text-sm font-semibold text-gray-700 rounded-lg border border-gray-300 backdrop-blur-md transition-all duration-300 bg-white/80 group">
-        <span id="{{ widget.attrs.id }}-selector-label" class="mr-2 truncate selected-label">
-            {% if widget.selected_label %}{{ widget.selected_label }}{% else %}Choose option...{% endif %}
+        <span id="{{ widget.attrs.id }}-selector-label"
+              class="mr-2 truncate selected-label">
+            {% if widget.selected_label %}
+                {{ widget.selected_label }}
+            {% else %}
+                Choose option...
+            {% endif %}
         </span>
         <div class="flex items-center text-gray-400 transition-colors group-hover:text-indigo-500">
             {% heroicon_outline "chevron-down" size="18" class="transition-transform duration-300" id=widget.attrs.id|add:"-selector-arrow" %}
         </div>
     </button>
-
     <!-- Dropdown Menu: Glassmorphism & Slide-up Animation -->
     <div id="{{ widget.attrs.id }}-dropdown"
          class="hidden searchable-dropdown absolute left-0 mt-2 w-full bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] z-50 overflow-hidden transform origin-top transition-all duration-300 scale-95 opacity-0 active:scale-100 active:opacity-100">
-        
         <div class="p-3 border-b border-gray-100/50 bg-gray-50/50">
             <div class="relative group">
                 {% heroicon_outline "magnifying-glass" size="18" class="absolute left-3 top-1/2 text-gray-400 transition-colors -translate-y-1/2 group-focus-within:text-indigo-500" %}
@@ -30,7 +32,6 @@
                        autocomplete="off">
             </div>
         </div>
-
         <div class="overflow-y-auto p-2 max-h-64 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent"
              id="{{ widget.attrs.id }}-options-list">
             {% for group, options, index in widget.optgroups %}
@@ -51,15 +52,13 @@
                     {% endif %}
                 {% endfor %}
             {% endfor %}
-            <div id="{{ widget.attrs.id }}-no-results"
-                 class="hidden p-8 text-center">
+            <div id="{{ widget.attrs.id }}-no-results" class="hidden p-8 text-center">
                 <div class="flex flex-col items-center">
                     {% heroicon_outline "face-frown" size="32" class="mb-2 text-gray-300" %}
                     <p class="text-sm font-medium text-gray-500">No matches found</p>
                 </div>
             </div>
         </div>
-
         {% if widget.create_url %}
             <div class="p-2 bg-gray-50 border-t border-gray-100">
                 <button type="button"
@@ -71,13 +70,13 @@
             </div>
         {% endif %}
     </div>
-
     <!-- Hidden native select for form data -->
     <div class="hidden">
         <select name="{{ widget.name }}" id="{{ widget.attrs.id }}">
             {% for group, options, index in widget.optgroups %}
                 {% for option in options %}
-                    <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
+                    <option value="{{ option.value }}"
+                            {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
                 {% endfor %}
             {% endfor %}
         </select>

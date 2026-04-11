@@ -1,11 +1,10 @@
 from django import forms
-from django.forms.widgets import ChoiceWidget
 
 
 class SearchableSelectWidget(forms.Widget):
     """
     A custom searchable select widget with dynamic filtering and optional "Quick Create" button.
-    Inherits from forms.Widget (instead of forms.Select) to prevent Crispy Forms 
+    Inherits from forms.Widget (instead of forms.Select) to prevent Crispy Forms
     from bypassing our custom template rendering.
     """
 

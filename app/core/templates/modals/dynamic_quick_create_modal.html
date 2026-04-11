@@ -1,13 +1,12 @@
 {% load heroicons %}
-<dialog id="dynamic-quick-create-modal" class="transition-opacity duration-300 modal modal-bottom sm:modal-middle">
+<dialog id="dynamic-quick-create-modal"
+        class="transition-opacity duration-300 modal modal-bottom sm:modal-middle">
     <div class="overflow-hidden p-0 w-11/12 max-w-4xl bg-white rounded-lg border border-gray-300 duration-300 modal-box animate-in zoom-in-95">
-      
         <div class="flex justify-between items-center px-8 py-6 bg-white border-b border-gray-300">
             <div class="flex items-center">
-               
                 <div>
-                    <h3 id="dynamic-modal-title" class="text-xl font-bold tracking-tight leading-tight text-gray-900">Quick Create</h3>
-                  
+                    <h3 id="dynamic-modal-title"
+                        class="text-xl font-bold tracking-tight leading-tight text-gray-900">Quick Create</h3>
                 </div>
             </div>
             <form method="dialog">
@@ -16,35 +15,35 @@
                 </button>
             </form>
         </div>
-
-        <form id="dynamic-quick-create-form" onsubmit="submitDynamicQuickCreate(event)">
+        <form id="dynamic-quick-create-form"
+              onsubmit="submitDynamicQuickCreate(event)">
             {% csrf_token %}
             <!-- Form Body: Soft scrolling -->
-            <div id="dynamic-modal-content" class="  space-y-6 max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-100 scrollbar-track-transparent">
+            <div id="dynamic-modal-content"
+                 class="  space-y-6 max-h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-100 scrollbar-track-transparent">
                 <div class="flex flex-col justify-center items-center py-16 space-y-5">
                     <div class="relative">
                         <div class="w-14 h-14 rounded-full border-4 border-indigo-100"></div>
-                        <div class="absolute top-0 left-0 w-14 h-14 rounded-full border-4 border-indigo-600 animate-spin border-t-transparent"></div>
+                        <div class="absolute top-0 left-0 w-14 h-14 rounded-full border-4 border-indigo-600 animate-spin border-t-transparent">
+                        </div>
                     </div>
                     <p class="text-sm font-bold tracking-widest text-gray-400 uppercase animate-pulse">Initializing Interface...</p>
                 </div>
             </div>
-
             <!-- Enhanced Global Error Container -->
-            <div id="dynamic-modal-errors" class="hidden px-8 py-2 duration-300 animate-in slide-in-from-top-4">
+            <div id="dynamic-modal-errors"
+                 class="hidden px-8 py-2 duration-300 animate-in slide-in-from-top-4">
                 <div class="p-4 rounded-2xl border border-rose-100 backdrop-blur-sm bg-rose-50/80">
                     <div class="flex items-start">
-                        <div class="flex-shrink-0 mt-0.5 text-rose-500">
-                            {% heroicon_solid "exclamation-circle" class="w-5 h-5" %}
-                        </div>
+                        <div class="flex-shrink-0 mt-0.5 text-rose-500">{% heroicon_solid "exclamation-circle" class="w-5 h-5" %}</div>
                         <div class="ml-3">
                             <h3 class="text-xs font-black tracking-widest text-rose-800 uppercase">Attention Required</h3>
-                            <div class="mt-1 text-sm font-medium leading-relaxed text-rose-700" id="dynamic-error-list"></div>
+                            <div class="mt-1 text-sm font-medium leading-relaxed text-rose-700"
+                                 id="dynamic-error-list"></div>
                         </div>
                     </div>
                 </div>
             </div>
-
             <!-- Footer: Premium Actions -->
             <div class="flex justify-end items-center px-8 py-6 space-x-4 bg-white border-t border-gray-300">
                 <button type="button"
@@ -57,9 +56,13 @@
                         class="inline-flex items-center px-6 py-2 text-sm font-bold text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     <span id="dynamic-submit-text">Create &amp; Select</span>
                     <div id="dynamic-submit-spinner" class="hidden ml-3">
-                        <svg class="w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-white animate-spin"
+                             xmlns="http://www.w3.org/2000/svg"
+                             fill="none"
+                             viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
                         </svg>
                     </div>
                 </button>
@@ -67,7 +70,7 @@
         </form>
     </div>
 </dialog>
-    <form method="dialog" class="modal-backdrop">
-        <button>close</button>
-    </form>
+<form method="dialog" class="modal-backdrop">
+    <button>close</button>
+</form>
 </dialog>

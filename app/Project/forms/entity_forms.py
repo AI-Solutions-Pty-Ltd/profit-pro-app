@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.forms import modelformset_factory
 from django.utils import timezone
 
+from app.core.Utilities.widgets import SearchableSelectWidget
 from app.Project.models.entity_definitions import (
     LabourEntity,
     MaterialEntity,
@@ -12,7 +13,6 @@ from app.Project.models.entity_definitions import (
     PlantEntity,
     SubcontractorEntity,
 )
-from app.core.Utilities.widgets import SearchableSelectWidget
 
 COMMON_WIDGET_ATTRS = {
     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm transition duration-150 ease-in-out",
