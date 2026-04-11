@@ -1,3 +1,4 @@
+from app.core.dynamic_quick_create import QuickCreateFormView, QuickCreateSubmitView
 import os
 
 from django.conf import settings
@@ -17,6 +18,16 @@ urlpatterns = (
         path("features/", FeaturesView.as_view(), name="features"),
         path("about/", AboutView.as_view(), name="about"),
         path("", HomeView.as_view(), name="home"),
+        path(
+            "quick-create/form/",
+            QuickCreateFormView.as_view(),
+            name="dynamic-quick-create-form",
+        ),
+        path(
+            "quick-create/submit/",
+            QuickCreateSubmitView.as_view(),
+            name="dynamic-quick-create-submit",
+        ),
         path("users/", include("app.Account.urls", namespace="users")),
         # app urls
         path("project/", include("app.Project.urls", namespace="project")),
