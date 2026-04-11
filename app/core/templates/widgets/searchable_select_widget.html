@@ -4,10 +4,10 @@
      data-searchable-select-id="{{ widget.attrs.id }}">
     
     <button type="button"
-            onclick="toggleSearchableDropdown(this)"
+            onclick="toggleSearchableSelect(this)"
             id="{{ widget.attrs.id }}-selector-btn"
             class="w-full flex items-center justify-between shadow-sm px-4 py-2 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all">
-        <span id="{{ widget.attrs.id }}-selector-label">
+        <span id="{{ widget.attrs.id }}-selector-label" class="selected-label">
             {% if widget.selected_label %}{{ widget.selected_label }}{% else %}Choose option...{% endif %}
         </span>
         {% heroicon_outline "chevron-down" size="20" class="text-gray-400 transition-transform" id=widget.attrs.id|add:"-selector-arrow" %}
@@ -15,7 +15,7 @@
 
     <!-- Dropdown Menu -->
     <div id="{{ widget.attrs.id }}-dropdown"
-         class="hidden absolute left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-2xl z-50 overflow-hidden transform origin-top transition-all">
+         class="hidden searchable-dropdown absolute left-0 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-2xl z-50 overflow-hidden transform origin-top transition-all">
         
         <div class="p-2 border-b border-gray-100 bg-gray-50">
             <div class="relative">
@@ -50,7 +50,7 @@
         {% if widget.create_url %}
             <div class="p-2 border-t border-gray-100 bg-gray-50">
                 <button type="button"
-                        onclick="openQuickCreateModal('{{ widget.attrs.id }}')"
+                        onclick="openQuickCreateModal('{{ widget.attrs.id }}', '{{ widget.resource_type|default:'' }}')"
                         class="w-full inline-flex items-center justify-center px-4 py-2 text-xs font-bold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100/50 rounded-md transition-all">
                     {% heroicon_outline "plus" size="16" class="mr-1.5" %}
                     Create New

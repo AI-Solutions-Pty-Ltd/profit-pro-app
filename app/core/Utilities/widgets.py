@@ -11,7 +11,7 @@ class SearchableSelectWidget(forms.Widget):
 
     template_name = "widgets/searchable_select_widget.html"
 
-    def __init__(self, attrs=None, choices=(), create_url=None):
+    def __init__(self, attrs=None, choices=(), create_url=None, resource_type=None):
         """
         Initialize the widget.
 
@@ -19,10 +19,12 @@ class SearchableSelectWidget(forms.Widget):
             attrs: Optional dictionary of attributes.
             choices: Optional list of choices.
             create_url: Optional boolean or URL string to enable the "Quick Create" button.
+            resource_type: Optional slug for dynamic modal loading (e.g., 'unit_of_measure', 'skill_type').
         """
         super().__init__(attrs)
         self.choices = choices
         self.create_url = create_url
+        self.resource_type = resource_type
 
     def get_context(self, name, value, attrs):
         """
@@ -30,6 +32,7 @@ class SearchableSelectWidget(forms.Widget):
         """
         context = super().get_context(name, value, attrs)
         context["widget"]["create_url"] = self.create_url
+        context["widget"]["resource_type"] = self.resource_type
 
         # Manually generate optgroups similar to ChoiceWidget
         # This allows our template to iterate through choices as it expects

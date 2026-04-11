@@ -50,8 +50,10 @@ class LabourEntityForm(BaseEntityForm):
         widgets = {
             "date_joined": forms.DateInput(attrs={"type": "date"}),
             "description": forms.Textarea(attrs={"rows": 3}),
-            "skill_type": SearchableSelectWidget(),
-            "unit_of_measure": SearchableSelectWidget(create_url=True),
+            "skill_type": SearchableSelectWidget(create_url=True, resource_type="skill_type"),
+            "unit_of_measure": SearchableSelectWidget(
+                create_url=True, resource_type="unit_of_measure"
+            ),
         }
         labels = {
             "person_name": "Full Name",
@@ -97,7 +99,9 @@ class MaterialEntityForm(BaseEntityForm):
             "date_received": forms.DateInput(attrs={"type": "date"}),
             "items_received": forms.Textarea(attrs={"rows": 2}),
             "description": forms.Textarea(attrs={"rows": 2}),
-            "unit_of_measure": SearchableSelectWidget(create_url=True),
+            "unit_of_measure": SearchableSelectWidget(
+                create_url=True, resource_type="unit_of_measure"
+            ),
         }
         labels = {
             "items_received": "Items / Specifications",
@@ -182,6 +186,7 @@ class MaterialItemForm(forms.ModelForm):
             ),
             "unit_of_measure": SearchableSelectWidget(
                 create_url=True,
+                resource_type="unit_of_measure",
                 attrs={
                     "class": "block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 },
@@ -251,9 +256,11 @@ class PlantEntityForm(BaseEntityForm):
             "date": forms.DateInput(attrs={"type": "date"}),
             "specific_info": forms.Textarea(attrs={"rows": 3}),
             "description": forms.Textarea(attrs={"rows": 3}),
-            "plant_type": SearchableSelectWidget(),
+            "plant_type": SearchableSelectWidget(create_url=True, resource_type="plant_type"),
             "breakdown_status": SearchableSelectWidget(),
-            "unit_of_measure": SearchableSelectWidget(create_url=True),
+            "unit_of_measure": SearchableSelectWidget(
+                create_url=True, resource_type="unit_of_measure"
+            ),
         }
         labels = {
             "specific_info": "Specific Info (S/N, etc.)",
@@ -295,7 +302,9 @@ class SubcontractorEntityForm(BaseEntityForm):
             "actual_finish_date": forms.DateInput(attrs={"type": "date"}),
             "scope": forms.Textarea(attrs={"rows": 3}),
             "description": forms.Textarea(attrs={"rows": 3}),
-            "unit_of_measure": SearchableSelectWidget(create_url=True),
+            "unit_of_measure": SearchableSelectWidget(
+                create_url=True, resource_type="unit_of_measure"
+            ),
         }
         labels = {
             "scope": "Scope of Work",
@@ -348,7 +357,9 @@ class OverheadEntityForm(BaseEntityForm):
         }
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
-            "unit_of_measure": SearchableSelectWidget(create_url=True),
+            "unit_of_measure": SearchableSelectWidget(
+                create_url=True, resource_type="unit_of_measure"
+            ),
         }
 
     def clean_rate(self):
