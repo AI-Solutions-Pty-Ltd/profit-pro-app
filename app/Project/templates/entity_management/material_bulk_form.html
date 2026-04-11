@@ -163,7 +163,7 @@
                                                     {{ form.unit_of_measure.value|default:"" }}
                                                 {% endif %}
                                             </div>
-                                            <div class="hidden">{{ form.unit_of_measure }}</div>
+                                            <div>{{ form.unit_of_measure }}</div>
                                         </td>
                                         <td class="px-3 py-4 align-top">
                                             <div class="pt-1 text-sm text-gray-600 humanized-number"
@@ -519,10 +519,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const totalValue = (parseFloat(modalQty.value) * parseFloat(modalRate.value));
         rowTotal.value = formatCurrency(totalValue);
 
-        // Update indexes in the clone
-        row.querySelectorAll('input, select, textarea').forEach(input => {
-            if (input.name) input.name = input.name.replace('__prefix__', nextIndex);
-            if (input.id) input.id = input.id.replace('__prefix__', nextIndex);
+        // Update indexes in the clone for ALL elements with name/id
+        row.querySelectorAll('[name], [id]').forEach(el => {
+            if (el.name) el.name = el.name.replace('__prefix__', nextIndex);
+            if (el.id) el.id = el.id.replace('__prefix__', nextIndex);
         });
 
         formContainer.appendChild(row);
