@@ -220,6 +220,16 @@ function submitDynamicQuickCreate(event) {
                 optionsList.insertBefore(btn, optionsList.firstChild);
             }
 
+            // Also append to the native select to ensure value persistence
+            const nativeSelect = document.getElementById(widgetId);
+            if (nativeSelect && nativeSelect.tagName === 'SELECT') {
+                const opt = document.createElement('option');
+                opt.value = data.id;
+                opt.textContent = data.name;
+                opt.selected = true;
+                nativeSelect.appendChild(opt);
+            }
+
             // Select the new option immediately
             const widgetContainer = document.getElementById(`${widgetId}-selector-container`);
             if (widgetContainer) {

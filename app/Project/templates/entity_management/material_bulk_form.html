@@ -436,6 +436,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalRate = itemModal.querySelector('[name*="rate"]');
     const modalDesc = itemModal.querySelector('[name*="description"]');
 
+    // Sync newly created units from searchable select with local unitMap
+    if (modalUnit) {
+        modalUnit.addEventListener('change', function() {
+            if (this.value && !unitMap[this.value]) {
+                const opt = this.querySelector(`option[value="${this.value}"]`);
+                if (opt) {
+                    // Extract short_name from "Name (Short)" format if present
+                    const match = opt.textContent.match(/\(([^)]+)\)$/);
+                    unitMap[this.value] = match ? match[1] : opt.textContent;
+                }
+            }
+        });
+    }
+
     function toggleEmptyState() {
         if (!emptyStateRow) return;
         const actualRows = formContainer.querySelectorAll('.form-row:not([style*="display: none"])');
@@ -597,4 +611,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initRows();
 });
     </script>
+{% endblock %}
+
+{% block extra_js %}
+    {{ block.super }}
+    {{ formset.media }}
 {% endblock %}
