@@ -50,7 +50,9 @@ class LabourEntityForm(BaseEntityForm):
         widgets = {
             "date_joined": forms.DateInput(attrs={"type": "date"}),
             "description": forms.Textarea(attrs={"rows": 3}),
-            "skill_type": SearchableSelectWidget(create_url=True, resource_type="skill_type"),
+            "skill_type": SearchableSelectWidget(
+                create_url=True, resource_type="skill_type"
+            ),
             "unit_of_measure": SearchableSelectWidget(
                 create_url=True, resource_type="unit_of_measure"
             ),
@@ -256,7 +258,9 @@ class PlantEntityForm(BaseEntityForm):
             "date": forms.DateInput(attrs={"type": "date"}),
             "specific_info": forms.Textarea(attrs={"rows": 3}),
             "description": forms.Textarea(attrs={"rows": 3}),
-            "plant_type": SearchableSelectWidget(create_url=True, resource_type="plant_type"),
+            "plant_type": SearchableSelectWidget(
+                create_url=True, resource_type="plant_type"
+            ),
             "breakdown_status": SearchableSelectWidget(),
             "unit_of_measure": SearchableSelectWidget(
                 create_url=True, resource_type="unit_of_measure"

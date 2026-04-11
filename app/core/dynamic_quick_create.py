@@ -1,45 +1,49 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.views import View
 
-from app.Project.forms.unit_forms import UnitOfMeasureForm
+# We import Project here as it is a core dependency for the submission view, 
+# but individual resource models/forms will be registered dynamically.
 from app.Project.models import Project
-from app.Project.models.unit_models import UnitOfMeasure
-from app.SiteManagement.forms.resource_forms import PlantTypeForm, SkillTypeForm
-from app.SiteManagement.models.plant_type import PlantType
-from app.SiteManagement.models.skill_type import SkillType
 
 
 class QuickCreateRegistry:
-    """Registry to map resource types to their core models and forms."""
+    """
+    Registry to map resource types to their models and forms dynamically.
+    Enables scaling to many resource types without bloating core views.
+    """
 
-    REGISTRY = {
-        "unit_of_measure": {
-            "model": UnitOfMeasure,
-            "form_class": UnitOfMeasureForm,
-            "title": "New Unit of Measure",
-            "needs_project": False,
-        },
-        "skill_type": {
-            "model": SkillType,
-            "form_class": SkillTypeForm,
-            "title": "New Skill Type",
-            "needs_project": True,
-        },
-        "plant_type": {
-            "model": PlantType,
-            "form_class": PlantTypeForm,
-            "title": "New Plant Type",
-            "needs_project": True,
-        },
-    }
+    def __init__(self):
+        self._registry = {}
 
-    @classmethod
-    def get(cls, resource_type):
-        return cls.REGISTRY.get(resource_type)
+    def register(self, resource_type, model, form_class, title, needs_project=False):
+        """
+        Register a new resource type.
+        
+        Args:
+            resource_type (str): Unique slug for the resource.
+            model (Model): Django model class.
+            form_class (Form): Django form class.
+            title (str): Display title for the modal.
+            needs_project (bool): Whether the model requires a 'project' association.
+        """
+        self._registry[resource_type] = {
+            "model": model,
+            "form_class": form_class,
+            "title": title,
+            "needs_project": needs_project,
+        }
+
+    def get(self, resource_type):
+        """Retrieve configuration for a resource type."""
+        return self._registry.get(resource_type)
+
+
+# Global singleton instance
+registry = QuickCreateRegistry()
 
 
 class QuickCreateFormView(LoginRequiredMixin, View):
@@ -47,10 +51,10 @@ class QuickCreateFormView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         resource_type = request.GET.get("resource_type")
-        config = QuickCreateRegistry.get(resource_type)
+        config = registry.get(resource_type)
 
         if not config:
-            return JsonResponse({"error": "Invalid resource type"}, status=400)
+            return JsonResponse({"error": f"Invalid resource type: {resource_type}"}, status=400)
 
         form = config["form_class"]()
         html = render_to_string(
@@ -68,12 +72,12 @@ class QuickCreateFormView(LoginRequiredMixin, View):
 
 
 class QuickCreateSubmitView(LoginRequiredMixin, View):
-    """Handles the AJAX submission for any supported quick-create resource."""
+    """Handles the AJAX submission for any dynamically registered quick-create resource."""
 
     def post(self, request, *args, **kwargs):
         resource_type = request.POST.get("resource_type")
         project_pk = request.POST.get("project_pk")
-        config = QuickCreateRegistry.get(resource_type)
+        config = registry.get(resource_type)
 
         if not config:
             return JsonResponse({"error": "Invalid resource type"}, status=400)
@@ -89,8 +93,6 @@ class QuickCreateSubmitView(LoginRequiredMixin, View):
                         instance.project = project
                     instance.save()
 
-                    # Return formatted response for the select widget
-                    # __str__ usually provides the best label, but we can customize
                     return JsonResponse(
                         {
                             "success": True,
