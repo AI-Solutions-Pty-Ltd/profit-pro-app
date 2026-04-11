@@ -1,1 +1,6 @@
 {% extends "profitability/base_form.html" %}
+
+{% block entity_name %}Overhead Entry{% endblock %}
+{% block entity_display_name %}Overhead Entry{% endblock %}
+{% block back_url %}{% url 'project:profitability-overhead-list' project.pk %}{% endblock %}
+{% block cancel_url %}{% url 'project:profitability-overhead-list' project.pk %}{% endblock %}

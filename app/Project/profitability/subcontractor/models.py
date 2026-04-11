@@ -34,6 +34,12 @@ class SubcontractorCostTracker(BaseModel):
     rate = models.DecimalField(
         max_digits=12, decimal_places=2, default=0, help_text="Rate per day/unit"
     )
+    task = models.TextField(blank=True, help_text="Specific task or scope")
+    hours_worked = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, help_text="Hours worked"
+    )
+    remarks = models.TextField(blank=True, help_text="Additional remarks")
+
 
     @property
     def cost(self):

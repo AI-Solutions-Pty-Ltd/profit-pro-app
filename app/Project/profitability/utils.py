@@ -43,6 +43,9 @@ def import_subcontractor_logs_to_profitability(project):
                     reference_no=log.subcontractor_entity.reference_no
                     if log.subcontractor_entity
                     else "",
+                    task=log.task,
+                    hours_worked=log.hours_worked or 0,
+                    remarks=log.remarks,
                 )
                 count += 1
     return count
@@ -69,6 +72,9 @@ def import_labour_logs_to_profitability(project):
                     date=log.date,
                     amount_of_days=days,
                     salary=log.labour_entity.rate if log.labour_entity else 0,
+                    id_number=log.labour_entity.id_number if log.labour_entity else "",
+                    task_activity=log.task_activity,
+                    remarks=log.remarks,
                 )
                 count += 1
     return count
@@ -105,6 +111,8 @@ def import_material_logs_to_profitability(project):
                         else ""
                     ),
                     rate=log.material_entity.rate if log.material_entity else 0,
+                    intended_usage=log.intended_usage,
+                    comments=log.comments,
                 )
                 count += 1
     return count
@@ -139,8 +147,12 @@ def import_plant_logs_to_profitability(project):
                     date=log.date,
                     usage_hours=log.usage_hours or 0,
                     hourly_rate=rate,
+                    breakdown_status=log.breakdown_status,
+                    maintenance_done=log.maintenance_done,
+                    remarks=log.remarks,
                 )
                 count += 1
+
     return count
 
 
@@ -169,8 +181,10 @@ def import_overhead_logs_to_profitability(project):
                     date=log.date,
                     amount_of_days=log.quantity,
                     rate=log.overhead_entity.rate if log.overhead_entity else 0,
+                    remarks=log.remarks,
                 )
                 count += 1
+
     return count
 
 

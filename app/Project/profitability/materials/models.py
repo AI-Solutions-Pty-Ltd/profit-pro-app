@@ -42,6 +42,11 @@ class MaterialCostTracker(BaseModel):
     rate = models.DecimalField(
         max_digits=12, decimal_places=2, default=0, help_text="Rate per unit"
     )
+    intended_usage = models.TextField(
+        blank=True, help_text="Intended usage for this material"
+    )
+    comments = models.TextField(blank=True, help_text="Additional comments")
+
 
     @property
     def cost(self):

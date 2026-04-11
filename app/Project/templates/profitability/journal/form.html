@@ -1,4 +1,4 @@
-{% extends "profitability/base_profitability.html" %}
+{% extends "profitability/base_form.html" %}
 {% load crispy_forms_tags %}
 {% load heroicons %}
 {% block title %}
@@ -81,14 +81,4 @@
             </div>
         </div>
     </div>
-    <style>
-    /* Premium Form Styling Overrides */
-    .asteriskField { display: none; }
-    input[type="text"], input[type="number"], input[type="date"], select, textarea {
-        @apply block w-full px-4 py-3 rounded-xl border-gray-200 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition-all !important;
-    }
-    label {
-        @apply block text-xs font-black text-gray-500 uppercase tracking-widest mb-2 !important;
-    }
-    </style>
-{% endblock profitability_content %}
+{% endblock %}

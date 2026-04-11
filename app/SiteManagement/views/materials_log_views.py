@@ -1,7 +1,6 @@
 """CRUD views for Materials Log."""
 
 from django.contrib import messages
-from django.forms import DateInput
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
@@ -9,7 +8,8 @@ from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Project.models import MaterialEntity, Project, Role
+from app.Project.models import Project, Role
+from app.SiteManagement.forms.log_forms import MaterialsLogForm
 from app.SiteManagement.models import MaterialsLog
 
 
@@ -22,6 +22,7 @@ class MaterialsLogMixin(
     roles = [Role.ADMIN, Role.USER]
     project_slug = "project_pk"
     required_tiers = [Subscription.SITE_MANAGEMENT]
+    form_class = MaterialsLogForm
 
     def get_project(self) -> Project:
         return Project.objects.get(pk=self.kwargs["project_pk"])
@@ -29,17 +30,11 @@ class MaterialsLogMixin(
     def get_queryset(self):
         return MaterialsLog.objects.filter(project=self.get_project())
 
-    def get_form(self, form_class=None):
-        """Filter material_entity to only show entities for the current project."""
-        form = super().get_form(form_class)  # type: ignore
-        project = self.get_project()
-        if "material_entity" in form.fields:
-            form.fields["material_entity"].queryset = MaterialEntity.objects.filter(
-                project=project
-            )
-        if "date_received" in form.fields:
-            form.fields["date_received"].widget = DateInput(attrs={"type": "date"})
-        return form
+    def get_form_kwargs(self):
+        """Pass the project to the form for queryset filtering."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
@@ -83,14 +78,6 @@ class MaterialsLogCreateView(MaterialsLogMixin, CreateView):
     """Create a new materials log."""
 
     template_name = "site_management/materials_log/form.html"
-    fields = [
-        "material_entity",
-        "date_received",
-        "invoice_number",
-        "quantity",
-        "intended_usage",
-        "comments",
-    ]
 
     def form_valid(self, form):
         form.instance.project = self.get_project()
@@ -113,14 +100,6 @@ class MaterialsLogUpdateView(MaterialsLogMixin, UpdateView):
     """Update a materials log."""
 
     template_name = "site_management/materials_log/form.html"
-    fields = [
-        "material_entity",
-        "date_received",
-        "invoice_number",
-        "quantity",
-        "intended_usage",
-        "comments",
-    ]
 
     def form_valid(self, form):
         messages.success(self.request, "Materials log updated successfully!")

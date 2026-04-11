@@ -12,18 +12,25 @@
                 <p class="text-sm text-gray-500">Manage and track plant equipment expenses for this project.</p>
             </div>
             <div class="flex flex-col gap-3 items-end">
-                <form action="{% url 'project:profitability-import-logs' project.pk %}"
-                      method="post"
-                      class="m-0">
-                    {% csrf_token %}
-                    <input type="hidden" name="import_type" value="plant">
-                    <button type="submit"
-                            title="Import latest logs from site management"
-                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700">
-                        {% heroicon_outline "cloud-arrow-down" class="mr-2 w-4 h-4" %}
-                        Sync Site Logs
-                    </button>
-                </form>
+                <div class="flex gap-3 items-center">
+                    <form action="{% url 'project:profitability-import-logs' project.pk %}"
+                          method="post"
+                          class="m-0">
+                        {% csrf_token %}
+                        <input type="hidden" name="import_type" value="plant">
+                        <button type="submit"
+                                title="Import latest logs from site management"
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700">
+                            {% heroicon_outline "cloud-arrow-down" class="mr-2 w-4 h-4" %}
+                            Sync Site Logs
+                        </button>
+                    </form>
+                    <a href="{% url 'project:profitability-plant-create' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50">
+                        {% heroicon_outline "plus" class="mr-2 w-4 h-4" %}
+                        Add Entry
+                    </a>
+                </div>
                 {% include "profitability/partials/pagination_month.html" %}
             </div>
         </div>
@@ -101,7 +108,11 @@
                                 <div class="flex flex-col items-center">
                                     <div class="p-3 mb-3 bg-gray-100 rounded-full">{% heroicon_outline "truck" class="w-8 h-8 text-gray-400" %}</div>
                                     <p class="text-lg font-medium">No plant entries found</p>
-                                    <p class="text-sm">Click "Add Plant Entry" to create one.</p>
+                                    <p class="text-sm">Click "Add Entry" to create one.</p>
+                                    <a href="{% url 'project:profitability-plant-create' project.pk %}"
+                                       class="mt-4 text-sm font-semibold text-indigo-600 hover:text-indigo-800">
+                                        Add Entry &rarr;
+                                    </a>
                                 </div>
                             </td>
                         </tr>

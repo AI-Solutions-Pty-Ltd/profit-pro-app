@@ -31,6 +31,9 @@ class LabourCostTracker(BaseModel):
     salary = models.DecimalField(
         max_digits=12, decimal_places=2, default=0, help_text="Daily salary/rate"
     )
+    task_activity = models.TextField(blank=True, help_text="Specific task or activity")
+    remarks = models.TextField(blank=True, help_text="Additional remarks")
+
 
     @property
     def cost(self):

@@ -12,18 +12,25 @@
                 <p class="text-sm text-gray-500">Manage all subcontractor payments and claims for this project.</p>
             </div>
             <div class="flex flex-col gap-3 items-end">
-                <form action="{% url 'project:profitability-import-logs' project.pk %}"
-                      method="post"
-                      class="m-0">
-                    {% csrf_token %}
-                    <input type="hidden" name="import_type" value="subcontractor">
-                    <button type="submit"
-                            title="Import latest logs from site management"
-                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700">
-                        {% heroicon_outline "cloud-arrow-down" class="mr-2 w-4 h-4" %}
-                        Sync Site Logs
-                    </button>
-                </form>
+                <div class="flex gap-3 items-center">
+                    <form action="{% url 'project:profitability-import-logs' project.pk %}"
+                          method="post"
+                          class="m-0">
+                        {% csrf_token %}
+                        <input type="hidden" name="import_type" value="subcontractor">
+                        <button type="submit"
+                                title="Import latest logs from site management"
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700">
+                            {% heroicon_outline "cloud-arrow-down" class="mr-2 w-4 h-4" %}
+                            Sync Site Logs
+                        </button>
+                    </form>
+                    <a href="{% url 'project:profitability-subcontractor-create' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50">
+                        {% heroicon_outline "plus" class="mr-2 w-4 h-4" %}
+                        Add Entry
+                    </a>
+                </div>
                 {% include "profitability/partials/pagination_month.html" %}
             </div>
         </div>
@@ -99,7 +106,11 @@
                                         {% heroicon_outline "document-text" class="w-8 h-8 text-gray-400" %}
                                     </div>
                                     <p class="text-lg font-medium">No results found</p>
-                                    <p class="text-sm">Click "Add Cost Entry" to start tracking subcontractor costs.</p>
+                                    <p class="text-sm">Click "Add Entry" to start tracking subcontractor costs.</p>
+                                    <a href="{% url 'project:profitability-subcontractor-create' project.pk %}"
+                                       class="mt-4 text-sm font-semibold text-indigo-600 hover:text-indigo-800">
+                                        Add Entry &rarr;
+                                    </a>
                                 </div>
                             </td>
                         </tr>
