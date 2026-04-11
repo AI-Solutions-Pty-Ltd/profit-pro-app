@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.views import View
 
-# We import Project here as it is a core dependency for the submission view, 
+# We import Project here as it is a core dependency for the submission view,
 # but individual resource models/forms will be registered dynamically.
 from app.Project.models import Project
 
@@ -22,7 +22,7 @@ class QuickCreateRegistry:
     def register(self, resource_type, model, form_class, title, needs_project=False):
         """
         Register a new resource type.
-        
+
         Args:
             resource_type (str): Unique slug for the resource.
             model (Model): Django model class.
@@ -54,7 +54,9 @@ class QuickCreateFormView(LoginRequiredMixin, View):
         config = registry.get(resource_type)
 
         if not config:
-            return JsonResponse({"error": f"Invalid resource type: {resource_type}"}, status=400)
+            return JsonResponse(
+                {"error": f"Invalid resource type: {resource_type}"}, status=400
+            )
 
         form = config["form_class"]()
         html = render_to_string(

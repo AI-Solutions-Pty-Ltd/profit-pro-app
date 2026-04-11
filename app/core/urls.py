@@ -1,10 +1,11 @@
-from app.core.dynamic_quick_create import QuickCreateFormView, QuickCreateSubmitView
 import os
 
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+
+from app.core.dynamic_quick_create import QuickCreateFormView, QuickCreateSubmitView
 
 from .views import (
     AboutView,
