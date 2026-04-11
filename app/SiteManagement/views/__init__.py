@@ -57,10 +57,13 @@ from .materials_log_views import (
     MaterialsLogUpdateView,
 )
 from .meeting_views import (
+    MeetingAddActionView,
+    MeetingAddDecisionView,
     MeetingCreateView,
     MeetingDeleteView,
     MeetingDetailView,
     MeetingListView,
+    MeetingUpdateActionStatusView,
     MeetingUpdateView,
 )
 from .ncr_views import (

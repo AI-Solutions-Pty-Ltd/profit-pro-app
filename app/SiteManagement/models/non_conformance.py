@@ -95,6 +95,14 @@ class NonConformance(BaseModel):
         null=True,
         help_text="Photographic evidence",
     )
+    source_decision = models.ForeignKey(
+        "MeetingDecision",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="linked_ncrs",
+        help_text="Meeting decision that triggered this NCR",
+    )
 
     class Meta:
         verbose_name = "Non-Conformance Report"

@@ -1,0 +1,80 @@
+{% extends "base_full.html" %}
+{% load heroicons %}
+{% block content %}
+    <div class="bg-white rounded-lg shadow-sm mb-6 sticky top-0 z-10">
+        <div class="px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200">
+            {% include "project/reports_nav.html" with tab="decision_log" %}
+            <div class="mt-4">{% include "site_management/meeting/_meeting_tabs.html" %}</div>
+        </div>
+    </div>
+    <div class="mb-3 px-4 sm:px-6 lg:px-8">
+        <a href="{% url 'project:project-management' project.pk %}"
+           class="inline-flex items-center gap-2 text-sm font-medium text-indigo-700 hover:text-indigo-900">
+            <span aria-hidden="true">←</span>
+            Back to Project Management
+        </a>
+    </div>
+    <div class="bg-white shadow-sm rounded-lg mb-6 mx-4 sm:mx-6 lg:mx-8">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Project Decision Log</h1>
+                <p class="text-sm text-gray-600 mt-1">Register of all key decisions made across project meetings.</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold uppercase tracking-wider">
+                    {{ decisions.count }} Decisions
+                </span>
+            </div>
+        </div>
+        <div class="p-6">
+            <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Meeting Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/2">Decision / Outcome</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Responsible</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Due Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for decision in decisions %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ decision.meeting.date|date:"d M Y" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight bg-gray-100 text-gray-800 border border-gray-200">
+                                        {{ decision.meeting.get_meeting_type_display }}
+                                        {% if decision.meeting.meeting_type == 'OTHER' and decision.meeting.other_meeting_type %}
+                                            : {{ decision.meeting.other_meeting_type }}
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-900 font-medium">{{ decision.description }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ decision.responsible_person|default:"-" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    {% if decision.due_date %}
+                                        <span class="{% if decision.due_date < today %}text-red-600 font-bold{% elif decision.due_date == today %}text-amber-600 font-bold{% else %}text-gray-500{% endif %}">
+                                            {{ decision.due_date|date:"d M Y" }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-gray-400 italic">N/A</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-12 text-center text-sm text-gray-500">
+                                    <div class="flex flex-col items-center">
+                                        {% heroicon_outline "clipboard-document-list" class="w-12 h-12 text-gray-300 mb-3" %}
+                                        <p>No key decisions have been logged yet.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

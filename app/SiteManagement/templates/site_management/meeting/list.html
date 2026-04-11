@@ -19,6 +19,7 @@
                 </a>
             </div>
         </div>
+        {% include "site_management/meeting/_meeting_tabs.html" %}
     </div>
     <!-- Summary Cards -->
     <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
@@ -59,8 +60,12 @@
                                     <span class="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Contractual</span>
                                 {% elif meeting.meeting_type == 'RISK' %}
                                     <span class="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Risk</span>
+                                {% elif meeting.meeting_type == 'EARLY_WARNING' %}
+                                    <span class="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Early Warning</span>
+                                {% elif meeting.meeting_type == 'OTHER' %}
+                                    <span class="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{{ meeting.other_meeting_type|default:"Other" }}</span>
                                 {% else %}
-                                    <span class="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Other</span>
+                                    <span class="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{{ meeting.get_meeting_type_display }}</span>
                                 {% endif %}
                             </td>
                             <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{{ meeting.date }}</td>

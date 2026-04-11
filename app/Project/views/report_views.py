@@ -2,7 +2,7 @@
 
 import csv
 import json
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from io import BytesIO
 from typing import Any
@@ -11,6 +11,7 @@ from dateutil.relativedelta import relativedelta
 from django.db.models import Q, QuerySet, Sum
 from django.http import HttpResponse
 from django.urls import reverse
+from django.utils import timezone
 from django.views.generic import ListView, TemplateView
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -60,6 +61,9 @@ from app.SiteManagement.models import (
     IncidentType,
     LabourLog,
     MaterialsLog,
+    MeetingAction,
+    MeetingActionStatus,
+    MeetingDecision,
     NCRStatus,
     NCRType,
     NonConformance,
@@ -3702,4 +3706,229 @@ class ComplianceReportView(ContractualReportView):
             }
         )
 
+        return context
+
+
+class ActionTrackerReportView(ComplianceReportView):
+    """Report that tracks all actions across meetings and registers in a unified list."""
+
+    template_name = "project/action_tracker_report.html"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        project = self.get_project()
+        return [
+            BreadcrumbItem(title="Projects", url=reverse("project:project-list")),
+            BreadcrumbItem(
+                title=project.name,
+                url=reverse(
+                    "project:project-management",
+                    kwargs={"pk": project.pk},
+                ),
+            ),
+            BreadcrumbItem(
+                title="Meetings",
+                url=reverse("site_management:meeting-list", args=[project.pk]),
+            ),
+            BreadcrumbItem(title="Action Tracker", url=None),
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = self.get_project()
+        today = timezone.now().date()
+
+        actions = []
+
+        # 1. Meeting Actions
+        meeting_actions = MeetingAction.objects.filter(
+            meeting__project=project, deleted=False
+        ).exclude(status=MeetingActionStatus.COMPLETE)
+        for ma in meeting_actions:
+            actions.append(
+                {
+                    "source": "Meeting",
+                    "description": ma.description,
+                    "responsible": ma.assigned_to,
+                    "due_date": ma.due_date,
+                    "status": ma.get_status_display(),
+                    "link": reverse(
+                        "site_management:meeting-detail",
+                        args=[project.pk, ma.meeting.pk],
+                    ),
+                }
+            )
+
+        # 2. Open Non-Conformances
+        open_ncrs = NonConformance.objects.filter(
+            project=project, status=NCRStatus.OPEN, deleted=False
+        ).select_related("source_decision__meeting")
+        for ncr in open_ncrs:
+            source = "NCR"
+            if ncr.source_decision:
+                source = f"NCR (Meeting {ncr.source_decision.meeting.date.strftime('%d/%m')})"
+            actions.append(
+                {
+                    "source": source,
+                    "description": f"{ncr.reference_number}: {ncr.description}",
+                    "responsible": ncr.responsible_person,
+                    "due_date": ncr.date,
+                    "status": "Open",
+                    "link": reverse("site_management:ncr-list", args=[project.pk]),
+                }
+            )
+
+        # 3. Open Incidents
+        open_incidents = Incident.objects.filter(
+            project=project, status=IncidentStatus.OPEN, deleted=False
+        )
+        for inc in open_incidents:
+            actions.append(
+                {
+                    "source": "Incident",
+                    "description": f"{inc.reference_number}: {inc.description}",
+                    "responsible": inc.reported_by,
+                    "due_date": inc.date,
+                    "status": "Open",
+                    "link": reverse("site_management:incident-list", args=[project.pk]),
+                }
+            )
+
+        # 4. Open RFIs
+        open_rfis = RFI.objects.filter(
+            project=project, status=RFIStatus.OPEN, deleted=False
+        ).select_related("source_decision__meeting")
+        for rfi in open_rfis:
+            source = "RFI"
+            if rfi.source_decision:
+                source = f"RFI (Meeting {rfi.source_decision.meeting.date.strftime('%d/%m')})"
+            actions.append(
+                {
+                    "source": source,
+                    "description": f"{rfi.reference_number}: {rfi.subject}",
+                    "responsible": "Consultant/Client",
+                    "due_date": rfi.due_date,
+                    "status": "Open",
+                    "link": reverse(
+                        "site_management:rfi-detail", args=[project.pk, rfi.pk]
+                    ),
+                }
+            )
+
+        # 5. Open Site Instructions
+        open_sis = SiteInstruction.objects.filter(
+            project=project, status=SiteInstructionStatus.OPEN, deleted=False
+        ).select_related("source_decision__meeting")
+        for si in open_sis:
+            source = "Site Instruction"
+            if si.source_decision:
+                source = (
+                    f"SI (Meeting {si.source_decision.meeting.date.strftime('%d/%m')})"
+                )
+            actions.append(
+                {
+                    "source": source,
+                    "description": f"{si.reference_number}: {si.subject}",
+                    "responsible": "Contractor",
+                    "due_date": si.date_notified,
+                    "status": "Open",
+                    "link": reverse(
+                        "site_management:site-instruction-detail",
+                        args=[project.pk, si.pk],
+                    ),
+                }
+            )
+
+        # 6. Open Early Warnings
+        open_ewns = EarlyWarning.objects.filter(
+            project=project, status=EarlyWarningStatus.OPEN, deleted=False
+        ).select_related("source_decision__meeting")
+        for ew in open_ewns:
+            source = "Early Warning"
+            if ew.source_decision:
+                source = (
+                    f"EW (Meeting {ew.source_decision.meeting.date.strftime('%d/%m')})"
+                )
+            actions.append(
+                {
+                    "source": source,
+                    "description": f"{ew.reference_number}: {ew.subject}",
+                    "responsible": "Project Manager",
+                    "due_date": ew.date,
+                    "status": "Open",
+                    "link": reverse(
+                        "site_management:early-warning-list", args=[project.pk]
+                    ),
+                }
+            )
+
+        # 7. Open Variations
+        open_variations = ContractVariation.objects.filter(
+            project=project, deleted=False
+        ).exclude(
+            status__in=[
+                ContractVariation.Status.APPROVED,
+                ContractVariation.Status.REJECTED,
+            ]
+        )
+        for var in open_variations:
+            actions.append(
+                {
+                    "source": "Variation",
+                    "description": f"VO-{var.variation_number}: {var.title}",
+                    "responsible": "Quantity Surveyor",
+                    "due_date": var.date_identified,
+                    "status": var.get_status_display(),
+                    "link": "#",
+                }
+            )
+
+        # 8. Open Correspondence
+        open_correspondence = ContractualCorrespondence.objects.filter(
+            project=project, requires_response=True, response_sent=False, deleted=False
+        )
+        for corr in open_correspondence:
+            actions.append(
+                {
+                    "source": "Correspondence",
+                    "description": f"{corr.reference_number}: {corr.subject}",
+                    "responsible": "Project Team",
+                    "due_date": corr.response_due_date,
+                    "status": "Pending Response",
+                    "link": "#",
+                }
+            )
+
+        # Sort actions by due date (overdue first)
+        actions.sort(key=lambda x: x["due_date"] if x["due_date"] else date.max)
+
+        context.update(
+            {
+                "unified_actions": actions,
+                "today": today,
+                "tab": "action_tracker",
+            }
+        )
+        return context
+
+
+class DecisionLogReportView(ComplianceReportView):
+    """Report that tracks all key decisions across all project meetings."""
+
+    template_name = "project/decision_log_report.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = self.get_project()
+
+        decisions = MeetingDecision.objects.filter(
+            meeting__project=project, deleted=False
+        ).order_by("-meeting__date", "-created_at")
+
+        context.update(
+            {
+                "decisions": decisions,
+                "today": timezone.now().date(),
+                "tab": "decision_log",
+            }
+        )
         return context
