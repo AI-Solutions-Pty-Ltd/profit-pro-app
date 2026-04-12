@@ -227,23 +227,85 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
                     {% for ls in labour_specs %}
-                        <tr class="hover:bg-gray-50">
-                            <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">{{ ls.section|default:"-" }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ ls.trade_name|default:"-" }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900">{{ ls.name }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ ls.unit }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
-                                {% if ls.crew %}
-                                    <span class="inline-flex items-center rounded-md bg-teal-50 px-2 py-1 text-xs font-medium text-teal-700 ring-1 ring-inset ring-teal-700/10">{{ ls.crew.crew_type }}</span>
-                                {% else %}
-                                    -
-                                {% endif %}
+                        <tr class="hover:bg-gray-50" data-ls-id="{{ ls.id }}">
+                            <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+                                <input type="text"
+                                       class="inline-edit-ls w-20 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="section"
+                                       value="{{ ls.section }}">
                             </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">{{ ls.daily_production }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">{{ ls.team_mix }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">{{ ls.site_factor }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">{{ ls.tools_factor }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right sm:pr-6">{{ ls.leadership_factor }}</td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                <input type="text"
+                                       class="inline-edit-ls w-32 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="trade_name"
+                                       value="{{ ls.trade_name }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900">
+                                <input type="text"
+                                       class="inline-edit-ls w-40 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="name"
+                                       value="{{ ls.name }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                <input type="text"
+                                       class="inline-edit-ls w-14 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="unit"
+                                       value="{{ ls.unit }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                <select class="inline-edit-ls border-0 bg-transparent text-xs text-gray-700 p-0 pr-6 focus:ring-2 focus:ring-indigo-500 rounded"
+                                        data-item-id="{{ ls.id }}"
+                                        data-field="crew">
+                                    <option value="">-</option>
+                                    {% for c in crews %}
+                                        <option value="{{ c.id }}" {% if ls.crew_id == c.id %}selected{% endif %}>{{ c.crew_type }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                <input type="number"
+                                       step="0.01"
+                                       class="inline-edit-ls w-20 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="daily_production"
+                                       value="{{ ls.daily_production }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                <input type="number"
+                                       step="0.0001"
+                                       class="inline-edit-ls w-16 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="team_mix"
+                                       value="{{ ls.team_mix }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                <input type="number"
+                                       step="0.0001"
+                                       class="inline-edit-ls w-16 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="site_factor"
+                                       value="{{ ls.site_factor }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                <input type="number"
+                                       step="0.0001"
+                                       class="inline-edit-ls w-16 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="tools_factor"
+                                       value="{{ ls.tools_factor }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right sm:pr-6">
+                                <input type="number"
+                                       step="0.0001"
+                                       class="inline-edit-ls w-16 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="leadership_factor"
+                                       value="{{ ls.leadership_factor }}">
+                            </td>
                         </tr>
                     {% empty %}
                         <tr>
@@ -256,4 +318,37 @@
             </table>
         </div>
     </div>
+    <script>
+document.querySelectorAll('.inline-edit-ls').forEach(input => {
+    let original = input.value;
+    input.addEventListener('focus', () => { original = input.value; });
+    input.addEventListener('change', () => {
+        if (input.value === original) return;
+        const id = input.dataset.itemId;
+        const field = input.dataset.field;
+        fetch(`/estimator/system/api/labour-spec/${id}/update/`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({field, value: input.value})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                input.classList.add('ring-2', 'ring-green-500');
+                setTimeout(() => input.classList.remove('ring-2', 'ring-green-500'), 800);
+                original = input.value;
+            } else {
+                input.classList.add('ring-2', 'ring-red-500');
+                setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);
+                input.value = original;
+            }
+        })
+        .catch(() => {
+            input.classList.add('ring-2', 'ring-red-500');
+            setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);
+            input.value = original;
+        });
+    });
+});
+    </script>
 {% endblock %}

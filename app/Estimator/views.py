@@ -1588,7 +1588,20 @@ class DownloadSystemSpecTemplateView(View):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateLabourSpecView(View):
-    """AJAX endpoint to update daily_production on a ProjectLabourSpecification."""
+    """AJAX endpoint to update fields on a ProjectLabourSpecification."""
+
+    ALLOWED_FIELDS = {
+        "section": "str",
+        "trade_name": "str",
+        "name": "str",
+        "unit": "str",
+        "crew": "fk",
+        "daily_production": "decimal",
+        "team_mix": "decimal",
+        "site_factor": "decimal",
+        "tools_factor": "decimal",
+        "leadership_factor": "decimal",
+    }
 
     def post(self, request, project_pk, pk):
         item = get_object_or_404(
@@ -1602,11 +1615,22 @@ class UpdateLabourSpecView(View):
         field = data.get("field")
         value = data.get("value")
 
-        if field != "daily_production":
+        if field not in self.ALLOWED_FIELDS:
             return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
 
+        field_type = self.ALLOWED_FIELDS[field]
         try:
-            item.daily_production = Decimal(str(value))
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            elif field_type == "fk":
+                if value == "" or value is None:
+                    item.crew = None
+                else:
+                    item.crew = get_object_or_404(
+                        ProjectLabourCrew, pk=int(value), project_id=project_pk
+                    )
+            else:
+                setattr(item, field, str(value))
         except Exception:
             return JsonResponse({"error": "Invalid value"}, status=400)
 
@@ -1624,6 +1648,7 @@ class UpdateLabourSpecView(View):
                 "rate_per_unit": fmt(item.rate_per_unit),
                 "daily_cost": fmt(item.daily_cost),
                 "total_cost": fmt(item.total_cost),
+                "crew_type": item.crew.crew_type if item.crew else None,
             }
         )
 
@@ -1731,6 +1756,7 @@ class LabourSpecDefListView(ProjectEstimatorMixin, ListView):
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_name"] = self.request.GET.get("trade_name", "")
         context["f_name"] = self.request.GET.get("name", "")
+        context["crews"] = ProjectLabourCrew.objects.filter(project=project)
 
         return context
 
@@ -2590,6 +2616,7 @@ class SystemLabourSpecListView(SystemLibraryMixin, ListView):
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_name"] = self.request.GET.get("trade_name", "")
         context["f_name"] = self.request.GET.get("name", "")
+        context["crews"] = SystemLabourCrew.objects.all()
         return context
 
     def post(self, request, *args, **kwargs):
@@ -2604,11 +2631,16 @@ class SystemLabourSpecListView(SystemLibraryMixin, ListView):
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateSystemLabourSpecView(View):
     ALLOWED_FIELDS = {
-        "daily_production",
-        "team_mix",
-        "site_factor",
-        "tools_factor",
-        "leadership_factor",
+        "section": "str",
+        "trade_name": "str",
+        "name": "str",
+        "unit": "str",
+        "crew": "fk",
+        "daily_production": "decimal",
+        "team_mix": "decimal",
+        "site_factor": "decimal",
+        "tools_factor": "decimal",
+        "leadership_factor": "decimal",
     }
 
     def post(self, request, pk):
@@ -2619,7 +2651,21 @@ class UpdateSystemLabourSpecView(View):
         field, value = data.get("field"), data.get("value")
         if field not in self.ALLOWED_FIELDS:
             return JsonResponse({"error": "Invalid field"}, status=400)
-        setattr(ls, field, Decimal(value))
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(ls, field, Decimal(str(value)))
+            elif field_type == "fk":
+                if value == "" or value is None:
+                    ls.crew = None
+                else:
+                    ls.crew = get_object_or_404(SystemLabourCrew, pk=int(value))
+            else:
+                setattr(ls, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
         ls.save()
         return JsonResponse(
             {
@@ -2627,6 +2673,7 @@ class UpdateSystemLabourSpecView(View):
                 "daily_output": str(ls.daily_output),
                 "daily_cost": str(ls.daily_cost),
                 "rate_per_unit": str(ls.rate_per_unit),
+                "crew_type": ls.crew.crew_type if ls.crew else None,
             }
         )
 
