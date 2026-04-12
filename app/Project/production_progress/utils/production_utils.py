@@ -5,7 +5,7 @@ from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 
-from ..models.production_models import DailyActivityEntry, ProductionPlan
+from ..production_models import DailyActivityEntry, ProductionPlan
 
 
 def calculate_progress_status(produced, planned, start_date=None, finish_date=None):

@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.forms import formset_factory, inlineformset_factory
 
-from ..models.production_models import (
+from .production_models import (
     DailyActivityEntry,
     DailyActivityReport,
     DailyLabourUsage,

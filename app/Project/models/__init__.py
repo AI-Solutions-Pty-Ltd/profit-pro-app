@@ -18,7 +18,7 @@ from app.Project.projects.projects_models import (
 )
 
 from ..milestone_schedules.milestone_models import Milestone
-from ..production_progress.models.production_models import (
+from ..production_progress.production_models import (
     DailyProduction,
     ProductionPlan,
     ProductionResource,
