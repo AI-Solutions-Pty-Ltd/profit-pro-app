@@ -8,12 +8,20 @@ from .models import (
     ProjectLabourCrew,
     ProjectLabourSpecification,
     ProjectMaterial,
+    ProjectPlantCost,
+    ProjectPlantSpecification,
+    ProjectPreliminaryCost,
+    ProjectPreliminarySpecification,
     ProjectSpecification,
     ProjectSpecificationComponent,
     ProjectTradeCode,
     SystemLabourCrew,
     SystemLabourSpecification,
     SystemMaterial,
+    SystemPlantCost,
+    SystemPlantSpecification,
+    SystemPreliminaryCost,
+    SystemPreliminarySpecification,
     SystemSpecification,
     SystemSpecificationComponent,
     SystemTradeCode,
@@ -425,6 +433,267 @@ SystemSpecificationComponentFormSet = inlineformset_factory(
     extra=4,
     can_delete=False,
 )
+
+
+# ── Plant Cost Forms ──────────────────────────────────────────────
+
+
+class PlantCostForm(forms.ModelForm):
+    class Meta:
+        model = ProjectPlantCost
+        fields = ["name", "hourly_production", "hourly_rate"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": TAILWIND_INPUT,
+                    "placeholder": "e.g. TLB - Case 580",
+                }
+            ),
+            "hourly_production": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+            "hourly_rate": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+        }
+
+
+class SystemPlantCostForm(forms.ModelForm):
+    class Meta:
+        model = SystemPlantCost
+        fields = ["name", "hourly_production", "hourly_rate"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": TAILWIND_INPUT,
+                    "placeholder": "e.g. TLB - Case 580",
+                }
+            ),
+            "hourly_production": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+            "hourly_rate": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+        }
+
+
+# ── Plant Specification Forms ────────────────────────────────────
+
+
+class PlantSpecificationForm(forms.ModelForm):
+    class Meta:
+        model = ProjectPlantSpecification
+        fields = [
+            "section",
+            "trade_name",
+            "name",
+            "unit",
+            "plant_type",
+            "daily_production",
+            "operator_factor",
+            "site_factor",
+        ]
+        widgets = {
+            "section": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "trade_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "name": forms.TextInput(
+                attrs={
+                    "class": TAILWIND_INPUT,
+                    "placeholder": "e.g. Excavations - TLB Trenches",
+                }
+            ),
+            "unit": forms.TextInput(
+                attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. m3"}
+            ),
+            "plant_type": forms.Select(attrs={"class": TAILWIND_SELECT}),
+            "daily_production": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+            "operator_factor": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.0001"}
+            ),
+            "site_factor": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.0001"}
+            ),
+        }
+
+    def __init__(self, *args, project=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if project:
+            cast(
+                ModelChoiceField, self.fields["plant_type"]
+            ).queryset = ProjectPlantCost.objects.filter(project=project)
+
+
+class SystemPlantSpecificationForm(forms.ModelForm):
+    class Meta:
+        model = SystemPlantSpecification
+        fields = [
+            "section",
+            "trade_name",
+            "name",
+            "unit",
+            "plant_type",
+            "daily_production",
+            "operator_factor",
+            "site_factor",
+        ]
+        widgets = {
+            "section": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "trade_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "name": forms.TextInput(
+                attrs={
+                    "class": TAILWIND_INPUT,
+                    "placeholder": "e.g. Excavations - TLB Trenches",
+                }
+            ),
+            "unit": forms.TextInput(
+                attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. m3"}
+            ),
+            "plant_type": forms.Select(attrs={"class": TAILWIND_SELECT}),
+            "daily_production": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+            "operator_factor": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.0001"}
+            ),
+            "site_factor": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.0001"}
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        cast(
+            ModelChoiceField, self.fields["plant_type"]
+        ).queryset = SystemPlantCost.objects.all()
+
+
+# ── Preliminary Cost Forms ───────────────────────────────────────
+
+
+class PreliminaryCostForm(forms.ModelForm):
+    class Meta:
+        model = ProjectPreliminaryCost
+        fields = [
+            "name",
+            "preliminary_type",
+            "sum_value",
+            "amount",
+            "number_per_month",
+            "monthly_rate",
+            "months",
+        ]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": TAILWIND_INPUT,
+                    "placeholder": "e.g. Site Establishment",
+                }
+            ),
+            "preliminary_type": forms.Select(attrs={"class": TAILWIND_SELECT}),
+            "sum_value": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+            "amount": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+            "number_per_month": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+            "monthly_rate": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+            "months": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+        }
+
+
+class SystemPreliminaryCostForm(forms.ModelForm):
+    class Meta:
+        model = SystemPreliminaryCost
+        fields = [
+            "name",
+            "preliminary_type",
+            "sum_value",
+            "amount",
+            "number_per_month",
+            "monthly_rate",
+            "months",
+        ]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": TAILWIND_INPUT,
+                    "placeholder": "e.g. Site Establishment",
+                }
+            ),
+            "preliminary_type": forms.Select(attrs={"class": TAILWIND_SELECT}),
+            "sum_value": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+            "amount": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+            "number_per_month": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+            "monthly_rate": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+            "months": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+        }
+
+
+# ── Preliminary Specification Forms ──────────────────────────────
+
+
+class PreliminarySpecificationForm(forms.ModelForm):
+    class Meta:
+        model = ProjectPreliminarySpecification
+        fields = ["section", "trade_name", "name", "unit", "amount"]
+        widgets = {
+            "section": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "trade_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "name": forms.TextInput(
+                attrs={
+                    "class": TAILWIND_INPUT,
+                    "placeholder": "e.g. Site Establishment",
+                }
+            ),
+            "unit": forms.TextInput(
+                attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. Sum"}
+            ),
+            "amount": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+        }
+
+
+class SystemPreliminarySpecificationForm(forms.ModelForm):
+    class Meta:
+        model = SystemPreliminarySpecification
+        fields = ["section", "trade_name", "name", "unit", "amount"]
+        widgets = {
+            "section": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "trade_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "name": forms.TextInput(
+                attrs={
+                    "class": TAILWIND_INPUT,
+                    "placeholder": "e.g. Site Establishment",
+                }
+            ),
+            "unit": forms.TextInput(
+                attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. Sum"}
+            ),
+            "amount": forms.NumberInput(
+                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
+            ),
+        }
 
 
 class ProjectAssumptionsForm(forms.ModelForm):

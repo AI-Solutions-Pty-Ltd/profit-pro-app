@@ -30,12 +30,20 @@ from .forms import (
     LabourCrewForm,
     LabourSpecificationForm,
     MaterialForm,
+    PlantCostForm,
+    PlantSpecificationForm,
+    PreliminaryCostForm,
+    PreliminarySpecificationForm,
     ProjectAssumptionsForm,
     SpecificationComponentFormSet,
     SpecificationForm,
     SystemLabourCrewForm,
     SystemLabourSpecificationForm,
     SystemMaterialForm,
+    SystemPlantCostForm,
+    SystemPlantSpecificationForm,
+    SystemPreliminaryCostForm,
+    SystemPreliminarySpecificationForm,
     SystemSpecificationComponentFormSet,
     SystemSpecificationForm,
     SystemTradeCodeForm,
@@ -46,12 +54,20 @@ from .models import (
     ProjectLabourCrew,
     ProjectLabourSpecification,
     ProjectMaterial,
+    ProjectPlantCost,
+    ProjectPlantSpecification,
+    ProjectPreliminaryCost,
+    ProjectPreliminarySpecification,
     ProjectSpecification,
     ProjectSpecificationComponent,
     ProjectTradeCode,
     SystemLabourCrew,
     SystemLabourSpecification,
     SystemMaterial,
+    SystemPlantCost,
+    SystemPlantSpecification,
+    SystemPreliminaryCost,
+    SystemPreliminarySpecification,
     SystemSpecification,
     SystemSpecificationComponent,
     SystemTradeCode,
@@ -768,13 +784,28 @@ class ExcelImportView(ProjectEstimatorMixin, FormView):
                 "specifications": "Material Estimator",
                 "labour_crews": "Labour Crews",
                 "labour_specs": "Labour Specs",
+                "plant_costs": "Plant Costs",
+                "plant_specs": "Plant Specs",
+                "preliminary_costs": "Preliminary Costs",
+                "preliminary_specs": "Preliminary Specs",
                 "boq_items": "Output BoQ Items",
             }
             for key, label in labels.items():
                 if key in results:
                     parts.append(f"{label}: {results[key]}")
 
-            messages.success(self.request, f"Import successful — {', '.join(parts)}")
+            skipped = [
+                label
+                for key, label in labels.items()
+                if key not in results and key != "boq_items"
+            ]
+            msg = f"Import successful — {', '.join(parts)}"
+            if skipped:
+                msg += (
+                    f". Skipped (sheet not found): {', '.join(skipped)}. "
+                    f"Sheets in file: {importer.sheet_names}"
+                )
+            messages.success(self.request, msg)
         except Exception as e:
             messages.error(self.request, f"Import failed: {e}")
         finally:
@@ -1805,6 +1836,376 @@ class LabourSpecDefListView(ProjectEstimatorMixin, ListView):
         return self.render_to_response(self.get_context_data(form=form))
 
 
+# ── Plant Costs ─────────────────────────────────────────────────
+
+
+class PlantCostListView(ProjectEstimatorMixin, ListView):
+    model = ProjectPlantCost
+    template_name = "estimator/plant_costs_list.html"
+    context_object_name = "plants"
+
+    def get_queryset(self):
+        return ProjectPlantCost.objects.filter(project=self.get_project())
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", PlantCostForm())
+        return context
+
+    def post(self, request, *args, **kwargs):
+        project_pk = self.kwargs["project_pk"]
+        action = request.POST.get("action")
+
+        if action == "sync_system":
+            from .services import sync_plant_costs_from_system
+
+            result = sync_plant_costs_from_system(self.get_project())
+            messages.success(
+                request,
+                f"Plant costs synced with system library — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse("estimator:plant_costs", kwargs={"project_pk": project_pk})
+            )
+
+        form = PlantCostForm(request.POST)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.project = self.get_project()
+            obj.save()
+            return redirect(
+                reverse("estimator:plant_costs", kwargs={"project_pk": project_pk})
+            )
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdatePlantCostView(View):
+    """AJAX endpoint to update fields on a ProjectPlantCost."""
+
+    ALLOWED_FIELDS = {
+        "name": "str",
+        "hourly_production": "decimal",
+        "hourly_rate": "decimal",
+    }
+
+    def post(self, request, project_pk, pk):
+        item = get_object_or_404(ProjectPlantCost, pk=pk, project_id=project_pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse({"ok": True})
+
+
+# ── Plant Spec Definitions ─────────────────────────────────────
+
+
+class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
+    model = ProjectPlantSpecification
+    template_name = "estimator/plant_spec_def_list.html"
+    context_object_name = "plant_specs"
+
+    def get_queryset(self):
+        project = self.get_project()
+        qs = ProjectPlantSpecification.objects.filter(project=project).select_related(
+            "plant_type"
+        )
+        section = self.request.GET.get("section")
+        if section:
+            qs = qs.filter(section=section)
+        trade_name = self.request.GET.get("trade_name")
+        if trade_name:
+            qs = qs.filter(trade_name=trade_name)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = self.get_project()
+        context["form"] = context.get("form", PlantSpecificationForm(project=project))
+        project_pspecs = ProjectPlantSpecification.objects.filter(project=project)
+        context["sections"] = (
+            project_pspecs.exclude(section="")
+            .values_list("section", flat=True)
+            .distinct()
+            .order_by("section")
+        )
+        context["trade_names"] = (
+            project_pspecs.exclude(trade_name="")
+            .values_list("trade_name", flat=True)
+            .distinct()
+            .order_by("trade_name")
+        )
+        context["plants"] = ProjectPlantCost.objects.filter(project=project)
+        context["f_section"] = self.request.GET.get("section", "")
+        context["f_trade_name"] = self.request.GET.get("trade_name", "")
+        return context
+
+    def post(self, request, *args, **kwargs):
+        project = self.get_project()
+        form = PlantSpecificationForm(request.POST, project=project)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.project = project
+            obj.save()
+            return redirect(
+                reverse(
+                    "estimator:plant_spec_defs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdatePlantSpecView(View):
+    """AJAX endpoint to update fields on a ProjectPlantSpecification."""
+
+    ALLOWED_FIELDS = {
+        "section": "str",
+        "trade_name": "str",
+        "name": "str",
+        "unit": "str",
+        "plant_type": "fk",
+        "daily_production": "decimal",
+        "operator_factor": "decimal",
+        "site_factor": "decimal",
+    }
+
+    def post(self, request, project_pk, pk):
+        item = get_object_or_404(
+            ProjectPlantSpecification, pk=pk, project_id=project_pk
+        )
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            elif field_type == "fk":
+                if value:
+                    item.plant_type = ProjectPlantCost.objects.get(
+                        pk=int(value), project_id=project_pk
+                    )
+                else:
+                    item.plant_type = None
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse(
+            {
+                "ok": True,
+                "daily_output": str(item.daily_output),
+                "hourly_cost": str(item.hourly_cost),
+                "rate_per_unit": str(item.rate_per_unit),
+                "plant_name": item.plant_type.name if item.plant_type else None,
+            }
+        )
+
+
+# ── Preliminary Costs ──────────────────────────────────────────
+
+
+class PreliminaryCostListView(ProjectEstimatorMixin, ListView):
+    model = ProjectPreliminaryCost
+    template_name = "estimator/preliminary_costs_list.html"
+    context_object_name = "preliminaries"
+
+    def get_queryset(self):
+        return ProjectPreliminaryCost.objects.filter(project=self.get_project())
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", PreliminaryCostForm())
+        return context
+
+    def post(self, request, *args, **kwargs):
+        project_pk = self.kwargs["project_pk"]
+        action = request.POST.get("action")
+
+        if action == "sync_system":
+            from .services import sync_preliminary_costs_from_system
+
+            result = sync_preliminary_costs_from_system(self.get_project())
+            messages.success(
+                request,
+                f"Preliminary costs synced with system library — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse(
+                    "estimator:preliminary_costs",
+                    kwargs={"project_pk": project_pk},
+                )
+            )
+
+        form = PreliminaryCostForm(request.POST)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.project = self.get_project()
+            obj.save()
+            return redirect(
+                reverse(
+                    "estimator:preliminary_costs",
+                    kwargs={"project_pk": project_pk},
+                )
+            )
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdatePreliminaryCostView(View):
+    """AJAX endpoint to update fields on a ProjectPreliminaryCost."""
+
+    ALLOWED_FIELDS = {
+        "name": "str",
+        "preliminary_type": "str",
+        "sum_value": "decimal",
+        "amount": "decimal",
+        "number_per_month": "decimal",
+        "monthly_rate": "decimal",
+        "months": "decimal",
+    }
+
+    def post(self, request, project_pk, pk):
+        item = get_object_or_404(ProjectPreliminaryCost, pk=pk, project_id=project_pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse(
+            {
+                "ok": True,
+                "computed_amount": str(item.computed_amount),
+            }
+        )
+
+
+# ── Preliminary Spec Definitions ───────────────────────────────
+
+
+class PreliminarySpecDefListView(ProjectEstimatorMixin, ListView):
+    model = ProjectPreliminarySpecification
+    template_name = "estimator/preliminary_spec_def_list.html"
+    context_object_name = "preliminary_specs"
+
+    def get_queryset(self):
+        return ProjectPreliminarySpecification.objects.filter(
+            project=self.get_project()
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", PreliminarySpecificationForm())
+        return context
+
+    def post(self, request, *args, **kwargs):
+        project = self.get_project()
+        form = PreliminarySpecificationForm(request.POST)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.project = project
+            obj.save()
+            return redirect(
+                reverse(
+                    "estimator:preliminary_spec_defs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdatePreliminarySpecView(View):
+    """AJAX endpoint to update fields on a ProjectPreliminarySpecification."""
+
+    ALLOWED_FIELDS = {
+        "section": "str",
+        "trade_name": "str",
+        "name": "str",
+        "unit": "str",
+        "amount": "decimal",
+    }
+
+    def post(self, request, project_pk, pk):
+        item = get_object_or_404(
+            ProjectPreliminarySpecification, pk=pk, project_id=project_pk
+        )
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse({"ok": True})
+
+
 # ── Upload / Download Template Views ──────────────────────────────
 
 
@@ -1826,9 +2227,11 @@ def _handle_upload(request, importer_class, success_url, entity_name, project=No
 
         created = result.get("created", 0)
         updated = result.get("updated", 0)
-        messages.success(
-            request, f"{entity_name} uploaded — {created} created, {updated} updated"
-        )
+        msg = f"{entity_name} uploaded — {created} created, {updated} updated"
+        sheet_used = result.get("sheet_used")
+        if sheet_used is not None and result.get("fell_back"):
+            msg += f" [sheet used: '{sheet_used}' (fallback — no sheet name matched)]"
+        messages.success(request, msg)
     except Exception as e:
         messages.error(request, f"Import failed: {str(e)}")
     finally:
@@ -2210,6 +2613,223 @@ class InitializeEstimatorView(ProjectEstimatorMixin, View):
             messages.error(request, f"Initialization failed: {e}")
         return redirect(
             reverse("estimator:dashboard", kwargs={"project_pk": project_pk})
+        )
+
+
+# ── Plant Costs Upload/Download ───────────────────────────────────
+
+
+class PlantCostUploadView(ProjectEstimatorMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_success_url(self):
+        return reverse(
+            "estimator:plant_costs", kwargs={"project_pk": self.kwargs["project_pk"]}
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["parent_template"] = "estimator/base_baseline_costs.html"
+        ctx["upload_title"] = "Upload Plant Costs"
+        ctx["upload_description"] = (
+            "Upload plant & equipment costs with hourly production and rates."
+        )
+        ctx["download_url_name"] = "estimator:download_plant_cost_template"
+        ctx["columns"] = [
+            ("Plant & Equipment", "Name of plant/equipment"),
+            ("Hourly Production", "Production output per hour"),
+            ("Hourly Rate", "Cost per hour (R)"),
+        ]
+        return ctx
+
+    def form_valid(self, form):
+        from .importers import PlantCostImporter
+
+        return _handle_upload(
+            self.request,
+            PlantCostImporter,
+            self.get_success_url(),
+            "Plant Costs",
+            project=self.get_project(),
+        )
+
+
+class DownloadPlantCostTemplateView(View):
+    def get(self, request, project_pk):
+        return _generate_template(
+            ["Plant & Equipment", "Hourly Production", "Hourly Rate"],
+            "PlantCost_Template.xlsx",
+        )
+
+
+# ── Plant Specs Upload/Download ───────────────────────────────────
+
+
+class PlantSpecUploadView(ProjectEstimatorMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_success_url(self):
+        return reverse(
+            "estimator:plant_spec_defs",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["parent_template"] = "estimator/base_baseline_costs.html"
+        ctx["upload_title"] = "Upload Plant Specifications"
+        ctx["upload_description"] = (
+            "Upload plant specification definitions with production factors."
+        )
+        ctx["download_url_name"] = "estimator:download_plant_spec_template"
+        ctx["columns"] = [
+            ("Section", "Section group"),
+            ("Trade Name", "Trade name"),
+            ("Plant Specification", "Specification name"),
+            ("Unit", "Unit of measure"),
+            ("Plant Type", "Name of plant (matches Plant Costs)"),
+            ("Daily Production", "Daily production output"),
+            ("Operator", "Operator factor"),
+            ("Site", "Site factor"),
+        ]
+        return ctx
+
+    def form_valid(self, form):
+        from .importers import PlantSpecImporter
+
+        return _handle_upload(
+            self.request,
+            PlantSpecImporter,
+            self.get_success_url(),
+            "Plant Specifications",
+            project=self.get_project(),
+        )
+
+
+class DownloadPlantSpecTemplateView(View):
+    def get(self, request, project_pk):
+        return _generate_template(
+            [
+                "Section",
+                "Trade Name",
+                "Plant Specification",
+                "Unit",
+                "Plant Type",
+                "Daily Production",
+                "Operator",
+                "Site",
+            ],
+            "PlantSpec_Template.xlsx",
+        )
+
+
+# ── Preliminary Costs Upload/Download ─────────────────────────────
+
+
+class PreliminaryCostUploadView(ProjectEstimatorMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_success_url(self):
+        return reverse(
+            "estimator:preliminary_costs",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["parent_template"] = "estimator/base_baseline_costs.html"
+        ctx["upload_title"] = "Upload Preliminary Costs"
+        ctx["upload_description"] = (
+            "Upload preliminary costs with type, amounts and time-based rates."
+        )
+        ctx["download_url_name"] = "estimator:download_preliminary_cost_template"
+        ctx["columns"] = [
+            ("Preliminary Type", "Type code (e.g. fixed_contractual, time_facilities)"),
+            ("Name", "Name of the preliminary item"),
+            ("Sum", "Sum/lump sum value"),
+            ("Amount", "Amount (fixed items)"),
+            ("Number/Month", "Quantity per month (time items)"),
+            ("Monthly Rate", "Monthly rate (time items)"),
+            ("Months", "Duration in months (time items)"),
+        ]
+        return ctx
+
+    def form_valid(self, form):
+        from .importers import PreliminaryCostImporter
+
+        return _handle_upload(
+            self.request,
+            PreliminaryCostImporter,
+            self.get_success_url(),
+            "Preliminary Costs",
+            project=self.get_project(),
+        )
+
+
+class DownloadPreliminaryCostTemplateView(View):
+    def get(self, request, project_pk):
+        return _generate_template(
+            [
+                "Preliminary Type",
+                "Name",
+                "Sum",
+                "Amount",
+                "Number/Month",
+                "Monthly Rate",
+                "Months",
+            ],
+            "PreliminaryCost_Template.xlsx",
+        )
+
+
+# ── Preliminary Specs Upload/Download ─────────────────────────────
+
+
+class PreliminarySpecUploadView(ProjectEstimatorMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_success_url(self):
+        return reverse(
+            "estimator:preliminary_spec_defs",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["parent_template"] = "estimator/base_baseline_costs.html"
+        ctx["upload_title"] = "Upload Preliminary Specifications"
+        ctx["upload_description"] = "Upload preliminary specification definitions."
+        ctx["download_url_name"] = "estimator:download_preliminary_spec_template"
+        ctx["columns"] = [
+            ("Section", "Section group"),
+            ("Trade Name", "Trade name"),
+            ("Name", "Specification name"),
+            ("Unit", "Unit of measure"),
+            ("Amount", "Amount (R)"),
+        ]
+        return ctx
+
+    def form_valid(self, form):
+        from .importers import PreliminarySpecImporter
+
+        return _handle_upload(
+            self.request,
+            PreliminarySpecImporter,
+            self.get_success_url(),
+            "Preliminary Specifications",
+            project=self.get_project(),
+        )
+
+
+class DownloadPreliminarySpecTemplateView(View):
+    def get(self, request, project_pk):
+        return _generate_template(
+            ["Section", "Trade Name", "Name", "Unit", "Amount"],
+            "PreliminarySpec_Template.xlsx",
         )
 
 
@@ -2747,4 +3367,404 @@ class DownloadSystemLabourSpecTemplateView(SystemLibraryMixin, View):
                 "Leadership Factor",
             ],
             "system_labour_specs_template.xlsx",
+        )
+
+
+# ── System Plant Costs ─────────────────────────────────────────────
+
+
+class SystemPlantCostListView(SystemLibraryMixin, ListView):
+    model = SystemPlantCost
+    template_name = "estimator/system/plant_cost_list.html"
+    context_object_name = "plants"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", SystemPlantCostForm())
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = SystemPlantCostForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("estimator:sys_plant_costs")
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateSystemPlantCostView(SystemLibraryMixin, View):
+    ALLOWED_FIELDS = {
+        "name": "str",
+        "hourly_production": "decimal",
+        "hourly_rate": "decimal",
+    }
+
+    def post(self, request, pk):
+        item = get_object_or_404(SystemPlantCost, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse({"ok": True})
+
+
+class SystemPlantCostUploadView(SystemLibraryMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["upload_title"] = "Upload Plant Costs"
+        context["upload_description"] = (
+            "Upload plant & equipment costs with hourly production and rates."
+        )
+        context["parent_template"] = "estimator/system/base_system.html"
+        context["download_url_name"] = "estimator:sys_download_plant_cost_template"
+        return context
+
+    def form_valid(self, form):
+        from .importers import PlantCostImporter
+
+        return _handle_upload(
+            self.request,
+            PlantCostImporter,
+            "estimator:sys_plant_costs",
+            "Plant Costs",
+        )
+
+
+class DownloadSystemPlantCostTemplateView(SystemLibraryMixin, View):
+    def get(self, request):
+        return _generate_template(
+            ["Plant & Equipment", "Hourly Production", "Hourly Rate"],
+            "system_plant_costs_template.xlsx",
+        )
+
+
+# ── System Plant Specs ─────────────────────────────────────────────
+
+
+class SystemPlantSpecListView(SystemLibraryMixin, ListView):
+    model = SystemPlantSpecification
+    template_name = "estimator/system/plant_spec_list.html"
+    context_object_name = "plant_specs"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", SystemPlantSpecificationForm())
+        context["plants"] = SystemPlantCost.objects.all()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = SystemPlantSpecificationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("estimator:sys_plant_specs")
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateSystemPlantSpecView(SystemLibraryMixin, View):
+    ALLOWED_FIELDS = {
+        "section": "str",
+        "trade_name": "str",
+        "name": "str",
+        "unit": "str",
+        "plant_type": "fk",
+        "daily_production": "decimal",
+        "operator_factor": "decimal",
+        "site_factor": "decimal",
+    }
+
+    def post(self, request, pk):
+        item = get_object_or_404(SystemPlantSpecification, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            elif field_type == "fk":
+                if value:
+                    item.plant_type = SystemPlantCost.objects.get(pk=int(value))
+                else:
+                    item.plant_type = None
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse(
+            {
+                "ok": True,
+                "daily_output": str(item.daily_output),
+                "hourly_cost": str(item.hourly_cost),
+                "rate_per_unit": str(item.rate_per_unit),
+                "plant_name": item.plant_type.name if item.plant_type else None,
+            }
+        )
+
+
+class SystemPlantSpecUploadView(SystemLibraryMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["upload_title"] = "Upload Plant Specifications"
+        context["upload_description"] = (
+            "Upload plant specification definitions with production factors."
+        )
+        context["parent_template"] = "estimator/system/base_system.html"
+        context["download_url_name"] = "estimator:sys_download_plant_spec_template"
+        return context
+
+    def form_valid(self, form):
+        from .importers import PlantSpecImporter
+
+        return _handle_upload(
+            self.request,
+            PlantSpecImporter,
+            "estimator:sys_plant_specs",
+            "Plant Specifications",
+        )
+
+
+class DownloadSystemPlantSpecTemplateView(SystemLibraryMixin, View):
+    def get(self, request):
+        return _generate_template(
+            [
+                "Section",
+                "Trade Name",
+                "Plant Specification",
+                "Unit",
+                "Plant Type",
+                "Daily Production",
+                "Operator",
+                "Site",
+            ],
+            "system_plant_specs_template.xlsx",
+        )
+
+
+# ── System Preliminary Costs ──────────────────────────────────────
+
+
+class SystemPreliminaryCostListView(SystemLibraryMixin, ListView):
+    model = SystemPreliminaryCost
+    template_name = "estimator/system/preliminary_cost_list.html"
+    context_object_name = "preliminaries"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", SystemPreliminaryCostForm())
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = SystemPreliminaryCostForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("estimator:sys_preliminary_costs")
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateSystemPreliminaryCostView(SystemLibraryMixin, View):
+    ALLOWED_FIELDS = {
+        "name": "str",
+        "preliminary_type": "str",
+        "sum_value": "decimal",
+        "amount": "decimal",
+        "number_per_month": "decimal",
+        "monthly_rate": "decimal",
+        "months": "decimal",
+    }
+
+    def post(self, request, pk):
+        item = get_object_or_404(SystemPreliminaryCost, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse({"ok": True, "computed_amount": str(item.computed_amount)})
+
+
+class SystemPreliminaryCostUploadView(SystemLibraryMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["upload_title"] = "Upload Preliminary Costs"
+        context["upload_description"] = (
+            "Upload preliminary costs with type, amounts and time-based rates."
+        )
+        context["parent_template"] = "estimator/system/base_system.html"
+        context["download_url_name"] = (
+            "estimator:sys_download_preliminary_cost_template"
+        )
+        return context
+
+    def form_valid(self, form):
+        from .importers import PreliminaryCostImporter
+
+        return _handle_upload(
+            self.request,
+            PreliminaryCostImporter,
+            "estimator:sys_preliminary_costs",
+            "Preliminary Costs",
+        )
+
+
+class DownloadSystemPreliminaryCostTemplateView(SystemLibraryMixin, View):
+    def get(self, request):
+        return _generate_template(
+            [
+                "Preliminary Type",
+                "Name",
+                "Sum",
+                "Amount",
+                "Number/Month",
+                "Monthly Rate",
+                "Months",
+            ],
+            "system_preliminary_costs_template.xlsx",
+        )
+
+
+# ── System Preliminary Specs ──────────────────────────────────────
+
+
+class SystemPreliminarySpecListView(SystemLibraryMixin, ListView):
+    model = SystemPreliminarySpecification
+    template_name = "estimator/system/preliminary_spec_list.html"
+    context_object_name = "preliminary_specs"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", SystemPreliminarySpecificationForm())
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = SystemPreliminarySpecificationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("estimator:sys_preliminary_specs")
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateSystemPreliminarySpecView(SystemLibraryMixin, View):
+    ALLOWED_FIELDS = {
+        "section": "str",
+        "trade_name": "str",
+        "name": "str",
+        "unit": "str",
+        "amount": "decimal",
+    }
+
+    def post(self, request, pk):
+        item = get_object_or_404(SystemPreliminarySpecification, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse({"ok": True})
+
+
+class SystemPreliminarySpecUploadView(SystemLibraryMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["upload_title"] = "Upload Preliminary Specifications"
+        context["upload_description"] = "Upload preliminary specification definitions."
+        context["parent_template"] = "estimator/system/base_system.html"
+        context["download_url_name"] = (
+            "estimator:sys_download_preliminary_spec_template"
+        )
+        return context
+
+    def form_valid(self, form):
+        from .importers import PreliminarySpecImporter
+
+        return _handle_upload(
+            self.request,
+            PreliminarySpecImporter,
+            "estimator:sys_preliminary_specs",
+            "Preliminary Specifications",
+        )
+
+
+class DownloadSystemPreliminarySpecTemplateView(SystemLibraryMixin, View):
+    def get(self, request):
+        return _generate_template(
+            ["Section", "Trade Name", "Name", "Unit", "Amount"],
+            "system_preliminary_specs_template.xlsx",
         )
