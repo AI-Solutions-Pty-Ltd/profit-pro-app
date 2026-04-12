@@ -58,3 +58,21 @@ class TestProfitabilityModels:
         )
         assert tracker.id is not None  # type: ignore
         assert str(tracker) == f"Electric Bill - {tracker.date} - 1200.00"
+
+    def test_subcontractor_tracker_null_entity(self):
+        """Test creating a subcontractor cost tracker without an entity."""
+        from decimal import Decimal
+
+        from app.Project.models import SubcontractorCostTracker
+
+        tracker = SubcontractorCostTracker.objects.create(
+            project=ProjectFactory(),
+            subcontractor_entity=None,
+            date="2024-01-01",
+            amount_of_days=Decimal("1.0"),
+            rate=Decimal("50.0"),
+        )
+        assert tracker.id is not None
+        assert tracker.subcontractor_entity is None
+        assert tracker.cost == Decimal("50.0")
+        assert str(tracker) == "Unknown - 2024-01-01 - 50.00"

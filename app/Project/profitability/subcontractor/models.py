@@ -19,6 +19,8 @@ class SubcontractorCostTracker(BaseModel):
         "Project.SubcontractorEntity",
         on_delete=models.CASCADE,
         related_name="cost_logs",
+        null=True,
+        blank=True,
         help_text="Link to master subcontractor definition",
     )
     date = models.DateField(help_text="Date of monitoring")
@@ -55,7 +57,10 @@ class SubcontractorCostTracker(BaseModel):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.subcontractor_entity.name} - {self.date} - {self.cost}"
+        entity_name = (
+            self.subcontractor_entity.name if self.subcontractor_entity else "Unknown"
+        )
+        return f"{entity_name} - {self.date} - {self.cost}"
 
     class Meta:
         verbose_name = "Subcontractor Cost Tracker"

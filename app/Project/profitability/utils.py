@@ -17,6 +17,9 @@ def import_subcontractor_logs_to_profitability(project):
 
     with transaction.atomic():
         for log in logs:
+            if not log.subcontractor_entity:
+                continue
+
             # Check if an entry already exists for this subcontractor and date
             exists = SubcontractorCostTracker.objects.filter(
                 project=project,
@@ -60,6 +63,9 @@ def import_labour_logs_to_profitability(project):
 
     with transaction.atomic():
         for log in logs:
+            if not log.labour_entity:
+                continue
+
             exists = LabourCostTracker.objects.filter(
                 project=project, labour_entity=log.labour_entity, date=log.date
             ).exists()
@@ -443,7 +449,10 @@ def bulk_sync_all_trackers_to_journal(project):
                 elif model == SubcontractorCostTracker:
                     entity_attr = "subcontractor_entity"
 
-                entity = getattr(instance, entity_attr)
+                entity = getattr(instance, entity_attr, None)
+                if not entity:
+                    continue
+
                 key = (instance.date, entity.id, model.__name__)
 
                 if key not in processed_keys:

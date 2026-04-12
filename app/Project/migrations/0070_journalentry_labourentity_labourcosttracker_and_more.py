@@ -1332,4 +1332,16 @@ class Migration(migrations.Migration):
                 "unique_together": {("project", "period_start", "period_end")},
             },
         ),
+        migrations.AlterField(
+            model_name="subcontractorcosttracker",
+            name="subcontractor_entity",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Link to master subcontractor definition",
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="cost_logs",
+                to="Project.subcontractorentity",
+            ),
+        ),
     ]
