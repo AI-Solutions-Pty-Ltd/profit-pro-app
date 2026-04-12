@@ -1,5 +1,4 @@
 {% extends "profitability/base_form.html" %}
-
 {% block entity_name %}
     {% if "journal" in request.path %}
         Journal Entry
@@ -17,11 +16,7 @@
         Record
     {% endif %}
 {% endblock %}
-
-{% block entity_display_name %}
-    {{ block.super }}
-{% endblock %}
-
+{% block entity_display_name %}{{ block.super }}{% endblock %}
 {% block back_url %}
     {% if "journal" in request.path %}
         {% url 'project:profitability-journal-list' project.pk %}
@@ -37,7 +32,4 @@
         {% url 'project:profitability-plant-list' project.pk %}
     {% endif %}
 {% endblock %}
-
-{% block cancel_url %}
-    {{ block.super }}
-{% endblock %}
+{% block cancel_url %}{{ block.super }}{% endblock %}

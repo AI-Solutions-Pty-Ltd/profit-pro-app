@@ -34,7 +34,6 @@ class LabourCostTracker(BaseModel):
     task_activity = models.TextField(blank=True, help_text="Specific task or activity")
     remarks = models.TextField(blank=True, help_text="Additional remarks")
 
-
     @property
     def cost(self):
         """Calculate total labour cost."""

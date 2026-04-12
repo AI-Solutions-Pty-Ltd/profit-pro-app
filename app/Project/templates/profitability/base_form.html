@@ -1,48 +1,50 @@
 {% extends "layout.html" %}
 {% load crispy_forms_tags %}
 {% load heroicons %}
-
 {% block title %}
-    {% if object %}Edit{% else %}New{% endif %} 
-    {% block entity_name %}Entry{% endblock %} - {{ project.name }} - Profitability
+    {% if object %}
+        Edit
+    {% else %}
+        New
+    {% endif %}
+    {% block entity_name %}Entry{% endblock %}
+    - {{ project.name }} - Profitability
 {% endblock title %}
-
 {% block page_content %}
     <div class="max-w-4xl mx-auto px-4 py-12">
         <!-- Premium Header Area -->
         <div class="mb-10">
-            <a href="{% block back_url %}#{% endblock %}" 
+            <a href="{% block back_url %}#{% endblock %}"
                onclick="if(this.getAttribute('href') === '#') { history.back(); return false; }"
                class="inline-flex items-center text-sm font-bold text-gray-400 hover:text-indigo-600 transition-colors mb-4 group focus:outline-none">
                 {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1 transform group-hover:-translate-x-1 transition-transform" %}
                 Back
             </a>
-            
             <div class="flex items-end justify-between">
                 <div>
                     <h1 class="text-3xl font-black text-gray-900 tracking-tight leading-none mb-2">
-                        {% if object %}Edit{% else %}New{% endif %} 
+                        {% if object %}
+                            Edit
+                        {% else %}
+                            New
+                        {% endif %}
                         {% block entity_display_name %}{{ block.super }}{% endblock %}
                     </h1>
                     <p class="text-gray-500 font-semibold tracking-wide">{{ project.name }}</p>
                 </div>
-                
                 {% block header_extra %}{% endblock %}
             </div>
         </div>
-
         <!-- Premium Form Card -->
         <div class="bg-white shadow-[0_30px_60px_-15px_rgba(79,70,229,0.15)] rounded-[2.5rem] border border-gray-100/50 overflow-hidden">
             <div class="p-8 md:p-12">
                 <form method="post" enctype="multipart/form-data" class="space-y-8">
                     {% csrf_token %}
-                    
                     <div class="grid grid-cols-1 gap-8">
                         {% block form_fields %}
                             {% crispy form %}
                         {% endblock %}
                     </div>
-                    
                     <div class="flex items-center justify-end space-x-4 pt-10 border-t border-gray-50 mt-10">
                         <a href="{% block cancel_url %}{{ block.super }}{% endblock %}"
                            onclick="if(this.getAttribute('href') === '#') { history.back(); return false; }"
@@ -61,11 +63,9 @@
                 </form>
             </div>
         </div>
-
         <!-- Feedback & Help Area -->
         {% block footer_help %}{% endblock %}
     </div>
-
     <style>
         /* Custom overrides for premium form look */
         .asteriskField { display: none; }

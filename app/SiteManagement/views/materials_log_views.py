@@ -1,8 +1,18 @@
 """CRUD views for Materials Log."""
 
+from typing import TYPE_CHECKING
+
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+
+if TYPE_CHECKING:
+    from django.views.generic.edit import FormMixin
+
+    _Base = FormMixin
+else:
+    _Base = object
+
 
 from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
@@ -14,7 +24,10 @@ from app.SiteManagement.models import MaterialsLog
 
 
 class MaterialsLogMixin(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
+    _Base,
+    SubscriptionRequiredMixin,
+    UserHasProjectRoleGenericMixin,
+    BreadcrumbMixin,
 ):
     """Mixin for Materials Log views."""
 

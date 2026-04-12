@@ -40,7 +40,6 @@ class SubcontractorCostTracker(BaseModel):
     )
     remarks = models.TextField(blank=True, help_text="Additional remarks")
 
-
     @property
     def cost(self):
         """Calculate total cost."""

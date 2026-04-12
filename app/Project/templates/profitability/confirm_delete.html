@@ -1,33 +1,29 @@
 {% extends "layout.html" %}
 {% load heroicons %}
-
 {% block title %}Delete Entry - {{ project.name }} - Profitability{% endblock %}
-
 {% block page_content %}
     <div class="max-w-xl mx-auto px-4 py-24">
         <!-- focused Header (Minimal) -->
         <div class="mb-10 text-center">
-             <a href="#" 
+            <a href="#"
                onclick="history.back(); return false;"
                class="inline-flex items-center text-sm font-bold text-gray-400 hover:text-indigo-600 transition-colors mb-6 group focus:outline-none">
                 {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1 transform group-hover:-translate-x-1 transition-transform" %}
                 Cancel and return
             </a>
         </div>
-
         <div class="bg-white shadow-[0_30px_60px_-15px_rgba(225,29,72,0.15)] rounded-[2.5rem] border border-gray-100/50 overflow-hidden">
             <div class="p-10 md:p-12 text-center">
                 <div class="w-24 h-24 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-8">
                     {% heroicon_outline "exclamation-triangle" size="48" class="text-rose-600" %}
                 </div>
-                
                 <h1 class="text-3xl font-black text-gray-900 mb-3 tracking-tight">Delete Cost Entry?</h1>
                 <p class="text-gray-500 font-medium leading-relaxed mb-10">
                     You're about to remove this record from <span class="text-gray-900 font-bold">{{ project.name }}</span>.
                     This action is <span class="text-rose-600 font-black italic">permanent</span> and cannot be undone.
                 </p>
-
-                <form method="post" class="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+                <form method="post"
+                      class="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
                     {% csrf_token %}
                     <a href="#"
                        onclick="history.back(); return false;"

@@ -1,5 +1,6 @@
 from crispy_forms.helper import FormHelper
 from django import forms
+from django.forms import ModelChoiceField
 
 from app.core.Utilities.widgets import SearchableSelectWidget
 from app.Project.models import (
@@ -58,7 +59,9 @@ class LabourCostTrackerForm(ProfitabilityBaseForm):
         super().__init__(*args, **kwargs)
         if self.project:
             entities = self.project.labourentity_entities.all()
-            self.fields["labour_entity"].queryset = entities
+            field = self.fields["labour_entity"]
+            assert isinstance(field, ModelChoiceField)
+            field.queryset = entities
             # Build choice data for autofill (rate and id_number)
             self.fields["labour_entity"].widget.choice_data = {
                 str(e.id): {"data-rate": str(e.rate), "data-id_number": e.id_number}
@@ -95,7 +98,9 @@ class SubcontractorCostTrackerForm(ProfitabilityBaseForm):
         super().__init__(*args, **kwargs)
         if self.project:
             entities = self.project.subcontractorentity_entities.all()
-            self.fields["subcontractor_entity"].queryset = entities
+            field = self.fields["subcontractor_entity"]
+            assert isinstance(field, ModelChoiceField)
+            field.queryset = entities
             # Build choice data for autofill (rate and reference_no)
             self.fields["subcontractor_entity"].widget.choice_data = {
                 str(e.id): {
@@ -125,7 +130,9 @@ class OverheadCostTrackerForm(ProfitabilityBaseForm):
         super().__init__(*args, **kwargs)
         if self.project:
             entities = self.project.overheadentity_entities.all()
-            self.fields["overhead_entity"].queryset = entities
+            field = self.fields["overhead_entity"]
+            assert isinstance(field, ModelChoiceField)
+            field.queryset = entities
             # Build choice data for autofill
             self.fields["overhead_entity"].widget.choice_data = {
                 str(e.id): {"data-rate": str(e.rate)} for e in entities
@@ -155,13 +162,13 @@ class MaterialCostTrackerForm(ProfitabilityBaseForm):
         super().__init__(*args, **kwargs)
         if self.project:
             entities = self.project.materialentity_entities.all()
-            self.fields["material_entity"].queryset = entities
+            field = self.fields["material_entity"]
+            assert isinstance(field, ModelChoiceField)
+            field.queryset = entities
             # Build choice data for autofill
             self.fields["material_entity"].widget.choice_data = {
                 str(e.id): {"data-rate": str(e.rate)} for e in entities
             }
-
-
 
 
 class PlantCostTrackerForm(ProfitabilityBaseForm):
@@ -188,9 +195,10 @@ class PlantCostTrackerForm(ProfitabilityBaseForm):
         super().__init__(*args, **kwargs)
         if self.project:
             entities = self.project.plantentity_entities.all()
-            self.fields["plant_entity"].queryset = entities
+            field = self.fields["plant_entity"]
+            assert isinstance(field, ModelChoiceField)
+            field.queryset = entities
             # Build choice data for autofill
             self.fields["plant_entity"].widget.choice_data = {
                 str(e.id): {"data-rate": str(e.rate)} for e in entities
             }
-

@@ -1,20 +1,19 @@
 {% extends "profitability/base_form.html" %}
 {% load crispy_forms_tags %}
 {% load heroicons %}
-
 {% block entity_name %}Journal Entry{% endblock %}
 {% block entity_display_name %}Journal Entry{% endblock %}
-{% block back_url %}{% url 'project:profitability-journal-list' project.pk %}{% endblock %}
-{% block cancel_url %}{% url 'project:profitability-journal-list' project.pk %}{% endblock %}
-
+{% block back_url %}
+    {% url 'project:profitability-journal-list' project.pk %}
+{% endblock %}
+{% block cancel_url %}
+    {% url 'project:profitability-journal-list' project.pk %}
+{% endblock %}
 {% block header_extra %}
     <div class="hidden sm:block">
-        <div class="p-4 bg-indigo-50 rounded-2xl">
-            {% heroicon_outline "document-plus" class="w-8 h-8 text-indigo-600" %}
-        </div>
+        <div class="p-4 bg-indigo-50 rounded-2xl">{% heroicon_outline "document-plus" class="w-8 h-8 text-indigo-600" %}</div>
     </div>
 {% endblock %}
-
 {% block form_fields %}
     <div class="space-y-6">
         <!-- Data Grid -->
@@ -32,12 +31,9 @@
         {% endif %}
     </div>
 {% endblock %}
-
 {% block footer_help %}
     <div class="mt-8 p-6 bg-gray-50/50 rounded-2xl border border-gray-100 flex items-start space-x-4">
-        <div class="p-2 bg-white rounded-xl shadow-sm">
-            {% heroicon_outline "light-bulb" class="w-5 h-5 text-amber-500" %}
-        </div>
+        <div class="p-2 bg-white rounded-xl shadow-sm">{% heroicon_outline "light-bulb" class="w-5 h-5 text-amber-500" %}</div>
         <div>
             <h4 class="text-sm font-bold text-gray-900">Pro Tip</h4>
             <p class="text-xs text-gray-600 font-medium mt-1 leading-relaxed">

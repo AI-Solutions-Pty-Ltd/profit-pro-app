@@ -39,7 +39,6 @@ class PlantCostTracker(BaseModel):
     maintenance_done = models.TextField(blank=True, help_text="Maintenance performed")
     remarks = models.TextField(blank=True, help_text="Additional remarks")
 
-
     @property
     def cost(self):
         """Calculate total plant cost."""

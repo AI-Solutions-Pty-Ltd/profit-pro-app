@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("Project", "0082_materialcosttracker_comments_and_more"),
     ]

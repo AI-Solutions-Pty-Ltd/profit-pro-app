@@ -75,7 +75,6 @@ class PlantCostTrackerUpdateView(ProfitabilityMixin, UpdateView):
         )
 
 
-
 class PlantCostTrackerDeleteView(ProfitabilityMixin, DeleteView):
     model = PlantCostTracker
     template_name = "profitability/confirm_delete.html"
