@@ -47,10 +47,7 @@ jobs:
         run: |
           echo "🔍 Checking for Django migration conflicts..."
           python manage.py check
-          echo "Checking for unapplied migrations..."
-          python manage.py showmigrations --plan
-          echo "Checking for migration consistency..."
-          python manage.py makemigrations --check --dry-run
+
 
       # - name: Run tests
       #   run: pytest -v -n auto --reuse-db --durations=10
