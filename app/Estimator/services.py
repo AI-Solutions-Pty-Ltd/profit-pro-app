@@ -127,6 +127,121 @@ def initialize_project_estimator(project):
     return results
 
 
+def clone_from_project(target_project, source_project):
+    """Clone all Project* library records from source_project into target_project.
+
+    Clears existing library data on target_project first (but NOT BOQItems).
+    Returns a dict of counts per entity type.
+    """
+    # Clear existing library data on target (not BoQ items)
+    ProjectSpecificationComponent.objects.filter(
+        specification__project=target_project
+    ).delete()
+    ProjectSpecification.objects.filter(project=target_project).delete()
+    ProjectLabourSpecification.objects.filter(project=target_project).delete()
+    ProjectLabourCrew.objects.filter(project=target_project).delete()
+    ProjectMaterial.objects.filter(project=target_project).delete()
+    ProjectTradeCode.objects.filter(project=target_project).delete()
+
+    results = {}
+
+    # ── Trade Codes ──
+    tc_map = {}
+    for stc in ProjectTradeCode.objects.filter(project=source_project):
+        ptc = ProjectTradeCode.objects.create(
+            project=target_project,
+            source=stc.source,
+            prefix=stc.prefix,
+            trade_name=stc.trade_name,
+        )
+        tc_map[stc.pk] = ptc
+    results["trade_codes"] = len(tc_map)
+
+    # ── Materials ──
+    mat_map = {}
+    for sm in ProjectMaterial.objects.filter(project=source_project):
+        pm = ProjectMaterial.objects.create(
+            project=target_project,
+            source=sm.source,
+            trade_name=sm.trade_name,
+            material_code=sm.material_code,
+            unit=sm.unit,
+            market_rate=sm.market_rate,
+            material_variety=sm.material_variety,
+            market_spec=sm.market_spec,
+        )
+        mat_map[sm.pk] = pm
+    results["materials"] = len(mat_map)
+
+    # ── Labour Crews ──
+    crew_map = {}
+    for slc in ProjectLabourCrew.objects.filter(project=source_project):
+        plc = ProjectLabourCrew.objects.create(
+            project=target_project,
+            source=slc.source,
+            crew_type=slc.crew_type,
+            crew_size=slc.crew_size,
+            skilled=slc.skilled,
+            semi_skilled=slc.semi_skilled,
+            general=slc.general,
+            daily_production=slc.daily_production,
+            skilled_rate=slc.skilled_rate,
+            semi_skilled_rate=slc.semi_skilled_rate,
+            general_rate=slc.general_rate,
+        )
+        crew_map[slc.pk] = plc
+    results["labour_crews"] = len(crew_map)
+
+    # ── Labour Specifications ──
+    lspec_count = 0
+    for sls in ProjectLabourSpecification.objects.filter(
+        project=source_project
+    ).select_related("crew"):
+        ProjectLabourSpecification.objects.create(
+            project=target_project,
+            source=sls.source,
+            section=sls.section,
+            trade_name=sls.trade_name,
+            name=sls.name,
+            unit=sls.unit,
+            crew=crew_map.get(sls.crew_id) if sls.crew_id else None,
+            daily_production=sls.daily_production,
+            team_mix=sls.team_mix,
+            site_factor=sls.site_factor,
+            tools_factor=sls.tools_factor,
+            leadership_factor=sls.leadership_factor,
+        )
+        lspec_count += 1
+    results["labour_specs"] = lspec_count
+
+    # ── Specifications + Components ──
+    spec_count = 0
+    for ss in ProjectSpecification.objects.filter(
+        project=source_project
+    ).prefetch_related("spec_components"):
+        ps = ProjectSpecification.objects.create(
+            project=target_project,
+            source=ss.source,
+            section=ss.section,
+            trade_code=tc_map.get(ss.trade_code_id) if ss.trade_code_id else None,
+            unit_label=ss.unit_label,
+            name=ss.name,
+        )
+        for comp in ss.spec_components.all():
+            ProjectSpecificationComponent.objects.create(
+                specification=ps,
+                material=mat_map.get(comp.material_id) if comp.material_id else None,
+                label=comp.label,
+                qty_per_unit=comp.qty_per_unit,
+                sort_order=comp.sort_order,
+            )
+        spec_count += 1
+    results["specifications"] = spec_count
+
+    results["status"] = "cloned"
+    return results
+
+
 def pull_from_library(project):
     """Overwrite project values with current system library values.
 
