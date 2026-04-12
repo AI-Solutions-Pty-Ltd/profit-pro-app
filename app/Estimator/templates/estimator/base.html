@@ -28,7 +28,7 @@
                     Resource Estimator
                 </a>
                 <a href="{% url 'estimator:trade_codes' project_pk=project_pk %}"
-                   class="{% if url_name == 'trade_codes' or url_name == 'materials' or url_name == 'labour_costs' or url_name == 'material_cost_upload' or url_name == 'labour_cost_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium">
+                   class="{% if url_name == 'trade_codes' or url_name == 'materials' or url_name == 'labour_costs' or url_name == 'material_cost_upload' or url_name == 'labour_cost_upload' or url_name == 'plant_costs' or url_name == 'plant_cost_upload' or url_name == 'plant_spec_defs' or url_name == 'plant_spec_upload' or url_name == 'preliminary_costs' or url_name == 'preliminary_cost_upload' or url_name == 'preliminary_spec_defs' or url_name == 'preliminary_spec_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium">
                     Baseline Resources Costs
                 </a>
                 <a href="{% url 'estimator:report_baseline_assessment' project_pk=project_pk %}"

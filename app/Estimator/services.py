@@ -2,12 +2,20 @@ from app.Estimator.models import (
     ProjectLabourCrew,
     ProjectLabourSpecification,
     ProjectMaterial,
+    ProjectPlantCost,
+    ProjectPlantSpecification,
+    ProjectPreliminaryCost,
+    ProjectPreliminarySpecification,
     ProjectSpecification,
     ProjectSpecificationComponent,
     ProjectTradeCode,
     SystemLabourCrew,
     SystemLabourSpecification,
     SystemMaterial,
+    SystemPlantCost,
+    SystemPlantSpecification,
+    SystemPreliminaryCost,
+    SystemPreliminarySpecification,
     SystemSpecification,
     SystemTradeCode,
 )
@@ -93,6 +101,71 @@ def initialize_project_estimator(project):
         lspec_count += 1
     results["labour_specs"] = lspec_count
 
+    # ── Plant Costs ──
+    plant_map = {}
+    for spc in SystemPlantCost.objects.all():
+        ppc = ProjectPlantCost.objects.create(
+            project=project,
+            source=spc,
+            name=spc.name,
+            hourly_production=spc.hourly_production,
+            hourly_rate=spc.hourly_rate,
+        )
+        plant_map[spc.pk] = ppc
+    results["plant_costs"] = len(plant_map)
+
+    # ── Plant Specifications ──
+    pspec_count = 0
+    for sps in SystemPlantSpecification.objects.all():
+        ProjectPlantSpecification.objects.create(
+            project=project,
+            source=sps,
+            section=sps.section,
+            trade_name=sps.trade_name,
+            name=sps.name,
+            unit=sps.unit,
+            plant_type=plant_map.get(getattr(sps, "plant_type_id", None))
+            if getattr(sps, "plant_type_id", None)
+            else None,
+            daily_production=sps.daily_production,
+            operator_factor=sps.operator_factor,
+            site_factor=sps.site_factor,
+        )
+        pspec_count += 1
+    results["plant_specs"] = pspec_count
+
+    # ── Preliminary Costs ──
+    prelim_count = 0
+    for spc in SystemPreliminaryCost.objects.all():
+        ProjectPreliminaryCost.objects.create(
+            project=project,
+            source=spc,
+            name=spc.name,
+            preliminary_type=spc.preliminary_type,
+            sum_value=spc.sum_value,
+            amount=spc.amount,
+            number_per_month=spc.number_per_month,
+            monthly_rate=spc.monthly_rate,
+            months=spc.months,
+        )
+        prelim_count += 1
+    results["preliminary_costs"] = prelim_count
+
+    # ── Preliminary Specifications ──
+    prelim_spec_count = 0
+    for sps in SystemPreliminarySpecification.objects.all():
+        ProjectPreliminarySpecification.objects.create(
+            project=project,
+            source=sps,
+            section=sps.section,
+            trade_name=sps.trade_name,
+            name=sps.name,
+            unit=sps.unit,
+            amount=sps.amount,
+        )
+        prelim_spec_count += 1
+    results["preliminary_specs"] = prelim_spec_count
+
     # ── Specifications (from SystemSpecification records) ──
     spec_count = 0
     for ss in SystemSpecification.objects.select_related("trade_code").prefetch_related(
@@ -142,6 +215,10 @@ def clone_from_project(target_project, source_project):
     ProjectLabourCrew.objects.filter(project=target_project).delete()
     ProjectMaterial.objects.filter(project=target_project).delete()
     ProjectTradeCode.objects.filter(project=target_project).delete()
+    ProjectPlantSpecification.objects.filter(project=target_project).delete()
+    ProjectPlantCost.objects.filter(project=target_project).delete()
+    ProjectPreliminaryCost.objects.filter(project=target_project).delete()
+    ProjectPreliminarySpecification.objects.filter(project=target_project).delete()
 
     results = {}
 
@@ -237,6 +314,71 @@ def clone_from_project(target_project, source_project):
             )
         spec_count += 1
     results["specifications"] = spec_count
+
+    # ── Plant Costs ──
+    plant_map = {}
+    for spc in ProjectPlantCost.objects.filter(project=source_project):
+        ppc = ProjectPlantCost.objects.create(
+            project=target_project,
+            source=spc.source,
+            name=spc.name,
+            hourly_production=spc.hourly_production,
+            hourly_rate=spc.hourly_rate,
+        )
+        plant_map[spc.pk] = ppc
+    results["plant_costs"] = len(plant_map)
+
+    # ── Plant Specifications ──
+    pspec_count = 0
+    for sps in ProjectPlantSpecification.objects.filter(
+        project=source_project
+    ).select_related("plant_type"):
+        ProjectPlantSpecification.objects.create(
+            project=target_project,
+            source=sps.source,
+            section=sps.section,
+            trade_name=sps.trade_name,
+            name=sps.name,
+            unit=sps.unit,
+            plant_type=plant_map.get(sps.plant_type_id) if sps.plant_type_id else None,
+            daily_production=sps.daily_production,
+            operator_factor=sps.operator_factor,
+            site_factor=sps.site_factor,
+        )
+        pspec_count += 1
+    results["plant_specs"] = pspec_count
+
+    # ── Preliminary Costs ──
+    prelim_count = 0
+    for spc in ProjectPreliminaryCost.objects.filter(project=source_project):
+        ProjectPreliminaryCost.objects.create(
+            project=target_project,
+            source=spc.source,
+            name=spc.name,
+            preliminary_type=spc.preliminary_type,
+            sum_value=spc.sum_value,
+            amount=spc.amount,
+            number_per_month=spc.number_per_month,
+            monthly_rate=spc.monthly_rate,
+            months=spc.months,
+        )
+        prelim_count += 1
+    results["preliminary_costs"] = prelim_count
+
+    # ── Preliminary Specifications ──
+    prelim_spec_count = 0
+    for sps in ProjectPreliminarySpecification.objects.filter(project=source_project):
+        ProjectPreliminarySpecification.objects.create(
+            project=target_project,
+            source=sps.source,
+            section=sps.section,
+            trade_name=sps.trade_name,
+            name=sps.name,
+            unit=sps.unit,
+            amount=sps.amount,
+        )
+        prelim_spec_count += 1
+    results["preliminary_specs"] = prelim_spec_count
 
     results["status"] = "cloned"
     return results
@@ -436,6 +578,84 @@ def sync_labour_costs_from_system(project):
             skilled_rate=slc.skilled_rate,
             semi_skilled_rate=slc.semi_skilled_rate,
             general_rate=slc.general_rate,
+        )
+        created += 1
+
+    return {"updated": updated, "created": created}
+
+
+def sync_plant_costs_from_system(project):
+    """Sync project plant costs with current system library values.
+
+    Updates existing rows that have a source FK and creates new rows
+    for system plants not yet in the project.
+    """
+    updated = 0
+    for ppc in ProjectPlantCost.objects.filter(
+        project=project, source__isnull=False
+    ).select_related("source"):
+        ppc.name = ppc.source.name
+        ppc.hourly_production = ppc.source.hourly_production
+        ppc.hourly_rate = ppc.source.hourly_rate
+        ppc.save()
+        updated += 1
+
+    existing_source_ids = set(
+        ProjectPlantCost.objects.filter(
+            project=project, source__isnull=False
+        ).values_list("source_id", flat=True)
+    )
+    created = 0
+    for spc in SystemPlantCost.objects.exclude(pk__in=existing_source_ids):
+        ProjectPlantCost.objects.create(
+            project=project,
+            source=spc,
+            name=spc.name,
+            hourly_production=spc.hourly_production,
+            hourly_rate=spc.hourly_rate,
+        )
+        created += 1
+
+    return {"updated": updated, "created": created}
+
+
+def sync_preliminary_costs_from_system(project):
+    """Sync project preliminary costs with current system library values.
+
+    Updates existing rows that have a source FK and creates new rows
+    for system preliminaries not yet in the project.
+    """
+    updated = 0
+    for ppc in ProjectPreliminaryCost.objects.filter(
+        project=project, source__isnull=False
+    ).select_related("source"):
+        ppc.name = ppc.source.name
+        ppc.preliminary_type = ppc.source.preliminary_type
+        ppc.sum_value = ppc.source.sum_value
+        ppc.amount = ppc.source.amount
+        ppc.number_per_month = ppc.source.number_per_month
+        ppc.monthly_rate = ppc.source.monthly_rate
+        ppc.months = ppc.source.months
+        ppc.save()
+        updated += 1
+
+    existing_source_ids = set(
+        ProjectPreliminaryCost.objects.filter(
+            project=project, source__isnull=False
+        ).values_list("source_id", flat=True)
+    )
+    created = 0
+    for spc in SystemPreliminaryCost.objects.exclude(pk__in=existing_source_ids):
+        ProjectPreliminaryCost.objects.create(
+            project=project,
+            source=spc,
+            name=spc.name,
+            preliminary_type=spc.preliminary_type,
+            sum_value=spc.sum_value,
+            amount=spc.amount,
+            number_per_month=spc.number_per_month,
+            monthly_rate=spc.monthly_rate,
+            months=spc.months,
         )
         created += 1
 

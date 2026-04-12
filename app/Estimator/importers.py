@@ -22,12 +22,20 @@ from .models import (
     ProjectLabourCrew,
     ProjectLabourSpecification,
     ProjectMaterial,
+    ProjectPlantCost,
+    ProjectPlantSpecification,
+    ProjectPreliminaryCost,
+    ProjectPreliminarySpecification,
     ProjectSpecification,
     ProjectSpecificationComponent,
     ProjectTradeCode,
     SystemLabourCrew,
     SystemLabourSpecification,
     SystemMaterial,
+    SystemPlantCost,
+    SystemPlantSpecification,
+    SystemPreliminaryCost,
+    SystemPreliminarySpecification,
     SystemSpecification,
     SystemSpecificationComponent,
     SystemTradeCode,
@@ -42,6 +50,40 @@ def _find_sheet(wb, keywords):
             if kw in normalised:
                 return wb[name]
     return wb.active
+
+
+def _find_sheet_with_name(wb, keywords):
+    """Like _find_sheet but returns (worksheet, matched_sheet_name, fell_back)."""
+    for name in wb.sheetnames:
+        normalised = name.lower().strip()
+        for kw in keywords:
+            if kw in normalised:
+                return wb[name], name, False
+    return wb.active, wb.active.title, True
+
+
+def _col_offset(ws):
+    """Return 0-indexed offset for the first non-empty column (handles sheets
+    where column A is blank, e.g. the master-file layout)."""
+    mc = ws.min_column or 1
+    return max(0, mc - 1)
+
+
+def _find_header_row(ws, required_keywords, max_scan=10):
+    """Return the 1-indexed row that contains every required keyword
+    (case-insensitive substring). Falls back to row 1 when no match."""
+    required = [kw.lower() for kw in required_keywords]
+    last = min(ws.max_row or 1, max_scan)
+    for r in range(1, last + 1):
+        parts = []
+        for c in range(1, (ws.max_column or 1) + 1):
+            v = ws.cell(row=r, column=c).value
+            if v is not None:
+                parts.append(str(v).lower())
+        joined = " | ".join(parts)
+        if all(kw in joined for kw in required):
+            return r
+    return 1
 
 
 def _safe_decimal(value):
@@ -574,3 +616,510 @@ class LabourSpecImporter:
 
         wb.close()
         return {"created": created, "updated": updated}
+
+
+# ── Plant Costs ─────────────────────────────────────────────────
+
+
+class PlantCostImporter:
+    """Import Plant & Equipment costs from Excel.
+
+    Expected columns: Plant & Equipment | Hourly Production | Hourly Rate
+    """
+
+    SHEET_KEYWORDS = [
+        "plant cost",
+        "plant costs",
+        "plantcost",
+        "plantcosts",
+        "plant and equipment",
+        "plant & equipment",
+    ]
+
+    def __init__(self, file_path, project=None):
+        self.file_path = file_path
+        self.project = project
+
+    def run(self):
+        wb = openpyxl.load_workbook(self.file_path, data_only=True)
+        ws, sheet_name, fell_back = _find_sheet_with_name(wb, self.SHEET_KEYWORDS)
+        all_sheets = list(wb.sheetnames)
+        created = updated = 0
+
+        co = _col_offset(ws)
+        header_row = _find_header_row(ws, ["plant", "hourly"])
+        data_start = header_row + 1
+
+        for row in ws.iter_rows(min_row=data_start, values_only=True):
+            ncols = len(row) if row else 0
+            name = _safe_str(row[co]) if ncols > co else ""
+            if not name or name.lower() == "total":
+                continue
+
+            defaults = {
+                "hourly_production": (
+                    _safe_decimal(row[co + 1]) if ncols > co + 1 else None
+                )
+                or Decimal("0"),
+                "hourly_rate": (
+                    _safe_decimal(row[co + 2]) if ncols > co + 2 else None
+                )
+                or Decimal("0"),
+            }
+
+            if self.project:
+                _, was_created = ProjectPlantCost.objects.update_or_create(
+                    project=self.project,
+                    name=name,
+                    defaults=defaults,
+                )
+            else:
+                _, was_created = SystemPlantCost.objects.update_or_create(
+                    name=name,
+                    defaults=defaults,
+                )
+            if was_created:
+                created += 1
+            else:
+                updated += 1
+
+        wb.close()
+        return {
+            "created": created,
+            "updated": updated,
+            "sheet_used": sheet_name,
+            "fell_back": fell_back,
+            "all_sheets": all_sheets,
+        }
+
+
+# ── Plant Specifications ────────────────────────────────────────
+
+
+class PlantSpecImporter:
+    """Import Plant Specifications from Excel.
+
+    Expected columns: Section | Trade Name | Plant Specification | Unit |
+                      Plant Type | Daily Production | Operator | Site
+    """
+
+    SHEET_KEYWORDS = [
+        "plant spec",
+        "plant specs",
+        "plant specification",
+        "plant specifications",
+        "plantspec",
+        "plantspecs",
+    ]
+
+    def __init__(self, file_path, project=None):
+        self.file_path = file_path
+        self.project = project
+
+    def run(self):
+        wb = openpyxl.load_workbook(self.file_path, data_only=True)
+        ws, sheet_name, fell_back = _find_sheet_with_name(wb, self.SHEET_KEYWORDS)
+        all_sheets = list(wb.sheetnames)
+        created = updated = 0
+
+        co = _col_offset(ws)
+        header_row = _find_header_row(ws, ["section", "plant"])
+        data_start = header_row + 1
+
+        for row in ws.iter_rows(min_row=data_start, values_only=True):
+            ncols = len(row) if row else 0
+            name = _safe_str(row[co + 2]) if ncols > co + 2 else ""
+            if not name:
+                continue
+
+            plant_type_str = _safe_str(row[co + 4]) if ncols > co + 4 else ""
+            if self.project:
+                plant_type = (
+                    ProjectPlantCost.objects.filter(
+                        project=self.project, name=plant_type_str
+                    ).first()
+                    if plant_type_str
+                    else None
+                )
+            else:
+                plant_type = (
+                    SystemPlantCost.objects.filter(name=plant_type_str).first()
+                    if plant_type_str
+                    else None
+                )
+
+            defaults = {
+                "section": _safe_str(row[co + 0]) if ncols > co + 0 else "",
+                "trade_name": _safe_str(row[co + 1]) if ncols > co + 1 else "",
+                "unit": _safe_str(row[co + 3]) if ncols > co + 3 else "",
+                "plant_type": plant_type,
+                "daily_production": (
+                    _safe_decimal(row[co + 5]) if ncols > co + 5 else None
+                )
+                or Decimal("0"),
+                "operator_factor": (
+                    _safe_decimal(row[co + 6]) if ncols > co + 6 else None
+                )
+                or Decimal("1"),
+                "site_factor": (
+                    _safe_decimal(row[co + 7]) if ncols > co + 7 else None
+                )
+                or Decimal("1"),
+            }
+
+            if self.project:
+                _, was_created = ProjectPlantSpecification.objects.update_or_create(
+                    project=self.project,
+                    name=name,
+                    defaults=defaults,
+                )
+            else:
+                _, was_created = SystemPlantSpecification.objects.update_or_create(
+                    name=name,
+                    defaults=defaults,
+                )
+            if was_created:
+                created += 1
+            else:
+                updated += 1
+
+        wb.close()
+        return {
+            "created": created,
+            "updated": updated,
+            "sheet_used": sheet_name,
+            "fell_back": fell_back,
+            "all_sheets": all_sheets,
+        }
+
+
+# ── Preliminary Costs ───────────────────────────────────────────
+
+
+class PreliminaryCostImporter:
+    """Import Preliminary Costs from Excel.
+
+    Supports two layouts:
+
+    1. Flat template: one row per item with a `Preliminary Type` column
+       (as produced by the downloaded template).
+    2. Hierarchical master layout: section-header rows (e.g. "Fixed
+       Contractual Requirements", "Time - Site Personnel") define the
+       preliminary_type for all data rows beneath them, until the next
+       header.
+    """
+
+    SHEET_KEYWORDS = [
+        "preliminary cost",
+        "preliminary costs",
+        "preliminarycost",
+        "preliminarycosts",
+        "preliminaries cost",
+        "preliminaries costs",
+        "prelim cost",
+        "prelim costs",
+    ]
+
+    # Maps a matched header phrase (lowercased, normalised) to the type code.
+    # Keys are checked as substrings against the first cell of each row.
+    TYPE_PHRASE_MAP = [
+        ("fixed contractual", "fixed_contractual"),
+        ("fixed - contractual", "fixed_contractual"),
+        ("fixed-contractual", "fixed_contractual"),
+        ("fixed facilities", "fixed_facilities"),
+        ("fixed - facilities", "fixed_facilities"),
+        ("fixed-facilities", "fixed_facilities"),
+        ("time contractual", "time_contractual"),
+        ("time - contractual", "time_contractual"),
+        ("time-contractual", "time_contractual"),
+        ("time small tool", "time_small_tools"),
+        ("time - small tool", "time_small_tools"),
+        ("time-small tool", "time_small_tools"),
+        ("time plant", "time_plant_equipment"),
+        ("time - plant", "time_plant_equipment"),
+        ("time-plant", "time_plant_equipment"),
+        ("time company", "time_company_overheads"),
+        ("time - company", "time_company_overheads"),
+        ("time-company", "time_company_overheads"),
+        ("time site personnel", "time_site_personnel"),
+        ("time - site personnel", "time_site_personnel"),
+        ("time-site personnel", "time_site_personnel"),
+        # keep these after the more-specific time- entries
+        ("time facilities", "time_facilities"),
+        ("time - facilities", "time_facilities"),
+        ("time-facilities", "time_facilities"),
+    ]
+
+    VALID_TYPE_CODES = {code for code, _ in SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES}
+
+    SKIP_PHRASES = {
+        "fixed preliminaries",
+        "time related preliminaries",
+        "total",
+    }
+
+    def __init__(self, file_path, project=None):
+        self.file_path = file_path
+        self.project = project
+
+    def _match_type(self, phrase):
+        p = phrase.lower().strip()
+        for needle, code in self.TYPE_PHRASE_MAP:
+            if needle in p:
+                return code
+        return None
+
+    def run(self):
+        wb = openpyxl.load_workbook(self.file_path, data_only=True)
+        ws, sheet_name, fell_back = _find_sheet_with_name(wb, self.SHEET_KEYWORDS)
+        all_sheets = list(wb.sheetnames)
+
+        co = _col_offset(ws)
+
+        # Detect layout: flat template has a header row mentioning both
+        # "preliminary type" (or just "type") and "name".
+        flat_header_row = None
+        for r in range(1, min((ws.max_row or 1) + 1, 8)):
+            parts = [
+                _safe_str(ws.cell(row=r, column=c).value).lower()
+                for c in range(1, (ws.max_column or 1) + 1)
+            ]
+            joined = " | ".join(parts)
+            if ("preliminary type" in joined or "type" in joined) and "name" in joined:
+                flat_header_row = r
+                break
+
+        if flat_header_row is not None:
+            return self._import_flat(ws, flat_header_row, co, sheet_name, fell_back, all_sheets)
+        return self._import_hierarchical(ws, co, sheet_name, fell_back, all_sheets)
+
+    def _upsert(self, name, ptype, defaults):
+        if self.project:
+            _, was_created = ProjectPreliminaryCost.objects.update_or_create(
+                project=self.project,
+                name=name,
+                preliminary_type=ptype,
+                defaults=defaults,
+            )
+        else:
+            _, was_created = SystemPreliminaryCost.objects.update_or_create(
+                name=name,
+                preliminary_type=ptype,
+                defaults=defaults,
+            )
+        return was_created
+
+    def _import_flat(self, ws, header_row, co, sheet_name, fell_back, all_sheets):
+        created = updated = 0
+        for row in ws.iter_rows(min_row=header_row + 1, values_only=True):
+            ncols = len(row) if row else 0
+            raw_type = _safe_str(row[co + 0]) if ncols > co + 0 else ""
+            name = _safe_str(row[co + 1]) if ncols > co + 1 else ""
+            if not name:
+                continue
+
+            # Accept either a code (fixed_contractual) or a display phrase.
+            if raw_type in self.VALID_TYPE_CODES:
+                ptype = raw_type
+            else:
+                ptype = self._match_type(raw_type) or ""
+            if not ptype:
+                continue
+
+            defaults = {
+                "sum_value": (_safe_decimal(row[co + 2]) if ncols > co + 2 else None)
+                or Decimal("0"),
+                "amount": (_safe_decimal(row[co + 3]) if ncols > co + 3 else None)
+                or Decimal("0"),
+                "number_per_month": (
+                    _safe_decimal(row[co + 4]) if ncols > co + 4 else None
+                )
+                or Decimal("0"),
+                "monthly_rate": (
+                    _safe_decimal(row[co + 5]) if ncols > co + 5 else None
+                )
+                or Decimal("0"),
+                "months": (_safe_decimal(row[co + 6]) if ncols > co + 6 else None)
+                or Decimal("0"),
+            }
+            if self._upsert(name, ptype, defaults):
+                created += 1
+            else:
+                updated += 1
+
+        return {
+            "created": created,
+            "updated": updated,
+            "sheet_used": sheet_name,
+            "fell_back": fell_back,
+            "all_sheets": all_sheets,
+        }
+
+    def _import_hierarchical(self, ws, co, sheet_name, fell_back, all_sheets):
+        created = updated = 0
+        current_type = None
+        is_time = False
+
+        for row in ws.iter_rows(min_row=1, values_only=True):
+            ncols = len(row) if row else 0
+            first = _safe_str(row[co]) if ncols > co else ""
+            if not first:
+                continue
+
+            first_lower = first.lower().strip()
+
+            # Section headers change the current_type. They are recognised
+            # because the next cell is a label like "Sum" or "Number/Month"
+            # — but we also match by phrase to be resilient.
+            matched = self._match_type(first)
+            if matched:
+                current_type = matched
+                is_time = matched.startswith("time_")
+                continue
+
+            # Skip super-headers and subtotal rows.
+            if any(phrase in first_lower for phrase in self.SKIP_PHRASES):
+                continue
+
+            if current_type is None:
+                continue
+
+            name = first
+            if is_time:
+                defaults = {
+                    "sum_value": Decimal("0"),
+                    "number_per_month": (
+                        _safe_decimal(row[co + 1]) if ncols > co + 1 else None
+                    )
+                    or Decimal("0"),
+                    "monthly_rate": (
+                        _safe_decimal(row[co + 2]) if ncols > co + 2 else None
+                    )
+                    or Decimal("0"),
+                    "months": (
+                        _safe_decimal(row[co + 3]) if ncols > co + 3 else None
+                    )
+                    or Decimal("0"),
+                    "amount": (
+                        _safe_decimal(row[co + 4]) if ncols > co + 4 else None
+                    )
+                    or Decimal("0"),
+                }
+                # A row with no numeric values is noise, skip it.
+                if (
+                    defaults["number_per_month"] == 0
+                    and defaults["monthly_rate"] == 0
+                    and defaults["months"] == 0
+                    and defaults["amount"] == 0
+                ):
+                    continue
+            else:
+                total = (
+                    _safe_decimal(row[co + 3]) if ncols > co + 3 else None
+                )
+                unit_amt = (
+                    _safe_decimal(row[co + 2]) if ncols > co + 2 else None
+                )
+                sum_v = (
+                    _safe_decimal(row[co + 1]) if ncols > co + 1 else None
+                )
+                defaults = {
+                    "sum_value": sum_v or Decimal("0"),
+                    "amount": total or unit_amt or Decimal("0"),
+                    "number_per_month": Decimal("0"),
+                    "monthly_rate": Decimal("0"),
+                    "months": Decimal("0"),
+                }
+                if defaults["sum_value"] == 0 and defaults["amount"] == 0:
+                    continue
+
+            if self._upsert(name, current_type, defaults):
+                created += 1
+            else:
+                updated += 1
+
+        return {
+            "created": created,
+            "updated": updated,
+            "sheet_used": sheet_name,
+            "fell_back": fell_back,
+            "all_sheets": all_sheets,
+        }
+
+
+# ── Preliminary Specifications ──────────────────────────────────
+
+
+class PreliminarySpecImporter:
+    """Import Preliminary Specifications from Excel.
+
+    Expected columns: Section | Trade Name | Name | Unit | Amount
+    """
+
+    SHEET_KEYWORDS = [
+        "preliminary spec",
+        "preliminary specs",
+        "preliminary specification",
+        "preliminary specifications",
+        "preliminariesspec",
+        "preliminaries spec",
+        "prelim spec",
+        "prelim specs",
+    ]
+
+    def __init__(self, file_path, project=None):
+        self.file_path = file_path
+        self.project = project
+
+    def run(self):
+        wb = openpyxl.load_workbook(self.file_path, data_only=True)
+        ws, sheet_name, fell_back = _find_sheet_with_name(wb, self.SHEET_KEYWORDS)
+        all_sheets = list(wb.sheetnames)
+        created = updated = 0
+
+        co = _col_offset(ws)
+        header_row = _find_header_row(ws, ["section", "preliminar"])
+        data_start = header_row + 1
+
+        for row in ws.iter_rows(min_row=data_start, values_only=True):
+            ncols = len(row) if row else 0
+            name = _safe_str(row[co + 2]) if ncols > co + 2 else ""
+            if not name:
+                continue
+
+            defaults = {
+                "section": _safe_str(row[co + 0]) if ncols > co + 0 else "",
+                "trade_name": _safe_str(row[co + 1]) if ncols > co + 1 else "",
+                "unit": _safe_str(row[co + 3]) if ncols > co + 3 else "",
+                "amount": (_safe_decimal(row[co + 4]) if ncols > co + 4 else None)
+                or Decimal("0"),
+            }
+
+            if self.project:
+                _, was_created = (
+                    ProjectPreliminarySpecification.objects.update_or_create(
+                        project=self.project,
+                        name=name,
+                        defaults=defaults,
+                    )
+                )
+            else:
+                _, was_created = (
+                    SystemPreliminarySpecification.objects.update_or_create(
+                        name=name,
+                        defaults=defaults,
+                    )
+                )
+            if was_created:
+                created += 1
+            else:
+                updated += 1
+
+        wb.close()
+        return {
+            "created": created,
+            "updated": updated,
+            "sheet_used": sheet_name,
+            "fell_back": fell_back,
+            "all_sheets": all_sheets,
+        }

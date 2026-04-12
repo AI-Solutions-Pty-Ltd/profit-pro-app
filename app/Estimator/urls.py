@@ -116,6 +116,70 @@ urlpatterns = [
         views.DownloadTradeCodeTemplateView.as_view(),
         name="download_trade_code_template",
     ),
+    # Plant Costs
+    path(
+        "project/<int:project_pk>/plant-costs/",
+        views.PlantCostListView.as_view(),
+        name="plant_costs",
+    ),
+    path(
+        "project/<int:project_pk>/plant-costs/upload/",
+        views.PlantCostUploadView.as_view(),
+        name="plant_cost_upload",
+    ),
+    path(
+        "project/<int:project_pk>/plant-costs/download-template/",
+        views.DownloadPlantCostTemplateView.as_view(),
+        name="download_plant_cost_template",
+    ),
+    # Plant Specs (simple definition)
+    path(
+        "project/<int:project_pk>/plant-spec-defs/",
+        views.PlantSpecDefListView.as_view(),
+        name="plant_spec_defs",
+    ),
+    path(
+        "project/<int:project_pk>/plant-spec-defs/upload/",
+        views.PlantSpecUploadView.as_view(),
+        name="plant_spec_upload",
+    ),
+    path(
+        "project/<int:project_pk>/plant-spec-defs/download-template/",
+        views.DownloadPlantSpecTemplateView.as_view(),
+        name="download_plant_spec_template",
+    ),
+    # Preliminary Costs
+    path(
+        "project/<int:project_pk>/preliminary-costs/",
+        views.PreliminaryCostListView.as_view(),
+        name="preliminary_costs",
+    ),
+    path(
+        "project/<int:project_pk>/preliminary-costs/upload/",
+        views.PreliminaryCostUploadView.as_view(),
+        name="preliminary_cost_upload",
+    ),
+    path(
+        "project/<int:project_pk>/preliminary-costs/download-template/",
+        views.DownloadPreliminaryCostTemplateView.as_view(),
+        name="download_preliminary_cost_template",
+    ),
+    # Preliminary Specs (simple definition)
+    path(
+        "project/<int:project_pk>/preliminary-spec-defs/",
+        views.PreliminarySpecDefListView.as_view(),
+        name="preliminary_spec_defs",
+    ),
+    path(
+        "project/<int:project_pk>/preliminary-spec-defs/upload/",
+        views.PreliminarySpecUploadView.as_view(),
+        name="preliminary_spec_upload",
+    ),
+    path(
+        "project/<int:project_pk>/preliminary-spec-defs/download-template/",
+        views.DownloadPreliminarySpecTemplateView.as_view(),
+        name="download_preliminary_spec_template",
+    ),
     path(
         "project/<int:project_pk>/import/",
         views.ExcelImportView.as_view(),
@@ -167,6 +231,26 @@ urlpatterns = [
         "project/<int:project_pk>/api/system-spec-component/<int:pk>/update/",
         views.UpdateSystemSpecComponentView.as_view(),
         name="update_system_spec_component",
+    ),
+    path(
+        "project/<int:project_pk>/api/plant-cost/<int:pk>/update/",
+        views.UpdatePlantCostView.as_view(),
+        name="update_plant_cost",
+    ),
+    path(
+        "project/<int:project_pk>/api/plant-spec/<int:pk>/update/",
+        views.UpdatePlantSpecView.as_view(),
+        name="update_plant_spec",
+    ),
+    path(
+        "project/<int:project_pk>/api/preliminary-cost/<int:pk>/update/",
+        views.UpdatePreliminaryCostView.as_view(),
+        name="update_preliminary_cost",
+    ),
+    path(
+        "project/<int:project_pk>/api/preliminary-spec/<int:pk>/update/",
+        views.UpdatePreliminarySpecView.as_view(),
+        name="update_preliminary_spec",
     ),
     path(
         "project/<int:project_pk>/api/bulk-markup/",
@@ -378,5 +462,90 @@ urlpatterns = [
         "system/api/labour-spec/<int:pk>/update/",
         views.UpdateSystemLabourSpecView.as_view(),
         name="sys_update_labour_spec",
+    ),
+    # System Plant Costs
+    path(
+        "system/plant-costs/",
+        views.SystemPlantCostListView.as_view(),
+        name="sys_plant_costs",
+    ),
+    path(
+        "system/plant-costs/upload/",
+        views.SystemPlantCostUploadView.as_view(),
+        name="sys_plant_cost_upload",
+    ),
+    path(
+        "system/plant-costs/download-template/",
+        views.DownloadSystemPlantCostTemplateView.as_view(),
+        name="sys_download_plant_cost_template",
+    ),
+    # System Plant Specs
+    path(
+        "system/plant-specs/",
+        views.SystemPlantSpecListView.as_view(),
+        name="sys_plant_specs",
+    ),
+    path(
+        "system/plant-specs/upload/",
+        views.SystemPlantSpecUploadView.as_view(),
+        name="sys_plant_spec_upload",
+    ),
+    path(
+        "system/plant-specs/download-template/",
+        views.DownloadSystemPlantSpecTemplateView.as_view(),
+        name="sys_download_plant_spec_template",
+    ),
+    # System Preliminary Costs
+    path(
+        "system/preliminary-costs/",
+        views.SystemPreliminaryCostListView.as_view(),
+        name="sys_preliminary_costs",
+    ),
+    path(
+        "system/preliminary-costs/upload/",
+        views.SystemPreliminaryCostUploadView.as_view(),
+        name="sys_preliminary_cost_upload",
+    ),
+    path(
+        "system/preliminary-costs/download-template/",
+        views.DownloadSystemPreliminaryCostTemplateView.as_view(),
+        name="sys_download_preliminary_cost_template",
+    ),
+    # System Preliminary Specs
+    path(
+        "system/preliminary-specs/",
+        views.SystemPreliminarySpecListView.as_view(),
+        name="sys_preliminary_specs",
+    ),
+    path(
+        "system/preliminary-specs/upload/",
+        views.SystemPreliminarySpecUploadView.as_view(),
+        name="sys_preliminary_spec_upload",
+    ),
+    path(
+        "system/preliminary-specs/download-template/",
+        views.DownloadSystemPreliminarySpecTemplateView.as_view(),
+        name="sys_download_preliminary_spec_template",
+    ),
+    # System AJAX (plant & preliminary)
+    path(
+        "system/api/plant-cost/<int:pk>/update/",
+        views.UpdateSystemPlantCostView.as_view(),
+        name="sys_update_plant_cost",
+    ),
+    path(
+        "system/api/plant-spec/<int:pk>/update/",
+        views.UpdateSystemPlantSpecView.as_view(),
+        name="sys_update_plant_spec",
+    ),
+    path(
+        "system/api/preliminary-cost/<int:pk>/update/",
+        views.UpdateSystemPreliminaryCostView.as_view(),
+        name="sys_update_preliminary_cost",
+    ),
+    path(
+        "system/api/preliminary-spec/<int:pk>/update/",
+        views.UpdateSystemPreliminarySpecView.as_view(),
+        name="sys_update_preliminary_spec",
     ),
 ]
