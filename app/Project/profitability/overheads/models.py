@@ -30,7 +30,6 @@ class OverheadCostTracker(BaseModel):
     )
     remarks = models.TextField(blank=True, help_text="Additional remarks")
 
-
     @property
     def cost(self):
         """Calculate total overhead cost."""

@@ -47,7 +47,6 @@ class MaterialCostTracker(BaseModel):
     )
     comments = models.TextField(blank=True, help_text="Additional comments")
 
-
     @property
     def cost(self):
         """Calculate total cost."""

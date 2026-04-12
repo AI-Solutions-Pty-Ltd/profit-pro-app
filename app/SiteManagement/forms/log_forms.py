@@ -1,4 +1,5 @@
 from django import forms
+from django.forms import ModelChoiceField
 
 from app.core.Utilities.widgets import SearchableSelectWidget
 from app.Project.models.entity_definitions import (
@@ -45,9 +46,9 @@ class LabourLogForm(BaseLogForm):
 
     def _filter_querysets(self, project):
         if "labour_entity" in self.fields:
-            self.fields["labour_entity"].queryset = LabourEntity.objects.filter(
-                project=project
-            )
+            field = self.fields["labour_entity"]
+            assert isinstance(field, ModelChoiceField)
+            field.queryset = LabourEntity.objects.filter(project=project)
 
 
 class MaterialsLogForm(BaseLogForm):
@@ -70,9 +71,9 @@ class MaterialsLogForm(BaseLogForm):
 
     def _filter_querysets(self, project):
         if "material_entity" in self.fields:
-            self.fields["material_entity"].queryset = MaterialEntity.objects.filter(
-                project=project
-            )
+            field = self.fields["material_entity"]
+            assert isinstance(field, ModelChoiceField)
+            field.queryset = MaterialEntity.objects.filter(project=project)
 
 
 class OverheadDailyLogForm(BaseLogForm):
@@ -88,9 +89,9 @@ class OverheadDailyLogForm(BaseLogForm):
 
     def _filter_querysets(self, project):
         if "overhead_entity" in self.fields:
-            self.fields["overhead_entity"].queryset = OverheadEntity.objects.filter(
-                project=project
-            )
+            field = self.fields["overhead_entity"]
+            assert isinstance(field, ModelChoiceField)
+            field.queryset = OverheadEntity.objects.filter(project=project)
 
 
 class PlantEquipmentLogForm(BaseLogForm):
@@ -114,9 +115,9 @@ class PlantEquipmentLogForm(BaseLogForm):
 
     def _filter_querysets(self, project):
         if "plant_entity" in self.fields:
-            self.fields["plant_entity"].queryset = PlantEntity.objects.filter(
-                project=project
-            )
+            field = self.fields["plant_entity"]
+            assert isinstance(field, ModelChoiceField)
+            field.queryset = PlantEntity.objects.filter(project=project)
 
 
 class SubcontractorLogForm(BaseLogForm):
@@ -140,6 +141,6 @@ class SubcontractorLogForm(BaseLogForm):
 
     def _filter_querysets(self, project):
         if "subcontractor_entity" in self.fields:
-            self.fields[
-                "subcontractor_entity"
-            ].queryset = SubcontractorEntity.objects.filter(project=project)
+            field = self.fields["subcontractor_entity"]
+            assert isinstance(field, ModelChoiceField)
+            field.queryset = SubcontractorEntity.objects.filter(project=project)

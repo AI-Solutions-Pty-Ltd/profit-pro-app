@@ -43,7 +43,6 @@ class SearchableSelectWidget(forms.Widget):
         context["widget"]["resource_type"] = self.resource_type
         context["widget"]["choice_data"] = self.choice_data
 
-
         # Manually generate optgroups similar to ChoiceWidget
         # This allows our template to iterate through choices as it expects
         search_val = (
@@ -84,7 +83,6 @@ class SearchableSelectWidget(forms.Widget):
                         "data": self.choice_data.get(str(val), {}),
                     }
                 )
-
 
         context["widget"]["optgroups"] = groups
 

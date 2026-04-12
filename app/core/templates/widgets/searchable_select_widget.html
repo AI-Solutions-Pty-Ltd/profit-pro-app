@@ -41,11 +41,8 @@
                                 class="flex items-center px-3 py-2.5 w-full text-left rounded-md transition-all duration-200 group option-item focus:outline-none focus:bg-indigo-50"
                                 data-id="{{ option.value }}"
                                 data-label="{{ option.label|lower }}"
-                                {% for key, val in option.data.items %}
-                                    {{ key }}="{{ val }}"
-                                {% endfor %}
+                                {% for key, val in option.data.items %}{{ key }}="{{ val }}"{% endfor %}
                                 onclick="selectSearchableOption(this, '{{ option.value }}', '{{ option.label|escapejs }}')">
-
                             <div class="flex-1">
                                 <span class="block text-sm font-semibold text-gray-700 group-hover:text-indigo-900">{{ option.label }}</span>
                             </div>
