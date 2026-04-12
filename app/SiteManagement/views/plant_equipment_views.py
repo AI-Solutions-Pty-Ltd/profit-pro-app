@@ -11,7 +11,9 @@ if TYPE_CHECKING:
 
     _Base = FormMixin
 else:
-    _Base = object
+
+    class _Base:
+        pass
 
 
 from app.Account.subscription_config import Subscription
@@ -141,6 +143,19 @@ class PlantEquipmentDeleteView(PlantEquipmentMixin, DeleteView):
             "site_management:plant-equipment-list",
             kwargs={"project_pk": self.get_project().pk},
         )
+
+    def post(self, request, *args, **kwargs):
+        """Override post to call delete directly, bypassing form validation."""
+        return self.delete(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        """Soft delete the object and redirect."""
+        self.object = self.get_object()
+        success_url = self.get_success_url()
+        self.object.soft_delete()
+        from django.http import HttpResponseRedirect
+
+        return HttpResponseRedirect(success_url)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -12,7 +12,9 @@ if TYPE_CHECKING:
 
     _Base = FormMixin
 else:
-    _Base = object
+
+    class _Base:
+        pass
 
 
 from app.Account.subscription_config import Subscription
@@ -143,7 +145,13 @@ class OverheadDailyLogDeleteView(OverheadDailyLogMixin, DeleteView):
             kwargs={"project_pk": self.get_project().pk},
         )
 
-    def form_valid(self, form):
+    def post(self, request, *args, **kwargs):
+        """Override post to call delete directly, bypassing form validation."""
+        return self.delete(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        """Soft delete the object and redirect."""
+        self.object = self.get_object()
         success_url = self.get_success_url()
         self.object.soft_delete()
         return HttpResponseRedirect(success_url)
