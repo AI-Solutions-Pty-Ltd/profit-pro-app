@@ -11,8 +11,8 @@ class JournalEntry(BaseModel):
     """
 
     class EntryType(models.TextChoices):
-        DEBIT = "DEBIT", "Debit"
-        CREDIT = "CREDIT", "Credit"
+        DEBIT = "DEBIT", "Revenue"
+        CREDIT = "CREDIT", "Expense"
 
     class Category(models.TextChoices):
         MATERIAL = "MATERIAL", "Material"

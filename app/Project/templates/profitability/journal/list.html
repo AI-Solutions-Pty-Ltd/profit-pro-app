@@ -86,12 +86,12 @@
                                     {% if entry.transaction_type == 'credit' %}
                                         <span class="inline-flex items-center px-2 py-0.5 text-sm font-bold tracking-tighter text-emerald-700 bg-emerald-100 rounded-full border border-emerald-200 shadow-sm">
                                             <span class="mr-1.5 w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></span>
-                                            {{ entry.transaction_type }}
+                                            {{ 'Revenue' }}
                                         </span>
                                     {% else %}
                                         <span class="inline-flex items-center px-2 py-0.5 text-sm font-bold tracking-tighter text-rose-700 bg-rose-100 rounded-full border border-rose-200 shadow-sm">
                                             <span class="mr-1.5 w-1 h-1 bg-rose-500 rounded-full"></span>
-                                            {{ entry.transaction_type }}
+                                            {{ 'Expense' }}
                                         </span>
                                     {% endif %}
                                 </td>

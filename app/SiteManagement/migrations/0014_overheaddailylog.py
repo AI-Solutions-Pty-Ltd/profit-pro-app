@@ -6,7 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("Project", "0077_labourentity_unit_of_measure_and_more"),
+        ("Project", "0070_journalentry_labourentity_labourcosttracker_and_more"),
         (
             "SiteManagement",
             "0013_subcontractorlog_date_alter_labourlog_id_number_and_more",
