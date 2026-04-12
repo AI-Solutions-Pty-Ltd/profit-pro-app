@@ -342,11 +342,43 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             current_date, category_filter, subcategory_filter, discipline_filter
         )
 
+        urgent_threshold = Decimal("0.96")
+        urgent_time_count = 0
+        urgent_cost_count = 0
+        for project in active_projects:
+            try:
+                spi = project.get_schedule_performance_index(current_date)
+            except (ZeroDivisionError, TypeError):
+                spi = None
+            try:
+                cpi = project.get_cost_performance_index(current_date)
+            except (ZeroDivisionError, TypeError):
+                cpi = None
+
+            try:
+                if spi is not None and Decimal(str(spi)) < urgent_threshold:
+                    urgent_time_count += 1
+            except Exception:
+                pass
+            try:
+                if cpi is not None and Decimal(str(cpi)) < urgent_threshold:
+                    urgent_cost_count += 1
+            except Exception:
+                pass
+
         context["active_projects_count"] = active_count
         context["urgent_projects"] = urgent_projects
         context["urgent_projects_count"] = len(urgent_projects)
         context["urgent_projects_percentage"] = (
             (len(urgent_projects) / active_count * 100) if active_count > 0 else 0
+        )
+        context["urgent_time_projects_count"] = urgent_time_count
+        context["urgent_time_projects_percentage"] = (
+            (urgent_time_count / active_count * 100) if active_count > 0 else 0
+        )
+        context["urgent_cost_projects_count"] = urgent_cost_count
+        context["urgent_cost_projects_percentage"] = (
+            (urgent_cost_count / active_count * 100) if active_count > 0 else 0
         )
         context["attention_projects"] = attention_projects
         context["attention_projects_count"] = len(attention_projects)

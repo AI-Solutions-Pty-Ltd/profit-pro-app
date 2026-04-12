@@ -1,28 +1,32 @@
-<nav class="bg-white border-b border-gray-300 overflow-hidden flex gap-x-2 text-xs mb-4"
+<nav class="flex overflow-hidden gap-x-2 mb-4 text-xs bg-white border-b border-gray-300"
      aria-label="Dashboard tabs">
     <a href="#"
        class="border-b-2 {% if tab == 'income_statement' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
-        {% heroicon_outline "chart-bar" class="w-5 h-5 inline mr-2" %}
+        {% heroicon_outline "chart-bar" class="inline mr-2 w-5 h-5" %}
         Income Statement
     </a>
     <a href="#"
        class="border-b-2 {% if tab == 'cashflow_statement' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
-        {% heroicon_outline "arrow-path" class="w-5 h-5 inline mr-2" %}
+        {% heroicon_outline "arrow-path" class="inline mr-2 w-5 h-5" %}
         Cashflow Statement
     </a>
     <a href="#"
        class="border-b-2 {% if tab == 'debtors_creditors' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
-        {% heroicon_outline "banknotes" class="w-5 h-5 inline mr-2" %}
+        {% heroicon_outline "banknotes" class="inline mr-2 w-5 h-5" %}
         Debtors & Creditors
     </a>
-    <a href="#"
-       class="border-b-2 {% if tab == 'profitability_risk' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
-        {% heroicon_outline "exclamation-triangle" class="w-5 h-5 inline mr-2" %}
+    {% comment %} <a href="#" class="border-b-2 {% if tab == 'profitability_risk' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
+        {% heroicon_outline "exclamation-triangle" class="inline mr-2 w-5 h-5" %}
         Profitability Risk Report
-    </a>
+    </a> {% endcomment %}
     <a href="#"
        class="border-b-2 {% if tab == 'contractors_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
-        {% heroicon_outline "briefcase" class="w-5 h-5 inline mr-2" %}
+        {% heroicon_outline "briefcase" class="inline mr-2 w-5 h-5" %}
         Contractors Report
+    </a>
+    <a href="{% url 'project:profitability-performance-report' project.pk|default:company.pk %}"
+       class="border-b-2 {% if tab == 'performance_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
+        {% heroicon_outline "presentation-chart-line" class="inline mr-2 w-5 h-5" %}
+        Profitability Report
     </a>
 </nav>

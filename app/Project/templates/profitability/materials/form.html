@@ -1,0 +1,9 @@
+{% extends "profitability/base_form.html" %}
+{% block entity_name %}Material Entry{% endblock %}
+{% block entity_display_name %}Material Entry{% endblock %}
+{% block back_url %}
+    {% url 'project:profitability-material-list' project.pk %}
+{% endblock %}
+{% block cancel_url %}
+    {% url 'project:profitability-material-list' project.pk %}
+{% endblock %}

@@ -28,14 +28,28 @@ class PlantEquipment(BaseModel):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        editable=False,
         related_name="equipment_items",
         help_text="Type of plant/equipment",
     )
+    plant_entity = models.ForeignKey(
+        "Project.PlantEntity",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="plant_logs",
+        help_text="Link to master plant definition",
+    )
     date = models.DateField(help_text="Date of record")
     equipment_name = models.CharField(
-        max_length=255, blank=True, help_text="Specific equipment name/ID (optional)"
+        max_length=255,
+        blank=True,
+        editable=False,
+        help_text="Specific equipment name/ID (optional)",
     )
-    supplier = models.CharField(max_length=255, blank=True, help_text="Supplier/Owner")
+    supplier = models.CharField(
+        max_length=255, blank=True, editable=False, help_text="Supplier/Owner"
+    )
     usage_hours = models.DecimalField(
         max_digits=8,
         decimal_places=2,
@@ -54,8 +68,19 @@ class PlantEquipment(BaseModel):
     )
     remarks = models.TextField(blank=True, help_text="Additional remarks")
 
+    def save(self, *args, **kwargs):
+        """Synchronize fields from master entity if linked."""
+        if self.plant_entity:
+            if not self.equipment_name:
+                self.equipment_name = self.plant_entity.name
+            if not self.supplier:
+                self.supplier = self.plant_entity.supplier
+            if not self.plant_type:
+                self.plant_type = self.plant_entity.plant_type
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.equipment_name or self.plant_type.name if self.plant_type else 'Equipment'} - {self.date}"
+        return f"{self.equipment_name or (self.plant_type.name if self.plant_type else 'Equipment')} - {self.date}"
 
     @property
     def total_cost(self):

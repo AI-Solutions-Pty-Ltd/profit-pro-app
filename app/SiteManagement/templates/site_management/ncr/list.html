@@ -29,6 +29,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Responsible</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                     </tr>
@@ -41,6 +42,16 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ncr.get_ncr_type_display }}</td>
                             <td class="px-6 py-4 text-sm text-gray-900">{{ ncr.description|truncatewords:8 }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ncr.responsible_person|default:"-" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                                {% if ncr.source_decision %}
+                                    <a href="{% url 'site_management:meeting-detail' project.pk ncr.source_decision.meeting.pk %}"
+                                       class="text-indigo-600 hover:underline">
+                                        Meeting ({{ ncr.source_decision.meeting.date|date:"d/m" }})
+                                    </a>
+                                {% else %}
+                                    <span class="text-gray-400">Direct Entry</span>
+                                {% endif %}
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if ncr.status == 'OPEN' %}bg-red-100 text-red-800{% else %}bg-green-100 text-green-800{% endif %}">{{ ncr.get_status_display }}</span>
                             </td>

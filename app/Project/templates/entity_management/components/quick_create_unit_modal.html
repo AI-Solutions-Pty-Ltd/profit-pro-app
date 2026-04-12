@@ -1,0 +1,185 @@
+{% load heroicons %}
+{% load crispy_forms_tags %}
+<dialog id="quick-create-unit-modal"
+        class="modal modal-bottom sm:modal-middle">
+    <div class="overflow-hidden p-0 w-11/12 max-w-2xl bg-white border border-gray-100 shadow-2xl modal-box">
+        <!-- Header -->
+        <div class="flex justify-between items-center px-6 py-5 bg-white border-b border-gray-100">
+            <div class="flex items-center">
+                <div class="p-2 mr-3 text-indigo-600 bg-indigo-50 rounded-lg">{% heroicon_outline "plus-circle" size="24" %}</div>
+                <h3 class="text-xl font-bold tracking-tight text-gray-900">New Unit of Measure</h3>
+            </div>
+            <form method="dialog">
+                <button class="p-2 text-gray-400 bg-gray-50 rounded-lg transition-colors hover:text-gray-600 hover:bg-gray-100">
+                    {% heroicon_outline "x-mark" size="20" %}
+                </button>
+            </form>
+        </div>
+        <form id="quick-unit-form" onsubmit="submitQuickUnit(event)">
+            {% csrf_token %}
+            <!-- Scrollable Content Area -->
+            <div class="px-8 py-6 space-y-5 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                <div id="quick-unit-errors"
+                     class="hidden p-4 bg-red-50 rounded-xl border border-red-200 shadow-sm duration-300 animate-in slide-in-from-top-2">
+                    <div class="flex">
+                        <div class="flex-shrink-0">{% heroicon_solid "x-circle" class="w-5 h-5 text-red-500" %}</div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-bold tracking-wider text-red-800 uppercase">Validation Error</h3>
+                            <div class="mt-1 text-sm leading-relaxed text-red-700" id="error-list"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Shared Form Fields -->
+                <div class="p-4 rounded-xl border border-gray-100 bg-gray-50/50">
+                    {% include "unit_management/partials/unit_form_fields.html" with form=unit_form %}
+                </div>
+            </div>
+            <!-- Footer Actions -->
+            <div class="flex justify-end px-8 py-5 mt-0 space-x-3 bg-gray-50 border-t border-gray-100 modal-action">
+                <button type="button"
+                        onclick="closeQuickCreateModal()"
+                        class="text-gray-700 bg-white border-gray-300 btn btn-ghost hover:bg-gray-50">Cancel</button>
+                <button type="submit"
+                        id="quick-unit-submit"
+                        class="px-8 text-white bg-indigo-600 border-none shadow-lg btn btn-primary hover:bg-indigo-700 shadow-indigo-200/50">
+                    <span id="submit-text">Create & Select Unit</span>
+                    <div id="submit-spinner" class="hidden ml-2">
+                        <svg class="w-4 h-4 text-white animate-spin"
+                             xmlns="http://www.w3.org/2000/svg"
+                             fill="none"
+                             viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                    </div>
+                </button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+{% include "unit_management/partials/unit_form_js.html" %}
+<script>
+    let activeSelectId = null;
+
+    function openQuickCreateModal(prefix) {
+        activeSelectId = prefix;
+        const modal = document.getElementById('quick-create-unit-modal');
+        if (modal && modal.showModal) {
+            modal.showModal();
+        } else if (modal) {
+            modal.classList.add('modal-open');
+        }
+        
+        // Reset form
+        const form = document.getElementById('quick-unit-form');
+        if (form) form.reset();
+        const errorContainer = document.getElementById('quick-unit-errors');
+        if (errorContainer) errorContainer.classList.add('hidden');
+    }
+
+    function closeQuickCreateModal() {
+        const modal = document.getElementById('quick-create-unit-modal');
+        if (modal && modal.close) {
+            modal.close();
+        } else if (modal) {
+            modal.classList.remove('modal-open');
+        }
+    }
+
+    function submitQuickUnit(e) {
+        e.preventDefault();
+        const form = document.getElementById('quick-unit-form');
+        const formData = new FormData(form);
+        const submitBtn = document.getElementById('quick-unit-submit');
+        const submitText = document.getElementById('submit-text');
+        const submitSpinner = document.getElementById('submit-spinner');
+        const errorContainer = document.getElementById('quick-unit-errors');
+        const errorList = document.getElementById('error-list');
+
+        if (!activeSelectId) {
+            console.error("No activeSelectId set for quick create");
+            return;
+        }
+
+        // Loading state
+        if (submitBtn) submitBtn.disabled = true;
+        if (submitText) submitText.textContent = 'Saving...';
+        if (submitSpinner) submitSpinner.classList.remove('hidden');
+        if (errorContainer) errorContainer.classList.add('hidden');
+
+        fetch('{% url "project:unit-create-ajax" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                try {
+                    // 1. Update Native Select
+                    const selectorContainer = document.getElementById(`${activeSelectId}-selector-container`);
+                    const nativeSelect = document.querySelector(`[name="${activeSelectId}"]`) || 
+                                       (selectorContainer ? selectorContainer.querySelector('select') : null);
+
+                    if (nativeSelect && nativeSelect.add) {
+                        const newOption = new Option(data.name, data.id, true, true);
+                        nativeSelect.add(newOption);
+                    }
+                    
+                    // 2. Update Searchable List
+                    const optionsList = document.getElementById(`${activeSelectId}-options-list`);
+                    if (optionsList) {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'w-full text-left flex items-center px-3 py-2 rounded-md hover:bg-indigo-50 group transition-colors option-item';
+                        btn.dataset.id = data.id;
+                        btn.dataset.label = data.name.toLowerCase();
+                        btn.onclick = () => selectSearchableOption(activeSelectId, data.id, data.name);
+                        btn.innerHTML = `<span class="block text-sm font-medium text-gray-700 group-hover:text-indigo-900">${data.name}</span>`;
+                        optionsList.insertBefore(btn, optionsList.firstChild);
+                    }
+
+                    // 3. Select the new option
+                    if (typeof selectSearchableOption === 'function') {
+                        selectSearchableOption(activeSelectId, data.id, data.name);
+                    }
+                } catch (err) {
+                    console.error("Error updating UI after unit creation:", err);
+                    // We continue anyway to close the modal since the unit was created
+                }
+                
+                closeQuickCreateModal();
+                
+                if (typeof showToast === 'function') {
+                    showToast('Unit created and selected successfully!', 'success');
+                }
+            } else {
+                if (errorContainer && errorList) {
+                    errorContainer.classList.remove('hidden');
+                    errorList.innerHTML = '';
+                    for (const [field, errors] of Object.entries(data.errors)) {
+                        errorList.innerHTML += `<p class="font-bold uppercase text-[10px] tracking-tight">${field}:</p> ${errors.join(', ')}<br>`;
+                    }
+                }
+            }
+        })
+        .catch(err => {
+            console.error("AJAX Error:", err);
+            if (errorContainer && errorList) {
+                errorContainer.classList.remove('hidden');
+                errorList.innerHTML = 'An unexpected error occurred. Please try again.';
+            }
+        })
+        .finally(() => {
+            if (submitBtn) submitBtn.disabled = false;
+            if (submitText) submitText.textContent = 'Create Unit';
+            if (submitSpinner) submitSpinner.classList.add('hidden');
+        });
+    }
+</script>
