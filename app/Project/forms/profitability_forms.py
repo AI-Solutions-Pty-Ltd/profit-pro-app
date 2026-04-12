@@ -18,6 +18,7 @@ class ProfitabilityBaseForm(forms.ModelForm):
         self.project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
+        self.helper.form_tag = False
         self.helper.form_method = "post"
 
 
