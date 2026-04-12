@@ -9,7 +9,7 @@ from app.SiteManagement.models import NonConformance
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("Project", "0070_journalentry_labourentity_labourcosttracker_and_more"),
+        ("Project", "0070_projectreportsummary"),
         (
             "SiteManagement",
             "0011_alter_plantequipment_equipment_name_planttype_and_more",
