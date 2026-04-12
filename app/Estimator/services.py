@@ -345,3 +345,98 @@ def pull_from_library(project):
     results["specifications"] = count
 
     return results
+
+
+def sync_materials_from_system(project):
+    """Sync project material costs with current system library values.
+
+    Updates existing rows that have a source FK and creates new rows
+    for system materials not yet in the project.
+    Returns count of updated + created rows.
+    """
+    updated = 0
+    for pm in ProjectMaterial.objects.filter(
+        project=project, source__isnull=False
+    ).select_related("source"):
+        pm.trade_name = pm.source.trade_name
+        pm.unit = pm.source.unit
+        pm.market_rate = pm.source.market_rate
+        pm.material_variety = pm.source.material_variety
+        pm.market_spec = pm.source.market_spec
+        pm.save()
+        updated += 1
+
+    # Add system materials not yet in the project
+    existing_source_ids = set(
+        ProjectMaterial.objects.filter(
+            project=project, source__isnull=False
+        ).values_list("source_id", flat=True)
+    )
+    created = 0
+    from app.Estimator.models import SystemMaterial
+
+    for sm in SystemMaterial.objects.exclude(pk__in=existing_source_ids):
+        ProjectMaterial.objects.create(
+            project=project,
+            source=sm,
+            trade_name=sm.trade_name,
+            material_code=sm.material_code,
+            unit=sm.unit,
+            market_rate=sm.market_rate,
+            material_variety=sm.material_variety,
+            market_spec=sm.market_spec,
+        )
+        created += 1
+
+    return {"updated": updated, "created": created}
+
+
+def sync_labour_costs_from_system(project):
+    """Sync project labour crews with current system library values.
+
+    Updates existing rows that have a source FK and creates new rows
+    for system crews not yet in the project.
+    Returns count of updated + created rows.
+    """
+    updated = 0
+    for plc in ProjectLabourCrew.objects.filter(
+        project=project, source__isnull=False
+    ).select_related("source"):
+        plc.crew_type = plc.source.crew_type
+        plc.crew_size = plc.source.crew_size
+        plc.skilled = plc.source.skilled
+        plc.semi_skilled = plc.source.semi_skilled
+        plc.general = plc.source.general
+        plc.daily_production = plc.source.daily_production
+        plc.skilled_rate = plc.source.skilled_rate
+        plc.semi_skilled_rate = plc.source.semi_skilled_rate
+        plc.general_rate = plc.source.general_rate
+        plc.save()
+        updated += 1
+
+    # Add system crews not yet in the project
+    existing_source_ids = set(
+        ProjectLabourCrew.objects.filter(
+            project=project, source__isnull=False
+        ).values_list("source_id", flat=True)
+    )
+    created = 0
+    from app.Estimator.models import SystemLabourCrew
+
+    for slc in SystemLabourCrew.objects.exclude(pk__in=existing_source_ids):
+        ProjectLabourCrew.objects.create(
+            project=project,
+            source=slc,
+            crew_type=slc.crew_type,
+            crew_size=slc.crew_size,
+            skilled=slc.skilled,
+            semi_skilled=slc.semi_skilled,
+            general=slc.general,
+            daily_production=slc.daily_production,
+            skilled_rate=slc.skilled_rate,
+            semi_skilled_rate=slc.semi_skilled_rate,
+            general_rate=slc.general_rate,
+        )
+        created += 1
+
+    return {"updated": updated, "created": created}

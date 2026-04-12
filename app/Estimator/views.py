@@ -535,16 +535,30 @@ class MaterialsListView(ProjectEstimatorMixin, ListView):
         return context
 
     def post(self, request, *args, **kwargs):
+        project_pk = self.kwargs["project_pk"]
+        action = request.POST.get("action")
+
+        if action == "sync_system":
+            from .services import sync_materials_from_system
+
+            result = sync_materials_from_system(self.get_project())
+            messages.success(
+                request,
+                f"Material costs synced with system library — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse("estimator:materials", kwargs={"project_pk": project_pk})
+            )
+
+        # Default: add material form
         form = MaterialForm(request.POST)
         if form.is_valid():
             obj = form.save(commit=False)
             obj.project = self.get_project()
             obj.save()
             return redirect(
-                reverse(
-                    "estimator:materials",
-                    kwargs={"project_pk": self.kwargs["project_pk"]},
-                )
+                reverse("estimator:materials", kwargs={"project_pk": project_pk})
             )
         self.object_list = self.get_queryset()
         return self.render_to_response(self.get_context_data(form=form))
@@ -564,16 +578,30 @@ class LabourCostListView(ProjectEstimatorMixin, ListView):
         return context
 
     def post(self, request, *args, **kwargs):
+        project_pk = self.kwargs["project_pk"]
+        action = request.POST.get("action")
+
+        if action == "sync_system":
+            from .services import sync_labour_costs_from_system
+
+            result = sync_labour_costs_from_system(self.get_project())
+            messages.success(
+                request,
+                f"Labour costs synced with system library — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse("estimator:labour_costs", kwargs={"project_pk": project_pk})
+            )
+
+        # Default: add crew form
         form = LabourCrewForm(request.POST)
         if form.is_valid():
             obj = form.save(commit=False)
             obj.project = self.get_project()
             obj.save()
             return redirect(
-                reverse(
-                    "estimator:labour_costs",
-                    kwargs={"project_pk": self.kwargs["project_pk"]},
-                )
+                reverse("estimator:labour_costs", kwargs={"project_pk": project_pk})
             )
         self.object_list = self.get_queryset()
         return self.render_to_response(self.get_context_data(form=form))
