@@ -153,3 +153,11 @@ class NonConformanceAdmin(admin.ModelAdmin):
     list_filter = ["ncr_type", "status", "project"]
     search_fields = ["reference_number", "description", "defect_description"]
     readonly_fields = ["reference_number", "date", "date_closed"]
+
+
+# @admin.register(OverheadDailyLog)
+# class OverheadDailyLogAdmin(admin.ModelAdmin):
+#     list_display = ["project", "date", "description", "category", "quantity"]
+#     list_filter = ["project", "date", "category"]
+#     search_fields = ["description", "remarks"]
+#     readonly_fields = ["description", "category"]

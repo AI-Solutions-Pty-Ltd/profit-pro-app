@@ -52,34 +52,6 @@ class MaterialCostTrackerListView(ProfitabilityMixin, ListView):
 
         return context
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        from decimal import Decimal
-
-        from django.db.models import Avg, F, Max, Min, Sum
-
-        # Current monthly queryset (already filtered by self.get_queryset via ProfitabilityMixin)
-        logs_qs = self.get_queryset()
-
-        # 1. Total Monthly Cost
-        context["kvi_total_cost"] = (
-            self.project.material_cost_logs.aggregate(  # type: ignore
-                total=Sum(F("quantity") * F("rate"))
-            )["total"]
-            or 0
-        )
-
-        # Entity budget (look for a Category named "Material")
-        budget_query = self.project.categories.filter(
-            name__icontains="Material"
-        ).first()
-        context["kvi_budget"] = budget_query.budget if budget_query else Decimal("0.00")
-        context["kvi_under_budget"] = context["kvi_budget"] - Decimal(
-            context["kvi_total_cost"]
-        )
-
-        return context
-
 
 class MaterialCostTrackerCreateView(ProfitabilityMixin, CreateView):
     model = MaterialCostTracker

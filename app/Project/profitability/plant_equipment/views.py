@@ -52,42 +52,6 @@ class PlantCostTrackerListView(ProfitabilityMixin, ListView):
 
         return context
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        from decimal import Decimal
-
-        from django.db.models import F, Sum
-
-        # Entity-specific Total Cost
-        context["kvi_total_cost"] = (
-            logs_qs.aggregate(total=Sum(F("usage_hours") * F("hourly_rate")))["total"]
-            or 0
-        )
-
-        # 2. Total Monthly Hours
-        context["kvi_metric_name"] = "Total Usage Hours"
-        context["kvi_metric_value"] = (
-            logs_qs.aggregate(total=Sum("usage_hours"))["total"] or 0
-        )
-
-        # 3. Rate Statistics (Average, High, Low)
-        rate_stats = logs_qs.aggregate(
-            avg=Avg("hourly_rate"), max=Max("hourly_rate"), min=Min("hourly_rate")
-        )
-        context["kvi_avg_rate"] = rate_stats["avg"] or 0
-        context["kvi_max_rate"] = rate_stats["max"] or 0
-        context["kvi_min_rate"] = rate_stats["min"] or 0
-        context["kvi_rate_label"] = "Hourly Rate"
-
-        # Entity budget (look for a Category named "Plant")
-        budget_query = self.project.categories.filter(name__icontains="Plant").first()
-        context["kvi_budget"] = budget_query.budget if budget_query else Decimal("0.00")
-        context["kvi_under_budget"] = context["kvi_budget"] - Decimal(
-            str(context["kvi_total_cost"])
-        )
-
-        return context
-
 
 class PlantCostTrackerCreateView(ProfitabilityMixin, CreateView):
     model = PlantCostTracker

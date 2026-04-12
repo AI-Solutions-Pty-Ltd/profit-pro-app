@@ -10,22 +10,49 @@
     {% block entity_name %}Entry{% endblock %}
     - {{ project.name }} - Profitability
 {% endblock title %}
-{% block profitability_content %}
-    <div class="mx-auto max-w-2xl">
-        <!-- Form Card -->
-        <div class="overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-xl">
-            <div class="p-8">
-                <form method="post" enctype="multipart/form-data" class="space-y-6">
+{% block page_content %}
+    <div class="px-4 py-12 mx-auto max-w-4xl">
+        <!-- Premium Header Area -->
+        <div class="mb-10">
+            <a href="{% block back_url %}#{% endblock %}"
+               onclick="if(this.getAttribute('href') === '#') { history.back(); return false; }"
+               class="inline-flex items-center mb-4 text-sm font-bold text-gray-400 transition-colors hover:text-indigo-600 group focus:outline-none">
+                {% heroicon_outline "chevron-left" class="mr-1 w-4 h-4 transition-transform transform group-hover:-translate-x-1" %}
+                Back
+            </a>
+            <div class="flex justify-between items-end">
+                <div>
+                    <h1 class="mb-2 text-3xl font-black tracking-tight leading-none text-gray-900">
+                        {% if object %}
+                            Edit
+                        {% else %}
+                            New
+                        {% endif %}
+                        {% block entity_display_name %}{{ block.super }}{% endblock %}
+                    </h1>
+                    <p class="font-semibold tracking-wide text-gray-500">{{ project.name }}</p>
+                </div>
+                {% block header_extra %}{% endblock %}
+            </div>
+        </div>
+        <!-- Premium Form Card -->
+        <div class="bg-white shadow-[0_30px_60px_-15px_rgba(79,70,229,0.15)] rounded-[2.5rem] border border-gray-100/50 overflow-hidden">
+            <div class="p-8 md:p-12">
+                <form method="post" enctype="multipart/form-data" class="space-y-8">
                     {% csrf_token %}
-                    <div class="grid grid-cols-1 gap-6">{% crispy form %}</div>
-                    <div class="flex justify-end items-center pt-6 space-x-3 border-t border-gray-100">
-                        <a href="#"
-                           onclick="history.back(); return false;"
-                           class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 transition-colors hover:bg-gray-50">
+                    <div class="grid grid-cols-1 gap-8">
+                        {% block form_fields %}
+                            {% crispy form %}
+                        {% endblock %}
+                    </div>
+                    <div class="flex justify-end items-center pt-10 mt-10 space-x-4 border-t border-gray-50">
+                        <a href="{% block cancel_url %}{{ block.super }}{% endblock %}"
+                           onclick="if(this.getAttribute('href') === '#') { history.back(); return false; }"
+                           class="px-8 py-3 text-sm font-bold text-gray-400 rounded-2xl transition-all hover:text-gray-600 hover:bg-gray-50">
                             Cancel
                         </a>
                         <button type="submit"
-                                class="inline-flex items-center px-6 py-2 text-sm font-bold text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                class="inline-flex items-center px-10 py-3.5 text-sm font-black text-white bg-indigo-600 rounded-2xl shadow-xl transition-all hover:bg-indigo-700 shadow-indigo-100 active:scale-95 focus:ring-4 focus:ring-indigo-500/20">
                             {% if object %}
                                 Update Details
                             {% else %}

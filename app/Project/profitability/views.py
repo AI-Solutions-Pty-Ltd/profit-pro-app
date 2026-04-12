@@ -7,8 +7,6 @@ from django.shortcuts import get_object_or_404, redirect
 from django.views import View
 from django.views.generic import TemplateView
 
-from django.views.generic import TemplateView
-
 from app.Project.projects.projects_models import Project
 
 from .utils import (

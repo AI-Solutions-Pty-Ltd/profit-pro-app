@@ -1,26 +1,39 @@
 {% extends "layout.html" %}
 {% load heroicons %}
-{% block title %}Delete Entry - {{ project.name }}{% endblock %}
-{% block profitability_content %}
-    <div class="mx-auto max-w-xl">
-        <div class="overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-xl">
-            <div class="p-8 text-center">
-                <div class="flex justify-center items-center mx-auto mb-6 w-20 h-20 bg-red-50 rounded-full">
-                    {% heroicon_outline "exclamation-triangle" size="40" class="text-red-600" %}
+{% block title %}Delete Entry - {{ project.name }} - Profitability{% endblock %}
+{% block page_content %}
+    <div class="px-4 py-24 mx-auto max-w-xl">
+        <!-- focused Header (Minimal) -->
+        <div class="mb-10 text-center">
+            <a href="#"
+               onclick="history.back(); return false;"
+               class="inline-flex items-center mb-6 text-sm font-bold text-gray-400 transition-colors hover:text-indigo-600 group focus:outline-none">
+                {% heroicon_outline "chevron-left" class="mr-1 w-4 h-4 transition-transform transform group-hover:-translate-x-1" %}
+                Cancel and return
+            </a>
+        </div>
+        <div class="bg-white shadow-[0_30px_60px_-15px_rgba(225,29,72,0.15)] rounded-[2.5rem] border border-gray-100/50 overflow-hidden">
+            <div class="p-10 text-center md:p-12">
+                <div class="flex justify-center items-center mx-auto mb-8 w-24 h-24 bg-rose-50 rounded-full">
+                    {% heroicon_outline "exclamation-triangle" size="48" class="text-rose-600" %}
                 </div>
-                <h1 class="mb-2 text-2xl font-bold text-gray-900">Delete Cost Entry?</h1>
-                <p class="mb-8 text-gray-600">Are you sure you want to delete this cost entry? This action cannot be undone.</p>
-                <form method="post" class="flex justify-center items-center space-x-4">
+                <h1 class="mb-3 text-3xl font-black tracking-tight text-gray-900">Delete Cost Entry?</h1>
+                <p class="mb-10 font-medium leading-relaxed text-gray-500">
+                    You're about to remove this record from <span class="font-bold text-gray-900">{{ project.name }}</span>.
+                    This action is <span class="italic font-black text-rose-600">permanent</span> and cannot be undone.
+                </p>
+                <form method="post"
+                      class="flex flex-col justify-center items-center space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4">
                     {% csrf_token %}
                     <a href="#"
                        onclick="history.back(); return false;"
-                       class="inline-flex items-center px-6 py-3 text-base font-medium text-gray-700 bg-white rounded-md border border-gray-300 transition-colors hover:bg-gray-50">
-                        Cancel
+                       class="px-8 py-3.5 w-full text-sm font-bold text-gray-400 rounded-2xl transition-all sm:w-auto hover:text-gray-700 hover:bg-gray-50">
+                        Keep Entry
                     </a>
                     <button type="submit"
-                            class="inline-flex items-center px-6 py-3 text-base font-bold text-white bg-red-600 rounded-md border border-transparent shadow-sm transition-all hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                        {% heroicon_outline "trash" class="mr-2 w-5 h-5" %}
-                        Confirm Delete
+                            class="inline-flex justify-center items-center px-10 py-3.5 w-full text-sm font-black text-white bg-rose-600 rounded-2xl border border-transparent shadow-xl transition-all sm:w-auto shadow-rose-100 hover:bg-rose-700 active:scale-95">
+                        {% heroicon_outline "trash" class="mr-2 w-4 h-4" %}
+                        Delete Permanently
                     </button>
                 </form>
             </div>
