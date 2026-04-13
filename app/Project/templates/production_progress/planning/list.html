@@ -10,10 +10,10 @@
     <!-- Header -->
     <div class="mb-6 bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4">
-            <a href="{% url 'project:production-dashboard' project.pk %}"
+             <a href="{% url 'project:company-management' project.pk %}"
                class="inline-flex items-center py-2 text-sm font-medium text-gray-700 bg-white rounded-md transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 {% heroicon_outline "chevron-left" size="20" %}
-                <span class="ml-2">Back to Dashboard</span>
+                <span class="ml-2">Back to Company Management</span>
             </a>
             <div class="flex justify-between items-center mt-2">
                 <div>
@@ -23,7 +23,7 @@
                     </p>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <a href="{% url 'project:production-planning' project.pk %}"
+                    <a href="{% url 'project:production-plan-create' project.pk %}"
                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         {% heroicon_solid "plus" class="mr-2 w-4 h-4" %} Add Plan
                     </a>
@@ -59,7 +59,7 @@
                     <button type="submit" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700">
                         {% heroicon_solid "magnifying-glass" class="mr-2 w-4 h-4" %} Filter
                     </button>
-                    <a href="{% url 'project:production-plan-list' project.pk %}" 
+                    <a href="{% url 'project:production-planning' project.pk %}" 
                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50">
                         Clear
                     </a>
@@ -127,7 +127,7 @@
                 <p class="mt-2 text-sm text-gray-500">
                     Try adjusting your filters or add a new production plan.
                 </p>
-                <a href="{% url 'project:production-planning' project.pk %}"
+                <a href="{% url 'project:production-plan-create' project.pk %}"
                    class="inline-flex items-center px-4 py-2 mt-6 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700">
                     {% heroicon_solid "plus" class="mr-2 w-4 h-4" %} Add Plan Item
                 </a>

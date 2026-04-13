@@ -11,7 +11,7 @@
     <!-- Header -->
     <div class="bg-white shadow-sm rounded-lg mb-6">
         <div class="px-6 py-4">
-            <a href="{% url 'project:production-plan-list' project.pk %}"
+            <a href="{% url 'project:production-planning' project.pk %}"
                class="inline-flex items-center py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                 {% heroicon_outline "chevron-left" size="20" %}
                 <span class="ml-2">Back to Planning List</span>
@@ -112,7 +112,7 @@
     <!-- Footer -->
     <div class="px-6 py-4 bg-white rounded-lg mt-10 shadow-sm border border-gray-100">
         <div class="flex justify-between items-center text-sm font-medium">
-            <a href="{% url 'project:production-plan-list' project.pk %}"
+            <a href="{% url 'project:production-planning' project.pk %}"
                class="inline-flex items-center text-gray-700 hover:text-indigo-600 transition-colors">
                 {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %} Back to List
             </a>

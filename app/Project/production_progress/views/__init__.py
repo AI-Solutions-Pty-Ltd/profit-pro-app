@@ -10,7 +10,7 @@ from .planning_views import (
     ProductionPlanDeleteView,
     ProductionPlanDetailView,
     ProductionPlanListView,
-    ProductionPlanningView,
+    ProductionPlanCreateView,
     ProductionPlanUpdateView,
     ProductionResourceCreateView,
 )
@@ -29,7 +29,7 @@ __all__ = [
     "ProductionProgressDashboardView",
     "ProductionActivityDetailView",
     "PlanProductivityDashboardView",
-    "ProductionPlanningView",
+    "ProductionPlanCreateView",
     "ProductionPlanListView",
     "ProductionPlanDetailView",
     "ProductionPlanUpdateView",

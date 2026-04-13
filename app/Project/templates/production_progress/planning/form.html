@@ -11,7 +11,7 @@
     <!-- Header -->
     <div class="bg-white shadow-sm rounded-lg mb-6">
         <div class="px-6 py-4">
-            <a href="{% url 'project:production-plan-list' project.pk %}"
+            <a href="{% url 'project:production-planning' project.pk %}"
                class="inline-flex items-center py-2 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                 {% heroicon_outline "chevron-left" size="20" %}
                 <span class="ml-2">Back to List</span>
@@ -66,7 +66,7 @@
 
             <!-- Form Actions -->
             <div class="mt-8 flex items-center justify-end space-x-3 pt-6 border-t border-gray-100">
-                <a href="{% url 'project:production-plan-list' project.pk %}"
+                <a href="{% url 'project:production-planning' project.pk %}"
                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
                     Cancel
                 </a>
@@ -87,7 +87,7 @@
                 {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
                 Business Management
             </a>
-            <a href="{% url 'project:production-plan-list' project.pk %}"
+            <a href="{% url 'project:production-planning' project.pk %}"
                class="inline-flex items-center text-gray-700 hover:text-indigo-600 transition-colors">
                 Back to Planning List
                 {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}

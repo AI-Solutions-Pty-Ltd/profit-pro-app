@@ -45,7 +45,7 @@ class ProductionPlanListView(
         return [
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
             {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
-            {"title": "Planning List", "url": None},
+            {"title": "Production Planning", "url": None},
         ]
 
     def get_queryset(self):
@@ -81,7 +81,7 @@ class ProductionPlanListView(
         return context
 
 
-class ProductionPlanningView(
+class ProductionPlanCreateView(
     SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, CreateView
 ):
     """Provides a schedule dashboard to plan daily production targets."""
@@ -98,7 +98,7 @@ class ProductionPlanningView(
 
     def get_success_url(self):
         return reverse_lazy(
-            "project:production-plan-list",
+            "project:production-planning",
             kwargs={"project_pk": self.kwargs["project_pk"]},
         )
 
@@ -116,7 +116,7 @@ class ProductionPlanningView(
         return [
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
             {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
-            {"title": "Planning List", "url": reverse_lazy("project:production-plan-list", kwargs={"project_pk": project_pk})},
+            {"title": "Production Planning", "url": reverse_lazy("project:production-planning", kwargs={"project_pk": project_pk})},
             {"title": "New Plan", "url": None},
         ]
 
@@ -186,7 +186,7 @@ class ProductionPlanDetailView(
         return [
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
             {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
-            {"title": "Planning List", "url": reverse_lazy("project:production-plan-list", kwargs={"project_pk": project_pk})},
+            {"title": "Production Planning", "url": reverse_lazy("project:production-planning", kwargs={"project_pk": project_pk})},
             {"title": f"Plan: {plan.activity}", "url": None},
         ]
 
@@ -211,7 +211,7 @@ class ProductionPlanUpdateView(
 
     def get_success_url(self):
         return reverse_lazy(
-            "project:production-plan-list",
+            "project:production-planning",
             kwargs={"project_pk": self.kwargs["project_pk"]},
         )
 
@@ -230,7 +230,7 @@ class ProductionPlanUpdateView(
         return [
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
             {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
-            {"title": "Planning List", "url": reverse_lazy("project:production-plan-list", kwargs={"project_pk": project_pk})},
+            {"title": "Production Planning", "url": reverse_lazy("project:production-planning", kwargs={"project_pk": project_pk})},
             {"title": f"Edit Plan: {plan.activity}", "url": None},
         ]
 
@@ -264,7 +264,7 @@ class ProductionPlanDeleteView(
 
     def get_success_url(self):
         return reverse_lazy(
-            "project:production-plan-list",
+            "project:production-planning",
             kwargs={"project_pk": self.kwargs["project_pk"]},
         )
 
@@ -279,7 +279,7 @@ class ProductionPlanDeleteView(
         return [
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
             {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
-            {"title": "Planning List", "url": reverse_lazy("project:production-plan-list", kwargs={"project_pk": project_pk})},
+            {"title": "Production Planning", "url": reverse_lazy("project:production-planning", kwargs={"project_pk": project_pk})},
             {"title": f"Delete Plan: {plan.activity}", "url": None},
         ]
 

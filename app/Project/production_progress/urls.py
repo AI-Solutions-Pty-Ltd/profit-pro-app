@@ -10,13 +10,13 @@ urlpatterns = [
     ),
     path(
         "<int:project_pk>/planning/",
-        views.ProductionPlanningView.as_view(),
+        views.ProductionPlanListView.as_view(),
         name="production-planning",
     ),
     path(
-        "<int:project_pk>/planning/list/",
-        views.ProductionPlanListView.as_view(),
-        name="production-plan-list",
+        "<int:project_pk>/planning/create/",
+        views.ProductionPlanCreateView.as_view(),
+        name="production-plan-create",
     ),
     path(
         "<int:project_pk>/cost-breakdown/",

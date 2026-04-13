@@ -9,14 +9,14 @@
 
 {% block content %}
     <!-- Header -->
-    <div class="bg-white shadow-sm rounded-lg mb-6">
+    <div class="mb-6 bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4">
             <a href="{% url 'project:production-cost-breakdown' project.pk %}?plan_id={{ production_plan.pk }}"
-               class="inline-flex items-center py-2 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+               class="inline-flex items-center py-2 text-sm font-medium text-gray-700 bg-white rounded-md transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 {% heroicon_outline "chevron-left" size="20" %}
                 <span class="ml-2">Back to Cost Breakdown</span>
             </a>
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2">
+            <div class="flex flex-col gap-4 justify-between mt-2 md:flex-row md:items-center">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Add Production Resource</h1>
                     <p class="text-sm text-gray-600">
@@ -28,7 +28,7 @@
     </div>
 
     <!-- Form -->
-    <div class="bg-white shadow-sm rounded-lg mb-6">
+    <div class="mb-6 bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-lg font-medium text-gray-900">Resource Details</h2>
             <p class="text-sm text-gray-600">Specify the resource type and quantity requirements.</p>
@@ -40,8 +40,8 @@
                 <div class="hidden">{{ form.production_plan }}</div>
 
                 <!-- Type Selection -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                    <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                <div class="grid grid-cols-1 gap-6 items-start md:grid-cols-2">
+                    <div >
                         {{ form.resource_type|as_crispy_field }}
                     </div>
                     <div>
@@ -56,7 +56,7 @@
                 </div>
 
                 <!-- Numbers -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start bg-gray-50 p-6 rounded-xl border border-gray-100">
+                <div class="grid grid-cols-1 gap-6 items-start p-6 bg-gray-50 rounded-xl border border-gray-100 md:grid-cols-3">
                     <div>{{ form.number|as_crispy_field }}</div>
                     <div>{{ form.days|as_crispy_field }}</div>
                     <div>{{ form.rate|as_crispy_field }}</div>
@@ -64,29 +64,29 @@
             </div>
 
             <!-- Form Actions -->
-            <div class="mt-10 flex items-center justify-end space-x-3 pt-6 border-t border-gray-100">
-                <a href="{% url 'project:production-cost-breakdown' project.pk %}?plan_id={{ production_plan.pk }}"
+            <div class="flex justify-end items-center pt-6 mt-10 space-x-3 border-t border-gray-100">
+                <a href="{% url 'project:production-planning' project.pk %}"
                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
                     Cancel
                 </a>
                 <button type="submit"
-                        class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                    {% heroicon_solid "plus" class="w-4 h-4 mr-2" %} Add Resource
+                        class="inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_solid "plus" class="mr-2 w-4 h-4" %} Add Resource
                 </button>
             </div>
         </form>
     </div>
 
     <!-- Footer -->
-    <div class="px-6 py-4 bg-white rounded-lg mt-8 shadow-sm">
+    <div class="px-6 py-4 mt-8 bg-white rounded-lg shadow-sm">
         <div class="flex justify-between items-center text-sm font-medium">
-            <a href="{% url 'project:production-plan-list' project.pk %}"
-               class="inline-flex items-center text-gray-700 hover:text-indigo-600 transition-colors">
-                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %} Back to Planning List
+            <a href="{% url 'project:production-planning' project.pk %}"
+               class="inline-flex items-center text-gray-700 transition-colors hover:text-indigo-600">
+                {% heroicon_outline "chevron-left" class="mr-1 w-4 h-4" %} Back to Planning List
             </a>
             <a href="{% url 'project:production-dashboard' project.pk %}"
-               class="inline-flex items-center text-gray-700 hover:text-indigo-600 transition-colors">
-                Production Dashboard {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+               class="inline-flex items-center text-gray-700 transition-colors hover:text-indigo-600">
+                Production Dashboard {% heroicon_outline "chevron-right" class="ml-1 w-4 h-4" %}
             </a>
         </div>
     </div>
