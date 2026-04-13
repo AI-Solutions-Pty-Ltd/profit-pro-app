@@ -3,6 +3,9 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.forms import formset_factory, inlineformset_factory
 
+from app.BillOfQuantities.models import Bill, Package, Structure
+from app.core.Utilities.widgets import SearchableSelectWidget
+
 from .production_models import (
     DailyActivityEntry,
     DailyActivityReport,
@@ -36,10 +39,21 @@ class DailyProductionForm(forms.ModelForm):
 class ProductionPlanForm(forms.ModelForm):
     """Form for production planning items."""
 
+    duration = forms.IntegerField(required=False, widget=forms.NumberInput(
+        attrs={
+            "id": "duration",
+            "readonly": "readonly",
+            "tabindex": "-1",
+        }
+    ))
+
     class Meta:
         model = ProductionPlan
         fields = [
             "activity",
+            "structure",
+            "bill",
+            "package",
             "start_date",
             "finish_date",
             "duration",
@@ -49,6 +63,18 @@ class ProductionPlanForm(forms.ModelForm):
         widgets = {
             "activity": forms.TextInput(
                 attrs={"id": "activity", "placeholder": "Enter Activity (e.g., Bricks)"}
+            ),
+            "structure": SearchableSelectWidget(
+                resource_type="structure",
+                attrs={"id": "id_structure"},
+            ),
+            "bill": SearchableSelectWidget(
+                resource_type="bill",
+                attrs={"id": "id_bill"},
+            ),
+            "package": SearchableSelectWidget(
+                resource_type="package",
+                attrs={"id": "id_package"},
             ),
             "start_date": forms.DateInput(
                 attrs={
@@ -66,12 +92,12 @@ class ProductionPlanForm(forms.ModelForm):
                     "style": "color-scheme: light;",
                 }
             ),
-            "duration": forms.NumberInput(
+            "quantity": forms.NumberInput(
                 attrs={
-                    "id": "duration",
-                    "readonly": "readonly",
-                    "tabindex": "-1",
-                    "required": False,
+                    "id": "quantity",
+                    "step": "0.01",
+                    "placeholder": "10000.00",
+                    "format": "{:.2f}",
                 }
             ),
             "quantity": forms.NumberInput(
@@ -86,6 +112,21 @@ class ProductionPlanForm(forms.ModelForm):
                 attrs={"id": "unit", "placeholder": "Unit e.g. bricks"}
             ),
         }
+
+    def __init__(self, *args, **kwargs):
+        project_id = kwargs.pop("project_id", None)
+        super().__init__(*args, **kwargs)
+
+        if project_id:
+            self.fields["structure"].queryset = Structure.objects.filter(
+                project_id=project_id
+            )
+            self.fields["bill"].queryset = Bill.objects.filter(
+                structure__project_id=project_id
+            )
+            self.fields["package"].queryset = Package.objects.filter(
+                bill__structure__project_id=project_id
+            )
 
     def clean(self):
         cleaned_data = super().clean()

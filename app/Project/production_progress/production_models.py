@@ -34,6 +34,24 @@ class ProductionPlan(BaseModel):
         Project, on_delete=models.CASCADE, related_name="production_plans"
     )
     activity = models.CharField(max_length=255)
+    structure = models.ForeignKey(
+        "BillOfQuantities.Structure",
+        on_delete=models.CASCADE,
+        related_name="production_plans",
+        help_text="The building or structure this plan belongs to",
+    )
+    bill = models.ForeignKey(
+        "BillOfQuantities.Bill",
+        on_delete=models.CASCADE,
+        related_name="production_plans",
+        help_text="The BOQ Bill this plan belongs to",
+    )
+    package = models.ForeignKey(
+        "BillOfQuantities.Package",
+        on_delete=models.CASCADE,
+        related_name="production_plans",
+        help_text="The BOQ Package this plan belongs to",
+    )
     start_date = models.DateField()
     finish_date = models.DateField()
     quantity = models.DecimalField(

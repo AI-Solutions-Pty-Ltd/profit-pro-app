@@ -47,6 +47,14 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                     <!-- Activity -->
                     <div class="md:col-span-2">{{ form.activity|as_crispy_field }}</div>
+                    
+                    <!-- WBS Levels -->
+                    <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>{{ form.structure|as_crispy_field }}</div>
+                        <div>{{ form.bill|as_crispy_field }}</div>
+                        <div>{{ form.package|as_crispy_field }}</div>
+                    </div>
+
                     <!-- Start Date -->
                     <div>{{ form.start_date|as_crispy_field }}</div>
                     <!-- Finish Date -->
@@ -129,6 +137,112 @@
       durationInput.value = diffDays;
     } else {
       durationInput.value = '';
+    }
+  }
+
+  // Project and API URLs
+  const projectPk = "{{ project.pk }}";
+  const billsUrl = "{% url 'bill_of_quantities:api-get-bills' project.pk %}";
+  const packagesUrl = "{% url 'bill_of_quantities:api-get-packages' project.pk %}";
+
+  // Cascading Logic
+  document.addEventListener('DOMContentLoaded', function() {
+    const structureSelect = document.getElementById('id_structure');
+    const billSelect = document.getElementById('id_bill');
+    const packageSelect = document.getElementById('id_package');
+
+    if (structureSelect) {
+      structureSelect.addEventListener('change', function() {
+        const structureId = this.value;
+        if (structureId) {
+          fetch(`${billsUrl}?structure_id=${structureId}`)
+            .then(response => response.json())
+            .then(data => {
+              updateSearchableSelect('id_bill', data.bills, 'bill');
+              // Clear package
+              updateSearchableSelect('id_package', [], 'package');
+            });
+        } else {
+          updateSearchableSelect('id_bill', [], 'bill');
+          updateSearchableSelect('id_package', [], 'package');
+        }
+      });
+    }
+
+    if (billSelect) {
+      billSelect.addEventListener('change', function() {
+        const billId = this.value;
+        if (billId) {
+          fetch(`${packagesUrl}?bill_id=${billId}`)
+            .then(response => response.json())
+            .then(data => {
+              updateSearchableSelect('id_package', data.packages, 'package');
+            });
+        } else {
+          updateSearchableSelect('id_package', [], 'package');
+        }
+      });
+    }
+  });
+
+  function updateSearchableSelect(fieldId, options, typeLabel) {
+    const container = document.getElementById(`${fieldId}-selector-container`);
+    if (!container) return;
+
+    const optionsList = document.getElementById(`${fieldId}-options-list`);
+    const nativeSelect = document.getElementById(fieldId);
+    const label = document.getElementById(`${fieldId}-selector-label`);
+    const noResults = document.getElementById(`${fieldId}-no-results`);
+    const searchInput = document.getElementById(`${fieldId}-search`);
+
+    // Clear existing
+    if (optionsList) optionsList.querySelectorAll('.option-item').forEach(el => el.remove());
+    if (nativeSelect) {
+      nativeSelect.innerHTML = '<option value="">---------</option>';
+      nativeSelect.value = '';
+    }
+    if (label) label.textContent = `Choose ${typeLabel}...`;
+    if (searchInput) searchInput.value = '';
+    if (noResults) noResults.classList.add('hidden');
+
+    options.forEach(opt => {
+      // Add to native select
+      if (nativeSelect) {
+        const newOpt = document.createElement('option');
+        newOpt.value = opt.id;
+        newOpt.textContent = opt.name;
+        nativeSelect.appendChild(newOpt);
+      }
+
+      // Add to searchable UI
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'flex items-center px-3 py-2.5 w-full text-left rounded-md transition-all duration-200 group option-item focus:outline-none focus:bg-indigo-50';
+      btn.dataset.id = opt.id;
+      btn.dataset.label = opt.name.toLowerCase();
+      
+      // Inline click handler to match searchable_select_widget.html
+      btn.onclick = function() {
+        selectSearchableOption(this, opt.id, opt.name);
+      };
+
+      btn.innerHTML = `
+        <div class="flex-1">
+          <span class="block text-sm font-semibold text-gray-700 group-hover:text-indigo-900">${opt.name}</span>
+        </div>
+        <div class="opacity-0 transition-opacity group-hover:opacity-100">
+          <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+      `;
+      optionsList.appendChild(btn);
+    });
+
+    if (options.length === 0) {
+      if (noResults) noResults.classList.remove('hidden');
+    } else {
+      if (noResults) noResults.classList.add('hidden');
     }
   }
 

@@ -39,6 +39,11 @@ class ProductionPlanningView(
     template_name = "production_progress/plan/planning.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["project_id"] = self.kwargs["project_pk"]
+        return kwargs
+
     def get_success_url(self):
         return reverse_lazy(
             "project:production-dashboard",
@@ -123,6 +128,11 @@ class ProductionPlanUpdateView(
     form_class = ProductionPlanForm
     template_name = "production_progress/plan/planning.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["project_id"] = self.kwargs["project_pk"]
+        return kwargs
 
     def get_queryset(self):
         return ProductionPlan.objects.filter(project_id=self.kwargs["project_pk"])
