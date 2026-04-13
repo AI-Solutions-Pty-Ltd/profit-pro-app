@@ -34,6 +34,14 @@ class ProductionPlan(BaseModel):
         Project, on_delete=models.CASCADE, related_name="production_plans"
     )
     activity = models.CharField(max_length=255)
+    parent = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.RESTRICT,
+        related_name="children",
+        help_text="Parent activity for nesting",
+    )
     structure = models.ForeignKey(
         "BillOfQuantities.Structure",
         on_delete=models.CASCADE,
@@ -42,12 +50,16 @@ class ProductionPlan(BaseModel):
     )
     bill = models.ForeignKey(
         "BillOfQuantities.Bill",
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
         related_name="production_plans",
         help_text="The BOQ Bill this plan belongs to",
     )
     package = models.ForeignKey(
         "BillOfQuantities.Package",
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
         related_name="production_plans",
         help_text="The BOQ Package this plan belongs to",
@@ -86,6 +98,12 @@ class ProductionPlan(BaseModel):
             self.duration = 0
         super().save(*args, **kwargs)
 
+    def soft_delete(self):
+        from django.core.exceptions import ValidationError
+        if self.children.filter(deleted=False).exists():
+            raise ValidationError("Cannot delete an activity that has children. Please delete them first.")
+        super().soft_delete()
+
     @property
     def is_active(self):
         """A plan is active between start and finish dates and if not archived."""
@@ -120,6 +138,49 @@ class ProductionPlan(BaseModel):
             )["total"]
             or 0
         )
+
+
+class PlanDependency(BaseModel):
+    """Tracks finish-to-start dependencies between production plans."""
+
+    predecessor = models.ForeignKey(
+        ProductionPlan, on_delete=models.CASCADE, related_name="successors"
+    )
+    successor = models.ForeignKey(
+        ProductionPlan, on_delete=models.CASCADE, related_name="predecessors"
+    )
+
+    class Meta:
+        verbose_name = "Plan Dependency"
+        verbose_name_plural = "Plan Dependencies"
+        unique_together = ["predecessor", "successor"]
+
+    def __str__(self):
+        return f"{self.predecessor.activity} -> {self.successor.activity}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if self.predecessor_id == self.successor_id:
+            raise ValidationError("An activity cannot depend on itself.")
+
+        # Check circular dependency using ancestor graph
+        def is_ancestor(node, target_id, visited=None):
+            if visited is None:
+                visited = set()
+            if node.id in visited:
+                return False
+            visited.add(node.id)
+            if node.id == target_id:
+                return True
+            for pred_rel in node.predecessors.all():
+                if is_ancestor(pred_rel.predecessor, target_id, visited):
+                    return True
+            return False
+
+        if self.predecessor_id and self.successor_id:
+            if is_ancestor(self.predecessor, self.successor.id):
+                raise ValidationError("This dependency creates a circular reference.")
 
 
 class ProductionResource(BaseModel):

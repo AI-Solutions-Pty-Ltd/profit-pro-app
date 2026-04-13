@@ -23,6 +23,7 @@ from ..production_forms import (
     DailyPlantUsageFormSet,
     ProductionPlanForm,
     ProductionResourceForm,
+    PlanDependencyFormSet,
 )
 from ..production_models import (
     ProductionPlan,
@@ -49,29 +50,29 @@ class ProductionPlanListView(
         ]
 
     def get_queryset(self):
-        queryset = ProductionPlan.objects.filter(
-            project_id=self.kwargs["project_pk"], is_archived=False
-        ).prefetch_related("resources")
-
-        # Get filter parameters
-        activity_filter = self.request.GET.get("activity", "").strip()
-        start_date_filter = self.request.GET.get("start_date", "").strip()
-        finish_date_filter = self.request.GET.get("finish_date", "").strip()
-
-        if activity_filter:
-            queryset = queryset.filter(activity__icontains=activity_filter)
-
-        if start_date_filter:
-            queryset = queryset.filter(start_date__gte=start_date_filter)
-
-        if finish_date_filter:
-            queryset = queryset.filter(finish_date__lte=finish_date_filter)
-
-        return queryset
+        return (
+            ProductionPlan.objects.filter(
+                project_id=self.kwargs["project_pk"], is_archived=False
+            )
+            .select_related("structure", "bill", "package", "parent")
+            .prefetch_related(
+                "children",
+                "predecessors",
+                "predecessors__predecessor",
+                "resources",
+            )
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["project"] = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        context["project"] = project
+
+        # Separate root plans and build a map for children if needed
+        # Although we can use plan.children.all() in template, 
+        # root_plans provides the starting point for the tree.
+        plans = context["plans"]
+        context["root_plans"] = [p for p in plans if p.parent_id is None]
 
         # Pass filters back to template
         context["activity_filter"] = self.request.GET.get("activity", "").strip()
@@ -109,6 +110,17 @@ class ProductionPlanCreateView(
         context["plans"] = ProductionPlan.objects.filter(
             project_id=project_pk, is_archived=False
         ).prefetch_related("resources")
+
+        if self.request.POST:
+            context["dependency_formset"] = PlanDependencyFormSet(
+                self.request.POST,
+                project_id=project_pk,
+                parent_id=self.request.POST.get("parent") or None,
+            )
+        else:
+            context["dependency_formset"] = PlanDependencyFormSet(
+                project_id=project_pk
+            )
         return context
 
     def get_breadcrumbs(self):
@@ -124,19 +136,37 @@ class ProductionPlanCreateView(
         project_pk = self.kwargs.get("project_pk")
         project = get_object_or_404(Project, pk=project_pk)
         form.instance.project = project
+        context = self.get_context_data()
+        dependency_formset = context["dependency_formset"]
 
-        try:
-            response = super().form_valid(form)
-            messages.success(self.request, "Production plan saved successfully.")
-            return response
-        except Exception as e:
-            messages.error(self.request, f"Database error: {str(e)}")
+        if dependency_formset.is_valid():
+            try:
+                response = super().form_valid(form)
+                dependency_formset.instance = self.object
+                dependency_formset.save()
+                messages.success(self.request, "Production plan saved successfully.")
+                return response
+            except Exception as e:
+                messages.error(self.request, f"Database error: {str(e)}")
+                return self.form_invalid(form)
+        else:
             return self.form_invalid(form)
 
     def form_invalid(self, form):
+        context = self.get_context_data()
+        dependency_formset = context.get("dependency_formset")
+        
         for field, errors in form.errors.items():
             for error in errors:
                 messages.error(self.request, f"Error in {field}: {error}")
+                
+        if dependency_formset and not dependency_formset.is_valid():
+            for error in dependency_formset.non_form_errors():
+                messages.error(self.request, f"Dependency Error: {error}")
+            for form_errors in dependency_formset.errors:
+                for field, field_errors in form_errors.items():
+                    messages.error(self.request, f"Dependency {field}: {', '.join(field_errors)}")
+                    
         return super().form_invalid(form)
 
 
@@ -222,6 +252,23 @@ class ProductionPlanUpdateView(
             project_id=self.kwargs["project_pk"], is_archived=False
         ).prefetch_related("resources")
         context["is_update"] = True
+        
+        if self.request.POST:
+            context["dependency_formset"] = PlanDependencyFormSet(
+                self.request.POST, 
+                instance=self.object,
+                project_id=self.kwargs["project_pk"],
+                plan_id=self.object.pk,
+                parent_id=self.request.POST.get("parent") or None,
+            )
+        else:
+            context["dependency_formset"] = PlanDependencyFormSet(
+                instance=self.object,
+                project_id=self.kwargs["project_pk"],
+                plan_id=self.object.pk,
+                parent_id=self.object.parent_id if self.object.parent else None,
+            )
+            
         return context
 
     def get_breadcrumbs(self):
@@ -235,18 +282,37 @@ class ProductionPlanUpdateView(
         ]
 
     def form_valid(self, form):
-        try:
-            response = super().form_valid(form)
-            messages.success(self.request, "Production plan updated successfully.")
-            return response
-        except Exception as e:
-            messages.error(self.request, f"Database error: {str(e)}")
+        context = self.get_context_data()
+        dependency_formset = context["dependency_formset"]
+        
+        if dependency_formset.is_valid():
+            try:
+                response = super().form_valid(form)
+                dependency_formset.instance = self.object
+                dependency_formset.save()
+                messages.success(self.request, "Production plan updated successfully.")
+                return response
+            except Exception as e:
+                messages.error(self.request, f"Database error: {str(e)}")
+                return self.form_invalid(form)
+        else:
             return self.form_invalid(form)
 
     def form_invalid(self, form):
+        context = self.get_context_data()
+        dependency_formset = context.get("dependency_formset")
+        
         for field, errors in form.errors.items():
             for error in errors:
                 messages.error(self.request, f"Error in {field}: {error}")
+                
+        if dependency_formset and not dependency_formset.is_valid():
+            for error in dependency_formset.non_form_errors():
+                messages.error(self.request, f"Dependency Error: {error}")
+            for form_errors in dependency_formset.errors:
+                for field, field_errors in form_errors.items():
+                    messages.error(self.request, f"Dependency {field}: {', '.join(field_errors)}")
+                    
         return super().form_invalid(form)
 
 
@@ -285,6 +351,11 @@ class ProductionPlanDeleteView(
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
+        
+        if hasattr(self.object, 'children') and self.object.children.filter(deleted=False).exists():
+            messages.error(request, "Cannot delete an activity that has children. Please delete them first.")
+            return redirect(str(self.get_success_url()))
+            
         self.object.is_archived = True
         self.object.save()
         messages.success(
@@ -546,4 +617,28 @@ class PlanResourcesAjaxView(
             },
             request=request,
         )
-        return JsonResponse({"html": html})
+
+class ProductionPlanAjaxDetailView(LoginRequiredMixin, TemplateView):
+    """
+    Returns the metadata (structure, bill, package) for a given plan as JSON.
+    Used for auto-filling fields when a parent is selected.
+    """
+
+    def get(self, request, *args, **kwargs):
+        plan = get_object_or_404(ProductionPlan, pk=self.kwargs["pk"])
+        return JsonResponse(
+            {
+                "structure": {
+                    "id": plan.structure_id,
+                    "label": str(plan.structure) if plan.structure else "",
+                },
+                "bill": {
+                    "id": plan.bill_id,
+                    "label": str(plan.bill) if plan.bill else "",
+                },
+                "package": {
+                    "id": plan.package_id,
+                    "label": str(plan.package) if plan.package else "",
+                },
+            }
+        )

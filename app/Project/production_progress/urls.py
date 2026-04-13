@@ -83,4 +83,9 @@ urlpatterns = [
         views.PlanResourcesAjaxView.as_view(),
         name="plan-resources-ajax",
     ),
+    path(
+        "<int:project_pk>/plan/<int:pk>/data/",
+        views.ProductionPlanAjaxDetailView.as_view(),
+        name="production-plan-data-ajax",
+    ),
 ]

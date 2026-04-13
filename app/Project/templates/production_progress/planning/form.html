@@ -9,14 +9,16 @@
 
 {% block content %}
     <!-- Header -->
-    <div class="bg-white shadow-sm rounded-lg mb-6">
+    <div class="mb-6 bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4">
+            {{ form.media }}
+            {{ dependency_formset.media }}
             <a href="{% url 'project:production-planning' project.pk %}"
-               class="inline-flex items-center py-2 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+               class="inline-flex items-center py-2 text-sm font-medium text-gray-700 bg-white rounded-md transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 {% heroicon_outline "chevron-left" size="20" %}
                 <span class="ml-2">Back to List</span>
             </a>
-            <div class="flex items-center justify-between mt-2">
+            <div class="flex justify-between items-center mt-2">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">
                         {% if is_update %}
@@ -25,14 +27,14 @@
                             New Production Plan
                         {% endif %}
                     </h1>
-                    <p class="text-sm text-gray-600 mt-1">Project: {{ project.name }}</p>
+                    <p class="mt-1 text-sm text-gray-600">Project: {{ project.name }}</p>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Form -->
-    <div class="bg-white shadow-sm rounded-lg mb-6">
+    <div class="mb-6 bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4 border-b border-gray-200">
             <h2 class="text-lg font-medium text-gray-900">Planning Item Details</h2>
             <p class="text-sm text-gray-600">Define the project activity and its hierarchical structure.</p>
@@ -40,19 +42,22 @@
         <form method="post" action="" class="p-6">
             {% csrf_token %}
             <div class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                    <!-- Activity -->
-                    <div class="md:col-span-2">{{ form.activity|as_crispy_field }}</div>
+                <div class="grid grid-cols-1 gap-6 items-start md:grid-cols-2">
+                    <!-- Activity and Parent -->
+                    <div class="grid grid-cols-1 gap-6 md:col-span-2 md:grid-cols-2">
+                        <div>{{ form.activity|as_crispy_field }}</div>
+                        <div>{{ form.parent|as_crispy_field }}</div>
+                    </div>
                     
                     <!-- WBS Levels -->
-                    <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 gap-6 md:col-span-2 md:grid-cols-3">
                         <div>{{ form.structure|as_crispy_field }}</div>
                         <div>{{ form.bill|as_crispy_field }}</div>
                         <div>{{ form.package|as_crispy_field }}</div>
                     </div>
 
                     <!-- Scheduling -->
-                    <div class="bg-gray-50 p-4 rounded-lg md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 gap-6 p-4 bg-gray-50 rounded-lg md:col-span-2 md:grid-cols-3">
                         <div>{{ form.start_date|as_crispy_field }}</div>
                         <div>{{ form.finish_date|as_crispy_field }}</div>
                         <div>{{ form.duration|as_crispy_field }}</div>
@@ -61,18 +66,41 @@
                     <!-- Metrics -->
                     <div>{{ form.quantity|as_crispy_field }}</div>
                     <div>{{ form.unit|as_crispy_field }}</div>
+
+                    <!-- Dependencies -->
+                    {% if dependency_formset %}
+                    <div class="p-4 mt-4 bg-gray-50 rounded-lg border border-gray-100 md:col-span-2">
+                        <h3 class="mb-4 text-sm font-semibold text-gray-900">Execution Dependencies</h3>
+                        {{ dependency_formset.management_form }}
+                        <div class="space-y-2">
+                            {% for dep_form in dependency_formset %}
+                                <div class="flex items-end space-x-4">
+                                    {{ dep_form.id }}
+                                    <div class="flex-1">
+                                        {{ dep_form.predecessor|as_crispy_field }}
+                                    </div>
+                                    {% comment %} {% if dependency_formset.can_delete %}
+                                    <div class="pb-6">
+                                        {{ dep_form.DELETE|as_crispy_field }}
+                                    </div>
+                                    {% endif %} {% endcomment %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
             <!-- Form Actions -->
-            <div class="mt-8 flex items-center justify-end space-x-3 pt-6 border-t border-gray-100">
+            <div class="flex justify-end items-center pt-6 mt-8 space-x-3 border-t border-gray-100">
                 <a href="{% url 'project:production-planning' project.pk %}"
-                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
+                   class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
                     Cancel
                 </a>
                 <button type="submit"
-                        class="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                    {% heroicon_solid "check" class="w-4 h-4 mr-2" %}
+                        class="inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_solid "check" class="mr-2 w-4 h-4" %}
                     {% if is_update %}Update Plan{% else %}Save Plan{% endif %}
                 </button>
             </div>
@@ -80,17 +108,17 @@
     </div>
 
     <!-- Footer -->
-    <div class="px-6 py-4 bg-white rounded-lg mt-6">
+    <div class="px-6 py-4 mt-6 bg-white rounded-lg">
         <div class="flex justify-between items-center text-sm font-medium">
             <a href="{% url 'project:company-management' project.pk %}"
-               class="inline-flex items-center text-gray-700 hover:text-indigo-600 transition-colors">
-                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+               class="inline-flex items-center text-gray-700 transition-colors hover:text-indigo-600">
+                {% heroicon_outline "chevron-left" class="mr-1 w-4 h-4" %}
                 Business Management
             </a>
             <a href="{% url 'project:production-planning' project.pk %}"
-               class="inline-flex items-center text-gray-700 hover:text-indigo-600 transition-colors">
+               class="inline-flex items-center text-gray-700 transition-colors hover:text-indigo-600">
                 Back to Planning List
-                {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
+                {% heroicon_outline "chevron-right" class="ml-1 w-4 h-4" %}
             </a>
         </div>
     </div>
@@ -132,10 +160,12 @@
         const projectPk = "{{ project.pk }}";
         const billsUrl = "{% url 'bill_of_quantities:api-get-bills' project.pk %}";
         const packagesUrl = "{% url 'bill_of_quantities:api-get-packages' project.pk %}";
+        const planDataUrl = "/project/" + projectPk + "/plan/";
 
         document.addEventListener('DOMContentLoaded', function() {
             const structureSelect = document.getElementById('id_structure');
             const billSelect = document.getElementById('id_bill');
+            const parentSelect = document.getElementById('id_parent');
 
             if (structureSelect) {
                 structureSelect.addEventListener('change', function() {
@@ -169,8 +199,64 @@
                 });
             }
 
+            if (parentSelect) {
+                parentSelect.addEventListener('change', function() {
+                    const parentId = this.value;
+                    if (parentId) {
+                        fetch(`${planDataUrl}${parentId}/data/`)
+                            .then(response => response.json())
+                            .then(data => {
+                                // 1. Set Structure
+                                if (data.structure && data.structure.id) {
+                                    setSearchableSelectValue('id_structure', data.structure.id, data.structure.label);
+                                    
+                                    // 2. Fetch Bills and Set Bill
+                                    if (data.bill && data.bill.id) {
+                                        fetch(`${billsUrl}?structure_id=${data.structure.id}`)
+                                            .then(response => response.json())
+                                            .then(billData => {
+                                                updateSearchableSelect('id_bill', billData.bills, 'bill');
+                                                setSearchableSelectValue('id_bill', data.bill.id, data.bill.label);
+                                                
+                                                // 3. Fetch Packages and Set Package
+                                                if (data.package && data.package.id) {
+                                                    fetch(`${packagesUrl}?bill_id=${data.bill.id}`)
+                                                        .then(response => response.json())
+                                                        .then(packageData => {
+                                                            updateSearchableSelect('id_package', packageData.packages, 'package');
+                                                            setSearchableSelectValue('id_package', data.package.id, data.package.label);
+                                                        });
+                                                }
+                                            });
+                                    }
+                                }
+                            });
+                    }
+                });
+            }
+
             calculateDuration();
         });
+
+        function setSearchableSelectValue(fieldId, value, label) {
+            const nativeSelect = document.getElementById(fieldId);
+            const labelEl = document.getElementById(`${fieldId}-selector-label`);
+            
+            if (nativeSelect) {
+                nativeSelect.value = value;
+                // Add option if it doesn't exist (failsafe)
+                if (nativeSelect.value !== String(value)) {
+                    const opt = document.createElement('option');
+                    opt.value = value;
+                    opt.textContent = label;
+                    nativeSelect.appendChild(opt);
+                    nativeSelect.value = value;
+                }
+            }
+            if (labelEl && label) {
+                labelEl.textContent = label;
+            }
+        }
 
         function updateSearchableSelect(fieldId, options, typeLabel) {
             const optionsList = document.getElementById(`${fieldId}-options-list`);
@@ -210,7 +296,7 @@
                         <span class="block text-sm font-semibold text-gray-700 group-hover:text-indigo-900">${opt.name}</span>
                     </div>
                 `;
-                optionsList.appendChild(btn);
+                if (optionsList) optionsList.appendChild(btn);
             });
 
             if (options.length === 0 && noResults) noResults.classList.remove('hidden');
