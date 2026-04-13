@@ -13,10 +13,19 @@
                         {% heroicon_outline "exclamation-triangle" class="w-10 h-10" %}
                     </div>
                     <h2 class="text-2xl font-black text-gray-900 mb-2">Confirm Deletion</h2>
-                    <p class="text-sm text-gray-500 mb-8 px-4">
-                        Are you sure you want to delete the production plan for <span class="font-bold text-gray-900">"{{ object.activity }}"</span>? This will also remove all associated resource cost breakdowns.
+                    <p class="text-sm text-gray-500 mb-4 px-4">
+                        Are you sure you want to archive <span class="font-bold text-gray-900">"{{ object.activity }}"</span>?
                     </p>
-                    <div class="grid grid-cols-2 gap-4">
+                    {% if object.children.exists %}
+                        <div class="mb-6 mx-4 flex items-start space-x-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-left">
+                            {% heroicon_outline "exclamation-triangle" class="flex-shrink-0 w-5 h-5 text-amber-500 mt-0.5" %}
+                            <p class="text-sm text-amber-800">
+                                This activity has <strong>{{ object.children.count }} child {{ object.children.count|pluralize:"activity,activities" }}</strong>.
+                                All children will also be archived.
+                            </p>
+                        </div>
+                    {% endif %}
+                    <div class="grid grid-cols-2 gap-4 px-4">
                         <a href="{% url 'project:production-planning' project.pk %}"
                            class="inline-flex items-center justify-center px-6 py-3 border border-gray-200 text-sm font-bold rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
                             Cancel
@@ -25,8 +34,8 @@
                             {% csrf_token %}
                             <button type="submit"
                                     class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-bold rounded-xl text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 shadow-lg shadow-red-200 transition-all duration-200">
-                                {% heroicon_solid "trash" class="w-4 h-4 mr-2" %}
-                                Delete Plan
+                                {% heroicon_solid "archive-box-x-mark" class="w-4 h-4 mr-2" %}
+                                Archive{% if object.children.exists %} All{% endif %}
                             </button>
                         </form>
                     </div>

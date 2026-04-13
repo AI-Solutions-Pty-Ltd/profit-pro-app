@@ -100,12 +100,12 @@
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="#"
-                                           onclick="showDeleteModal('{% url 'project:production-plan-delete' project.pk plan.pk %}', '{{ plan.activity|escapejs }}')"
-                                           class="flex items-center text-red-600">
+                                        <button type="button"
+                                                onclick="event.preventDefault(); event.stopPropagation(); showDeleteModal('{% url 'project:production-plan-delete' project.pk plan.pk %}', '{{ plan.activity|escapejs }}');"
+                                                class="flex items-center w-full text-left text-red-600">
                                             {% heroicon_outline "trash" class="mr-2 w-4 h-4" %}
                                             Delete Activity
-                                        </a>
+                                        </button>
                                     </li>
                                     {% if not plan.package %}
                                         <li>

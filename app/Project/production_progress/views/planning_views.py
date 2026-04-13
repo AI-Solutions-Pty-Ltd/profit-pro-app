@@ -1,4 +1,5 @@
 import json
+from django.db import models as db_models
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -500,25 +501,33 @@ class ProductionPlanDeleteView(
             {"title": f"Delete Plan: {plan.activity}", "url": None},
         ]
 
-    def delete(self, request, *args, **kwargs):
-        self.object = self.get_object()
+    def _archive_recursive(self, plan):
+        """Recursively archive all descendants before archiving the plan itself."""
+        for child in plan.children.all():
+            self._archive_recursive(child)
+            child.is_archived = True
+            child.save(update_fields=["is_archived"])
 
-        if (
-            hasattr(self.object, "children")
-            and self.object.children.filter(deleted=False).exists()
-        ):
+    def delete(self, request, *args, **kwargs):
+        """Archive the plan and all its descendants gracefully."""
+        self.object = self.get_object()
+        try:
+            # Archive all children recursively so the RESTRICT FK is never triggered
+            self._archive_recursive(self.object)
+            self.object.is_archived = True
+            self.object.save(update_fields=["is_archived"])
+            messages.success(
+                request,
+                f"Activity \u2018{self.object.activity}\u2019 and its "
+                f"children have been archived successfully.",
+            )
+        except db_models.RestrictedError:
             messages.error(
                 request,
-                "Cannot delete an activity that has children."
-                " Please delete them first.",
+                f"Cannot delete \u2018{self.object.activity}\u2019 because it is "
+                f"still referenced by other records. "
+                f"Please remove the dependencies first.",
             )
-            return redirect(str(self.get_success_url()))
-
-        self.object.is_archived = True
-        self.object.save()
-        messages.success(
-            request, f"Production plan '{self.object.activity}' archived successfully."
-        )
         return redirect(str(self.get_success_url()))
 
 
