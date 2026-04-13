@@ -661,9 +661,7 @@ class PlantCostImporter:
                     _safe_decimal(row[co + 1]) if ncols > co + 1 else None
                 )
                 or Decimal("0"),
-                "hourly_rate": (
-                    _safe_decimal(row[co + 2]) if ncols > co + 2 else None
-                )
+                "hourly_rate": (_safe_decimal(row[co + 2]) if ncols > co + 2 else None)
                 or Decimal("0"),
             }
 
@@ -761,9 +759,7 @@ class PlantSpecImporter:
                     _safe_decimal(row[co + 6]) if ncols > co + 6 else None
                 )
                 or Decimal("1"),
-                "site_factor": (
-                    _safe_decimal(row[co + 7]) if ncols > co + 7 else None
-                )
+                "site_factor": (_safe_decimal(row[co + 7]) if ncols > co + 7 else None)
                 or Decimal("1"),
             }
 
@@ -850,7 +846,9 @@ class PreliminaryCostImporter:
         ("time-facilities", "time_facilities"),
     ]
 
-    VALID_TYPE_CODES = {code for code, _ in SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES}
+    VALID_TYPE_CODES = {
+        code for code, _ in SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
+    }
 
     SKIP_PHRASES = {
         "fixed preliminaries",
@@ -890,7 +888,9 @@ class PreliminaryCostImporter:
                 break
 
         if flat_header_row is not None:
-            return self._import_flat(ws, flat_header_row, co, sheet_name, fell_back, all_sheets)
+            return self._import_flat(
+                ws, flat_header_row, co, sheet_name, fell_back, all_sheets
+            )
         return self._import_hierarchical(ws, co, sheet_name, fell_back, all_sheets)
 
     def _upsert(self, name, ptype, defaults):
@@ -935,9 +935,7 @@ class PreliminaryCostImporter:
                     _safe_decimal(row[co + 4]) if ncols > co + 4 else None
                 )
                 or Decimal("0"),
-                "monthly_rate": (
-                    _safe_decimal(row[co + 5]) if ncols > co + 5 else None
-                )
+                "monthly_rate": (_safe_decimal(row[co + 5]) if ncols > co + 5 else None)
                 or Decimal("0"),
                 "months": (_safe_decimal(row[co + 6]) if ncols > co + 6 else None)
                 or Decimal("0"),
@@ -996,13 +994,9 @@ class PreliminaryCostImporter:
                         _safe_decimal(row[co + 2]) if ncols > co + 2 else None
                     )
                     or Decimal("0"),
-                    "months": (
-                        _safe_decimal(row[co + 3]) if ncols > co + 3 else None
-                    )
+                    "months": (_safe_decimal(row[co + 3]) if ncols > co + 3 else None)
                     or Decimal("0"),
-                    "amount": (
-                        _safe_decimal(row[co + 4]) if ncols > co + 4 else None
-                    )
+                    "amount": (_safe_decimal(row[co + 4]) if ncols > co + 4 else None)
                     or Decimal("0"),
                 }
                 # A row with no numeric values is noise, skip it.
@@ -1014,15 +1008,9 @@ class PreliminaryCostImporter:
                 ):
                     continue
             else:
-                total = (
-                    _safe_decimal(row[co + 3]) if ncols > co + 3 else None
-                )
-                unit_amt = (
-                    _safe_decimal(row[co + 2]) if ncols > co + 2 else None
-                )
-                sum_v = (
-                    _safe_decimal(row[co + 1]) if ncols > co + 1 else None
-                )
+                total = _safe_decimal(row[co + 3]) if ncols > co + 3 else None
+                unit_amt = _safe_decimal(row[co + 2]) if ncols > co + 2 else None
+                sum_v = _safe_decimal(row[co + 1]) if ncols > co + 1 else None
                 defaults = {
                     "sum_value": sum_v or Decimal("0"),
                     "amount": total or unit_amt or Decimal("0"),

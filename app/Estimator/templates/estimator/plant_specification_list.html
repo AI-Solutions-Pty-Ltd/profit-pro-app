@@ -51,9 +51,15 @@
                         <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Plant Spec</th>
                         <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Plant Type</th>
                         <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Unit</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">Daily Output</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">Hourly Cost</th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">Rate / Unit</th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                            Daily Output
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                            Hourly Cost
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                            Rate / Unit
+                        </th>
                         <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">BoQ Qty</th>
                         <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">Amount</th>
                     </tr>
@@ -73,7 +79,9 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="9" class="px-3 py-8 text-center text-gray-500">No plant specifications assigned to Output BoQ items yet.</td>
+                            <td colspan="9" class="px-3 py-8 text-center text-gray-500">
+                                No plant specifications assigned to Output BoQ items yet.
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>
