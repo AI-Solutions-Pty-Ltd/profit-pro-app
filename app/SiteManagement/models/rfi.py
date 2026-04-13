@@ -100,6 +100,14 @@ class RFI(BaseModel):
         default=RFIStatus.OPEN,
         help_text="Current status of this RFI",
     )
+    source_decision = models.ForeignKey(
+        "MeetingDecision",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="linked_rfis",
+        help_text="Meeting decision that triggered this RFI",
+    )
     date_closed = models.DateField(
         null=True,
         blank=True,

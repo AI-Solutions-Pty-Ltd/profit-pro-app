@@ -90,6 +90,7 @@
         </div>
         {% block extra_js %}
         {% endblock extra_js %}
+        {{ form.media }}
         <!-- Loading Buttons JavaScript -->
         <script src="{% static 'js/loading-buttons.js' %}"></script>
         <script>
@@ -194,6 +195,7 @@
                 });
             });
         </script>
+        {% include "modals/dynamic_quick_create_modal.html" %}
         <style>
             svg {
                 margin-left: 5px;

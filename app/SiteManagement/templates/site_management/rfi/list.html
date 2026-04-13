@@ -48,6 +48,7 @@
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issued By</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Source</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WBS</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Respond By</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -77,6 +78,16 @@
                                 {% endif %}
                             </td>
                             <td class="px-4 py-4 text-sm text-gray-900">{{ rfi.subject|truncatewords:8 }}</td>
+                            <td class="px-4 py-4 whitespace-nowrap text-[10px] text-gray-500">
+                                {% if rfi.source_decision %}
+                                    <a href="{% url 'site_management:meeting-detail' project.pk rfi.source_decision.meeting.pk %}"
+                                       class="text-indigo-600 hover:underline">
+                                        Meeting ({{ rfi.source_decision.meeting.date|date:"d/m" }})
+                                    </a>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
                             <td class="px-4 py-4 text-sm text-gray-500">
                                 <div class="space-y-1">
                                     {% if rfi.project_category %}

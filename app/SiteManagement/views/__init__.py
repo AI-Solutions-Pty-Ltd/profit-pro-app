@@ -57,10 +57,13 @@ from .materials_log_views import (
     MaterialsLogUpdateView,
 )
 from .meeting_views import (
+    MeetingAddActionView,
+    MeetingAddDecisionView,
     MeetingCreateView,
     MeetingDeleteView,
     MeetingDetailView,
     MeetingListView,
+    MeetingUpdateActionStatusView,
     MeetingUpdateView,
 )
 from .ncr_views import (
@@ -74,6 +77,12 @@ from .offsite_log_views import (
     OffsiteLogDeleteView,
     OffsiteLogListView,
     OffsiteLogUpdateView,
+)
+from .overhead_daily_log_views import (
+    OverheadDailyLogCreateView,
+    OverheadDailyLogDeleteView,
+    OverheadDailyLogListView,
+    OverheadDailyLogUpdateView,
 )
 from .photo_log_views import (
     PhotoLogCreateView,
@@ -235,6 +244,10 @@ __all__ = [
     "OffsiteLogCreateView",
     "OffsiteLogUpdateView",
     "OffsiteLogDeleteView",
+    "OverheadDailyLogListView",
+    "OverheadDailyLogCreateView",
+    "OverheadDailyLogUpdateView",
+    "OverheadDailyLogDeleteView",
     "SafetyObservationListView",
     "SafetyObservationCreateView",
     "SafetyObservationUpdateView",

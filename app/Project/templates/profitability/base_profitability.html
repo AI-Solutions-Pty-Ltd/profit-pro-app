@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+{% block content %}
+    <div class="pb-12 min-h-screen">
+        <!-- Submodule Header -->
+        <div class="sticky top-0 z-10 bg-white rounded-xl shadow-sm">
+            <div class="px-4 py-4 sm:px-6 lg:px-8">
+                <a href="{% url 'project:company-management' project.pk %}"
+                   class="inline-flex items-center py-2 text-sm font-medium text-gray-700 bg-white rounded-md transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_outline "chevron-left" size="20" %}
+                    <span class="ml-2">Business Management</span>
+                </a>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        {% comment %} <div class="p-2 bg-indigo-600 rounded-lg">
+                        {% heroicon_outline "chart-pie" class="w-6 h-6 text-white" %}
+                        </div> {% endcomment %}
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Profitability Management</h1>
+                            <p class="text-sm text-gray-500">{{ project.name }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <a href="{% url 'project:profitability-dashboard' project.pk %}"
+                           class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700">
+                            {% heroicon_outline "home" class="mr-2 w-4 h-4" %}
+                            Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <!-- Navigation Tabs -->
+            <div class="px-4 sm:px-6 lg:px-8">
+                <nav class="flex overflow-x-auto -mb-px space-x-8 pb-1 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-slate-100 [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400"
+                     aria-label="Tabs">
+                    {% with current_url=request.resolver_match.url_name %}
+                        <a href="{% url 'project:profitability-journal-list' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'journal' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "book-open" class="inline-block mr-1 w-4 h-4" %}
+                            Journal Entries
+                        </a>
+                        <a href="{% url 'project:profitability-material-list' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'material' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "cube" class="inline-block mr-1 w-4 h-4" %}
+                            Materials
+                        </a>
+                        <a href="{% url 'project:profitability-subcontractor-list' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'subcontractor' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "briefcase" class="inline-block mr-1 w-4 h-4" %}
+                            Subcontractors
+                        </a>
+                        <a href="{% url 'project:profitability-plant-list' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'plant' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "truck" class="inline-block mr-1 w-4 h-4" %}
+                            Plant Equipment
+                        </a>
+                        <a href="{% url 'project:profitability-labour-list' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'labour' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "user-group" class="inline-block mr-1 w-4 h-4" %}
+                            Labour
+                        </a>
+                        <a href="{% url 'project:profitability-overhead-list' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'overhead' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "home" class="inline-block mr-1 w-4 h-4" %}
+                            Overheads
+                        </a>
+                        <a href="{% url 'project:profitability-coming-soon' project.pk 'Baseline' %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'baseline' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "calculator" class="inline-block mr-1 w-4 h-4" %}
+                            Baseline
+                        </a>
+                    {% endwith %}
+                </nav>
+            </div>
+        </div>
+        <!-- Main Content Area -->
+        <div class="py-8">
+            {% block profitability_content %}
+            {% endblock profitability_content %}
+        </div>
+    </div>
+{% endblock content %}

@@ -119,6 +119,14 @@ class EarlyWarning(BaseModel):
         default=EarlyWarningStatus.OPEN,
         help_text="Current status of this early warning",
     )
+    source_decision = models.ForeignKey(
+        "MeetingDecision",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="linked_early_warnings",
+        help_text="Meeting decision that triggered this early warning",
+    )
     date_closed = models.DateField(
         null=True,
         blank=True,

@@ -770,7 +770,9 @@ class PaymentCertificateSubmitView(
                 self.request,
                 f"Payment Certificate #{payment_certificate.certificate_number} has been submitted!",
             )
-            payment_certificate.approved_on = datetime.now()
+            from django.utils import timezone
+
+            payment_certificate.approved_on = timezone.now()
             payment_certificate.approved_by = self.request.user
 
             # If marked as final, link to project

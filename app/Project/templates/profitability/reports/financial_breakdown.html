@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+{% load humanize %}
+{% block title %}
+    Financial Breakdown - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <!-- Header Card -->
+        <div class="mb-6 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div class="px-6 py-4">
+                <div class="flex justify-between items-center mb-4">
+                    <a href="{% url 'project:profitability-performance-report' project.pk %}"
+                       class="inline-flex items-center py-2 text-sm font-medium text-gray-700 bg-white transition-colors hover:text-indigo-600 focus:outline-none">
+                        {% heroicon_outline "chevron-left" size="20" %}
+                        <span class="ml-2">Back to Performance Dashboard</span>
+                    </a>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Detailed Financial Breakdown</h1>
+                        <p class="mt-1 text-sm text-gray-600">
+                            Full financial performance ledger for {{ project.name }} ({{ start_date|date:"M d, Y" }} - {{ end_date|date:"M d, Y" }})
+                        </p>
+                    </div>
+                    {% comment %} <div class="flex items-center p-1 bg-gray-50 rounded-md border border-gray-200">
+                    <button onclick="window.print()" class="flex items-center px-3 py-1.5 text-xs font-bold text-gray-600 rounded transition-colors hover:bg-white hover:shadow-sm">
+                        {% heroicon_outline "document-arrow-down" size="14" class="mr-1.5" %}
+                        Export PDF
+                    </button>
+                    </div> {% endcomment %}
+                </div>
+            </div>
+        </div>
+        <!-- Table Section -->
+        <div class="overflow-hidden mb-8 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
+                <h3 class="text-lg font-bold text-gray-900">Actual vs. Planned vs. Forecast</h3>
+            </div>
+            {% include "profitability/reports/partials/financial_table.html" %}
+        </div>
+        <!-- Footnote Section -->
+        <div class="p-6 bg-gray-50 rounded-xl border border-gray-100">
+            <h3 class="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4 flex items-center">
+                {% heroicon_outline "information-circle" size="16" class="mr-2" %}
+                Notes & Assumptions
+            </h3>
+            <ul class="pl-5 space-y-2 text-xs list-disc text-gray-500">
+                <li>Revenue is calculated from cumulative approved payment certificates.</li>
+                <li>COGS includes all recorded Material, Labour, Subcontractor, and Plant equipment costs.</li>
+                <li>Planned figures are derived from the approved Baseline Cashflow (approx. 60% COGS / 12% OpEx allocation).</li>
+                <li>Forecast figures represent estimated values from the Expenditure Forecast.</li>
+            </ul>
+        </div>
+    </div>
+{% endblock content %}

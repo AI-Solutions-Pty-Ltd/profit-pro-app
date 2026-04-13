@@ -41,6 +41,14 @@ jobs:
           echo "Python path: $(python -c 'import sys; print(sys.executable)')"
           python -m ty check . --python $(python -c 'import sys; print(sys.executable)')
 
+      - name: Check for migration conflicts
+        env:
+          DJANGO_SETTINGS_MODULE: settings.local
+        run: |
+          echo "🔍 Checking for Django migration conflicts..."
+          python manage.py check
+
+
       # - name: Run tests
       #   run: pytest -v -n auto --reuse-db --durations=10
 

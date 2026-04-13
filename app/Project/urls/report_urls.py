@@ -26,6 +26,16 @@ urlpatterns = [
         report_views.ConstructionProgressReportView.as_view(),
         name="construction-progress-report",
     ),
+    path(
+        "project/<int:project_pk>/action-tracker/",
+        report_views.ActionTrackerReportView.as_view(),
+        name="action-tracker-report",
+    ),
+    path(
+        "project/<int:project_pk>/decision-log/",
+        report_views.DecisionLogReportView.as_view(),
+        name="decision-log-report",
+    ),
     # Portfolio Reports
     path(
         "portfolio/reports/financial/",
