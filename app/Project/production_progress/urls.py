@@ -14,6 +14,11 @@ urlpatterns = [
         name="production-planning",
     ),
     path(
+        "<int:project_pk>/planning/gantt/",
+        views.ProductionPlanGanttView.as_view(),
+        name="production-planning-gantt",
+    ),
+    path(
         "<int:project_pk>/planning/create/",
         views.ProductionPlanCreateView.as_view(),
         name="production-plan-create",

@@ -1,0 +1,560 @@
+{% extends "production_progress/base_production.html" %}
+{% load static %}
+{% load heroicons %}
+{% block title %}
+    Gantt Chart - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block production_content %}
+    <!-- Page Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h2 class="text-2xl font-black text-gray-900 tracking-tight">Project Schedule — Gantt</h2>
+            <p class="text-sm text-gray-500">Visual timeline with dependencies and hierarchy.</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <!-- View Toggle -->
+            <div class="flex items-center bg-white rounded-xl border border-gray-200 p-1 shadow-sm">
+                <a href="{% url 'project:production-planning' project.pk %}"
+                   class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50 rounded-lg transition-colors border-r border-gray-100">
+                    {% heroicon_outline "list-bullet" class="mr-1.5 w-4 h-4" %} List
+                </a>
+                <button type="button"
+                        class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 rounded-lg transition-colors">
+                    {% heroicon_outline "chart-bar" class="mr-1.5 w-4 h-4 rotate-90" %} Gantt
+                </button>
+            </div>
+            <!-- Zoom controls -->
+            <div class="flex items-center bg-white rounded-xl border border-gray-200 p-1 shadow-sm">
+                <button type="button"
+                        id="zoom-out-btn"
+                        class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50 rounded-lg transition-colors border-r border-gray-100">
+                    {% heroicon_outline "minus" class="w-4 h-4" %}
+                </button>
+                <span id="zoom-label" class="px-3 text-xs font-bold text-gray-600">Day</span>
+                <button type="button"
+                        id="zoom-in-btn"
+                        class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50 rounded-lg transition-colors border-l border-gray-100">
+                    {% heroicon_outline "plus" class="w-4 h-4" %}
+                </button>
+            </div>
+            <a href="{% url 'project:production-plan-create' project.pk %}"
+               class="inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-indigo-600 rounded-xl border border-transparent shadow-sm transition-colors hover:bg-indigo-700">
+                {% heroicon_solid "plus" class="mr-2 w-4 h-4" %} Add Activity
+            </a>
+        </div>
+    </div>
+    {% if plans %}
+        <!-- Gantt Chart Container -->
+        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <!-- Legend -->
+            <div class="flex items-center space-x-5 px-5 py-3 bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500">
+                <div class="flex items-center space-x-1.5">
+                    <div class="w-3 h-3 rounded-sm bg-indigo-500"></div>
+                    <span>Summary (Parent)</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                    <div class="w-3 h-3 rounded-sm bg-sky-400"></div>
+                    <span>Task</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                    <div class="w-3 h-3 rounded-sm bg-emerald-500"></div>
+                    <span>Active Today</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                    <svg width="28" height="12" viewBox="0 0 28 12">
+                        <line x1="0" y1="6" x2="22" y2="6" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3,2" />
+                        <polygon points="22,2 28,6 22,10" fill="#94a3b8" />
+                    </svg>
+                    <span>Dependency</span>
+                </div>
+            </div>
+            <!-- Gantt body: left label pane + right chart pane -->
+            <div class="flex overflow-x-auto" id="gantt-wrapper">
+                <!-- Label Column (sticky) -->
+                <div class="flex-shrink-0 w-72 border-r border-gray-200 bg-white z-10"
+                     id="gantt-labels">
+                    <div class="h-[52px] border-b border-gray-100 flex items-center px-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">
+                        Activity
+                    </div>
+                    <div id="gantt-label-rows"></div>
+                </div>
+                <!-- Chart Area -->
+                <div class="flex-1 min-w-0 overflow-x-auto" id="gantt-chart-scroll">
+                    <canvas id="gantt-canvas" style="display:block;"></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- Tooltip -->
+        <div id="gantt-tooltip"
+             class="hidden fixed z-50 pointer-events-none bg-gray-900 text-white text-xs rounded-xl shadow-2xl px-4 py-3 max-w-xs">
+            <div id="tooltip-title" class="font-bold text-sm mb-1"></div>
+            <div id="tooltip-dates" class="text-gray-300 mb-0.5"></div>
+            <div id="tooltip-duration" class="text-gray-400"></div>
+            <div id="tooltip-deps" class="text-slate-300 mt-1 hidden"></div>
+        </div>
+    {% else %}
+        <div class="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center">
+            <div class="flex justify-center items-center mx-auto mb-4 w-20 h-20 text-indigo-600 bg-indigo-50 rounded-full">
+                {% heroicon_outline "chart-bar" class="w-10 h-10 rotate-90" %}
+            </div>
+            <h3 class="text-xl font-black text-gray-900">No activities to display</h3>
+            <p class="mt-2 text-sm text-gray-500 max-w-sm mx-auto">
+                Add activities with start and finish dates to see them on the Gantt chart.
+            </p>
+            <a href="{% url 'project:production-plan-create' project.pk %}"
+               class="inline-flex items-center px-6 py-3 mt-8 text-sm font-bold text-white bg-indigo-600 rounded-xl border border-transparent shadow-sm transition-colors hover:bg-indigo-700">
+                {% heroicon_solid "plus" class="mr-2 w-4 h-4" %} Create First Activity
+            </a>
+        </div>
+    {% endif %}
+    <!-- Footer -->
+    <div class="px-6 py-4 mt-8 bg-gray-50 rounded-2xl border border-gray-100 flex justify-end items-center">
+        <a href="{% url 'project:company-management' project.pk %}"
+           class="inline-flex items-center text-sm font-bold text-gray-400 hover:text-indigo-600 transition-colors">
+            {% heroicon_outline "chevron-left" class="mr-1 w-4 h-4" %} Back to Management
+        </a>
+    </div>
+{% endblock production_content %}
+{% block extra_js %}
+    <script>
+// ── Data from Django ──────────────────────────────────────────────────────────
+const GANTT_DATA = {{ gantt_data_json|safe }};
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+const ROW_H   = 56;   // px per row
+const HEAD_H  = 52;   // header height
+const PAD_Y   = 13;   // vertical padding inside row
+const BAR_H   = ROW_H - PAD_Y * 2;
+const LABEL_W = 288;  // must match CSS (w-72)
+
+// Zoom levels: pixels per day
+const ZOOM_LEVELS = [
+    { label: 'Week', ppd: 4 },
+    { label: 'Day',  ppd: 14 },
+    { label: 'Hour', ppd: 30 },
+];
+let zoomIdx = 1;
+
+// ── State ─────────────────────────────────────────────────────────────────────
+const canvas  = document.getElementById('gantt-canvas');
+const ctx     = canvas ? canvas.getContext('2d') : null;
+const labelEl = document.getElementById('gantt-label-rows');
+const wrapper = document.getElementById('gantt-chart-scroll');
+const tooltip = document.getElementById('gantt-tooltip');
+
+if (!GANTT_DATA.length || !canvas) {
+    // Nothing to render
+    document.getElementById('gantt-chart-scroll') && (document.getElementById('gantt-chart-scroll').style.display = 'none');
+} else {
+    // Parse dates
+    GANTT_DATA.forEach(d => {
+        d.startTs = new Date(d.start_date).getTime();
+        d.endTs   = new Date(d.finish_date).getTime();
+    });
+
+    const allStarts = GANTT_DATA.map(d => d.startTs);
+    const allEnds   = GANTT_DATA.map(d => d.endTs);
+    let chartStart  = Math.min(...allStarts);
+    let chartEnd    = Math.max(...allEnds);
+
+    // Add 5% padding each side
+    const totalMs  = chartEnd - chartStart;
+    chartStart    -= totalMs * 0.02;
+    chartEnd      += totalMs * 0.05;
+
+    const MS_PER_DAY = 86400000;
+    const totalDays  = (chartEnd - chartStart) / MS_PER_DAY;
+
+    function xForDate(ts) {
+        const ppd = ZOOM_LEVELS[zoomIdx].ppd;
+        return ((ts - chartStart) / MS_PER_DAY) * ppd;
+    }
+
+    function totalWidth() {
+        return totalDays * ZOOM_LEVELS[zoomIdx].ppd;
+    }
+
+    // ── Colour helper ───────────────────────────────────────────────────────
+    function barColor(row) {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const s     = new Date(row.start_date); s.setHours(0,0,0,0);
+        const e     = new Date(row.finish_date); e.setHours(0,0,0,0);
+        if (s <= today && today <= e) return { fill: '#10b981', stroke: '#059669' }; // active
+        if (row.has_children)        return { fill: '#6366f1', stroke: '#4f46e5' }; // parent
+        return                              { fill: '#38bdf8', stroke: '#0ea5e9' }; // normal task
+    }
+
+    // ── Draw header (days / weeks) ──────────────────────────────────────────
+    function drawHeader() {
+        const ppd = ZOOM_LEVELS[zoomIdx].ppd;
+        const W   = totalWidth();
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.fillRect(0, 0, W, HEAD_H);
+
+        // bottom border
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, HEAD_H);
+        ctx.lineTo(W, HEAD_H);
+        ctx.stroke();
+
+        // Decide tick granularity
+        let tick, fmt;
+        if (ppd >= 20) {
+            tick = MS_PER_DAY;
+            fmt  = d => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        } else if (ppd >= 6) {
+            tick = MS_PER_DAY * 7;
+            fmt  = d => `W${getWeek(d)} ${d.getFullYear()}`;
+        } else {
+            tick = MS_PER_DAY * 30;
+            fmt  = d => d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+        }
+
+        ctx.fillStyle = '#64748b';
+        ctx.font      = 'bold 11px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+
+        let cur = new Date(chartStart);
+        cur.setHours(0, 0, 0, 0);
+
+        while (cur.getTime() < chartEnd) {
+            const x = xForDate(cur.getTime());
+            if (x >= 0 && x <= W) {
+                // Tick line
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth   = 0.75;
+                ctx.beginPath();
+                ctx.moveTo(x, HEAD_H - 20);
+                ctx.lineTo(x, HEAD_H);
+                ctx.stroke();
+                // Label
+                ctx.fillText(fmt(cur), x, HEAD_H - 24);
+            }
+            cur = new Date(cur.getTime() + tick);
+        }
+
+        // Today line label
+        const todayX = xForDate(Date.now());
+        if (todayX >= 0 && todayX <= W) {
+            ctx.fillStyle = '#ef4444';
+            ctx.font      = 'bold 10px Inter, system-ui, sans-serif';
+            ctx.fillText('TODAY', todayX, 14);
+        }
+    }
+
+    // ── Draw rows ───────────────────────────────────────────────────────────
+    function drawRows() {
+        const W = totalWidth();
+        GANTT_DATA.forEach((row, i) => {
+            const y = HEAD_H + i * ROW_H;
+
+            // Row background (alternating)
+            ctx.fillStyle = i % 2 === 0 ? '#ffffff' : '#f8fafc';
+            ctx.fillRect(0, y, W, ROW_H);
+
+            // Today line
+            const todayX = xForDate(Date.now());
+            if (todayX >= 0 && todayX <= W) {
+                ctx.strokeStyle = 'rgba(239,68,68,0.25)';
+                ctx.lineWidth   = 1;
+                ctx.beginPath();
+                ctx.moveTo(todayX, y);
+                ctx.lineTo(todayX, y + ROW_H);
+                ctx.stroke();
+            }
+
+            // Grid lines
+            ctx.strokeStyle = '#f1f5f9';
+            ctx.lineWidth   = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(0, y + ROW_H);
+            ctx.lineTo(W, y + ROW_H);
+            ctx.stroke();
+
+            // Bar
+            const x1  = xForDate(row.startTs);
+            const x2  = xForDate(row.endTs + MS_PER_DAY); // inclusive end
+            const barW = Math.max(x2 - x1, 4);
+            const barY = y + PAD_Y;
+            const col  = barColor(row);
+            const radius = 4;
+
+            // Shadow
+            ctx.shadowColor   = 'rgba(99,102,241,0.15)';
+            ctx.shadowBlur    = 4;
+            ctx.shadowOffsetY = 2;
+
+            // Rounded rect bar
+            ctx.fillStyle = col.fill;
+            ctx.beginPath();
+            ctx.moveTo(x1 + radius, barY);
+            ctx.lineTo(x1 + barW - radius, barY);
+            ctx.quadraticCurveTo(x1 + barW, barY, x1 + barW, barY + radius);
+            ctx.lineTo(x1 + barW, barY + BAR_H - radius);
+            ctx.quadraticCurveTo(x1 + barW, barY + BAR_H, x1 + barW - radius, barY + BAR_H);
+            ctx.lineTo(x1 + radius, barY + BAR_H);
+            ctx.quadraticCurveTo(x1, barY + BAR_H, x1, barY + BAR_H - radius);
+            ctx.lineTo(x1, barY + radius);
+            ctx.quadraticCurveTo(x1, barY, x1 + radius, barY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur  = 0;
+
+            // Stripe pattern for parent bars
+            if (row.has_children) {
+                ctx.save();
+                ctx.clip();
+                ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+                ctx.lineWidth = 6;
+                for (let sx = x1 - BAR_H; sx < x1 + barW; sx += 10) {
+                    ctx.beginPath();
+                    ctx.moveTo(sx, barY);
+                    ctx.lineTo(sx + BAR_H, barY + BAR_H);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            // Bar label (if wide enough)
+            if (barW > 36) {
+                ctx.fillStyle   = '#fff';
+                ctx.font        = `600 11px Inter, system-ui, sans-serif`;
+                ctx.textAlign   = 'left';
+                ctx.shadowColor = 'rgba(0,0,0,0.35)';
+                ctx.shadowBlur  = 3;
+                const label = row.activity.length > 24 ? row.activity.substring(0, 22) + '…' : row.activity;
+                ctx.fillText(label, x1 + 8, barY + BAR_H / 2 + 4);
+                ctx.shadowBlur = 0;
+            }
+        });
+    }
+
+    // ── Draw dependency arrows ──────────────────────────────────────────────
+    function drawDependencies() {
+        // Build a map: id -> row index
+        const idxMap = {};
+        GANTT_DATA.forEach((r, i) => { idxMap[r.id] = i; });
+
+        GANTT_DATA.forEach((row) => {
+            if (!row.predecessors || !row.predecessors.length) return;
+            row.predecessors.forEach(predId => {
+                const fromIdx = idxMap[predId];
+                if (fromIdx === undefined) return;
+                const toIdx   = idxMap[row.id];
+                const fromRow = GANTT_DATA[fromIdx];
+
+                // Arrow: from right-end of predecessor to left-start of successor
+                const fx = xForDate(fromRow.endTs + MS_PER_DAY);
+                const fy = HEAD_H + fromIdx * ROW_H + ROW_H / 2;
+                const tx = xForDate(row.startTs);
+                const ty = HEAD_H + toIdx   * ROW_H + ROW_H / 2;
+
+                const cp1x = fx + Math.min(30, (tx - fx) * 0.4);
+                const cp2x = tx - Math.min(30, (tx - fx) * 0.4);
+
+                ctx.strokeStyle = '#94a3b8';
+                ctx.lineWidth   = 1.5;
+                ctx.setLineDash([5, 4]);
+                ctx.beginPath();
+                ctx.moveTo(fx, fy);
+                ctx.bezierCurveTo(cp1x, fy, cp2x, ty, tx, ty);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Arrowhead
+                const angle = Math.atan2(ty - (ty), tx - cp2x);
+                ctx.fillStyle = '#94a3b8';
+                ctx.beginPath();
+                ctx.moveTo(tx, ty);
+                ctx.lineTo(tx - 8 * Math.cos(angle - 0.4), ty - 8 * Math.sin(angle - 0.4));
+                ctx.lineTo(tx - 8 * Math.cos(angle + 0.4), ty - 8 * Math.sin(angle + 0.4));
+                ctx.closePath();
+                ctx.fill();
+            });
+        });
+    }
+
+    // ── Today vertical line (prominent) ─────────────────────────────────────
+    function drawTodayLine() {
+        const W      = totalWidth();
+        const todayX = xForDate(Date.now());
+        if (todayX < 0 || todayX > W) return;
+        const totalH = HEAD_H + GANTT_DATA.length * ROW_H;
+
+        ctx.strokeStyle = 'rgba(239,68,68,0.7)';
+        ctx.lineWidth   = 1.5;
+        ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        ctx.moveTo(todayX, HEAD_H);
+        ctx.lineTo(todayX, totalH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Circle marker at top
+        ctx.fillStyle   = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(todayX, HEAD_H + 4, 4, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // ── Build label rows (DOM) ──────────────────────────────────────────────
+    function buildLabels() {
+        labelEl.innerHTML = '';
+        GANTT_DATA.forEach((row, i) => {
+            const div = document.createElement('div');
+            div.style.height       = ROW_H + 'px';
+            div.style.display      = 'flex';
+            div.style.alignItems   = 'center';
+            div.style.gap          = '10px';
+            div.style.paddingLeft  = (16 + row.depth * 18) + 'px';
+            div.style.paddingRight = '12px';
+            div.style.borderBottom = '1px solid #f1f5f9';
+            div.style.background   = i % 2 === 0 ? '#ffffff' : '#f8fafc';
+            div.style.cursor       = 'pointer';
+            div.style.transition   = 'background 0.15s';
+            div.title = row.activity;
+
+            // Bullet / icon
+            const bullet = document.createElement('span');
+            bullet.style.flexShrink   = '0';
+            bullet.style.width        = '10px';
+            bullet.style.height       = '10px';
+            bullet.style.borderRadius = row.has_children ? '3px' : '50%';
+            const col = barColor(row);
+            bullet.style.background   = col.fill;
+            bullet.style.boxShadow    = `0 0 0 2px ${col.fill}33`;
+            div.appendChild(bullet);
+
+            // Text wrapper (activity + optional sub-label)
+            const textWrap = document.createElement('div');
+            textWrap.style.overflow   = 'hidden';
+            textWrap.style.flex       = '1';
+
+            const span = document.createElement('span');
+            span.style.fontSize     = '13px';
+            span.style.fontWeight   = row.has_children ? '700' : '500';
+            span.style.color        = '#1e293b';
+            span.style.display      = 'block';
+            span.style.overflow     = 'hidden';
+            span.style.textOverflow = 'ellipsis';
+            span.style.whiteSpace   = 'nowrap';
+            span.textContent        = row.activity;
+            textWrap.appendChild(span);
+
+            // Duration sub-label
+            const sub = document.createElement('span');
+            sub.style.fontSize  = '11px';
+            sub.style.color     = '#94a3b8';
+            sub.style.display   = 'block';
+            sub.textContent     = `${row.duration}d`;
+            textWrap.appendChild(sub);
+
+            div.appendChild(textWrap);
+
+            // Hover effect
+            div.addEventListener('mouseenter', () => { div.style.background = '#eef2ff'; });
+            div.addEventListener('mouseleave', () => { div.style.background = i % 2 === 0 ? '#ffffff' : '#f8fafc'; });
+
+            // Edit link on click
+            div.addEventListener('click', () => { window.location.href = row.edit_url; });
+
+            labelEl.appendChild(div);
+        });
+    }
+
+    // ── Render everything ───────────────────────────────────────────────────
+    function render() {
+        const W = Math.ceil(totalWidth());
+        const H = HEAD_H + GANTT_DATA.length * ROW_H;
+
+        // DPI scaling
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width  = W * dpr;
+        canvas.height = H * dpr;
+        canvas.style.width  = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.scale(dpr, dpr);
+
+        ctx.clearRect(0, 0, W, H);
+        drawHeader();
+        drawRows();
+        drawDependencies();
+        drawTodayLine();
+
+        // Zoom label sync
+        document.getElementById('zoom-label').textContent = ZOOM_LEVELS[zoomIdx].label;
+
+        buildLabels();
+    }
+
+    // ── Zoom controls ───────────────────────────────────────────────────────
+    document.getElementById('zoom-in-btn').addEventListener('click', () => {
+        if (zoomIdx < ZOOM_LEVELS.length - 1) { zoomIdx++; render(); }
+    });
+    document.getElementById('zoom-out-btn').addEventListener('click', () => {
+        if (zoomIdx > 0) { zoomIdx--; render(); }
+    });
+
+    // ── Tooltip on hover ────────────────────────────────────────────────────
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseY = e.clientY - rect.top;
+        const rowIdx = Math.floor((mouseY - HEAD_H) / ROW_H);
+
+        if (rowIdx < 0 || rowIdx >= GANTT_DATA.length) {
+            tooltip.classList.add('hidden');
+            return;
+        }
+
+        const row = GANTT_DATA[rowIdx];
+        const mouseX = e.clientX - rect.left;
+        const x1 = xForDate(row.startTs);
+        const x2 = xForDate(row.endTs + MS_PER_DAY);
+
+        if (mouseX < x1 || mouseX > x2) {
+            tooltip.classList.add('hidden');
+            return;
+        }
+
+        document.getElementById('tooltip-title').textContent    = row.activity;
+        document.getElementById('tooltip-dates').textContent    = `${row.start_date} → ${row.finish_date}`;
+        document.getElementById('tooltip-duration').textContent = `Duration: ${row.duration} day${row.duration !== 1 ? 's' : ''}`;
+
+        const depsEl = document.getElementById('tooltip-deps');
+        if (row.predecessor_names && row.predecessor_names.length) {
+            depsEl.textContent = `Depends on: ${row.predecessor_names.join(', ')}`;
+            depsEl.classList.remove('hidden');
+        } else {
+            depsEl.classList.add('hidden');
+        }
+
+        tooltip.style.left = (e.clientX + 16) + 'px';
+        tooltip.style.top  = (e.clientY - 16) + 'px';
+        tooltip.classList.remove('hidden');
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+        tooltip.classList.add('hidden');
+    });
+
+    // ── Sync scrolling between label pane and chart ─────────────────────────
+    // (labels are fixed height so only vertical scroll matters; handled naturally)
+
+    // ── Helper: ISO week number ─────────────────────────────────────────────
+    function getWeek(d) {
+        const date  = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+        const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+        return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+    }
+
+    // Initial render
+    render();
+    window.addEventListener('resize', render);
+}
+    </script>
+{% endblock extra_js %}

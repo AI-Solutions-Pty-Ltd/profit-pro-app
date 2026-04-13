@@ -1,3 +1,5 @@
+import json
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
@@ -28,6 +30,99 @@ from ..production_models import (
     ProductionPlan,
     ProductionResource,
 )
+
+
+class ProductionPlanGanttView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """Renders a Gantt chart of all production plan activities."""
+
+    template_name = "production_progress/planning/gantt.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {
+                "title": "Production Planning",
+                "url": reverse_lazy(
+                    "project:production-planning", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": "Gantt Chart", "url": None},
+        ]
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _flatten_tree(plans, parent_id=None, depth=0):
+        """Return activities in pre-order (parent then children), with depth."""
+        rows = []
+        for plan in plans:
+            if plan.parent_id == parent_id:
+                rows.append((plan, depth))
+                rows.extend(
+                    ProductionPlanGanttView._flatten_tree(plans, plan.pk, depth + 1)
+                )
+        return rows
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        context["project"] = project
+
+        all_plans = list(
+            ProductionPlan.objects.filter(project=project, is_archived=False)
+            .select_related("structure", "bill", "package", "parent")
+            .prefetch_related(
+                "predecessors",
+                "predecessors__predecessor",
+                "children",
+            )
+            .order_by("start_date", "activity")
+        )
+
+        context["plans"] = all_plans
+
+        # Build flat ordered list with depth for the Gantt canvas
+        ordered = self._flatten_tree(all_plans)
+        edit_url_name = "project:production-plan-edit"
+        project_pk = self.kwargs["project_pk"]
+
+        gantt_data = []
+        for plan, depth in ordered:
+            predecessor_ids = [dep.predecessor_id for dep in plan.predecessors.all()]
+            predecessor_names = [
+                dep.predecessor.activity for dep in plan.predecessors.all()
+            ]
+            gantt_data.append(
+                {
+                    "id": plan.pk,
+                    "activity": plan.activity,
+                    "start_date": plan.start_date.isoformat(),
+                    "finish_date": plan.finish_date.isoformat(),
+                    "duration": plan.duration,
+                    "depth": depth,
+                    "has_children": plan.children.exists(),
+                    "predecessors": predecessor_ids,
+                    "predecessor_names": predecessor_names,
+                    "edit_url": reverse_lazy(
+                        edit_url_name,
+                        kwargs={"project_pk": project_pk, "pk": plan.pk},
+                    ),
+                }
+            )
+
+        context["gantt_data_json"] = json.dumps(gantt_data, default=str)
+        return context
 
 
 class ProductionPlanListView(
@@ -414,7 +509,8 @@ class ProductionPlanDeleteView(
         ):
             messages.error(
                 request,
-                "Cannot delete an activity that has children. Please delete them first.",
+                "Cannot delete an activity that has children."
+                " Please delete them first.",
             )
             return redirect(str(self.get_success_url()))
 

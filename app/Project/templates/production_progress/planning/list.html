@@ -12,6 +12,18 @@
             <p class="text-sm text-gray-500">Manage activities, dependencies, and hierarchical structure.</p>
         </div>
         <div class="flex items-center space-x-3">
+            <!-- View Toggle -->
+            <div class="flex items-center bg-white rounded-xl border border-gray-200 p-1 shadow-sm">
+                <button type="button"
+                        class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 rounded-lg transition-colors border-r border-gray-100">
+                    {% heroicon_outline "list-bullet" class="mr-1.5 w-4 h-4" %} List
+                </button>
+                <a href="{% url 'project:production-planning-gantt' project.pk %}"
+                   class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
+                    {% heroicon_outline "chart-bar" class="mr-1.5 w-4 h-4 rotate-90" %} Gantt
+                </a>
+            </div>
+            <!-- Expand / Collapse -->
             <div class="flex items-center bg-white rounded-xl border border-gray-200 p-1 shadow-sm">
                 <button type="button"
                         onclick="expandAll()"
