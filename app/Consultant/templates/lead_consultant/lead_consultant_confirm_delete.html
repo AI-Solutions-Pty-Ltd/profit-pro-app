@@ -31,17 +31,22 @@
                 <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Registration Number</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ object.registration_number }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{ object.registration_number }}
+                        </dd>
                     </div>
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Tax Number</dt>
-                        <dd class="mt-1 text-sm text-gray-900">{{ object.tax_number }}</dd>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {{ object.tax_number }}
+                        </dd>
                     </div>
                     <div>
                         <dt class="text-sm font-medium text-gray-500">VAT Registered</dt>
                         <dd class="mt-1 text-sm text-gray-900">
                             {% if object.vat_registered %}
-                                Yes{% if object.vat_number %} ({{ object.vat_number }}){% endif %}
+                                Yes
+                                {% if object.vat_number %}({{ object.vat_number }}){% endif %}
                             {% else %}
                                 No
                             {% endif %}
@@ -50,13 +55,18 @@
                     <div>
                         <dt class="text-sm font-medium text-gray-500">Bank</dt>
                         <dd class="mt-1 text-sm text-gray-900">
-                            {% if object.bank_name %}{{ object.bank_name }}{% else %}Not specified{% endif %}
+                            {% if object.bank_name %}
+                                {{ object.bank_name }}
+                            {% else %}
+                                Not specified
+                            {% endif %}
                         </dd>
                     </div>
                 </dl>
             </div>
             <!-- Form Actions -->
-            <form method="post" class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+            <form method="post"
+                  class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-lg">
                 {% csrf_token %}
                 <div class="flex justify-end space-x-3">
                     <a href="{% url 'client:lead-consultant-management:lead-consultant-list' project.pk %}"
