@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block content %}
+    <div class="pb-12 min-h-screen">
+        <!-- Submodule Header -->
+        <div class="sticky top-0 z-10 bg-white rounded-xl shadow-sm">
+            <div class="px-4 py-4 sm:px-6 lg:px-8">
+                <a href="{% url 'project:company-management' project.pk %}"
+                   class="inline-flex items-center py-2 text-sm font-medium text-gray-700 bg-white rounded-md transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_outline "chevron-left" size="20" %}
+                    <span class="ml-2">Business Management</span>
+                </a>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Production Progress</h1>
+                            <p class="text-sm text-gray-500">{{ project.name }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="px-4 sm:px-6 lg:px-8">
+                <nav class="flex overflow-x-auto -mb-px space-x-8 pb-1 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-slate-100 [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400"
+                     aria-label="Tabs">
+                    {% with current_url=request.resolver_match.url_name %}
+                        {% comment %} <!-- Dashboard -->
+                        <a href="{% url 'project:production-dashboard' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if current_url == 'production-dashboard' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "home" class="inline-block mr-1 w-4 h-4" %}
+                            Dashboard
+                        </a> {% endcomment %}
+
+                        <!-- Planning -->
+                        <a href="{% url 'project:production-planning' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'planning' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "clipboard-document-list" class="inline-block mr-1 w-4 h-4" %}
+                            Planning
+                        </a>
+
+                        <!-- Resources -->
+                        <a href="{% url 'project:production-cost-breakdown' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'cost-breakdown' in current_url or 'resource' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "user-group" class="inline-block mr-1 w-4 h-4" %}
+                            Costing
+                        </a>
+
+                        <!-- Progress Hub -->
+                        <a href="{% url 'project:production-progress-dashboard' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'progress-dashboard' in current_url or 'tracking' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "presentation-chart-line" class="inline-block mr-1 w-4 h-4" %}
+                            Progress Tracker
+                        </a>
+
+                        <!-- Forecast Hub -->
+                        <a href="{% url 'project:production-forecast-dashboard' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'forecast' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "chart-pie" class="inline-block mr-1 w-4 h-4" %}
+                           Cost Forecast
+                        </a>
+
+                        <!-- History -->
+                        <a href="{% url 'project:production-list' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if current_url == 'production-list' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "book-open" class="inline-block mr-1 w-4 h-4" %}
+                            Log Progress
+                        </a>
+                    {% endwith %}
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="py-8">
+            {% block production_content %}
+            {% endblock production_content %}
+        </div>
+    </div>
+{% endblock content %}

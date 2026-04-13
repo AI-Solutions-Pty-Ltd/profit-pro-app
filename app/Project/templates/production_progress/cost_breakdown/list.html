@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "production_progress/base_production.html" %}
 {% load static %}
 {% load heroicons %}
 {% load crispy_forms_tags %}
@@ -8,33 +8,26 @@
     Cost Breakdown - {{ project.name }} - {{ block.super }}
 {% endblock title %}
 
-{% block content %}
-    <!-- Header -->
-    <div class="mb-6 bg-white rounded-lg shadow-sm">
-        <div class="px-6 py-4">
-            <a href="{% url 'project:production-planning' project.pk %}"
-               class="inline-flex items-center py-2 text-sm font-medium text-gray-700 bg-white rounded-md transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                {% heroicon_outline "chevron-left" size="20" %}
-                <span class="ml-2">Back to Planning List</span>
-            </a>
-            <div class="flex flex-col gap-4 justify-between mt-2 md:flex-row md:items-center">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Cost Breakdown</h1>
-                    <p class="mt-1 text-sm text-gray-600">{{ project.name }}</p>
-                </div>
-                <div class="flex flex-wrap gap-4 items-center">
-                    <div class="min-w-[200px] md:min-w-[300px]">
-                        <select id="plan_select"
-                                class="block py-2 pr-10 pl-3 w-full text-base rounded-md border-gray-300 shadow-sm transition-all duration-200 select focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                onchange="window.location.href='?plan_id=' + this.value">
-                            <option value="">-- Select Production Plan --</option>
-                            {% for p in all_plans %}
-                                <option value="{{ p.pk }}" {% if selected_plan.pk == p.pk %}selected{% endif %}>
-                                    {{ p.activity }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+{% block production_content %}
+    <!-- Filter Section (Plan Selector) -->
+    <div class="mb-6 bg-white rounded-lg shadow-sm px-6 py-4">
+        <div class="flex flex-col gap-4 justify-between md:flex-row md:items-center">
+            <div>
+                <h2 class="text-lg font-bold text-gray-900">Cost Breakdown</h2>
+                <p class="text-sm text-gray-500">Analyze resource costs for specific production activities.</p>
+            </div>
+            <div class="flex flex-wrap gap-4 items-center">
+                <div class="min-w-[200px] md:min-w-[300px]">
+                    <select id="plan_select"
+                            class="block py-2 pr-10 pl-3 w-full text-base rounded-md border-gray-300 shadow-sm transition-all duration-200 select focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            onchange="window.location.href='?plan_id=' + this.value">
+                        <option value="">-- Select Production Plan --</option>
+                        {% for p in all_plans %}
+                            <option value="{{ p.pk }}" {% if selected_plan.pk == p.pk %}selected{% endif %}>
+                                {{ p.activity }}
+                            </option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
         </div>
@@ -55,7 +48,6 @@
                 <dt class="mb-1 text-sm font-semibold text-gray-600">Quantity</dt>
                 <dd class="text-xl font-bold text-gray-900">{{ selected_plan.quantity|floatformat:2 }} {{ selected_plan.unit }}</dd>
             </div>
-            
         </div>
 
         <!-- Resource Types -->
@@ -156,4 +148,4 @@
             </a>
         </div>
     </div>
-{% endblock content %}
+{% endblock production_content %}

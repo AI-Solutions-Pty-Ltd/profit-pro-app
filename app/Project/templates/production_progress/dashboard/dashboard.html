@@ -1,42 +1,9 @@
-{% extends "base.html" %}
+{% extends "production_progress/base_production.html" %}
 {% load static %}
 {% block title %}
-    Production
-    Dashboard - {{ project.name }} - {{ block.super }}
+    Production Dashboard - {{ project.name }} - {{ block.super }}
 {% endblock title %}
-{% block content %}
-    <!-- Header -->
-    <div class="bg-white shadow-sm rounded-lg mb-6">
-        <div class="px-6 py-4">
-            <a href="{% url 'project:company-management' project.pk %}"
-               class="inline-flex items-center py-2 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                {% heroicon_outline "chevron-left" size="20" %}
-                <span class="ml-2">Back</span>
-            </a>
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Production Dashboard</h1>
-                    <p class="text-sm text-gray-600 mt-1">
-                        Manage production plans and track project progress for {{ project.name }}
-                    </p>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <a href="{% url 'project:production-planning' project.pk %}"
-                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                        {% heroicon_outline "chart-bar" size="20" %}
-                        <span class="ml-2">Planning</span>
-                    </a>
-                    {% comment %}
-        <a href="{% url 'project:production-forecast-dashboard' project.pk %}" class="inline-flex items-center px-4 py-2 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-          {% heroicon_outline "presentation-chart-line" size="20" %}
-          <span class="ml-2">Forecast Hub</span>
-        </a>
-                    {% endcomment %}
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Content -->
+{% block production_content %}
     <!-- Content Card -->
     <!-- Action Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -118,7 +85,7 @@
             </a>
         </div>
     </div>
-{% endblock content %}
+{% endblock production_content %}
 
 {% block extra_js %}
     {{ block.super }}

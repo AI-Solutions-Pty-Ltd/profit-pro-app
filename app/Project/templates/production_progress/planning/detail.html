@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "production_progress/base_production.html" %}
 {% load static %}
 {% load heroicons %}
 {% load humanize %}
@@ -7,98 +7,109 @@
     Production Plan Detail - {{ project.name }} - {{ block.super }}
 {% endblock title %}
 
-{% block content %}
-    <!-- Header -->
-    <div class="bg-white shadow-sm rounded-lg mb-6">
-        <div class="px-6 py-4">
-            <a href="{% url 'project:production-planning' project.pk %}"
-               class="inline-flex items-center py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                {% heroicon_outline "chevron-left" size="20" %}
-                <span class="ml-2">Back to Planning List</span>
+{% block production_content %}
+    <!-- Filter Header -->
+    <div class="flex flex-col gap-4 justify-between items-start mb-8 sm:flex-row sm:items-center">
+        <div>
+            <h2 class="text-xl font-black text-gray-900 uppercase tracking-tight">Plan Details</h2>
+            <p class="text-sm text-gray-500">Resource allocation and cost breakdown for <span class="text-indigo-600 font-bold">{{ object.activity }}</span></p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <a href="{% url 'project:production-plan-edit' project.pk object.pk %}"
+               class="inline-flex items-center px-4 py-2 border border-gray-200 rounded-xl shadow-sm text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 transition-all hover:border-indigo-200">
+                {% heroicon_outline "pencil-square" class="w-4 h-4 mr-2 text-indigo-500" %}
+                Edit Plan
             </a>
-            <div class="flex items-center justify-between mt-2">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Production Plan Details</h1>
-                    <p class="text-sm text-gray-600 mt-1">Activity: <span class="font-semibold">{{ object.activity }}</span></p>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <a href="{% url 'project:production-plan-edit' project.pk object.pk %}"
-                       class="inline-flex items-center px-4 py-2 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                        {% heroicon_outline "pencil-square" size="20" %}
-                        <span class="ml-2">Edit Plan</span>
-                    </a>
-                </div>
-            </div>
+            <a href="{% url 'project:production-cost-breakdown' project.pk %}?plan_id={{ object.pk }}"
+               class="inline-flex items-center px-4 py-2 rounded-xl shadow-sm text-sm font-black text-white bg-indigo-600 hover:bg-indigo-700 transition-all transform hover:scale-[1.02]">
+                {% heroicon_outline "plus-circle" class="mr-2 w-4 h-4" %}
+                Manage Resources
+            </a>
         </div>
     </div>
 
     <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <dt class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Duration</dt>
-            <dd class="text-2xl font-bold text-gray-900">{{ object.duration }} Days</dd>
-            <p class="text-xs text-gray-500 mt-1">{{ object.start_date|date:"M d" }} - {{ object.finish_date|date:"M d, Y" }}</p>
+    <div class="grid grid-cols-1 gap-6 mb-12 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+            <div class="mb-2 text-xs font-black text-gray-400 uppercase tracking-widest">Duration</div>
+            <div class="text-2xl font-black text-gray-900">{{ object.duration }} <span class="text-sm text-gray-400 font-bold uppercase">Days</span></div>
+            <div class="mt-1 text-xs font-bold text-indigo-500 uppercase">{{ object.start_date|date:"M d" }} — {{ object.finish_date|date:"M d, Y" }}</div>
         </div>
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <dt class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Planned Quantity</dt>
-            <dd class="text-2xl font-bold text-gray-900">{{ object.quantity|floatformat:2 }}</dd>
-            <p class="text-xs text-gray-500 mt-1">Unit: {{ object.unit }}</p>
+
+        <div class="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+            <div class="mb-2 text-xs font-black text-gray-400 uppercase tracking-widest">Planned Volume</div>
+            <div class="text-2xl font-black text-gray-900">{{ object.quantity|floatformat:1 }} <span class="text-sm text-gray-400 font-bold uppercase">{{ object.unit }}</span></div>
+            <div class="mt-1 text-xs font-bold text-emerald-500 uppercase">Target Quota</div>
         </div>
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <dt class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Total Labour</dt>
-            <dd class="text-2xl font-bold text-indigo-600">R {{ object.total_labour_cost|floatformat:2|intcomma }}</dd>
+
+        <div class="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+            <div class="mb-2 text-xs font-black text-gray-400 uppercase tracking-widest">Labour Budget</div>
+            <div class="text-2xl font-black text-gray-900">R {{ object.total_labour_cost|floatformat:0|intcomma }}</div>
+            <div class="mt-1 text-xs font-bold text-blue-500 uppercase">Total Personnel</div>
         </div>
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <dt class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Total Plant</dt>
-            <dd class="text-2xl font-bold text-indigo-600">R {{ object.total_plant_cost|floatformat:2|intcomma }}</dd>
+
+        <div class="p-6 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-200 transition-all hover:shadow-xl transform hover:scale-[1.01]">
+            <div class="mb-2 text-xs font-black text-indigo-200 uppercase tracking-widest">Plant Budget</div>
+            <div class="text-2xl font-black text-white">R {{ object.total_plant_cost|floatformat:0|intcomma }}</div>
+            <div class="mt-1 text-xs font-bold text-indigo-100 uppercase">Machinery & Equipment</div>
         </div>
     </div>
 
     <!-- Resource Breakdown -->
-    <div class="space-y-6">
-        <div class="flex items-center justify-between">
-            <h2 class="text-lg font-bold text-gray-900">Resource Breakdown</h2>
-            <div class="flex space-x-2">
-                <a href="{% url 'project:production-cost-breakdown' project.pk %}?plan_id={{ object.pk }}"
-                   class="inline-flex items-center px-4 py-2 rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                    {% heroicon_outline "plus-circle" size="20" class="mr-2" %}
-                    Manage Resources
-                </a>
-            </div>
-        </div>
-
+    <div class="space-y-8">
         {% for category in resource_categories %}
-            <div class="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-                    <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wide">{{ category.type_name }}</h3>
-                    <span class="text-sm font-semibold text-indigo-600">Total: R {{ category.total_cost|floatformat:2|intcomma }}</span>
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <div class="px-8 py-5 flex items-center justify-between bg-gray-50/50 border-b border-gray-100">
+                    <h3 class="text-xs font-black text-gray-900 uppercase tracking-widest flex items-center">
+                        {% if category.type_name == "Labour" %}
+                            {% heroicon_outline "user-group" class="mr-2 w-4 h-4 text-blue-500" %}
+                        {% else %}
+                            {% heroicon_outline "truck" class="mr-2 w-4 h-4 text-emerald-500" %}
+                        {% endif %}
+                        {{ category.type_name }} Allocation
+                    </h3>
+                    <div class="text-xs font-black text-indigo-600 uppercase tracking-tight">
+                        Category Total: <span class="text-sm ml-1">R {{ category.total_cost|floatformat:2|intcomma }}</span>
+                    </div>
                 </div>
+                
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-white">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resource Name</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b border-gray-100">
+                                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Resource</th>
+                                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Count</th>
+                                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Days</th>
+                                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Rate</th>
+                                <th class="px-8 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Extension</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-100">
+                        <tbody class="divide-y divide-gray-50">
                             {% for resource in category.resources %}
-                                <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ resource.name }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ resource.number|floatformat:0 }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ resource.days|floatformat:0 }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">R {{ resource.rate|floatformat:2|intcomma }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900">
-                                        R {{ resource.total_cost|floatformat:2|intcomma }}
+                                <tr class="hover:bg-gray-50/50 transition-colors group">
+                                    <td class="px-8 py-5">
+                                        <div class="text-sm font-black text-gray-900">{{ resource.name }}</div>
+                                    </td>
+                                    <td class="px-8 py-5">
+                                        <div class="text-sm font-bold text-gray-600">{{ resource.number|floatformat:0 }}</div>
+                                    </td>
+                                    <td class="px-8 py-5">
+                                        <div class="text-sm font-bold text-gray-600">{{ resource.days|floatformat:0 }}</div>
+                                    </td>
+                                    <td class="px-8 py-5">
+                                        <div class="text-sm font-bold text-gray-600">R {{ resource.rate|floatformat:2|intcomma }}</div>
+                                    </td>
+                                    <td class="px-8 py-5 text-right">
+                                        <div class="text-sm font-black text-gray-900">R {{ resource.total_cost|floatformat:2|intcomma }}</div>
                                     </td>
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="5" class="px-6 py-10 text-center text-sm text-gray-400 italic">
-                                        No {{ category.type_name|lower }} resources defined.
+                                    <td colspan="5" class="px-8 py-12 text-center">
+                                        <div class="inline-flex items-center justify-center p-4 bg-gray-50 rounded-2xl mb-4">
+                                            {% heroicon_outline "document-minus" class="w-8 h-8 text-gray-300" %}
+                                        </div>
+                                        <div class="text-sm font-bold text-gray-400">No {{ category.type_name|lower }} resources defined.</div>
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -109,17 +120,13 @@
         {% endfor %}
     </div>
 
-    <!-- Footer -->
-    <div class="px-6 py-4 bg-white rounded-lg mt-10 shadow-sm border border-gray-100">
-        <div class="flex justify-between items-center text-sm font-medium">
-            <a href="{% url 'project:production-planning' project.pk %}"
-               class="inline-flex items-center text-gray-700 hover:text-indigo-600 transition-colors">
-                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %} Back to List
-            </a>
-            <a href="{% url 'project:production-dashboard' project.pk %}"
-               class="inline-flex items-center text-gray-700 hover:text-indigo-600 transition-colors">
-                Production Dashboard {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
-            </a>
-        </div>
+    <!-- Footer Nav -->
+    <div class="flex flex-col gap-4 justify-between items-center px-8 py-6 mt-12 mb-8 bg-white rounded-2xl border border-gray-100 shadow-sm sm:flex-row">
+        <a href="{% url 'project:production-planning' project.pk %}"
+           class="inline-flex items-center text-sm font-bold text-gray-400 transition-colors hover:text-indigo-600">
+            {% heroicon_outline "chevron-left" class="mr-2 w-4 h-4" %} Back to Planning List
+        </a>
     </div>
-{% endblock content %}
+{% endblock production_content %}
+
+

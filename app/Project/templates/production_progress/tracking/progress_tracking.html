@@ -1,112 +1,93 @@
-{% extends "base.html" %}
+{% extends "production_progress/base_production.html" %}
 {% load static %}
 {% load heroicons %}
 {% load humanize %}
 {% load project_tags %}
+
 {% block title %}
     Progress Tracking - {{ project.name }} - {{ block.super }}
 {% endblock title %}
-{% block content %}
-    <!-- Header -->
-    <div class="bg-white shadow-sm rounded-lg mb-6">
-        <div class="px-6 py-4">
-            <a href="#"
-               onclick="window.history.back(); return false;"
-               class="inline-flex items-center p py-2 text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                {% heroicon_outline "chevron-left" size="20" %}
-                <span class="ml-1">Back</span>
-            </a>
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Production Progress Tracking</h1>
-                    <p class="text-sm text-gray-600 mt-1">Project: {{ project.name }}</p>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <a href="{% url 'project:production-list' project.pk %}"
-                       class="inline-flex items-center px-4 py-2 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 transition-colors">
-                        {% heroicon_outline "clipboard-document-list" size="20" %}
-                        <span class="ml-2">View Detailed Logs</span>
-                    </a>
-                    <a href="{% url 'project:production-create' project.pk %}"
-                       class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors">
-                        {% heroicon_solid "plus" size="20" %}
-                        <span class="ml-2">Log Daily Progress</span>
-                    </a>
-                </div>
-            </div>
-        </div>
+
+{% block production_content %}
+    <!-- Actions Header -->
+    <div class="flex flex-wrap gap-4 justify-end items-center mb-8">
+        <a href="{% url 'project:production-list' project.pk %}"
+           class="inline-flex items-center px-4 py-2.5 text-sm font-bold text-indigo-600 bg-white rounded-xl border border-indigo-200 shadow-sm transition-all hover:bg-indigo-50 hover:shadow-md">
+            {% heroicon_outline "clipboard-document-list" class="mr-2 w-5 h-5" %} View Detailed Logs
+        </a>
+        <a href="{% url 'project:production-create' project.pk %}"
+           class="inline-flex items-center px-4 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-xl border border-transparent shadow-sm transition-all hover:bg-indigo-700 hover:shadow-md">
+            {% heroicon_solid "plus" class="mr-2 w-5 h-5" %} Log Daily Progress
+        </a>
     </div>
-    <!-- Filters -->
-    {% comment %} <div class="bg-white shadow-sm rounded-lg mb-6 p-4">
-    <form method="GET" class="flex flex-wrap items-end gap-4">
-      <div class="w-64">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Activity</label>
-        <select name="plan_id" class="form-select w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-          <option value="">All Activities</option>
-          {% for plan in all_plans %}
-            <option value="{{ plan.id }}" {% if request.GET.plan_id == plan.id|stringformat:"s" %}selected{% endif %}>{{ plan.activity }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <button type="submit" class="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-900 transition-colors">
-        Filter
-      </button>
-    </form>
-    </div> {% endcomment %}
+
     {% for data in logs_data %}
         {% if not request.GET.plan_id or request.GET.plan_id == data.plan.id|stringformat:"s" %}
-            <div class="bg-white shadow-sm rounded-lg overflow-hidden mb-8">
-                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-gray-900">{{ data.plan.activity }}</h3>
-                    <span class="text-sm text-gray-600 font-medium">Planned: {{ data.plan.quantity }} {{ data.plan.unit }}</span>
+            <div class="overflow-hidden mb-12 bg-white rounded-2xl border border-gray-200 shadow-sm">
+                <!-- Activity Header -->
+                <div class="flex flex-col gap-4 justify-between items-start px-6 py-5 bg-gray-50 border-b border-gray-100 sm:flex-row sm:items-center">
+                    <div class="flex items-center">
+                        <div class="flex justify-center items-center mr-4 w-10 h-10 text-indigo-600 bg-indigo-100 rounded-xl">
+                            {% heroicon_outline "chart-pie" class="w-5 h-5" %}
+                        </div>
+                        <div>
+                            <h3 class="text-base font-black text-gray-900 uppercase tracking-tight">{{ data.plan.activity }}</h3>
+                            <p class="text-xs text-gray-500">Performance tracking across log period</p>
+                        </div>
+                    </div>
+                    <div class="inline-flex items-center px-3 py-1 text-xs font-bold text-indigo-700 bg-indigo-100 rounded-lg">
+                        Planned: {{ data.plan.quantity }} {{ data.plan.unit }}
+                    </div>
                 </div>
+
+                <!-- Metrics Grid/Table -->
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                        <thead class="bg-gray-50/50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">Description</th>
+                                <th class="px-6 py-3 text-xs font-bold tracking-wider text-left text-gray-500 uppercase w-64">Metric</th>
                                 {% for day in data.days_list %}
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{{ day }}</th>
+                                    <th class="px-6 py-3 text-xs font-bold tracking-wider text-center text-gray-500 uppercase">{{ day }}</th>
                                 {% endfor %}
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            <tr>
-                                <td class="px-6 py-4 text-sm text-gray-600 font-medium bg-gray-50">Production Quantity</td>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr class="transition-colors hover:bg-gray-50/50">
+                                <td class="px-6 py-4 text-sm font-bold text-gray-900 bg-gray-50/30">Production Quantity</td>
                                 {% for day in data.days_list %}
-                                    <td class="px-6 py-4 text-sm text-center text-gray-900 font-bold border-l">
+                                    <td class="px-6 py-4 text-sm font-bold text-center text-gray-900 border-l border-gray-100">
                                         {{ data.day_data|get_item:day|get_item:'production'|floatformat:0|intcomma }}
                                     </td>
                                 {% endfor %}
                             </tr>
-                            <tr>
-                                <td class="px-6 py-4 text-sm text-gray-600 font-medium bg-gray-50">Total Cost</td>
+                            <tr class="transition-colors hover:bg-gray-50/50">
+                                <td class="px-6 py-4 text-sm text-gray-600 bg-gray-50/30">Total Cost</td>
                                 {% for day in data.days_list %}
-                                    <td class="px-6 py-4 text-sm text-center text-gray-900 border-l">
+                                    <td class="px-6 py-4 text-sm text-center text-gray-700 border-l border-gray-100">
                                         R {{ data.day_data|get_item:day|get_item:'total_cost'|floatformat:2|intcomma }}
                                     </td>
                                 {% endfor %}
                             </tr>
-                            <tr>
-                                <td class="px-6 py-4 text-sm text-gray-600 font-medium bg-gray-50">Man Hours</td>
+                            <tr class="transition-colors hover:bg-gray-50/50">
+                                <td class="px-6 py-4 text-sm text-gray-600 bg-gray-50/30">Man Hours</td>
                                 {% for day in data.days_list %}
-                                    <td class="px-6 py-4 text-sm text-center text-gray-900 border-l">
+                                    <td class="px-6 py-4 text-sm text-center text-gray-700 border-l border-gray-100">
                                         {{ data.day_data|get_item:day|get_item:'man_hours'|floatformat:1 }}
                                     </td>
                                 {% endfor %}
                             </tr>
-                            <tr>
-                                <td class="px-6 py-4 text-sm text-gray-600 font-medium bg-gray-50">Work Productivity (Units/MH)</td>
+                            <tr class="transition-colors bg-indigo-50/40 hover:bg-indigo-50/60">
+                                <td class="px-6 py-4 text-sm font-black text-indigo-800 bg-indigo-50/20 uppercase tracking-tight">Work Productivity (Units/MH)</td>
                                 {% for day in data.days_list %}
-                                    <td class="px-6 py-4 text-sm text-center text-indigo-600 font-extrabold border-l">
+                                    <td class="px-6 py-4 text-sm font-black text-center text-indigo-600 border-l border-indigo-100">
                                         {{ data.day_data|get_item:day|get_item:'productivity'|floatformat:4 }}
                                     </td>
                                 {% endfor %}
                             </tr>
-                            <tr>
-                                <td class="px-6 py-4 text-sm text-gray-600 font-medium bg-gray-50">Cost per Item</td>
+                            <tr class="transition-colors bg-red-50/40 hover:bg-red-50/60">
+                                <td class="px-6 py-4 text-sm font-black text-red-800 bg-red-50/20 uppercase tracking-tight">Cost per Item</td>
                                 {% for day in data.days_list %}
-                                    <td class="px-6 py-4 text-sm text-center text-red-600 font-extrabold border-l">
+                                    <td class="px-6 py-4 text-sm font-black text-center text-red-600 border-l border-red-100">
                                         R {{ data.day_data|get_item:day|get_item:'cost_per_item'|floatformat:2|intcomma }}
                                     </td>
                                 {% endfor %}
@@ -117,24 +98,29 @@
             </div>
         {% endif %}
     {% empty %}
-        <div class="bg-white shadow-sm rounded-lg p-12 text-center border-2 border-dashed border-gray-300">
-            <h3 class="text-lg font-medium text-gray-900">No data available for tracking</h3>
-            <p class="text-sm text-gray-500 mt-2">Log your daily activity to see progress metrics.</p>
+        <div class="px-6 py-24 text-center bg-white border-2 border-dashed border-gray-200 rounded-2xl">
+            <div class="flex justify-center items-center mx-auto mb-6 w-20 h-20 text-indigo-400 bg-indigo-50 rounded-full">
+                {% heroicon_outline "presentation-chart-line" class="w-10 h-10" %}
+            </div>
+            <h3 class="text-xl font-bold text-gray-900">No data available for tracking</h3>
+            <p class="mt-2 text-gray-500">Log your daily activity to see progress metrics.</p>
+            <a href="{% url 'project:production-create' project.pk %}"
+               class="inline-flex items-center px-6 py-3 mt-8 text-sm font-bold text-white bg-indigo-600 rounded-xl transition-all hover:bg-indigo-700">
+                Log Progress
+            </a>
         </div>
     {% endfor %}
-    <!-- Footer -->
-    <div class="px-6 py-4 bg-white rounded-lg mt-8 shadow-sm">
-        <div class="flex justify-between items-center">
-            <a href="{% url 'project:company-management' project.pk %}"
-               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
-                Business Management
-            </a>
-            <a href="{% url 'project:production-dashboard' project.pk %}"
-               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                Production Dashboard
-                {% heroicon_outline "chevron-right" class="w-4 h-4 mr-1" %}
-            </a>
-        </div>
+
+    <!-- Footer Nav -->
+    <div class="flex flex-col gap-4 justify-between items-center px-8 py-6 mt-12 mb-8 bg-white rounded-2xl border border-gray-100 shadow-sm sm:flex-row">
+        <a href="{% url 'project:company-management' project.pk %}"
+           class="inline-flex items-center text-sm font-bold text-gray-400 transition-colors hover:text-indigo-600">
+            {% heroicon_outline "chevron-left" class="mr-2 w-4 h-4" %} Business Management
+        </a>
+        <a href="{% url 'project:production-dashboard' project.pk %}"
+           class="inline-flex items-center px-5 py-2 text-sm font-bold text-indigo-600 bg-indigo-50 rounded-xl transition-all hover:bg-indigo-100">
+            Production Dashboard {% heroicon_outline "chevron-right" class="ml-2 w-4 h-4" %}
+        </a>
     </div>
-{% endblock content %}
+{% endblock production_content %}
+
