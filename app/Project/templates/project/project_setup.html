@@ -241,7 +241,11 @@
                         <h2 class="text-lg font-semibold text-gray-900">Lead Consultant Management</h2>
                         <p class="text-sm text-gray-600 mt-1">Manage project lead consultant information</p>
                     </div>
-                    {# Note: Assuming a manage list view exists similar to contractors, otherwise this button can be removed or linked to project-users #}
+                    <a href="{% url 'client:lead-consultant-management:lead-consultant-list' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_outline "user-group" size="20" class="mr-2" %}
+                        Manage Lead Consultants
+                    </a>
                 </div>
             </div>
             <div class="px-6 py-4">

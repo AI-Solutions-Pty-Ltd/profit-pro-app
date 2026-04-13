@@ -83,15 +83,14 @@ class ProjectLeadConsultantForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         project = kwargs.pop("project", None)
-        user: Account = kwargs.pop("user", None)
-        projects = user.get_projects
+        kwargs.pop("user", None)
 
         super().__init__(*args, **kwargs)
 
-        # Filter to only show consultant companies
-        queryset = Company.objects.filter(
-            lead_consultant_projects__in=projects, type=Company.Type.LEAD_CONSULTANT
-        ).order_by("name")
+        # Filter to only show lead consultant companies
+        queryset = Company.objects.filter(type=Company.Type.LEAD_CONSULTANT).order_by(
+            "name"
+        )
 
         # Exclude the currently assigned lead consultant if project is provided
         if project and project.lead_consultant:
