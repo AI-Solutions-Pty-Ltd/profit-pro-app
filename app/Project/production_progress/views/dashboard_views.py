@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
 from django.views.generic import DetailView, ListView, TemplateView
 
 from app.Account.subscription_config import Subscription
@@ -36,32 +37,20 @@ class ProductionDashboardView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["project"] = Project.objects.get(pk=self.kwargs["project_pk"])
-
-        # Get filter parameters
-        activity_filter = self.request.GET.get("activity", "").strip()
-        start_date_filter = self.request.GET.get("start_date", "").strip()
-        finish_date_filter = self.request.GET.get("finish_date", "").strip()
-
-        # Build queryset with filters
-        plans = ProductionPlan.objects.filter(
-            project_id=self.kwargs["project_pk"], is_archived=False
-        ).prefetch_related("resources")
-
-        if activity_filter:
-            plans = plans.filter(activity__icontains=activity_filter)
-
-        if start_date_filter:
-            plans = plans.filter(start_date__gte=start_date_filter)
-
-        if finish_date_filter:
-            plans = plans.filter(finish_date__lte=finish_date_filter)
-
-        context["plans"] = plans
-        context["activity_filter"] = activity_filter
-        context["start_date_filter"] = start_date_filter
-        context["finish_date_filter"] = finish_date_filter
-
         return context
+
+    def get_breadcrumbs(self):
+        project = Project.objects.get(pk=self.kwargs["project_pk"])
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": f"Project: {project.name}",
+                "url": reverse_lazy(
+                    "project:project-management", kwargs={"pk": project.pk}
+                ),
+            },
+            {"title": "Production Dashboard", "url": None},
+        ]
 
 
 class ProductionProgressDashboardView(
@@ -106,6 +95,14 @@ class ProductionProgressDashboardView(
             }
         )
         return context
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {"title": "Progress Tracking", "url": None},
+        ]
 
 
 class ProductionActivityDetailView(

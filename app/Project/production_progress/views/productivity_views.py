@@ -37,14 +37,27 @@ class DailyProductionCreateView(
 
     model = DailyProduction
     form_class = DailyProductionForm
-    template_name = "production_progress/log/production_form.html"
+    template_name = "production_progress/tracking/production_form.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {"title": "Log Daily Quantities", "url": None},
+        ]
 
     def get_success_url(self):
         return reverse_lazy(
             "project:production-dashboard",
             kwargs={"project_pk": self.kwargs["project_pk"]},
         )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        return context
 
     def form_valid(self, form):
         form.instance.project_id = self.kwargs["project_pk"]
@@ -56,8 +69,16 @@ class DailyProductivityCreateView(
 ):
     """View to handle the composite Daily Productivity Form."""
 
-    template_name = "production_progress/log/productivity_form.html"
+    template_name = "production_progress/tracking/productivity_form.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {"title": "Daily Productivity Log", "url": None},
+        ]
 
     def get_context_data(self, post_data=None, **kwargs):
         context = super().get_context_data(**kwargs)

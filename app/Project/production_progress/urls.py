@@ -14,6 +14,11 @@ urlpatterns = [
         name="production-planning",
     ),
     path(
+        "<int:project_pk>/planning/list/",
+        views.ProductionPlanListView.as_view(),
+        name="production-plan-list",
+    ),
+    path(
         "<int:project_pk>/cost-breakdown/",
         views.ProductionCostBreakdownView.as_view(),
         name="production-cost-breakdown",

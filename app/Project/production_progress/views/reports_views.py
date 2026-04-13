@@ -2,6 +2,7 @@ import json
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
 from django.views.generic import TemplateView
 
 from app.Account.subscription_config import Subscription
@@ -24,8 +25,16 @@ class ProductivityLogsView(
 ):
     """Consolidated view for Labour Log, Plant Log, and Productivity Table."""
 
-    template_name = "production_progress/log/productivity_logs.html"
+    template_name = "production_progress/tracking/productivity_logs.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {"title": "Productivity Logs", "url": None},
+        ]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -123,6 +132,14 @@ class ProductionForecastDashboardView(
 
     template_name = "production_progress/reports/forecast_dashboard.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {"title": "Forecasting Dashboard", "url": None},
+        ]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

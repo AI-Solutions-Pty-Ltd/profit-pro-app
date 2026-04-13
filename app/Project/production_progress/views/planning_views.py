@@ -8,6 +8,7 @@ from django.views.generic import (
     CreateView,
     DeleteView,
     DetailView,
+    ListView,
     TemplateView,
     UpdateView,
 )
@@ -29,6 +30,57 @@ from ..production_models import (
 )
 
 
+class ProductionPlanListView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, ListView
+):
+    """Lists all production plans for a project with filtering."""
+
+    model = ProductionPlan
+    template_name = "production_progress/planning/list.html"
+    context_object_name = "plans"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {"title": "Planning List", "url": None},
+        ]
+
+    def get_queryset(self):
+        queryset = ProductionPlan.objects.filter(
+            project_id=self.kwargs["project_pk"], is_archived=False
+        ).prefetch_related("resources")
+
+        # Get filter parameters
+        activity_filter = self.request.GET.get("activity", "").strip()
+        start_date_filter = self.request.GET.get("start_date", "").strip()
+        finish_date_filter = self.request.GET.get("finish_date", "").strip()
+
+        if activity_filter:
+            queryset = queryset.filter(activity__icontains=activity_filter)
+
+        if start_date_filter:
+            queryset = queryset.filter(start_date__gte=start_date_filter)
+
+        if finish_date_filter:
+            queryset = queryset.filter(finish_date__lte=finish_date_filter)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+
+        # Pass filters back to template
+        context["activity_filter"] = self.request.GET.get("activity", "").strip()
+        context["start_date_filter"] = self.request.GET.get("start_date", "").strip()
+        context["finish_date_filter"] = self.request.GET.get("finish_date", "").strip()
+
+        return context
+
+
 class ProductionPlanningView(
     SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, CreateView
 ):
@@ -36,7 +88,7 @@ class ProductionPlanningView(
 
     model = ProductionPlan
     form_class = ProductionPlanForm
-    template_name = "production_progress/plan/planning.html"
+    template_name = "production_progress/planning/form.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_form_kwargs(self):
@@ -46,17 +98,27 @@ class ProductionPlanningView(
 
     def get_success_url(self):
         return reverse_lazy(
-            "project:production-dashboard",
+            "project:production-plan-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
         )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["project"] = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        project_pk = self.kwargs.get("project_pk")
+        context["project"] = get_object_or_404(Project, pk=project_pk)
         context["plans"] = ProductionPlan.objects.filter(
-            project_id=self.kwargs["project_pk"], is_archived=False
+            project_id=project_pk, is_archived=False
         ).prefetch_related("resources")
         return context
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {"title": "Planning List", "url": reverse_lazy("project:production-plan-list", kwargs={"project_pk": project_pk})},
+            {"title": "New Plan", "url": None},
+        ]
 
     def form_valid(self, form):
         project_pk = self.kwargs.get("project_pk")
@@ -84,7 +146,7 @@ class ProductionPlanDetailView(
     """Shows a single production plan detail."""
 
     model = ProductionPlan
-    template_name = "production_progress/plan/plan_detail.html"
+    template_name = "production_progress/planning/detail.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_queryset(self):
@@ -118,6 +180,16 @@ class ProductionPlanDetailView(
         context["resource_categories"] = resource_categories
         return context
 
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        plan = self.get_object()
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {"title": "Planning List", "url": reverse_lazy("project:production-plan-list", kwargs={"project_pk": project_pk})},
+            {"title": f"Plan: {plan.activity}", "url": None},
+        ]
+
 
 class ProductionPlanUpdateView(
     SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, UpdateView
@@ -126,7 +198,7 @@ class ProductionPlanUpdateView(
 
     model = ProductionPlan
     form_class = ProductionPlanForm
-    template_name = "production_progress/plan/planning.html"
+    template_name = "production_progress/planning/form.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_form_kwargs(self):
@@ -139,7 +211,7 @@ class ProductionPlanUpdateView(
 
     def get_success_url(self):
         return reverse_lazy(
-            "project:production-dashboard",
+            "project:production-plan-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
         )
 
@@ -151,6 +223,16 @@ class ProductionPlanUpdateView(
         ).prefetch_related("resources")
         context["is_update"] = True
         return context
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        plan = self.get_object()
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {"title": "Planning List", "url": reverse_lazy("project:production-plan-list", kwargs={"project_pk": project_pk})},
+            {"title": f"Edit Plan: {plan.activity}", "url": None},
+        ]
 
     def form_valid(self, form):
         try:
@@ -174,7 +256,7 @@ class ProductionPlanDeleteView(
     """Delete an existing production plan item."""
 
     model = ProductionPlan
-    template_name = "production_progress/plan/plan_confirm_delete.html"
+    template_name = "production_progress/planning/delete.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_queryset(self):
@@ -182,7 +264,7 @@ class ProductionPlanDeleteView(
 
     def get_success_url(self):
         return reverse_lazy(
-            "project:production-dashboard",
+            "project:production-plan-list",
             kwargs={"project_pk": self.kwargs["project_pk"]},
         )
 
@@ -190,6 +272,16 @@ class ProductionPlanDeleteView(
         context = super().get_context_data(**kwargs)
         context["project"] = Project.objects.get(pk=self.kwargs["project_pk"])
         return context
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        plan = self.get_object()
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {"title": "Planning List", "url": reverse_lazy("project:production-plan-list", kwargs={"project_pk": project_pk})},
+            {"title": f"Delete Plan: {plan.activity}", "url": None},
+        ]
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -206,7 +298,7 @@ class ProductionCostBreakdownView(
 ):
     """Financial analysis view showing the actual cost breakdown vs budget totals."""
 
-    template_name = "production_progress/plan/cost_breakdown.html"
+    template_name = "production_progress/cost_breakdown/list.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_context_data(self, **kwargs):
@@ -237,6 +329,14 @@ class ProductionCostBreakdownView(
         )
         return context
 
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {"title": "Cost Breakdown", "url": None},
+        ]
+
     def post(self, request, *args, **kwargs):
         project_pk = self.kwargs["project_pk"]
         action = request.POST.get("action")
@@ -263,7 +363,7 @@ class ProductionResourceCreateView(
 
     model = ProductionResource
     form_class = ProductionResourceForm
-    template_name = "production_progress/plan/production_resource_form.html"
+    template_name = "production_progress/resource/form.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_success_url(self):
@@ -334,6 +434,15 @@ class ProductionResourceCreateView(
                 pass
 
         return context
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {"title": "Cost Breakdown", "url": reverse_lazy("project:production-cost-breakdown", kwargs={"project_pk": project_pk})},
+            {"title": "Add Resource", "url": None},
+        ]
 
 
 class PlanResourcesAjaxView(
