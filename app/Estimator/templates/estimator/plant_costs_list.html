@@ -1,11 +1,11 @@
 {% extends "estimator/base_baseline_costs.html" %}
 {% load estimator_tags %}
-{% block title %}Material Costs - Project Resource Estimator{% endblock %}
+{% block title %}Plant Costs - Project Resource Estimator{% endblock %}
 {% block sub_content %}
     <div class="sm:flex sm:items-center sm:justify-between mb-6">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Material Costs</h1>
-            <p class="mt-1 text-sm text-gray-500">Material pricing reference used in rate calculations.</p>
+            <h1 class="text-2xl font-bold text-gray-900">Plant Costs</h1>
+            <p class="mt-1 text-sm text-gray-500">Plant & equipment pricing reference used in rate calculations.</p>
         </div>
         <div class="mt-4 sm:mt-0 flex gap-2">
             <form method="post" class="inline">
@@ -13,7 +13,7 @@
                 <input type="hidden" name="action" value="sync_system">
                 <button type="submit"
                         class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50"
-                        onclick="return confirm('This will sync material costs with the system library. Existing rates linked to system data will be overwritten. Continue?')">
+                        onclick="return confirm('This will sync plant costs with the system library. Existing rates linked to system data will be overwritten. Continue?')">
                     <svg xmlns="http://www.w3.org/2000/svg"
                          fill="none"
                          viewBox="0 0 24 24"
@@ -25,7 +25,7 @@
                     Sync with System
                 </button>
             </form>
-            <a href="{% url 'estimator:download_material_cost_template' project_pk=project_pk %}"
+            <a href="{% url 'estimator:download_plant_cost_template' project_pk=project_pk %}"
                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 <svg xmlns="http://www.w3.org/2000/svg"
                      fill="none"
@@ -37,7 +37,7 @@
                 </svg>
                 Template
             </a>
-            <a href="{% url 'estimator:material_cost_upload' project_pk=project_pk %}"
+            <a href="{% url 'estimator:plant_cost_upload' project_pk=project_pk %}"
                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 <svg xmlns="http://www.w3.org/2000/svg"
                      fill="none"
@@ -50,7 +50,7 @@
                 Upload
             </a>
             <button type="button"
-                    onclick="document.getElementById('material-form').classList.toggle('hidden')"
+                    onclick="document.getElementById('plant-form').classList.toggle('hidden')"
                     class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                 <svg xmlns="http://www.w3.org/2000/svg"
                      fill="none"
@@ -60,19 +60,19 @@
                      class="w-5 h-5 mr-1.5 -ml-0.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
-                Add Material
+                Add Plant
             </button>
         </div>
     </div>
-    <!-- Add Material Form -->
-    <div id="material-form"
+    <!-- Add Plant Form -->
+    <div id="plant-form"
          class="{% if not form.errors %}hidden{% endif %} mb-6">
-        <div class="overflow-hidden bg-white shadow-sm rounded-lg overflow-hidden">
+        <div class="overflow-hidden bg-white shadow-sm rounded-lg">
             <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-base font-semibold text-gray-900 mb-4">New Material</h3>
+                <h3 class="text-base font-semibold text-gray-900 mb-4">New Plant & Equipment</h3>
                 <form method="post">
                     {% csrf_token %}
-                    <input type="hidden" name="action" value="add_material">
+                    <input type="hidden" name="action" value="add_plant">
                     {% if form.errors %}
                         <div class="rounded-md bg-red-50 p-4 mb-4">
                             <div class="text-sm text-red-700">
@@ -84,102 +84,83 @@
                     {% endif %}
                     <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
                         <div class="sm:col-span-2">
-                            <label for="id_trade_name" class="block text-sm font-medium text-gray-700">Trade Name</label>
-                            <div class="mt-1">{{ form.trade_name }}</div>
+                            <label for="id_name" class="block text-sm font-medium text-gray-700">Plant & Equipment</label>
+                            <div class="mt-1">{{ form.name }}</div>
                         </div>
                         <div class="sm:col-span-2">
-                            <label for="id_material_code"
-                                   class="block text-sm font-medium text-gray-700">Material Code</label>
-                            <div class="mt-1">{{ form.material_code }}</div>
-                        </div>
-                        <div class="sm:col-span-1">
-                            <label for="id_unit" class="block text-sm font-medium text-gray-700">Unit</label>
-                            <div class="mt-1">{{ form.unit }}</div>
-                        </div>
-                        <div class="sm:col-span-1">
-                            <label for="id_market_rate" class="block text-sm font-medium text-gray-700">Market Rate (R)</label>
-                            <div class="mt-1">{{ form.market_rate }}</div>
+                            <label for="id_hourly_production"
+                                   class="block text-sm font-medium text-gray-700">Hourly Production</label>
+                            <div class="mt-1">{{ form.hourly_production }}</div>
                         </div>
                         <div class="sm:col-span-2">
-                            <label for="id_material_variety"
-                                   class="block text-sm font-medium text-gray-700">Material Variety</label>
-                            <div class="mt-1">{{ form.material_variety }}</div>
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label for="id_market_spec" class="block text-sm font-medium text-gray-700">Market Spec</label>
-                            <div class="mt-1">{{ form.market_spec }}</div>
+                            <label for="id_hourly_rate" class="block text-sm font-medium text-gray-700">Hourly Rate (R)</label>
+                            <div class="mt-1">{{ form.hourly_rate }}</div>
                         </div>
                     </div>
                     <div class="mt-4 flex justify-end gap-x-3">
                         <button type="button"
-                                onclick="document.getElementById('material-form').classList.add('hidden')"
+                                onclick="document.getElementById('plant-form').classList.add('hidden')"
                                 class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                             Cancel
                         </button>
                         <button type="submit"
-                                class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                            Save Material
+                                class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                            Save Plant
                         </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
-    <div class="overflow-hidden bg-white shadow-sm rounded-lg overflow-hidden">
+    <div class="overflow-hidden bg-white shadow-sm rounded-lg">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
                         <th scope="col"
                             class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">
-                            Trade Name
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Material Code
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Unit
+                            Plant & Equipment
                         </th>
                         <th scope="col"
                             class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Market Rate
+                            Hourly Production
                         </th>
                         <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Material Variety
-                        </th>
-                        <th scope="col"
-                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">
-                            Market Spec
+                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">
+                            Hourly Rate
                         </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
-                    {% for mat in materials %}
+                    {% for plant in plants %}
                         <tr class="hover:bg-gray-50">
-                            <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">{{ mat.trade_name|default:"-" }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900">
-                                <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-indigo-700/10 ring-inset">
-                                    {{ mat.material_code }}
-                                </span>
+                            <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+                                <input type="text"
+                                       class="inline-edit w-48 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ plant.id }}"
+                                       data-field="name"
+                                       value="{{ plant.name }}">
                             </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ mat.unit }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-gray-900 text-right">
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                <input type="number"
+                                       step="0.01"
+                                       class="inline-edit w-24 text-right border-0 bg-transparent text-sm p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ plant.id }}"
+                                       data-field="hourly_production"
+                                       value="{{ plant.hourly_production }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-gray-900 text-right sm:pr-6">
                                 <input type="number"
                                        step="0.01"
                                        class="inline-edit w-24 text-right border-0 bg-transparent text-sm font-semibold text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                       data-item-id="{{ mat.id }}"
-                                       data-field="market_rate"
-                                       value="{{ mat.market_rate }}">
+                                       data-item-id="{{ plant.id }}"
+                                       data-field="hourly_rate"
+                                       value="{{ plant.hourly_rate }}">
                             </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ mat.material_variety }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500 sm:pr-6">{{ mat.market_spec }}</td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">No materials found.</td>
+                            <td colspan="3" class="px-6 py-12 text-center text-sm text-gray-500">No plant & equipment found.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -194,7 +175,7 @@ document.querySelectorAll('.inline-edit').forEach(input => {
         if (input.value === original) return;
         const id = input.dataset.itemId;
         const field = input.dataset.field;
-        fetch(`/estimator/project/{{ project_pk }}/api/material/${id}/update/`, {
+        fetch(`/estimator/project/{{ project_pk }}/api/plant-cost/${id}/update/`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({field, value: input.value})
