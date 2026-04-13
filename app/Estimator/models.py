@@ -235,6 +235,126 @@ class SystemLabourSpecification(models.Model):
         return self.boq_quantity or Decimal("0")
 
 
+class SystemPlantCost(models.Model):
+    """System-level plant & equipment cost library."""
+
+    name = models.CharField(max_length=200, unique=True)
+    hourly_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    hourly_rate = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "System Plant Cost"
+
+    def __str__(self):
+        return self.name
+
+
+class SystemPlantSpecification(models.Model):
+    """System-level plant specification library."""
+
+    section = models.CharField(max_length=100, blank=True)
+    trade_name = models.CharField(max_length=200, blank=True)
+    name = models.CharField(max_length=200)
+    unit = models.CharField(max_length=20, blank=True)
+    plant_type = models.ForeignKey(
+        SystemPlantCost,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="plant_specs",
+    )
+    daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    operator_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+
+    class Meta:
+        ordering = ["section", "name"]
+        verbose_name = "System Plant Specification"
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def daily_output(self):
+        return self.daily_production * self.operator_factor * self.site_factor
+
+    @property
+    def hourly_cost(self):
+        if self.plant_type:
+            return self.plant_type.hourly_rate
+        return Decimal("0")
+
+    @property
+    def rate_per_unit(self):
+        if self.daily_production and self.daily_production > 0:
+            return self.hourly_cost / self.daily_production
+        return Decimal("0")
+
+
+class SystemPreliminaryCost(models.Model):
+    """System-level preliminaries cost library — single table with type column."""
+
+    PRELIMINARY_TYPE_CHOICES = [
+        ("fixed_contractual", "Fixed Contractual Requirements"),
+        ("fixed_facilities", "Fixed Facilities"),
+        ("time_contractual", "Time-Contractual Requirements"),
+        ("time_facilities", "Time-Facilities"),
+        ("time_small_tools", "Time-Small Tool Allowances"),
+        ("time_plant_equipment", "Time-Plant and Equipment"),
+        ("time_company_overheads", "Time-Company & Head Office Overheads"),
+        ("time_site_personnel", "Time-Site Personnel"),
+    ]
+
+    name = models.CharField(max_length=200)
+    preliminary_type = models.CharField(max_length=30, choices=PRELIMINARY_TYPE_CHOICES)
+    sum_value = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0, help_text="Sum/lump sum value"
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    number_per_month = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, blank=True
+    )
+    monthly_rate = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0, blank=True
+    )
+    months = models.DecimalField(max_digits=6, decimal_places=2, default=0, blank=True)
+
+    class Meta:
+        ordering = ["preliminary_type", "name"]
+        verbose_name = "System Preliminary Cost"
+
+    def __str__(self):
+        return f"{self.get_preliminary_type_display()} - {self.name}"
+
+    @property
+    def is_time_based(self):
+        return self.preliminary_type.startswith("time_")
+
+    @property
+    def computed_amount(self):
+        if self.is_time_based:
+            return self.number_per_month * self.monthly_rate * self.months
+        return self.amount
+
+
+class SystemPreliminarySpecification(models.Model):
+    """System-level preliminary specification library."""
+
+    section = models.CharField(max_length=100, blank=True)
+    trade_name = models.CharField(max_length=200, blank=True)
+    name = models.CharField(max_length=200)
+    unit = models.CharField(max_length=20, blank=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    class Meta:
+        ordering = ["section", "name"]
+        verbose_name = "System Preliminary Specification"
+
+    def __str__(self):
+        return self.name
+
+
 class SystemMaterialSpec(models.Model):
     """Reusable material specification library at system level."""
 
@@ -573,6 +693,168 @@ class ProjectLabourSpecification(models.Model):
         return total or Decimal("0")
 
 
+class ProjectPlantCost(models.Model):
+    """Project-scoped plant & equipment cost."""
+
+    project = models.ForeignKey(
+        "Project.Project",
+        on_delete=models.CASCADE,
+        related_name="estimator_plant_costs",
+    )
+    source = models.ForeignKey(
+        SystemPlantCost,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_copies",
+    )
+    name = models.CharField(max_length=200)
+    hourly_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    hourly_rate = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    class Meta:
+        ordering = ["name"]
+        unique_together = [("project", "name")]
+        verbose_name = "Project Plant Cost"
+
+    def __str__(self):
+        return self.name
+
+
+class ProjectPlantSpecification(models.Model):
+    """Project-scoped plant specification."""
+
+    project = models.ForeignKey(
+        "Project.Project",
+        on_delete=models.CASCADE,
+        related_name="estimator_plant_specs",
+    )
+    source = models.ForeignKey(
+        SystemPlantSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_copies",
+    )
+    section = models.CharField(max_length=100, blank=True)
+    trade_name = models.CharField(max_length=200, blank=True)
+    name = models.CharField(max_length=200)
+    unit = models.CharField(max_length=20, blank=True)
+    plant_type = models.ForeignKey(
+        ProjectPlantCost,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="plant_specs",
+    )
+    daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    operator_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+    site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
+
+    class Meta:
+        ordering = ["section", "name"]
+        unique_together = [("project", "name")]
+        verbose_name = "Project Plant Specification"
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def daily_output(self):
+        return self.daily_production * self.operator_factor * self.site_factor
+
+    @property
+    def hourly_cost(self):
+        if self.plant_type:
+            return self.plant_type.hourly_rate
+        return Decimal("0")
+
+    @property
+    def rate_per_unit(self):
+        if self.daily_production and self.daily_production > 0:
+            return self.hourly_cost / self.daily_production
+        return Decimal("0")
+
+
+class ProjectPreliminaryCost(models.Model):
+    """Project-scoped preliminaries cost — single table with type column."""
+
+    project = models.ForeignKey(
+        "Project.Project",
+        on_delete=models.CASCADE,
+        related_name="estimator_preliminary_costs",
+    )
+    source = models.ForeignKey(
+        SystemPreliminaryCost,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_copies",
+    )
+    name = models.CharField(max_length=200)
+    preliminary_type = models.CharField(
+        max_length=30, choices=SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
+    )
+    sum_value = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0, help_text="Sum/lump sum value"
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    number_per_month = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, blank=True
+    )
+    monthly_rate = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0, blank=True
+    )
+    months = models.DecimalField(max_digits=6, decimal_places=2, default=0, blank=True)
+
+    class Meta:
+        ordering = ["preliminary_type", "name"]
+        verbose_name = "Project Preliminary Cost"
+
+    def __str__(self):
+        return f"{self.get_preliminary_type_display()} - {self.name}"
+
+    @property
+    def is_time_based(self):
+        return self.preliminary_type.startswith("time_")
+
+    @property
+    def computed_amount(self):
+        if self.is_time_based:
+            return self.number_per_month * self.monthly_rate * self.months
+        return self.amount
+
+
+class ProjectPreliminarySpecification(models.Model):
+    """Project-scoped preliminary specification."""
+
+    project = models.ForeignKey(
+        "Project.Project",
+        on_delete=models.CASCADE,
+        related_name="estimator_preliminary_specs",
+    )
+    source = models.ForeignKey(
+        SystemPreliminarySpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="project_copies",
+    )
+    section = models.CharField(max_length=100, blank=True)
+    trade_name = models.CharField(max_length=200, blank=True)
+    name = models.CharField(max_length=200)
+    unit = models.CharField(max_length=20, blank=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    class Meta:
+        ordering = ["section", "name"]
+        unique_together = [("project", "name")]
+        verbose_name = "Project Preliminary Specification"
+
+    def __str__(self):
+        return self.name
+
+
 # ═══════════════════════════════════════════════════════════════════
 # ProjectAssumptions — Project-level global markups & wastage
 # ═══════════════════════════════════════════════════════════════════
@@ -635,6 +917,20 @@ class BOQItem(models.Model):
     )
     labour_specification = models.ForeignKey(
         ProjectLabourSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="boq_items",
+    )
+    plant_specification = models.ForeignKey(
+        ProjectPlantSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="boq_items",
+    )
+    preliminary_specification = models.ForeignKey(
+        ProjectPreliminarySpecification,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -724,10 +1020,38 @@ class BOQItem(models.Model):
         return None
 
     @property
+    def new_plant_rate(self):
+        if self.plant_specification:
+            return self.plant_specification.rate_per_unit
+        return None
+
+    @property
+    def new_plant_amount(self):
+        rate = self.new_plant_rate
+        if rate and self.contract_quantity:
+            return rate * self.contract_quantity
+        return None
+
+    @property
+    def new_preliminary_rate(self):
+        if self.preliminary_specification:
+            return self.preliminary_specification.amount
+        return None
+
+    @property
+    def new_preliminary_amount(self):
+        rate = self.new_preliminary_rate
+        if rate and self.contract_quantity:
+            return rate * self.contract_quantity
+        return None
+
+    @property
     def baseline_new_price(self):
         mat = self.new_materials_rate or Decimal("0")
         lab = self.new_labour_rate or Decimal("0")
-        total = mat + lab
+        plant = self.new_plant_rate or Decimal("0")
+        prelim = self.new_preliminary_rate or Decimal("0")
+        total = mat + lab + plant + prelim
         return total if total > 0 else None
 
     @property

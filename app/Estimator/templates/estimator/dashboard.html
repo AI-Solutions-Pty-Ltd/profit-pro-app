@@ -170,7 +170,31 @@
                     {% endfor %}
                 </select>
             </div>
-            {% if f_section or f_bill_no or f_trade_code or f_mat_spec or f_lab_spec %}
+            <div class="min-w-0">
+                <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Plant Spec</label>
+                <select name="plant_spec"
+                        onchange="this.form.submit()"
+                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                    <option value="">All</option>
+                    <option value="none" {% if f_plant_spec == "none" %}selected{% endif %}>No Plant Spec</option>
+                    {% for name in plant_spec_names %}
+                        <option value="{{ name }}" {% if f_plant_spec == name %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="min-w-0">
+                <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Prelim Spec</label>
+                <select name="prelim_spec"
+                        onchange="this.form.submit()"
+                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                    <option value="">All</option>
+                    <option value="none" {% if f_prelim_spec == "none" %}selected{% endif %}>No Prelim Spec</option>
+                    {% for name in prelim_spec_names %}
+                        <option value="{{ name }}" {% if f_prelim_spec == name %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if f_section or f_bill_no or f_trade_code or f_mat_spec or f_lab_spec or f_plant_spec or f_prelim_spec %}
                 <a href="{% url 'estimator:dashboard' project_pk=project_pk %}"
                    class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 ring-1 ring-inset ring-gray-300">
                     <svg xmlns="http://www.w3.org/2000/svg"
@@ -332,6 +356,20 @@
                     <label class="flex items-center text-xs text-gray-700">
                         <input type="checkbox"
                                class="column-detail-toggle"
+                               data-column="col-plant-spec"
+                               checked>
+                        <span class="ml-2">Plant Spec</span>
+                    </label>
+                    <label class="flex items-center text-xs text-gray-700">
+                        <input type="checkbox"
+                               class="column-detail-toggle"
+                               data-column="col-prelim-spec"
+                               checked>
+                        <span class="ml-2">Prelim Spec</span>
+                    </label>
+                    <label class="flex items-center text-xs text-gray-700">
+                        <input type="checkbox"
+                               class="column-detail-toggle"
                                data-column="col-unit"
                                checked>
                         <span class="ml-2">Unit</span>
@@ -476,11 +514,11 @@
             </div>
         </div>
         <div class="overflow-x-auto">
-            <table class="text-xs min-w-[2700px]"  id="boq-table">
+            <table class="text-xs min-w-[2940px]"  id="boq-table">
                 <thead>
                     <!-- Column group headers -->
                     <tr class="border-b border-gray-200">
-                        <th colspan="6"
+                        <th colspan="8"
                             class="bg-gray-50 px-2 py-1.5 text-left text-[9px] font-bold uppercase tracking-widest text-gray-400 border-r border-gray-200 column-group-item-details">
                             Item Details
                         </th>
@@ -534,6 +572,12 @@
                         </th>
                         <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[120px]">
                             Lab. Spec
+                        </th>
+                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[120px]">
+                            Plant Spec
+                        </th>
+                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[120px]">
+                            Prelim Spec
                         </th>
                         <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 border-r border-gray-200 w-[200px]">
                             Details
@@ -652,6 +696,34 @@
                                         {% for name in labour_spec_names %}
                                             <option value="{{ name }}"
                                                     {% if item.labour_specification and item.labour_specification.name == name %}selected{% endif %}>
+                                                {{ name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <!-- Plant Spec (editable dropdown) -->
+                                <td class="px-1 py-0.5 column-group-item-details col-plant-spec whitespace-normal w-[120px]">
+                                    <select class="boq-edit-select w-full rounded border-0 py-0.5 pl-1 pr-5 text-[10px] text-gray-700 ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-indigo-500 bg-white"
+                                            data-item-id="{{ item.id }}"
+                                            data-field="plant_specification">
+                                        <option value="">--</option>
+                                        {% for name in plant_spec_names %}
+                                            <option value="{{ name }}"
+                                                    {% if item.plant_specification and item.plant_specification.name == name %}selected{% endif %}>
+                                                {{ name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <!-- Prelim Spec (editable dropdown) -->
+                                <td class="px-1 py-0.5 column-group-item-details col-prelim-spec whitespace-normal w-[120px]">
+                                    <select class="boq-edit-select w-full rounded border-0 py-0.5 pl-1 pr-5 text-[10px] text-gray-700 ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-indigo-500 bg-white"
+                                            data-item-id="{{ item.id }}"
+                                            data-field="preliminary_specification">
+                                        <option value="">--</option>
+                                        {% for name in prelim_spec_names %}
+                                            <option value="{{ name }}"
+                                                    {% if item.preliminary_specification and item.preliminary_specification.name == name %}selected{% endif %}>
                                                 {{ name }}
                                             </option>
                                         {% endfor %}
