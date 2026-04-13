@@ -360,6 +360,94 @@ urlpatterns = [
         kwargs={"variant": "forecast", "rate_type": "contract"},
         name="report_labour_list_forecast_contract",
     ),
+    # Plant Estimator (calculator)
+    path(
+        "project/<int:project_pk>/plant-specs/",
+        views.PlantSpecificationListView.as_view(),
+        name="plant_specs",
+    ),
+    # Prelim Estimator (calculator)
+    path(
+        "project/<int:project_pk>/prelim-specs/",
+        views.PreliminarySpecificationListView.as_view(),
+        name="prelim_specs",
+    ),
+    # Plant reports — new rates
+    path(
+        "project/<int:project_pk>/reports/plant-list-baseline/",
+        views.PlantListReportView.as_view(),
+        kwargs={"variant": "baseline"},
+        name="report_plant_list_baseline",
+    ),
+    path(
+        "project/<int:project_pk>/reports/plant-list-progress/",
+        views.PlantListReportView.as_view(),
+        kwargs={"variant": "progress"},
+        name="report_plant_list_progress",
+    ),
+    path(
+        "project/<int:project_pk>/reports/plant-list-forecast/",
+        views.PlantListReportView.as_view(),
+        kwargs={"variant": "forecast"},
+        name="report_plant_list_forecast",
+    ),
+    # Plant reports — contract rates (Baseline Estimator)
+    path(
+        "project/<int:project_pk>/reports/plant-list-baseline/contract/",
+        views.PlantListReportView.as_view(),
+        kwargs={"variant": "baseline", "rate_type": "contract"},
+        name="report_plant_list_baseline_contract",
+    ),
+    path(
+        "project/<int:project_pk>/reports/plant-list-progress/contract/",
+        views.PlantListReportView.as_view(),
+        kwargs={"variant": "progress", "rate_type": "contract"},
+        name="report_plant_list_progress_contract",
+    ),
+    path(
+        "project/<int:project_pk>/reports/plant-list-forecast/contract/",
+        views.PlantListReportView.as_view(),
+        kwargs={"variant": "forecast", "rate_type": "contract"},
+        name="report_plant_list_forecast_contract",
+    ),
+    # Prelim reports — new rates
+    path(
+        "project/<int:project_pk>/reports/prelim-list-baseline/",
+        views.PreliminaryListReportView.as_view(),
+        kwargs={"variant": "baseline"},
+        name="report_prelim_list_baseline",
+    ),
+    path(
+        "project/<int:project_pk>/reports/prelim-list-progress/",
+        views.PreliminaryListReportView.as_view(),
+        kwargs={"variant": "progress"},
+        name="report_prelim_list_progress",
+    ),
+    path(
+        "project/<int:project_pk>/reports/prelim-list-forecast/",
+        views.PreliminaryListReportView.as_view(),
+        kwargs={"variant": "forecast"},
+        name="report_prelim_list_forecast",
+    ),
+    # Prelim reports — contract rates (Baseline Estimator)
+    path(
+        "project/<int:project_pk>/reports/prelim-list-baseline/contract/",
+        views.PreliminaryListReportView.as_view(),
+        kwargs={"variant": "baseline", "rate_type": "contract"},
+        name="report_prelim_list_baseline_contract",
+    ),
+    path(
+        "project/<int:project_pk>/reports/prelim-list-progress/contract/",
+        views.PreliminaryListReportView.as_view(),
+        kwargs={"variant": "progress", "rate_type": "contract"},
+        name="report_prelim_list_progress_contract",
+    ),
+    path(
+        "project/<int:project_pk>/reports/prelim-list-forecast/contract/",
+        views.PreliminaryListReportView.as_view(),
+        kwargs={"variant": "forecast", "rate_type": "contract"},
+        name="report_prelim_list_forecast_contract",
+    ),
     # ── System Library ────────────────────────────────────────────
     path("system/", views.SystemTradeCodeListView.as_view(), name="sys_trade_codes"),
     # System Trade Codes

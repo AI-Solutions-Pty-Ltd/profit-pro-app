@@ -130,6 +130,9 @@ class DashboardView(ProjectEstimatorMixin, ListView):
                 "specification",
                 "labour_specification",
                 "labour_specification__crew",
+                "plant_specification",
+                "plant_specification__plant_type",
+                "preliminary_specification",
                 "material",
             )
             .prefetch_related(
@@ -165,6 +168,18 @@ class DashboardView(ProjectEstimatorMixin, ListView):
             qs = qs.filter(labour_specification__isnull=True)
         elif lab_spec:
             qs = qs.filter(labour_specification__name=lab_spec)
+
+        plant_spec = self.request.GET.get("plant_spec")
+        if plant_spec == "none":
+            qs = qs.filter(plant_specification__isnull=True)
+        elif plant_spec:
+            qs = qs.filter(plant_specification__name=plant_spec)
+
+        prelim_spec = self.request.GET.get("prelim_spec")
+        if prelim_spec == "none":
+            qs = qs.filter(preliminary_specification__isnull=True)
+        elif prelim_spec:
+            qs = qs.filter(preliminary_specification__name=prelim_spec)
 
         return qs
 
@@ -211,6 +226,20 @@ class DashboardView(ProjectEstimatorMixin, ListView):
             .distinct()
             .order_by("name")
         )
+        context["plant_spec_names"] = (
+            ProjectPlantSpecification.objects.filter(project=project)
+            .exclude(name="")
+            .values_list("name", flat=True)
+            .distinct()
+            .order_by("name")
+        )
+        context["prelim_spec_names"] = (
+            ProjectPreliminarySpecification.objects.filter(project=project)
+            .exclude(name="")
+            .values_list("name", flat=True)
+            .distinct()
+            .order_by("name")
+        )
 
         # Current filter values
         context["f_section"] = self.request.GET.get("section", "")
@@ -218,6 +247,8 @@ class DashboardView(ProjectEstimatorMixin, ListView):
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_mat_spec"] = self.request.GET.get("mat_spec", "")
         context["f_lab_spec"] = self.request.GET.get("lab_spec", "")
+        context["f_plant_spec"] = self.request.GET.get("plant_spec", "")
+        context["f_prelim_spec"] = self.request.GET.get("prelim_spec", "")
 
         # Project assumptions (wastage)
         assumptions, _ = ProjectAssumptions.objects.get_or_create(project=project)
@@ -510,6 +541,22 @@ class MaterialSpecListView(ProjectEstimatorMixin, ListView):
 
     def post(self, request, *args, **kwargs):
         project = self.get_project()
+        action = request.POST.get("action")
+        if action == "sync_system":
+            from .services import sync_material_specs_from_system
+
+            result = sync_material_specs_from_system(project)
+            messages.success(
+                request,
+                f"Material specs synced with system library — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse(
+                    "estimator:material_specs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
         spec_form = SpecificationForm(request.POST, project=project)
         component_formset = SpecificationComponentFormSet(request.POST)
         if spec_form.is_valid():
@@ -1294,6 +1341,243 @@ class LabourListReportView(ProjectEstimatorMixin, ListView):
         return context
 
 
+class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
+    """Shared base: Plant/Prelim report pages mirroring MaterialListReportView.
+
+    Concrete subclasses set spec_field, spec_rate_attr, parent_template_new,
+    parent_template_contract, title_noun.
+    """
+
+    model = BOQItem
+    template_name = "estimator/reports/material_list.html"
+    context_object_name = "items"
+
+    VARIANT_CONFIGS = {
+        "baseline": {"qty_field": "contract_quantity"},
+        "progress": {"qty_field": "progress_quantity"},
+        "forecast": {"qty_field": "forecast_quantity"},
+    }
+
+    spec_field = ""
+    spec_rate_attr = ""
+    parent_template_new = ""
+    parent_template_contract = ""
+    title_noun = ""
+
+    def _get_rate_type(self):
+        return self.kwargs.get("rate_type", "new")
+
+    def get_queryset(self):
+        qs = (
+            BOQItem.objects.filter(project=self.get_project())
+            .select_related("trade_code", self.spec_field)
+            .filter(is_section_header=False)
+            .filter(**{f"{self.spec_field}__isnull": False})
+        )
+        section = self.request.GET.get("section")
+        if section:
+            qs = qs.filter(section=section)
+        trade_code = self.request.GET.get("trade_code")
+        if trade_code:
+            qs = qs.filter(trade_code__id=trade_code)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        variant = self.kwargs["variant"]
+        qty_field = self.VARIANT_CONFIGS[variant]["qty_field"]
+        rate_type = self._get_rate_type()
+        variant_title = variant.capitalize()
+        rate_suffix = "Contract Rates" if rate_type == "contract" else "New Rates"
+        context["report_title"] = (
+            f"{variant_title} {self.title_noun} List ({rate_suffix})"
+        )
+        context["rate_type"] = rate_type
+        context["parent_template"] = (
+            self.parent_template_contract
+            if rate_type == "contract"
+            else self.parent_template_new
+        )
+
+        grand_total = Decimal("0")
+        report_rows = []
+        for item in context["items"]:
+            spec = getattr(item, self.spec_field)
+            quantity = getattr(item, qty_field) or Decimal("0")
+            if rate_type == "contract":
+                rate = item.contract_rate
+            else:
+                rate = getattr(spec, self.spec_rate_attr) if spec else None
+            amount = rate * quantity if rate and quantity else None
+            if amount:
+                grand_total += amount
+            report_rows.append(
+                {
+                    "section": item.section,
+                    "bill_no": item.bill_no,
+                    "material_name": spec.name if spec else "",
+                    "unit": item.unit,
+                    "quantity": quantity if quantity else None,
+                    "rate": rate,
+                    "amount": amount,
+                }
+            )
+        for row in report_rows:
+            row["pct_of_total"] = calculate_pct_of_total(row["amount"], grand_total)
+
+        context["report_rows"] = report_rows
+        context["grand_total"] = grand_total
+
+        section_totals = {}
+        name_totals = {}
+        for row in report_rows:
+            if row["amount"]:
+                s = row["section"] or "Unassigned"
+                section_totals[s] = section_totals.get(s, Decimal("0")) + row["amount"]
+                m = row["material_name"] or "Unknown"
+                name_totals[m] = name_totals.get(m, Decimal("0")) + row["amount"]
+
+        sorted_sections = sorted(
+            section_totals.items(), key=lambda x: x[1], reverse=True
+        )
+        context["chart_section_labels"] = json.dumps([s[0] for s in sorted_sections])
+        context["chart_section_values"] = json.dumps(
+            [float(s[1]) for s in sorted_sections]
+        )
+        sorted_names = sorted(name_totals.items(), key=lambda x: x[1], reverse=True)[
+            :10
+        ]
+        context["chart_material_labels"] = json.dumps([m[0] for m in sorted_names])
+        context["chart_material_values"] = json.dumps(
+            [float(m[1]) for m in sorted_names]
+        )
+
+        project = self.get_project()
+        project_items = BOQItem.objects.filter(project=project)
+        context["sections"] = (
+            project_items.exclude(section="")
+            .values_list("section", flat=True)
+            .distinct()
+            .order_by("section")
+        )
+        context["trade_codes"] = ProjectTradeCode.objects.filter(project=project)
+        context["f_section"] = self.request.GET.get("section", "")
+        context["f_trade_code"] = self.request.GET.get("trade_code", "")
+        return context
+
+
+class PlantListReportView(_SimpleSpecListReportView):
+    spec_field = "plant_specification"
+    spec_rate_attr = "rate_per_unit"
+    parent_template_new = "estimator/base_plant_estimator.html"
+    parent_template_contract = "estimator/base_baseline_estimator_plant.html"
+    title_noun = "Plant"
+
+
+class PreliminaryListReportView(_SimpleSpecListReportView):
+    spec_field = "preliminary_specification"
+    spec_rate_attr = "amount"
+    parent_template_new = "estimator/base_prelim_estimator.html"
+    parent_template_contract = "estimator/base_baseline_estimator_prelim.html"
+    title_noun = "Preliminary"
+
+
+class _SimpleSpecCalculatorView(ProjectEstimatorMixin, TemplateView):
+    """Shared base: Plant/Prelim calculator pages grouping BOQItems by spec."""
+
+    spec_field = ""
+    spec_rate_attr = ""
+    parent_template = ""
+    title_noun = ""
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = self.get_project()
+        f_section = self.request.GET.get("section", "")
+        f_name = self.request.GET.get("name", "")
+
+        qs = BOQItem.objects.filter(
+            project=project,
+            is_section_header=False,
+            **{f"{self.spec_field}__isnull": False},
+        ).select_related(self.spec_field)
+        if f_section:
+            qs = qs.filter(section=f_section)
+        if f_name:
+            qs = qs.filter(**{f"{self.spec_field}__name": f_name})
+
+        from collections import OrderedDict
+
+        groups = OrderedDict()
+        spec_id_field = f"{self.spec_field}_id"
+        order_field = f"{self.spec_field}__name"
+        for boq in qs.order_by("section", order_field):
+            spec = getattr(boq, self.spec_field)
+            key = (boq.section, getattr(boq, spec_id_field, None))
+            if key not in groups:
+                groups[key] = {
+                    "section": boq.section,
+                    "spec": spec,
+                    "boq_qty": Decimal("0"),
+                }
+            if boq.contract_quantity:
+                groups[key]["boq_qty"] += boq.contract_quantity
+
+        rows = []
+        for group in groups.values():
+            spec = group["spec"]
+            boq_qty = group["boq_qty"]
+            rate = getattr(spec, self.spec_rate_attr) or Decimal("0")
+            rows.append(
+                {
+                    "section": group["section"],
+                    "spec": spec,
+                    "boq_qty": boq_qty,
+                    "rate": rate,
+                    "amount": rate * boq_qty if boq_qty else Decimal("0"),
+                }
+            )
+        context["rows"] = rows
+        context["parent_template"] = self.parent_template
+        context["title_noun"] = self.title_noun
+
+        boq_with = BOQItem.objects.filter(
+            project=project,
+            is_section_header=False,
+            **{f"{self.spec_field}__isnull": False},
+        )
+        context["sections"] = (
+            boq_with.exclude(section="")
+            .values_list("section", flat=True)
+            .distinct()
+            .order_by("section")
+        )
+        context["names"] = (
+            boq_with.values_list(f"{self.spec_field}__name", flat=True)
+            .distinct()
+            .order_by(f"{self.spec_field}__name")
+        )
+        context["f_section"] = f_section
+        context["f_name"] = f_name
+        return context
+
+
+class PlantSpecificationListView(_SimpleSpecCalculatorView):
+    template_name = "estimator/plant_specification_list.html"
+    spec_field = "plant_specification"
+    spec_rate_attr = "rate_per_unit"
+    parent_template = "estimator/base_plant_estimator.html"
+    title_noun = "Plant"
+
+
+class PreliminarySpecificationListView(_SimpleSpecCalculatorView):
+    template_name = "estimator/preliminary_specification_list.html"
+    spec_field = "preliminary_specification"
+    spec_rate_attr = "amount"
+    parent_template = "estimator/base_prelim_estimator.html"
+    title_noun = "Preliminary"
+
+
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateBoqItemView(View):
     """AJAX endpoint to update FK fields or decimal markup fields on a BOQItem."""
@@ -1302,6 +1586,11 @@ class UpdateBoqItemView(View):
         "trade_code": (ProjectTradeCode, "trade_code"),
         "specification": (ProjectSpecification, "specification"),
         "labour_specification": (ProjectLabourSpecification, "labour_specification"),
+        "plant_specification": (ProjectPlantSpecification, "plant_specification"),
+        "preliminary_specification": (
+            ProjectPreliminarySpecification,
+            "preliminary_specification",
+        ),
     }
 
     DECIMAL_FIELDS = {"material_markup_pct", "labour_markup_pct", "transport_pct"}
@@ -1382,19 +1671,15 @@ class UpdateBoqItemView(View):
                 "ok": True,
                 "new_materials_rate": fmt(item.new_materials_rate),
                 "new_labour_rate": fmt(item.new_labour_rate),
+                "new_plant_rate": fmt(item.new_plant_rate),
+                "new_preliminary_rate": fmt(item.new_preliminary_rate),
                 "baseline_new_price": fmt(item.baseline_new_price),
                 "progress_amount": fmt(item.progress_amount),
                 "forecast_amount": fmt(item.forecast_amount),
-                "new_materials_amount": fmt(
-                    item.new_materials_rate * item.contract_quantity
-                    if item.new_materials_rate and item.contract_quantity
-                    else None
-                ),
-                "new_labour_amount": fmt(
-                    item.new_labour_rate * item.contract_quantity
-                    if item.new_labour_rate and item.contract_quantity
-                    else None
-                ),
+                "new_materials_amount": fmt(item.new_materials_amount),
+                "new_labour_amount": fmt(item.new_labour_amount),
+                "new_plant_amount": fmt(item.new_plant_amount),
+                "new_preliminary_amount": fmt(item.new_preliminary_amount),
             }
         )
 
@@ -1821,6 +2106,22 @@ class LabourSpecDefListView(ProjectEstimatorMixin, ListView):
 
     def post(self, request, *args, **kwargs):
         project = self.get_project()
+        action = request.POST.get("action")
+        if action == "sync_system":
+            from .services import sync_labour_specs_from_system
+
+            result = sync_labour_specs_from_system(project)
+            messages.success(
+                request,
+                f"Labour specs synced with system library — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse(
+                    "estimator:labour_spec_defs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
         form = LabourSpecificationForm(request.POST, project=project)
         if form.is_valid():
             obj = form.save(commit=False)
@@ -1962,6 +2263,22 @@ class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
 
     def post(self, request, *args, **kwargs):
         project = self.get_project()
+        action = request.POST.get("action")
+        if action == "sync_system":
+            from .services import sync_plant_specs_from_system
+
+            result = sync_plant_specs_from_system(project)
+            messages.success(
+                request,
+                f"Plant specs synced with system library — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse(
+                    "estimator:plant_spec_defs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
         form = PlantSpecificationForm(request.POST, project=project)
         if form.is_valid():
             obj = form.save(commit=False)
@@ -2151,6 +2468,22 @@ class PreliminarySpecDefListView(ProjectEstimatorMixin, ListView):
 
     def post(self, request, *args, **kwargs):
         project = self.get_project()
+        action = request.POST.get("action")
+        if action == "sync_system":
+            from .services import sync_preliminary_specs_from_system
+
+            result = sync_preliminary_specs_from_system(project)
+            messages.success(
+                request,
+                f"Preliminary specs synced with system library — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse(
+                    "estimator:preliminary_spec_defs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
         form = PreliminarySpecificationForm(request.POST)
         if form.is_valid():
             obj = form.save(commit=False)

@@ -922,6 +922,20 @@ class BOQItem(models.Model):
         blank=True,
         related_name="boq_items",
     )
+    plant_specification = models.ForeignKey(
+        ProjectPlantSpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="boq_items",
+    )
+    preliminary_specification = models.ForeignKey(
+        ProjectPreliminarySpecification,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="boq_items",
+    )
     item_no = models.CharField(max_length=20, blank=True)
     pay_ref = models.CharField(max_length=50, blank=True)
     description = models.CharField(max_length=500, blank=True)
@@ -1006,10 +1020,38 @@ class BOQItem(models.Model):
         return None
 
     @property
+    def new_plant_rate(self):
+        if self.plant_specification:
+            return self.plant_specification.rate_per_unit
+        return None
+
+    @property
+    def new_plant_amount(self):
+        rate = self.new_plant_rate
+        if rate and self.contract_quantity:
+            return rate * self.contract_quantity
+        return None
+
+    @property
+    def new_preliminary_rate(self):
+        if self.preliminary_specification:
+            return self.preliminary_specification.amount
+        return None
+
+    @property
+    def new_preliminary_amount(self):
+        rate = self.new_preliminary_rate
+        if rate and self.contract_quantity:
+            return rate * self.contract_quantity
+        return None
+
+    @property
     def baseline_new_price(self):
         mat = self.new_materials_rate or Decimal("0")
         lab = self.new_labour_rate or Decimal("0")
-        total = mat + lab
+        plant = self.new_plant_rate or Decimal("0")
+        prelim = self.new_preliminary_rate or Decimal("0")
+        total = mat + lab + plant + prelim
         return total if total > 0 else None
 
     @property
