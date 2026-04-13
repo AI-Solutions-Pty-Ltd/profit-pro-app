@@ -100,7 +100,12 @@ class ProductionProgressDashboardView(
         project_pk = self.kwargs["project_pk"]
         return [
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
-            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
             {"title": "Progress Tracking", "url": None},
         ]
 

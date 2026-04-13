@@ -1,7 +1,9 @@
 """Tests for ProductionPlan models."""
 
 import pytest
+
 from app.Project.production_progress.factories import ProductionPlanFactory
+
 
 @pytest.mark.django_db
 class TestProductionPlanModel:

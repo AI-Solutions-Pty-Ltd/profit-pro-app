@@ -3,11 +3,9 @@
 {% load heroicons %}
 {% load crispy_forms_tags %}
 {% load humanize %}
-
 {% block title %}
     Cost Breakdown - {{ project.name }} - {{ block.super }}
 {% endblock title %}
-
 {% block production_content %}
     <!-- Filter Section (Plan Selector) -->
     <div class="mb-6 bg-white rounded-lg shadow-sm px-6 py-4">
@@ -23,33 +21,36 @@
                             onchange="window.location.href='?plan_id=' + this.value">
                         <option value="">-- Select Production Plan --</option>
                         {% for p in all_plans %}
-                            <option value="{{ p.pk }}" {% if selected_plan.pk == p.pk %}selected{% endif %}>
-                                {{ p.activity }}
-                            </option>
+                            <option value="{{ p.pk }}"
+                                    {% if selected_plan.pk == p.pk %}selected{% endif %}>{{ p.activity }}</option>
                         {% endfor %}
                     </select>
                 </div>
             </div>
         </div>
     </div>
-
     {% if selected_plan %}
         <!-- Summary Card -->
         <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-3">
             <div class="flex flex-col justify-between p-6 bg-indigo-600 rounded-lg shadow-lg shadow-indigo-100">
                 <dt class="mb-1 text-sm font-semibold text-indigo-100">Total Planned Cost</dt>
-                <dd class="text-2xl font-black text-white">R {{ selected_plan.total_labour_cost|add:selected_plan.total_plant_cost|add:selected_plan.total_other_cost|floatformat:2|intcomma }}</dd>
+                <dd class="text-2xl font-black text-white">
+                    R {{ selected_plan.total_labour_cost|add:selected_plan.total_plant_cost|add:selected_plan.total_other_cost|floatformat:2|intcomma }}
+                </dd>
             </div>
             <div class="p-6 bg-white rounded-lg border border-gray-100 shadow-sm">
                 <dt class="mb-1 text-sm font-semibold text-gray-600">Duration</dt>
-                <dd class="text-xl font-bold text-gray-900">{{ selected_plan.duration }} Days</dd>
+                <dd class="text-xl font-bold text-gray-900">
+                    {{ selected_plan.duration }} Days
+                </dd>
             </div>
             <div class="p-6 bg-white rounded-lg border border-gray-100 shadow-sm">
                 <dt class="mb-1 text-sm font-semibold text-gray-600">Quantity</dt>
-                <dd class="text-xl font-bold text-gray-900">{{ selected_plan.quantity|floatformat:2 }} {{ selected_plan.unit }}</dd>
+                <dd class="text-xl font-bold text-gray-900">
+                    {{ selected_plan.quantity|floatformat:2 }} {{ selected_plan.unit }}
+                </dd>
             </div>
         </div>
-
         <!-- Resource Types -->
         <div class="space-y-8">
             {% for type_code, type_name in resource_form.fields.resource_type.choices %}
@@ -86,11 +87,14 @@
                                                     R {{ resource.total_cost|floatformat:2|intcomma }}
                                                 </td>
                                                 <td class="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
-                                                    <form method="post" class="inline" onsubmit="return confirm('Delete this resource?')">
+                                                    <form method="post"
+                                                          class="inline"
+                                                          onsubmit="return confirm('Delete this resource?')">
                                                         {% csrf_token %}
                                                         <input type="hidden" name="action" value="delete">
                                                         <input type="hidden" name="resource_id" value="{{ resource.id }}">
-                                                        <button type="submit" class="text-gray-600 transition-colors hover:text-red-500">
+                                                        <button type="submit"
+                                                                class="text-gray-600 transition-colors hover:text-red-500">
                                                             {% heroicon_outline "trash" size="18" %}
                                                         </button>
                                                     </form>
@@ -101,7 +105,8 @@
                                 </tbody>
                                 <tfoot class="bg-gray-50/30">
                                     <tr>
-                                        <td colspan="4" class="px-6 py-4 text-sm font-semibold text-right text-gray-600">
+                                        <td colspan="4"
+                                            class="px-6 py-4 text-sm font-semibold text-right text-gray-600">
                                             Total {{ type_name }} Cost
                                         </td>
                                         <td class="px-6 py-4 text-sm font-semibold text-right text-indigo-600 whitespace-nowrap">
@@ -134,7 +139,6 @@
             </p>
         </div>
     {% endif %}
-
     <!-- Footer -->
     <div class="px-6 py-4 mt-12 bg-white rounded-2xl border border-gray-50 shadow-sm">
         <div class="flex justify-between items-center text-sm font-bold">

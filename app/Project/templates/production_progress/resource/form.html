@@ -2,11 +2,9 @@
 {% load static %}
 {% load heroicons %}
 {% load crispy_forms_tags %}
-
 {% block title %}
     Add Resource - {{ project.name }} - {{ block.super }}
 {% endblock title %}
-
 {% block content %}
     <!-- Header -->
     <div class="mb-6 bg-white rounded-lg shadow-sm">
@@ -26,7 +24,6 @@
             </div>
         </div>
     </div>
-
     <!-- Form -->
     <div class="mb-6 bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4 border-b border-gray-200">
@@ -38,23 +35,18 @@
             <div class="space-y-6">
                 <!-- Hidden Plan Field -->
                 <div class="hidden">{{ form.production_plan }}</div>
-
                 <!-- Type Selection -->
                 <div class="grid grid-cols-1 gap-6 items-start md:grid-cols-2">
-                    <div >
-                        {{ form.resource_type|as_crispy_field }}
-                    </div>
+                    <div>{{ form.resource_type|as_crispy_field }}</div>
                     <div>
                         <div id="skill_type_container" class="hidden">{{ form.skill_type|as_crispy_field }}</div>
                         <div id="plant_type_container" class="hidden">{{ form.plant_type|as_crispy_field }}</div>
                     </div>
                 </div>
-
                 <!-- Identity -->
                 <div class="grid grid-cols-1 gap-6 items-start">
                     <div>{{ form.name|as_crispy_field }}</div>
                 </div>
-
                 <!-- Numbers -->
                 <div class="grid grid-cols-1 gap-6 items-start p-6 bg-gray-50 rounded-xl border border-gray-100 md:grid-cols-3">
                     <div>{{ form.number|as_crispy_field }}</div>
@@ -62,7 +54,6 @@
                     <div>{{ form.rate|as_crispy_field }}</div>
                 </div>
             </div>
-
             <!-- Form Actions -->
             <div class="flex justify-end items-center pt-6 mt-10 space-x-3 border-t border-gray-100">
                 <a href="{% url 'project:production-planning' project.pk %}"
@@ -76,7 +67,6 @@
             </div>
         </form>
     </div>
-
     <!-- Footer -->
     <div class="px-6 py-4 mt-8 bg-white rounded-lg shadow-sm">
         <div class="flex justify-between items-center text-sm font-medium">
@@ -90,7 +80,6 @@
             </a>
         </div>
     </div>
-
     <script>
         function toggleResourceTypes() {
             const resourceTypeSelect = document.querySelector('[name="resource_type"]');

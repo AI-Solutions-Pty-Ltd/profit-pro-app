@@ -1,11 +1,9 @@
 {% extends "production_progress/base_production.html" %}
 {% load static %}
 {% load heroicons %}
-
 {% block title %}
     Production Planning List - {{ project.name }} - {{ block.super }}
 {% endblock title %}
-
 {% block production_content %}
     <!-- Page Header (Actions) -->
     <div class="flex justify-between items-center mb-8">
@@ -15,12 +13,12 @@
         </div>
         <div class="flex items-center space-x-3">
             <div class="flex items-center bg-white rounded-xl border border-gray-200 p-1 shadow-sm">
-                <button type="button" 
+                <button type="button"
                         onclick="expandAll()"
                         class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50 rounded-lg transition-colors border-r border-gray-100">
                     {% heroicon_outline "arrows-pointing-out" class="mr-1.5 w-4 h-4" %} Expand All
                 </button>
-                <button type="button" 
+                <button type="button"
                         onclick="collapseAll()"
                         class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50 rounded-lg transition-colors">
                     {% heroicon_outline "arrows-pointing-in" class="mr-1.5 w-4 h-4" %} Collapse All
@@ -32,7 +30,6 @@
             </a>
         </div>
     </div>
-
     <!-- Hierarchical List Container -->
     <div class="space-y-4">
         {% if root_plans %}
@@ -59,7 +56,6 @@
             </div>
         {% endif %}
     </div>
-
     <!-- Footer Actions -->
     <div class="px-6 py-4 mt-12 bg-gray-50 rounded-2xl border border-gray-100 flex justify-between items-center">
         <div class="flex items-center space-x-4 text-xs font-bold text-gray-500 uppercase tracking-widest">
@@ -75,7 +71,6 @@
             {% heroicon_outline "chevron-left" class="mr-1 w-4 h-4" %} Back to Management
         </a>
     </div>
-
     <style>
         .animate-fadeIn {
             animation: fadeIn 0.3s ease-out forwards;
@@ -86,12 +81,12 @@
         }
     </style>
 {% endblock production_content %}
-
 {% block extra_js %}
     <!-- Delete Confirmation Modal (Same as original but kept for context) -->
     <div id="delete-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="hideDeleteModal()"></div>
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+                 onclick="hideDeleteModal()"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
             <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -102,7 +97,9 @@
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                             <h3 class="text-lg font-bold leading-6 text-gray-900">Delete Activity</h3>
                             <div class="mt-2 text-sm text-gray-500">
-                                <p>Are you sure you want to delete <span id="delete-activity-name" class="font-bold text-gray-900"></span>?</p>
+                                <p>
+                                    Are you sure you want to delete <span id="delete-activity-name" class="font-bold text-gray-900"></span>?
+                                </p>
                                 <p class="mt-1">All children activities and associated costs will also be impacted.</p>
                             </div>
                         </div>
@@ -111,25 +108,40 @@
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                     <form id="delete-form" method="post">
                         {% csrf_token %}
-                        <button type="submit" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-bold text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">Delete</button>
+                        <button type="submit"
+                                class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-bold text-white hover:bg-red-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">
+                            Delete
+                        </button>
                     </form>
-                    <button type="button" onclick="hideDeleteModal()" class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-bold text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Cancel</button>
+                    <button type="button"
+                            onclick="hideDeleteModal()"
+                            class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-bold text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Cancel
+                    </button>
                 </div>
             </div>
         </div>
     </div>
-
     <script>
         function toggleChildren(planId) {
             const childrenDiv = document.getElementById(`children-${planId}`);
             const icon = document.getElementById(`toggle-icon-${planId}`);
-            
+            const button = document.getElementById(`toggle-btn-${planId}`);
+
             if (childrenDiv.classList.contains('hidden')) {
                 childrenDiv.classList.remove('hidden');
                 icon.classList.add('rotate-90');
+                if (button) {
+                    button.setAttribute('aria-expanded', 'true');
+                    button.setAttribute('title', 'Collapse children');
+                }
             } else {
                 childrenDiv.classList.add('hidden');
                 icon.classList.remove('rotate-90');
+                if (button) {
+                    button.setAttribute('aria-expanded', 'false');
+                    button.setAttribute('title', 'Expand children');
+                }
             }
         }
 
@@ -172,4 +184,3 @@
         document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideDeleteModal(); });
     </script>
 {% endblock extra_js %}
-

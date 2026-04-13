@@ -7,13 +7,13 @@ from .dashboard_views import (
 from .planning_views import (
     PlanResourcesAjaxView,
     ProductionCostBreakdownView,
+    ProductionPlanAjaxDetailView,
+    ProductionPlanCreateView,
     ProductionPlanDeleteView,
     ProductionPlanDetailView,
     ProductionPlanListView,
-    ProductionPlanCreateView,
     ProductionPlanUpdateView,
     ProductionResourceCreateView,
-    ProductionPlanAjaxDetailView,
 )
 from .productivity_views import (
     DailyProductionCreateView,

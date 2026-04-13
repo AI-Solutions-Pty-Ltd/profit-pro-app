@@ -2,7 +2,6 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView,
@@ -21,9 +20,9 @@ from app.Project.models import Project
 from ..production_forms import (
     AggregatedLabourFormSet,
     DailyPlantUsageFormSet,
+    PlanDependencyFormSet,
     ProductionPlanForm,
     ProductionResourceForm,
-    PlanDependencyFormSet,
 )
 from ..production_models import (
     ProductionPlan,
@@ -45,7 +44,12 @@ class ProductionPlanListView(
         project_pk = self.kwargs["project_pk"]
         return [
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
-            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
             {"title": "Production Planning", "url": None},
         ]
 
@@ -69,7 +73,7 @@ class ProductionPlanListView(
         context["project"] = project
 
         # Separate root plans and build a map for children if needed
-        # Although we can use plan.children.all() in template, 
+        # Although we can use plan.children.all() in template,
         # root_plans provides the starting point for the tree.
         plans = context["plans"]
         context["root_plans"] = [p for p in plans if p.parent_id is None]
@@ -97,6 +101,16 @@ class ProductionPlanCreateView(
         kwargs["project_id"] = self.kwargs["project_pk"]
         return kwargs
 
+    def get_initial(self):
+        initial = super().get_initial()
+        if self.request.GET.get("parent"):
+            initial["parent"] = self.request.GET.get("parent")
+        if self.request.GET.get("structure"):
+            initial["structure"] = self.request.GET.get("structure")
+        if self.request.GET.get("bill"):
+            initial["bill"] = self.request.GET.get("bill")
+        return initial
+
     def get_success_url(self):
         return reverse_lazy(
             "project:production-planning",
@@ -118,17 +132,25 @@ class ProductionPlanCreateView(
                 parent_id=self.request.POST.get("parent") or None,
             )
         else:
-            context["dependency_formset"] = PlanDependencyFormSet(
-                project_id=project_pk
-            )
+            context["dependency_formset"] = PlanDependencyFormSet(project_id=project_pk)
         return context
 
     def get_breadcrumbs(self):
         project_pk = self.kwargs["project_pk"]
         return [
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
-            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
-            {"title": "Production Planning", "url": reverse_lazy("project:production-planning", kwargs={"project_pk": project_pk})},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {
+                "title": "Production Planning",
+                "url": reverse_lazy(
+                    "project:production-planning", kwargs={"project_pk": project_pk}
+                ),
+            },
             {"title": "New Plan", "url": None},
         ]
 
@@ -155,18 +177,20 @@ class ProductionPlanCreateView(
     def form_invalid(self, form):
         context = self.get_context_data()
         dependency_formset = context.get("dependency_formset")
-        
+
         for field, errors in form.errors.items():
             for error in errors:
                 messages.error(self.request, f"Error in {field}: {error}")
-                
+
         if dependency_formset and not dependency_formset.is_valid():
             for error in dependency_formset.non_form_errors():
                 messages.error(self.request, f"Dependency Error: {error}")
             for form_errors in dependency_formset.errors:
                 for field, field_errors in form_errors.items():
-                    messages.error(self.request, f"Dependency {field}: {', '.join(field_errors)}")
-                    
+                    messages.error(
+                        self.request, f"Dependency {field}: {', '.join(field_errors)}"
+                    )
+
         return super().form_invalid(form)
 
 
@@ -215,8 +239,18 @@ class ProductionPlanDetailView(
         plan = self.get_object()
         return [
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
-            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
-            {"title": "Production Planning", "url": reverse_lazy("project:production-planning", kwargs={"project_pk": project_pk})},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {
+                "title": "Production Planning",
+                "url": reverse_lazy(
+                    "project:production-planning", kwargs={"project_pk": project_pk}
+                ),
+            },
             {"title": f"Plan: {plan.activity}", "url": None},
         ]
 
@@ -252,10 +286,10 @@ class ProductionPlanUpdateView(
             project_id=self.kwargs["project_pk"], is_archived=False
         ).prefetch_related("resources")
         context["is_update"] = True
-        
+
         if self.request.POST:
             context["dependency_formset"] = PlanDependencyFormSet(
-                self.request.POST, 
+                self.request.POST,
                 instance=self.object,
                 project_id=self.kwargs["project_pk"],
                 plan_id=self.object.pk,
@@ -268,7 +302,7 @@ class ProductionPlanUpdateView(
                 plan_id=self.object.pk,
                 parent_id=self.object.parent_id if self.object.parent else None,
             )
-            
+
         return context
 
     def get_breadcrumbs(self):
@@ -276,15 +310,25 @@ class ProductionPlanUpdateView(
         plan = self.get_object()
         return [
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
-            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
-            {"title": "Production Planning", "url": reverse_lazy("project:production-planning", kwargs={"project_pk": project_pk})},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {
+                "title": "Production Planning",
+                "url": reverse_lazy(
+                    "project:production-planning", kwargs={"project_pk": project_pk}
+                ),
+            },
             {"title": f"Edit Plan: {plan.activity}", "url": None},
         ]
 
     def form_valid(self, form):
         context = self.get_context_data()
         dependency_formset = context["dependency_formset"]
-        
+
         if dependency_formset.is_valid():
             try:
                 response = super().form_valid(form)
@@ -301,18 +345,20 @@ class ProductionPlanUpdateView(
     def form_invalid(self, form):
         context = self.get_context_data()
         dependency_formset = context.get("dependency_formset")
-        
+
         for field, errors in form.errors.items():
             for error in errors:
                 messages.error(self.request, f"Error in {field}: {error}")
-                
+
         if dependency_formset and not dependency_formset.is_valid():
             for error in dependency_formset.non_form_errors():
                 messages.error(self.request, f"Dependency Error: {error}")
             for form_errors in dependency_formset.errors:
                 for field, field_errors in form_errors.items():
-                    messages.error(self.request, f"Dependency {field}: {', '.join(field_errors)}")
-                    
+                    messages.error(
+                        self.request, f"Dependency {field}: {', '.join(field_errors)}"
+                    )
+
         return super().form_invalid(form)
 
 
@@ -344,18 +390,34 @@ class ProductionPlanDeleteView(
         plan = self.get_object()
         return [
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
-            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
-            {"title": "Production Planning", "url": reverse_lazy("project:production-planning", kwargs={"project_pk": project_pk})},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {
+                "title": "Production Planning",
+                "url": reverse_lazy(
+                    "project:production-planning", kwargs={"project_pk": project_pk}
+                ),
+            },
             {"title": f"Delete Plan: {plan.activity}", "url": None},
         ]
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        
-        if hasattr(self.object, 'children') and self.object.children.filter(deleted=False).exists():
-            messages.error(request, "Cannot delete an activity that has children. Please delete them first.")
+
+        if (
+            hasattr(self.object, "children")
+            and self.object.children.filter(deleted=False).exists()
+        ):
+            messages.error(
+                request,
+                "Cannot delete an activity that has children. Please delete them first.",
+            )
             return redirect(str(self.get_success_url()))
-            
+
         self.object.is_archived = True
         self.object.save()
         messages.success(
@@ -404,7 +466,12 @@ class ProductionCostBreakdownView(
         project_pk = self.kwargs["project_pk"]
         return [
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
-            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
             {"title": "Cost Breakdown", "url": None},
         ]
 
@@ -510,8 +577,19 @@ class ProductionResourceCreateView(
         project_pk = self.kwargs["project_pk"]
         return [
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
-            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
-            {"title": "Cost Breakdown", "url": reverse_lazy("project:production-cost-breakdown", kwargs={"project_pk": project_pk})},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {
+                "title": "Cost Breakdown",
+                "url": reverse_lazy(
+                    "project:production-cost-breakdown",
+                    kwargs={"project_pk": project_pk},
+                ),
+            },
             {"title": "Add Resource", "url": None},
         ]
 
@@ -604,19 +682,6 @@ class PlanResourcesAjaxView(
             if not plan_resources[plan.id]["unskilled"]:
                 form.fields["unskilled_number"].disabled = True
 
-        html = render_to_string(
-            "production_progress/partials/resource_formsets_multi.html",
-            {
-                "labour_formset": labour_formset,
-                "plant_formsets": plant_formsets,
-                "selected_plans": selected_plans,
-                "plan_resources": plan_resources,
-                "labour_forms_with_plans": list(
-                    zip(labour_formset.forms, selected_plans, strict=True)
-                ),
-            },
-            request=request,
-        )
 
 class ProductionPlanAjaxDetailView(LoginRequiredMixin, TemplateView):
     """

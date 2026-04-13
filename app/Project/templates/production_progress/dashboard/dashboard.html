@@ -14,9 +14,7 @@
                     {% heroicon_outline "clipboard-document-list" class="w-6 h-6 text-indigo-600" %}
                 </div>
                 <h3 class="text-lg font-black text-gray-900">Production Planning</h3>
-                <p class="text-sm text-gray-500 mt-2 mb-6">
-                    Define activities, schedules, and link them to your Bill of Quantities.
-                </p>
+                <p class="text-sm text-gray-500 mt-2 mb-6">Define activities, schedules, and link them to your Bill of Quantities.</p>
                 <div class="flex items-center space-x-3">
                     <a href="{% url 'project:production-planning' project.pk %}"
                        class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 transition-colors">
@@ -29,7 +27,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Resources Card -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
             <div class="p-6">
@@ -46,7 +43,6 @@
                 </a>
             </div>
         </div>
-
         <!-- Progress Card -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
             <div class="p-6">
@@ -54,9 +50,7 @@
                     {% heroicon_outline "presentation-chart-line" class="w-6 h-6 text-blue-600" %}
                 </div>
                 <h3 class="text-lg font-black text-gray-900">Progress Tracker</h3>
-                <p class="text-sm text-gray-500 mt-2 mb-6">
-                    Track daily output, monitor productivity, and compare actuals vs plan.
-                </p>
+                <p class="text-sm text-gray-500 mt-2 mb-6">Track daily output, monitor productivity, and compare actuals vs plan.</p>
                 <a href="{% url 'project:production-progress-dashboard' project.pk %}"
                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition-colors">
                     Track Progress
@@ -64,7 +58,6 @@
             </div>
         </div>
     </div>
-
     <!-- Quick Stats / Insights (Optional but premium) -->
     <div class="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm text-center">
         <div class="mx-auto w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
@@ -75,7 +68,6 @@
             The Production Dashboard has been reorganized. You can now manage plans, resource breakdowns, and progress tracking through their dedicated logical modules.
         </p>
     </div>
-
     <!-- Footer -->
     <div class="px-6 py-4 bg-white rounded-xl mt-10 border border-gray-50 shadow-sm">
         <div class="flex justify-between items-center">
@@ -86,7 +78,6 @@
         </div>
     </div>
 {% endblock production_content %}
-
 {% block extra_js %}
     {{ block.super }}
 {% endblock extra_js %}

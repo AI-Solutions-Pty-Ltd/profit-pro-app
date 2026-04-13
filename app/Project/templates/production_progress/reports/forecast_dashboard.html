@@ -1,18 +1,15 @@
 {% extends "production_progress/base_production.html" %}
 {% load static %}
 {% load heroicons %}
-
 {% block title %}
     Cost Forecasting - {{ selected_plan.activity|default:"Analytics" }} - {{ block.super }}
 {% endblock title %}
-
 {% block extra_css %}
     <style>
     .metric-value { font-feature-settings: "tnum"; }
     .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
     </style>
 {% endblock extra_css %}
-
 {% block production_content %}
     <!-- Filter Header -->
     <div class="flex flex-col gap-4 justify-between items-start mb-8 sm:flex-row sm:items-center">
@@ -26,9 +23,8 @@
                         onchange="this.form.submit()"
                         class="block w-full min-w-[240px] py-2 text-sm font-bold border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 rounded-xl shadow-sm">
                     {% for p in all_plans %}
-                        <option value="{{ p.id }}" {% if p.id == selected_plan.id %}selected{% endif %}>
-                            {{ p.activity }}
-                        </option>
+                        <option value="{{ p.id }}"
+                                {% if p.id == selected_plan.id %}selected{% endif %}>{{ p.activity }}</option>
                     {% endfor %}
                 </select>
             </form>
@@ -38,7 +34,6 @@
             </button>
         </div>
     </div>
-
     {% if not selected_plan %}
         <div class="px-6 py-24 text-center bg-white rounded-2xl border-2 border-gray-200 border-dashed">
             <div class="flex justify-center items-center mx-auto mb-6 w-20 h-20 text-indigo-400 bg-indigo-50 rounded-full">
@@ -48,7 +43,6 @@
             <p class="mt-2 text-gray-500">Select an item from the menu above to view forecasting models.</p>
         </div>
     {% else %}
-    
         <!-- Activity Context Card -->
         <div class="grid grid-cols-1 gap-6 mb-8 lg:grid-cols-3">
             <div class="flex flex-col col-span-1 p-6 bg-white rounded-2xl border border-gray-200 shadow-sm lg:col-span-2 border-l-4 border-l-{{ summary.status_color }}-500">
@@ -65,29 +59,35 @@
                         <div class="text-xs font-bold text-gray-400 uppercase">Complete</div>
                     </div>
                 </div>
-                
                 <div class="mb-6 w-full h-3 bg-gray-100 rounded-full">
-                    <div class="h-3 bg-indigo-600 rounded-full transition-all duration-1000" style="width: {{ summary.progress_pct }}%"></div>
+                    <div class="h-3 bg-indigo-600 rounded-full transition-all duration-1000"
+                         style="width: {{ summary.progress_pct }}%"></div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-8">
                     <div>
                         <div class="mb-1 text-xs font-bold tracking-wider text-gray-400 uppercase">Time Forecast</div>
                         <div class="text-xl font-black text-gray-900">{{ summary.forecast_days }} Days</div>
                         <div class="text-xs font-bold {% if summary.time_variance >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
-                            {% if summary.time_variance >= 0 %}early by {{ summary.time_variance }} days{% else %}late by {{ summary.time_variance|abs }} days{% endif %}
+                            {% if summary.time_variance >= 0 %}
+                                early by {{ summary.time_variance }} days
+                            {% else %}
+                                late by {{ summary.time_variance|abs }} days
+                            {% endif %}
                         </div>
                     </div>
                     <div>
                         <div class="mb-1 text-xs font-bold tracking-wider text-gray-400 uppercase">Cost Forecast</div>
                         <div class="text-xl font-black text-gray-900">R {{ summary.forecast_cost|floatformat:0|intcomma }}</div>
                         <div class="text-xs font-bold {% if summary.budget_variance >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
-                            {% if summary.budget_variance >= 0 %}under by R {{ summary.budget_variance|floatformat:0|intcomma }}{% else %}over by R {{ summary.budget_variance|abs|floatformat:0|intcomma }}{% endif %}
+                            {% if summary.budget_variance >= 0 %}
+                                under by R {{ summary.budget_variance|floatformat:0|intcomma }}
+                            {% else %}
+                                over by R {{ summary.budget_variance|abs|floatformat:0|intcomma }}
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
-
             <div class="p-6 bg-indigo-600 rounded-2xl shadow-lg transition-transform hover:scale-[1.01]">
                 <h4 class="mb-4 text-sm font-black tracking-wider text-indigo-100 uppercase">Target Metrics</h4>
                 <div class="space-y-4">
@@ -109,7 +109,6 @@
                 </p>
             </div>
         </div>
-
         <!-- KPI Grid -->
         <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-3">
             <!-- Avg Daily Output -->
@@ -121,13 +120,14 @@
                     <h3 class="text-xs font-black tracking-widest text-gray-400 uppercase">Avg Daily Output</h3>
                 </div>
                 <div class="flex justify-between items-end">
-                    <div class="text-2xl font-black text-gray-900">{{ kpis.daily_output.actual|floatformat:1 }} <span class="text-xs text-gray-400">{{ selected_plan.unit }}</span></div>
+                    <div class="text-2xl font-black text-gray-900">
+                        {{ kpis.daily_output.actual|floatformat:1 }} <span class="text-xs text-gray-400">{{ selected_plan.unit }}</span>
+                    </div>
                     <div class="text-sm font-bold {% if kpis.daily_output.variance >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
                         {{ kpis.daily_output.variance|stringformat:"+0.1f" }}%
                     </div>
                 </div>
             </div>
-
             <!-- Cost Per Unit -->
             <div class="p-5 bg-white rounded-2xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
                 <div class="flex items-center mb-4">
@@ -143,7 +143,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Work Productivity -->
             <div class="p-5 bg-white rounded-2xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
                 <div class="flex items-center mb-4">
@@ -153,14 +152,15 @@
                     <h3 class="text-xs font-black tracking-widest text-gray-400 uppercase">Work Productivity</h3>
                 </div>
                 <div class="flex justify-between items-end">
-                    <div class="text-2xl font-black text-gray-900">{{ kpis.productivity.actual|floatformat:2 }} <span class="text-xs text-gray-400">U/MH</span></div>
+                    <div class="text-2xl font-black text-gray-900">
+                        {{ kpis.productivity.actual|floatformat:2 }} <span class="text-xs text-gray-400">U/MH</span>
+                    </div>
                     <div class="text-sm font-bold {% if kpis.productivity.variance >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
                         {{ kpis.productivity.variance|stringformat:"+0.1f" }}%
                     </div>
                 </div>
             </div>
         </div>
-
         <!-- Charts Section -->
         <div class="grid grid-cols-1 gap-8 mb-12 lg:grid-cols-2">
             <!-- Production Trajectory -->
@@ -175,7 +175,6 @@
                     <canvas id="productionTrajectoryChart"></canvas>
                 </div>
             </div>
-            
             <!-- Cost Trajectory -->
             <div class="flex overflow-hidden flex-col bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
@@ -190,19 +189,15 @@
             </div>
         </div>
     {% endif %}
-
     <!-- Footer Nav -->
     <div class="flex flex-col gap-4 justify-between items-center px-8 py-6 mt-12 mb-8 bg-white rounded-2xl border border-gray-100 shadow-sm sm:flex-row">
         <a href="{% url 'project:production-progress-dashboard' project.pk %}"
            class="inline-flex items-center text-sm font-bold text-gray-400 transition-colors hover:text-indigo-600">
             {% heroicon_outline "chevron-left" class="mr-2 w-4 h-4" %} Back to Dashboard
         </a>
-        <div class="text-xs font-bold tracking-widest text-gray-400 uppercase">
-            Last Model Refresh: {% now "H:i" %}
-        </div>
+        <div class="text-xs font-bold tracking-widest text-gray-400 uppercase">Last Model Refresh: {% now "H:i" %}</div>
     </div>
 {% endblock production_content %}
-
 {% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>

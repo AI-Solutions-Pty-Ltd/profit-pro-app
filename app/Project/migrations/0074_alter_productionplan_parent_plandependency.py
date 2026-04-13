@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("Project", "0073_productionplan_parent_alter_productionplan_bill_and_more"),
     ]

@@ -3,11 +3,9 @@
 {% load heroicons %}
 {% load humanize %}
 {% load project_tags %}
-
 {% block title %}
     Productivity Logs - {{ project.name }} - {{ block.super }}
 {% endblock title %}
-
 {% block production_content %}
     <!-- Actions Header -->
     <div class="flex justify-end items-center mb-8">
@@ -16,7 +14,6 @@
             {% heroicon_solid "plus" class="mr-2 w-5 h-5" %} Capture Daily Activity
         </a>
     </div>
-
     {% for data in logs_data %}
         <div class="mb-16">
             <!-- Activity Header Card -->
@@ -25,13 +22,10 @@
                     {% heroicon_outline "clipboard-document-check" class="w-6 h-6" %}
                 </div>
                 <div>
-                    <h2 class="text-lg font-black text-gray-900 uppercase tracking-tight">
-                        Activity: {{ data.plan.activity }}
-                    </h2>
+                    <h2 class="text-lg font-black text-gray-900 uppercase tracking-tight">Activity: {{ data.plan.activity }}</h2>
                     <p class="text-sm text-gray-500">Detailed productivity metrics and resource logs</p>
                 </div>
             </div>
-
             <!-- Productivity Table -->
             <div class="overflow-hidden mb-8 bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <div class="flex items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
@@ -95,14 +89,11 @@
                     </table>
                 </div>
             </div>
-
             <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <!-- Labour Log -->
                 <div class="overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm">
                     <div class="flex items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <div class="p-1.5 mr-3 text-blue-600 bg-blue-100 rounded-lg">
-                            {% heroicon_outline "users" class="w-4 h-4" %}
-                        </div>
+                        <div class="p-1.5 mr-3 text-blue-600 bg-blue-100 rounded-lg">{% heroicon_outline "users" class="w-4 h-4" %}</div>
                         <h3 class="text-sm font-black text-gray-900 uppercase tracking-wider">Labour Log</h3>
                     </div>
                     <div class="overflow-x-auto">
@@ -141,13 +132,10 @@
                         </table>
                     </div>
                 </div>
-
                 <!-- Plant Log -->
                 <div class="overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm">
                     <div class="flex items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <div class="p-1.5 mr-3 text-orange-600 bg-orange-100 rounded-lg">
-                            {% heroicon_outline "truck" class="w-4 h-4" %}
-                        </div>
+                        <div class="p-1.5 mr-3 text-orange-600 bg-orange-100 rounded-lg">{% heroicon_outline "truck" class="w-4 h-4" %}</div>
                         <h3 class="text-sm font-black text-gray-900 uppercase tracking-wider">Plant & Equipment</h3>
                     </div>
                     <div class="overflow-x-auto">
@@ -201,7 +189,6 @@
             </a>
         </div>
     {% endfor %}
-
     <!-- Footer Nav -->
     <div class="flex flex-col gap-4 justify-between items-center px-8 py-6 mt-12 mb-8 bg-white rounded-2xl border border-gray-100 shadow-sm sm:flex-row">
         <a href="{% url 'project:company-management' project.pk %}"
@@ -214,4 +201,3 @@
         </a>
     </div>
 {% endblock production_content %}
-

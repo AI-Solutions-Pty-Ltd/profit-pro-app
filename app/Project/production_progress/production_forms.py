@@ -12,9 +12,9 @@ from .production_models import (
     DailyLabourUsage,
     DailyPlantUsage,
     DailyProduction,
+    PlanDependency,
     ProductionPlan,
     ProductionResource,
-    PlanDependency,
 )
 
 
@@ -40,13 +40,16 @@ class DailyProductionForm(forms.ModelForm):
 class ProductionPlanForm(forms.ModelForm):
     """Form for production planning items."""
 
-    duration = forms.IntegerField(required=False, widget=forms.NumberInput(
-        attrs={
-            "id": "duration",
-            "readonly": "readonly",
-            "tabindex": "-1",
-        }
-    ))
+    duration = forms.IntegerField(
+        required=False,
+        widget=forms.NumberInput(
+            attrs={
+                "id": "duration",
+                "readonly": "readonly",
+                "tabindex": "-1",
+            }
+        ),
+    )
 
     class Meta:
         model = ProductionPlan
@@ -78,9 +81,7 @@ class ProductionPlanForm(forms.ModelForm):
                 resource_type="package",
                 attrs={"id": "id_package", "required": False},
             ),
-            "parent": SearchableSelectWidget(
-                attrs={"id": "id_parent"}
-            ),
+            "parent": SearchableSelectWidget(attrs={"id": "id_parent"}),
             "start_date": forms.DateInput(
                 attrs={
                     "id": "start_date",
@@ -95,14 +96,6 @@ class ProductionPlanForm(forms.ModelForm):
                     "type": "date",
                     "onchange": "calculateDuration()",
                     "style": "color-scheme: light;",
-                }
-            ),
-            "quantity": forms.NumberInput(
-                attrs={
-                    "id": "quantity",
-                    "step": "0.01",
-                    "placeholder": "10000.00",
-                    "format": "{:.2f}",
                 }
             ),
             "quantity": forms.NumberInput(
@@ -132,11 +125,29 @@ class ProductionPlanForm(forms.ModelForm):
             self.fields["package"].queryset = Package.objects.filter(
                 bill__structure__project_id=project_id
             )
-            
-            parent_qs = ProductionPlan.objects.filter(project_id=project_id, is_archived=False)
+
+            parent_qs = ProductionPlan.objects.filter(
+                project_id=project_id, is_archived=False
+            ).exclude(package__isnull=False)
             if self.instance.pk:
                 parent_qs = parent_qs.exclude(pk=self.instance.pk)
+
+            choice_data = {
+                str(plan.pk): {
+                    "data-structure-id": plan.structure_id or "",
+                    "data-structure-label": str(plan.structure)
+                    if plan.structure
+                    else "",
+                    "data-bill-id": plan.bill_id or "",
+                    "data-bill-label": str(plan.bill) if plan.bill else "",
+                    "data-package-id": plan.package_id or "",
+                    "data-package-label": str(plan.package) if plan.package else "",
+                }
+                for plan in parent_qs
+            }
+
             self.fields["parent"].queryset = parent_qs
+            self.fields["parent"].widget.choice_data = choice_data
 
         self.fields["bill"].required = False
         self.fields["package"].required = False
@@ -177,20 +188,31 @@ class ProductionPlanForm(forms.ModelForm):
                 )
 
         # Enforce rule: Cannot change structure/parent if it has children
-        if self.instance.pk and hasattr(self.instance, 'children') and self.instance.children.filter(deleted=False).exists():
+        if (
+            self.instance.pk
+            and hasattr(self.instance, "children")
+            and self.instance.children.filter(deleted=False).exists()
+        ):
             old_instance = ProductionPlan.objects.get(pk=self.instance.pk)
             new_parent = cleaned_data.get("parent")
             new_structure = cleaned_data.get("structure")
             new_bill = cleaned_data.get("bill")
             new_package = cleaned_data.get("package")
 
-            if (old_instance.parent != new_parent or
-                old_instance.structure != new_structure or
-                old_instance.bill != new_bill or
-                old_instance.package != new_package):
-                raise ValidationError("Cannot change WBS structure or parent activity because it has dependent children.")
+            if (
+                old_instance.parent != new_parent
+                or old_instance.structure != new_structure
+                or old_instance.bill != new_bill
+                or old_instance.package != new_package
+            ):
+                raise ValidationError(
+                    "Cannot change WBS structure or parent activity because it has dependent children."
+                )
 
-        if cleaned_data.get("parent") and cleaned_data.get("parent").pk == self.instance.pk:
+        if (
+            cleaned_data.get("parent")
+            and cleaned_data.get("parent").pk == self.instance.pk
+        ):
             raise ValidationError({"parent": "An activity cannot be its own parent."})
 
         return cleaned_data
@@ -554,38 +576,38 @@ AggregatedLabourFormSet = formset_factory(
     AggregatedLabourForm, extra=0, can_delete=False
 )
 
+
 class BasePlanDependencyFormSet(forms.models.BaseInlineFormSet):
     def __init__(self, *args, **kwargs):
-        self.project_id = kwargs.pop('project_id', None)
-        self.plan_id = kwargs.pop('plan_id', None)
+        self.project_id = kwargs.pop("project_id", None)
+        self.plan_id = kwargs.pop("plan_id", None)
         # Capture current activity hierarchy for same-level validation
-        self.parent_id = kwargs.pop('parent_id', None)
+        self.parent_id = kwargs.pop("parent_id", None)
         super().__init__(*args, **kwargs)
 
     def get_form_kwargs(self, index):
         kwargs = super().get_form_kwargs(index)
-        kwargs['project_id'] = self.project_id
-        kwargs['plan_id'] = self.plan_id
+        kwargs["project_id"] = self.project_id
+        kwargs["plan_id"] = self.plan_id
         return kwargs
 
     def add_fields(self, form, index):
         super().add_fields(form, index)
         # Enforce "same level" rule structurally
-        if 'predecessor' in form.fields:
-            qs = form.fields['predecessor'].queryset
+        if "predecessor" in form.fields:
+            qs = form.fields["predecessor"].queryset
             if self.parent_id:
                 qs = qs.filter(parent_id=self.parent_id)
             else:
                 qs = qs.filter(parent__isnull=True)
-            form.fields['predecessor'].queryset = qs.distinct()
+            form.fields["predecessor"].queryset = qs.distinct()
+
 
 class PlanDependencyForm(forms.ModelForm):
     class Meta:
         model = PlanDependency
         fields = ["predecessor"]
-        widgets = {
-            "predecessor": SearchableSelectWidget()
-        }
+        widgets = {"predecessor": SearchableSelectWidget()}
 
     def __init__(self, *args, **kwargs):
         project_id = kwargs.pop("project_id", None)
@@ -597,6 +619,7 @@ class PlanDependencyForm(forms.ModelForm):
             if plan_id:
                 qs = qs.exclude(pk=plan_id)
             predecessor_field.queryset = qs
+
 
 PlanDependencyFormSet = inlineformset_factory(
     ProductionPlan,

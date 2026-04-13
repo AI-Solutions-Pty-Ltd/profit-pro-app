@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("BillOfQuantities", "0024_alter_specialitemtransaction_special_item_type"),
         ("Project", "0072_productionplan_bill_productionplan_package_and_more"),

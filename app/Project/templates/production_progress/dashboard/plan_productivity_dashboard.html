@@ -1,11 +1,9 @@
 {% extends "production_progress/base_production.html" %}
 {% load static %}
 {% load heroicons %}
-
 {% block title %}
     Plan Productivity Dashboard - {{ selected_plan.activity|default:"Analytics" }} - {{ block.super }}
 {% endblock title %}
-
 {% block extra_css %}
     <style>
     .glass-card {
@@ -26,7 +24,6 @@
     }
     </style>
 {% endblock extra_css %}
-
 {% block production_content %}
     <div class="px-4 sm:px-6 lg:px-8">
         <!-- Dashboard Header Actions -->
@@ -50,25 +47,22 @@
                             class="select w-full py-1.5 text-xs border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md shadow-sm bg-white">
                         {% for p in all_plans %}
                             <option value="{{ p.id }}"
-                                    {% if p.id == selected_plan.id %}selected{% endif %}>
-                                {{ p.activity }}
-                            </option>
+                                    {% if p.id == selected_plan.id %}selected{% endif %}>{{ p.activity }}</option>
                         {% endfor %}
                     </select>
                 </form>
                 {% if selected_plan %}
-                <a href="{% url 'project:production-forecast-dashboard' project.pk %}?plan_id={{ selected_plan.pk }}"
-                   class="inline-flex items-center px-3 py-1.5 border border-amber-600 rounded-md font-medium text-amber-600 bg-white hover:bg-amber-50 text-xs shadow-sm transition-colors">
-                    {% heroicon_outline "presentation-chart-line" size="14" class="mr-1.5" %}
-                    Forecast View
-                </a>
+                    <a href="{% url 'project:production-forecast-dashboard' project.pk %}?plan_id={{ selected_plan.pk }}"
+                       class="inline-flex items-center px-3 py-1.5 border border-amber-600 rounded-md font-medium text-amber-600 bg-white hover:bg-amber-50 text-xs shadow-sm transition-colors">
+                        {% heroicon_outline "presentation-chart-line" size="14" class="mr-1.5" %}
+                        Forecast View
+                    </a>
                 {% endif %}
                 <a href="."
                    class="p-1.5 text-gray-500 hover:text-indigo-600 border border-gray-200 rounded-md shadow-sm bg-white hover:bg-gray-50"
                    title="Refresh">{% heroicon_outline "arrow-path" size="16" %}</a>
             </div>
         </div>
-
         {% if not selected_plan %}
             <!-- Empty State -->
             <div class="bg-white rounded-xl border-2 border-dashed border-gray-200 p-20 text-center shadow-sm">
@@ -334,8 +328,6 @@
         {% endif %}
     </div>
 {% endblock production_content %}
-
-
 {% block extra_js %}
     {% if selected_plan and charts %}
         <!-- Chart.js -->

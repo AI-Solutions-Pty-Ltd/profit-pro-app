@@ -44,7 +44,12 @@ class DailyProductionCreateView(
         project_pk = self.kwargs["project_pk"]
         return [
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
-            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
             {"title": "Log Daily Quantities", "url": None},
         ]
 
@@ -76,7 +81,12 @@ class DailyProductivityCreateView(
         project_pk = self.kwargs["project_pk"]
         return [
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
-            {"title": "Production Dashboard", "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk})},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
             {"title": "Daily Productivity Log", "url": None},
         ]
 

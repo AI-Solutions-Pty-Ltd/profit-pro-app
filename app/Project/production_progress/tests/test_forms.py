@@ -1,9 +1,15 @@
 """Tests for ProductionPlan forms."""
 
 import pytest
+
+from app.BillOfQuantities.tests.factories import (
+    BillFactory,
+    PackageFactory,
+    StructureFactory,
+)
 from app.Project.production_progress.production_forms import ProductionPlanForm
 from app.Project.tests.factories import ProjectFactory
-from app.BillOfQuantities.tests.factories import StructureFactory, BillFactory, PackageFactory
+
 
 @pytest.mark.django_db
 class TestProductionPlanForm:

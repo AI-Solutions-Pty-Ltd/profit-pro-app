@@ -2,11 +2,14 @@
 {% load static %}
 {% load heroicons %}
 {% load crispy_forms_tags %}
-
 {% block title %}
-    {% if is_update %}Edit{% else %}New{% endif %} Production Plan - {{ project.name }} - {{ block.super }}
+    {% if is_update %}
+        Edit
+    {% else %}
+        New
+    {% endif %}
+    Production Plan - {{ project.name }} - {{ block.super }}
 {% endblock title %}
-
 {% block content %}
     <!-- Header -->
     <div class="mb-6 bg-white rounded-lg shadow-sm">
@@ -32,7 +35,6 @@
             </div>
         </div>
     </div>
-
     <!-- Form -->
     <div class="mb-6 bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4 border-b border-gray-200">
@@ -48,50 +50,43 @@
                         <div>{{ form.activity|as_crispy_field }}</div>
                         <div>{{ form.parent|as_crispy_field }}</div>
                     </div>
-                    
                     <!-- WBS Levels -->
                     <div class="grid grid-cols-1 gap-6 md:col-span-2 md:grid-cols-3">
                         <div>{{ form.structure|as_crispy_field }}</div>
                         <div>{{ form.bill|as_crispy_field }}</div>
                         <div>{{ form.package|as_crispy_field }}</div>
                     </div>
-
                     <!-- Scheduling -->
                     <div class="grid grid-cols-1 gap-6 p-4 bg-gray-50 rounded-lg md:col-span-2 md:grid-cols-3">
                         <div>{{ form.start_date|as_crispy_field }}</div>
                         <div>{{ form.finish_date|as_crispy_field }}</div>
                         <div>{{ form.duration|as_crispy_field }}</div>
                     </div>
-
                     <!-- Metrics -->
                     <div>{{ form.quantity|as_crispy_field }}</div>
                     <div>{{ form.unit|as_crispy_field }}</div>
-
                     <!-- Dependencies -->
                     {% if dependency_formset %}
-                    <div class="p-4 mt-4 bg-gray-50 rounded-lg border border-gray-100 md:col-span-2">
-                        <h3 class="mb-4 text-sm font-semibold text-gray-900">Execution Dependencies</h3>
-                        {{ dependency_formset.management_form }}
-                        <div class="space-y-2">
-                            {% for dep_form in dependency_formset %}
-                                <div class="flex items-end space-x-4">
-                                    {{ dep_form.id }}
-                                    <div class="flex-1">
-                                        {{ dep_form.predecessor|as_crispy_field }}
-                                    </div>
-                                    {% comment %} {% if dependency_formset.can_delete %}
+                        <div class="p-4 mt-4 bg-gray-50 rounded-lg border border-gray-100 md:col-span-2">
+                            <h3 class="mb-4 text-sm font-semibold text-gray-900">Execution Dependencies</h3>
+                            {{ dependency_formset.management_form }}
+                            <div class="space-y-2">
+                                {% for dep_form in dependency_formset %}
+                                    <div class="flex items-end space-x-4">
+                                        {{ dep_form.id }}
+                                        <div class="flex-1">{{ dep_form.predecessor|as_crispy_field }}</div>
+                                        {% comment %} {% if dependency_formset.can_delete %}
                                     <div class="pb-6">
                                         {{ dep_form.DELETE|as_crispy_field }}
                                     </div>
-                                    {% endif %} {% endcomment %}
-                                </div>
-                            {% endfor %}
+                                        {% endif %} {% endcomment %}
+                                    </div>
+                                {% endfor %}
+                            </div>
                         </div>
-                    </div>
                     {% endif %}
                 </div>
             </div>
-
             <!-- Form Actions -->
             <div class="flex justify-end items-center pt-6 mt-8 space-x-3 border-t border-gray-100">
                 <a href="{% url 'project:production-planning' project.pk %}"
@@ -101,12 +96,15 @@
                 <button type="submit"
                         class="inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     {% heroicon_solid "check" class="mr-2 w-4 h-4" %}
-                    {% if is_update %}Update Plan{% else %}Save Plan{% endif %}
+                    {% if is_update %}
+                        Update Plan
+                    {% else %}
+                        Save Plan
+                    {% endif %}
                 </button>
             </div>
         </form>
     </div>
-
     <!-- Footer -->
     <div class="px-6 py-4 mt-6 bg-white rounded-lg">
         <div class="flex justify-between items-center text-sm font-medium">
@@ -123,7 +121,6 @@
         </div>
     </div>
 {% endblock content %}
-
 {% block extra_js %}
     {{ block.super }}
     <script>
@@ -160,7 +157,8 @@
         const projectPk = "{{ project.pk }}";
         const billsUrl = "{% url 'bill_of_quantities:api-get-bills' project.pk %}";
         const packagesUrl = "{% url 'bill_of_quantities:api-get-packages' project.pk %}";
-        const planDataUrl = "/project/" + projectPk + "/plan/";
+        const planDataUrl = "{% url 'project:production-plan-data-ajax' project.pk 0 %}";
+        const planDataBase = planDataUrl.replace(/\/0\/data\/$/, '/');
 
         document.addEventListener('DOMContentLoaded', function() {
             const structureSelect = document.getElementById('id_structure');
@@ -203,7 +201,7 @@
                 parentSelect.addEventListener('change', function() {
                     const parentId = this.value;
                     if (parentId) {
-                        fetch(`${planDataUrl}${parentId}/data/`)
+                        fetch(`${planDataBase}${parentId}/data/`)
                             .then(response => response.json())
                             .then(data => {
                                 // 1. Set Structure

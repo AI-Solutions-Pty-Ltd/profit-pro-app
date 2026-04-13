@@ -1,11 +1,9 @@
 {% extends "base.html" %}
 {% load static %}
 {% load heroicons %}
-
 {% block title %}
     Delete Production Plan - {{ project.name }} - {{ block.super }}
 {% endblock title %}
-
 {% block content %}
     <div class="min-h-[50vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-md w-full">
@@ -18,7 +16,6 @@
                     <p class="text-sm text-gray-500 mb-8 px-4">
                         Are you sure you want to delete the production plan for <span class="font-bold text-gray-900">"{{ object.activity }}"</span>? This will also remove all associated resource cost breakdowns.
                     </p>
-                    
                     <div class="grid grid-cols-2 gap-4">
                         <a href="{% url 'project:production-planning' project.pk %}"
                            class="inline-flex items-center justify-center px-6 py-3 border border-gray-200 text-sm font-bold rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200">
@@ -35,7 +32,6 @@
                     </div>
                 </div>
             </div>
-            
             <p class="mt-8 text-center text-xs text-gray-400">
                 Tip: You can also archive plans instead of deleting them if you'd like to keep a record.
             </p>

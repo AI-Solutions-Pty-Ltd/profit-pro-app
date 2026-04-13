@@ -100,8 +100,11 @@ class ProductionPlan(BaseModel):
 
     def soft_delete(self):
         from django.core.exceptions import ValidationError
+
         if self.children.filter(deleted=False).exists():
-            raise ValidationError("Cannot delete an activity that has children. Please delete them first.")
+            raise ValidationError(
+                "Cannot delete an activity that has children. Please delete them first."
+            )
         super().soft_delete()
 
     @property
