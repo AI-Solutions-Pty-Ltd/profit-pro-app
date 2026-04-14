@@ -19,7 +19,12 @@ from app.Project.models import ProjectDocument, Role
 class DocumentMixin(UserHasProjectRoleGenericMixin, BreadcrumbMixin):
     """Mixin for document views."""
 
-    roles = [Role.CONTRACT_DOCUMENTS, Role.STAGE_GATE_APPROVALS]
+    roles = [
+        Role.CONTRACT_DOCUMENTS,
+        Role.STAGE_GATE_APPROVALS,
+        Role.ADMIN,
+        Role.USER,
+    ]
     project_slug = "project_pk"
 
     def get_category(self) -> str:
