@@ -293,7 +293,7 @@
             document.getElementById('editModal').classList.remove('hidden');
             document.getElementById('edit_name').value = name;
             document.getElementById('edit_description').value = description;
-            document.getElementById('editForm').action = `/project/discipline/${id}/update/`;
+            document.getElementById('editForm').action = `/project/project-discipline/${id}/update/`;
             document.getElementById('edit_name').focus();
         }
 
@@ -308,7 +308,7 @@
         function openDeleteModal(id, name, projectCount) {
             document.getElementById('deleteModal').classList.remove('hidden');
             document.getElementById('delete_discipline_name').textContent = name;
-            document.getElementById('deleteForm').action = `/project/discipline/${id}/delete/`;
+            document.getElementById('deleteForm').action = `/project/project-discipline/${id}/delete/`;
             
             const warning = document.getElementById('delete_warning');
             if (projectCount > 0) {
