@@ -14,6 +14,16 @@
         {% heroicon_outline "banknotes" class="w-5 h-5 inline mr-2" %}
         Financial Report
     </a>
+    <a href="{% url 'project:portfolio-production-report' %}"
+       class="border-b-2 {% if tab == 'production' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 text-sm font-medium transition-colors">
+        {% heroicon_outline "wrench-screwdriver" class="w-5 h-5 inline mr-2" %}
+        Production Report
+    </a>
+    <a href="{% url 'project:portfolio-progress-report' %}"
+       class="border-b-2 {% if tab == 'progress' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 text-sm font-medium transition-colors">
+        {% heroicon_outline "arrow-trending-up" class="w-5 h-5 inline mr-2" %}
+        Progress Report
+    </a>
     <a href="{% url 'project:portfolio-schedule-report' %}"
        class="border-b-2 {% if tab == 'schedule' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 text-sm font-medium transition-colors">
         {% heroicon_outline "clock" class="w-5 h-5 inline mr-2" %}

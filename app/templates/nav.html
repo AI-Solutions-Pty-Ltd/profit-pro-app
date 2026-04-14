@@ -5,7 +5,7 @@
             <div class="flex justify-between items-center h-16">
                 <!-- Logo/Brand -->
                 <div class="flex-shrink-0 flex items-center">
-                    <a href="{% url 'home' %}" class="text-2xl font-bold text-indigo-600">{{ SITE_NAME|default:"Profit Pro" }}</a>
+                    <a href="{% url 'home' %}" class="text-2xl font-bold text-brand-green">{{ SITE_NAME|default:"Profit Pro" }}</a>
                 </div>
                 <!-- Navigation Links -->
                 <div class="hidden md:block">
@@ -13,28 +13,28 @@
                         {% if user.is_authenticated %}
                             <!-- 1. Home Page -->
                             <a href="{% url 'home' %}"
-                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
+                               class="text-gray-700 hover:text-brand-green px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
                                 {% heroicon_outline "home" class="w-4 h-4 mr-1" %}
                                 Home
                             </a>
                             <!-- 2. Portfolio Dashboard with Reports Dropdown -->
                             <div class="relative group" id="portfolio-nav-container">
                                 <a href="{% url 'project:portfolio-dashboard' %}"
-                                   class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
+                                   class="text-gray-700 hover:text-brand-green px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
                                     {% heroicon_outline "chart-pie" class="w-4 h-4 mr-1" %}
                                     Project Dashboard
                                 </a>
                             </div>
                             <!-- 4. Project List -->
                             <a href="{% url 'project:project-list' %}"
-                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
+                               class="text-gray-700 hover:text-brand-green px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
                                 {% heroicon_outline "building-office-2" class="w-4 h-4 mr-1" %}
                                 Project List
                             </a>
                             {% if user.is_staff %}
                                 <!-- 4b. System Library (staff only) -->
                                 <a href="{% url 'estimator:sys_trade_codes' %}"
-                                   class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
+                                   class="text-gray-700 hover:text-brand-green px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
                                     {% heroicon_outline "server-stack" class="w-4 h-4 mr-1" %}
                                     System Library
                                 </a>
@@ -42,7 +42,7 @@
                             {% if request.user|userhassubscription:"BUSINESS_MANAGEMENT" %}
                                 <!-- 3. Companies (only if user has companies) -->
                                 <a href="{% url 'project:company-dashboard' %}"
-                                   class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
+                                   class="text-gray-700 hover:text-brand-green px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
                                     {% heroicon_outline "building-office" class="w-4 h-4 mr-1" %}
                                     Business Dashboard
                                 </a>
@@ -50,7 +50,7 @@
                             <!-- 5. Consultant Clients (only for consultant group) -->
                             {% if user|useringroup:"consultant" %}
                                 <a href="{% url 'client:consultant:client-list' %}"
-                                   class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
+                                   class="text-gray-700 hover:text-brand-green px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center">
                                     {% heroicon_outline "building-office-2" class="w-4 h-4 mr-1" %}
                                     My Clients
                                 </a>
@@ -63,10 +63,10 @@
                     <div class="ml-4 flex items-center md:ml-6 space-x-4">
                         {% if user.is_authenticated %}
                             <a href="{% url 'notices:list' %}"
-                               class="inline-flex items-center text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors relative"
+                               class="inline-flex items-center text-gray-700 hover:text-brand-green px-3 py-2 rounded-md text-sm font-medium transition-colors relative"
                                title="Notices">{% heroicon_outline "bell" class="w-5 h-5 mr-1" %}</a>
                             <a href="{{ user.detail_url }}"
-                               class="inline-flex items-center text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                               class="inline-flex items-center text-gray-700 hover:text-brand-green px-3 py-2 rounded-md text-sm font-medium transition-colors"
                                title="View Profile">
                                 {% heroicon_outline "user-circle" class="w-5 h-5 mr-1" %}
                                 Welcome, {{ user.first_name|default:user.email }}
@@ -74,16 +74,16 @@
                             <form method="post" action="{% url 'users:auth:logout' %}">
                                 {% csrf_token %}
                                 <button type="submit"
-                                        class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors"
+                                        class="bg-brand-blue text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 transition-colors"
                                         onclick="return confirm('Are you sure you want to logout?')">Logout</button>
                             </form>
                         {% else %}
                             <a href="{% url 'users:auth:login' %}"
-                               class="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                               class="text-gray-700 hover:text-brand-green px-3 py-2 rounded-md text-sm font-medium transition-colors">
                                 Login
                             </a>
                             <a href="{% url 'users:auth:register' %}"
-                               class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors">
+                               class="bg-brand-blue text-white px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 transition-colors">
                                 Sign Up
                             </a>
                         {% endif %}
@@ -92,7 +92,7 @@
                 <!-- Mobile menu button -->
                 <div class="md:hidden">
                     <button type="button"
-                            class="bg-gray-100 inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-indigo-600 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                            class="bg-gray-100 inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-brand-green hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-green">
                         <span class="sr-only">Open main menu</span>
                         {% heroicon_outline name="bars-3" class="h-6 w-6" %}
                     </button>

@@ -9,6 +9,11 @@ _path_prefix = "company/"
 urlpatterns = [
     path("<int:pk>/", cvs.CompanyManagementView.as_view(), name="company-management"),
     path(
+        "<int:pk>/reports/<slug:report>/",
+        cvs.CompanyReportView.as_view(),
+        name="company-report",
+    ),
+    path(
         "<int:pk>/update/",
         cvs.CompanyUpdateView.as_view(),
         name="company-update",

@@ -6,6 +6,7 @@ from datetime import datetime
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import QuerySet
+from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import DetailView, ListView, UpdateView
@@ -74,6 +75,11 @@ class CompanyManagementView(
     def get_queryset(self) -> QuerySet["Project"]:
         """Filter companies to show only those the user has access to."""
         return self.request.user.get_projects  # type: ignore
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["tab"] = "dashboard"
+        return context
 
 
 class CompanyUpdateView(
@@ -273,3 +279,48 @@ class BusinessSetupView(
             },
             {"title": "Business Setup", "url": None},
         ]
+
+
+class CompanyReportView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, DetailView
+):
+    model = Project
+    template_name = "company/company_report.html"
+    context_object_name = "company"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    report_titles = {
+        "income_statement": "Income Statement",
+        "production_report": "Production Report",
+        "progress_report": "Progress Report",
+        "cashflow_statement": "Cashflow Statement",
+        "debtors_creditors": "Debtors & Creditors",
+        "profitability_risk": "Profitability Risk Report",
+        "contractors_report": "Contractors Report",
+    }
+
+    def get_queryset(self) -> QuerySet[Project]:
+        return self.request.user.get_projects  # type: ignore
+
+    def dispatch(self, request, *args, **kwargs):
+        report = kwargs.get("report")
+        if report not in self.report_titles:
+            raise Http404("Unknown report")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        report = self.kwargs["report"]
+        context["tab"] = report
+        context["report"] = report
+        context["report_title"] = self.report_titles[report]
+        context["current_date"] = datetime.now()
+
+        context["revenue"] = 100_000_000
+        context["gross_profit_margin"] = 20.0
+        context["gross_profit"] = 20_000_000
+        context["variable_costs"] = 12_000_000
+        context["net_profit"] = 8_000_000
+        context["net_profit_margin"] = 8.0
+        context["forecast_profit"] = 6_500_000
+        return context
