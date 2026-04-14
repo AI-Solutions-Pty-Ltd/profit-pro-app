@@ -220,21 +220,10 @@
                             <!-- Meetings & Tracking -->
                             {% if request.user|projectroles:project|userhasrole:'ADMIN,User' %}
                                 <div class="pt-2 mt-2 border-t border-gray-100">
-                                    <h4 class="mb-2 text-xs font-bold tracking-wider text-gray-400 uppercase">Meetings & Tracking</h4>
                                     <a href="{% url 'site_management:meeting-list' project.pk %}"
                                        class="flex justify-between items-center px-3 py-2 mb-2 w-full bg-white rounded-lg border border-cyan-200 transition-colors hover:bg-cyan-50 group/btn">
                                         <span class="text-sm font-medium text-cyan-700">Meetings</span>
                                         {% heroicon_outline "arrow-right" size="16" class="text-cyan-500 opacity-0 transition-opacity group-hover/btn:opacity-100" %}
-                                    </a>
-                                    <a href="{% url 'project:action-tracker-report' project.pk %}"
-                                       class="flex justify-between items-center px-3 py-2 mb-2 w-full bg-white rounded-lg border border-rose-200 transition-colors hover:bg-rose-50 group/btn">
-                                        <span class="text-sm font-medium text-rose-700">Action Tracker</span>
-                                        {% heroicon_outline "arrow-right" size="16" class="text-rose-500 opacity-0 transition-opacity group-hover/btn:opacity-100" %}
-                                    </a>
-                                    <a href="{% url 'project:decision-log-report' project.pk %}"
-                                       class="flex justify-between items-center px-3 py-2 w-full bg-white rounded-lg border border-blue-200 transition-colors hover:bg-blue-50 group/btn">
-                                        <span class="text-sm font-medium text-blue-700">Decision Log</span>
-                                        {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 transition-opacity group-hover/btn:opacity-100" %}
                                     </a>
                                 </div>
                             {% endif %}
