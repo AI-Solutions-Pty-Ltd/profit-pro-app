@@ -29,10 +29,13 @@
             <form method="get" class="flex flex-wrap items-center gap-3">
                 <div class="relative">
                     <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Project</span>
-                    <select name="projects" onchange="this.form.submit()" class="w-48 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg appearance-none bg-white">
+                    <select name="projects"
+                            onchange="this.form.submit()"
+                            class="w-48 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg appearance-none bg-white">
                         <option value="">All Projects</option>
                         {% for project in filter_form.projects.field.queryset %}
-                            <option value="{{ project.pk }}" {% if filter_form.projects.value|stringformat:"s" == project.pk|stringformat:"s" %}selected{% endif %}>
+                            <option value="{{ project.pk }}"
+                                    {% if filter_form.projects.value|stringformat:"s" == project.pk|stringformat:"s" %}selected{% endif %}>
                                 {{ project.name }}
                             </option>
                         {% endfor %}
@@ -43,7 +46,6 @@
             </form>
         </div>
     </div>
-
     <!-- Production Data Table -->
     <div class="bg-white shadow-sm rounded-lg overflow-hidden">
         <div class="overflow-x-auto">
@@ -71,14 +73,13 @@
                                 {{ item.efficiency|default:"0.00"|floatformat:2 }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <a href="{% url 'project:production-dashboard' item.project.pk %}" class="text-indigo-600 hover:text-indigo-900">Details</a>
+                                <a href="{% url 'project:production-dashboard' item.project.pk %}"
+                                   class="text-indigo-600 hover:text-indigo-900">Details</a>
                             </td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-500">
-                                No projects found with current filters.
-                            </td>
+                            <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-500">No projects found with current filters.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
