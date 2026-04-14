@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views import View
 
 from app.Account.subscription_config import Subscription
-from app.BillOfQuantities.models import Bill, Package, LineItem
+from app.BillOfQuantities.models import Bill, LineItem, Package
 from app.core.Utilities.subscription_and_role_mixin import (
     SubscriptionAndRoleRequiredMixin,
 )
@@ -130,7 +130,9 @@ class GetLineItemsByPackageView(SubscriptionAndRoleRequiredMixin, View):
 
         # Only return work items (is_work=True)
         line_items = (
-            LineItem.objects.filter(package_id=package_id, is_work=True, project=project)
+            LineItem.objects.filter(
+                package_id=package_id, is_work=True, project=project
+            )
             .exclude(id__in=planned_line_item_ids)
             .order_by("row_index")
             .values(

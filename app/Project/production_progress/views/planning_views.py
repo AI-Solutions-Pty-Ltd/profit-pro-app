@@ -1,8 +1,8 @@
 import json
-from django.db import models as db_models
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import models as db_models
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
@@ -115,6 +115,7 @@ class ProductionPlanGanttView(
                     "has_children": plan.children.exists(),
                     "predecessors": predecessor_ids,
                     "predecessor_names": predecessor_names,
+                    "parent_id": plan.parent_id,
                     "edit_url": reverse_lazy(
                         edit_url_name,
                         kwargs={"project_pk": project_pk, "pk": plan.pk},

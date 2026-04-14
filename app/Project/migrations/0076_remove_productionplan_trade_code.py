@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("Project", "0075_productionplan_line_item_productionplan_trade_code_and_more"),
     ]

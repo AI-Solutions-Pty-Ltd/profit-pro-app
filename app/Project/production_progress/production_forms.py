@@ -3,9 +3,9 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.forms import formset_factory, inlineformset_factory
 
-from app.BillOfQuantities.models import Bill, Package, Structure, LineItem
-from app.Project.models.unit_models import UnitOfMeasure
+from app.BillOfQuantities.models import Bill, LineItem, Package, Structure
 from app.core.Utilities.widgets import SearchableSelectWidget
+from app.Project.models.unit_models import UnitOfMeasure
 
 from .production_models import (
     DailyActivityEntry,
@@ -150,10 +150,18 @@ class ProductionPlanForm(forms.ModelForm):
             if self.instance.pk:
                 planned_qs = planned_qs.exclude(pk=self.instance.pk)
 
-            planned_structure_ids = planned_qs.filter(structure__isnull=False).values_list("structure_id", flat=True)
-            planned_bill_ids = planned_qs.filter(bill__isnull=False).values_list("bill_id", flat=True)
-            planned_package_ids = planned_qs.filter(package__isnull=False).values_list("package_id", flat=True)
-            planned_line_item_ids = planned_qs.filter(line_item__isnull=False).values_list("line_item_id", flat=True)
+            planned_structure_ids = planned_qs.filter(
+                structure__isnull=False
+            ).values_list("structure_id", flat=True)
+            planned_bill_ids = planned_qs.filter(bill__isnull=False).values_list(
+                "bill_id", flat=True
+            )
+            planned_package_ids = planned_qs.filter(package__isnull=False).values_list(
+                "package_id", flat=True
+            )
+            planned_line_item_ids = planned_qs.filter(
+                line_item__isnull=False
+            ).values_list("line_item_id", flat=True)
 
             # Configure BoQ fields with Quick Create
             self.fields["structure"].widget.resource_type = "structure"
@@ -238,6 +246,7 @@ class ProductionPlanForm(forms.ModelForm):
         # Convert unit object to its short_name string for the database
         if unit_obj:
             from app.Project.models.unit_models import UnitOfMeasure
+
             if isinstance(unit_obj, UnitOfMeasure):
                 cleaned_data["unit"] = unit_obj.short_name
 
@@ -248,10 +257,12 @@ class ProductionPlanForm(forms.ModelForm):
                 cleaned_data["bill"] = parent.bill
             if parent.package:
                 cleaned_data["package"] = parent.package
-        
+
         # Validate structure presence
         if not cleaned_data.get("structure") and not parent:
-            raise ValidationError({"structure": "Structure is required for top-level plans."})
+            raise ValidationError(
+                {"structure": "Structure is required for top-level plans."}
+            )
 
         # Auto-populate activity from the NEWLY selected field
         # Auto-populate activity from the MOST SPECIFIC field provided in the form
@@ -267,7 +278,9 @@ class ProductionPlanForm(forms.ModelForm):
 
         activity = cleaned_data.get("activity")
         # Use stored project_id or instance project
-        project = self.project_id or (self.instance.project if self.instance.pk else None)
+        project = self.project_id or (
+            self.instance.project if self.instance.pk else None
+        )
 
         if start_date and finish_date and finish_date < start_date:
             raise ValidationError(
