@@ -10,7 +10,7 @@
                 </div>
                 <h1 class="mb-2 text-2xl font-bold text-gray-900">Delete Material Entry?</h1>
                 <p class="mb-8 text-gray-600">
-                    Are you sure you want to delete the material entry for <strong>{{ object.material_entity.name }}</strong> dated <strong>{{ object.date|date:"d M Y" }}</strong>? This action cannot be undone.
+                    Are you sure you want to delete the material entry for <strong>{{ object.material_entity.name|default:"Unknown Material" }}</strong> dated <strong>{{ object.date|date:"d M Y" }}</strong>? This action cannot be undone.
                 </p>
                 <form method="post" class="flex justify-center items-center space-x-4">
                     {% csrf_token %}
