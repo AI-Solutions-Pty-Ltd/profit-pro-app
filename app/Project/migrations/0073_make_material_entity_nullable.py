@@ -5,15 +5,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0072_fix_orphaned_material_cost_trackers'),
+        ("Project", "0072_fix_orphaned_material_cost_trackers"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='materialcosttracker',
-            name='material_entity',
-            field=models.ForeignKey(blank=True, help_text='Link to master material definition', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='cost_logs', to='Project.materialentity'),
+            model_name="materialcosttracker",
+            name="material_entity",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Link to master material definition",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="cost_logs",
+                to="Project.materialentity",
+            ),
         ),
     ]
