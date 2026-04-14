@@ -25,7 +25,9 @@ class MaterialCostTracker(BaseModel):
     )
     material_entity = models.ForeignKey(
         "Project.MaterialEntity",
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="cost_logs",
         help_text="Link to master material definition",
     )
@@ -62,7 +64,10 @@ class MaterialCostTracker(BaseModel):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.material_entity.name} - {self.date} - {self.cost}"
+        material_name = (
+            self.material_entity.name if self.material_entity else "Unknown Material"
+        )
+        return f"{material_name} - {self.date} - {self.cost}"
 
     class Meta:
         verbose_name = "Material Cost Tracker"

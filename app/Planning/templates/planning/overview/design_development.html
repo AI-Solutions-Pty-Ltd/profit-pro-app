@@ -16,7 +16,15 @@
                         {{ project.name }} - Track design progress across all Procurement Package
                     </p>
                 </div>
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center gap-4 flex-wrap">
+                    <a href="{% url 'planning:design-category-create' project.pk %}"
+                       class="text-sm text-indigo-200 hover:text-white underline transition-colors">+ L1 Category</a>
+                    <a href="{% url 'planning:design-subcategory-create' project.pk %}"
+                       class="text-sm text-indigo-200 hover:text-white underline transition-colors">+ L2 SubCategory</a>
+                    <a href="{% url 'planning:design-group-create' project.pk %}"
+                       class="text-sm text-indigo-200 hover:text-white underline transition-colors">+ L3 Group</a>
+                    <a href="{% url 'planning:design-discipline-create' project.pk %}"
+                       class="text-sm text-indigo-200 hover:text-white underline transition-colors">+ L4 Discipline</a>
                     <a href="{% url 'project:project-management' project.pk %}"
                        class="inline-flex items-center px-5 py-2.5 border border-white/20 text-sm font-semibold rounded-lg text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/50 transition-all duration-200 shadow-lg">
                         {% heroicon_outline "arrow-left" size="18" class="mr-2" %}

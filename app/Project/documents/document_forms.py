@@ -101,7 +101,7 @@ class ProjectDocumentForm(forms.ModelForm):
             category_field = self.fields["project_category"]
             if hasattr(category_field, "queryset"):
                 category_field.queryset = Category.objects.filter(  # type: ignore
-                    projects_id=project.pk, deleted=False
+                    project_id=project.pk, deleted=False
                 ).order_by("name")
 
             # Filter for project-specific subcategories
@@ -115,7 +115,7 @@ class ProjectDocumentForm(forms.ModelForm):
             discipline_field = self.fields["project_discipline"]
             if hasattr(discipline_field, "queryset"):
                 discipline_field.queryset = Discipline.objects.filter(  # type: ignore
-                    projects_id=project.pk, deleted=False
+                    project_id=project.pk, deleted=False
                 ).order_by("name")
 
             # Make fields optional
