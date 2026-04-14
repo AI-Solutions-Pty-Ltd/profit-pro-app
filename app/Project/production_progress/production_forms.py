@@ -3,7 +3,8 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.forms import formset_factory, inlineformset_factory
 
-from app.BillOfQuantities.models import Bill, Package, Structure
+from app.BillOfQuantities.models import Bill, Package, Structure, LineItem
+from app.Project.models.unit_models import UnitOfMeasure
 from app.core.Utilities.widgets import SearchableSelectWidget
 
 from .production_models import (
@@ -51,11 +52,23 @@ class ProductionPlanForm(forms.ModelForm):
         ),
     )
 
+    unit = forms.ModelChoiceField(
+        queryset=UnitOfMeasure.objects.all(),
+        to_field_name="short_name",
+        widget=SearchableSelectWidget(
+            resource_type="unit_of_measure",
+            create_url=True,
+            attrs={"id": "unit"},
+        ),
+        required=True,
+    )
+
     class Meta:
         model = ProductionPlan
         fields = [
             "parent",
             "activity",
+            "line_item",
             "structure",
             "bill",
             "package",
@@ -66,8 +79,10 @@ class ProductionPlanForm(forms.ModelForm):
             "unit",
         ]
         widgets = {
-            "activity": forms.TextInput(
-                attrs={"id": "activity", "placeholder": "Enter Activity (e.g., Bricks)"}
+            "activity": forms.HiddenInput(attrs={"id": "activity"}),
+            "line_item": SearchableSelectWidget(
+                resource_type="line_item",
+                attrs={"id": "id_line_item"},
             ),
             "structure": SearchableSelectWidget(
                 resource_type="structure",
@@ -106,29 +121,78 @@ class ProductionPlanForm(forms.ModelForm):
                     "format": "{:.2f}",
                 }
             ),
-            "unit": forms.TextInput(
-                attrs={"id": "unit", "placeholder": "Unit e.g. bricks"}
+            "unit": SearchableSelectWidget(
+                resource_type="unit_of_measure",
+                attrs={"id": "unit"},
             ),
         }
 
     def __init__(self, *args, **kwargs):
         project_id = kwargs.pop("project_id", None)
+        self.project_id = project_id
         super().__init__(*args, **kwargs)
 
+        # Determine level context
+        parent_id = self.initial.get("parent") or (
+            self.instance.parent_id if self.instance.pk else None
+        )
+        self.is_top_level = not parent_id
+        self.is_new = not self.instance.pk
+
+        if self.instance.pk and self.instance.parent_id:
+            self.fields["parent"].disabled = True
+
         if project_id:
+            # Get already planned BoQ items to filter them out
+            planned_qs = ProductionPlan.objects.filter(
+                project_id=project_id, is_archived=False
+            )
+            if self.instance.pk:
+                planned_qs = planned_qs.exclude(pk=self.instance.pk)
+
+            planned_structure_ids = planned_qs.filter(structure__isnull=False).values_list("structure_id", flat=True)
+            planned_bill_ids = planned_qs.filter(bill__isnull=False).values_list("bill_id", flat=True)
+            planned_package_ids = planned_qs.filter(package__isnull=False).values_list("package_id", flat=True)
+            planned_line_item_ids = planned_qs.filter(line_item__isnull=False).values_list("line_item_id", flat=True)
+
+            # Configure BoQ fields with Quick Create
+            self.fields["structure"].widget.resource_type = "structure"
+            self.fields["structure"].widget.create_url = True
             self.fields["structure"].queryset = Structure.objects.filter(
                 project_id=project_id
-            )
+            ).exclude(id__in=planned_structure_ids)
+
+            self.fields["bill"].widget.resource_type = "bill"
+            self.fields["bill"].widget.create_url = True
             self.fields["bill"].queryset = Bill.objects.filter(
                 structure__project_id=project_id
-            )
+            ).exclude(id__in=planned_bill_ids)
+
+            self.fields["package"].widget.resource_type = "package"
+            self.fields["package"].widget.create_url = True
             self.fields["package"].queryset = Package.objects.filter(
                 bill__structure__project_id=project_id
-            )
+            ).exclude(id__in=planned_package_ids)
+
+            self.fields["line_item"].queryset = LineItem.objects.filter(
+                project_id=project_id, is_work=True
+            ).exclude(id__in=planned_line_item_ids)
+
+            # Set choice_data for line_item to support auto-fill
+            line_item_qs = self.fields["line_item"].queryset
+            self.fields["line_item"].widget.choice_data = {
+                str(li.pk): {
+                    "data-description": li.description,
+                    "data-item-number": li.item_number,
+                    "data-unit": li.unit_measurement,
+                    "data-quantity": str(li.budgeted_quantity),
+                }
+                for li in line_item_qs
+            }
 
             parent_qs = ProductionPlan.objects.filter(
                 project_id=project_id, is_archived=False
-            ).exclude(package__isnull=False)
+            ).exclude(line_item__isnull=False)
             if self.instance.pk:
                 parent_qs = parent_qs.exclude(pk=self.instance.pk)
 
@@ -142,6 +206,10 @@ class ProductionPlanForm(forms.ModelForm):
                     "data-bill-label": str(plan.bill) if plan.bill else "",
                     "data-package-id": plan.package_id or "",
                     "data-package-label": str(plan.package) if plan.package else "",
+                    "data-line-item-id": plan.line_item_id or "",
+                    "data-line-item-label": str(plan.line_item)
+                    if plan.line_item
+                    else "",
                 }
                 for plan in parent_qs
             }
@@ -149,8 +217,11 @@ class ProductionPlanForm(forms.ModelForm):
             self.fields["parent"].queryset = parent_qs
             self.fields["parent"].widget.choice_data = choice_data
 
+        self.fields["structure"].required = False
         self.fields["bill"].required = False
         self.fields["package"].required = False
+        self.fields["line_item"].required = False
+        self.fields["activity"].required = False
 
     def clean(self):
         cleaned_data = super().clean()
@@ -159,10 +230,44 @@ class ProductionPlanForm(forms.ModelForm):
 
         start_date = cleaned_data.get("start_date")
         finish_date = cleaned_data.get("finish_date")
+        line_item = cleaned_data.get("line_item")
         activity = cleaned_data.get("activity")
-        project = (
-            self.instance.project if self.instance.pk else cleaned_data.get("project")
-        )
+        parent = cleaned_data.get("parent")
+        unit_obj = cleaned_data.get("unit")
+
+        # Convert unit object to its short_name string for the database
+        if unit_obj:
+            from app.Project.models.unit_models import UnitOfMeasure
+            if isinstance(unit_obj, UnitOfMeasure):
+                cleaned_data["unit"] = unit_obj.short_name
+
+        # Inherit hierarchy from parent
+        if parent:
+            cleaned_data["structure"] = parent.structure
+            if parent.bill:
+                cleaned_data["bill"] = parent.bill
+            if parent.package:
+                cleaned_data["package"] = parent.package
+        
+        # Validate structure presence
+        if not cleaned_data.get("structure") and not parent:
+            raise ValidationError({"structure": "Structure is required for top-level plans."})
+
+        # Auto-populate activity from the NEWLY selected field
+        # Auto-populate activity from the MOST SPECIFIC field provided in the form
+        # We check fields in reverse order of hierarchy
+        if cleaned_data.get("line_item"):
+            cleaned_data["activity"] = str(cleaned_data["line_item"].description[:255])
+        elif cleaned_data.get("package"):
+            cleaned_data["activity"] = str(cleaned_data["package"])
+        elif cleaned_data.get("bill"):
+            cleaned_data["activity"] = str(cleaned_data["bill"])
+        elif cleaned_data.get("structure"):
+            cleaned_data["activity"] = str(cleaned_data["structure"])
+
+        activity = cleaned_data.get("activity")
+        # Use stored project_id or instance project
+        project = self.project_id or (self.instance.project if self.instance.pk else None)
 
         if start_date and finish_date and finish_date < start_date:
             raise ValidationError(
@@ -183,9 +288,10 @@ class ProductionPlanForm(forms.ModelForm):
                 overlapping_plans = overlapping_plans.filter(project=project)
 
             if overlapping_plans.exists():
-                raise ValidationError(
-                    f"An active plan for '{activity}' already exists within this date range ({start_date} to {finish_date})."
-                )
+                error_msg = f"An active plan for '{activity}' already exists within this date range ({start_date} to {finish_date})."
+                if parent and parent.activity == activity:
+                    error_msg = f"This sub-activity cannot have the same name as its parent ('{activity}'). Please select a more specific level (like a Package or Line Item) or adjust the selection."
+                raise ValidationError(error_msg)
 
         # Enforce rule: Cannot change structure/parent if it has children
         if (

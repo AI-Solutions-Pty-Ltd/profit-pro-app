@@ -68,7 +68,7 @@
                     <!-- Right: Metadata & Actions -->
                     <div class="flex items-center space-x-4">
                         <div class="hidden text-right sm:block">
-                            <div class="text-sm font-bold text-gray-900">{{ plan.quantity }} {{ plan.unit }}</div>
+                            <div class="text-sm font-bold text-gray-900">{{ plan.quantity|floatformat:1}} {{ plan.unit_display }}</div>
                             <div class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Scheduled Qty</div>
                         </div>
                         <div class="flex items-center">
@@ -107,9 +107,9 @@
                                             Delete Activity
                                         </button>
                                     </li>
-                                    {% if not plan.package %}
+                                    {% if not plan.line_item %}
                                         <li>
-                                            <a href="{% url 'project:production-plan-create' project.pk %}?parent={{ plan.pk }}{% if plan.structure %}&structure={{ plan.structure.pk }}{% endif %}{% if plan.bill %}&bill={{ plan.bill.pk }}{% endif %}"
+                                            <a href="{% url 'project:production-plan-create' project.pk %}?parent={{ plan.pk }}{% if plan.structure %}&structure={{ plan.structure.pk }}{% endif %}{% if plan.bill %}&bill={{ plan.bill.pk }}{% endif %}{% if plan.package %}&package={{ plan.package.pk }}{% elif not plan.bill and not plan.package and plan.parent %}&package={{ plan.parent.package.pk }}{% endif %}"
                                                class="flex items-center text-indigo-500">
                                                 {% heroicon_outline "plus" class="mr-2 w-4 h-4" %}
                                                 Add Activity
@@ -142,7 +142,7 @@
                             </div>
                             <div>
                                 <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Unit of Measure</h4>
-                                <p class="text-sm font-bold text-gray-700">{{ plan.unit }}</p>
+                                <p class="text-sm font-bold text-gray-700">{{ plan.unit_display }}</p>
                             </div>
                         </div>
                         <div class="space-y-3">

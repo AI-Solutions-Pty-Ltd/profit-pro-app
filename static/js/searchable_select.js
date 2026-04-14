@@ -111,27 +111,16 @@ function selectSearchableOption(target, id, label) {
 
     if (displayLabel) displayLabel.textContent = label;
 
-    // Autofill Logic: Check for data attributes to populate other fields in the form
-    const structureId = target.dataset.structureId;
-    const structureLabel = target.dataset.structureLabel;
-    const billId = target.dataset.billId;
-    const billLabel = target.dataset.billLabel;
-    const packageId = target.dataset.packageId;
-    const packageLabel = target.dataset.packageLabel;
-
-    if (typeof setSearchableSelectValue === 'function') {
-        if (structureId) {
-            setSearchableSelectValue('id_structure', structureId, structureLabel);
-        }
-        if (billId) {
-            setSearchableSelectValue('id_bill', billId, billLabel);
-        }
-        if (packageId) {
-            setSearchableSelectValue('id_package', packageId, packageLabel);
-        } else if (typeof updateSearchableSelect === 'function') {
-            updateSearchableSelect('id_package', [], 'package');
-        }
-    }
+    // Trigger field-specific selection logic via custom event
+    const selectionEvent = new CustomEvent('searchableSelect:selected', {
+        detail: {
+            id: id,
+            label: label,
+            dataset: target.dataset
+        },
+        bubbles: true
+    });
+    container.dispatchEvent(selectionEvent);
 
     const rate = target.dataset.rate;
     if (rate) {

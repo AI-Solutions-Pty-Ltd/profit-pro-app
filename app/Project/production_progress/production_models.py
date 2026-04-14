@@ -33,7 +33,7 @@ class ProductionPlan(BaseModel):
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name="production_plans"
     )
-    activity = models.CharField(max_length=255)
+    activity = models.CharField(max_length=255, blank=True)
     parent = models.ForeignKey(
         "self",
         null=True,
@@ -64,6 +64,14 @@ class ProductionPlan(BaseModel):
         related_name="production_plans",
         help_text="The BOQ Package this plan belongs to",
     )
+    line_item = models.ForeignKey(
+        "BillOfQuantities.LineItem",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="production_plans",
+        help_text="The BOQ Line Item (Trade Code) this plan belongs to",
+    )
     start_date = models.DateField()
     finish_date = models.DateField()
     quantity = models.DecimalField(
@@ -90,6 +98,16 @@ class ProductionPlan(BaseModel):
 
     def __str__(self):
         return f"{self.project.name} - {self.activity}"
+
+    @property
+    def unit_display(self):
+        """Returns the shorthand unit if available, otherwise just the unit."""
+        if not self.unit:
+            return ""
+        # Handle "Name (shorthand)" format
+        if "(" in self.unit and ")" in self.unit:
+            return self.unit.split("(")[-1].split(")")[0]
+        return self.unit
 
     def save(self, *args, **kwargs):
         if self.start_date and self.finish_date:

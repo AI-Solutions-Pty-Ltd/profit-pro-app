@@ -51,17 +51,30 @@ class QuickCreateFormView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         resource_type = request.GET.get("resource_type")
+        project_id = request.GET.get("project_id")
         config = registry.get(resource_type)
 
         if not config:
-            return JsonResponse(
-                {"error": f"Invalid resource type: {resource_type}"}, status=400
-            )
+            return JsonResponse({"error": "Invalid resource type"}, status=400)
 
-        form = config["form_class"]()
+        form_kwargs = {}
+        if project_id:
+            form_kwargs["project_id"] = project_id
+
+        try:
+            form = config["form_class"](**form_kwargs)
+        except TypeError:
+            # Fallback if form doesn't accept project_id
+            form = config["form_class"]()
+
         html = render_to_string(
             "modals/partials/generic_form_fields.html",
-            {"form": form, "resource_type": resource_type, "title": config["title"]},
+            {
+                "form": form,
+                "resource_type": resource_type,
+                "title": config["title"],
+                "project_id": project_id,
+            },
             request=request,
         )
 
