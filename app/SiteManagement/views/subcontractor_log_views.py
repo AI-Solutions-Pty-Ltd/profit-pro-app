@@ -1,20 +1,35 @@
 """CRUD views for Subcontractor Log."""
 
+from typing import TYPE_CHECKING
+
 from django.contrib import messages
-from django.forms import DateInput
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+
+if TYPE_CHECKING:
+    from django.views.generic.edit import FormMixin
+
+    _Base = FormMixin
+else:
+
+    class _Base:
+        pass
+
 
 from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project, Role
+from app.SiteManagement.forms.log_forms import SubcontractorLogForm
 from app.SiteManagement.models import SubcontractorLog
 
 
 class SubcontractorLogMixin(
-    SubscriptionRequiredMixin, UserHasProjectRoleGenericMixin, BreadcrumbMixin
+    _Base,
+    SubscriptionRequiredMixin,
+    UserHasProjectRoleGenericMixin,
+    BreadcrumbMixin,
 ):
     """Mixin for Subcontractor Log views."""
 
@@ -22,12 +37,19 @@ class SubcontractorLogMixin(
     required_tiers = [Subscription.SITE_MANAGEMENT]
     roles = [Role.ADMIN, Role.USER]
     project_slug = "project_pk"
+    form_class = SubcontractorLogForm
 
     def get_project(self) -> Project:
         return Project.objects.get(pk=self.kwargs["project_pk"])
 
     def get_queryset(self):
         return SubcontractorLog.objects.filter(project=self.get_project())
+
+    def get_form_kwargs(self):
+        """Pass the project to the form for queryset filtering."""
+        kwargs = super().get_form_kwargs()
+        kwargs["project"] = self.get_project()
+        return kwargs
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         project = self.get_project()
@@ -71,30 +93,6 @@ class SubcontractorLogCreateView(SubcontractorLogMixin, CreateView):
     """Create a new subcontractor log."""
 
     template_name = "site_management/subcontractor_log/form.html"
-    fields = [
-        "name",
-        "trade",
-        "scope",
-        "start_date",
-        "planned_finish_date",
-        "actual_finish_date",
-        "task",
-        "hours_worked",
-        "output",
-        "output_unit",
-        "remarks",
-    ]
-    widgets = {
-        "start_date": DateInput(attrs={"type": "date"}),
-        "planned_finish_date": DateInput(attrs={"type": "date"}),
-        "actual_finish_date": DateInput(attrs={"type": "date"}),
-    }
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        for field_name, widget in self.widgets.items():
-            form.fields[field_name].widget = widget
-        return form
 
     def form_valid(self, form):
         form.instance.project = self.get_project()
@@ -114,33 +112,9 @@ class SubcontractorLogCreateView(SubcontractorLogMixin, CreateView):
 
 
 class SubcontractorLogUpdateView(SubcontractorLogMixin, UpdateView):
-    """Update a subcontractor log."""
+    """Update a labour log."""
 
     template_name = "site_management/subcontractor_log/form.html"
-    fields = [
-        "name",
-        "trade",
-        "scope",
-        "start_date",
-        "planned_finish_date",
-        "actual_finish_date",
-        "task",
-        "hours_worked",
-        "output",
-        "output_unit",
-        "remarks",
-    ]
-    widgets = {
-        "start_date": DateInput(attrs={"type": "date"}),
-        "planned_finish_date": DateInput(attrs={"type": "date"}),
-        "actual_finish_date": DateInput(attrs={"type": "date"}),
-    }
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        for field_name, widget in self.widgets.items():
-            form.fields[field_name].widget = widget
-        return form
 
     def form_valid(self, form):
         messages.success(self.request, "Subcontractor log updated successfully!")
@@ -169,6 +143,19 @@ class SubcontractorLogDeleteView(SubcontractorLogMixin, DeleteView):
             "site_management:subcontractor-log-list",
             kwargs={"project_pk": self.get_project().pk},
         )
+
+    def post(self, request, *args, **kwargs):
+        """Override post to call delete directly, bypassing form validation."""
+        return self.delete(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        """Soft delete the object and redirect."""
+        self.object = self.get_object()
+        success_url = self.get_success_url()
+        self.object.soft_delete()
+        from django.http import HttpResponseRedirect
+
+        return HttpResponseRedirect(success_url)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

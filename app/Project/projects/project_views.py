@@ -361,6 +361,81 @@ class ProjectSetupView(ProjectMixin, DetailView):
             BreadcrumbItem(title="Edit Project", url=None),
         ]
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = self.object
+        from app.Estimator.models import ProjectMaterial
+
+        if project.contractor_id:
+            context["sibling_projects"] = (
+                Project.objects.filter(contractor_id=project.contractor_id)
+                .exclude(pk=project.pk)
+                .order_by("name")
+            )
+        else:
+            context["sibling_projects"] = Project.objects.none()
+        context["has_estimator_data"] = ProjectMaterial.objects.filter(
+            project=project
+        ).exists()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        project = self.object
+        action = request.POST.get("action")
+
+        if action == "clone_system":
+            from app.Estimator.services import initialize_project_estimator
+
+            try:
+                result = initialize_project_estimator(project)
+                if result.get("status") == "already_initialized":
+                    messages.warning(
+                        request,
+                        "This project already has estimator data. "
+                        "Clear existing data first or use a fresh project.",
+                    )
+                else:
+                    messages.success(
+                        request,
+                        f"System library cloned — "
+                        f"{result['trade_codes']} trade codes, "
+                        f"{result['materials']} materials, "
+                        f"{result['labour_crews']} labour crews, "
+                        f"{result['specifications']} specifications, "
+                        f"{result['labour_specs']} labour specs.",
+                    )
+            except Exception as e:
+                messages.error(request, f"Clone from system failed: {e}")
+
+        elif action == "clone_project":
+            from django.shortcuts import get_object_or_404
+
+            from app.Estimator.services import clone_from_project
+
+            source_pk = request.POST.get("source_project")
+            if not source_pk:
+                messages.error(request, "Please select a project to clone from.")
+            else:
+                source_project = get_object_or_404(Project, pk=source_pk)
+                try:
+                    result = clone_from_project(project, source_project)
+                    messages.success(
+                        request,
+                        f"Cloned from '{source_project.name}' — "
+                        f"{result['trade_codes']} trade codes, "
+                        f"{result['materials']} materials, "
+                        f"{result['labour_crews']} labour crews, "
+                        f"{result['specifications']} specifications, "
+                        f"{result['labour_specs']} labour specs.",
+                    )
+                except Exception as e:
+                    messages.error(request, f"Clone from project failed: {e}")
+
+        return HttpResponseRedirect(
+            reverse("project:project-setup", kwargs={"pk": project.pk})
+        )
+
 
 class ProjectManagementView(ProjectMixin, DetailView):
     """Display project management page with all buttons (no graphs)."""

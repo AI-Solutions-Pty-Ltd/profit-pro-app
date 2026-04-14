@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% block title %}Unit Management - Profit Pro{% endblock %}
+{% block content %}
+    <div class="mb-6 bg-white rounded-lg shadow-sm">
+        <div class="px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Unit Standards</h1>
+                    <p class="mt-1 text-sm text-gray-600">Centralized registry for all measurements and unit standards.</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:unit-create' %}"
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm hover:bg-indigo-700">
+                        {% heroicon_outline "plus" class="mr-2 w-5 h-5" %}
+                        Add New Unit
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Stats Summary -->
+    <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-3">
+        <div class="p-6 bg-white rounded-lg border border-gray-100 shadow-sm">
+            <div class="flex items-center">
+                <div class="p-3 bg-indigo-50 rounded-lg">{% heroicon_outline "scale" class="w-6 h-6 text-indigo-600" %}</div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium tracking-wider text-gray-500 uppercase">Registered Units</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-6 bg-white rounded-lg border border-gray-100 shadow-sm">
+            <div class="flex items-center">
+                <div class="p-3 bg-emerald-50 rounded-lg">{% heroicon_outline "bookmark" class="w-6 h-6 text-emerald-600" %}</div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium tracking-wider text-gray-500 uppercase">Base Units</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ base_units_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-6 bg-white rounded-lg border border-gray-100 shadow-sm">
+            <div class="flex items-center">
+                <div class="p-3 bg-amber-50 rounded-lg">{% heroicon_outline "tag" class="w-6 h-6 text-amber-600" %}</div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium tracking-wider text-gray-500 uppercase">Domains</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ categories_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="overflow-hidden bg-white rounded-lg shadow-sm">
+        <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+            <h2 class="text-sm font-bold tracking-wider text-gray-900 uppercase">Available Definitions</h2>
+            <div class="relative max-w-xs">
+                <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+                    {% heroicon_mini "magnifying-glass" class="w-4 h-4 text-gray-400" %}
+                </div>
+                <input type="text"
+                       id="table-search"
+                       placeholder="Filter units..."
+                       class="block py-2 pr-3 pl-10 w-full leading-5 placeholder-gray-500 bg-white rounded-md border border-gray-300 transition-colors focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Unit Specification</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Shorthand</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Category</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Standard Conversion</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for unit in units %}
+                        <tr class="transition-colors hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex flex-shrink-0 justify-center items-center w-8 h-8 text-xs font-bold text-gray-500 bg-gray-100 rounded-lg">
+                                        {{ unit.name|slice:":1" }}
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">{{ unit.name }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-gray-800 bg-gray-100 rounded-full">
+                                    {{ unit.short_name }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ unit.get_category_display }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
+                                {% if unit.reference_unit %}
+                                    <div class="flex items-center text-gray-600">
+                                        <span class="mr-1 font-medium">1</span> {{ unit.short_name }}
+                                        {% heroicon_mini "arrow-right" class="mx-2 w-3 h-3 text-gray-400" %}
+                                        <span class="mr-1 font-bold text-indigo-600">{{ unit.conversion_factor|floatformat:0 }}</span> {{ unit.reference_unit.short_name }}
+                                    </div>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium text-emerald-800 bg-emerald-100 rounded-full">
+                                        Base Unit
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 space-x-2 text-sm font-medium text-right whitespace-nowrap">
+                                <a href="{% url 'project:unit-update' unit.pk %}"
+                                   class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                <a href="{% url 'project:unit-delete' unit.pk %}"
+                                   class="text-red-600 hover:text-red-900">Delete</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-sm text-center text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    {% heroicon_outline "scale" class="mb-3 w-12 h-12 text-gray-400" %}
+                                    <p class="font-medium">No units found</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if is_paginated %}
+        <div class="flex justify-between items-center px-6 py-4 mt-6 bg-gray-50 rounded-lg border-t border-gray-200">
+            <span class="text-sm font-medium text-gray-700">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            <div class="inline-flex space-x-2">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}"
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50">
+                        Previous
+                    </a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}"
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 hover:bg-gray-50">
+                        Next
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+    <div class="px-6 py-4 mt-6 bg-gray-50 rounded-lg border-t border-gray-200">
+        <div class="flex justify-between items-center">
+            <a href="{% url 'project:company-dashboard' %}"
+               class="inline-flex items-center text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600">
+                {% heroicon_outline "chevron-left" class="mr-1 w-4 h-4" %}
+                Back to Business Dashboard
+            </a>
+        </div>
+    </div>
+    <script>
+    // Simple table search filter
+    document.getElementById('table-search').addEventListener('keyup', function() {
+        let value = this.value.toLowerCase();
+        let rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(row => {
+            if (row.innerText.toLowerCase().indexOf(value) > -1) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    });
+    </script>
+{% endblock %}

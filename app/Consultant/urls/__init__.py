@@ -27,4 +27,8 @@ urlpatterns = [
         "project-lead-consultant/",
         include("app.Consultant.urls.project_lead_consultant_urls"),
     ),
+    path(
+        "lead-consultant-management/",
+        include("app.Consultant.urls.lead_consultant_management_urls"),
+    ),
 ]

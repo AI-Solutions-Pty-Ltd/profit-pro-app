@@ -6,15 +6,15 @@
         <div class="px-6 py-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Project Disciplines</h1>
-                    <p class="text-sm text-gray-600 mt-1">Manage project disciplines for expertise classification</p>
+                    <h1 class="text-2xl font-bold text-gray-900">Project Stages</h1>
+                    <p class="text-sm text-gray-600 mt-1">Manage project stages for classification</p>
                 </div>
                 <div class="flex items-center gap-3">
                     <button type="button"
                             onclick="openCreateModal()"
                             class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                         {% heroicon_outline "plus" size="16" %}
-                        <span class="ml-2">Add Discipline</span>
+                        <span class="ml-2">Add Project Stage</span>
                     </button>
                     <a href="{% url 'project:portfolio-dashboard' %}"
                        class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
@@ -37,17 +37,17 @@
                 <a href="{% url 'project:category-list' %}"
                    class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
                     {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Categories
+                    Sectors
                 </a>
                 <a href="{% url 'project:subcategory-list' %}"
                    class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
                     {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Sub Categories
+                    Areas
                 </a>
                 <a href="{% url 'project:discipline-list' %}"
                    class="border-indigo-500 text-indigo-600 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
                     {% heroicon_outline "academic-cap" size="16" class="inline mr-1.5" %}
-                    Disciplines
+                    Project Stages
                 </a>
             </nav>
         </div>
@@ -57,8 +57,10 @@
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-lg font-semibold text-gray-900">All Disciplines</h2>
-                    <p class="text-sm text-gray-500 mt-1">{{ disciplines.count }} discipline{{ disciplines.count|pluralize }} available</p>
+                    <h2 class="text-lg font-semibold text-gray-900">All Project Stages</h2>
+                    <p class="text-sm text-gray-500 mt-1">
+                        {{ disciplines.count }} project stage{{ disciplines.count|pluralize }} available
+                    </p>
                 </div>
             </div>
         </div>
@@ -107,8 +109,8 @@
                             <td colspan="4" class="px-6 py-12 text-center">
                                 <div class="flex flex-col items-center">
                                     {% heroicon_outline "academic-cap" size="48" class="text-gray-300 mb-4" %}
-                                    <p class="text-sm text-gray-500 font-medium">No disciplines yet</p>
-                                    <p class="text-xs text-gray-400 mt-1">Click "Add Discipline" to create your first discipline</p>
+                                    <p class="text-sm text-gray-500 font-medium">No project stages yet</p>
+                                    <p class="text-xs text-gray-400 mt-1">Click "Add Project Stage" to create your first project stage</p>
                                 </div>
                             </td>
                         </tr>
@@ -124,7 +126,7 @@
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900">Add New Discipline</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Add New Project Stage</h3>
                         <button type="button"
                                 onclick="closeCreateModal()"
                                 class="text-gray-400 hover:text-gray-500">
@@ -138,7 +140,7 @@
                     {% csrf_token %}
                     <div class="px-6 py-4 space-y-4">
                         <div>
-                            <label for="create_name" class="block text-sm font-medium text-gray-700">Discipline Name *</label>
+                            <label for="create_name" class="block text-sm font-medium text-gray-700">Project Stage Name *</label>
                             <input type="text"
                                    name="name"
                                    id="create_name"
@@ -168,7 +170,7 @@
                         <button type="submit"
                                 class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "plus" size="16" class="inline mr-1" %}
-                            Create Discipline
+                            Create Project Stage
                         </button>
                     </div>
                 </form>
@@ -182,7 +184,7 @@
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900">Edit Discipline</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Edit Project Stage</h3>
                         <button type="button"
                                 onclick="closeEditModal()"
                                 class="text-gray-400 hover:text-gray-500">
@@ -194,7 +196,7 @@
                     {% csrf_token %}
                     <div class="px-6 py-4 space-y-4">
                         <div>
-                            <label for="edit_name" class="block text-sm font-medium text-gray-700">Discipline Name *</label>
+                            <label for="edit_name" class="block text-sm font-medium text-gray-700">Project Stage Name *</label>
                             <input type="text"
                                    name="name"
                                    id="edit_name"
@@ -221,7 +223,7 @@
                         <button type="submit"
                                 class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             {% heroicon_outline "check" size="16" class="inline mr-1" %}
-                            Update Discipline
+                            Update Project Stage
                         </button>
                     </div>
                 </form>
@@ -235,7 +237,7 @@
             <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-semibold text-gray-900">Delete Discipline</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Delete Project Stage</h3>
                         <button type="button"
                                 onclick="closeDeleteModal()"
                                 class="text-gray-400 hover:text-gray-500">
@@ -250,7 +252,7 @@
                             <div class="flex-shrink-0">{% heroicon_outline "exclamation-triangle" size="24" class="text-red-600" %}</div>
                             <div class="ml-3">
                                 <p class="text-sm text-gray-700">
-                                    Are you sure you want to delete the discipline <strong id="delete_discipline_name"></strong>?
+                                    Are you sure you want to delete the project stage <strong id="delete_discipline_name"></strong>?
                                 </p>
                                 <p class="text-sm text-gray-500 mt-2" id="delete_warning"></p>
                             </div>
@@ -265,7 +267,7 @@
                         <button type="submit"
                                 class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                             {% heroicon_outline "trash" size="16" class="inline mr-1" %}
-                            Delete Discipline
+                            Delete Project Stage
                         </button>
                     </div>
                 </form>
@@ -291,7 +293,7 @@
             document.getElementById('editModal').classList.remove('hidden');
             document.getElementById('edit_name').value = name;
             document.getElementById('edit_description').value = description;
-            document.getElementById('editForm').action = `/project/discipline/${id}/update/`;
+            document.getElementById('editForm').action = `/project/project-discipline/${id}/update/`;
             document.getElementById('edit_name').focus();
         }
 
@@ -306,7 +308,7 @@
         function openDeleteModal(id, name, projectCount) {
             document.getElementById('deleteModal').classList.remove('hidden');
             document.getElementById('delete_discipline_name').textContent = name;
-            document.getElementById('deleteForm').action = `/project/discipline/${id}/delete/`;
+            document.getElementById('deleteForm').action = `/project/project-discipline/${id}/delete/`;
             
             const warning = document.getElementById('delete_warning');
             if (projectCount > 0) {

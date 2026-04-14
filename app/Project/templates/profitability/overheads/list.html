@@ -1,0 +1,129 @@
+{% extends "profitability/base_profitability.html" %}
+{% load static %}
+{% load heroicons %}
+{% block title %}Overheads Cost Tracker - {{ project.name }}{% endblock %}
+{% block profitability_content %}
+    {% include "profitability/partials/kvi_cards.html" %}
+    <div class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm">
+        <!-- List Header -->
+        <div class="flex flex-col gap-4 justify-between items-start px-6 py-4 bg-gray-50 border-b border-gray-200 md:flex-row">
+            <div class="flex-1">
+                <h3 class="text-lg font-bold text-gray-900">Overheads Cost Tracker</h3>
+                <p class="text-sm text-gray-500">Manage and track indirect costs for {{ project.name }}</p>
+            </div>
+            <div class="flex flex-col gap-3 items-end">
+                <div class="flex gap-3 items-center">
+                    <form action="{% url 'project:profitability-import-logs' project.pk %}"
+                          method="post"
+                          class="m-0">
+                        {% csrf_token %}
+                        <input type="hidden" name="import_type" value="overhead">
+                        <button type="submit"
+                                title="Import latest logs from site management"
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700">
+                            {% heroicon_outline "cloud-arrow-down" class="mr-2 w-4 h-4" %}
+                            Sync Site Logs
+                        </button>
+                    </form>
+                    <a href="{% url 'project:profitability-overhead-create' project.pk %}"
+                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50">
+                        {% heroicon_outline "plus" class="mr-2 w-4 h-4" %}
+                        Add Entry
+                    </a>
+                </div>
+                {% include "profitability/partials/pagination_month.html" %}
+            </div>
+        </div>
+        <!-- Table -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col"
+                            class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                            Date
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
+                            Description
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">
+                            Days
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">
+                            Rate
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">
+                            Amount Paid
+                        </th>
+                        <th scope="col"
+                            class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">
+                            Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for log in logs %}
+                        <tr class="transition-colors hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ log.date|date:"d M Y" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ log.overhead_entity.name }}</div>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">{{ log.amount_of_days|floatformat:1 }}</td>
+                            <td class="px-6 py-4 text-sm text-right text-gray-900 whitespace-nowrap">R{{ log.rate|floatformat:2|intcomma }}</td>
+                            <td class="px-6 py-4 text-sm font-bold text-right text-indigo-600 whitespace-nowrap"
+                                title="R{{ log.cost|floatformat:2|intcomma }}">
+                                {% if log.cost > 100000 %}
+                                    R{{ log.cost|intword }}
+                                {% else %}
+                                    R{{ log.cost|floatformat:2|intcomma }}
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
+                                <div class="flex justify-end items-center space-x-3">
+                                    <a href="{% url 'project:profitability-overhead-update' project.pk log.pk %}"
+                                       class="text-indigo-600 hover:text-indigo-900"
+                                       title="Edit">{% heroicon_outline "pencil-square" class="w-5 h-5" %}</a>
+                                    <a href="{% url 'project:profitability-overhead-delete' project.pk log.pk %}"
+                                       class="text-red-600 hover:text-red-900"
+                                       title="Delete">{% heroicon_outline "trash" class="w-5 h-5" %}</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    <div class="p-3 mb-3 bg-gray-100 rounded-full">{% heroicon_outline "home" class="w-8 h-8 text-gray-400" %}</div>
+                                    <p class="text-lg font-medium">No overhead entries found</p>
+                                    <p class="text-sm">Click "Add Overhead Entry" to create one.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                {% if logs %}
+                    <tfoot class="border-t-2 border-indigo-100 bg-indigo-50/50">
+                        <tr>
+                            <td colspan="2"
+                                class="px-6 py-4 text-sm font-bold tracking-wider text-gray-900 uppercase">
+                                Monthly Totals
+                            </td>
+                            <td class="px-6 py-4 text-sm font-black text-right text-gray-900 whitespace-nowrap">
+                                {{ kvi_metric_value|floatformat:1|intcomma }} Days
+                            </td>
+                            <td class="px-6 py-4"></td>
+                            <td class="px-6 py-4 text-sm font-black text-right text-indigo-700 whitespace-nowrap">
+                                R{{ kvi_total_cost|floatformat:2|intcomma }}
+                            </td>
+                            <td class="px-6 py-4"></td>
+                        </tr>
+                    </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+{% endblock profitability_content %}

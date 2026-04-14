@@ -15,15 +15,28 @@ class SubcontractorLog(BaseModel):
         related_name="subcontractor_logs",
         help_text="Project this subcontractor log belongs to",
     )
-    name = models.CharField(max_length=255, help_text="Subcontractor name")
-    trade = models.CharField(max_length=100, help_text="Trade/specialty")
-    scope = models.TextField(help_text="Scope of work")
-    start_date = models.DateField(help_text="Start date")
+    subcontractor_entity = models.ForeignKey(
+        "Project.SubcontractorEntity",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="subcontractor_logs",
+        help_text="Link to master subcontractor definition",
+    )
+    date = models.DateField(help_text="Date of work entry")
+    name = models.CharField(
+        max_length=255, blank=True, editable=False, help_text="Subcontractor name"
+    )
+    trade = models.CharField(
+        max_length=100, blank=True, editable=False, help_text="Trade/specialty"
+    )
+    scope = models.TextField(blank=True, editable=False, help_text="Scope of work")
+    start_date = models.DateField(editable=False, help_text="Start date")
     planned_finish_date = models.DateField(
-        blank=True, null=True, help_text="Planned finish date"
+        blank=True, null=True, editable=False, help_text="Planned finish date"
     )
     actual_finish_date = models.DateField(
-        blank=True, null=True, help_text="Actual finish date"
+        blank=True, null=True, editable=False, help_text="Actual finish date"
     )
     task = models.CharField(max_length=255, help_text="Current task")
     hours_worked = models.DecimalField(
@@ -53,7 +66,21 @@ class SubcontractorLog(BaseModel):
     remarks = models.TextField(blank=True, help_text="Additional remarks")
 
     def save(self, *args, **kwargs):
-        """Calculate productivity before saving."""
+        """Calculate productivity and synchronize fields from master entity before saving."""
+        if self.subcontractor_entity:
+            if not self.name:
+                self.name = self.subcontractor_entity.name
+            if not self.trade:
+                self.trade = self.subcontractor_entity.trade
+            if not self.scope:
+                self.scope = self.subcontractor_entity.scope
+            if not self.start_date:
+                self.start_date = self.subcontractor_entity.start_date
+            if not self.planned_finish_date:
+                self.planned_finish_date = self.subcontractor_entity.planned_finish_date
+            if not self.actual_finish_date:
+                self.actual_finish_date = self.subcontractor_entity.actual_finish_date
+
         if (
             self.output
             and self.hours_worked

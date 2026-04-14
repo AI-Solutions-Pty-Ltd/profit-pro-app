@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load heroicons %}
+{% block title %}
+    {% if object %}
+        Edit
+    {% else %}
+        New
+    {% endif %}
+    Unit - Profit Pro
+{% endblock %}
+{% block content %}
+    <div class="mx-auto max-w-3xl">
+        <div class="mb-6 bg-white rounded-lg shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        {% if object %}
+                            Edit Unit Definition
+                        {% else %}
+                            New Unit Specification
+                        {% endif %}
+                    </h1>
+                </div>
+            </div>
+            <div class="px-6 py-6">
+                <form method="post" class="space-y-8">
+                    {% csrf_token %}
+                    {% include "unit_management/partials/unit_form_fields.html" %}
+                    <div class="flex justify-end items-center pt-8 space-x-4 border-t border-gray-200">
+                        <a href="{% url 'project:unit-list' %}"
+                           class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Cancel
+                        </a>
+                        <button type="submit"
+                                class="inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            {% heroicon_outline "check" class="mr-2 w-5 h-5" %}
+                            {% if object %}
+                                Update Unit
+                            {% else %}
+                                Save Unit
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block scripts %}
+    {% include "unit_management/partials/unit_form_js.html" %}
+{% endblock %}
