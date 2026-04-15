@@ -2,42 +2,78 @@
 {% load estimator_tags %}
 {% block title %}Project Resource Estimator{% endblock %}
 {% block content %}
-    <!-- Estimator Main Navigation — 7 Tabs -->
-    <div class="mb-6 border-b border-gray-200">
-        <nav class="flex space-x-8 overflow-x-auto"
-             aria-label="Estimator sections">
-            {% with url_name=request.resolver_match.url_name %}
-                <a href="{% url 'estimator:project_assumptions' project_pk=project_pk %}"
-                   class="{% if url_name == 'project_assumptions' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium">
-                    Project Assumptions
+    <div class="pb-12 min-h-screen">
+        <!-- Submodule Header -->
+        <div class="sticky top-0 z-10 bg-white rounded-xl shadow-sm">
+            <div class="px-4 py-4 sm:px-6 lg:px-8">
+                <a href="{% url 'project:company-management' project.pk %}"
+                   class="inline-flex items-center py-2 text-sm font-medium text-gray-700 bg-white rounded-md transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_outline "chevron-left" size="20" %}
+                    <span class="ml-2">Business Management</span>
                 </a>
-                <a href="{% url 'estimator:baseline' project_pk=project_pk %}"
-                   class="{% if url_name == 'baseline' or url_name == 'sync_boq' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium">
-                    Progress Claims &amp; Forecasts
-                </a>
-                <a href="{% url 'estimator:dashboard' project_pk=project_pk %}"
-                   class="{% if url_name == 'dashboard' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium">
-                    Project Estimator
-                </a>
-                <a href="{% url 'estimator:report_material_list_progress_contract' project_pk=project_pk %}"
-                   class="{% if 'contract' in url_name or url_name == 'material_specs' or url_name == 'specifications' or url_name == 'material_spec_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium">
-                    Baseline Estimator
-                </a>
-                <a href="{% url 'estimator:report_labour_list_progress' project_pk=project_pk %}"
-                   class="{% if url_name == 'labour_spec_defs' or url_name == 'labour_specs' or url_name == 'labour_spec_upload' or url_name == 'plant_specs' or url_name == 'prelim_specs' or 'report_material_list_baseline' == url_name or 'report_material_list_progress' == url_name or 'report_material_list_forecast' == url_name or 'report_labour_list_baseline' == url_name or 'report_labour_list_progress' == url_name or 'report_labour_list_forecast' == url_name or 'report_plant_list_baseline' == url_name or 'report_plant_list_progress' == url_name or 'report_plant_list_forecast' == url_name or 'report_prelim_list_baseline' == url_name or 'report_prelim_list_progress' == url_name or 'report_prelim_list_forecast' == url_name %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium">
-                    Resource Estimator
-                </a>
-                <a href="{% url 'estimator:trade_codes' project_pk=project_pk %}"
-                   class="{% if url_name == 'trade_codes' or url_name == 'materials' or url_name == 'labour_costs' or url_name == 'material_cost_upload' or url_name == 'labour_cost_upload' or url_name == 'plant_costs' or url_name == 'plant_cost_upload' or url_name == 'plant_spec_defs' or url_name == 'plant_spec_upload' or url_name == 'preliminary_costs' or url_name == 'preliminary_cost_upload' or url_name == 'preliminary_spec_defs' or url_name == 'preliminary_spec_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium">
-                    Baseline Resources Costs
-                </a>
-                <a href="{% url 'estimator:report_baseline_assessment' project_pk=project_pk %}"
-                   class="{% if url_name == 'report_baseline_assessment' or url_name == 'report_progress_assessment' or url_name == 'report_forecast_assessment' or url_name == 'report_key_rates_assessment' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{% endif %} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium">
-                    Financial Risk Report
-                </a>
-            {% endwith %}
-        </nav>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Project Resource Estimator</h1>
+                            <p class="text-sm text-gray-500">{{ project.name }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <a href="{% url 'estimator:dashboard' project_pk=project.pk %}"
+                           class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700">
+                            {% heroicon_outline "home" class="mr-2 w-4 h-4" %}
+                            Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <!-- Navigation Tabs -->
+            <div class="px-4 sm:px-6 lg:px-8">
+                <nav class="flex overflow-x-auto -mb-px space-x-8 pb-1 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100 [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-slate-100 [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400"
+                     aria-label="Estimator sections">
+                    {% with url_name=request.resolver_match.url_name %}
+                        <a href="{% url 'estimator:project_assumptions' project_pk=project_pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'project_assumptions' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "clipboard-document-list" class="inline-block mr-1 w-4 h-4" %}
+                            Project Assumptions
+                        </a>
+                        <a href="{% url 'estimator:baseline' project_pk=project_pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'baseline' or url_name == 'sync_boq' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "chart-bar" class="inline-block mr-1 w-4 h-4" %}
+                            Progress Claims &amp; Forecasts
+                        </a>
+                        <a href="{% url 'estimator:dashboard' project_pk=project_pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'dashboard' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "calculator" class="inline-block mr-1 w-4 h-4" %}
+                            Project Estimator
+                        </a>
+                        <a href="{% url 'estimator:report_material_list_progress_contract' project_pk=project_pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'contract' in url_name or url_name == 'material_specs' or url_name == 'specifications' or url_name == 'material_spec_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "document-text" class="inline-block mr-1 w-4 h-4" %}
+                            Baseline Estimator
+                        </a>
+                        <a href="{% url 'estimator:report_labour_list_progress' project_pk=project_pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'labour_spec_defs' or url_name == 'labour_specs' or url_name == 'labour_spec_upload' or url_name == 'plant_specs' or url_name == 'prelim_specs' or 'report_material_list_baseline' == url_name or 'report_material_list_progress' == url_name or 'report_material_list_forecast' == url_name or 'report_labour_list_baseline' == url_name or 'report_labour_list_progress' == url_name or 'report_labour_list_forecast' == url_name or 'report_plant_list_baseline' == url_name or 'report_plant_list_progress' == url_name or 'report_plant_list_forecast' == url_name or 'report_prelim_list_baseline' == url_name or 'report_prelim_list_progress' == url_name or 'report_prelim_list_forecast' == url_name %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "cube" class="inline-block mr-1 w-4 h-4" %}
+                            Resource Estimator
+                        </a>
+                        <a href="{% url 'estimator:trade_codes' project_pk=project_pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'trade_codes' or url_name == 'materials' or url_name == 'labour_costs' or url_name == 'material_cost_upload' or url_name == 'labour_cost_upload' or url_name == 'plant_costs' or url_name == 'plant_cost_upload' or url_name == 'plant_spec_defs' or url_name == 'plant_spec_upload' or url_name == 'preliminary_costs' or url_name == 'preliminary_cost_upload' or url_name == 'preliminary_spec_defs' or url_name == 'preliminary_spec_upload' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "currency-dollar" class="inline-block mr-1 w-4 h-4" %}
+                            Baseline Resources Costs
+                        </a>
+                        <a href="{% url 'estimator:report_baseline_assessment' project_pk=project_pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if url_name == 'report_baseline_assessment' or url_name == 'report_progress_assessment' or url_name == 'report_forecast_assessment' or url_name == 'report_key_rates_assessment' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "exclamation-triangle" class="inline-block mr-1 w-4 h-4" %}
+                            Financial Risk Report
+                        </a>
+                    {% endwith %}
+                </nav>
+            </div>
+        </div>
+        <!-- Main Content Area -->
+        <div class="py-8">
+            {% block estimator_content %}{% endblock %}
+        </div>
     </div>
-    <!-- Child page content -->
-    {% block estimator_content %}{% endblock %}
 {% endblock %}

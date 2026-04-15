@@ -928,6 +928,9 @@ class PricedBoqReportView(ProjectEstimatorMixin, ListView):
                 "specification",
                 "labour_specification",
                 "labour_specification__crew",
+                "plant_specification",
+                "plant_specification__plant_type",
+                "preliminary_specification",
                 "material",
             )
             .prefetch_related(
@@ -972,13 +975,19 @@ class PricedBoqReportView(ProjectEstimatorMixin, ListView):
 
             mat_rate = item.new_materials_rate
             lab_rate = item.new_labour_rate
+            plant_rate = item.new_plant_rate
+            prelim_rate = item.new_preliminary_rate
             bnp = item.baseline_new_price
             if bnp and bnp > 0:
                 mat_pct = (Decimal(str(mat_rate or 0)) / bnp) * Decimal("100")
                 lab_pct = (Decimal(str(lab_rate or 0)) / bnp) * Decimal("100")
+                plant_pct = (Decimal(str(plant_rate or 0)) / bnp) * Decimal("100")
+                prelim_pct = (Decimal(str(prelim_rate or 0)) / bnp) * Decimal("100")
             else:
                 mat_pct = None
                 lab_pct = None
+                plant_pct = None
+                prelim_pct = None
 
             if amount_a:
                 total_a += amount_a
@@ -995,6 +1004,8 @@ class PricedBoqReportView(ProjectEstimatorMixin, ListView):
                     "variance_pct": variance_pct,
                     "materials_pct": mat_pct,
                     "labour_pct": lab_pct,
+                    "plant_pct": plant_pct,
+                    "preliminary_pct": prelim_pct,
                 }
             )
 
