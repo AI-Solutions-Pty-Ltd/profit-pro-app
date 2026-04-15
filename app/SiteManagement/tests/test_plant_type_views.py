@@ -3,7 +3,6 @@
 import pytest
 from django.urls import reverse
 
-from app.Project.models import Project
 from app.Project.tests.factories import ProjectFactory
 from app.SiteManagement.models import PlantType
 from app.SiteManagement.tests.factories import PlantTypeFactory
