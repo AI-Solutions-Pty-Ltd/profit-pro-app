@@ -19,7 +19,7 @@ jobs:
   deploy:
     if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/develop' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'develop') }}
     environment:
-      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/staging' && 'staging') || (github.ref == 'refs/heads/develop' && 'staging') || 'production' }}
+      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/staging' && 'staging') || (github.ref == 'refs/heads/develop' && 'develop') || 'production' }}
     runs-on: ubuntu-latest
 
     steps:
