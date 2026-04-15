@@ -6,6 +6,7 @@ from .dashboard_views import (
 )
 from .planning_views import (
     PlanResourcesAjaxView,
+    ProductionCostBreakdownDetailView,
     ProductionCostBreakdownView,
     ProductionPlanAjaxDetailView,
     ProductionPlanCreateView,
@@ -38,6 +39,7 @@ __all__ = [
     "ProductionPlanUpdateView",
     "ProductionPlanDeleteView",
     "ProductionCostBreakdownView",
+    "ProductionCostBreakdownDetailView",
     "ProductionResourceCreateView",
     "PlanResourcesAjaxView",
     "DailyProductionCreateView",

@@ -29,6 +29,11 @@ urlpatterns = [
         name="production-cost-breakdown",
     ),
     path(
+        "<int:project_pk>/cost-breakdown/<int:plan_pk>/",
+        views.ProductionCostBreakdownDetailView.as_view(),
+        name="production-cost-breakdown-detail",
+    ),
+    path(
         "<int:project_pk>/plan/<int:pk>/",
         views.ProductionPlanDetailView.as_view(),
         name="production-plan-detail",

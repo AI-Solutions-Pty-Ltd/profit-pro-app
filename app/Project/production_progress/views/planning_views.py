@@ -535,7 +535,7 @@ class ProductionPlanDeleteView(
 class ProductionCostBreakdownView(
     SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
 ):
-    """Financial analysis view showing the actual cost breakdown vs budget totals."""
+    """List view showing all production plans with cost totals. Click a row to drill in."""
 
     template_name = "production_progress/cost_breakdown/list.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
@@ -545,27 +545,22 @@ class ProductionCostBreakdownView(
         project = Project.objects.get(pk=self.kwargs["project_pk"])
         context["project"] = project
 
-        all_plans = ProductionPlan.objects.filter(project=project).order_by("activity")
-        plan_id = self.request.GET.get("plan_id")
-
-        selected_plan = None
-        if plan_id:
-            try:
-                selected_plan = all_plans.get(pk=plan_id)
-            except (ProductionPlan.DoesNotExist, ValueError):
-                pass
+        all_plans = (
+            ProductionPlan.objects.filter(project=project, is_archived=False)
+            .select_related("structure", "bill", "package", "line_item", "parent")
+            .prefetch_related("resources")
+            .order_by("activity")
+        )
 
         context["all_plans"] = all_plans
-        context["selected_plan"] = selected_plan
-        context["plans"] = [selected_plan] if selected_plan else []
 
-        initial = {}
-        if selected_plan:
-            initial["production_plan"] = selected_plan
-
-        context["resource_form"] = ProductionResourceForm(
-            project_id=project.pk, initial=initial
-        )
+        # Aggregate project-level totals for the footer row
+        total_labour = sum(p.total_labour_cost for p in all_plans)
+        total_plant = sum(p.total_plant_cost for p in all_plans)
+        total_other = sum(p.total_other_cost for p in all_plans)
+        context["total_labour"] = total_labour
+        context["total_plant"] = total_plant
+        context["total_cost"] = total_labour + total_plant + total_other
         return context
 
     def get_breadcrumbs(self):
@@ -581,8 +576,60 @@ class ProductionCostBreakdownView(
             {"title": "Cost Breakdown", "url": None},
         ]
 
+
+class ProductionCostBreakdownDetailView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """Detail view for a single plan's resource cost breakdown."""
+
+    template_name = "production_progress/cost_breakdown/detail.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def _get_plan(self):
+        """Retrieve the production plan for this project."""
+        return get_object_or_404(
+            ProductionPlan,
+            pk=self.kwargs["plan_pk"],
+            project_id=self.kwargs["project_pk"],
+            is_archived=False,
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        selected_plan = self._get_plan()
+
+        context["project"] = project
+        context["selected_plan"] = selected_plan
+        context["resource_form"] = ProductionResourceForm(
+            project_id=project.pk, initial={"production_plan": selected_plan}
+        )
+        return context
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        plan = self._get_plan()
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {
+                "title": "Cost Breakdown",
+                "url": reverse_lazy(
+                    "project:production-cost-breakdown",
+                    kwargs={"project_pk": project_pk},
+                ),
+            },
+            {"title": plan.activity, "url": None},
+        ]
+
     def post(self, request, *args, **kwargs):
         project_pk = self.kwargs["project_pk"]
+        plan_pk = self.kwargs["plan_pk"]
         action = request.POST.get("action")
 
         if action == "delete":
@@ -597,7 +644,11 @@ class ProductionCostBreakdownView(
             except ProductionResource.DoesNotExist:
                 messages.error(request, "Resource not found.")
 
-        return redirect("project:production-cost-breakdown", project_pk=project_pk)
+        return redirect(
+            "project:production-cost-breakdown-detail",
+            project_pk=project_pk,
+            plan_pk=plan_pk,
+        )
 
 
 class ProductionResourceCreateView(
@@ -611,14 +662,17 @@ class ProductionResourceCreateView(
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_success_url(self):
-        url = reverse_lazy(
-            "project:production-cost-breakdown",
-            kwargs={"project_pk": self.kwargs["project_pk"]},
-        )
         plan_id = self.request.GET.get("plan_id")
+        project_pk = self.kwargs["project_pk"]
         if plan_id:
-            return f"{url}?plan_id={plan_id}"
-        return url
+            return reverse_lazy(
+                "project:production-cost-breakdown-detail",
+                kwargs={"project_pk": project_pk, "plan_pk": plan_id},
+            )
+        return reverse_lazy(
+            "project:production-cost-breakdown",
+            kwargs={"project_pk": project_pk},
+        )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
