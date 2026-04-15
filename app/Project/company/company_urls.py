@@ -7,8 +7,16 @@ from . import company_views as cvs
 _path_prefix = "company/"
 
 urlpatterns = [
-    path("<int:pk>/", cvs.CompanyDetailDashboardView.as_view(), name="company-detail-dashboard"),
-    path("<int:pk>/management/", cvs.CompanyManagementView.as_view(), name="company-management"),
+    path(
+        "<int:pk>/",
+        cvs.CompanyDetailDashboardView.as_view(),
+        name="company-detail-dashboard",
+    ),
+    path(
+        "<int:pk>/management/",
+        cvs.CompanyManagementView.as_view(),
+        name="company-management",
+    ),
     path(
         "<int:pk>/reports/<slug:report>/",
         cvs.CompanyReportView.as_view(),

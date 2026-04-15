@@ -5,7 +5,7 @@ import random
 from datetime import datetime
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import QuerySet
+from django.db.models import F, QuerySet, Sum
 from django.http import Http404
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
@@ -16,14 +16,16 @@ from app.Account.subscription_config import Subscription
 from app.core.Utilities.dates import get_previous_n_months
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Project.models import Company, ContractualCompliance, Portfolio, Project
+from app.Estimator.models import BOQItem
+from app.Project.models import (
+    Company,
+    ContractualCompliance,
+    OverheadCostTracker,
+    Portfolio,
+    Project,
+)
 
 from .company_forms import CompanyFilterForm, CompanyForm
-
-
-from django.db.models import Sum, F
-from app.Estimator.models import BOQItem
-from app.Project.models import OverheadCostTracker
 
 
 class CompanyMetricsMixin:
