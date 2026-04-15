@@ -4,9 +4,12 @@ on:
   workflow_run:
     workflows: ["CI - Test and Validate"]
     types: [completed]
-    branches: [main, staging]
+    branches: [main, staging, develop]
   push:
-    branches: [staging]
+    branches: [staging, develop]
+  pull_request:
+    branches: [main]
+    types: [closed]
   workflow_dispatch:
     inputs:
       environment:
@@ -17,12 +20,13 @@ on:
         options:
           - production
           - staging
+          - develop
 
 jobs:
   deploy:
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' || github.ref == 'refs/heads/staging' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' || github.ref == 'refs/heads/staging' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'develop') }}
     environment:
-      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/staging' && 'staging') || 'production' }}
+      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/staging' && 'staging') || (github.ref == 'refs/heads/develop' && 'staging') || 'production' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -30,7 +34,7 @@ jobs:
 
       - name: Display Deployment Environment
         run: |
-          ENVIRONMENT="${{ github.event.inputs.environment || (github.ref == 'refs/heads/staging' && 'staging') || 'production' }}"
+          ENVIRONMENT="${{ github.event.inputs.environment || (github.ref == 'refs/heads/staging' && 'staging') || (github.ref == 'refs/heads/develop' && 'develop') || 'production' }}"
           echo "🚀 Deploying to $ENVIRONMENT environment"
           echo "Branch: ${{ github.ref }}"
           echo "Triggered by: ${{ github.event_name }}"
