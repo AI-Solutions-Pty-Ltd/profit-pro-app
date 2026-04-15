@@ -100,7 +100,7 @@ class PortfolioReportMixin:
 
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
-        super().setup(request, *args, **kwargs)
+        super().setup(request, *args, **kwargs)  # type: ignore
         from app.Project.models import (
             Company,
             ProjectDiscipline,
@@ -143,7 +143,7 @@ class PortfolioReportMixin:
 
     def get_queryset(self: Any) -> QuerySet[Project]:
         """Get filtered projects for report view."""
-        user: Account = self.request.user  # type: ignore
+        user: Account = self.request.user
         projects = user.get_projects.order_by("-created_at")
 
         # Apply filters if valid

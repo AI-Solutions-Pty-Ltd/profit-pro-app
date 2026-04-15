@@ -3,6 +3,7 @@
 import pytest
 from django.urls import reverse
 
+from app.Project.models import Project
 from app.Project.tests.factories import ProjectFactory
 from app.SiteManagement.models import PlantType
 from app.SiteManagement.tests.factories import PlantTypeFactory
@@ -16,7 +17,7 @@ class TestPlantTypeViews:
     def test_plant_type_list_view(self, client, superuser):
         """Test the list view."""
         client.force_login(superuser)
-        project = ProjectFactory()
+        project: Project = ProjectFactory()  # type: ignore
         project.users.add(superuser)
 
         PlantTypeFactory(project=project, name="Excavator")
@@ -34,7 +35,7 @@ class TestPlantTypeViews:
     def test_plant_type_create_view_get(self, client, superuser):
         """Test the create view GET request (this was where the 500 error occurred)."""
         client.force_login(superuser)
-        project = ProjectFactory()
+        project: Project = ProjectFactory()  # type: ignore
         project.users.add(superuser)
 
         url = reverse(
@@ -49,7 +50,7 @@ class TestPlantTypeViews:
     def test_plant_type_create_view_post(self, client, superuser):
         """Test the create view POST request."""
         client.force_login(superuser)
-        project = ProjectFactory()
+        project: Project = ProjectFactory()  # type: ignore
         project.users.add(superuser)
 
         url = reverse(
@@ -68,9 +69,9 @@ class TestPlantTypeViews:
     def test_plant_type_update_view(self, client, superuser):
         """Test the update view."""
         client.force_login(superuser)
-        project = ProjectFactory()
+        project: Project = ProjectFactory()  # type: ignore
         project.users.add(superuser)
-        plant_type = PlantTypeFactory(project=project, name="Old Name")
+        plant_type: PlantType = PlantTypeFactory(project=project, name="Old Name")  # type: ignore
 
         url = reverse(
             "site_management:plant-type-update",
@@ -89,9 +90,9 @@ class TestPlantTypeViews:
     def test_plant_type_delete_view(self, client, superuser):
         """Test the delete view."""
         client.force_login(superuser)
-        project = ProjectFactory()
+        project: Project = ProjectFactory()  # type: ignore
         project.users.add(superuser)
-        plant_type = PlantTypeFactory(project=project)
+        plant_type: PlantType = PlantTypeFactory(project=project)  # type: ignore
 
         url = reverse(
             "site_management:plant-type-delete",
