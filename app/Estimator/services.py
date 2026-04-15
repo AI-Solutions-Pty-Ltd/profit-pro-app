@@ -834,11 +834,6 @@ def sync_plant_specs_from_system(project):
     ).select_related("plant_type"):
         if sps.name in existing_names:
             continue
-        plant_type = None
-        if sps.plant_type:
-            plant_type = ProjectPlantCost.objects.filter(
-                project=project, source_id=sps.plant_type.pk
-            ).first()
         ProjectPlantSpecification.objects.create(
             project=project,
             source=sps,
@@ -846,7 +841,7 @@ def sync_plant_specs_from_system(project):
             trade_name=sps.trade_name,
             name=sps.name,
             unit=sps.unit,
-            plant_type=plant_type,
+            plant_type=sps.plant_type,
             daily_production=sps.daily_production,
             operator_factor=sps.operator_factor,
             site_factor=sps.site_factor,
