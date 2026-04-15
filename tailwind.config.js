@@ -2,16 +2,14 @@
 module.exports = {
   content: [
     './templates/**/*.html',
-    './app/*/templates/**/*.html',
+    './app/**/*.html',
     './theme/templates/**/*.html',
   ],
   theme: {
     extend: {
       colors: {
-        brand: {
-          green: '#00cc00',
-          blue: '#003399',
-        },
+        'brand-green': '#00cc00',
+        'brand-blue': '#003399',
         primary: {
           50: '#eff6ff',
           100: '#dbeafe',

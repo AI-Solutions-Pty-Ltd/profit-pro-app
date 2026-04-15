@@ -13,15 +13,16 @@
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <!-- Page Title and Description -->
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Business Dashboard</h1>
-                    <p class="mt-1 text-sm text-gray-600">Financial overview as of {{ current_date|date:"F d, Y" }}</p>
+                    <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ company.name }} Dashboard</h1>
+                    <p class="mt-1 text-sm text-gray-600">Financial overview for {{ company.name }} as of {{ current_date|date:"F d, Y" }}</p>
                 </div>
-                <!-- Filter Actions -->
-                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                    <!-- Company Jump -->
-                    <form method="get" class="centered-content">
-                        <div class="min-w-[200px]">{{ filter_form.company|as_crispy_field }}</div>
-                    </form>
+                <!-- Actions -->
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:company-management' company.pk %}"
+                       class="inline-flex items-center px-4 py-2 text-xs font-medium text-purple-600 bg-white border border-purple-600 rounded-md hover:bg-purple-50 transition-colors">
+                        {% heroicon_outline "folder-open" size="16" class="mr-2" %}
+                        Business Management
+                    </a>
                 </div>
             </div>
         </div>
@@ -29,15 +30,15 @@
         <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <a href="{% url 'project:portfolio-dashboard' %}"
+                    <a href="{% url 'project:company-dashboard' %}"
                        class="inline-flex items-center px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
                         {% heroicon_outline "arrow-left" size="16" class="mr-2" %}
-                        Back to Portfolio
+                        Back to Portfolio Dashboard
                     </a>
                 </div>
                 <div class="flex items-center space-x-3">
                     <a href="{% url 'project:company-list' %}"
-                       class="inline-flex items-center px-4 py-2 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors">
+                       class="inline-flex items-center px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
                         {% heroicon_outline "building-office" size="20" class="mr-2" %}
                         View All Companies
                     </a>
@@ -49,47 +50,29 @@
         <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2">
             <h5 class="text-sm font-semibold text-white flex items-center">
                 {% heroicon_outline "briefcase" size="16" class="mr-2" %}
-                Company Status
+                Business Status
             </h5>
         </div>
         <div class="p-4">
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                 <!-- Active Projects -->
                 <span class="bg-blue-50 rounded-lg p-3 text-center border border-blue-100 hover:bg-blue-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
                     <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-blue-600 transition-colors">
                         {% heroicon_outline "folder-open" size="16" class="text-white" %}
                     </div>
                     <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Active Projects</p>
-                    <p class="text-xl font-bold text-blue-700 mt-1">{{ request.user.get_projects.count }}</p>
+                    <p class="text-xl font-bold text-blue-700 mt-1">{{ active_projects_count }}</p>
                 </span>
-                <!-- Profits -->
+                <!-- Revenue -->
                 <a class="bg-rose-50 rounded-lg p-3 text-center border border-rose-100 hover:bg-rose-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
                     <div class="w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-rose-600 transition-colors">
                         {% heroicon_outline "currency-dollar" size="16" class="text-white" %}
                     </div>
-                    <p class="text-xs font-medium text-rose-600 uppercase tracking-wider">Profits</p>
+                    <p class="text-xs font-medium text-rose-600 uppercase tracking-wider">Revenue</p>
                     <p class="text-xl font-bold text-rose-700 mt-1">R {{ revenue|default:0|floatformat:0|intcomma }}</p>
                 </a>
-                <!-- Urgent Intervention -->
-                <a href="{% url 'project:portfolio-financial-report' %}?sort=cpi_asc"
-                   class="bg-red-50 rounded-lg p-3 text-center border border-red-100 hover:bg-red-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-red-600 transition-colors">
-                        {% heroicon_outline "exclamation-triangle" size="16" class="text-white" %}
-                    </div>
-                    <p class="text-xs font-medium text-red-600 uppercase tracking-wider">Urgent Intervention</p>
-                    <p class="text-xl font-bold text-red-700 mt-1">{{ urgent_projects_count }}</p>
-                </a>
-                <!-- Requiring Attention -->
-                <a href="{% url 'project:portfolio-financial-report' %}?sort=cpi_asc"
-                   class="bg-orange-50 rounded-lg p-3 text-center border border-orange-200 hover:bg-orange-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-orange-600 transition-colors">
-                        {% heroicon_outline "eye" size="16" class="text-white" %}
-                    </div>
-                    <p class="text-xs font-medium text-orange-700 uppercase tracking-wider">Requiring Attention</p>
-                    <p class="text-xl font-bold text-orange-800 mt-1">{{ attention_projects_count }}</p>
-                </a>
                 <!-- Compliance % -->
-                <a href="{% url 'project:compliance-report' %}"
+                <a href="{% url 'project:compliance-report' %}?contractor={{ company.pk }}"
                    class="bg-emerald-50 rounded-lg p-3 text-center border border-emerald-100 hover:bg-emerald-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
                     <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-emerald-600 transition-colors">
                         {% heroicon_outline "shield-check" size="16" class="text-white" %}
@@ -98,8 +81,8 @@
                     <p class="text-xl font-bold text-emerald-700 mt-1">{{ compliance_percentage|floatformat:1 }}%</p>
                     <p class="text-xs text-emerald-500">{{ total_compliance_items }} items</p>
                 </a>
-                <!-- Urgent Compliance Matters -->
-                <a href="{% url 'project:compliance-report' %}?party=overdue"
+                <!-- Urgent Compliance -->
+                <a href="{% url 'project:compliance-report' %}?party=overdue&contractor={{ company.pk }}"
                    class="bg-indigo-50 rounded-lg p-3 text-center border border-indigo-100 hover:bg-indigo-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
                     <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-indigo-600 transition-colors">
                         {% heroicon_outline "shield-exclamation" size="16" class="text-white" %}
@@ -107,6 +90,15 @@
                     <p class="text-xs font-medium text-indigo-600 uppercase tracking-wider">Urgent Compliance</p>
                     <p class="text-xl font-bold text-indigo-700 mt-1">{{ urgent_compliance_count }}</p>
                     <p class="text-xs text-indigo-500">overdue items</p>
+                </a>
+                <!-- Ledgers -->
+                <a href="{% url 'ledger:ledger-list' company.pk %}"
+                   class="bg-green-50 rounded-lg p-3 text-center border border-green-100 hover:bg-green-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-green-600 transition-colors">
+                        {% heroicon_outline "clipboard-document-list" size="16" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Ledgers</p>
+                    <p class="text-xl font-bold text-green-700 mt-1">View</p>
                 </a>
             </div>
         </div>
@@ -118,11 +110,7 @@
         <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-2">
             <h5 class="text-sm font-semibold text-white flex items-center">
                 {% heroicon_outline "banknotes" size="16" class="mr-2" %}
-                {% if active_companies > 1 %}
-                    Income Statement across {{ active_companies }} companies
-                {% else %}
-                    Income Statement
-                {% endif %}
+                Income Statement Summary
             </h5>
         </div>
         <div class="p-4">
@@ -180,12 +168,12 @@
     </div>
     <!-- Footer -->
     <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-4">
-        <div class="flex row ">
-            <span class="text-sm text-gray-500">Company Dashboard</span>
-            <a href="{% url 'project:company-list' %}"
-               class="ml-auto inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                {% heroicon_outline "list-bullet" size="16" class="mr-2" %}
-                View All Companies
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-500">Dedicated Business Dashboard - {{ company.name }}</span>
+            <a href="{% url 'project:company-management' company.pk %}"
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                {% heroicon_outline "folder-open" size="16" class="mr-2" %}
+                Management Center
                 {% heroicon_outline "arrow-right" class="w-4 h-4 ml-2" %}
             </a>
         </div>
@@ -193,10 +181,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Performance Index Charts (6 months)
-
-
-            // Profit Trend Charts (6 months)
             const profitLabels = {{ profit_labels|safe }};
             const grossProfitData = {{ gross_profit_percentage_data|safe }};
             const netProfitData = {{ net_profit_data|safe }};
@@ -297,12 +281,11 @@
                         },
                         y: {
                             min: 0,
-                            max: 2000000,
                             grid: { color: 'rgba(0, 0, 0, 0.05)' },
                             ticks: { 
                                 font: { size: 9 },
                                 callback: function(value) {
-                                    return 'R ' + (value / 1000000).toFixed(1) + 'M';
+                                    return 'R ' + value.toLocaleString();
                                 }
                             }
                         }
@@ -312,7 +295,6 @@
                     }
                 }
             });
-
         });
     </script>
 {% endblock content %}

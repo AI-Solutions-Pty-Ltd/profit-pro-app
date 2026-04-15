@@ -410,6 +410,15 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         context["total_compliance_items"] = total_compliance_items
 
         # ==========================================
+        # Impact Stats
+        # ==========================================
+        from app.Project.models import ProjectImpact
+
+        context["impact_items_count"] = ProjectImpact.objects.filter(
+            project__in=active_projects
+        ).count()
+
+        # ==========================================
         # Group 2 - Budgets and Payments
         # ==========================================
         original_budget = portfolio.get_total_original_budget(
