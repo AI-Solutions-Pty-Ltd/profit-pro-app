@@ -218,6 +218,5 @@ CRISPY_TEMPLATE_PACK = "tailwind"
 # Tailwind Configuration
 TAILWIND_APP_NAME = "app.theme"
 NPM_BIN_PATH = os.getenv("NPM_BIN_PATH", "C:/Program Files/nodejs/npm.cmd")
-NPM_BIN_PATH = r"C:\nvm4w\nodejs\npm.cmd"
 
 VAT_RATE = Decimal(os.getenv("VAT_RATE", "0.15"))
