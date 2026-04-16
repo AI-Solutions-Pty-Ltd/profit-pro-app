@@ -282,7 +282,7 @@ def clone_from_project(target_project, source_project):
             trade_name=sls.trade_name,
             name=sls.name,
             unit=sls.unit,
-            crew=crew_map.get(sls.crew_id) if sls.crew_id else None,
+            crew=crew_map.get(sls.crew.pk) if sls.crew else None,
             daily_production=sls.daily_production,
             team_mix=sls.team_mix,
             site_factor=sls.site_factor,
@@ -301,14 +301,14 @@ def clone_from_project(target_project, source_project):
             project=target_project,
             source=ss.source,
             section=ss.section,
-            trade_code=tc_map.get(ss.trade_code_id) if ss.trade_code_id else None,
+            trade_code=tc_map.get(ss.trade_code.pk) if ss.trade_code else None,
             unit_label=ss.unit_label,
             name=ss.name,
         )
         for comp in ss.spec_components.all():
             ProjectSpecificationComponent.objects.create(
                 specification=ps,
-                material=mat_map.get(comp.material_id) if comp.material_id else None,
+                material=mat_map.get(comp.material.pk) if comp.material else None,
                 label=comp.label,
                 qty_per_unit=comp.qty_per_unit,
                 sort_order=comp.sort_order,
@@ -341,7 +341,7 @@ def clone_from_project(target_project, source_project):
             trade_name=sps.trade_name,
             name=sps.name,
             unit=sps.unit,
-            plant_type=plant_map.get(sps.plant_type_id) if sps.plant_type_id else None,
+            plant_type=plant_map.get(sps.plant_type.pk) if sps.plant_type else None,
             daily_production=sps.daily_production,
             operator_factor=sps.operator_factor,
             site_factor=sps.site_factor,
@@ -716,9 +716,9 @@ def sync_material_specs_from_system(project):
         )
         for comp in sms.system_spec_components.all():
             mat = None
-            if comp.material_id:
+            if comp.material:
                 mat = ProjectMaterial.objects.filter(
-                    project=project, source_id=comp.material_id
+                    project=project, source_id=comp.material.pk
                 ).first()
             ProjectSpecificationComponent.objects.create(
                 specification=ps,
@@ -747,9 +747,9 @@ def sync_labour_specs_from_system(project):
         pls.site_factor = pls.source.site_factor
         pls.tools_factor = pls.source.tools_factor
         pls.leadership_factor = pls.source.leadership_factor
-        if pls.source.crew_id:
+        if pls.source.crew:
             pls.crew = ProjectLabourCrew.objects.filter(
-                project=project, source_id=pls.source.crew_id
+                project=project, source_id=pls.source.crew.pk
             ).first()
         else:
             pls.crew = None
@@ -773,9 +773,9 @@ def sync_labour_specs_from_system(project):
         if sls.name in existing_names:
             continue
         crew = None
-        if sls.crew_id:
+        if sls.crew:
             crew = ProjectLabourCrew.objects.filter(
-                project=project, source_id=sls.crew_id
+                project=project, source_id=sls.crew.pk
             ).first()
         ProjectLabourSpecification.objects.create(
             project=project,
