@@ -19,6 +19,7 @@ from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project
+from app.Estimator.models import BOQItem
 
 from ..production_forms import (
     AggregatedLabourFormSet,
@@ -82,7 +83,7 @@ class ProductionPlanGanttView(
 
         all_plans = list(
             ProductionPlan.objects.filter(project=project, is_archived=False)
-            .select_related("structure", "bill", "package", "parent")
+            .select_related("labour_activity", "parent")
             .prefetch_related(
                 "predecessors",
                 "predecessors__predecessor",
@@ -155,7 +156,7 @@ class ProductionPlanListView(
             ProductionPlan.objects.filter(
                 project_id=self.kwargs["project_pk"], is_archived=False
             )
-            .select_related("structure", "bill", "package", "parent")
+            .select_related("labour_activity", "parent")
             .prefetch_related(
                 "children",
                 "predecessors",
@@ -202,10 +203,10 @@ class ProductionPlanCreateView(
         initial = super().get_initial()
         if self.request.GET.get("parent"):
             initial["parent"] = self.request.GET.get("parent")
-        if self.request.GET.get("structure"):
-            initial["structure"] = self.request.GET.get("structure")
-        if self.request.GET.get("bill"):
-            initial["bill"] = self.request.GET.get("bill")
+        if self.request.GET.get("section"):
+            initial["section"] = self.request.GET.get("section")
+        if self.request.GET.get("bill_no"):
+            initial["bill_no"] = self.request.GET.get("bill_no")
         return initial
 
     def get_success_url(self):
@@ -547,7 +548,7 @@ class ProductionCostBreakdownView(
 
         all_plans = (
             ProductionPlan.objects.filter(project=project, is_archived=False)
-            .select_related("structure", "bill", "package", "line_item", "parent")
+            .select_related("labour_activity", "parent")
             .prefetch_related("resources")
             .order_by("activity")
         )
@@ -867,3 +868,54 @@ class ProductionPlanAjaxDetailView(LoginRequiredMixin, TemplateView):
                 },
             }
         )
+
+
+class GetProjectBillsAjaxView(LoginRequiredMixin, TemplateView):
+    """Returns unique bill numbers for a given section/project."""
+
+    def get(self, request, *args, **kwargs):
+        project_id = self.kwargs.get("project_pk")
+        section = request.GET.get("section")
+        
+        bills = (
+            BOQItem.objects.filter(project_id=project_id, section=section)
+            .values_list("bill_no", flat=True)
+            .distinct()
+            .order_by("bill_no")
+        )
+        
+        return JsonResponse({"bills": list(bills)})
+
+
+class GetProjectItemsAjaxView(LoginRequiredMixin, TemplateView):
+    """Returns BOQItems for a given project, optionally filtered by section and bill."""
+
+    def get(self, request, *args, **kwargs):
+        project_id = self.kwargs.get("project_pk")
+        section = request.GET.get("section")
+        bill_no = request.GET.get("bill_no")
+        
+        items_query = BOQItem.objects.filter(project_id=project_id)
+        
+        if section:
+            items_query = items_query.filter(section=section)
+        if bill_no:
+            items_query = items_query.filter(bill_no=bill_no)
+            
+        items = items_query.select_related("labour_specification").order_by("section", "bill_no", "description")
+        
+        data = [
+            {
+                "id": item.id,
+                "label": f"[{item.section}][{item.bill_no}] {item.description}" if not (section and bill_no) else item.description,
+                "description": item.description,
+                "section": item.section,
+                "bill_no": item.bill_no,
+                "unit": item.unit,
+                "quantity": str(item.contract_quantity or 0),
+                "labour_spec": item.labour_specification.name if item.labour_specification else ""
+            }
+            for item in items
+        ]
+        
+        return JsonResponse({"items": data})

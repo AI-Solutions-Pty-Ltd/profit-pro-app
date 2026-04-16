@@ -38,8 +38,8 @@
     <!-- Form -->
     <div class="mb-6 bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-medium text-gray-900">Planning Item Details</h2>
-            <p class="text-sm text-gray-600">Define the project activity and its hierarchical structure.</p>
+            <h2 class="text-lg font-medium text-gray-900">Labor Activity Details</h2>
+            <p class="text-sm text-gray-600">Select a labor activity to plan. Hierarchy and metadata will be auto-filled.</p>
         </div>
         <form method="post" action="" class="p-6">
             {% csrf_token %}
@@ -57,26 +57,27 @@
                             </div>
                         </div>
 
-                        {% if form.is_new and form.is_top_level %}
-                        <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                            <label class="inline-flex items-center cursor-pointer group">
-                                <input type="checkbox" id="toggle_sub_activity" class="sr-only peer">
-                                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300/50 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                                <span class="ms-3 text-sm font-semibold text-gray-700 group-hover:text-indigo-600 transition-colors">Add as sub-activity</span>
-                            </label>
-                        </div>
-                        {% endif %}
 
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <div id="parent_field_container" class="{% if form.is_top_level %}hidden{% endif %}">{{ form.parent|as_crispy_field }}</div>
-                            <div id="structure_field_container" class="{% if not form.is_top_level and form.parent.value %}hidden{% endif %}">{{ form.structure|as_crispy_field }}</div>
-                            <div id="bill_field_container" class="hidden">{{ form.bill|as_crispy_field }}</div>
-                            <div id="package_field_container" class="hidden">{{ form.package|as_crispy_field }}</div>
-                            <div id="line_item_field_container" class="hidden">{{ form.line_item|as_crispy_field }}</div>
+                            <div id="parent_field_container" class="{% if form.is_top_level %}hidden{% endif %}">
+                                {{ form.parent|as_crispy_field }}
+                            </div>
+                            <!-- Hierarchical steps hidden by default in favors of direct line item selection -->
+                            <div id="section_field_container" class="hidden">
+                                {{ form.section|as_crispy_field }}
+                            </div>
+                            <div id="bill_no_field_container" class="hidden">
+                                {{ form.bill_no|as_crispy_field }}
+                            </div>
+                            <div id="labour_activity_field_container">
+                                {{ form.labour_activity|as_crispy_field }}
+                            </div>
                         </div>
                         
                         <!-- Hidden Activity Title -->
-                        {{ form.activity }}
+                        <div id="activity_field_wrapper" class="hidden">
+                            {{ form.activity|as_crispy_field }}
+                        </div>
                     </div>
                     <!-- Scheduling -->
                     <div class="grid grid-cols-1 gap-6 p-4 bg-gray-50 rounded-lg md:col-span-2 md:grid-cols-3">
@@ -177,9 +178,8 @@
         }
 
         const projectPk = "{{ project.pk }}";
-        const billsUrl = "{% url 'bill_of_quantities:api-get-bills' project.pk %}";
-        const packagesUrl = "{% url 'bill_of_quantities:api-get-packages' project.pk %}";
-        const lineItemsUrl = "{% url 'bill_of_quantities:api-get-line-items' project.pk %}";
+        const billsUrl = "{% url 'project:ajax-project-bills' project.pk %}";
+        const laborActivitiesUrl = "{% url 'project:ajax-project-labor-activities' project.pk %}";
         const planDataUrl = "{% url 'project:production-plan-data-ajax' project.pk 0 %}";
         const planDataBase = planDataUrl.replace(/\/0\/data\/$/, '/');
 
@@ -188,107 +188,50 @@
             const breadcrumbList = document.getElementById('breadcrumb_list');
             
             const parentContainer = document.getElementById('parent_field_container');
-            const structureContainer = document.getElementById('structure_field_container');
-            const billContainer = document.getElementById('bill_field_container');
-            const packageContainer = document.getElementById('package_field_container');
-            const lineItemContainer = document.getElementById('line_item_field_container');
+            const sectionContainer = document.getElementById('section_field_container');
+            const billContainer = document.getElementById('bill_no_field_container');
+            const activityContainer = document.getElementById('labour_activity_field_container');
             
-            const structureSelect = document.getElementById('id_structure');
-            const billSelect = document.getElementById('id_bill');
-            const packageSelect = document.getElementById('id_package');
-            const lineItemSelect = document.getElementById('id_line_item');
+            const sectionSelect = document.getElementById('id_section');
+            const billSelect = document.getElementById('id_bill_no');
+            const activitySelect = document.getElementById('id_labour_activity');
             const parentSelect = document.getElementById('id_parent');
 
-            const subActivityToggle = document.getElementById('toggle_sub_activity');
-
             function updateHierarchyUI(parentData = null) {
-                // Reset all
-                structureContainer.classList.add('hidden');
-                billContainer.classList.add('hidden');
-                packageContainer.classList.add('hidden');
-                lineItemContainer.classList.add('hidden');
+                // In consolidated mode, we primarily care about showing the item field
+                // Section and Bill are hidden and auto-filled
                 contextContainer.classList.add('hidden');
                 breadcrumbList.innerHTML = '';
 
-                if (!parentData) {
-                    // Only show structure if we are NOT in sub-activity mode
-                    if (!subActivityToggle || !subActivityToggle.checked) {
-                        structureContainer.classList.remove('hidden');
-                    }
-                    return;
-                }
+                if (parentData) {
+                    contextContainer.classList.remove('hidden');
+                    const breadcrumbs = [];
+                    if (parentData.section) breadcrumbs.push({ label: parentData.section, type: 'Section' });
+                    if (parentData.billNo) breadcrumbs.push({ label: parentData.billNo, type: 'Bill' });
 
-                contextContainer.classList.remove('hidden');
-                const breadcrumbs = [];
-                
-                if (parentData.structureLabel) breadcrumbs.push({ label: parentData.structureLabel, type: 'Structure' });
-                if (parentData.billLabel) breadcrumbs.push({ label: parentData.billLabel, type: 'Bill' });
-                if (parentData.packageLabel) breadcrumbs.push({ label: parentData.packageLabel, type: 'Package' });
-                if (parentData.lineItemLabel) breadcrumbs.push({ label: parentData.lineItemLabel, type: 'Line Item' });
-
-                breadcrumbs.forEach((bc, index) => {
-                    const span = document.createElement('span');
-                    span.className = 'px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium border border-indigo-200 whitespace-nowrap';
-                    span.textContent = bc.label;
-                    span.title = bc.type;
-                    breadcrumbList.appendChild(span);
-                    
-                    if (index < breadcrumbs.length - 1 || true) {
+                    breadcrumbs.forEach((bc, index) => {
+                        const span = document.createElement('span');
+                        span.className = 'px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium border border-indigo-200 whitespace-nowrap';
+                        span.textContent = bc.label;
+                        span.title = bc.type;
+                        breadcrumbList.appendChild(span);
+                        
                         const arrow = document.createElement('span');
                         arrow.className = 'text-gray-400 mx-1';
                         arrow.innerHTML = '&#8594;';
                         breadcrumbList.appendChild(arrow);
-                    }
-                });
-
-                // Determine which field to show next
-                if (parentData.lineItemId) {
-                    const msg = document.createElement('span');
-                    msg.className = 'text-xs text-red-500 font-italic';
-                    msg.textContent = 'Last level reached.';
-                    breadcrumbList.appendChild(msg);
-                } else if (parentData.packageId) {
-                    lineItemContainer.classList.remove('hidden');
-                } else if (parentData.billId) {
-                    packageContainer.classList.remove('hidden');
-                } else if (parentData.structureId) {
-                    billContainer.classList.remove('hidden');
+                    });
                 }
             }
 
-            if (subActivityToggle) {
-                subActivityToggle.addEventListener('change', function() {
-                    if (this.checked) {
-                        parentContainer.classList.remove('hidden');
-                        structureContainer.classList.add('hidden');
-                        // Trigger UI update for current parent if any
-                        if (parentSelect.value) {
-                             parentSelect.dispatchEvent(new Event('change'));
-                        } else {
-                            updateHierarchyUI(null);
-                        }
-                    } else {
-                        parentContainer.classList.add('hidden');
-                        structureContainer.classList.remove('hidden');
-                        setSearchableSelectValue('id_parent', '', '');
-                        updateHierarchyUI(null);
-                    }
-                });
-            }
 
             if (parentSelect) {
                 // Listen for custom selection event from searchable select
                 parentSelect.closest('.searchable-select-container').addEventListener('searchableSelect:selected', function(e) {
                     const data = e.detail.dataset;
                     updateHierarchyUI({
-                        structureId: data.structureId,
-                        structureLabel: data.structureLabel,
-                        billId: data.billId,
-                        billLabel: data.billLabel,
-                        packageId: data.packageId,
-                        packageLabel: data.packageLabel,
-                        lineItemId: data.lineItemId,
-                        lineItemLabel: data.lineItemLabel
+                        section: data.section,
+                        billNo: data.billNo
                     });
                 });
 
@@ -301,14 +244,8 @@
 
                         if (btn) {
                             updateHierarchyUI({
-                                structureId: btn.dataset.structureId,
-                                structureLabel: btn.dataset.structureLabel,
-                                billId: btn.dataset.billId,
-                                billLabel: btn.dataset.billLabel,
-                                packageId: btn.dataset.packageId,
-                                packageLabel: btn.dataset.packageLabel,
-                                lineItemId: btn.dataset.lineItemId,
-                                lineItemLabel: btn.dataset.lineItemLabel
+                                section: btn.dataset.section,
+                                billNo: btn.dataset.billNo
                             });
                         }
                     } else {
@@ -317,91 +254,77 @@
                 });
             }
 
-            // Listen for selections on Structure to filter Bills
-            const structureSelector = document.getElementById('id_structure');
-            if (structureSelector) {
-                structureSelector.closest('.searchable-select-container').addEventListener('searchableSelect:selected', function(e) {
-                    const structureId = e.detail.id;
-                    if (structureId) {
-                        const projectPk = window.location.pathname.match(/\/project\/(\d+)\//)[1];
-                        const currentPlanId = '{{ form.instance.pk|default:"" }}';
-                        fetch(`/BillOfQuantities/project/${projectPk}/api/bills/?structure_id=${structureId}&exclude_plan_id=${currentPlanId}`)
-                            .then(res => res.json())
-                            .then(data => {
-                                updateSearchableSelect('id_bill', data.bills, 'bill');
-                                // Reset downstream
-                                updateSearchableSelect('id_package', [], 'package');
-                                updateSearchableSelect('id_line_item', [], 'line item');
-                            });
-                    }
-                });
-            }
-
-            // Also listen for selections on Bill to filter Packages
-            const billSelector = document.getElementById('id_bill');
-            if (billSelector) {
-                billSelector.closest('.searchable-select-container').addEventListener('searchableSelect:selected', function(e) {
-                    const billId = e.detail.id;
-                    if (billId) {
-                        const projectPk = window.location.pathname.match(/\/project\/(\d+)\//)[1];
-                        const currentPlanId = '{{ form.instance.pk|default:"" }}';
-                        fetch(`/BillOfQuantities/project/${projectPk}/api/packages/?bill_id=${billId}&exclude_plan_id=${currentPlanId}`)
-                            .then(res => res.json())
-                            .then(data => {
-                                updateSearchableSelect('id_package', data, 'package');
-                            });
-                    }
-                });
-            }
-
-            // Also listen for selections on Package to filter Line Items
-            const packageSelector = document.getElementById('id_package');
-            if (packageSelector) {
-                packageSelector.closest('.searchable-select-container').addEventListener('searchableSelect:selected', function(e) {
-                    const packageId = e.detail.id;
-                    if (packageId) {
-                        const projectPk = window.location.pathname.match(/\/project\/(\d+)\//)[1];
-                        const currentPlanId = '{{ form.instance.pk|default:"" }}';
-                        fetch(`/BillOfQuantities/project/${projectPk}/api/line-items/?package_id=${packageId}&exclude_plan_id=${currentPlanId}`)
-                            .then(res => res.json())
-                            .then(data => {
-                                updateSearchableSelect('id_line_item', data, 'line item');
-                            });
-                    }
-                });
-            }
-
-            // Sync hidden activity title
-            [structureSelect, billSelect, packageSelect, lineItemSelect].forEach(sel => {
-                if (sel) {
-                    sel.addEventListener('change', function() {
-                        const labelEl = document.getElementById(`${this.id}-selector-label`);
-                        if (labelEl && this.value) {
-                            document.getElementById('activity').value = labelEl.textContent.trim();
-                        }
+            // Activity Selection & Auto-fill
+            if (activitySelect) {
+                // Load ALL project activities on startup
+                fetch(laborActivitiesUrl)
+                    .then(res => res.json())
+                    .then(data => {
+                        const options = data.activities.map(act => ({
+                            id: act.id,
+                            name: act.label,
+                            data: {
+                                'data-activity-name': act.activity_name,
+                                'data-section': act.section,
+                                'data-bill-no': act.bill_no,
+                                'data-unit': act.unit,
+                                'data-quantity': act.quantity
+                            }
+                        }));
+                        updateSearchableSelect('id_labour_activity', options, 'activity');
                     });
-                }
-            });
 
+                activitySelect.addEventListener('change', function() {
+                    const activityId = this.value;
+                    if (activityId) {
+                        const container = this.closest('.searchable-select-container');
+                        const optionsList = container ? container.querySelector('[id$="-options-list"]') : null;
+                        const btn = optionsList ? optionsList.querySelector(`[data-id="${activityId}"]`) : null;
+
+                        if (btn) {
+                            // Populate Section and Bill hidden fields
+                            setSearchableSelectValue('id_section', btn.dataset.section, btn.dataset.section);
+                            setSearchableSelectValue('id_bill_no', btn.dataset.billNo, btn.dataset.billNo);
+
+                            const activityName = btn.dataset.activityName;
+                            const unit = btn.dataset.unit;
+                            const qty = btn.dataset.quantity;
+
+                            // Set Activity Name Title
+                            document.getElementById('activity').value = activityName || '';
+                            
+                            // Set Unit
+                            if (unit) {
+                                const unitSelector = document.getElementById('unit-options-list');
+                                if (unitSelector) {
+                                    const options = Array.from(unitSelector.querySelectorAll('.option-item'));
+                                    const unitBtn = options.find(b => b.dataset.id === unit) || 
+                                                   options.find(b => b.textContent.toLowerCase().includes(unit.toLowerCase()));
+                                    if (unitBtn) {
+                                        selectSearchableOption(unitBtn, unitBtn.dataset.id, unitBtn.textContent.trim());
+                                    }
+                                }
+                            }
+                            // Set Quantity
+                            if (qty) document.getElementById('quantity').value = qty;
+
+                            // Automatic Parent lookup - we can try to find a parent plan that matches section/bill
+                            // This is a bit complex without a dedicated endpoint, but we can search the parent list if loaded.
+                        }
+                    }
+                });
+            }
+
+            // Initialization for update
             {% if is_update or not form.is_top_level %}
-                // Initial state for updates or newly created sub-activities
                 if (parentSelect && parentSelect.value) {
-                    const parentId = parentSelect.value;
-                    // Find the container for the parent field to get the options
                     const container = parentSelect.closest('.searchable-select-container');
                     const optionsList = container ? container.querySelector('[id$="-options-list"]') : null;
-                    const btn = optionsList ? optionsList.querySelector(`[data-id="${parentId}"]`) : null;
-                    
+                    const btn = optionsList ? optionsList.querySelector(`[data-id="${parentSelect.value}"]`) : null;
                     if (btn) {
                          updateHierarchyUI({
-                            structureId: btn.dataset.structureId,
-                            structureLabel: btn.dataset.structureLabel,
-                            billId: btn.dataset.billId,
-                            billLabel: btn.dataset.billLabel,
-                            packageId: btn.dataset.packageId,
-                            packageLabel: btn.dataset.packageLabel,
-                            lineItemId: btn.dataset.lineItemId,
-                            lineItemLabel: btn.dataset.lineItemLabel
+                            section: btn.dataset.section,
+                            billNo: btn.dataset.billNo
                         });
                     }
                 } else {
@@ -409,75 +332,14 @@
                 }
             {% endif %}
 
-            if (packageSelect) {
-                packageSelect.addEventListener('change', function() {
-                    const packageId = this.value;
-                    if (packageId) {
-                        const currentPlanId = '{{ form.instance.pk|default:"" }}';
-                        fetch(`${lineItemsUrl}?package_id=${packageId}&exclude_plan_id=${currentPlanId}`)
-                            .then(response => response.json())
-                            .then(data => {
-                                const optionsList = data.line_items.map(li => ({
-                                    id: li.id,
-                                    name: li.description,
-                                    data: {
-                                        'data-description': li.description,
-                                        'data-unit': li.unit_measurement,
-                                        'data-quantity': li.budgeted_quantity
-                                    }
-                                }));
-                                updateSearchableSelect('id_line_item', optionsList, 'line item');
-                            });
-                    } else {
-                        updateSearchableSelect('id_line_item', [], 'line item');
-                    }
-                });
-            }
-
-            if (lineItemSelect) {
-                lineItemSelect.addEventListener('change', function() {
-                    const lineItemId = this.value;
-                    if (lineItemId) {
-                        const container = this.closest('.searchable-select-container');
-                        const optionsList = container ? container.querySelector('[id$="-options-list"]') : null;
-                        const btn = optionsList ? optionsList.querySelector(`[data-id="${lineItemId}"]`) : null;
-
-                        if (btn) {
-                            const desc = btn.dataset.description;
-                            const unit = btn.dataset.unit;
-                            const qty = btn.dataset.quantity;
-
-                            document.getElementById('activity').value = desc || '';
-                            
-                            if (unit) {
-                                const unitSelector = document.getElementById('unit-options-list');
-                                if (unitSelector) {
-                                    const options = Array.from(unitSelector.querySelectorAll('.option-item'));
-                                    // Try exact match on ID (short_name) first, then partial match on label
-                                    const unitBtn = options.find(b => b.dataset.id === unit) || 
-                                                  options.find(b => b.textContent.toLowerCase().includes(unit.toLowerCase()));
-                                    
-                                    if (unitBtn) {
-                                        selectSearchableOption(unitBtn, unitBtn.dataset.id, unitBtn.textContent.trim());
-                                    }
-                                }
-                            }
-                            if (qty) document.getElementById('quantity').value = qty;
-                        }
-                    }
-                });
-            }
-
             calculateDuration();
         });
 
         function setSearchableSelectValue(fieldId, value, label) {
             const nativeSelect = document.getElementById(fieldId);
             const labelEl = document.getElementById(`${fieldId}-selector-label`);
-            
             if (nativeSelect) {
                 nativeSelect.value = value;
-                // Add option if it doesn't exist (failsafe)
                 if (nativeSelect.value !== String(value)) {
                     const opt = document.createElement('option');
                     opt.value = value;
@@ -486,9 +348,7 @@
                     nativeSelect.value = value;
                 }
             }
-            if (labelEl && label) {
-                labelEl.textContent = label;
-            }
+            if (labelEl && label) labelEl.textContent = label;
         }
 
         function updateSearchableSelect(fieldId, options, typeLabel) {
@@ -525,7 +385,6 @@
                 btn.dataset.id = optId;
                 btn.dataset.label = optName.toLowerCase();
                 
-                // Add extra data attributes if present
                 for (const [key, value] of Object.entries(optData)) {
                     btn.setAttribute(key, value);
                 }

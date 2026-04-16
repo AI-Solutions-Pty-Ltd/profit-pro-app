@@ -3,25 +3,37 @@
 {% block title %}Output BoQ - Project Resource Estimator{% endblock %}
 {% block estimator_content %}
     <!-- Page header -->
-    <div class="sm:flex sm:items-center sm:justify-between mb-6">
+    <div class="mb-6 sm:flex sm:items-center sm:justify-between">
         <div>
             <h1 class="text-2xl font-bold text-gray-900">Output Bill of Quantities</h1>
             <p class="mt-1 text-sm text-gray-500">
                 Calculated BoQ with materials rates, labour rates, progress and forecast amounts.
             </p>
         </div>
-        <div class="mt-4 sm:mt-0 flex gap-2">
+        <div class="flex gap-2 mt-4 sm:mt-0">
+            <a href="{% url 'project:labor-activity-list' project_pk=project_pk %}"
+               class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke-width="1.5"
+                     stroke="currentColor"
+                     class="mr-1.5 -ml-0.5 w-5 h-5 text-gray-400">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+                Labor Activities
+            </a>
             <form method="post"
                   action="{% url 'estimator:sync_boq' project_pk=project_pk %}">
                 {% csrf_token %}
                 <button type="submit"
-                        class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                        class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-500">
                     <svg xmlns="http://www.w3.org/2000/svg"
                          fill="none"
                          viewBox="0 0 24 24"
                          stroke-width="1.5"
                          stroke="currentColor"
-                         class="w-5 h-5 mr-1.5 -ml-0.5">
+                         class="mr-1.5 -ml-0.5 w-5 h-5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
                     </svg>
                     Sync from Baseline BoQ
@@ -30,10 +42,10 @@
         </div>
     </div>
     <!-- Summary cards -->
-    <div class="grid grid-cols-2 gap-4 lg:grid-cols-5 mb-8">
-        <div class="rounded-lg bg-white shadow p-4">
-            <div class="flex items-center gap-3">
-                <div class="rounded-lg bg-gray-100 p-2">
+    <div class="grid grid-cols-2 gap-4 mb-8 lg:grid-cols-5">
+        <div class="p-4 bg-white rounded-lg shadow">
+            <div class="flex gap-3 items-center">
+                <div class="p-2 bg-gray-100 rounded-lg">
                     <svg xmlns="http://www.w3.org/2000/svg"
                          fill="none"
                          viewBox="0 0 24 24"
@@ -49,9 +61,9 @@
                 </div>
             </div>
         </div>
-        <div class="rounded-lg bg-white shadow p-4">
-            <div class="flex items-center gap-3">
-                <div class="rounded-lg bg-amber-50 p-2">
+        <div class="p-4 bg-white rounded-lg shadow">
+            <div class="flex gap-3 items-center">
+                <div class="p-2 bg-amber-50 rounded-lg">
                     <svg xmlns="http://www.w3.org/2000/svg"
                          fill="none"
                          viewBox="0 0 24 24"
@@ -67,9 +79,9 @@
                 </div>
             </div>
         </div>
-        <div class="rounded-lg bg-white shadow p-4">
-            <div class="flex items-center gap-3">
-                <div class="rounded-lg bg-purple-50 p-2">
+        <div class="p-4 bg-white rounded-lg shadow">
+            <div class="flex gap-3 items-center">
+                <div class="p-2 bg-purple-50 rounded-lg">
                     <svg xmlns="http://www.w3.org/2000/svg"
                          fill="none"
                          viewBox="0 0 24 24"
@@ -85,9 +97,9 @@
                 </div>
             </div>
         </div>
-        <div class="rounded-lg bg-white shadow p-4">
-            <div class="flex items-center gap-3">
-                <div class="rounded-lg bg-green-50 p-2">
+        <div class="p-4 bg-white rounded-lg shadow">
+            <div class="flex gap-3 items-center">
+                <div class="p-2 bg-green-50 rounded-lg">
                     <svg xmlns="http://www.w3.org/2000/svg"
                          fill="none"
                          viewBox="0 0 24 24"
@@ -103,9 +115,9 @@
                 </div>
             </div>
         </div>
-        <div class="rounded-lg bg-white shadow p-4">
-            <div class="flex items-center gap-3">
-                <div class="rounded-lg bg-blue-50 p-2">
+        <div class="p-4 bg-white rounded-lg shadow">
+            <div class="flex gap-3 items-center">
+                <div class="p-2 bg-blue-50 rounded-lg">
                     <svg xmlns="http://www.w3.org/2000/svg"
                          fill="none"
                          viewBox="0 0 24 24"
@@ -123,13 +135,13 @@
         </div>
     </div>
     <!-- Filters -->
-    <div class="bg-white shadow-sm rounded-lg p-4 mb-4">
-        <form method="get" id="filter-form" class="flex flex-wrap items-end gap-3">
+    <div class="p-4 mb-4 bg-white rounded-lg shadow-sm">
+        <form method="get" id="filter-form" class="flex flex-wrap gap-3 items-end">
             <div class="min-w-0">
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Section</label>
                 <select name="section"
                         onchange="this.form.submit()"
-                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                        class="block py-1.5 pr-8 pl-2 w-full text-xs text-gray-900 bg-white rounded-md border-0 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600">
                     <option value="">All Sections</option>
                     {% for s in sections %}
                         <option value="{{ s }}" {% if f_section == s %}selected{% endif %}>{{ s }}</option>
@@ -140,7 +152,7 @@
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Bill No.</label>
                 <select name="bill_no"
                         onchange="this.form.submit()"
-                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                        class="block py-1.5 pr-8 pl-2 w-full text-xs text-gray-900 bg-white rounded-md border-0 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600">
                     <option value="">All Bills</option>
                     {% for b in bill_nos %}
                         <option value="{{ b }}" {% if f_bill_no == b %}selected{% endif %}>{{ b }}</option>
@@ -151,7 +163,7 @@
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Trade Code</label>
                 <select name="trade_code"
                         onchange="this.form.submit()"
-                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                        class="block py-1.5 pr-8 pl-2 w-full text-xs text-gray-900 bg-white rounded-md border-0 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600">
                     <option value="">All Trades</option>
                     {% for tc in trade_codes %}
                         <option value="{{ tc.id }}"
@@ -165,7 +177,7 @@
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Material Spec</label>
                 <select name="mat_spec"
                         onchange="this.form.submit()"
-                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                        class="block py-1.5 pr-8 pl-2 w-full text-xs text-gray-900 bg-white rounded-md border-0 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600">
                     <option value="">All</option>
                     <option value="has_spec" {% if f_mat_spec == "has_spec" %}selected{% endif %}>Has Specification</option>
                     <option value="has_material"
@@ -180,7 +192,7 @@
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Labour Spec</label>
                 <select name="lab_spec"
                         onchange="this.form.submit()"
-                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                        class="block py-1.5 pr-8 pl-2 w-full text-xs text-gray-900 bg-white rounded-md border-0 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600">
                     <option value="">All</option>
                     <option value="none" {% if f_lab_spec == "none" %}selected{% endif %}>No Labour Spec</option>
                     {% for name in labour_spec_names %}
@@ -192,7 +204,7 @@
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Plant Spec</label>
                 <select name="plant_spec"
                         onchange="this.form.submit()"
-                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                        class="block py-1.5 pr-8 pl-2 w-full text-xs text-gray-900 bg-white rounded-md border-0 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600">
                     <option value="">All</option>
                     <option value="none" {% if f_plant_spec == "none" %}selected{% endif %}>No Plant Spec</option>
                     {% for name in plant_spec_names %}
@@ -204,7 +216,7 @@
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Prelim Spec</label>
                 <select name="prelim_spec"
                         onchange="this.form.submit()"
-                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                        class="block py-1.5 pr-8 pl-2 w-full text-xs text-gray-900 bg-white rounded-md border-0 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600">
                     <option value="">All</option>
                     <option value="none" {% if f_prelim_spec == "none" %}selected{% endif %}>No Prelim Spec</option>
                     {% for name in prelim_spec_names %}
@@ -214,13 +226,13 @@
             </div>
             {% if f_section or f_bill_no or f_trade_code or f_mat_spec or f_lab_spec or f_plant_spec or f_prelim_spec %}
                 <a href="{% url 'estimator:dashboard' project_pk=project_pk %}"
-                   class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 ring-1 ring-inset ring-gray-300">
+                   class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md ring-1 ring-inset ring-gray-300 hover:bg-gray-200">
                     <svg xmlns="http://www.w3.org/2000/svg"
                          fill="none"
                          viewBox="0 0 24 24"
                          stroke-width="1.5"
                          stroke="currentColor"
-                         class="w-3.5 h-3.5 mr-1">
+                         class="mr-1 w-3.5 h-3.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                     </svg>
                     Clear
@@ -229,32 +241,32 @@
         </form>
     </div>
     <!-- BoQ Table -->
-    <div class="bg-white shadow-sm rounded-lg">
-        <div class="flex items-center justify-between gap-3 p-4 border-b border-gray-200">
-            <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-700">Bill of Quantities</h3>
-            <div class="flex items-center gap-2">
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="flex gap-3 justify-between items-center p-4 border-b border-gray-200">
+            <h3 class="text-xs font-semibold tracking-wider text-gray-700 uppercase">Bill of Quantities</h3>
+            <div class="flex gap-2 items-center">
                 <button id="column-groups-btn"
                         type="button"
-                        class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700">
+                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
                     <svg xmlns="http://www.w3.org/2000/svg"
                          fill="none"
                          viewBox="0 0 24 24"
                          stroke-width="1.5"
                          stroke="currentColor"
-                         class="w-3.5 h-3.5 mr-1.5">
+                         class="mr-1.5 w-3.5 h-3.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 0a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0m7.5 0v6m-6 0v6m6-6v6m6-6v6" />
                     </svg>
                     Column Groups
                 </button>
                 <button id="column-details-btn"
                         type="button"
-                        class="inline-flex items-center rounded-md bg-slate-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-700">
+                        class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-white rounded-md bg-slate-600 hover:bg-slate-700">
                     <svg xmlns="http://www.w3.org/2000/svg"
                          fill="none"
                          viewBox="0 0 24 24"
                          stroke-width="1.5"
                          stroke="currentColor"
-                         class="w-3.5 h-3.5 mr-1.5">
+                         class="mr-1.5 w-3.5 h-3.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.132 0 4.235.677 6.039 1.952.992.615 1.961 1.4 2.872 2.2V3m0 0A9.75 9.75 0 0 0 18.039 1.049M0 3v5.757a9.75 9.75 0 0 1 1.952-6.039A9.75 9.75 0 0 1 6.039 1.049m12 0A9.75 9.75 0 0 0 6.039 1.049m0 0v5.008a3 3 0 1 1 0-5.008m0 0h.008v.008H6.039v-.008m0 0h5.952v5.008m0 0a3 3 0 1 1 6 0v-5.008m0 5.008v5.757m0 0a9.75 9.75 0 0 1-1.952 6.039A9.75 9.75 0 0 1 6.039 22.95m12 0a9.75 9.75 0 0 0 1.952-6.039 9.75 9.75 0 0 0-1.952-6.039m0 6.039a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                     </svg>
                     Fine-tune Columns
@@ -335,7 +347,7 @@
              class="hidden absolute bg-white shadow-lg rounded-lg p-4 z-50 mt-2 min-w-[380px] max-h-[500px] overflow-y-auto">
             <div class="space-y-2">
                 <div class="pb-2 border-b border-gray-200">
-                    <p class="text-xs font-semibold uppercase text-gray-600 mb-2">Item Details</p>
+                    <p class="mb-2 text-xs font-semibold text-gray-600 uppercase">Item Details</p>
                     <label class="flex items-center text-xs text-gray-700">
                         <input type="checkbox"
                                class="column-detail-toggle"
@@ -394,7 +406,7 @@
                     </label>
                 </div>
                 <div class="py-2 border-b border-gray-200">
-                    <p class="text-xs font-semibold uppercase text-gray-600 mb-2">Contract</p>
+                    <p class="mb-2 text-xs font-semibold text-gray-600 uppercase">Contract</p>
                     <label class="flex items-center text-xs text-gray-700">
                         <input type="checkbox"
                                class="column-detail-toggle"
@@ -418,7 +430,7 @@
                     </label>
                 </div>
                 <div class="py-2 border-b border-gray-200">
-                    <p class="text-xs font-semibold uppercase text-gray-600 mb-2">Project</p>
+                    <p class="mb-2 text-xs font-semibold text-gray-600 uppercase">Project</p>
                     <label class="flex items-center text-xs text-gray-700">
                         <input type="checkbox"
                                class="column-detail-toggle"
@@ -428,7 +440,7 @@
                     </label>
                 </div>
                 <div class="py-2 border-b border-gray-200">
-                    <p class="text-xs font-semibold uppercase text-gray-600 mb-2">New Material</p>
+                    <p class="mb-2 text-xs font-semibold text-gray-600 uppercase">New Material</p>
                     <label class="flex items-center text-xs text-gray-700">
                         <input type="checkbox"
                                class="column-detail-toggle"
@@ -445,7 +457,7 @@
                     </label>
                 </div>
                 <div class="py-2 border-b border-gray-200">
-                    <p class="text-xs font-semibold uppercase text-gray-600 mb-2">New Labour</p>
+                    <p class="mb-2 text-xs font-semibold text-gray-600 uppercase">New Labour</p>
                     <label class="flex items-center text-xs text-gray-700">
                         <input type="checkbox"
                                class="column-detail-toggle"
@@ -462,7 +474,7 @@
                     </label>
                 </div>
                 <div class="py-2 border-b border-gray-200">
-                    <p class="text-xs font-semibold uppercase text-gray-600 mb-2">Markups</p>
+                    <p class="mb-2 text-xs font-semibold text-gray-600 uppercase">Markups</p>
                     <label class="flex items-center text-xs text-gray-700">
                         <input type="checkbox"
                                class="column-detail-toggle"
@@ -486,7 +498,7 @@
                     </label>
                 </div>
                 <div class="py-2 border-b border-gray-200">
-                    <p class="text-xs font-semibold uppercase text-gray-600 mb-2">Combined</p>
+                    <p class="mb-2 text-xs font-semibold text-gray-600 uppercase">Combined</p>
                     <label class="flex items-center text-xs text-gray-700">
                         <input type="checkbox"
                                class="column-detail-toggle"
@@ -496,7 +508,7 @@
                     </label>
                 </div>
                 <div class="py-2 border-b border-gray-200">
-                    <p class="text-xs font-semibold uppercase text-gray-600 mb-2">Progress</p>
+                    <p class="mb-2 text-xs font-semibold text-gray-600 uppercase">Progress</p>
                     <label class="flex items-center text-xs text-gray-700">
                         <input type="checkbox"
                                class="column-detail-toggle"
@@ -513,7 +525,7 @@
                     </label>
                 </div>
                 <div class="py-2">
-                    <p class="text-xs font-semibold uppercase text-gray-600 mb-2">Forecast</p>
+                    <p class="mb-2 text-xs font-semibold text-gray-600 uppercase">Forecast</p>
                     <label class="flex items-center text-xs text-gray-700">
                         <input type="checkbox"
                                class="column-detail-toggle"
@@ -668,7 +680,7 @@
                     {% for item in items %}
                         {% if item.is_section_header %}
                         {% else %}
-                            <tr class="hover:bg-gray-50/50 align-top" data-item-id="{{ item.id }}">
+                            <tr class="align-top hover:bg-gray-50/50" data-item-id="{{ item.id }}">
                                 <!-- Section -->
                                 <td class="py-1.5 pl-3 pr-1 text-gray-400 whitespace-normal break-words column-group-item-details col-section w-[100px]">
                                     {{ item.section }}
@@ -758,32 +770,32 @@
                                 <!-- Unit -->
                                 <td class="px-1 py-1.5 text-center text-gray-500 column-group-item-details col-unit w-[40px]">{{ item.unit }}</td>
                                 <!-- Contract Qty -->
-                                <td class="px-1 py-1.5 text-right tabular-nums text-gray-700 column-group-contract col-contract-qty">
+                                <td class="px-1 py-1.5 tabular-nums text-right text-gray-700 column-group-contract col-contract-qty">
                                     {{ item.contract_quantity|qty }}
                                 </td>
                                 <!-- Contract Rate -->
-                                <td class="px-1 py-1.5 text-right tabular-nums text-gray-700 column-group-contract col-contract-rate">
+                                <td class="px-1 py-1.5 tabular-nums text-right text-gray-700 column-group-contract col-contract-rate">
                                     {{ item.contract_rate|currency }}
                                 </td>
                                 <!-- Contract Amount -->
-                                <td class="px-1 py-1.5 text-right tabular-nums font-medium text-gray-900 border-r border-gray-100 column-group-contract col-contract-amount">
+                                <td class="px-1 py-1.5 font-medium tabular-nums text-right text-gray-900 border-r border-gray-100 column-group-contract col-contract-amount">
                                     {{ item.contract_amount|currency }}
                                 </td>
                                 <!-- Project Qty -->
-                                <td class="px-1 py-1.5 text-right tabular-nums font-medium text-teal-700 bg-teal-50/30 border-r border-gray-100 column-group-project-qty col-project-qty">
+                                <td class="px-1 py-1.5 font-medium tabular-nums text-right text-teal-700 border-r border-gray-100 bg-teal-50/30 column-group-project-qty col-project-qty">
                                     {{ item.contract_quantity|apply_wastage:wastage_pct|qty }}
                                 </td>
                                 <!-- New Material Rate -->
-                                <td class="px-1 py-1.5 text-right tabular-nums font-medium text-amber-700 bg-amber-50/30 column-group-new-material col-mat-rate"
+                                <td class="px-1 py-1.5 font-medium tabular-nums text-right text-amber-700 bg-amber-50/30 column-group-new-material col-mat-rate"
                                     data-cell="new_materials_rate">{{ item.new_materials_rate|currency }}</td>
                                 <!-- New Material Amount -->
-                                <td class="px-1 py-1.5 text-right tabular-nums font-medium text-amber-700 bg-amber-50/30 border-r border-gray-100 column-group-new-material col-mat-amount"
+                                <td class="px-1 py-1.5 font-medium tabular-nums text-right text-amber-700 border-r border-gray-100 bg-amber-50/30 column-group-new-material col-mat-amount"
                                     data-cell="new_materials_amount">{{ item.new_materials_amount|currency }}</td>
                                 <!-- New Labour Rate -->
-                                <td class="px-1 py-1.5 text-right tabular-nums font-medium text-purple-700 bg-purple-50/30 column-group-new-labour col-labour-rate"
+                                <td class="px-1 py-1.5 font-medium tabular-nums text-right text-purple-700 bg-purple-50/30 column-group-new-labour col-labour-rate"
                                     data-cell="new_labour_rate">{{ item.new_labour_rate|currency }}</td>
                                 <!-- New Labour Amount -->
-                                <td class="px-1 py-1.5 text-right tabular-nums font-medium text-purple-700 bg-purple-50/30 border-r border-gray-100 column-group-new-labour col-labour-amount"
+                                <td class="px-1 py-1.5 font-medium tabular-nums text-right text-purple-700 border-r border-gray-100 bg-purple-50/30 column-group-new-labour col-labour-amount"
                                     data-cell="new_labour_amount">{{ item.new_labour_amount|currency }}</td>
                                 <!-- Markups -->
                                 <td class="px-0.5 py-0.5 bg-orange-50/30 column-group-markups col-mat-markup">
@@ -802,7 +814,7 @@
                                            data-item-id="{{ item.id }}"
                                            data-field="labour_markup_pct">
                                 </td>
-                                <td class="px-0.5 py-0.5 bg-orange-50/30 border-r border-gray-100 column-group-markups col-transport-pct">
+                                <td class="px-0.5 py-0.5 border-r border-gray-100 bg-orange-50/30 column-group-markups col-transport-pct">
                                     <input type="number"
                                            step="0.01"
                                            value="{{ item.transport_pct }}"
@@ -811,7 +823,7 @@
                                            data-field="transport_pct">
                                 </td>
                                 <!-- Baseline New Price -->
-                                <td class="px-1 py-1.5 text-right tabular-nums font-semibold text-indigo-700 bg-indigo-50/30 border-r border-gray-100 column-group-combined col-combined-price"
+                                <td class="px-1 py-1.5 font-semibold tabular-nums text-right text-indigo-700 border-r border-gray-100 bg-indigo-50/30 column-group-combined col-combined-price"
                                     data-cell="baseline_new_price">{{ item.baseline_new_price|currency }}</td>
                                 <!-- Progress Qty (now editable) -->
                                 <td class="px-0.5 py-0.5 bg-green-50/30 column-group-progress col-progress-qty">
@@ -823,7 +835,7 @@
                                            data-field="progress_quantity">
                                 </td>
                                 <!-- Progress Amount -->
-                                <td class="px-1 py-1.5 text-right tabular-nums font-medium text-green-700 bg-green-50/30 border-r border-gray-100 column-group-progress col-progress-amount"
+                                <td class="px-1 py-1.5 font-medium tabular-nums text-right text-green-700 border-r border-gray-100 bg-green-50/30 column-group-progress col-progress-amount"
                                     data-cell="progress_amount">{{ item.progress_amount|currency }}</td>
                                 <!-- Forecast Qty (now editable) -->
                                 <td class="px-0.5 py-0.5 bg-blue-50/30 column-group-forecast col-forecast-qty">
@@ -835,19 +847,19 @@
                                            data-field="forecast_quantity">
                                 </td>
                                 <!-- Forecast Amount -->
-                                <td class="px-1 py-1.5 text-right tabular-nums font-medium text-blue-700 bg-blue-50/30 pr-3 column-group-forecast col-forecast-amount"
+                                <td class="px-1 py-1.5 pr-3 font-medium tabular-nums text-right text-blue-700 bg-blue-50/30 column-group-forecast col-forecast-amount"
                                     data-cell="forecast_amount">{{ item.forecast_amount|currency }}</td>
                             </tr>
                         {% endif %}
                     {% empty %}
                         <tr>
-                            <td colspan="23" class="px-6 py-16 text-center text-sm text-gray-400">
+                            <td colspan="23" class="px-6 py-16 text-sm text-center text-gray-400">
                                 <svg xmlns="http://www.w3.org/2000/svg"
                                      fill="none"
                                      viewBox="0 0 24 24"
                                      stroke-width="1.5"
                                      stroke="currentColor"
-                                     class="w-10 h-10 text-gray-200 mx-auto mb-3">
+                                     class="mx-auto mb-3 w-10 h-10 text-gray-200">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H6.911a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661Z" />
                                 </svg>
                                 <p class="mb-4">No BoQ items found. Construct the Output BoQ from your Baseline BoQ.</p>
@@ -856,13 +868,13 @@
                                       class="inline-block">
                                     {% csrf_token %}
                                     <button type="submit"
-                                            class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                                            class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-500">
                                         <svg xmlns="http://www.w3.org/2000/svg"
                                              fill="none"
                                              viewBox="0 0 24 24"
                                              stroke-width="1.5"
                                              stroke="currentColor"
-                                             class="w-5 h-5 mr-1.5 -ml-0.5">
+                                             class="mr-1.5 -ml-0.5 w-5 h-5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
                                         </svg>
                                         Sync from Baseline BoQ

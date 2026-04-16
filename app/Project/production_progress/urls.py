@@ -98,4 +98,29 @@ urlpatterns = [
         views.ProductionPlanAjaxDetailView.as_view(),
         name="production-plan-data-ajax",
     ),
+    path(
+        "<int:project_pk>/ajax/bills/",
+        views.GetProjectBillsAjaxView.as_view(),
+        name="ajax-project-bills",
+    ),
+    path(
+        "<int:project_pk>/ajax/items/",
+        views.GetProjectItemsAjaxView.as_view(),
+        name="ajax-project-items",
+    ),
+    path(
+        "<int:project_pk>/ajax/labor-activities/",
+        views.GetProjectLaborActivitiesAjaxView.as_view(),
+        name="ajax-project-labor-activities",
+    ),
+    path(
+        "<int:project_pk>/labor-activities/",
+        views.LaborActivityListView.as_view(),
+        name="labor-activity-list",
+    ),
+    path(
+        "<int:project_pk>/labor-activities/detail/",
+        views.LaborActivityDetailView.as_view(),
+        name="labor-activity-detail",
+    ),
 ]

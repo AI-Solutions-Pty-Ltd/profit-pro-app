@@ -107,9 +107,9 @@
                                             Delete Activity
                                         </button>
                                     </li>
-                                    {% if not plan.line_item %}
+                                    {% if not plan.labour_activity %}
                                         <li>
-                                            <a href="{% url 'project:production-plan-create' project.pk %}?parent={{ plan.pk }}{% if plan.structure %}&structure={{ plan.structure.pk }}{% endif %}{% if plan.bill %}&bill={{ plan.bill.pk }}{% endif %}{% if plan.package %}&package={{ plan.package.pk }}{% elif not plan.bill and not plan.package and plan.parent %}&package={{ plan.parent.package.pk }}{% endif %}"
+                                            <a href="{% url 'project:production-plan-create' project.pk %}?parent={{ plan.pk }}{% if plan.section %}&section={{ plan.section }}{% endif %}{% if plan.bill_no %}&bill_no={{ plan.bill_no }}{% endif %}"
                                                class="flex items-center text-indigo-500">
                                                 {% heroicon_outline "plus" class="mr-2 w-4 h-4" %}
                                                 Add Activity
@@ -121,24 +121,24 @@
                         </div>
                     </div>
                 </div>
-                <!-- Expanded Details (Structure, BOQ, etc) -->
+                <!-- Expanded Details (Section, Bill No, etc) -->
                 <div id="details-{{ plan.pk }}"
                      class="hidden pt-4 mt-4 border-t border-gray-100 animate-fadeIn">
                     <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
                         <div class="space-y-3">
                             <div>
-                                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Project Structure</h4>
-                                <p class="text-sm font-bold text-gray-700">{{ plan.structure }}</p>
+                                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Section</h4>
+                                <p class="text-sm font-bold text-gray-700">{{ plan.section|default:"General" }}</p>
                             </div>
                             <div>
-                                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Bill Area</h4>
-                                <p class="text-sm font-bold text-gray-700">{{ plan.bill|default:"General" }}</p>
+                                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Bill No</h4>
+                                <p class="text-sm font-bold text-gray-700">{{ plan.bill_no|default:"N/A" }}</p>
                             </div>
                         </div>
                         <div class="space-y-3">
                             <div>
-                                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">BOQ Package</h4>
-                                <p class="text-sm font-bold text-gray-700">{{ plan.package|default:"Not Assigned" }}</p>
+                                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Labor Specification</h4>
+                                <p class="text-sm font-bold text-gray-700">{{ plan.labour_activity|default:"Not Linked" }}</p>
                             </div>
                             <div>
                                 <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Unit of Measure</h4>

@@ -1,0 +1,198 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Case, Count, DecimalField, F, Sum, Value, When
+from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
+from django.http import JsonResponse
+from django.views.generic import DetailView, ListView, TemplateView
+
+from app.Account.subscription_config import Subscription
+from app.core.Utilities.mixins import BreadcrumbMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
+from app.Estimator.models import BOQItem, ProjectLabourSpecification
+from app.Project.models import Project
+
+
+class LaborActivityListView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, ListView
+):
+    """
+    Groups BOQItems by Labour Specification, Section, and Bill No to form 'Activities'.
+    Provides aggregated metrics for each activity group.
+    """
+
+    model = BOQItem
+    template_name = "production_progress/activities/list.html"
+    context_object_name = "activities"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_queryset(self):
+        project_pk = self.kwargs["project_pk"]
+        return (
+            BOQItem.objects.filter(project_id=project_pk, labour_specification__isnull=False)
+            .values(
+                "section",
+                "bill_no",
+                "labour_specification",
+                "labour_specification__name",
+                "labour_specification__unit",
+                "labour_specification__crew__crew_type",
+            )
+            .annotate(
+                num_items=Count("id"),
+                total_tracker=Sum(
+                    Case(
+                        When(unit=F("labour_specification__unit"), then=F("contract_quantity")),
+                        default=Value(0),
+                        output_field=DecimalField(),
+                    )
+                ),
+            )
+            .order_by("section", "bill_no", "labour_specification__name")
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+        context["project"] = project
+        context["project_pk"] = project_pk
+
+        # Add rate information to activities since rate is a property and can't be easily fetched in ValuesQuerySet
+        activities = context["activities"]
+        labour_specs = ProjectLabourSpecification.objects.filter(project_id=project_pk)
+        spec_map = {spec.id: spec for spec in labour_specs}
+
+        for activity in activities:
+            spec = spec_map.get(activity["labour_specification"])
+            if spec:
+                activity["rate"] = spec.rate_per_unit
+            else:
+                activity["rate"] = 0
+
+        return context
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk}),
+            },
+            {"title": "Labor Activities", "url": "#"},
+        ]
+
+
+class LaborActivityDetailView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, ListView
+):
+    """
+    Detailed breakdown of a specific activity group.
+    Filters BOQItems by the specific Lab Spec, Section, and Bill No.
+    """
+
+    model = BOQItem
+    template_name = "production_progress/activities/detail.html"
+    context_object_name = "items"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_queryset(self):
+        self.project_pk = self.kwargs["project_pk"]
+        self.labour_spec_id = self.request.GET.get("labour_spec")
+        self.section = self.request.GET.get("section", "")
+        self.bill_no = self.request.GET.get("bill_no", "")
+
+        return BOQItem.objects.filter(
+            project_id=self.project_pk,
+            labour_specification_id=self.labour_spec_id,
+            section=self.section,
+            bill_no=self.bill_no,
+        ).order_by("id")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = get_object_or_404(Project, pk=self.project_pk)
+        labour_spec = get_object_or_404(
+            ProjectLabourSpecification, pk=self.labour_spec_id, project=project
+        )
+
+        context["project"] = project
+        context["project_pk"] = self.project_pk
+        context["labour_spec"] = labour_spec
+        context["section"] = self.section
+        context["bill_no"] = self.bill_no
+
+        # Calculate total tracker for this specific view
+        context["total_tracker"] = (
+            self.get_queryset()
+            .filter(unit=labour_spec.unit)
+            .aggregate(total=Sum("contract_quantity"))["total"]
+            or 0
+        )
+
+        return context
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Labor Activities",
+                "url": reverse_lazy("project:labor-activity-list", kwargs={"project_pk": project_pk}),
+            },
+            {"title": "Activity Details", "url": "#"},
+        ]
+
+class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
+    """
+    Returns unique Labor Activities for a given project.
+    Groups BOQItems by (LabourSpecID, Section, BillNo).
+    """
+
+    def get(self, request, *args, **kwargs):
+        project_id = self.kwargs.get("project_pk")
+        
+        # We want unique combinations of (spec, section, bill)
+        # and we use the first item's ID as a representative ID for the form.
+        items = (
+            BOQItem.objects.filter(project_id=project_id, labour_specification__isnull=False)
+            .values(
+                "labour_specification",
+                "labour_specification__name",
+                "labour_specification__unit",
+                "section",
+                "bill_no"
+            )
+            .annotate(
+                representative_id=Sum("id"), # This is just to get A value, we'll fix below
+                total_quantity=Sum(
+                    Case(
+                        When(unit=F("labour_specification__unit"), then=F("contract_quantity")),
+                        default=Value(0),
+                        output_field=DecimalField(),
+                    )
+                ),
+            )
+            .order_by("section", "bill_no", "labour_specification__name")
+        )
+
+        # To get a real ID, we actually need to do something slightly different 
+        # because ValuesQuerySet + aggregation doesn't let us pick a specific ID easily.
+        # We'll just fetch a sample ID for each group.
+        
+        # Optimize: Get all item groups first
+        data = []
+        for item in items:
+            label = f"[{item['section']}][{item['bill_no']}] {item['labour_specification__name']}"
+            
+            data.append({
+                "id": item["labour_specification"], # Use the spec ID
+                "label": label,
+                "activity_name": item["labour_specification__name"],
+                "section": item["section"],
+                "bill_no": item["bill_no"],
+                "unit": item["labour_specification__unit"],
+                "quantity": str(item["total_quantity"] or 0),
+            })
+
+        return JsonResponse({"activities": data})

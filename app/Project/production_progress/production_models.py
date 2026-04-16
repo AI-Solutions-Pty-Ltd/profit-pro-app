@@ -42,35 +42,15 @@ class ProductionPlan(BaseModel):
         related_name="children",
         help_text="Parent activity for nesting",
     )
-    structure = models.ForeignKey(
-        "BillOfQuantities.Structure",
-        on_delete=models.CASCADE,
-        related_name="production_plans",
-        help_text="The building or structure this plan belongs to",
-    )
-    bill = models.ForeignKey(
-        "BillOfQuantities.Bill",
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name="production_plans",
-        help_text="The BOQ Bill this plan belongs to",
-    )
-    package = models.ForeignKey(
-        "BillOfQuantities.Package",
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        related_name="production_plans",
-        help_text="The BOQ Package this plan belongs to",
-    )
-    line_item = models.ForeignKey(
-        "BillOfQuantities.LineItem",
+    section = models.CharField(max_length=200, blank=True, help_text="Manual section or inherited from Activity")
+    bill_no = models.CharField(max_length=200, blank=True, help_text="Manual bill no or inherited from Activity")
+    labour_activity = models.ForeignKey(
+        "estimator.ProjectLabourSpecification",
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
         related_name="production_plans",
-        help_text="The BOQ Line Item (Trade Code) this plan belongs to",
+        help_text="The Labor Specification this plan belongs to",
     )
     start_date = models.DateField()
     finish_date = models.DateField()
@@ -90,7 +70,7 @@ class ProductionPlan(BaseModel):
         ordering = ["start_date"]
         constraints = [
             models.UniqueConstraint(
-                fields=["project", "activity", "start_date"],
+                fields=["project", "section", "bill_no", "activity", "start_date"],
                 name="unique_plan_activity_date",
                 condition=models.Q(is_archived=False),
             )
@@ -110,11 +90,69 @@ class ProductionPlan(BaseModel):
         return self.unit
 
     def save(self, *args, **kwargs):
+        # Auto-calculate duration
         if self.start_date and self.finish_date:
             self.duration = (self.finish_date - self.start_date).days
         else:
             self.duration = 0
+
+        # Auto-naming from Labour Specification
+        if self.labour_activity:
+            if not self.activity:
+                self.activity = self.labour_activity.name
+            
+            # The section and bill_no should be assigned by the form/view 
+            # based on the activity grouping selected by the user.
+
+        # Handle automatic hierarchy generation ONLY for leaf items (Labour activities)
+        if self.labour_activity and not self.parent and (self.section or self.bill_no):
+            self._ensure_hierarchy()
+
         super().save(*args, **kwargs)
+
+    def _ensure_hierarchy(self):
+        """Automatically creates Section and Bill levels if they don't exist."""
+        if not self.section:
+            return
+
+        # 1. Ensure Section Level exists
+        section_parent, _ = ProductionPlan.objects.get_or_create(
+            project=self.project,
+            section=self.section,
+            bill_no="",
+            labour_activity=None,
+            defaults={
+                "activity": self.section,
+                "start_date": self.start_date or timezone.now().date(),
+                "finish_date": self.finish_date or timezone.now().date(),
+                "quantity": 0,
+                "unit": "SUM",
+            },
+        )
+
+        if not self.bill_no:
+            if self != section_parent:
+                self.parent = section_parent
+            return
+
+        # 2. Ensure Bill Level exists under Section
+        bill_parent, _ = ProductionPlan.objects.get_or_create(
+            project=self.project,
+            section=self.section,
+            bill_no=self.bill_no,
+            labour_activity=None,
+            defaults={
+                "activity": f"Bill {self.bill_no}",
+                "parent": section_parent,
+                "start_date": self.start_date or timezone.now().date(),
+                "finish_date": self.finish_date or timezone.now().date(),
+                "quantity": 0,
+                "unit": "SUM",
+            },
+        )
+
+        if self != bill_parent and self != section_parent:
+            self.parent = bill_parent
 
     def soft_delete(self):
         from django.core.exceptions import ValidationError

@@ -10,6 +10,7 @@ from app.BillOfQuantities.tests.factories import (
 )
 from app.Project.tests.factories import ProjectFactory
 
+from app.Estimator.models import ProjectLabourSpecification
 from .production_models import ProductionPlan
 
 
@@ -33,3 +34,4 @@ class ProductionPlanFactory(DjangoModelFactory):
     duration = 10
     quantity = factory.Faker("pydecimal", left_digits=4, right_digits=2, positive=True)
     unit = "m3"
+    labour_activity = None

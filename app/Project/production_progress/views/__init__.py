@@ -16,6 +16,8 @@ from .planning_views import (
     ProductionPlanListView,
     ProductionPlanUpdateView,
     ProductionResourceCreateView,
+    GetProjectBillsAjaxView,
+    GetProjectItemsAjaxView,
 )
 from .productivity_views import (
     DailyProductionCreateView,
@@ -26,6 +28,12 @@ from .reports_views import (
     ProductivityLogsView,
 )
 from .tracking_views import ProgressTrackingView
+from .activity_views import (
+    LaborActivityListView,
+    LaborActivityDetailView,
+    GetProjectLaborActivitiesAjaxView,
+)
+
 
 __all__ = [
     "ProductionDashboardView",
@@ -48,4 +56,9 @@ __all__ = [
     "ProductionForecastDashboardView",
     "ProgressTrackingView",
     "ProductionPlanAjaxDetailView",
+    "GetProjectBillsAjaxView",
+    "GetProjectItemsAjaxView",
+    "LaborActivityListView",
+    "LaborActivityDetailView",
+    "GetProjectLaborActivitiesAjaxView",
 ]

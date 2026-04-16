@@ -1,0 +1,116 @@
+{% extends "production_progress/base_production.html" %}
+{% load static %}
+{% load heroicons %}
+{% load estimator_tags %}
+
+{% block title %}
+    Activity Details - {{ labour_spec.name }} - {{ block.super }}
+{% endblock title %}
+
+{% block production_content %}
+    <div class="px-4 sm:px-6 lg:px-8">
+        <!-- Breadcrumbs / Back -->
+        <div class="mb-6">
+            <nav class="flex" aria-label="Breadcrumb">
+                <ol role="list" class="flex items-center space-x-4">
+                    <li>
+                        <div>
+                            <a href="{% url 'project:labor-activity-list' project_pk=project_pk %}" class="text-gray-400 hover:text-gray-500">
+                                {% heroicon_outline "chevron-left" class="w-5 h-5 flex-shrink-0" %}
+                                <span class="sr-only">Back to Activities</span>
+                            </a>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <span class="text-sm font-medium text-gray-500">Activities</span>
+                            {% heroicon_outline "chevron-right" class="w-5 h-5 flex-shrink-0 text-gray-300 ml-4" %}
+                            <span class="ml-4 text-sm font-black text-gray-900">{{ labour_spec.name }}</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- Activity Header Card -->
+        <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:px-6 border border-gray-100 mb-8">
+            <div class="sm:flex sm:items-baseline sm:justify-between">
+                <div class="sm:w-0 sm:flex-1">
+                    <h1 class="text-xl font-black text-gray-900">{{ labour_spec.name }}</h1>
+                    <p class="mt-1 text-sm text-gray-500 truncate">Grouped by Section: <span class="font-bold text-gray-700">{{ section|default:"All" }}</span> | Bill: <span class="font-bold text-gray-700">{{ bill_no|default:"All" }}</span></p>
+                </div>
+            </div>
+            
+            <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-4">
+                <div class="overflow-hidden rounded-lg bg-gray-50 px-4 py-5 border border-gray-100">
+                    <dt class="truncate text-xs font-black text-gray-500 uppercase tracking-widest">Crew Type</dt>
+                    <dd class="mt-1 text-lg font-black text-purple-700">{{ labour_spec.crew.crew_type|default:"No Crew Assigned" }}</dd>
+                </div>
+                <div class="overflow-hidden rounded-lg bg-gray-50 px-4 py-5 border border-gray-100">
+                    <dt class="truncate text-xs font-black text-gray-500 uppercase tracking-widest">Base Rate</dt>
+                    <dd class="mt-1 text-lg font-black text-gray-900">{{ labour_spec.rate_per_unit|currency }}</dd>
+                </div>
+                <div class="overflow-hidden rounded-lg bg-gray-50 px-4 py-5 border border-gray-100">
+                    <dt class="truncate text-xs font-black text-gray-500 uppercase tracking-widest">Work Unit</dt>
+                    <dd class="mt-1 text-lg font-black text-gray-900">{{ labour_spec.unit }}</dd>
+                </div>
+                <div class="overflow-hidden rounded-lg bg-indigo-50 px-4 py-5 border border-indigo-100">
+                    <dt class="truncate text-xs font-black text-indigo-500 uppercase tracking-widest">Total Tracker</dt>
+                    <dd class="mt-1 text-lg font-black text-indigo-700">{{ total_tracker|qty }} {{ labour_spec.unit }}</dd>
+                </div>
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-100">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-sm font-black text-gray-900 uppercase tracking-widest">Constituent Line Items</h3>
+            </div>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Bill No</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Section</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-black text-gray-500 uppercase tracking-wider">Description</th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-black text-gray-500 uppercase tracking-wider">Unit</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-black text-gray-500 uppercase tracking-wider">Contract Qty</th>
+                        <th scope="col" class="px-6 py-3 text-center text-xs font-black text-gray-500 uppercase tracking-wider">Tracked?</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in items %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.bill_no }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">{{ item.section }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            <div class="max-w-md">{{ item.description|default:"-" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-center font-medium {% if item.unit == labour_spec.unit %}text-indigo-600{% else %}text-gray-400{% endif %}">
+                            {{ item.unit }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-mono text-gray-700">{{ item.contract_quantity|qty }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            {% if item.unit == labour_spec.unit %}
+                                <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-bold text-green-800">
+                                    {% heroicon_outline "check-circle" class="w-3 h-3 mr-1" %} Included
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-bold text-red-800" title="Unit mismatch ({{ item.unit }} vs {{ labour_spec.unit }})">
+                                    {% heroicon_outline "x-circle" class="w-3 h-3 mr-1" %} Excluded
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                <div class="flex justify-end items-center space-x-4">
+                    <span class="text-xs font-black text-gray-500 uppercase tracking-widest">Total Planned for Activity:</span>
+                    <span class="text-xl font-black text-indigo-600 tabular-nums">{{ total_tracker|qty }} {{ labour_spec.unit }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock production_content %}
