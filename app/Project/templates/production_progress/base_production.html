@@ -37,6 +37,13 @@
                             {% heroicon_outline "clipboard-document-list" class="inline-block mr-1 w-4 h-4" %}
                             Planning
                         </a>
+                        <!-- Labor Activities -->
+                        <a href="{% url 'project:labor-activity-list' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'labor-activity' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "squares-2x2" class="inline-block mr-1 w-4 h-4" %}
+                            Labor Activities
+                        </a>
+
                         <!-- Resources -->
                         <a href="{% url 'project:production-cost-breakdown' project.pk %}"
                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'cost-breakdown' in current_url or 'resource' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">

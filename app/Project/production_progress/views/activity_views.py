@@ -27,9 +27,23 @@ class LaborActivityListView(
 
     def get_queryset(self):
         project_pk = self.kwargs["project_pk"]
+        self.f_section = self.request.GET.get("section", "")
+        self.f_bill = self.request.GET.get("bill_no", "")
+        self.f_activity = self.request.GET.get("activity", "")
+
+        queryset = BOQItem.objects.filter(
+            project_id=project_pk, labour_specification__isnull=False
+        )
+
+        if self.f_section:
+            queryset = queryset.filter(section=self.f_section)
+        if self.f_bill:
+            queryset = queryset.filter(bill_no=self.f_bill)
+        if self.f_activity:
+            queryset = queryset.filter(labour_specification__name__icontains=self.f_activity)
+
         return (
-            BOQItem.objects.filter(project_id=project_pk, labour_specification__isnull=False)
-            .values(
+            queryset.values(
                 "section",
                 "bill_no",
                 "labour_specification",
@@ -57,7 +71,27 @@ class LaborActivityListView(
         context["project"] = project
         context["project_pk"] = project_pk
 
-        # Add rate information to activities since rate is a property and can't be easily fetched in ValuesQuerySet
+        # Add filters to context for the template
+        context["f_section"] = self.f_section
+        context["f_bill"] = self.f_bill
+        context["f_activity"] = self.f_activity
+
+        # Get unique values for filter dropdowns
+        all_activities = BOQItem.objects.filter(
+            project_id=project_pk, labour_specification__isnull=False
+        )
+        context["sections"] = (
+            all_activities.order_by("section")
+            .values_list("section", flat=True)
+            .distinct()
+        )
+        context["bills"] = (
+            all_activities.order_by("bill_no")
+            .values_list("bill_no", flat=True)
+            .distinct()
+        )
+
+        # Add rate information to activities
         activities = context["activities"]
         labour_specs = ProjectLabourSpecification.objects.filter(project_id=project_pk)
         spec_map = {spec.id: spec for spec in labour_specs}
@@ -70,6 +104,7 @@ class LaborActivityListView(
                 activity["rate"] = 0
 
         return context
+
 
     def get_breadcrumbs(self):
         project_pk = self.kwargs["project_pk"]
