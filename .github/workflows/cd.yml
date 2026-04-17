@@ -19,19 +19,20 @@ jobs:
   deploy:
     if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/develop' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'develop') }}
     environment:
-      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/staging' && 'staging') || (github.ref == 'refs/heads/develop' && 'develop') || 'production' }}
+      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production') || (github.ref == 'refs/heads/staging' && 'staging') || (github.ref == 'refs/heads/develop' && 'development') || 'production' }}
     runs-on: ubuntu-latest
+    env:
+      DEPLOY_ENVIRONMENT: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production') || (github.ref == 'refs/heads/staging' && 'staging') || (github.ref == 'refs/heads/develop' && 'development') || 'production' }}
 
     steps:
       - uses: actions/checkout@v5
 
       - name: Display Deployment Environment
         run: |
-          ENVIRONMENT="${{ github.event.inputs.environment || (github.ref == 'refs/heads/staging' && 'staging') || (github.ref == 'refs/heads/develop' && 'develop') || 'production' }}"
-          echo "🚀 Deploying to $ENVIRONMENT environment"
+          echo "🚀 Deploying to ${{ env.DEPLOY_ENVIRONMENT }} environment"
           echo "Branch: ${{ github.ref }}"
           echo "Triggered by: ${{ github.event_name }}"
-          echo "Environment: $ENVIRONMENT"
+          echo "Environment: ${{ env.DEPLOY_ENVIRONMENT }}"
 
       - name: Generate Production Secret Key
         id: generate-secret
@@ -40,7 +41,7 @@ jobs:
           echo "SECRET_KEY=$SECRET_KEY" >> $GITHUB_ENV
           echo "secret_key=$SECRET_KEY" >> $GITHUB_OUTPUT
 
-      - name: Create ${{ github.event.inputs.environment }} .env File
+      - name: Create ${{ env.DEPLOY_ENVIRONMENT }} .env File
         run: |
           touch .env
           # Core settings
@@ -74,7 +75,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: app/theme/static_src/package-lock.json
 
