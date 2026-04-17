@@ -95,13 +95,26 @@ class DailyProductivityCreateView(
         project_pk = self.kwargs["project_pk"]
         project = get_object_or_404(Project, pk=project_pk)
         context["project"] = project
-        context["all_plans"] = ProductionPlan.objects.filter(
-            project=project, is_archived=False
-        )
+        all_plans = ProductionPlan.objects.filter(
+            project=project, is_archived=False, labour_activity__isnull=False
+        ).select_related("parent", "parent__parent")
+
+        # Add hierarchical context for display
+        for plan in all_plans:
+            context_parts = []
+            if plan.section:
+                context_parts.append(plan.section)
+            if plan.bill_no:
+                context_parts.append(f"Bill {plan.bill_no}")
+            plan.hierarchical_context = " / ".join(context_parts)
+
+        context["all_plans"] = all_plans
 
         selected_plans_ids = self.request.POST.getlist("selected_plans")
         if not selected_plans_ids:
             selected_plans_ids = self.request.GET.getlist("selected_plans")
+        print(f"DEBUG: selected_plans_ids: {selected_plans_ids}")
+        print(f"DEBUG: project: {project}")
 
         selected_plans = (
             ProductionPlan.objects.filter(
@@ -120,17 +133,38 @@ class DailyProductivityCreateView(
 
         for plan in selected_plans:
             resources = ProductionResource.objects.filter(production_plan=plan)
+            # Check for specification-based resources
+            has_skilled_crew = False
+            has_semi_crew = False
+            has_general_crew = False
+            has_plant_spec = False
+
+            if plan.labour_activity and plan.labour_activity.crew:
+                crew = plan.labour_activity.crew
+                has_skilled_crew = crew.skilled > 0
+                has_semi_crew = crew.semi_skilled > 0
+                has_general_crew = crew.general > 0
+
+            if plan.plant_specification:
+                has_plant_spec = True
+
             plan_resources[plan.id] = {
-                "skilled": resources.filter(
+                "skilled": has_skilled_crew
+                or resources.filter(
                     resource_type="LABOUR", skill_type__name__icontains="skilled"
+                )
+                .exclude(skill_type__name__icontains="semi")
+                .exists(),
+                "semi_skilled": has_semi_crew
+                or resources.filter(
+                    resource_type="LABOUR", skill_type__name__icontains="semi-skilled"
                 ).exists(),
-                "semi_skilled": resources.filter(
-                    resource_type="LABOUR", skill_type__name__icontains="semi"
-                ).exists(),
-                "unskilled": resources.filter(
+                "unskilled": has_general_crew or resources.filter(
                     resource_type="LABOUR", skill_type__name__icontains="unskilled"
                 ).exists(),
-                "plant": resources.filter(resource_type="PLANT").exists(),
+                "plant": has_plant_spec or resources.filter(resource_type="PLANT").exists(),
+                "has_crew_spec": has_skilled_crew or has_semi_crew or has_general_crew,
+                "has_plant_spec": has_plant_spec,
             }
 
             planned_plants = resources.filter(resource_type="PLANT")
@@ -162,7 +196,20 @@ class DailyProductivityCreateView(
         context["plan_resources"] = plan_resources
         context["plant_formsets"] = plant_formsets
 
-        labour_initial = [{"activity": plan.id} for plan in selected_plans]
+        # Build initial data for labour using Crew Spec if available
+        labour_initial = []
+        for plan in selected_plans:
+            initial = {"activity": plan.id}
+            if plan.labour_activity and plan.labour_activity.crew:
+                crew = plan.labour_activity.crew
+                initial.update({
+                    "skilled_number": crew.skilled,
+                    "semi_skilled_number": crew.semi_skilled,
+                    "unskilled_number": crew.general,
+                    "total_hours": 8.0  # Standard daily hours
+                })
+            labour_initial.append(initial)
+
         if post_data:
             labour_formset = AggregatedLabourFormSet(
                 post_data, prefix="labour", form_kwargs={"project_id": project.id}

@@ -80,6 +80,19 @@
                             <div class="flex items-center gap-3">
                                 <div>
                                     <h3 class="font-bold capitalize text-slate-800">{{ item.plan.activity }}</h3>
+                                    {% if item.plan.section or item.plan.bill_no %}
+                                        <div class="flex gap-1 items-center mt-0.5 mb-1.5 overflow-hidden">
+                                            {% if item.plan.section %}
+                                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter truncate">{{ item.plan.section }}</span>
+                                            {% endif %}
+                                            {% if item.plan.section and item.plan.bill_no %}
+                                                <span class="text-[9px] text-slate-300">/</span>
+                                            {% endif %}
+                                            {% if item.plan.bill_no %}
+                                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter truncate">{{ item.plan.bill_no }}</span>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
                                     <div class="flex items-center gap-2">
                                         <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium {% if item.status_color == 'green' %}bg-emerald-100 text-emerald-700{% elif item.status_color == 'yellow' %}bg-amber-100 text-amber-700{% else %}bg-rose-100 text-rose-700{% endif %}">
                                             <span class="h-1.5 w-1.5 rounded-full {% if item.status_color == 'green' %}bg-emerald-500{% elif item.status_color == 'yellow' %}bg-amber-500{% else %}bg-rose-500{% endif %}"></span>{{ item.status_text }}

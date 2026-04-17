@@ -23,7 +23,12 @@
                 {% for form, plan in labour_forms_with_plans %}
                     <div class="grid grid-cols-[1fr_repeat(5,110px)] items-start hover:bg-gray-50 transition-colors {% if form.errors %}bg-red-50/30{% endif %}">
                         <div class="px-3 py-2 font-medium text-gray-900 border-gray-200">
-                            <div class="flex items-center">{{ plan.activity }}{{ form.activity }}</div>
+                            <div class="flex items-center">
+                                {{ plan.activity }}{{ form.activity }}
+                                {% if plan_resources|get:plan.id|get:'has_crew_spec' %}
+                                    <span class="ml-2 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 bg-blue-50 rounded-full ring-1 ring-inset ring-blue-700/10">Spec</span>
+                                {% endif %}
+                            </div>
                             {% if form.non_field_errors %}
                                 <div class="text-red-500 text-[10px] leading-tight mt-1">{{ form.non_field_errors }}</div>
                             {% endif %}

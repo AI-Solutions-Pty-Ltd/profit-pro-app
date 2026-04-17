@@ -1,73 +1,85 @@
 {% extends "production_progress/base_production.html" %}
 {% load static %}
 {% load heroicons %}
+{% load humanize %}
+{% load project_tags %}
+
 {% block title %}
     Cost Forecasting - {{ selected_plan.activity|default:"Analytics" }} - {{ block.super }}
 {% endblock title %}
+
 {% block extra_css %}
     <style>
     .metric-value { font-feature-settings: "tnum"; }
     .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
     </style>
 {% endblock extra_css %}
+
 {% block production_content %}
     <!-- Filter Header -->
     <div class="flex flex-col gap-4 justify-between items-start mb-8 sm:flex-row sm:items-center">
         <div>
-            <h2 class="text-xl font-black tracking-tight text-gray-900 uppercase">Costing Forecasting</h2>
-            <p class="text-sm text-gray-500">Predictive analytics for production budgets and timelines</p>
+            <h2 class="text-2xl font-bold tracking-tight text-gray-900">Costing Forecasting</h2>
+            <p class="mt-1 text-sm text-gray-600">Predictive analytics for production budgets and timelines</p>
         </div>
         <div class="flex items-center space-x-3">
             <form method="get" id="forecastForm" class="flex items-center space-x-2">
-                <select name="plan_id"
-                        onchange="this.form.submit()"
-                        class="block w-full min-w-[240px] py-2 text-sm font-bold border-gray-200 focus:ring-indigo-500 focus:border-indigo-500 rounded-xl shadow-sm">
-                    {% for p in all_plans %}
-                        <option value="{{ p.id }}"
-                                {% if p.id == selected_plan.id %}selected{% endif %}>{{ p.activity }}</option>
-                    {% endfor %}
-                </select>
+                {{ plan_selector_widget|safe }}
             </form>
             <button onclick="window.location.reload()"
-                    class="p-2 text-gray-400 bg-white rounded-xl border border-gray-200 shadow-sm transition-colors hover:text-indigo-600 hover:bg-gray-50">
+                    class="p-2 text-gray-400 bg-white rounded-xl border border-gray-200 shadow-sm transition-colors hover:bg-gray-50 hover:text-indigo-600">
                 {% heroicon_outline "arrow-path" class="w-5 h-5" %}
             </button>
         </div>
     </div>
+
     {% if not selected_plan %}
         <div class="px-6 py-24 text-center bg-white rounded-2xl border-2 border-gray-200 border-dashed">
             <div class="flex justify-center items-center mx-auto mb-6 w-20 h-20 text-indigo-400 bg-indigo-50 rounded-full">
                 {% heroicon_outline "presentation-chart-line" class="w-10 h-10" %}
             </div>
-            <h3 class="text-xl font-black text-gray-900">No Production Plan Selected</h3>
+            <h3 class="text-xl font-bold text-gray-900">No Production Plan Selected</h3>
             <p class="mt-2 text-gray-500">Select an item from the menu above to view forecasting models.</p>
         </div>
     {% else %}
         <!-- Activity Context Card -->
         <div class="grid grid-cols-1 gap-6 mb-8 lg:grid-cols-3">
-            <div class="flex flex-col col-span-1 p-6 bg-white rounded-2xl border border-gray-200 shadow-sm lg:col-span-2 border-l-4 border-l-{{ summary.status_color }}-500">
+            <div class="col-span-1 border-l-4 border-gray-200 bg-white p-6 shadow-sm rounded-2xl border border-gray-200 lg:col-span-2 {% if summary.status_color == 'emerald' %}border-l-emerald-500{% elif summary.status_color == 'amber' %}border-l-amber-500{% else %}border-l-rose-500{% endif %}">
                 <div class="flex justify-between items-start mb-6">
                     <div>
-                        <div class="flex items-center mb-1">
-                            <span class="status-dot bg-{{ summary.status_color }}-500"></span>
-                            <span class="text-xs font-black text-{{ summary.status_color }}-600 uppercase tracking-wider">{{ summary.status }}</span>
+                        <div class="flex items-center mb-1.5">
+                            <span class="status-dot {% if summary.status_color == 'emerald' %}bg-emerald-500{% elif summary.status_color == 'amber' %}bg-amber-500{% else %}bg-rose-500{% endif %}"></span>
+                            <span class="text-[10px] font-black uppercase tracking-wider {% if summary.status_color == 'emerald' %}text-emerald-600{% elif summary.status_color == 'amber' %}text-amber-600{% else %}text-rose-600{% endif %}">{{ summary.status }}</span>
                         </div>
                         <h3 class="text-lg font-black tracking-tight text-gray-900 uppercase">{{ selected_plan.activity }}</h3>
+                        {% if selected_plan.section or selected_plan.bill_no %}
+                            <div class="flex gap-1.5 items-center mt-0.5">
+                                {% if selected_plan.section %}
+                                    <span class="text-[10px] font-bold uppercase tracking-tighter text-gray-400">{{ selected_plan.section }}</span>
+                                {% endif %}
+                                {% if selected_plan.section and selected_plan.bill_no %}
+                                    <span class="text-[10px] text-gray-300">/</span>
+                                {% endif %}
+                                {% if selected_plan.bill_no %}
+                                    <span class="text-[10px] font-bold uppercase tracking-tighter text-gray-400">{{ selected_plan.bill_no }}</span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="text-right">
-                        <div class="text-2xl font-black text-gray-900">{{ summary.progress_pct }}%</div>
-                        <div class="text-xs font-bold text-gray-400 uppercase">Complete</div>
+                        <div class="text-2xl font-black tabular-nums text-gray-900">{{ summary.progress_pct }}%</div>
+                        <div class="text-[10px] font-bold uppercase text-gray-400">Complete</div>
                     </div>
                 </div>
                 <div class="mb-6 w-full h-3 bg-gray-100 rounded-full">
-                    <div class="h-3 bg-indigo-600 rounded-full transition-all duration-1000"
+                    <div class="h-3 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full transition-all duration-1000"
                          style="width: {{ summary.progress_pct }}%"></div>
                 </div>
                 <div class="grid grid-cols-2 gap-8">
                     <div>
-                        <div class="mb-1 text-xs font-bold tracking-wider text-gray-400 uppercase">Time Forecast</div>
-                        <div class="text-xl font-black text-gray-900">{{ summary.forecast_days }} Days</div>
-                        <div class="text-xs font-bold {% if summary.time_variance >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
+                        <div class="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">Time Forecast</div>
+                        <div class="text-xl font-black tabular-nums text-gray-900">{{ summary.forecast_days }} Studies Days</div>
+                        <div class="text-xs font-bold {% if summary.time_variance >= 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
                             {% if summary.time_variance >= 0 %}
                                 early by {{ summary.time_variance }} days
                             {% else %}
@@ -76,9 +88,9 @@
                         </div>
                     </div>
                     <div>
-                        <div class="mb-1 text-xs font-bold tracking-wider text-gray-400 uppercase">Cost Forecast</div>
-                        <div class="text-xl font-black text-gray-900">R {{ summary.forecast_cost|floatformat:0|intcomma }}</div>
-                        <div class="text-xs font-bold {% if summary.budget_variance >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
+                        <div class="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">Cost Forecast</div>
+                        <div class="text-xl font-black tabular-nums text-gray-900">R {{ summary.forecast_cost|floatformat:0|intcomma }}</div>
+                        <div class="text-xs font-bold {% if summary.budget_variance >= 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
                             {% if summary.budget_variance >= 0 %}
                                 under by R {{ summary.budget_variance|floatformat:0|intcomma }}
                             {% else %}
@@ -88,27 +100,28 @@
                     </div>
                 </div>
             </div>
-            <div class="p-6 bg-indigo-600 rounded-2xl shadow-lg transition-transform hover:scale-[1.01]">
-                <h4 class="mb-4 text-sm font-black tracking-wider text-indigo-100 uppercase">Target Metrics</h4>
+            <div class="rounded-2xl bg-indigo-600 p-6 shadow-lg transition-transform hover:scale-[1.01]">
+                <h4 class="mb-4 text-xs font-black tracking-wider text-indigo-100 uppercase">Target Metrics</h4>
                 <div class="space-y-4">
                     <div class="flex justify-between items-center py-2 border-b border-indigo-500/50">
-                        <span class="text-xs font-bold text-indigo-200 uppercase">Days Remaining</span>
-                        <span class="text-lg font-black text-white">{{ summary.days_remaining }}</span>
+                        <span class="text-[10px] font-bold uppercase text-indigo-200">Days Remaining</span>
+                        <span class="text-xl font-black tabular-nums text-white">{{ summary.days_remaining }}</span>
                     </div>
                     <div class="flex justify-between items-center py-2 border-b border-indigo-500/50">
-                        <span class="text-xs font-bold text-indigo-200 uppercase">Units Remaining</span>
-                        <span class="text-lg font-black text-white">{{ summary.units_remaining|floatformat:0 }}</span>
+                        <span class="text-[10px] font-bold uppercase text-indigo-200">Units Remaining</span>
+                        <span class="text-xl font-black tabular-nums text-white">{{ summary.units_remaining|floatformat:0 }}</span>
                     </div>
                     <div class="flex justify-between items-center py-2">
-                        <span class="text-xs font-bold text-indigo-200 uppercase">Budget Used</span>
-                        <span class="text-lg font-black text-white">{{ summary.budget_used_pct }}%</span>
+                        <span class="text-[10px] font-bold uppercase text-indigo-200">Budget Used</span>
+                        <span class="text-xl font-black tabular-nums text-white">{{ summary.budget_used_pct }}%</span>
                     </div>
                 </div>
-                <p class="mt-6 text-[10px] text-indigo-200 italic leading-relaxed">
+                <p class="mt-6 text-[10px] italic leading-relaxed text-indigo-200">
                     Models based on cumulative performance as of {% now "M d, Y" %}.
                 </p>
             </div>
         </div>
+
         <!-- KPI Grid -->
         <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-3">
             <!-- Avg Daily Output -->
@@ -117,11 +130,11 @@
                     <div class="flex justify-center items-center mr-3 w-10 h-10 text-blue-600 bg-blue-50 rounded-xl">
                         {% heroicon_outline "chart-bar" class="w-5 h-5" %}
                     </div>
-                    <h3 class="text-xs font-black tracking-widest text-gray-400 uppercase">Avg Daily Output</h3>
+                    <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-400">Avg Daily Output</h3>
                 </div>
                 <div class="flex justify-between items-end">
-                    <div class="text-2xl font-black text-gray-900">
-                        {{ kpis.daily_output.actual|floatformat:1 }} <span class="text-xs text-gray-400">{{ selected_plan.unit }}</span>
+                    <div class="text-2xl font-black tabular-nums text-gray-900">
+                        {{ kpis.daily_output.actual|floatformat:1 }} <span class="text-xs font-bold text-gray-400">{{ selected_plan.unit }}</span>
                     </div>
                     <div class="text-sm font-bold {% if kpis.daily_output.variance >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
                         {{ kpis.daily_output.variance|stringformat:"+0.1f" }}%
@@ -134,10 +147,10 @@
                     <div class="flex justify-center items-center mr-3 w-10 h-10 text-emerald-600 bg-emerald-50 rounded-xl">
                         {% heroicon_outline "tag" class="w-5 h-5" %}
                     </div>
-                    <h3 class="text-xs font-black tracking-widest text-gray-400 uppercase">Cost Per Unit</h3>
+                    <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-400">Cost Per Unit</h3>
                 </div>
                 <div class="flex justify-between items-end">
-                    <div class="text-2xl font-black text-gray-900">R {{ kpis.cost.actual|floatformat:2 }}</div>
+                    <div class="text-2xl font-black tabular-nums text-gray-900">R {{ kpis.cost.actual|floatformat:2 }}</div>
                     <div class="text-sm font-bold {% if kpis.cost.variance <= 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
                         {{ kpis.cost.variance|stringformat:"+0.1f" }}%
                     </div>
@@ -149,11 +162,11 @@
                     <div class="flex justify-center items-center mr-3 w-10 h-10 text-purple-600 bg-purple-50 rounded-xl">
                         {% heroicon_outline "bolt" class="w-5 h-5" %}
                     </div>
-                    <h3 class="text-xs font-black tracking-widest text-gray-400 uppercase">Work Productivity</h3>
+                    <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-400">Work Productivity</h3>
                 </div>
                 <div class="flex justify-between items-end">
-                    <div class="text-2xl font-black text-gray-900">
-                        {{ kpis.productivity.actual|floatformat:2 }} <span class="text-xs text-gray-400">U/MH</span>
+                    <div class="text-2xl font-black tabular-nums text-gray-900">
+                        {{ kpis.productivity.actual|floatformat:2 }} <span class="text-xs font-bold text-gray-400">U/MH</span>
                     </div>
                     <div class="text-sm font-bold {% if kpis.productivity.variance >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
                         {{ kpis.productivity.variance|stringformat:"+0.1f" }}%
@@ -161,44 +174,48 @@
                 </div>
             </div>
         </div>
+
         <!-- Charts Section -->
         <div class="grid grid-cols-1 gap-8 mb-12 lg:grid-cols-2">
             <!-- Production Trajectory -->
             <div class="flex overflow-hidden flex-col bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                    <h3 class="flex items-center text-xs font-black tracking-wider text-gray-900 uppercase">
+                    <h3 class="flex items-center text-[10px] font-black uppercase tracking-wider text-gray-900">
                         {% heroicon_outline "presentation-chart-line" class="mr-2 w-4 h-4 text-indigo-500" %}
                         Production Trajectory Forecast
                     </h3>
                 </div>
-                <div class="p-6 h-[400px]">
+                <div class="h-[400px] p-6">
                     <canvas id="productionTrajectoryChart"></canvas>
                 </div>
             </div>
             <!-- Cost Trajectory -->
             <div class="flex overflow-hidden flex-col bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                    <h3 class="flex items-center text-xs font-black tracking-wider text-gray-900 uppercase">
+                    <h3 class="flex items-center text-[10px] font-black uppercase tracking-wider text-gray-900">
                         {% heroicon_outline "banknotes" class="mr-2 w-4 h-4 text-emerald-500" %}
                         Cost Trajectory Forecast
                     </h3>
                 </div>
-                <div class="p-6 h-[400px]">
+                <div class="h-[400px] p-6">
                     <canvas id="costTrajectoryChart"></canvas>
                 </div>
             </div>
         </div>
     {% endif %}
+
     <!-- Footer Nav -->
     <div class="flex flex-col gap-4 justify-between items-center px-8 py-6 mt-12 mb-8 bg-white rounded-2xl border border-gray-100 shadow-sm sm:flex-row">
         <a href="{% url 'project:production-progress-dashboard' project.pk %}"
            class="inline-flex items-center text-sm font-bold text-gray-400 transition-colors hover:text-indigo-600">
             {% heroicon_outline "chevron-left" class="mr-2 w-4 h-4" %} Back to Dashboard
         </a>
-        <div class="text-xs font-bold tracking-widest text-gray-400 uppercase">Last Model Refresh: {% now "H:i" %}</div>
+        <div class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Last Model Refresh: {% now "H:i" %}</div>
     </div>
 {% endblock production_content %}
+
 {% block extra_js %}
+    <script src="{% static 'js/searchable_select.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {

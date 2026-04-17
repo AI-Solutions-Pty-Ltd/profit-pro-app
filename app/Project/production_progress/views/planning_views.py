@@ -5,6 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models as db_models
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView,
@@ -547,7 +548,9 @@ class ProductionCostBreakdownView(
         context["project"] = project
 
         all_plans = (
-            ProductionPlan.objects.filter(project=project, is_archived=False)
+            ProductionPlan.objects.filter(
+                project=project, is_archived=False, labour_activity__isnull=False
+            )
             .select_related("labour_activity", "parent")
             .prefetch_related("resources")
             .order_by("activity")
@@ -615,11 +618,28 @@ class ProductionCostBreakdownDetailView(
                 items = items.filter(bill_no=selected_plan.bill_no)
             context["activity_line_items"] = items
 
-            # Fallback plant specs logic for when direct spec is missing
-            if not selected_plan.plant_specification:
-                unique_spec_ids = items.filter(plant_specification__isnull=False).values_list('plant_specification', flat=True).distinct()
-                from app.Estimator.models import ProjectPlantSpecification
-                context["fallback_plant_specs"] = ProjectPlantSpecification.objects.filter(pk__in=unique_spec_ids)
+        # Fallback plant specs logic for when direct spec is missing
+        # We search by section and bill to match the ProductionPlan.total_plant_cost property logic
+        if (
+            not selected_plan.plant_specification
+            and selected_plan.section
+            and selected_plan.bill_no
+        ):
+            from app.Estimator.models import BOQItem, ProjectPlantSpecification
+
+            unique_spec_ids = (
+                BOQItem.objects.filter(
+                    project=project,
+                    section=selected_plan.section,
+                    bill_no=selected_plan.bill_no,
+                    plant_specification__isnull=False,
+                )
+                .values_list("plant_specification", flat=True)
+                .distinct()
+            )
+            context["fallback_plant_specs"] = ProjectPlantSpecification.objects.filter(
+                pk__in=unique_spec_ids
+            )
 
         return context
 
@@ -797,30 +817,64 @@ class PlanResourcesAjaxView(
         plant_formsets = {}
 
         for plan in selected_plans:
-            has_skilled = ProductionResource.objects.filter(
-                production_plan=plan,
-                resource_type="LABOUR",
-                skill_type__name__icontains="skilled",
-            ).exists()
-            has_semi_skilled = ProductionResource.objects.filter(
-                production_plan=plan,
-                resource_type="LABOUR",
-                skill_type__name__icontains="semi",
-            ).exists()
-            has_unskilled = ProductionResource.objects.filter(
-                production_plan=plan,
-                resource_type="LABOUR",
-                skill_type__name__icontains="unskilled",
-            ).exists()
-            has_plant = ProductionResource.objects.filter(
-                production_plan=plan, resource_type="PLANT"
-            ).exists()
+            # Check for specification-based resources
+            has_skilled_crew = False
+            has_semi_crew = False
+            has_general_crew = False
+            has_plant_spec = False
+
+            if plan.labour_activity and plan.labour_activity.crew:
+                crew = plan.labour_activity.crew
+                has_skilled_crew = crew.skilled > 0
+                has_semi_crew = crew.semi_skilled > 0
+                has_general_crew = crew.general > 0
+
+            if plan.plant_specification:
+                has_plant_spec = True
+
+            has_skilled = (
+                has_skilled_crew
+                or ProductionResource.objects.filter(
+                    production_plan=plan,
+                    resource_type="LABOUR",
+                    skill_type__name__icontains="skilled",
+                )
+                .exclude(skill_type__name__icontains="semi")
+                .exists()
+            )
+
+            has_semi_skilled = (
+                has_semi_crew
+                or ProductionResource.objects.filter(
+                    production_plan=plan,
+                    resource_type="LABOUR",
+                    skill_type__name__icontains="semi",
+                ).exists()
+            )
+
+            has_unskilled = (
+                has_general_crew
+                or ProductionResource.objects.filter(
+                    production_plan=plan,
+                    resource_type="LABOUR",
+                    skill_type__name__icontains="unskilled",
+                ).exists()
+            )
+
+            has_plant = (
+                has_plant_spec
+                or ProductionResource.objects.filter(
+                    production_plan=plan, resource_type="PLANT"
+                ).exists()
+            )
 
             plan_resources[plan.id] = {
                 "skilled": has_skilled,
                 "semi_skilled": has_semi_skilled,
                 "unskilled": has_unskilled,
                 "plant": has_plant,
+                "has_crew_spec": has_skilled_crew or has_semi_crew or has_general_crew,
+                "has_plant_spec": has_plant_spec,
             }
 
             planned_plants = ProductionResource.objects.filter(
@@ -845,7 +899,22 @@ class PlanResourcesAjaxView(
                 )
             plant_formsets[plan.id] = plant_formset
 
-        labour_initial = [{"activity": plan.id} for plan in selected_plans]
+        # Build initial data for labour using Crew Spec if available
+        labour_initial = []
+        for plan in selected_plans:
+            initial = {"activity": plan.id}
+            if plan.labour_activity and plan.labour_activity.crew:
+                crew = plan.labour_activity.crew
+                initial.update(
+                    {
+                        "skilled_number": crew.skilled,
+                        "semi_skilled_number": crew.semi_skilled,
+                        "unskilled_number": crew.general,
+                        "total_hours": 8.0,  # Standard daily hours
+                    }
+                )
+            labour_initial.append(initial)
+
         labour_formset = AggregatedLabourFormSet(
             prefix="labour", initial=labour_initial
         )
@@ -858,6 +927,23 @@ class PlanResourcesAjaxView(
                 form.fields["semi_skilled_number"].disabled = True
             if not plan_resources[plan.id]["unskilled"]:
                 form.fields["unskilled_number"].disabled = True
+
+        # Render the partial and return as JSON
+        context = {
+            "project": project,
+            "selected_plans": selected_plans,
+            "labour_formset": labour_formset,
+            "labour_forms_with_plans": zip(labour_formset.forms, selected_plans),
+            "plan_resources": plan_resources,
+            "plant_formsets": plant_formsets,
+        }
+
+        html = render_to_string(
+            "production_progress/partials/resource_formsets_multi.html",
+            context,
+            request=request,
+        )
+        return JsonResponse({"html": html})
 
 
 class ProductionPlanAjaxDetailView(LoginRequiredMixin, TemplateView):
@@ -918,18 +1004,24 @@ class GetProjectItemsAjaxView(LoginRequiredMixin, TemplateView):
         if bill_no:
             items_query = items_query.filter(bill_no=bill_no)
 
-        items = items_query.select_related("labour_specification").order_by("section", "bill_no", "description")
+        items = items_query.select_related("labour_specification").order_by(
+            "section", "bill_no", "description"
+        )
 
         data = [
             {
                 "id": item.id,
-                "label": f"[{item.section}][{item.bill_no}] {item.description}" if not (section and bill_no) else item.description,
+                "label": f"[{item.section}][{item.bill_no}] {item.description}"
+                if not (section and bill_no)
+                else item.description,
                 "description": item.description,
                 "section": item.section,
                 "bill_no": item.bill_no,
                 "unit": item.unit,
                 "quantity": str(item.contract_quantity or 0),
-                "labour_spec": item.labour_specification.name if item.labour_specification else ""
+                "labour_spec": item.labour_specification.name
+                if item.labour_specification
+                else "",
             }
             for item in items
         ]

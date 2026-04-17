@@ -159,7 +159,9 @@ class PlanProductivityDashboardView(
         start_date = self.request.GET.get("start_date")
         end_date = self.request.GET.get("end_date")
 
-        all_plans = ProductionPlan.objects.filter(project=project).order_by("activity")
+        all_plans = ProductionPlan.objects.filter(
+            project=project, labour_activity__isnull=False
+        ).order_by("activity")
 
         # Default to first plan if none selected
         selected_plan = None

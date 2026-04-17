@@ -28,8 +28,20 @@
                             {% heroicon_outline "chart-pie" class="w-5 h-5" %}
                         </div>
                         <div>
-                            <h3 class="text-base font-black text-gray-900 uppercase tracking-tight">{{ data.plan.activity }}</h3>
-                            <p class="text-xs text-gray-500">Performance tracking across log period</p>
+                            <h3 class="text-base font-black tracking-tight text-gray-900 uppercase">{{ data.plan.activity }}</h3>
+                            {% if data.plan.section or data.plan.bill_no %}
+                                <div class="flex gap-1.5 items-center mt-0.5">
+                                    {% if data.plan.section %}
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{{ data.plan.section }}</span>
+                                    {% endif %}
+                                    {% if data.plan.section and data.plan.bill_no %}
+                                        <span class="text-[10px] text-gray-300">/</span>
+                                    {% endif %}
+                                    {% if data.plan.bill_no %}
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{{ data.plan.bill_no }}</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="inline-flex items-center px-3 py-1 text-xs font-bold text-indigo-700 bg-indigo-100 rounded-lg">

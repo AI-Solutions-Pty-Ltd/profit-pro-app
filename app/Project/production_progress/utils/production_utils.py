@@ -49,7 +49,9 @@ def get_dashboard_data(project_id, start_date=None, end_date=None):
     """
     Aggregates all project data for the dashboard with optimized queries.
     """
-    plans = ProductionPlan.objects.filter(project_id=project_id)
+    plans = ProductionPlan.objects.filter(
+        project_id=project_id, labour_activity__isnull=False
+    )
     entries_qs = (
         DailyActivityEntry.objects.filter(report__project_id=project_id)
         .select_related("report")

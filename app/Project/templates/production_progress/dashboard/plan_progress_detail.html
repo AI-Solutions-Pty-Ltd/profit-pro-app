@@ -22,7 +22,20 @@
                     <div class="flex items-start space-x-4">
                         <div>
                             <div class="flex items-center space-x-3">
-                                <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ plan.activity|title }}</h1>
+                                <h1 class="text-2xl font-bold tracking-tight text-gray-900">{{ plan.activity|title }}</h1>
+                                {% if plan.section or plan.bill_no %}
+                                    <div class="flex gap-1.5 items-center mt-0.5">
+                                        {% if plan.section %}
+                                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{{ plan.section }}</span>
+                                        {% endif %}
+                                        {% if plan.section and plan.bill_no %}
+                                            <span class="text-[10px] text-gray-300">/</span>
+                                        {% endif %}
+                                        {% if plan.bill_no %}
+                                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{{ plan.bill_no }}</span>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold {% if status_color == 'green' %}bg-emerald-50 text-emerald-700 border border-emerald-100{% elif status_color == 'yellow' %}bg-amber-50 text-amber-700 border border-amber-100{% else %}bg-rose-50 text-rose-700 border border-rose-100{% endif %}">
                                     <span class="w-1.5 h-1.5 rounded-full mr-1.5 {% if status_color == 'green' %}bg-emerald-500{% elif status_color == 'yellow' %}bg-amber-500{% else %}bg-rose-500{% endif %}"></span>
                                     {{ status_text }}

@@ -9,6 +9,7 @@ from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project
+from app.core.Utilities.widgets import SearchableSelectWidget
 
 from ..production_models import (
     DailyActivityEntry,
@@ -47,8 +48,10 @@ class ProductivityLogsView(
         project = get_object_or_404(Project, pk=project_pk)
         context["project"] = project
 
-        # Get all plans for this project
-        plans = ProductionPlan.objects.filter(project=project)
+        # Get all plans for this project - only work activities (with labour spec)
+        plans = ProductionPlan.objects.filter(
+            project=project, labour_activity__isnull=False
+        )
 
         # Get all entries for this project
         entries = DailyActivityEntry.objects.filter(report__project=project).order_by(
@@ -161,7 +164,9 @@ class ProductionForecastDashboardView(
         start_date = self.request.GET.get("start_date")
         end_date = self.request.GET.get("end_date")
 
-        all_plans = ProductionPlan.objects.filter(project=project).order_by("activity")
+        all_plans = ProductionPlan.objects.filter(
+            project=project, labour_activity__isnull=False
+        ).order_by("activity")
 
         selected_plan = None
         if plan_id:
@@ -182,6 +187,26 @@ class ProductionForecastDashboardView(
         if "charts" in forecast_data:
             charts_json = json.dumps(forecast_data["charts"])
 
+        # Prepare Searchable Select Widget
+        plan_choices = []
+        for p in all_plans:
+            label = p.activity
+            hierarchy = []
+            if p.section:
+                hierarchy.append(p.section)
+            if p.bill_no:
+                hierarchy.append(p.bill_no)
+            if hierarchy:
+                label = f"{label} ({' / '.join(hierarchy)})"
+            plan_choices.append((p.pk, label))
+
+        plan_widget = SearchableSelectWidget(choices=plan_choices)
+        plan_selector_widget = plan_widget.render(
+            "plan_id",
+            selected_plan.pk if selected_plan else None,
+            attrs={"id": "plan_id", "onchange": "this.form.submit()"},
+        )
+
         context.update(
             {
                 "project": project,
@@ -189,6 +214,7 @@ class ProductionForecastDashboardView(
                 "selected_plan": selected_plan,
                 "start_date": start_date,
                 "end_date": end_date,
+                "plan_selector_widget": plan_selector_widget,
                 **forecast_data,
                 "charts_json": charts_json,
             }

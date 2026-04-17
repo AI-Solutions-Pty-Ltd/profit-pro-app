@@ -32,9 +32,24 @@
                 <h2 class="text-2xl font-bold text-gray-900">Plan Productivity Dashboard</h2>
                 <p class="text-sm text-gray-600 mt-1 flex items-center">
                     {% if selected_plan %}
-                        <span class="font-medium">Plan: {{ selected_plan.activity }}</span>
-                        <span class="mx-2 text-gray-300">|</span>
-                        <span>{{ selected_plan.start_date|date:"M d" }} - {{ selected_plan.finish_date|date:"M d, Y" }}</span>
+                        <div class="flex flex-col">
+                            <span class="font-bold text-gray-900">{{ selected_plan.activity }}</span>
+                            {% if selected_plan.section or selected_plan.bill_no %}
+                                <div class="flex gap-1 items-center mt-0.5">
+                                    {% if selected_plan.section %}
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{{ selected_plan.section }}</span>
+                                    {% endif %}
+                                    {% if selected_plan.section and selected_plan.bill_no %}
+                                        <span class="text-[10px] text-gray-300">/</span>
+                                    {% endif %}
+                                    {% if selected_plan.bill_no %}
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{{ selected_plan.bill_no }}</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <span class="mx-3 text-gray-300 self-center">|</span>
+                        <span class="self-center">{{ selected_plan.start_date|date:"M d" }} - {{ selected_plan.finish_date|date:"M d, Y" }}</span>
                     {% else %}
                         No plan selected
                     {% endif %}
@@ -45,10 +60,10 @@
                     <select name="plan_id"
                             onchange="this.form.submit()"
                             class="select w-full py-1.5 text-xs border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md shadow-sm bg-white">
-                        {% for p in all_plans %}
                             <option value="{{ p.id }}"
-                                    {% if p.id == selected_plan.id %}selected{% endif %}>{{ p.activity }}</option>
-                        {% endfor %}
+                                    {% if p.id == selected_plan.id %}selected{% endif %}>
+                                {{ p.activity }} {% if p.section or p.bill_no %}({% if p.section %}{{ p.section }}{% endif %}{% if p.section and p.bill_no %} / {% endif %}{% if p.bill_no %}{{ p.bill_no }}{% endif %}){% endif %}
+                            </option>
                     </select>
                 </form>
                 {% if selected_plan %}
