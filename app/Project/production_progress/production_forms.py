@@ -4,7 +4,7 @@ from django.db.models import Q
 from django.forms import formset_factory, inlineformset_factory
 
 from app.core.Utilities.widgets import SearchableSelectWidget
-from app.Estimator.models import BOQItem, ProjectLabourSpecification
+from app.Estimator.models import BOQItem, ProjectLabourSpecification, ProjectPlantSpecification
 from app.Project.models.unit_models import UnitOfMeasure
 
 from .production_models import (
@@ -68,6 +68,14 @@ class ProductionPlanForm(forms.ModelForm):
             attrs={"id": "id_labour_activity"},
         ),
     )
+    plant_specification = forms.ModelChoiceField(
+        queryset=ProjectPlantSpecification.objects.none(),
+        required=False,
+        widget=SearchableSelectWidget(
+            resource_type="plant_specification",
+            attrs={"id": "id_plant_specification"},
+        ),
+    )
     unit = forms.ModelChoiceField(
         queryset=UnitOfMeasure.objects.all(),
         to_field_name="short_name",
@@ -86,6 +94,7 @@ class ProductionPlanForm(forms.ModelForm):
             "section",
             "bill_no",
             "labour_activity",
+            "plant_specification",
             "activity",
             "start_date",
             "finish_date",
@@ -173,6 +182,15 @@ class ProductionPlanForm(forms.ModelForm):
             # Expand labour_activity queryset to include ALL specs for the project
             project_specs = ProjectLabourSpecification.objects.filter(project_id=project_id)
             self.fields["labour_activity"].queryset = project_specs
+            self.fields["plant_specification"].queryset = ProjectPlantSpecification.objects.filter(project_id=project_id)
+
+            # Configure plant_specification choice metadata
+            if self.instance.pk and self.instance.plant_specification:
+                self.fields["plant_specification"].widget.choice_data = {
+                    str(self.instance.plant_specification_id): {
+                        "data-type": self.instance.plant_specification.plant_type.name if self.instance.plant_specification.plant_type else ""
+                    }
+                }
 
             # Configure activity metadata for auto-fill in JS
             # We don't populate all groupings here because there could be many (Spec x Section x Bill)

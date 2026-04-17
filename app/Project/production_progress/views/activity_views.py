@@ -8,7 +8,7 @@ from django.views.generic import DetailView, ListView, TemplateView
 from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Estimator.models import BOQItem, ProjectLabourSpecification
+from app.Estimator.models import BOQItem, ProjectLabourSpecification, ProjectPlantSpecification
 from app.Project.models import Project
 
 
@@ -60,6 +60,7 @@ class LaborActivityListView(
                         output_field=DecimalField(),
                     )
                 ),
+                total_amount=Sum(F("contract_quantity") * F("contract_rate"), output_field=DecimalField()),
             )
             .order_by("section", "bill_no", "labour_specification__name")
         )
@@ -99,9 +100,23 @@ class LaborActivityListView(
         for activity in activities:
             spec = spec_map.get(activity["labour_specification"])
             if spec:
-                activity["rate"] = spec.rate_per_unit
+                activity["daily_production"] = spec.daily_production
             else:
-                activity["rate"] = 0
+                activity["daily_production"] = 0
+
+            # Get unique plant types for this specific activity grouping
+            activity_plant_items = all_activities.filter(
+                section=activity["section"],
+                bill_no=activity["bill_no"],
+                labour_specification_id=activity["labour_specification"]
+            ).select_related("plant_specification__plant_type")
+            
+            plant_types = set()
+            for item in activity_plant_items:
+                if item.plant_specification and item.plant_specification.plant_type:
+                    plant_types.add(item.plant_specification.plant_type.name)
+            
+            activity["plant_types"] = ", ".join(sorted(plant_types)) if plant_types else "None"
 
         return context
 
@@ -142,7 +157,7 @@ class LaborActivityDetailView(
             labour_specification_id=self.labour_spec_id,
             section=self.section,
             bill_no=self.bill_no,
-        ).order_by("id")
+        ).select_related("plant_specification__plant_type").order_by("id")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -157,13 +172,27 @@ class LaborActivityDetailView(
         context["section"] = self.section
         context["bill_no"] = self.bill_no
 
-        # Calculate total tracker for this specific view
-        context["total_tracker"] = (
-            self.get_queryset()
-            .filter(unit=labour_spec.unit)
-            .aggregate(total=Sum("contract_quantity"))["total"]
-            or 0
+        # Calculate total tracker and total amount for this specific view
+        group_items = self.get_queryset()
+        metrics = group_items.aggregate(
+            total_tracker=Sum(
+                Case(
+                    When(unit=labour_spec.unit, then=F("contract_quantity")),
+                    default=Value(0),
+                    output_field=DecimalField(),
+                )
+            ),
+            total_amount=Sum(F("contract_quantity") * F("contract_rate"), output_field=DecimalField()),
         )
+        context["total_tracker"] = metrics["total_tracker"] or 0
+        context["total_amount"] = metrics["total_amount"] or 0
+
+        # Unique plant types for overview card
+        plant_types = set()
+        for item in group_items:
+            if item.plant_specification and item.plant_specification.plant_type:
+                plant_types.add(item.plant_specification.plant_type.name)
+        context["plant_types_summary"] = ", ".join(sorted(plant_types)) if plant_types else "None"
 
         return context
 
@@ -220,6 +249,27 @@ class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
         for item in items:
             label = f"[{item['section']}][{item['bill_no']}] {item['labour_specification__name']}"
             
+            # Find plant specs available for this group to help with selection in the form
+            plant_specs = (
+                BOQItem.objects.filter(
+                    project_id=project_id,
+                    labour_specification_id=item["labour_specification"],
+                    section=item["section"],
+                    bill_no=item["bill_no"],
+                    plant_specification__isnull=False
+                )
+                .values("plant_specification", "plant_specification__name", "plant_specification__plant_type__name")
+                .distinct()
+            )
+            plant_spec_list = [
+                {
+                    "id": p["plant_specification"],
+                    "name": p["plant_specification__name"],
+                    "type": p["plant_specification__plant_type__name"]
+                }
+                for p in plant_specs
+            ]
+
             data.append({
                 "id": item["labour_specification"], # Use the spec ID
                 "label": label,
@@ -228,6 +278,7 @@ class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
                 "bill_no": item["bill_no"],
                 "unit": item["labour_specification__unit"],
                 "quantity": str(item["total_quantity"] or 0),
+                "plant_specs": plant_spec_list,
             })
 
         return JsonResponse({"activities": data})

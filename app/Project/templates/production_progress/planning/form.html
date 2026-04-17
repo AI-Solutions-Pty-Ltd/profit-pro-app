@@ -72,6 +72,9 @@
                             <div id="labour_activity_field_container">
                                 {{ form.labour_activity|as_crispy_field }}
                             </div>
+                            <div id="plant_specification_field_container">
+                                {{ form.plant_specification|as_crispy_field }}
+                            </div>
                         </div>
                         
                         <!-- Hidden Activity Title -->
@@ -268,7 +271,8 @@
                                 'data-section': act.section,
                                 'data-bill-no': act.bill_no,
                                 'data-unit': act.unit,
-                                'data-quantity': act.quantity
+                                'data-quantity': act.quantity,
+                                'data-plants': JSON.stringify(act.plant_specs)
                             }
                         }));
                         updateSearchableSelect('id_labour_activity', options, 'activity');
@@ -289,6 +293,23 @@
                             const activityName = btn.dataset.activityName;
                             const unit = btn.dataset.unit;
                             const qty = btn.dataset.quantity;
+                            const plantsStr = btn.dataset.plants;
+
+                            // Update Plant Selection options
+                            if (plantsStr) {
+                                const plants = JSON.parse(plantsStr);
+                                const plantOptions = plants.map(p => ({
+                                    id: p.id,
+                                    name: `${p.name} (${p.type})`,
+                                    data: { 'data-type': p.type }
+                                }));
+                                updateSearchableSelect('id_plant_specification', plantOptions, 'plant_specification');
+
+                                // Auto-fill if only one plant spec exists
+                                if (plants.length === 1) {
+                                    setSearchableSelectValue('id_plant_specification', plants[0].id, `${plants[0].name} (${plants[0].type})`);
+                                }
+                            }
 
                             // Set Activity Name Title
                             document.getElementById('activity').value = activityName || '';

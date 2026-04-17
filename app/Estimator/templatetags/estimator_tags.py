@@ -47,3 +47,12 @@ def apply_wastage(value, wastage_pct):
         return float(value) * (1 + float(wastage_pct or 0) / 100)
     except (ValueError, TypeError):
         return value
+
+
+@register.filter
+def multiply(value, arg):
+    """Multiply the value by the argument."""
+    try:
+        return float(value) * float(arg)
+    except (ValueError, TypeError):
+        return 0

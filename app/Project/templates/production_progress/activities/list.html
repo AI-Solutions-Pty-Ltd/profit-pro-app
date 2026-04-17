@@ -87,10 +87,12 @@
                             <th scope="col" class="px-3 py-3.5 text-xs font-bold text-left text-gray-600 uppercase">Section</th>
                             <th scope="col" class="px-3 py-3.5 text-xs font-bold text-left text-gray-600 uppercase">Bill No</th>
                             <th scope="col" class="px-3 py-3.5 text-xs font-bold text-left text-gray-600 uppercase">Crew</th>
+                            <th scope="col" class="px-3 py-3.5 text-xs font-bold text-left text-gray-600 uppercase">Plant Type</th>
                             <th scope="col" class="px-3 py-3.5 text-xs font-bold text-center text-gray-600 uppercase">Unit</th>
-                            <th scope="col" class="px-3 py-3.5 text-xs font-bold text-right text-gray-600 uppercase">Base Rate</th>
+                            <th scope="col" class="px-3 py-3.5 text-xs font-bold text-right text-gray-600 uppercase">Daily Prod.</th>
                             <th scope="col" class="px-3 py-3.5 text-xs font-bold text-center text-gray-600 uppercase">Items</th>
                             <th scope="col" class="px-3 py-3.5 text-xs font-bold text-right text-gray-600 uppercase">Total Tracker</th>
+                            <th scope="col" class="px-3 py-3.5 text-xs font-bold text-right text-gray-600 uppercase">Total Amount</th>
                             <th scope="col" class="relative py-3.5 pr-4 pl-3 sm:pr-6">
                                 <span class="sr-only">Actions</span>
                             </th>
@@ -113,11 +115,14 @@
                                     {{ activity.labour_specification__crew__crew_type|default:"No Crew" }}
                                 </span>
                             </td>
+                            <td class="px-3 py-4 text-sm text-gray-500 italic whitespace-nowrap">
+                                {{ activity.plant_types }}
+                            </td>
                             <td class="px-3 py-4 text-sm font-medium text-center text-gray-500 whitespace-nowrap">
                                 {{ activity.labour_specification__unit }}
                             </td>
                             <td class="px-3 py-4 font-mono text-sm tabular-nums text-right text-gray-600 whitespace-nowrap">
-                                {{ activity.rate|currency }}
+                                {{ activity.daily_production|qty }}
                             </td>
                             <td class="px-3 py-4 text-sm text-center text-gray-500 whitespace-nowrap">
                                 <div class="inline-flex items-center px-2 py-0.5 text-xs font-semibold text-gray-700 bg-gray-100 rounded-full border border-gray-200">
@@ -126,6 +131,9 @@
                             </td>
                             <td class="px-3 py-4 text-sm font-bold tabular-nums text-right text-gray-900 whitespace-nowrap">
                                 <span class="p-1 text-indigo-600 rounded-md bg-indigo-50/50">{{ activity.total_tracker|qty }}</span>
+                            </td>
+                            <td class="px-3 py-4 text-sm font-bold tabular-nums text-right text-emerald-700 whitespace-nowrap">
+                                {{ activity.total_amount|currency }}
                             </td>
                             <td class="relative py-4 pr-4 pl-3 text-sm font-medium text-right whitespace-nowrap sm:pr-6">
                                 <a href="{% url 'project:labor-activity-detail' project_pk=project_pk %}?labour_spec={{ activity.labour_specification }}&section={{ activity.section|urlencode }}&bill_no={{ activity.bill_no|urlencode }}" 

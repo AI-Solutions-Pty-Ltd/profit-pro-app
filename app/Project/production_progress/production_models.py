@@ -52,6 +52,14 @@ class ProductionPlan(BaseModel):
         related_name="production_plans",
         help_text="The Labor Specification this plan belongs to",
     )
+    plant_specification = models.ForeignKey(
+        "estimator.ProjectPlantSpecification",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="production_plans",
+        help_text="Optional Plant Specification for this plan",
+    )
     start_date = models.DateField()
     finish_date = models.DateField()
     quantity = models.DecimalField(
@@ -100,8 +108,8 @@ class ProductionPlan(BaseModel):
         if self.labour_activity:
             if not self.activity:
                 self.activity = self.labour_activity.name
-            
-            # The section and bill_no should be assigned by the form/view 
+
+            # The section and bill_no should be assigned by the form/view
             # based on the activity grouping selected by the user.
 
         # Handle automatic hierarchy generation ONLY for leaf items (Labour activities)
@@ -173,21 +181,47 @@ class ProductionPlan(BaseModel):
 
     @property
     def total_labour_cost(self):
-        return (
-            self.resources.filter(resource_type="LABOUR").aggregate(
-                total=models.Sum("total_cost")
-            )["total"]
-            or 0
-        )
+        # Manual resources cost
+        manual_cost = self.resources.filter(resource_type="LABOUR").aggregate(
+            total=models.Sum("total_cost")
+        )["total"] or 0
+
+        # Crew-based specification cost
+        spec_cost = 0
+        if self.labour_activity and self.labour_activity.crew:
+            spec_cost = self.labour_activity.crew.crew_daily_cost * (self.duration or 0)
+
+        return manual_cost + spec_cost
 
     @property
     def total_plant_cost(self):
-        return (
-            self.resources.filter(resource_type="PLANT").aggregate(
-                total=models.Sum("total_cost")
-            )["total"]
-            or 0
-        )
+        # Manual resources cost
+        manual_cost = self.resources.filter(resource_type="PLANT").aggregate(
+            total=models.Sum("total_cost")
+        )["total"] or 0
+
+        # Specification-based plant cost
+        spec_cost = 0
+        if self.plant_specification and self.plant_specification.plant_type:
+            # Assuming plant specification cost is plant_type hourly_rate * 8 hours (standard day) * duration
+            # We can use daily_production/rate_per_unit logic if available,
+            # but usually it's spec.hourly_cost * 8 * duration
+            spec_cost = self.plant_specification.hourly_cost * 8 * (self.duration or 0)
+        else:
+            # Fallback: Pull from related BOQItems
+            from app.Estimator.models import BOQItem, ProjectPlantSpecification
+            spec_ids = BOQItem.objects.filter(
+                project=self.project,
+                section=self.section,
+                bill_no=self.bill_no,
+                plant_specification__isnull=False
+            ).values_list("plant_specification", flat=True).distinct()
+
+            if spec_ids:
+                for spec in ProjectPlantSpecification.objects.filter(pk__in=spec_ids):
+                    spec_cost += spec.hourly_cost * 8 * (self.duration or 0)
+
+        return manual_cost + spec_cost
 
     @property
     def total_other_cost(self):

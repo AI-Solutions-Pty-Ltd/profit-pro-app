@@ -18,8 +18,8 @@ from django.views.generic import (
 from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Project.models import Project
 from app.Estimator.models import BOQItem
+from app.Project.models import Project
 
 from ..production_forms import (
     AggregatedLabourFormSet,
@@ -605,6 +605,22 @@ class ProductionCostBreakdownDetailView(
         context["resource_form"] = ProductionResourceForm(
             project_id=project.pk, initial={"production_plan": selected_plan}
         )
+
+        # Fetch related BOQItems for the activity line items section
+        if selected_plan.labour_activity:
+            items = selected_plan.labour_activity.boq_items.all()
+            if selected_plan.section:
+                items = items.filter(section=selected_plan.section)
+            if selected_plan.bill_no:
+                items = items.filter(bill_no=selected_plan.bill_no)
+            context["activity_line_items"] = items
+
+            # Fallback plant specs logic for when direct spec is missing
+            if not selected_plan.plant_specification:
+                unique_spec_ids = items.filter(plant_specification__isnull=False).values_list('plant_specification', flat=True).distinct()
+                from app.Estimator.models import ProjectPlantSpecification
+                context["fallback_plant_specs"] = ProjectPlantSpecification.objects.filter(pk__in=unique_spec_ids)
+
         return context
 
     def get_breadcrumbs(self):
@@ -876,14 +892,14 @@ class GetProjectBillsAjaxView(LoginRequiredMixin, TemplateView):
     def get(self, request, *args, **kwargs):
         project_id = self.kwargs.get("project_pk")
         section = request.GET.get("section")
-        
+
         bills = (
             BOQItem.objects.filter(project_id=project_id, section=section)
             .values_list("bill_no", flat=True)
             .distinct()
             .order_by("bill_no")
         )
-        
+
         return JsonResponse({"bills": list(bills)})
 
 
@@ -894,16 +910,16 @@ class GetProjectItemsAjaxView(LoginRequiredMixin, TemplateView):
         project_id = self.kwargs.get("project_pk")
         section = request.GET.get("section")
         bill_no = request.GET.get("bill_no")
-        
+
         items_query = BOQItem.objects.filter(project_id=project_id)
-        
+
         if section:
             items_query = items_query.filter(section=section)
         if bill_no:
             items_query = items_query.filter(bill_no=bill_no)
-            
+
         items = items_query.select_related("labour_specification").order_by("section", "bill_no", "description")
-        
+
         data = [
             {
                 "id": item.id,
@@ -917,5 +933,5 @@ class GetProjectItemsAjaxView(LoginRequiredMixin, TemplateView):
             }
             for item in items
         ]
-        
+
         return JsonResponse({"items": data})
