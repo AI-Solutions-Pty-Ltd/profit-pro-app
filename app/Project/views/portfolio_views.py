@@ -389,6 +389,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         # ==========================================
         # Compliance Stats
         # ==========================================
+        # Compliance percentage for filtered projects
         total_compliance_items = ContractualCompliance.objects.filter(
             project__in=active_projects
         ).count()
@@ -406,17 +407,48 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             if total_compliance_items > 0
             else 0
         )
+
+        # Compliance for ALL projects (ignoring filters)
+        all_active_projects = portfolio.get_active_projects()
+        total_portfolio_compliance_items = ContractualCompliance.objects.filter(
+            project__in=all_active_projects
+        ).count()
+        completed_portfolio_compliance_items = ContractualCompliance.objects.filter(
+            project__in=all_active_projects,
+            status=ContractualCompliance.Status.COMPLETED,
+        ).count()
+
+        context["portfolio_compliance_percentage"] = (
+            round(
+                (
+                    completed_portfolio_compliance_items
+                    / total_portfolio_compliance_items
+                    * 100
+                ),
+                1,
+            )
+            if total_portfolio_compliance_items > 0
+            else 0
+        )
+
         context["urgent_compliance_count"] = overdue_compliance_items
         context["total_compliance_items"] = total_compliance_items
 
         # ==========================================
         # Impact Stats
         # ==========================================
+        from django.db.models import F
+
         from app.Project.models import ProjectImpact
 
-        context["impact_items_count"] = ProjectImpact.objects.filter(
+        impact_stats = ProjectImpact.objects.filter(
             project__in=active_projects
-        ).count()
+        ).aggregate(
+            total_jobs=Sum(F("jobs_created") + F("jobs_retained")),
+            total_local_spend=Sum("local_spend_amount"),
+        )
+        context["total_jobs_count"] = impact_stats["total_jobs"] or 0
+        context["total_local_spend"] = impact_stats["total_local_spend"] or 0
 
         # ==========================================
         # Group 2 - Budgets and Payments
