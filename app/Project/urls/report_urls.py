@@ -43,16 +43,6 @@ urlpatterns = [
         name="portfolio-financial-report",
     ),
     path(
-        "portfolio/reports/production/",
-        report_views.PortfolioProductionReportView.as_view(),
-        name="portfolio-production-report",
-    ),
-    path(
-        "portfolio/reports/progress/",
-        report_views.PortfolioProgressReportView.as_view(),
-        name="portfolio-progress-report",
-    ),
-    path(
         "portfolio/reports/schedule/",
         report_views.ScheduleReportView.as_view(),
         name="portfolio-schedule-report",

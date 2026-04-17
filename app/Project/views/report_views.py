@@ -89,18 +89,20 @@ class ProjectAccessMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
         )
 
 
-class PortfolioReportMixin:
-    """Mixin for portfolio-level reports with common filtering logic."""
+class FinancialReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView):
+    """Financial Report - Project List with Budget, Forecast, Variances, Certified, CPI & SPI."""
 
     model = Project
+    template_name = "portfolio/reports/financial_report.html"
     context_object_name = "projects"
     permissions = ["contractor"]
     required_tiers = [Subscription.FREE_TIER]
+
     filter_form: ProjectFilterForm | None = None
 
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
-        super().setup(request, *args, **kwargs)  # type: ignore
+        super().setup(request, *args, **kwargs)
         from app.Project.models import (
             Company,
             ProjectDiscipline,
@@ -141,9 +143,27 @@ class PortfolioReportMixin:
             discipline_queryset=discipline_queryset,
         )
 
-    def get_queryset(self: Any) -> QuerySet[Project]:
-        """Get filtered projects for report view."""
-        user: Account = self.request.user
+    def get_breadcrumbs(self: "FinancialReportView") -> list[BreadcrumbItem]:
+        """Return breadcrumbs for financial report."""
+        return [
+            BreadcrumbItem(
+                title="Portfolio",
+                url=reverse("project:portfolio-dashboard"),
+            ),
+            BreadcrumbItem(
+                title="Reports",
+                url=None,
+            ),
+            BreadcrumbItem(
+                title="Financial Report",
+                url=None,
+            ),
+        ]
+
+    def get_queryset(self: "FinancialReportView") -> QuerySet[Project]:
+        """Get filtered projects for financial report view."""
+        # Initialize filter form with user's projects
+        user: Account = self.request.user  # type: ignore
         projects = user.get_projects.order_by("-created_at")
 
         # Apply filters if valid
@@ -171,31 +191,6 @@ class PortfolioReportMixin:
                 projects = projects.filter(contractor=contractor)
 
         return projects
-
-
-class FinancialReportView(
-    SubscriptionRequiredMixin, PortfolioReportMixin, ProjectAccessMixin, ListView
-):
-    """Financial Report - Project List with Budget, Forecast, Variances, Certified, CPI & SPI."""
-
-    template_name = "portfolio/reports/financial_report.html"
-
-    def get_breadcrumbs(self: "FinancialReportView") -> list[BreadcrumbItem]:
-        """Return breadcrumbs for financial report."""
-        return [
-            BreadcrumbItem(
-                title="Portfolio",
-                url=reverse("project:portfolio-dashboard"),
-            ),
-            BreadcrumbItem(
-                title="Reports",
-                url=None,
-            ),
-            BreadcrumbItem(
-                title="Financial Report",
-                url=None,
-            ),
-        ]
 
     def get_context_data(self: "FinancialReportView", **kwargs: Any) -> dict[str, Any]:
         """Add financial metrics to context."""
@@ -343,98 +338,6 @@ class FinancialReportView(
         context["filter_form"] = self.filter_form
         context["current_sort"] = sort_by
 
-        return context
-
-
-class PortfolioProductionReportView(
-    SubscriptionRequiredMixin, PortfolioReportMixin, ProjectAccessMixin, ListView
-):
-    """Production Report - Project List with Productivity Metrics."""
-
-    template_name = "portfolio/reports/production_report.html"
-
-    def get_breadcrumbs(self: "PortfolioProductionReportView") -> list[BreadcrumbItem]:
-        return [
-            BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(title="Reports", url=None),
-            BreadcrumbItem(title="Production Report", url=None),
-        ]
-
-    def get_context_data(
-        self: "PortfolioProductionReportView", **kwargs: Any
-    ) -> dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        projects: QuerySet[Project] = context["projects"]
-        current_date = datetime.now()
-
-        report_data = []
-        for project in projects:
-            # Aggregate productivity metrics from ProductivityLog for this project
-            try:
-                productivity_index = project.get_cost_performance_index(current_date)
-                efficiency = project.get_schedule_performance_index(current_date)
-            except (ZeroDivisionError, TypeError):
-                productivity_index = None
-                efficiency = None
-
-            report_data.append(
-                {
-                    "project": project,
-                    "productivity_index": productivity_index,
-                    "efficiency": efficiency,
-                }
-            )
-
-        context["report_data"] = report_data
-        context["filter_form"] = self.filter_form
-        return context
-
-
-class PortfolioProgressReportView(
-    SubscriptionRequiredMixin, PortfolioReportMixin, ProjectAccessMixin, ListView
-):
-    """Progress Report - Project List with Construction Progress Metrics."""
-
-    template_name = "portfolio/reports/progress_report.html"
-
-    def get_breadcrumbs(self: "PortfolioProgressReportView") -> list[BreadcrumbItem]:
-        return [
-            BreadcrumbItem(
-                title="Portfolio", url=reverse("project:portfolio-dashboard")
-            ),
-            BreadcrumbItem(title="Reports", url=None),
-            BreadcrumbItem(title="Progress Report", url=None),
-        ]
-
-    def get_context_data(
-        self: "PortfolioProgressReportView", **kwargs: Any
-    ) -> dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        projects: QuerySet[Project] = context["projects"]
-        current_date = datetime.now()
-
-        report_data = []
-        for project in projects:
-            # Construction progress metrics
-            try:
-                percentage_complete = project.get_actual_cost_percentage(current_date)
-            except (ZeroDivisionError, TypeError, AttributeError):
-                percentage_complete = 0
-
-            report_data.append(
-                {
-                    "project": project,
-                    "percentage_complete": percentage_complete,
-                    "status": project.status,
-                    "start_date": project.start_date,
-                    "end_date": project.end_date,
-                }
-            )
-
-        context["report_data"] = report_data
-        context["filter_form"] = self.filter_form
         return context
 
 

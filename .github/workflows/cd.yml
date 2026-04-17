@@ -1,8 +1,12 @@
 name: CD - Deploy to Production
 
 on:
+  workflow_run:
+    workflows: ["CI - Test and Validate"]
+    types: [completed]
+    branches: [main, staging]
   push:
-    branches: [main, staging, develop]
+    branches: [staging]
   workflow_dispatch:
     inputs:
       environment:
@@ -13,26 +17,24 @@ on:
         options:
           - production
           - staging
-          - develop
 
 jobs:
   deploy:
-    if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/develop' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.base_ref == 'develop') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' || github.ref == 'refs/heads/staging' }}
     environment:
-      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production') || (github.ref == 'refs/heads/staging' && 'staging') || (github.ref == 'refs/heads/develop' && 'development') || 'production' }}
+      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/staging' && 'staging') || 'production' }}
     runs-on: ubuntu-latest
-    env:
-      DEPLOY_ENVIRONMENT: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production') || (github.ref == 'refs/heads/staging' && 'staging') || (github.ref == 'refs/heads/develop' && 'development') || 'production' }}
 
     steps:
       - uses: actions/checkout@v5
 
       - name: Display Deployment Environment
         run: |
-          echo "🚀 Deploying to ${{ env.DEPLOY_ENVIRONMENT }} environment"
+          ENVIRONMENT="${{ github.event.inputs.environment || (github.ref == 'refs/heads/staging' && 'staging') || 'production' }}"
+          echo "🚀 Deploying to $ENVIRONMENT environment"
           echo "Branch: ${{ github.ref }}"
           echo "Triggered by: ${{ github.event_name }}"
-          echo "Environment: ${{ env.DEPLOY_ENVIRONMENT }}"
+          echo "Environment: $ENVIRONMENT"
 
       - name: Generate Production Secret Key
         id: generate-secret
@@ -41,7 +43,7 @@ jobs:
           echo "SECRET_KEY=$SECRET_KEY" >> $GITHUB_ENV
           echo "secret_key=$SECRET_KEY" >> $GITHUB_OUTPUT
 
-      - name: Create ${{ env.DEPLOY_ENVIRONMENT }} .env File
+      - name: Create ${{ github.event.inputs.environment }} .env File
         run: |
           touch .env
           # Core settings
@@ -75,7 +77,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: app/theme/static_src/package-lock.json
 

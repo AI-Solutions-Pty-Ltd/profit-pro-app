@@ -101,21 +101,21 @@ class RFIForm(forms.ModelForm):
             category_field = self.fields["project_category"]
             if hasattr(category_field, "queryset"):
                 category_field.queryset = Category.objects.filter(  # type: ignore
-                    project=project, deleted=False
+                    projects_id=project.pk, deleted=False
                 ).order_by("name")
 
             # Filter for project-specific subcategories
             subcategory_field = self.fields["project_sub_category"]
             if hasattr(subcategory_field, "queryset"):
                 subcategory_field.queryset = SubCategory.objects.filter(  # type: ignore
-                    project=project, deleted=False
+                    project_id=project.pk, deleted=False
                 ).order_by("name")
 
             # Filter for project-specific disciplines
             discipline_field = self.fields["project_discipline"]
             if hasattr(discipline_field, "queryset"):
                 discipline_field.queryset = Discipline.objects.filter(  # type: ignore
-                    project=project, deleted=False
+                    projects_id=project.pk, deleted=False
                 ).order_by("name")
 
             # Make fields optional

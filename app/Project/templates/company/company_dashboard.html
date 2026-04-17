@@ -5,7 +5,20 @@
 {% block content %}
     <!-- Dashboard Navigation Tabs -->
     <div class="bg-white rounded-lg shadow-sm mb-6 sticky top-0 z-10">
-        <div class="border-b border-gray-200">{% include "company/reports_nav.html" with tab="dashboard" %}</div>
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8 px-6" aria-label="Dashboard tabs">
+                <a href="{% url 'project:company-dashboard' %}"
+                   class="border-b-2 border-indigo-500 py-4 px-1 text-sm font-medium text-indigo-600">
+                    {% heroicon_outline "building-office" class="w-5 h-5 inline mr-2" %}
+                    Business Dashboard
+                </a>
+                <a href="#"
+                   class="border-b-2 border-indigo-500 py-4 px-1 text-sm font-medium text-indigo-600">
+                    {% heroicon_outline "document-text" class="w-5 h-5 inline mr-2" %}
+                    Financial Report
+                </a>
+            </nav>
+        </div>
     </div>
     <!-- Page Header -->
     <header class="bg-white shadow-sm rounded-lg mb-6">
@@ -127,30 +140,34 @@
         </div>
         <div class="p-4">
             <!-- Income Statement Summary -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                <!-- Baseline Profit -->
-                <div class="bg-blue-50 rounded-lg p-2 text-center border border-blue-100">
-                    <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Baseline Profit</p>
-                    <p class="text-lg font-bold text-blue-700 mt-1">R {{ baseline_profit|default:0|floatformat:0|intcomma }}</p>
-                    <p class="text-xs text-blue-500">({{ baseline_profit_margin|default:0|floatformat:1 }}%)</p>
-                </div>
-                <!-- Progress Profit -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+                <!-- Revenue -->
                 <div class="bg-green-50 rounded-lg p-2 text-center border border-green-100">
-                    <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Progress Profit</p>
-                    <p class="text-lg font-bold text-green-700 mt-1">R {{ progress_profit|default:0|floatformat:0|intcomma }}</p>
-                    <p class="text-xs text-green-500">({{ progress_profit_margin|default:0|floatformat:1 }}%)</p>
+                    <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Total Profits</p>
+                    <p class="text-lg font-bold text-green-700 mt-1">R {{ revenue|default:0|floatformat:0|intcomma }}</p>
                 </div>
-                <!-- Forecast Profit -->
+                <!-- Gross Profit -->
+                <div class="bg-blue-50 rounded-lg p-2 text-center border border-blue-100">
+                    <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Gross Profit</p>
+                    <p class="text-lg font-bold text-blue-700 mt-1">R {{ gross_profit|default:0|floatformat:0|intcomma }}</p>
+                    <p class="text-xs text-blue-500">({{ gross_profit_margin|default:0|floatformat:1 }}%)</p>
+                </div>
+                <!-- Variable Costs -->
+                <div class="bg-orange-50 rounded-lg p-2 text-center border border-orange-100">
+                    <p class="text-xs font-medium text-orange-600 uppercase tracking-wider">Variable Costs</p>
+                    <p class="text-lg font-bold text-orange-700 mt-1">R {{ variable_costs|default:0|floatformat:0|intcomma }}</p>
+                </div>
+                <!-- Net Profit -->
+                <div class="bg-purple-50 rounded-lg p-2 text-center border border-purple-100">
+                    <p class="text-xs font-medium text-purple-600 uppercase tracking-wider">Net Profit</p>
+                    <p class="text-lg font-bold text-purple-700 mt-1">R {{ net_profit|default:0|floatformat:0|intcomma }}</p>
+                    <p class="text-xs text-purple-500">({{ net_profit_margin|default:0|floatformat:1 }}%)</p>
+                </div>
+                <!-- Forecast Profit at Completion -->
                 <div class="bg-amber-50 rounded-lg p-2 text-center border border-amber-100">
                     <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Forecast Profit</p>
                     <p class="text-lg font-bold text-amber-700 mt-1">R {{ forecast_profit|default:0|floatformat:0|intcomma }}</p>
-                    <p class="text-xs text-amber-500">({{ forecast_profit_margin|default:0|floatformat:1 }}%)</p>
-                </div>
-                <!-- Overheads -->
-                <div class="bg-rose-50 rounded-lg p-2 text-center border border-rose-100">
-                    <p class="text-xs font-medium text-rose-600 uppercase tracking-wider">Overheads</p>
-                    <p class="text-lg font-bold text-rose-700 mt-1">R {{ total_overheads|default:0|floatformat:0|intcomma }}</p>
-                    <p class="text-xs text-rose-500">({{ overheads_percentage|default:0|floatformat:1 }}%)</p>
+                    <p class="text-xs text-amber-500">at completion</p>
                 </div>
             </div>
             <!-- Profit Trend Charts -->
