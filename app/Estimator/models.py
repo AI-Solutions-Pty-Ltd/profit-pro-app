@@ -325,7 +325,7 @@ class SystemPreliminaryCost(models.Model):
         verbose_name = "System Preliminary Cost"
 
     def __str__(self):
-        return f"{self.get_preliminary_type_display()} - {self.name}"
+        return f"{self.get_preliminary_type_display()} - {self.name}"  # type: ignore
 
     @property
     def is_time_based(self):
@@ -812,7 +812,7 @@ class ProjectPreliminaryCost(models.Model):
         verbose_name = "Project Preliminary Cost"
 
     def __str__(self):
-        return f"{self.get_preliminary_type_display()} - {self.name}"
+        return f"{self.get_preliminary_type_display()} - {self.name}"  # type: ignore
 
     @property
     def is_time_based(self):
