@@ -438,6 +438,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         # Impact Stats
         # ==========================================
         from django.db.models import F
+
         from app.Project.models import ProjectImpact
 
         impact_stats = ProjectImpact.objects.filter(
