@@ -342,6 +342,14 @@
             const response = await fetch(`{% url 'project:ajax-daily-log-activity-data' project_pk=project.pk %}?plan_id=${planId}`);
             const data = await response.json();
             
+            // Update Activity Title and Subtitle dynamically
+            if (data.activity) {
+                const titleEl = row.querySelector('.activity-title-text');
+                const subtitleEl = row.querySelector('.activity-subtitle-text');
+                if (titleEl) titleEl.innerText = data.activity;
+                if (subtitleEl) subtitleEl.innerText = `${data.section || 'No Section'} / ${data.bill_no || 'No Bill'}`;
+            }
+            
             if (data.crew) {
                 row.querySelectorAll('.labour-group').forEach(group => {
                     const cat = group.dataset.cat;
@@ -559,9 +567,9 @@
 
         const html = template
             .replace(/__NUM__/g, num)
-            .replace(/__TITLE__/g, title)
-            .replace(/__SUBTITLE__/g, subtitle)
-            .replace(/__PLAN_ID__/g, planId);
+            .replace(/__TITLE__/g, title || 'Activity Name')
+            .replace(/__SUBTITLE__/g, subtitle || 'No Section / No Bill')
+            .replace(/__PLAN_ID__/g, planId || '');
         
         const div = document.createElement('div');
         div.innerHTML = html;

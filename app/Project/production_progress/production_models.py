@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from django.core.validators import MinValueValidator
@@ -206,6 +207,52 @@ class ProductionPlan(BaseModel):
                 "Cannot delete an activity that has children. Please delete them first."
             )
         super().soft_delete()
+
+    @property
+    def hourly_labour_rate(self) -> Decimal:
+        """Calculates total crew hourly rate based on (Count * Rate) for each skill."""
+        if not self.labour_activity or not self.labour_activity.crew:
+            return Decimal("0")
+        
+        crew = self.labour_activity.crew
+        # Formula: (Count * Rate) summed across all 3 levels
+        total_daily = (
+            Decimal(str(crew.skilled)) * crew.skilled_rate +
+            Decimal(str(crew.semi_skilled)) * crew.semi_skilled_rate +
+            Decimal(str(crew.general)) * crew.general_rate
+        )
+        # Convert daily crew cost to hourly (assuming 8h day)
+        return total_daily / Decimal("8.0")
+
+    @property
+    def hourly_plant_rate(self) -> Decimal:
+        """Sums hourly_rate for each physical plant assigned to this activity via BOQItems."""
+        from app.Estimator.models import BOQItem
+        
+        # Get all BOQ items contributing to this activity
+        items = BOQItem.objects.filter(
+            project=self.project,
+            section=self.section,
+            bill_no=self.bill_no,
+            labour_specification=self.labour_activity,
+            plant_specification__isnull=False
+        ).select_related("plant_specification__plant_type")
+        
+        # Sum hourly rate for each item (physical plant unit)
+        total_hourly = Decimal("0")
+        for item in items:
+            if item.plant_specification and item.plant_specification.plant_type:
+                total_hourly += item.plant_specification.plant_type.hourly_rate
+        
+        return total_hourly
+
+    @property
+    def daily_labour_cost(self) -> Decimal:
+        return self.hourly_labour_rate * Decimal("8.0")
+
+    @property
+    def daily_plant_cost(self) -> Decimal:
+        return self.hourly_plant_rate * Decimal("8.0")
 
     @property
     def is_active(self):
@@ -449,15 +496,21 @@ class DailyActivityEntry(BaseModel):
 
     @property
     def total_labour_cost(self):
-        return sum(usage.total_cost for usage in self.labour_usage.all())
+        """Calculated labour cost based on crew spec rates and tracked hours."""
+        return self.production_plan.hourly_labour_rate * Decimal(str(self.hours_on_activity))
 
     @property
     def total_plant_cost(self):
-        return sum(usage.total_cost for usage in self.plant_usage.all())
+        """Calculated plant cost based on assigned unit rates and tracked hours."""
+        return self.production_plan.hourly_plant_rate * Decimal(str(self.hours_on_activity))
 
     @property
     def man_hours(self):
-        return sum(usage.man_hours for usage in self.labour_usage.all())
+        """Calculated man hours based on crew size and tracked activity duration."""
+        crew_size = Decimal("0")
+        if self.production_plan.labour_activity and self.production_plan.labour_activity.crew:
+            crew_size = Decimal(str(self.production_plan.labour_activity.crew.crew_size))
+        return crew_size * Decimal(str(self.hours_on_activity))
 
     @property
     def total_cost(self):

@@ -1,5 +1,5 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Case, Count, DecimalField, F, Sum, Value, When
+from django.db.models import Case, Count, DecimalField, ExpressionWrapper, F, Sum, Value, When
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
@@ -73,6 +73,25 @@ class LaborActivityListView(
                     F("contract_quantity") * F("contract_rate"),
                     output_field=DecimalField(),
                 ),
+                # Confirmed Formula: (skilled * rate + semi * rate + general * rate)
+                daily_labour_cost=ExpressionWrapper(
+                    Coalesce(F("labour_specification__crew__skilled"), 0)
+                    * Coalesce(F("labour_specification__crew__skilled_rate"), 0)
+                    + Coalesce(F("labour_specification__crew__semi_skilled"), 0)
+                    * Coalesce(F("labour_specification__crew__semi_skilled_rate"), 0)
+                    + Coalesce(F("labour_specification__crew__general"), 0)
+                    * Coalesce(F("labour_specification__crew__general_rate"), 0),
+                    output_field=DecimalField(),
+                ),
+                # Confirmed Formula: Sum(plant_rate) * 8.0 for all units in group
+                daily_plant_cost=Sum(
+                    Coalesce(F("plant_specification__plant_type__hourly_rate"), 0)
+                    * Value(8.0),
+                    output_field=DecimalField(),
+                ),
+            )
+            .annotate(
+                total_daily_cost=F("daily_labour_cost") + F("daily_plant_cost")
             )
             .order_by("section", "bill_no", "labour_specification__name")
         )
@@ -218,13 +237,27 @@ class LaborActivityDetailView(
         context["total_amount"] = metrics["total_amount"] or 0
 
         # Unique plant types summary
-        plant_types = sorted(
-            group_items.filter(plant_specification__plant_type__isnull=False)
-            .values_list("plant_specification__plant_type__name", flat=True)
-            .distinct()
-        )
         context["plant_types_summary"] = (
             ", ".join(plant_types) if plant_types else "None"
+        )
+
+        # Calculate daily costs for the "Budgeted Daily Cost" card
+        # Confirmed Formula No 1 & 3: Crew Daily Cost (skilled*rate + ...)
+        context["daily_labour_cost"] = (
+            labour_spec.crew.crew_daily_cost if labour_spec.crew else 0
+        )
+
+        # Confirmed Formula No 2: Sum(plant_rate) * 8.0
+        plant_metrics = group_items.aggregate(
+            plant_cost=Sum(
+                Coalesce(F("plant_specification__plant_type__hourly_rate"), 0)
+                * Value(8.0),
+                output_field=DecimalField(),
+            )
+        )
+        context["daily_plant_cost"] = plant_metrics["plant_cost"] or 0
+        context["total_daily_cost"] = (
+            context["daily_labour_cost"] + context["daily_plant_cost"]
         )
 
         return context

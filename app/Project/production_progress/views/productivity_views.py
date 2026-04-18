@@ -1,7 +1,7 @@
 import json
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, Sum, F, OuterRef, Subquery, DecimalField
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, OuterRef, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -85,40 +85,59 @@ class ProductionDailyLogListView(
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_queryset(self):
-        # Subquery for Labour Costs
-        labour_costs = (
-            DailyLabourUsage.objects.filter(entry=OuterRef("pk"))
-            .annotate(
-                line_cost=F("number") * F("hours") * F("resource__rate"),
-            )
-            .values("entry")
-            .annotate(total=Sum("line_cost"))
-            .values("total")
-        )
+        from app.Estimator.models import BOQItem
 
-        # Subquery for Plant Costs
-        plant_costs = (
-            DailyPlantUsage.objects.filter(entry=OuterRef("pk"))
-            .annotate(
-                line_cost=F("number") * F("hours") * F("resource__rate"),
+        # Subquery for summing plant rates across BOQItems linked to this plan/activity
+        plant_rates = (
+            BOQItem.objects.filter(
+                project_id=OuterRef("production_plan__project_id"),
+                section=OuterRef("production_plan__section"),
+                bill_no=OuterRef("production_plan__bill_no"),
+                labour_specification_id=OuterRef("production_plan__labour_activity_id"),
+                plant_specification__isnull=False,
             )
-            .values("entry")
-            .annotate(total=Sum("line_cost"))
-            .values("total")
+            .values("labour_specification_id")
+            .annotate(total_rate=Sum("plant_specification__plant_type__hourly_rate"))
+            .values("total_rate")
         )
 
         return (
-            DailyActivityEntry.objects.filter(report__project_id=self.kwargs["project_pk"])
-            .select_related("report", "production_plan")
+            DailyActivityEntry.objects.filter(
+                report__project_id=self.kwargs["project_pk"]
+            )
+            .select_related(
+                "report",
+                "production_plan",
+                "production_plan__labour_activity",
+                "production_plan__labour_activity__crew",
+            )
             .annotate(
-                acc_labour_cost=Coalesce(
-                    Subquery(labour_costs, output_field=DecimalField()),
-                    0,
+                # Formula: (skilled * rate + semi * rate + general * rate) / 8.0
+                hourly_labour_rate=ExpressionWrapper(
+                    (
+                        F("production_plan__labour_activity__crew__skilled")
+                        * F("production_plan__labour_activity__crew__skilled_rate")
+                        + F("production_plan__labour_activity__crew__semi_skilled")
+                        * F("production_plan__labour_activity__crew__semi_skilled_rate")
+                        + F("production_plan__labour_activity__crew__general")
+                        * F("production_plan__labour_activity__crew__general_rate")
+                    )
+                    / Value(8.0),
                     output_field=DecimalField(),
                 ),
-                acc_plant_cost=Coalesce(
-                    Subquery(plant_costs, output_field=DecimalField()),
-                    0,
+                hourly_plant_rate=Coalesce(
+                    Subquery(plant_rates, output_field=DecimalField()),
+                    Value(0),
+                    output_field=DecimalField(),
+                ),
+            )
+            .annotate(
+                acc_labour_cost=ExpressionWrapper(
+                    F("hours_on_activity") * F("hourly_labour_rate"),
+                    output_field=DecimalField(),
+                ),
+                acc_plant_cost=ExpressionWrapper(
+                    F("hours_on_activity") * F("hourly_plant_rate"),
                     output_field=DecimalField(),
                 ),
             )
@@ -130,7 +149,18 @@ class ProductionDailyLogListView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["project"] = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        context["project"] = project
+
+        # Calculate Aggregate Totals for the footer
+        qs = self.get_queryset()
+        context["totals"] = qs.aggregate(
+            qty=Sum("quantity"),
+            hours=Sum("hours_on_activity"),
+            labour=Sum("acc_labour_cost"),
+            plant=Sum("acc_plant_cost"),
+            total=Sum("acc_total_cost"),
+        )
         return context
 
     def get_breadcrumbs(self):
@@ -252,9 +282,9 @@ class ProductionDailyLogUpdateView(
             entries_data.append(
                 {
                     "production_plan_id": entry.production_plan_id,
-                    "activity": entry.production_plan.activity,
-                    "section": entry.production_plan.section,
-                    "bill_no": entry.production_plan.bill_no,
+                    "activity": entry.production_plan.activity or (entry.production_plan.labour_activity.name if entry.production_plan.labour_activity else f"Activity {entry.production_plan.id}"),
+                    "section": entry.production_plan.section or "No Section",
+                    "bill_no": entry.production_plan.bill_no or "No Bill",
                     "quantity": float(entry.quantity),
                     "hours_on_activity": float(entry.hours_on_activity),
                     "labour_details": labour_details,
@@ -366,8 +396,10 @@ class ProductionDailyLogDetailView(
         context["entries"] = entries
         
         # Calculate daily totals
-        # Note: Summing model properties in Python for a single report is acceptable.
-        context["report_total_cost"] = sum(entry.total_cost for entry in entries)
+        context["report_total_labour_cost"] = sum(entry.total_labour_cost for entry in entries)
+        context["report_total_plant_cost"] = sum(entry.total_plant_cost for entry in entries)
+        context["report_total_cost"] = context["report_total_labour_cost"] + context["report_total_plant_cost"]
+        context["report_total_hours"] = sum(entry.hours_on_activity for entry in entries)
         return context
 
     def get_breadcrumbs(self):
@@ -406,6 +438,9 @@ class DailyLogActivityDataAjaxView(LoginRequiredMixin, TemplateView):
 
         return JsonResponse(
             {
+                "activity": plan.activity or str(plan),
+                "section": plan.section or "No Section",
+                "bill_no": plan.bill_no or "No Bill",
                 "unit": plan.unit_display,
                 "plant_types": list(plant_types),
                 "crew": crew_info,

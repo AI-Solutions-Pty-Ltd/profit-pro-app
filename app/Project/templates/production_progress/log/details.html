@@ -44,35 +44,55 @@
     </div>
 
     <!-- Summary Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center">
-            <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl mr-4">
-                {% heroicon_outline "squares-2x2" class="w-6 h-6" %}
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center">
+            <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl mr-3">
+                {% heroicon_outline "squares-2x2" class="w-5 h-5" %}
             </div>
             <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Activities Recorded</p>
-                <p class="text-xl font-black text-gray-900">{{ entries|length }}</p>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Activities</p>
+                <p class="text-lg font-black text-gray-900">{{ entries|length }}</p>
             </div>
         </div>
-        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center">
-            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl mr-4">
-                {% heroicon_outline "banknotes" class="w-6 h-6" %}
+        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center">
+            <div class="p-3 bg-purple-50 text-purple-600 rounded-xl mr-3">
+                {% heroicon_outline "users" class="w-5 h-5" %}
             </div>
             <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Daily Cost</p>
-                <p class="text-xl font-black text-gray-900">{{ report_total_cost|currency }}</p>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Labour Cost</p>
+                <p class="text-lg font-black text-gray-900">{{ report_total_labour_cost|currency }}</p>
             </div>
         </div>
-        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center">
-            <div class="p-3 bg-amber-50 text-amber-600 rounded-xl mr-4">
-                {% heroicon_outline "chat-bubble-bottom-center-text" class="w-6 h-6" %}
+        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center">
+            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl mr-3">
+                {% heroicon_outline "truck" class="w-5 h-5" %}
             </div>
-            <div class="flex-grow">
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">General Notes</p>
-                <p class="text-sm text-gray-600">{{ report.notes|default:"No notes captured for this day." }}</p>
+            <div>
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Plant Cost</p>
+                <p class="text-lg font-black text-gray-900">{{ report_total_plant_cost|currency }}</p>
+            </div>
+        </div>
+        <div class="bg-indigo-600 p-5 rounded-2xl shadow-lg shadow-indigo-100 flex items-center text-white">
+            <div class="p-3 bg-white/10 rounded-xl mr-3">
+                {% heroicon_outline "banknotes" class="w-5 h-5" %}
+            </div>
+            <div>
+                <p class="text-[10px] font-bold text-indigo-100 uppercase tracking-widest">Total cost</p>
+                <p class="text-lg font-black">{{ report_total_cost|currency }}</p>
             </div>
         </div>
     </div>
+
+    <!-- Notes if any -->
+    {% if report.notes %}
+    <div class="bg-amber-50/50 border border-amber-100 p-4 rounded-xl flex items-start gap-3">
+        {% heroicon_outline "information-circle" class="w-5 h-5 text-amber-500 mt-0.5" %}
+        <div>
+            <p class="text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">Daily Notes</p>
+            <p class="text-sm text-amber-900/80">{{ report.notes }}</p>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Activity Detail Cards -->
     <div class="space-y-10">
@@ -99,6 +119,11 @@
                     <div class="text-right">
                         <div class="text-[10px] font-bold text-gray-400 uppercase">Total Hours</div>
                         <div class="text-lg font-black text-gray-900 font-mono">{{ entry.hours_on_activity|qty }} hrs</div>
+                    </div>
+                    <div class="h-8 w-px bg-gray-200"></div>
+                    <div class="text-right">
+                        <div class="text-[10px] font-bold text-gray-400 uppercase">Total Cost</div>
+                        <div class="text-lg font-black text-emerald-600 font-mono">{{ entry.total_cost|currency }}</div>
                     </div>
                 </div>
             </div>
