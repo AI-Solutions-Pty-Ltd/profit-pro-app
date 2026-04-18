@@ -21,7 +21,6 @@ class ProductionPlanFactory(DjangoModelFactory):
         model = ProductionPlan
 
     project = factory.SubFactory(ProjectFactory)
-    project = factory.SubFactory(ProjectFactory)
     activity = factory.Sequence(lambda n: f"Activity {n}")
     start_date = factory.Faker("date_between", start_date="-1y", end_date="today")
     finish_date = factory.Faker("date_between", start_date="today", end_date="+1y")
