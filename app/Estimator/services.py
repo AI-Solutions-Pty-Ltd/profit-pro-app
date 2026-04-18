@@ -301,14 +301,18 @@ def clone_from_project(target_project, source_project):
             project=target_project,
             source=ss.source,
             section=ss.section,
-            trade_code=tc_map.get(ss.trade_code_id) if ss.trade_code_id else None,
+            trade_code=tc_map.get(getattr(ss, "trade_code_id", None))
+            if getattr(ss, "trade_code_id", None)
+            else None,
             unit_label=ss.unit_label,
             name=ss.name,
         )
         for comp in ss.spec_components.all():
             ProjectSpecificationComponent.objects.create(
                 specification=ps,
-                material=mat_map.get(comp.material_id) if comp.material_id else None,
+                material=mat_map.get(getattr(comp, "material_id", None))
+                if getattr(comp, "material_id", None)
+                else None,
                 label=comp.label,
                 qty_per_unit=comp.qty_per_unit,
                 sort_order=comp.sort_order,
