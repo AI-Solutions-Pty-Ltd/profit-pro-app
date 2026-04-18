@@ -842,7 +842,7 @@ def sync_plant_specs_from_system(project):
             continue
         plant_type = None
         if sps.plant_type_id:  # ty:ignore[unresolved-attribute]
-            plant_type = ProjectPlantCost.objects.filter(  # noqa: F841
+            plant_type = ProjectPlantCost.objects.filter(
                 project=project,
                 source_id=sps.plant_type_id,  # ty:ignore[unresolved-attribute]
             ).first()
