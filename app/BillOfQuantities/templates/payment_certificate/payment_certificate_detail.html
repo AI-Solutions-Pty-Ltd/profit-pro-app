@@ -25,12 +25,12 @@
                     <p class="text-sm text-gray-600 mt-1">Date: {{ payment_certificate.approved_on }}</p>
                 </div>
                 <div class="flex items-center space-x-3">
-                    {% if payment_certificate.status == "DRAFT" %}
+                    {% if payment_certificate.status == "DRAFT" or payment_certificate.status == "REJECTED" %}
                         <a href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk payment_certificate.pk %}"
                            class="loading-btn inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                            data-loading-text="Editing...">
-                            {% heroicon_outline "pencil" class="w-4 h-4" %}
-                            Edit
+                            {% heroicon_outline "pencil" class="w-4 h-4 mr-1" %}
+                            Edit Certificate
                         </a>
                     {% endif %}
                     {% if payment_certificate.actual_transactions.count %}
@@ -77,7 +77,16 @@
                 </div>
             </div>
             <div id="pdf-download" class="mt-6 pt-6 border-t border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Download PDF Reports</h2>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900">Download PDF Reports</h2>
+                    {% if payment_certificate.status == "DRAFT" or payment_certificate.status == "REJECTED" %}
+                        <a href="{% url 'bill_of_quantities:payment-certificate-edit' project.pk payment_certificate.pk %}"
+                           class="inline-flex items-center px-3 py-1.5 border border-indigo-600 shadow-sm text-xs font-medium rounded text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                            {% heroicon_outline "pencil" class="w-3.5 h-3.5 mr-1" %}
+                            Edit Certificate Data
+                        </a>
+                    {% endif %}
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Full PDF Form -->
                     <form method="get"

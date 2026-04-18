@@ -183,7 +183,6 @@ class TransactionForm(forms.ModelForm):
         """Initialize form with company-scoped choices."""
         super().__init__(*args, **kwargs)
         self.company = company
-        self.project = self.data.get("project")
 
         if not self.company:
             raise ValueError("Company is required for transaction form.")

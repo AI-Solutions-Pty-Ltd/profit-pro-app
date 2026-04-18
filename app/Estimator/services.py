@@ -341,7 +341,7 @@ def clone_from_project(target_project, source_project):
             trade_name=sps.trade_name,
             name=sps.name,
             unit=sps.unit,
-            plant_type=plant_map.get(sps.plant_type_id) if sps.plant_type_id else None,  # ty:ignore[unresolved-attribute]
+            plant_type=plant_map.get(sps.plant_type.pk) if sps.plant_type else None,
             daily_production=sps.daily_production,
             operator_factor=sps.operator_factor,
             site_factor=sps.site_factor,
@@ -716,7 +716,7 @@ def sync_material_specs_from_system(project):
         )
         for comp in sms.system_spec_components.all():
             mat = None
-            if comp.material_id:  # ty:ignore[unresolved-attribute]
+            if comp.material:
                 mat = ProjectMaterial.objects.filter(
                     project=project,
                     source_id=comp.material_id,  # ty:ignore[unresolved-attribute]
@@ -748,9 +748,9 @@ def sync_labour_specs_from_system(project):
         pls.site_factor = pls.source.site_factor
         pls.tools_factor = pls.source.tools_factor
         pls.leadership_factor = pls.source.leadership_factor
-        if pls.source.crew_id:
+        if pls.source.crew:
             pls.crew = ProjectLabourCrew.objects.filter(
-                project=project, source_id=pls.source.crew_id
+                project=project, source_id=pls.source.crew.pk
             ).first()
         else:
             pls.crew = None
@@ -849,7 +849,7 @@ def sync_plant_specs_from_system(project):
             trade_name=sps.trade_name,
             name=sps.name,
             unit=sps.unit,
-            plant_type=plant_type,
+            plant_type=sps.plant_type,
             daily_production=sps.daily_production,
             operator_factor=sps.operator_factor,
             site_factor=sps.site_factor,

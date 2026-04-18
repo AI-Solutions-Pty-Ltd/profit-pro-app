@@ -16,7 +16,7 @@ class TestPlantTypeViews:
     def test_plant_type_list_view(self, client, superuser):
         """Test the list view."""
         client.force_login(superuser)
-        project = ProjectFactory()
+        project = ProjectFactory.create()
         project.users.add(superuser)
 
         PlantTypeFactory(project=project, name="Excavator")
@@ -34,7 +34,7 @@ class TestPlantTypeViews:
     def test_plant_type_create_view_get(self, client, superuser):
         """Test the create view GET request (this was where the 500 error occurred)."""
         client.force_login(superuser)
-        project = ProjectFactory()
+        project = ProjectFactory.create()
         project.users.add(superuser)
 
         url = reverse(
@@ -49,7 +49,7 @@ class TestPlantTypeViews:
     def test_plant_type_create_view_post(self, client, superuser):
         """Test the create view POST request."""
         client.force_login(superuser)
-        project = ProjectFactory()
+        project = ProjectFactory.create()
         project.users.add(superuser)
 
         url = reverse(
@@ -68,9 +68,9 @@ class TestPlantTypeViews:
     def test_plant_type_update_view(self, client, superuser):
         """Test the update view."""
         client.force_login(superuser)
-        project = ProjectFactory()
+        project = ProjectFactory.create()
         project.users.add(superuser)
-        plant_type = PlantTypeFactory(project=project, name="Old Name")
+        plant_type = PlantTypeFactory.create(project=project, name="Old Name")
 
         url = reverse(
             "site_management:plant-type-update",
@@ -89,9 +89,9 @@ class TestPlantTypeViews:
     def test_plant_type_delete_view(self, client, superuser):
         """Test the delete view."""
         client.force_login(superuser)
-        project = ProjectFactory()
+        project = ProjectFactory.create()
         project.users.add(superuser)
-        plant_type = PlantTypeFactory(project=project)
+        plant_type = PlantTypeFactory.create(project=project)
 
         url = reverse(
             "site_management:plant-type-delete",
