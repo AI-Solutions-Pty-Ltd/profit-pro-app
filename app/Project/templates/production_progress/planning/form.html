@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+{% load crispy_forms_tags %}
+{% block title %}
+    {% if is_update %}
+        Edit
+    {% else %}
+        New
+    {% endif %}
+    Production Plan - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <!-- Header -->
+    <div class="mb-6 bg-white rounded-lg shadow-sm">
+        <div class="px-6 py-4">
+            {{ form.media }}
+            {{ dependency_formset.media }}
+            <a href="{% url 'project:production-planning' project.pk %}"
+               class="inline-flex items-center py-2 text-sm font-medium text-gray-700 bg-white rounded-md transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                {% heroicon_outline "chevron-left" size="20" %}
+                <span class="ml-2">Back to List</span>
+            </a>
+            <div class="flex justify-between items-center mt-2">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        {% if is_update %}
+                            Edit Production Plan
+                        {% else %}
+                            New Production Plan
+                        {% endif %}
+                    </h1>
+                    <p class="mt-1 text-sm text-gray-600">Project: {{ project.name }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Form -->
+    <div class="mb-6 bg-white rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Labor Activity Details</h2>
+            <p class="text-sm text-gray-600">Select a labor activity to plan. Hierarchy and metadata will be auto-filled.</p>
+        </div>
+        <form method="post" action="" class="p-6">
+            {% csrf_token %}
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 gap-6 items-start md:grid-cols-2">
+                    <!-- Activity and Parent -->
+                    <div class="grid grid-cols-1 gap-6 md:col-span-2">
+                        <!-- Parent Context Breadcrumbs -->
+                        <div id="hierarchy_context"
+                             class="hidden p-4 bg-indigo-50/50 rounded-lg border border-indigo-100 mb-2">
+                            <div class="flex items-center space-x-2 text-sm text-indigo-900 overflow-x-auto pb-1">
+                                <span class="font-semibold whitespace-nowrap">Context:</span>
+                                <div id="breadcrumb_list" class="flex items-center space-x-2">
+                                    <!-- Breadcrumbs injected here -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            <div id="parent_field_container"
+                                 class="{% if form.is_top_level %}hidden{% endif %}">
+                                {{ form.parent|as_crispy_field }}
+                            </div>
+                            <!-- Hierarchical steps hidden by default in favors of direct line item selection -->
+                            <div id="section_field_container" class="hidden">{{ form.section|as_crispy_field }}</div>
+                            <div id="bill_no_field_container" class="hidden">{{ form.bill_no|as_crispy_field }}</div>
+                            <div id="labour_activity_field_container">{{ form.labour_activity|as_crispy_field }}</div>
+                            <div id="plant_specification_field_container" class="hidden">{{ form.plant_specification|as_crispy_field }}</div>
+                        </div>
+                        <!-- Hidden Activity Title -->
+                        <div id="activity_field_wrapper" class="hidden">{{ form.activity|as_crispy_field }}</div>
+                    </div>
+                    <!-- Scheduling -->
+                    <div class="grid grid-cols-1 gap-6 p-4 bg-gray-50 rounded-lg md:col-span-2 md:grid-cols-3">
+                        <div>{{ form.start_date|as_crispy_field }}</div>
+                        <div>{{ form.finish_date|as_crispy_field }}</div>
+                        <div>{{ form.duration|as_crispy_field }}</div>
+                    </div>
+                    <!-- Metrics -->
+                    <div class="grid grid-cols-1 gap-6 p-4 bg-gray-50 rounded-lg border border-gray-100 md:col-span-2 md:grid-cols-3">
+                        <div>{{ form.quantity|as_crispy_field }}</div>
+                        <div>{{ form.unit|as_crispy_field }}</div>
+                        <div>
+                            <div id="div_id_daily_rate" class="mb-3">
+                                <label for="daily_rate"
+                                       class="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                                    Daily Prod. Rate
+                                </label>
+                                <input type="text"
+                                       id="daily_rate"
+                                       class="block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                       readonly
+                                       value="0">
+                                <p class="mt-1 text-xs text-gray-400">Fetched from project specifications</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Dependencies -->
+                    {% if dependency_formset %}
+                        <div class="p-4 mt-4 bg-gray-50 rounded-lg border border-gray-100 md:col-span-2">
+                            <h3 class="mb-4 text-sm font-semibold text-gray-900">Execution Dependencies</h3>
+                            {{ dependency_formset.management_form }}
+                            <div class="space-y-2">
+                                {% for dep_form in dependency_formset %}
+                                    <div class="flex items-end space-x-4">
+                                        {{ dep_form.id }}
+                                        <div class="flex-1">{{ dep_form.predecessor|as_crispy_field }}</div>
+                                        {% comment %} {% if dependency_formset.can_delete %}
+                                    <div class="pb-6">
+                                        {{ dep_form.DELETE|as_crispy_field }}
+                                    </div>
+                                        {% endif %} {% endcomment %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <!-- Form Actions -->
+            <div class="flex justify-end items-center pt-6 mt-8 space-x-3 border-t border-gray-100">
+                <a href="{% url 'project:production-planning' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {% heroicon_solid "check" class="mr-2 w-4 h-4" %}
+                    {% if is_update %}
+                        Update Plan
+                    {% else %}
+                        Save Plan
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+    <!-- Footer -->
+    <div class="px-6 py-4 mt-6 bg-white rounded-lg">
+        <div class="flex justify-between items-center text-sm font-medium">
+            <a href="{% url 'project:company-management' project.pk %}"
+               class="inline-flex items-center text-gray-700 transition-colors hover:text-indigo-600">
+                {% heroicon_outline "chevron-left" class="mr-1 w-4 h-4" %}
+                Business Management
+            </a>
+            <a href="{% url 'project:production-planning' project.pk %}"
+               class="inline-flex items-center text-gray-700 transition-colors hover:text-indigo-600">
+                Back to Planning List
+                {% heroicon_outline "chevron-right" class="ml-1 w-4 h-4" %}
+            </a>
+        </div>
+    </div>
+{% endblock content %}
+{% block extra_js %}
+    {{ block.super }}
+    <script>
+        function calculateDuration() {
+            const startDateInput = document.getElementById('start_date');
+            const endDateInput = document.getElementById('finish_date');
+            const durationInput = document.getElementById('duration');
+            const quantityInput = document.getElementById('quantity');
+            const dailyRateInput = document.getElementById('daily_rate');
+            const activitySelect = document.getElementById('id_labour_activity');
+            
+            // 1. Calculate Duration from Quantity and Production Rate
+            if (activitySelect && activitySelect.value && quantityInput && quantityInput.value) {
+                const container = activitySelect.closest('.searchable-select-container');
+                const optionsList = container ? container.querySelector('[id$="-options-list"]') : null;
+                const btn = optionsList ? optionsList.querySelector(`[data-id="${activitySelect.value}"]`) : null;
+                
+                if (btn && btn.dataset.dailyProduction) {
+                    const rate = parseFloat(btn.dataset.dailyProduction);
+                    const qty = parseFloat(quantityInput.value);
+                    
+                    if (dailyRateInput) dailyRateInput.value = rate;
+
+                    if (rate > 0 && qty > 0) {
+                        const calculatedDuration = Math.ceil(qty / rate);
+                        durationInput.value = calculatedDuration;
+                    } else if (qty > 0) {
+                        // If rate is 0 but qty > 0, default to 1 day minimum
+                        durationInput.value = 1;
+                    }
+                } else if (dailyRateInput) {
+                    dailyRateInput.value = 0;
+                }
+            }
+
+            // 2. Calculate Finish Date from Start Date and Duration
+            if (startDateInput.value && durationInput.value) {
+                const start = new Date(startDateInput.value);
+                const duration = parseInt(durationInput.value);
+                
+                if (!isNaN(start.getTime()) && duration > 0) {
+                    const end = new Date(start);
+                    // Finish date = Start Date + (Duration - 1) days
+                    end.setDate(start.getDate() + (duration - 1));
+                    
+                    const yyyy = end.getFullYear();
+                    const mm = String(end.getMonth() + 1).padStart(2, '0');
+                    const dd = String(end.getDate()).padStart(2, '0');
+                    endDateInput.value = `${yyyy}-${mm}-${dd}`;
+                }
+            }
+        }
+
+        const projectPk = "{{ project.pk }}";
+        const billsUrl = "{% url 'project:ajax-project-bills' project.pk %}";
+        const laborActivitiesUrl = "{% url 'project:ajax-project-labor-activities' project.pk %}";
+        const planDataUrl = "{% url 'project:production-plan-data-ajax' project.pk 0 %}";
+        const planDataBase = planDataUrl.replace(/\/0\/data\/$/, '/');
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const contextContainer = document.getElementById('hierarchy_context');
+            const breadcrumbList = document.getElementById('breadcrumb_list');
+            
+            const parentContainer = document.getElementById('parent_field_container');
+            const sectionContainer = document.getElementById('section_field_container');
+            const billContainer = document.getElementById('bill_no_field_container');
+            const activityContainer = document.getElementById('labour_activity_field_container');
+            
+            const sectionSelect = document.getElementById('id_section');
+            const billSelect = document.getElementById('id_bill_no');
+            const activitySelect = document.getElementById('id_labour_activity');
+            const parentSelect = document.getElementById('id_parent');
+            
+            const startDateInput = document.getElementById('start_date');
+            const endDateInput = document.getElementById('finish_date');
+            const quantityInput = document.getElementById('quantity');
+            const durationInput = document.getElementById('duration');
+
+            if (endDateInput) endDateInput.readOnly = true;
+
+            function updateHierarchyUI(parentData = null) {
+                // In consolidated mode, we primarily care about showing the item field
+                // Section and Bill are hidden and auto-filled
+                contextContainer.classList.add('hidden');
+                breadcrumbList.innerHTML = '';
+
+                if (parentData) {
+                    contextContainer.classList.remove('hidden');
+                    const breadcrumbs = [];
+                    if (parentData.section) breadcrumbs.push({ label: parentData.section, type: 'Section' });
+                    if (parentData.billNo) breadcrumbs.push({ label: parentData.billNo, type: 'Bill' });
+
+                    breadcrumbs.forEach((bc, index) => {
+                        const span = document.createElement('span');
+                        span.className = 'px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium border border-indigo-200 whitespace-nowrap';
+                        span.textContent = bc.label;
+                        span.title = bc.type;
+                        breadcrumbList.appendChild(span);
+                        
+                        const arrow = document.createElement('span');
+                        arrow.className = 'text-gray-400 mx-1';
+                        arrow.innerHTML = '&#8594;';
+                        breadcrumbList.appendChild(arrow);
+                    });
+                }
+            }
+
+
+            if (parentSelect) {
+                // Listen for custom selection event from searchable select
+                parentSelect.closest('.searchable-select-container').addEventListener('searchableSelect:selected', function(e) {
+                    const data = e.detail.dataset;
+                    updateHierarchyUI({
+                        section: data.section,
+                        billNo: data.billNo
+                    });
+                });
+
+                parentSelect.addEventListener('change', function() {
+                    const parentId = this.value;
+                    if (parentId) {
+                        const container = this.closest('.searchable-select-container');
+                        const optionsList = container ? container.querySelector('[id$="-options-list"]') : null;
+                        const btn = optionsList ? optionsList.querySelector(`[data-id="${parentId}"]`) : null;
+
+                        if (btn) {
+                            updateHierarchyUI({
+                                section: btn.dataset.section,
+                                billNo: btn.dataset.billNo
+                            });
+                        }
+                    } else {
+                        updateHierarchyUI(null);
+                    }
+                });
+            }
+
+            // Activity Selection & Auto-fill
+            if (activitySelect) {
+                // Load ALL project activities on startup
+                fetch(laborActivitiesUrl)
+                    .then(res => res.json())
+                    .then(data => {
+                        const options = data.activities.map(act => ({
+                            id: act.id,
+                            name: act.label,
+                            data: {
+                                'data-activity-name': act.activity_name,
+                                'data-section': act.section,
+                                'data-bill-no': act.bill_no,
+                                'data-unit': act.unit,
+                                'data-quantity': act.quantity,
+                                'data-daily-production': act.daily_production,
+                                'data-plants': JSON.stringify(act.plant_specs)
+                            }
+                        }));
+                        updateSearchableSelect('id_labour_activity', options, 'activity');
+                    });
+
+                activitySelect.addEventListener('change', function() {
+                    const activityId = this.value;
+                    if (activityId) {
+                        const container = this.closest('.searchable-select-container');
+                        const optionsList = container ? container.querySelector('[id$="-options-list"]') : null;
+                        const btn = optionsList ? optionsList.querySelector(`[data-id="${activityId}"]`) : null;
+
+                        if (btn) {
+                            // Populate Section and Bill hidden fields
+                            setSearchableSelectValue('id_section', btn.dataset.section, btn.dataset.section);
+                            setSearchableSelectValue('id_bill_no', btn.dataset.billNo, btn.dataset.billNo);
+
+                            const activityName = btn.dataset.activityName;
+                            const unit = btn.dataset.unit;
+                            const qty = btn.dataset.quantity;
+                            const plantsStr = btn.dataset.plants;
+
+                            // Update Plant Selection options
+                            if (plantsStr) {
+                                const plants = JSON.parse(plantsStr);
+                                const plantOptions = plants.map(p => ({
+                                    id: p.id,
+                                    name: `${p.name} (${p.type})`,
+                                    data: { 'data-type': p.type }
+                                }));
+                                updateSearchableSelect('id_plant_specification', plantOptions, 'plant_specification');
+
+                                // Auto-fill if only one plant spec exists
+                                if (plants.length === 1) {
+                                    setSearchableSelectValue('id_plant_specification', plants[0].id, `${plants[0].name} (${plants[0].type})`);
+                                }
+                            }
+
+                            // Set Activity Name Title
+                            document.getElementById('activity').value = activityName || '';
+                            
+                            // Set Unit
+                            if (unit) {
+                                const unitSelector = document.getElementById('unit-options-list');
+                                if (unitSelector) {
+                                    const options = Array.from(unitSelector.querySelectorAll('.option-item'));
+                                    const unitBtn = options.find(b => b.dataset.id === unit) || 
+                                                   options.find(b => b.textContent.toLowerCase().includes(unit.toLowerCase()));
+                                    if (unitBtn) {
+                                        selectSearchableOption(unitBtn, unitBtn.dataset.id, unitBtn.textContent.trim());
+                                    }
+                                }
+                            }
+                            // Set Quantity
+                            if (qty) document.getElementById('quantity').value = qty;
+
+                            calculateDuration();
+
+                            // Automatic Parent lookup - we can try to find a parent plan that matches section/bill
+                            // This is a bit complex without a dedicated endpoint, but we can search the parent list if loaded.
+                        }
+                    }
+                });
+            }
+
+            // Initialization for update
+            {% if is_update or not form.is_top_level %}
+                if (parentSelect && parentSelect.value) {
+                    const container = parentSelect.closest('.searchable-select-container');
+                    const optionsList = container ? container.querySelector('[id$="-options-list"]') : null;
+                    const btn = optionsList ? optionsList.querySelector(`[data-id="${parentSelect.value}"]`) : null;
+                    if (btn) {
+                         updateHierarchyUI({
+                            section: btn.dataset.section,
+                            billNo: btn.dataset.billNo
+                        });
+                    }
+                } else {
+                    updateHierarchyUI(null);
+                }
+            {% endif %}
+
+            calculateDuration();
+
+            // Add event listeners for auto-calculation
+            if (startDateInput) startDateInput.addEventListener('change', calculateDuration);
+            if (quantityInput) quantityInput.addEventListener('input', calculateDuration);
+            if (durationInput) durationInput.addEventListener('input', calculateDuration); // Allow manual duration override if qty isn't enough
+        });
+
+        function setSearchableSelectValue(fieldId, value, label) {
+            const nativeSelect = document.getElementById(fieldId);
+            const labelEl = document.getElementById(`${fieldId}-selector-label`);
+            if (nativeSelect) {
+                nativeSelect.value = value;
+                if (nativeSelect.value !== String(value)) {
+                    const opt = document.createElement('option');
+                    opt.value = value;
+                    opt.textContent = label;
+                    nativeSelect.appendChild(opt);
+                    nativeSelect.value = value;
+                }
+            }
+            if (labelEl && label) labelEl.textContent = label;
+        }
+
+        function updateSearchableSelect(fieldId, options, typeLabel) {
+            const optionsList = document.getElementById(`${fieldId}-options-list`);
+            const nativeSelect = document.getElementById(fieldId);
+            const label = document.getElementById(`${fieldId}-selector-label`);
+            const noResults = document.getElementById(`${fieldId}-no-results`);
+            const searchInput = document.getElementById(`${fieldId}-search`);
+
+            if (optionsList) optionsList.querySelectorAll('.option-item:not(.always-visible)').forEach(el => el.remove());
+            if (nativeSelect) {
+                nativeSelect.innerHTML = '<option value="">---------</option>';
+                nativeSelect.value = '';
+            }
+            if (label) label.textContent = `Choose ${typeLabel}...`;
+            if (searchInput) searchInput.value = '';
+            if (noResults) noResults.classList.add('hidden');
+
+            options.forEach(opt => {
+                const optId = opt.id || opt;
+                const optName = opt.name || opt;
+                const optData = opt.data || {};
+
+                if (nativeSelect) {
+                    const newOpt = document.createElement('option');
+                    newOpt.value = optId;
+                    newOpt.textContent = optName;
+                    nativeSelect.appendChild(newOpt);
+                }
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'flex items-center px-3 py-2.5 w-full text-left rounded-md transition-all duration-200 group option-item focus:outline-none focus:bg-indigo-50';
+                btn.dataset.id = optId;
+                btn.dataset.label = optName.toLowerCase();
+                
+                for (const [key, value] of Object.entries(optData)) {
+                    btn.setAttribute(key, value);
+                }
+
+                btn.onclick = function() {
+                    selectSearchableOption(this, optId, optName);
+                };
+
+                btn.innerHTML = `
+                    <div class="flex-1">
+                        <span class="block text-sm font-semibold text-gray-700 group-hover:text-indigo-900">${optName}</span>
+                    </div>
+                `;
+                if (optionsList) optionsList.appendChild(btn);
+            });
+
+            if (options.length === 0 && noResults) noResults.classList.remove('hidden');
+        }
+    </script>
+{% endblock extra_js %}

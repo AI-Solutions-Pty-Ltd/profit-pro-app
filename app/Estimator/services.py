@@ -282,7 +282,7 @@ def clone_from_project(target_project, source_project):
             trade_name=sls.trade_name,
             name=sls.name,
             unit=sls.unit,
-            crew=crew_map.get(sls.crew.pk) if sls.crew else None,
+            crew=crew_map.get(sls.crew_id) if sls.crew_id else None,  # ty:ignore[unresolved-attribute]
             daily_production=sls.daily_production,
             team_mix=sls.team_mix,
             site_factor=sls.site_factor,
@@ -301,14 +301,18 @@ def clone_from_project(target_project, source_project):
             project=target_project,
             source=ss.source,
             section=ss.section,
-            trade_code=tc_map.get(ss.trade_code.pk) if ss.trade_code else None,
+            trade_code=tc_map.get(getattr(ss, "trade_code_id", None))
+            if getattr(ss, "trade_code_id", None)
+            else None,
             unit_label=ss.unit_label,
             name=ss.name,
         )
         for comp in ss.spec_components.all():
             ProjectSpecificationComponent.objects.create(
                 specification=ps,
-                material=mat_map.get(comp.material.pk) if comp.material else None,
+                material=mat_map.get(getattr(comp, "material_id", None))
+                if getattr(comp, "material_id", None)
+                else None,
                 label=comp.label,
                 qty_per_unit=comp.qty_per_unit,
                 sort_order=comp.sort_order,
@@ -718,7 +722,8 @@ def sync_material_specs_from_system(project):
             mat = None
             if comp.material:
                 mat = ProjectMaterial.objects.filter(
-                    project=project, source_id=comp.material.pk
+                    project=project,
+                    source_id=comp.material_id,  # ty:ignore[unresolved-attribute]
                 ).first()
             ProjectSpecificationComponent.objects.create(
                 specification=ps,
@@ -773,9 +778,10 @@ def sync_labour_specs_from_system(project):
         if sls.name in existing_names:
             continue
         crew = None
-        if sls.crew:
+        if sls.crew_id:  # ty:ignore[unresolved-attribute]
             crew = ProjectLabourCrew.objects.filter(
-                project=project, source_id=sls.crew.pk
+                project=project,
+                source_id=sls.crew_id,  # ty:ignore[unresolved-attribute]
             ).first()
         ProjectLabourSpecification.objects.create(
             project=project,
@@ -834,6 +840,12 @@ def sync_plant_specs_from_system(project):
     ).select_related("plant_type"):
         if sps.name in existing_names:
             continue
+        plant_type = None
+        if sps.plant_type_id:  # ty:ignore[unresolved-attribute]
+            plant_type = ProjectPlantCost.objects.filter(
+                project=project,
+                source_id=sps.plant_type_id,  # ty:ignore[unresolved-attribute]
+            ).first()
         ProjectPlantSpecification.objects.create(
             project=project,
             source=sps,
@@ -841,7 +853,7 @@ def sync_plant_specs_from_system(project):
             trade_name=sps.trade_name,
             name=sps.name,
             unit=sps.unit,
-            plant_type=sps.plant_type,
+            plant_type=plant_type,
             daily_production=sps.daily_production,
             operator_factor=sps.operator_factor,
             site_factor=sps.site_factor,

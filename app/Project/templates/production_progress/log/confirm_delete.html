@@ -1,0 +1,53 @@
+{% extends "production_progress/base_production.html" %}
+{% load static %}
+{% load heroicons %}
+{% block title %}
+    Delete Daily Log - {{ report.date|date:"d M Y" }} - {{ project.name }}
+{% endblock title %}
+{% block production_content %}
+    <div class="max-w-2xl mx-auto py-12">
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
+            <!-- Warning Header -->
+            <div class="bg-red-50 px-8 py-10 flex flex-col items-center text-center">
+                <div class="mb-6 p-4 bg-white rounded-2xl shadow-sm text-red-600">
+                    {% heroicon_outline "exclamation-triangle" class="w-12 h-12" %}
+                </div>
+                <h1 class="text-3xl font-black text-gray-900 tracking-tight mb-2">Confirm Deletion</h1>
+                <p class="text-gray-500 max-w-sm">
+                    You are about to permanently remove the Daily Activity Log for
+                    <span class="font-black text-gray-900">{{ report.date|date:"l, d F Y" }}</span>.
+                </p>
+            </div>
+            <!-- Details -->
+            <div class="p-8">
+                <div class="bg-gray-50 rounded-2xl p-6 border border-gray-100 mb-8">
+                    <div class="flex items-center justify-between mb-4 border-b border-gray-200 pb-4">
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Project</span>
+                        <span class="font-bold text-gray-900">{{ project.name }}</span>
+                    </div>
+                    <div class="flex items-center justify-between mb-4 border-b border-gray-200 pb-4">
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Activities Recorded</span>
+                        <span class="font-bold text-gray-900">{{ report.entries.count }}</span>
+                    </div>
+                    <div class="text-sm text-gray-600 italic">"{{ report.notes|default:"No notes provided."|truncatechars:100 }}"</div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{% url 'project:production-daily-log-list' project_pk=project.pk %}"
+                       class="inline-flex items-center justify-center px-8 py-4 border border-gray-200 rounded-2xl bg-white text-base font-bold text-gray-600 hover:bg-gray-50 transition-all">
+                        Cancel, Keep Log
+                    </a>
+                    <form method="post" class="contents">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="inline-flex items-center justify-center px-8 py-4 bg-red-600 rounded-2xl text-base font-bold text-white hover:bg-red-700 shadow-lg shadow-red-100 transition-all">
+                            {% heroicon_outline "trash" class="w-5 h-5 mr-2" %} Yes, Delete Report
+                        </button>
+                    </form>
+                </div>
+                <p class="mt-8 text-center text-xs text-gray-400 font-medium italic">
+                    This action is irreversible. All activity entries and resource usage for this day will be lost.
+                </p>
+            </div>
+        </div>
+    </div>
+{% endblock production_content %}

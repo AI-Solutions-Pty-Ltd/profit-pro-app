@@ -1,0 +1,293 @@
+{% extends "production_progress/base_production.html" %}
+{% load static %}
+{% load heroicons %}
+{% load crispy_forms_tags %}
+{% load humanize %}
+{% load estimator_tags %}
+{% block title %}
+    Cost Breakdown — {{ selected_plan.activity }} - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block production_content %}
+    <!-- Header & breadcrumb-style back link -->
+    <div class="px-6 py-5 mb-6 bg-white rounded-lg shadow-sm">
+        <div class="flex flex-col gap-4 justify-between md:flex-row md:items-center">
+            <div>
+                <div class="flex gap-2 items-center mb-1">
+                    <a href="{% url 'project:production-cost-breakdown' project.pk %}"
+                       class="inline-flex gap-1 items-center text-xs font-semibold text-indigo-600 transition-colors hover:text-indigo-800">
+                        {% heroicon_mini "arrow-left" class="w-3 h-3" %} All Plans
+                    </a>
+                    <span class="text-gray-300">/</span>
+                    <span class="text-xs text-gray-500">Cost Breakdown</span>
+                </div>
+                <h2 class="text-lg font-bold text-gray-900">{{ selected_plan.activity }}</h2>
+                <p class="text-sm text-gray-500">Detailed resource cost breakdown for this production activity.</p>
+            </div>
+            <div class="flex flex-col gap-1 text-sm text-gray-500">
+                {% if selected_plan.structure %}
+                    <span class="inline-flex gap-1 items-center">
+                        {% heroicon_mini "building-office-2" class="w-4 h-4 text-gray-400" %}
+                        <strong class="text-gray-700">Structure:</strong> {{ selected_plan.structure }}
+                    </span>
+                {% endif %}
+                {% if selected_plan.bill %}
+                    <span class="inline-flex gap-1 items-center">
+                        {% heroicon_mini "document-text" class="w-4 h-4 text-gray-400" %}
+                        <strong class="text-gray-700">Bill:</strong> {{ selected_plan.bill }}
+                    </span>
+                {% endif %}
+                {% if selected_plan.package %}
+                    <span class="inline-flex gap-1 items-center">
+                        {% heroicon_mini "archive-box" class="w-4 h-4 text-gray-400" %}
+                        <strong class="text-gray-700">Package:</strong> {{ selected_plan.package }}
+                    </span>
+                {% endif %}
+                {% if selected_plan.line_item %}
+                    <span class="inline-flex gap-1 items-center">
+                        {% heroicon_mini "tag" class="w-4 h-4 text-gray-400" %}
+                        <strong class="text-gray-700">Line Item:</strong> {{ selected_plan.line_item }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-3">
+        <div class="flex overflow-hidden relative flex-col justify-between p-6 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-100 group">
+            <div class="absolute -top-4 -right-4 transition-transform text-white/10 group-hover:scale-110">
+                {% heroicon_solid "banknotes" class="w-24 h-24" %}
+            </div>
+            <dt class="mb-1 text-xs font-bold tracking-wider text-indigo-100 uppercase">Total Planned Cost</dt>
+            <dd class="text-3xl font-black text-white">
+                {{ selected_plan.total_labour_cost|add:selected_plan.total_plant_cost|add:selected_plan.total_other_cost|currency }}
+            </dd>
+        </div>
+        <div class="overflow-hidden relative p-6 bg-white rounded-2xl border border-gray-100 shadow-sm transition-colors group hover:border-indigo-100">
+            <div class="absolute -top-4 -right-4 text-gray-50 transition-transform group-hover:scale-110">
+                {% heroicon_solid "calendar" class="w-24 h-24" %}
+            </div>
+            <dt class="mb-1 text-xs font-bold tracking-wider text-gray-500 uppercase">Duration</dt>
+            <dd class="text-2xl font-black text-gray-900">
+                {{ selected_plan.duration }} <span class="text-sm font-bold text-gray-400">Days</span>
+            </dd>
+        </div>
+        <div class="overflow-hidden relative p-6 bg-white rounded-2xl border border-gray-100 shadow-sm transition-colors group hover:border-indigo-100">
+            <div class="absolute -top-4 -right-4 text-gray-50 transition-transform group-hover:scale-110">
+                {% heroicon_solid "document-chart-bar" class="w-24 h-24" %}
+            </div>
+            <dt class="mb-1 text-xs font-bold tracking-wider text-gray-500 uppercase">Planned Quantity</dt>
+            <dd class="text-2xl font-black text-gray-900">
+                {{ selected_plan.quantity|qty }} <span class="text-sm font-bold text-gray-400">{{ selected_plan.unit_display }}</span>
+            </dd>
+        </div>
+    </div>
+    <!-- Resource Type Tables -->
+    <div class="space-y-8">
+        {% for type_code, type_name in resource_form.fields.resource_type.choices %}
+            {% if type_code %}
+                <div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm">
+                    <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                        <div class="flex gap-2 items-center">
+                            <div class="p-1.5 text-indigo-600 bg-indigo-50 rounded-lg">
+                                {% if type_code == 'LABOUR' %}
+                                    {% heroicon_mini "users" class="w-4 h-4" %}
+                                {% elif type_code == 'PLANT' %}
+                                    {% heroicon_mini "truck" class="w-4 h-4" %}
+                                {% else %}
+                                    {% heroicon_mini "cube" class="w-4 h-4" %}
+                                {% endif %}
+                            </div>
+                            <h3 class="font-bold text-gray-900">{{ type_name }}</h3>
+                        </div>
+                        {% comment %} <a href="{% url 'project:production-resource-add' project.pk %}?plan_id={{ selected_plan.pk }}&type={{ type_code }}" class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-50 rounded-md transition-all hover:bg-indigo-100">
+                            {% heroicon_solid "plus" class="mr-1 w-3 h-3" %} Add {{ type_name }}
+                        </a> {% endcomment %}
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-100">
+                            <thead class="bg-white">
+                                <tr>
+                                    <th class="px-6 py-4 text-xs font-bold tracking-wider text-left text-gray-500 uppercase">Resource</th>
+                                    <th class="px-6 py-4 text-xs font-bold tracking-wider text-left text-gray-500 uppercase">Qty</th>
+                                    <th class="px-6 py-4 text-xs font-bold tracking-wider text-left text-gray-500 uppercase">
+                                        {% if type_code == 'PLANT' %}
+                                            Hours
+                                        {% else %}
+                                            Days
+                                        {% endif %}
+                                    </th>
+                                    <th class="px-6 py-4 text-xs font-bold tracking-wider text-left text-gray-500 uppercase">Rate</th>
+                                    <th class="px-6 py-4 text-xs font-semibold tracking-wider text-right text-gray-500 uppercase">Total</th>
+                                    {% if type_code == 'LABOUR' or type_code == 'PLANT' %}
+                                        <th class="px-6 py-4 text-xs font-semibold tracking-wider text-right text-gray-500 uppercase">Source</th>
+                                    {% endif %}
+                                    {% comment %} <th class="px-6 py-4 text-xs font-bold tracking-wider text-right text-gray-500 uppercase">Actions</th> {% endcomment %}
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-50">
+                                <!-- Spec-based Resources: Labour Crew -->
+                                {% if type_code == 'LABOUR' and selected_plan.labour_activity.crew %}
+                                    {% with crew=selected_plan.labour_activity.crew %}
+                                        {% if crew.skilled > 0 %}
+                                            <tr class="transition-colors hover:bg-indigo-50/20">
+                                                <td class="px-6 py-4 text-sm font-bold text-gray-900 whitespace-nowrap">Skilled Labour</td>
+                                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ crew.skilled }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ selected_plan.duration }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ crew.skilled_rate|currency }}</td>
+                                                <td class="px-6 py-4 text-sm font-black text-right text-gray-900 whitespace-nowrap">
+                                                    {{ crew.skilled|multiply:selected_plan.duration|multiply:crew.skilled_rate|currency }}
+                                                </td>
+                                                <td class="px-6 py-4 text-right whitespace-nowrap">
+                                                    <span class="inline-flex items-center px-2 py-0.5 text-xs font-bold text-blue-700 bg-blue-50 rounded-full ring-1 ring-inset ring-blue-700/10">Crew Spec</span>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                        {% if crew.semi_skilled > 0 %}
+                                            <tr class="transition-colors hover:bg-indigo-50/20">
+                                                <td class="px-6 py-4 text-sm font-bold text-gray-900 whitespace-nowrap">Semi-Skilled Labour</td>
+                                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ crew.semi_skilled }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ selected_plan.duration }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ crew.semi_skilled_rate|currency }}</td>
+                                                <td class="px-6 py-4 text-sm font-black text-right text-gray-900 whitespace-nowrap">
+                                                    {{ crew.semi_skilled|multiply:selected_plan.duration|multiply:crew.semi_skilled_rate|currency }}
+                                                </td>
+                                                <td class="px-6 py-4 text-right whitespace-nowrap">
+                                                    <span class="inline-flex items-center px-2 py-0.5 text-xs font-bold text-blue-700 bg-blue-50 rounded-full ring-1 ring-inset ring-blue-700/10">Crew Spec</span>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                        {% if crew.general > 0 %}
+                                            <tr class="transition-colors hover:bg-indigo-50/20">
+                                                <td class="px-6 py-4 text-sm font-bold text-gray-900 whitespace-nowrap">General Labour</td>
+                                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ crew.general }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ selected_plan.duration }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ crew.general_rate|currency }}</td>
+                                                <td class="px-6 py-4 text-sm font-black text-right text-gray-900 whitespace-nowrap">
+                                                    {{ crew.general|multiply:selected_plan.duration|multiply:crew.general_rate|currency }}
+                                                </td>
+                                                <td class="px-6 py-4 text-right whitespace-nowrap">
+                                                    <span class="inline-flex items-center px-2 py-0.5 text-xs font-bold text-blue-700 bg-blue-50 rounded-full ring-1 ring-inset ring-blue-700/10">Crew Spec</span>
+                                                </td>
+                                            </tr>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endif %}
+                                <!-- Spec-based Resources: Plant Spec -->
+                                {% if type_code == 'PLANT' %}
+                                    {% if selected_plan.plant_specification %}
+                                        {% with spec=selected_plan.plant_specification %}
+                                            <tr class="transition-colors hover:bg-indigo-50/20">
+                                                <td class="px-6 py-4 text-sm font-bold text-gray-900 whitespace-nowrap">
+                                                    {{ spec.plant_type.name|default:"Primary Plant" }}
+                                                </td>
+                                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">1</td>
+                                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ selected_plan.duration|multiply:8|qty }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                                                    {{ spec.hourly_cost|currency }} <span class="text-[10px] font-medium">/hr</span>
+                                                </td>
+                                                <td class="px-6 py-4 text-sm font-black text-right text-gray-900 whitespace-nowrap">
+                                                    {{ spec.hourly_cost|multiply:8|multiply:selected_plan.duration|currency }}
+                                                </td>
+                                                <td class="px-6 py-4 text-right whitespace-nowrap">
+                                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 rounded-full ring-1 ring-inset ring-emerald-700/10">Plant Spec</span>
+                                                </td>
+                                            </tr>
+                                        {% endwith %}
+                                    {% elif fallback_plant_specs %}
+                                        {% for spec in fallback_plant_specs %}
+                                            <tr class="transition-colors hover:bg-teal-50/10">
+                                                <td class="px-6 py-4 text-sm font-bold text-gray-900 whitespace-nowrap">
+                                                    {{ spec.plant_type.name|default:spec.name }}
+                                                </td>
+                                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">1</td>
+                                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ selected_plan.duration|multiply:8|qty }}</td>
+                                                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                                                    {{ spec.hourly_cost|currency }} <span class="text-[10px] font-medium">/hr</span>
+                                                </td>
+                                                <td class="px-6 py-4 text-sm font-black text-right text-gray-900 whitespace-nowrap">
+                                                    {{ spec.hourly_cost|multiply:8|multiply:selected_plan.duration|currency }}
+                                                </td>
+                                                <td class="px-6 py-4 text-right whitespace-nowrap">
+                                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-teal-700 bg-teal-50 rounded-full ring-1 ring-inset ring-teal-700/10"
+                                                          title="Auto-derived from BOQ Items">Fallback Spec</span>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endif %}
+                                <!-- Manual Resources from selected_plan.resources -->
+                                {% for resource in selected_plan.resources.all %}
+                                    {% if resource.resource_type == type_code %}
+                                        <tr class="transition-colors hover:bg-indigo-50/30">
+                                            <td class="px-6 py-4 text-sm font-bold text-gray-900 whitespace-nowrap">{{ resource.name }}</td>
+                                            <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ resource.number|qty }}</td>
+                                            <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                                                {% if type_code == 'PLANT' %}
+                                                    {{ resource.days|multiply:8|qty }}
+                                                {% else %}
+                                                    {{ resource.days|qty }}
+                                                {% endif %}
+                                            </td>
+                                            <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ resource.rate|currency }}</td>
+                                            <td class="px-6 py-4 text-sm font-black text-right text-gray-900 whitespace-nowrap">
+                                                {{ resource.total_cost|currency }}
+                                            </td>
+                                            <td class="px-6 py-4 text-right whitespace-nowrap">
+                                                <span class="inline-flex items-center px-2 py-0.5 text-xs font-bold text-amber-700 bg-amber-50 rounded-full ring-1 ring-inset ring-amber-700/10">Manual Entry</span>
+                                            </td>
+                                            <td class="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
+                                                <form method="post"
+                                                      action="{% url 'project:production-cost-breakdown-detail' project.pk selected_plan.pk %}"
+                                                      class="inline"
+                                                      onsubmit="return confirm('Delete this manual resource?')">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="delete">
+                                                    <input type="hidden" name="resource_id" value="{{ resource.id }}">
+                                                    <button type="submit"
+                                                            class="p-1 text-gray-400 rounded-full transition-colors hover:text-red-500 hover:bg-red-50">
+                                                        {% heroicon_outline "trash" size="16" %}
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="bg-gray-50/30">
+                                <tr>
+                                    <td colspan="4"
+                                        class="px-6 py-4 text-xs font-semibold text-right text-gray-500 uppercase">
+                                        Total {{ type_name }} Cost
+                                    </td>
+                                    <td class="px-6 py-4 text-sm font-black text-right text-indigo-600 whitespace-nowrap">
+                                        {% if type_code == 'LABOUR' %}
+                                            {{ selected_plan.total_labour_cost|currency }}
+                                        {% elif type_code == 'PLANT' %}
+                                            {{ selected_plan.total_plant_cost|currency }}
+                                        {% else %}
+                                            {{ selected_plan.total_other_cost|currency }}
+                                        {% endif %}
+                                    </td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <!-- Footer -->
+    <div class="px-6 py-4 mt-12 bg-white rounded-2xl border border-gray-50 shadow-sm">
+        <div class="flex justify-between items-center text-sm font-bold">
+            <a href="{% url 'project:production-cost-breakdown' project.pk %}"
+               class="inline-flex items-center text-gray-600 transition-colors hover:text-indigo-600">
+                {% heroicon_outline "chevron-left" class="mr-2 w-4 h-4" %} Back to Cost Breakdown List
+            </a>
+            <a href="{% url 'project:production-dashboard' project.pk %}"
+               class="inline-flex items-center text-gray-600 transition-colors hover:text-indigo-600">
+                Dashboard {% heroicon_outline "chevron-right" class="ml-2 w-4 h-4" %}
+            </a>
+        </div>
+    </div>
+{% endblock production_content %}
