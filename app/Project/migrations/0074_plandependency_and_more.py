@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("Project", "0073_make_material_entity_nullable"),
         ("estimator", "0011_boqitem_plant_prelim_specs"),
