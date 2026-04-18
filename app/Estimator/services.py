@@ -301,14 +301,14 @@ def clone_from_project(target_project, source_project):
             project=target_project,
             source=ss.source,
             section=ss.section,
-            trade_code=tc_map.get(ss.trade_code_id) if ss.trade_code_id else None,  # ty:ignore[unresolved-attribute]
+            trade_code=tc_map.get(ss.trade_code_id) if ss.trade_code_id else None,
             unit_label=ss.unit_label,
             name=ss.name,
         )
         for comp in ss.spec_components.all():
             ProjectSpecificationComponent.objects.create(
                 specification=ps,
-                material=mat_map.get(comp.material_id) if comp.material_id else None,  # ty:ignore[unresolved-attribute]
+                material=mat_map.get(comp.material_id) if comp.material_id else None,
                 label=comp.label,
                 qty_per_unit=comp.qty_per_unit,
                 sort_order=comp.sort_order,
@@ -838,7 +838,7 @@ def sync_plant_specs_from_system(project):
             continue
         plant_type = None
         if sps.plant_type_id:  # ty:ignore[unresolved-attribute]
-            plant_type = ProjectPlantCost.objects.filter(
+            plant_type = ProjectPlantCost.objects.filter(  # noqa: F841
                 project=project,
                 source_id=sps.plant_type_id,  # ty:ignore[unresolved-attribute]
             ).first()
