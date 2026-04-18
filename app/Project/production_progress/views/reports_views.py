@@ -8,8 +8,8 @@ from django.views.generic import TemplateView
 from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Project.models import Project
 from app.core.Utilities.widgets import SearchableSelectWidget
+from app.Project.models import Project
 
 from ..production_models import (
     DailyActivityEntry,

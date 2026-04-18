@@ -52,19 +52,6 @@
                         <div class="text-4xl font-bold text-indigo-600 tracking-tighter">{{ completion_pct|floatformat:1 }}%</div>
                         <div class="text-gray-600 text-sm mt-1 ">Complete</div>
                     </div>
-                    {% comment %} <div class="flex items-center space-x-3">
-                    <a href="{% url 'project:production-plan-edit' project.pk plan.pk %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Edit Plan
-                    </a>
-                    <a href="{% url 'project:plan-productivity-dashboard' project.pk %}?plan_id={{ plan.pk }}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        {% heroicon_outline "chart-bar" size="18" class="mr-2 text-indigo-600" %}
-                        Productivity Analytics
-                    </a>
-                    <a href="{% url 'project:production-create' project.pk %}?plan_id={{ plan.pk }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        {% heroicon_solid "plus" size="18" class="mr-2" %}
-                        Log Progress
-                    </a>
-                    </div> {% endcomment %}
                 </div>
                 <!-- Progress Section -->
                 <div class="mb-2">
@@ -202,13 +189,6 @@
                         </div>
                         <h3 class="text-sm font-bold text-gray-900 uppercase tracking-tight">No activity logs found</h3>
                         <p class="text-[11px] text-gray-400 mt-1 font-medium">Start by logging your daily production progress.</p>
-                        <div class="mt-8">
-                            <a href="{% url 'project:production-create' project.pk %}?plan_id={{ plan.pk }}"
-                               class="inline-flex items-center text-indigo-600 font-bold text-xs uppercase tracking-widest hover:text-indigo-800 transition-colors">
-                                {% heroicon_solid "plus" size="14" class="mr-1.5" %}
-                                Log Progress
-                            </a>
-                        </div>
                     </div>
                 {% endfor %}
             </div>

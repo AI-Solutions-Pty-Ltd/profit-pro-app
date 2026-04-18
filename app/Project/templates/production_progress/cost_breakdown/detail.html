@@ -227,7 +227,8 @@
                                 {% endif %}
 
                                 <!-- Manual Resources from selected_plan.resources -->
-                                {% comment %} {% for resource in selected_plan.resources.all %}
+                                <!-- Manual Resources from selected_plan.resources -->
+                                {% for resource in selected_plan.resources.all %}
                                     {% if resource.resource_type == type_code %}
                                         <tr class="transition-colors hover:bg-indigo-50/30">
                                             <td class="px-6 py-4 text-sm font-bold text-gray-900 whitespace-nowrap">{{ resource.name }}</td>
@@ -258,7 +259,7 @@
                                             </td>
                                         </tr>
                                     {% endif %}
-                                {% endfor %} {% endcomment %}
+                                {% endfor %}
                             </tbody>
                             <tfoot class="bg-gray-50/30">
                                 <tr>

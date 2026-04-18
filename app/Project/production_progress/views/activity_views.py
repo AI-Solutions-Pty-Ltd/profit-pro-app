@@ -1,14 +1,17 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Case, Count, DecimalField, F, Sum, Value, When
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
-from django.http import JsonResponse
-from django.views.generic import DetailView, ListView, TemplateView
+from django.views.generic import ListView, TemplateView
 
 from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Estimator.models import BOQItem, ProjectLabourSpecification, ProjectPlantSpecification
+from app.Estimator.models import (
+    BOQItem,
+    ProjectLabourSpecification,
+)
 from app.Project.models import Project
 
 
@@ -40,7 +43,9 @@ class LaborActivityListView(
         if self.f_bill:
             queryset = queryset.filter(bill_no=self.f_bill)
         if self.f_activity:
-            queryset = queryset.filter(labour_specification__name__icontains=self.f_activity)
+            queryset = queryset.filter(
+                labour_specification__name__icontains=self.f_activity
+            )
 
         return (
             queryset.values(
@@ -53,14 +58,21 @@ class LaborActivityListView(
             )
             .annotate(
                 num_items=Count("id"),
+                plant_count=Count("plant_specification__plant_type", distinct=True),
                 total_tracker=Sum(
                     Case(
-                        When(unit=F("labour_specification__unit"), then=F("contract_quantity")),
+                        When(
+                            unit=F("labour_specification__unit"),
+                            then=F("contract_quantity"),
+                        ),
                         default=Value(0),
                         output_field=DecimalField(),
                     )
                 ),
-                total_amount=Sum(F("contract_quantity") * F("contract_rate"), output_field=DecimalField()),
+                total_amount=Sum(
+                    F("contract_quantity") * F("contract_rate"),
+                    output_field=DecimalField(),
+                ),
             )
             .order_by("section", "bill_no", "labour_specification__name")
         )
@@ -97,29 +109,39 @@ class LaborActivityListView(
         labour_specs = ProjectLabourSpecification.objects.filter(project_id=project_pk)
         spec_map = {spec.id: spec for spec in labour_specs}
 
+        # Map plant types in bulk to avoid N+1 queries
+        plant_mapping_data = (
+            all_activities.filter(plant_specification__plant_type__isnull=False)
+            .values(
+                "section",
+                "bill_no",
+                "labour_specification",
+                "plant_specification__plant_type__name",
+            )
+            .distinct()
+        )
+
+        plant_map = {}
+        for row in plant_mapping_data:
+            key = (row["section"], row["bill_no"], row["labour_specification"])
+            if key not in plant_map:
+                plant_map[key] = []
+            plant_map[key].append(row["plant_specification__plant_type__name"])
+
         for activity in activities:
             spec = spec_map.get(activity["labour_specification"])
-            if spec:
-                activity["daily_production"] = spec.daily_production
-            else:
-                activity["daily_production"] = 0
+            activity["daily_production"] = spec.daily_production if spec else 0
 
-            # Get unique plant types for this specific activity grouping
-            activity_plant_items = all_activities.filter(
-                section=activity["section"],
-                bill_no=activity["bill_no"],
-                labour_specification_id=activity["labour_specification"]
-            ).select_related("plant_specification__plant_type")
-            
-            plant_types = set()
-            for item in activity_plant_items:
-                if item.plant_specification and item.plant_specification.plant_type:
-                    plant_types.add(item.plant_specification.plant_type.name)
-            
-            activity["plant_types"] = ", ".join(sorted(plant_types)) if plant_types else "None"
+            # Set aggregated plant types from map
+            key = (
+                activity["section"],
+                activity["bill_no"],
+                activity["labour_specification"],
+            )
+            types = sorted(plant_map.get(key, []))
+            activity["plant_types"] = ", ".join(types) if types else "None"
 
         return context
-
 
     def get_breadcrumbs(self):
         project_pk = self.kwargs["project_pk"]
@@ -127,7 +149,9 @@ class LaborActivityListView(
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
             {
                 "title": "Production Dashboard",
-                "url": reverse_lazy("project:production-dashboard", kwargs={"project_pk": project_pk}),
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
             },
             {"title": "Labor Activities", "url": "#"},
         ]
@@ -152,12 +176,16 @@ class LaborActivityDetailView(
         self.section = self.request.GET.get("section", "")
         self.bill_no = self.request.GET.get("bill_no", "")
 
-        return BOQItem.objects.filter(
-            project_id=self.project_pk,
-            labour_specification_id=self.labour_spec_id,
-            section=self.section,
-            bill_no=self.bill_no,
-        ).select_related("plant_specification__plant_type").order_by("id")
+        return (
+            BOQItem.objects.filter(
+                project_id=self.project_pk,
+                labour_specification_id=self.labour_spec_id,
+                section=self.section,
+                bill_no=self.bill_no,
+            )
+            .select_related("plant_specification__plant_type")
+            .order_by("id")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -182,17 +210,22 @@ class LaborActivityDetailView(
                     output_field=DecimalField(),
                 )
             ),
-            total_amount=Sum(F("contract_quantity") * F("contract_rate"), output_field=DecimalField()),
+            total_amount=Sum(
+                F("contract_quantity") * F("contract_rate"), output_field=DecimalField()
+            ),
         )
         context["total_tracker"] = metrics["total_tracker"] or 0
         context["total_amount"] = metrics["total_amount"] or 0
 
-        # Unique plant types for overview card
-        plant_types = set()
-        for item in group_items:
-            if item.plant_specification and item.plant_specification.plant_type:
-                plant_types.add(item.plant_specification.plant_type.name)
-        context["plant_types_summary"] = ", ".join(sorted(plant_types)) if plant_types else "None"
+        # Unique plant types summary
+        plant_types = sorted(
+            group_items.filter(plant_specification__plant_type__isnull=False)
+            .values_list("plant_specification__plant_type__name", flat=True)
+            .distinct()
+        )
+        context["plant_types_summary"] = (
+            ", ".join(plant_types) if plant_types else "None"
+        )
 
         return context
 
@@ -202,10 +235,13 @@ class LaborActivityDetailView(
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
             {
                 "title": "Labor Activities",
-                "url": reverse_lazy("project:labor-activity-list", kwargs={"project_pk": project_pk}),
+                "url": reverse_lazy(
+                    "project:labor-activity-list", kwargs={"project_pk": project_pk}
+                ),
             },
             {"title": "Activity Details", "url": "#"},
         ]
+
 
 class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
     """
@@ -215,23 +251,31 @@ class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         project_id = self.kwargs.get("project_pk")
-        
+
         # We want unique combinations of (spec, section, bill)
         # and we use the first item's ID as a representative ID for the form.
         items = (
-            BOQItem.objects.filter(project_id=project_id, labour_specification__isnull=False)
+            BOQItem.objects.filter(
+                project_id=project_id, labour_specification__isnull=False
+            )
             .values(
                 "labour_specification",
                 "labour_specification__name",
                 "labour_specification__unit",
+                "labour_specification__daily_production",
                 "section",
-                "bill_no"
+                "bill_no",
             )
             .annotate(
-                representative_id=Sum("id"), # This is just to get A value, we'll fix below
+                representative_id=Sum(
+                    "id"
+                ),  # This is just to get A value, we'll fix below
                 total_quantity=Sum(
                     Case(
-                        When(unit=F("labour_specification__unit"), then=F("contract_quantity")),
+                        When(
+                            unit=F("labour_specification__unit"),
+                            then=F("contract_quantity"),
+                        ),
                         default=Value(0),
                         output_field=DecimalField(),
                     )
@@ -240,45 +284,61 @@ class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
             .order_by("section", "bill_no", "labour_specification__name")
         )
 
-        # To get a real ID, we actually need to do something slightly different 
-        # because ValuesQuerySet + aggregation doesn't let us pick a specific ID easily.
-        # We'll just fetch a sample ID for each group.
-        
-        # Optimize: Get all item groups first
-        data = []
-        for item in items:
-            label = f"[{item['section']}][{item['bill_no']}] {item['labour_specification__name']}"
-            
-            # Find plant specs available for this group to help with selection in the form
-            plant_specs = (
-                BOQItem.objects.filter(
-                    project_id=project_id,
-                    labour_specification_id=item["labour_specification"],
-                    section=item["section"],
-                    bill_no=item["bill_no"],
-                    plant_specification__isnull=False
-                )
-                .values("plant_specification", "plant_specification__name", "plant_specification__plant_type__name")
-                .distinct()
+        # To avoid N+1 inside the loop, fetch all plant specs/types for these activities first
+        all_plants = (
+            BOQItem.objects.filter(
+                project_id=project_id,
+                labour_specification__isnull=False,
+                plant_specification__isnull=False,
             )
-            plant_spec_list = [
+            .values(
+                "section",
+                "bill_no",
+                "labour_specification",
+                "plant_specification",
+                "plant_specification__name",
+                "plant_specification__plant_type__name",
+            )
+            .distinct()
+        )
+
+        plant_spec_map = {}
+        plant_type_map = {}
+        for p in all_plants:
+            key = (p["section"], p["bill_no"], p["labour_specification"])
+            if key not in plant_spec_map:
+                plant_spec_map[key] = []
+                plant_type_map[key] = set()
+
+            plant_spec_map[key].append(
                 {
                     "id": p["plant_specification"],
                     "name": p["plant_specification__name"],
-                    "type": p["plant_specification__plant_type__name"]
+                    "type": p["plant_specification__plant_type__name"],
                 }
-                for p in plant_specs
-            ]
+            )
+            plant_type_map[key].add(p["plant_specification__plant_type__name"])
 
-            data.append({
-                "id": item["labour_specification"], # Use the spec ID
-                "label": label,
-                "activity_name": item["labour_specification__name"],
-                "section": item["section"],
-                "bill_no": item["bill_no"],
-                "unit": item["labour_specification__unit"],
-                "quantity": str(item["total_quantity"] or 0),
-                "plant_specs": plant_spec_list,
-            })
+        data = []
+        for item in items:
+            key = (item["section"], item["bill_no"], item["labour_specification"])
+            label = f"[{item['section']}][{item['bill_no']}] {item['labour_specification__name']}"
+
+            data.append(
+                {
+                    "id": item["labour_specification"],
+                    "label": label,
+                    "activity_name": item["labour_specification__name"],
+                    "section": item["section"],
+                    "bill_no": item["bill_no"],
+                    "unit": item["labour_specification__unit"],
+                    "quantity": str(item["total_quantity"] or 0),
+                    "daily_production": str(
+                        item["labour_specification__daily_production"] or 0
+                    ),
+                    "plant_specs": plant_spec_map.get(key, []),
+                    "plant_types": sorted(plant_type_map.get(key, [])),
+                }
+            )
 
         return JsonResponse({"activities": data})

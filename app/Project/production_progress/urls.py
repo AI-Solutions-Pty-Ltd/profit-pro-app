@@ -54,11 +54,6 @@ urlpatterns = [
         name="production-list",
     ),
     path(
-        "<int:project_pk>/productivity/add/",
-        views.DailyProductivityCreateView.as_view(),
-        name="production-create",
-    ),
-    path(
         "<int:project_pk>/tracking/",
         views.ProgressTrackingView.as_view(),
         name="production-tracking",
@@ -89,11 +84,6 @@ urlpatterns = [
         name="production-forecast-dashboard",
     ),
     path(
-        "<int:project_pk>/productivity/resources/ajax/",
-        views.PlanResourcesAjaxView.as_view(),
-        name="plan-resources-ajax",
-    ),
-    path(
         "<int:project_pk>/plan/<int:pk>/data/",
         views.ProductionPlanAjaxDetailView.as_view(),
         name="production-plan-data-ajax",
@@ -122,5 +112,41 @@ urlpatterns = [
         "<int:project_pk>/labor-activities/detail/",
         views.LaborActivityDetailView.as_view(),
         name="labor-activity-detail",
+    ),
+    # Daily Log URLs
+    path(
+        "<int:project_pk>/daily-logs/",
+        views.ProductionDailyLogListView.as_view(),
+        name="production-daily-log-list",
+    ),
+    path(
+        "<int:project_pk>/daily-logs/add/",
+        views.ProductionDailyLogCreateView.as_view(),
+        name="production-daily-log-create",
+    ),
+    path(
+        "<int:project_pk>/daily-logs/<int:pk>/",
+        views.ProductionDailyLogDetailView.as_view(),
+        name="production-daily-log-detail",
+    ),
+    path(
+        "<int:project_pk>/daily-logs/<int:pk>/edit/",
+        views.ProductionDailyLogUpdateView.as_view(),
+        name="production-daily-log-edit",
+    ),
+    path(
+        "<int:project_pk>/daily-logs/<int:pk>/delete/",
+        views.ProductionDailyLogDeleteView.as_view(),
+        name="production-daily-log-delete",
+    ),
+    path(
+        "<int:project_pk>/ajax/daily-log-activity-data/",
+        views.DailyLogActivityDataAjaxView.as_view(),
+        name="ajax-daily-log-activity-data",
+    ),
+    path(
+        "<int:project_pk>/plan/<int:pk>/refresh/",
+        views.ProductionPlanRefreshAjaxView.as_view(),
+        name="production-plan-refresh-ajax",
     ),
 ]

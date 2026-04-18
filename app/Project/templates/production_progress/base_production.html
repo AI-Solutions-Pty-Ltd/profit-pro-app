@@ -62,6 +62,12 @@
                             {% heroicon_outline "chart-pie" class="inline-block mr-1 w-4 h-4" %}
                             Cost Forecast
                         </a>
+                        <!-- Daily Logs -->
+                        <a href="{% url 'project:production-daily-log-list' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'daily-log' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "calendar-days" class="inline-block mr-1 w-4 h-4" %}
+                            Daily Logs
+                        </a>
                         <!-- History -->
                         <a href="{% url 'project:production-list' project.pk %}"
                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if current_url == 'production-list' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">

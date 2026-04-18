@@ -3,15 +3,15 @@
 import factory
 from factory.django import DjangoModelFactory
 
-from app.BillOfQuantities.tests.factories import (
-    BillFactory,
-    PackageFactory,
-    StructureFactory,
-)
 from app.Project.tests.factories import ProjectFactory
 
-from app.Estimator.models import ProjectLabourSpecification
-from .production_models import ProductionPlan
+from .production_models import (
+    DailyActivityEntry,
+    DailyActivityReport,
+    DailyLabourUsage,
+    DailyPlantUsage,
+    ProductionPlan,
+)
 
 
 class ProductionPlanFactory(DjangoModelFactory):
@@ -21,13 +21,7 @@ class ProductionPlanFactory(DjangoModelFactory):
         model = ProductionPlan
 
     project = factory.SubFactory(ProjectFactory)
-    structure = factory.SubFactory(
-        StructureFactory, project=factory.SelfAttribute("..project")
-    )
-    bill = factory.SubFactory(
-        BillFactory, structure=factory.SelfAttribute("..structure")
-    )
-    package = factory.SubFactory(PackageFactory, bill=factory.SelfAttribute("..bill"))
+    project = factory.SubFactory(ProjectFactory)
     activity = factory.Sequence(lambda n: f"Activity {n}")
     start_date = factory.Faker("date_between", start_date="-1y", end_date="today")
     finish_date = factory.Faker("date_between", start_date="today", end_date="+1y")
@@ -35,3 +29,50 @@ class ProductionPlanFactory(DjangoModelFactory):
     quantity = factory.Faker("pydecimal", left_digits=4, right_digits=2, positive=True)
     unit = "m3"
     labour_activity = None
+
+
+class DailyActivityReportFactory(DjangoModelFactory):
+    """Factory for DailyActivityReport model."""
+
+    class Meta:
+        model = DailyActivityReport
+
+    project = factory.SubFactory(ProjectFactory)
+    date = factory.Faker("date_between", start_date="-1y", end_date="today")
+    notes = factory.Faker("text")
+
+
+class DailyActivityEntryFactory(DjangoModelFactory):
+    """Factory for DailyActivityEntry model."""
+
+    class Meta:
+        model = DailyActivityEntry
+
+    report = factory.SubFactory(DailyActivityReportFactory)
+    production_plan = factory.SubFactory(ProductionPlanFactory)
+    quantity = 100
+    hours_on_activity = 8.0
+
+
+class DailyLabourUsageFactory(DjangoModelFactory):
+    """Factory for DailyLabourUsage model."""
+
+    class Meta:
+        model = DailyLabourUsage
+
+    entry = factory.SubFactory(DailyActivityEntryFactory)
+    skill_type = "Skilled"
+    number = 2
+    hours = 8.0
+
+
+class DailyPlantUsageFactory(DjangoModelFactory):
+    """Factory for DailyPlantUsage model."""
+
+    class Meta:
+        model = DailyPlantUsage
+
+    entry = factory.SubFactory(DailyActivityEntryFactory)
+    plant_name = factory.Faker("word")
+    hours = 8.0
+    quantity = 50.0

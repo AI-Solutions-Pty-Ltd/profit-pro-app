@@ -1,12 +1,18 @@
-from django.contrib import messages
+import json
+
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db import transaction
-from django.shortcuts import get_object_or_404, redirect
+from django.db.models import Count, Sum, F, OuterRef, Subquery, DecimalField
+from django.db.models.functions import Coalesce
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
-from django.utils import timezone
 from django.views.generic import (
     CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
     TemplateView,
+    UpdateView,
 )
 
 from app.Account.subscription_config import Subscription
@@ -15,19 +21,17 @@ from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project
 
 from ..production_forms import (
-    AggregatedLabourFormSet,
-    DailyActivityReportForm,
-    DailyPlantUsageFormSet,
     DailyProductionForm,
 )
 from ..production_models import (
     DailyActivityEntry,
     DailyActivityReport,
     DailyLabourUsage,
+    DailyPlantUsage,
     DailyProduction,
     ProductionPlan,
-    ProductionResource,
 )
+from ..serializers import DailyLogReportSerializer
 
 
 class DailyProductionCreateView(
@@ -61,7 +65,8 @@ class DailyProductionCreateView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["project"] = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        context["project"] = project
         return context
 
     def form_valid(self, form):
@@ -69,13 +74,64 @@ class DailyProductionCreateView(
         return super().form_valid(form)
 
 
-class DailyProductivityCreateView(
-    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+class ProductionDailyLogListView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, ListView
 ):
-    """View to handle the composite Daily Productivity Form."""
+    """List view for Daily Activity Reports."""
 
-    template_name = "production_progress/tracking/productivity_form.html"
+    model = DailyActivityEntry
+    template_name = "production_progress/log/list.html"
+    context_object_name = "entries"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_queryset(self):
+        # Subquery for Labour Costs
+        labour_costs = (
+            DailyLabourUsage.objects.filter(entry=OuterRef("pk"))
+            .annotate(
+                line_cost=F("number") * F("hours") * F("resource__rate"),
+            )
+            .values("entry")
+            .annotate(total=Sum("line_cost"))
+            .values("total")
+        )
+
+        # Subquery for Plant Costs
+        plant_costs = (
+            DailyPlantUsage.objects.filter(entry=OuterRef("pk"))
+            .annotate(
+                line_cost=F("number") * F("hours") * F("resource__rate"),
+            )
+            .values("entry")
+            .annotate(total=Sum("line_cost"))
+            .values("total")
+        )
+
+        return (
+            DailyActivityEntry.objects.filter(report__project_id=self.kwargs["project_pk"])
+            .select_related("report", "production_plan")
+            .annotate(
+                acc_labour_cost=Coalesce(
+                    Subquery(labour_costs, output_field=DecimalField()),
+                    0,
+                    output_field=DecimalField(),
+                ),
+                acc_plant_cost=Coalesce(
+                    Subquery(plant_costs, output_field=DecimalField()),
+                    0,
+                    output_field=DecimalField(),
+                ),
+            )
+            .annotate(
+                acc_total_cost=F("acc_labour_cost") + F("acc_plant_cost"),
+            )
+            .order_by("-report__date", "-created_at")
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        return context
 
     def get_breadcrumbs(self):
         project_pk = self.kwargs["project_pk"]
@@ -87,300 +143,271 @@ class DailyProductivityCreateView(
                     "project:production-dashboard", kwargs={"project_pk": project_pk}
                 ),
             },
-            {"title": "Daily Productivity Log", "url": None},
+            {"title": "Daily Logs", "url": None},
         ]
 
-    def get_context_data(self, post_data=None, **kwargs):
+
+class ProductionDailyLogCreateView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """Multi-activity Daily Log Form."""
+
+    template_name = "production_progress/log/form.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         project_pk = self.kwargs["project_pk"]
         project = get_object_or_404(Project, pk=project_pk)
         context["project"] = project
-        all_plans = ProductionPlan.objects.filter(
-            project=project, is_archived=False, labour_activity__isnull=False
-        ).select_related("parent", "parent__parent")
 
-        # Add hierarchical context for display
-        for plan in all_plans:
-            context_parts = []
-            if plan.section:
-                context_parts.append(plan.section)
-            if plan.bill_no:
-                context_parts.append(f"Bill {plan.bill_no}")
-            plan.hierarchical_context = " / ".join(context_parts)
-
-        context["all_plans"] = all_plans
-
-        selected_plans_ids = self.request.POST.getlist("selected_plans")
-        if not selected_plans_ids:
-            selected_plans_ids = self.request.GET.getlist("selected_plans")
-        print(f"DEBUG: selected_plans_ids: {selected_plans_ids}")
-        print(f"DEBUG: project: {project}")
-
-        selected_plans = (
-            ProductionPlan.objects.filter(
-                id__in=selected_plans_ids, project=project
-            ).order_by("id")
-            if selected_plans_ids
-            else ProductionPlan.objects.none()
-        )
-        context["selected_plans"] = selected_plans
-        context["selected_plans_ids"] = [
-            int(sid) for sid in selected_plans_ids if str(sid).isdigit()
-        ]
-
-        plan_resources = {}
-        plant_formsets = {}
-
-        for plan in selected_plans:
-            resources = ProductionResource.objects.filter(production_plan=plan)
-            # Check for specification-based resources
-            has_skilled_crew = False
-            has_semi_crew = False
-            has_general_crew = False
-            has_plant_spec = False
-
-            if plan.labour_activity and plan.labour_activity.crew:
-                crew = plan.labour_activity.crew
-                has_skilled_crew = crew.skilled > 0
-                has_semi_crew = crew.semi_skilled > 0
-                has_general_crew = crew.general > 0
-
-            if plan.plant_specification:
-                has_plant_spec = True
-
-            plan_resources[plan.id] = {
-                "skilled": has_skilled_crew
-                or resources.filter(
-                    resource_type="LABOUR", skill_type__name__icontains="skilled"
-                )
-                .exclude(skill_type__name__icontains="semi")
-                .exists(),
-                "semi_skilled": has_semi_crew
-                or resources.filter(
-                    resource_type="LABOUR", skill_type__name__icontains="semi-skilled"
-                ).exists(),
-                "unskilled": has_general_crew or resources.filter(
-                    resource_type="LABOUR", skill_type__name__icontains="unskilled"
-                ).exists(),
-                "plant": has_plant_spec or resources.filter(resource_type="PLANT").exists(),
-                "has_crew_spec": has_skilled_crew or has_semi_crew or has_general_crew,
-                "has_plant_spec": has_plant_spec,
-            }
-
-            planned_plants = resources.filter(resource_type="PLANT")
-            plant_initial = [
-                {"resource": res.id, "number": int(res.number), "hours": 8.0}
-                for res in planned_plants
-            ]
-
-            p_prefix = f"plant_{plan.id}"
-            if post_data:
-                p_formset = DailyPlantUsageFormSet(
-                    post_data, prefix=p_prefix, form_kwargs={"activity_id": plan.id}
-                )
-            else:
-                p_formset = DailyPlantUsageFormSet(
-                    prefix=p_prefix,
-                    initial=plant_initial,
-                    form_kwargs={"activity_id": plan.id},
-                )
-
-            for f in p_formset.forms:
-                f.fields["resource"].queryset = planned_plants
-                f.fields["activity"].initial = plan.id
-                f.fields["activity"].queryset = ProductionPlan.objects.filter(
-                    id=plan.id
-                )
-            plant_formsets[plan.id] = p_formset
-
-        context["plan_resources"] = plan_resources
-        context["plant_formsets"] = plant_formsets
-
-        # Build initial data for labour using Crew Spec if available
-        labour_initial = []
-        for plan in selected_plans:
-            initial = {"activity": plan.id}
-            if plan.labour_activity and plan.labour_activity.crew:
-                crew = plan.labour_activity.crew
-                initial.update({
-                    "skilled_number": crew.skilled,
-                    "semi_skilled_number": crew.semi_skilled,
-                    "unskilled_number": crew.general,
-                    "total_hours": 8.0  # Standard daily hours
-                })
-            labour_initial.append(initial)
-
-        if post_data:
-            labour_formset = AggregatedLabourFormSet(
-                post_data, prefix="labour", form_kwargs={"project_id": project.id}
-            )
-        else:
-            labour_formset = AggregatedLabourFormSet(
-                prefix="labour",
-                initial=labour_initial,
-                form_kwargs={"project_id": project.id},
-            )
-
-        for form, plan in zip(labour_formset.forms, selected_plans, strict=False):
-            form.fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)
-            res_info = plan_resources[plan.id]
-            if not res_info["skilled"]:
-                form.fields["skilled_number"].disabled = True
-            if not res_info["semi_skilled"]:
-                form.fields["semi_skilled_number"].disabled = True
-            if not res_info["unskilled"]:
-                form.fields["unskilled_number"].disabled = True
-
-        context["labour_formset"] = labour_formset
-        context["labour_forms_with_plans"] = list(
-            zip(labour_formset.forms, selected_plans, strict=False)
-        )
-        context["plant_formset"] = next(
-            iter(plant_formsets.values()), None
-        ) or DailyPlantUsageFormSet(prefix="plant")
-
-        if post_data:
-            context["report_form"] = DailyActivityReportForm(post_data)
-        else:
-            context["report_form"] = DailyActivityReportForm(
-                initial={"date": timezone.now().date()}
-            )
+        # Available activities (only those with ProductionPlans)
+        context["plans"] = ProductionPlan.objects.filter(
+            project=project, labour_activity__isnull=False
+        ).order_by("section", "bill_no", "activity")
 
         return context
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs) -> JsonResponse:
+        try:
+            data = json.loads(request.body)
+            data["project_id"] = self.kwargs["project_pk"]
+            serializer = DailyLogReportSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse(
+                    {"status": "success", "message": "Log saved successfully"}
+                )
+            return JsonResponse(
+                {"status": "error", "errors": serializer.errors}, status=400
+            )
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Daily Logs",
+                "url": reverse_lazy(
+                    "project:production-daily-log-list",
+                    kwargs={"project_pk": project_pk},
+                ),
+            },
+            {"title": "Capture Log", "url": None},
+        ]
+
+
+class ProductionDailyLogUpdateView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, DetailView
+):
+    """Multi-activity Daily Log Edit Form."""
+
+    model = DailyActivityReport
+    template_name = "production_progress/log/form.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+    context_object_name = "report"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         project_pk = self.kwargs["project_pk"]
         project = get_object_or_404(Project, pk=project_pk)
+        context["project"] = project
 
-        report_form = DailyActivityReportForm(request.POST)
-        labour_formset = AggregatedLabourFormSet(
-            request.POST, prefix="labour", form_kwargs={"project_id": project.id}
-        )
+        # Available activities (only those with ProductionPlans)
+        context["plans"] = ProductionPlan.objects.filter(
+            project=project, labour_activity__isnull=False
+        ).order_by("section", "bill_no", "activity")
 
-        selected_plans_ids = request.POST.getlist("selected_plans")
-        selected_plans = ProductionPlan.objects.filter(
-            id__in=selected_plans_ids, project=project
-        ).order_by("id")
-        plan_map = {str(p.id): p for p in selected_plans}
+        # Prepare initial data for JS
+        # We prefetch for efficiency
+        report = self.object
+        entries_data = []
+        for entry in report.entries.all().select_related("production_plan"):
+            # Labour
+            labour_details = {
+                "Skilled": {"number": 0, "hours": 0},
+                "Semi-Skilled": {"number": 0, "hours": 0},
+                "General": {"number": 0, "hours": 0},
+            }
+            for usage in entry.labour_usage.all().select_related("resource"):
+                labour_details[usage.resource.name] = {
+                    "number": float(usage.number),
+                    "hours": float(usage.hours),
+                }
 
-        for form in labour_formset.forms:
-            act_id = form.data.get(
-                f"labour-{form.prefix}-activity"
-            ) or form.initial.get("activity")
-            if str(act_id) in plan_map:
-                form.fields["activity"].queryset = ProductionPlan.objects.filter(
-                    id=act_id
+            # Plant
+            plant_usage = []
+            for usage in entry.plant_usage.all().select_related("resource"):
+                plant_usage.append(
+                    {
+                        "plant_name": usage.resource.name,
+                        "number": float(usage.number),
+                        "hours": float(usage.hours),
+                        "quantity": float(usage.quantity),
+                    }
                 )
 
-        plant_formsets = {}
-        plant_valid = True
-        for plan in selected_plans:
-            p_prefix = f"plant_{plan.id}"
-            if f"{p_prefix}-TOTAL_FORMS" not in request.POST:
-                continue
-
-            p_formset = DailyPlantUsageFormSet(
-                request.POST, prefix=p_prefix, form_kwargs={"activity_id": plan.id}
+            entries_data.append(
+                {
+                    "production_plan_id": entry.production_plan_id,
+                    "activity": entry.production_plan.activity,
+                    "section": entry.production_plan.section,
+                    "bill_no": entry.production_plan.bill_no,
+                    "quantity": float(entry.quantity),
+                    "hours_on_activity": float(entry.hours_on_activity),
+                    "labour_details": labour_details,
+                    "plant_usage": plant_usage,
+                    "unit": entry.production_plan.unit_display,
+                    "available_plants": list(entry.production_plan.plant_types),
+                }
             )
 
-            planned_plants = ProductionResource.objects.filter(
-                production_plan=plan, resource_type="PLANT"
-            )
-            for f in p_formset.forms:
-                f.fields["resource"].queryset = planned_plants
-                f.fields["activity"].queryset = ProductionPlan.objects.filter(
-                    id=plan.id
-                )
-
-            plant_formsets[plan.id] = p_formset
-            if not p_formset.is_valid():
-                plant_valid = False
-
-        if report_form.is_valid() and labour_formset.is_valid() and plant_valid:
-            try:
-                with transaction.atomic():
-                    report, _ = DailyActivityReport.objects.get_or_create(
-                        project=project, date=report_form.cleaned_data["date"]
-                    )
-
-                    entries = {}
-
-                    for form in labour_formset:
-                        if form.cleaned_data:
-                            plan = form.cleaned_data["activity"]
-                            entry, _ = DailyActivityEntry.objects.update_or_create(
-                                report=report,
-                                production_plan=plan,
-                                defaults={
-                                    "quantity": form.cleaned_data.get("quantity") or 0.0
-                                },
-                            )
-                            entries[plan.id] = entry
-
-                            entry.labour_usage.all().delete()
-
-                            for name_part, number in [
-                                ("skilled", form.cleaned_data.get("skilled_number")),
-                                ("semi", form.cleaned_data.get("semi_skilled_number")),
-                                (
-                                    "unskilled",
-                                    form.cleaned_data.get("unskilled_number"),
-                                ),
-                            ]:
-                                if number and number > 0:
-                                    res = ProductionResource.objects.filter(
-                                        production_plan=plan,
-                                        resource_type="LABOUR",
-                                        skill_type__name__icontains=name_part,
-                                    ).first()
-                                    if res:
-                                        DailyLabourUsage.objects.create(
-                                            entry=entry,
-                                            resource=res,
-                                            number=number,
-                                            hours=form.cleaned_data.get("total_hours")
-                                            or 0.0,
-                                        )
-
-                    for plan_id, p_fs in plant_formsets.items():
-                        entry = entries.get(plan_id)
-                        if not entry:
-                            plan = plan_map.get(str(plan_id))
-                            entry, _ = DailyActivityEntry.objects.update_or_create(
-                                report=report,
-                                production_plan=plan,
-                                defaults={"quantity": 0},
-                            )
-                            entries[plan_id] = entry
-
-                        for p_form in p_fs:
-                            if p_form.cleaned_data:
-                                if p_form.cleaned_data.get("DELETE", False):
-                                    if p_form.instance.pk:
-                                        p_form.instance.delete()
-                                else:
-                                    usage = p_form.save(commit=False)
-                                    usage.entry = entry
-                                    usage.save()
-
-                    messages.success(
-                        request, "Daily productivity logs saved successfully."
-                    )
-                    return redirect(
-                        "project:production-dashboard", project_pk=project_pk
-                    )
-
-            except Exception as e:
-                messages.error(request, f"Error during save: {str(e)}")
-        else:
-            messages.error(request, "Please correct the errors in the form.")
-
-        context = self.get_context_data(post_data=request.POST)
-        context.update(
+        context["initial_data"] = json.dumps(
             {
-                "report_form": report_form,
-                "labour_formset": labour_formset,
-                "plant_formsets": plant_formsets,
+                "date": report.date.isoformat(),
+                "notes": report.notes,
+                "entries": entries_data,
             }
         )
-        return self.render_to_response(context)
+
+        return context
+
+    def post(self, request, *args, **kwargs) -> JsonResponse:
+        try:
+            instance = self.get_object()
+            data = json.loads(request.body)
+            data["project_id"] = self.kwargs["project_pk"]
+            serializer = DailyLogReportSerializer(instance, data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse(
+                    {"status": "success", "message": "Log updated successfully"}
+                )
+            return JsonResponse(
+                {"status": "error", "errors": serializer.errors}, status=400
+            )
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Daily Logs",
+                "url": reverse_lazy(
+                    "project:production-daily-log-list",
+                    kwargs={"project_pk": project_pk},
+                ),
+            },
+            {"title": "Edit Log", "url": None},
+        ]
+
+
+class ProductionDailyLogDeleteView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, DeleteView
+):
+    """Deletes a Daily Activity Report."""
+
+    model = DailyActivityReport
+    template_name = "production_progress/log/confirm_delete.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+    context_object_name = "report"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        context["project"] = get_object_or_404(Project, pk=project_pk)
+        
+        # Calculate Project Totals for the current list
+        queryset = self.get_queryset()
+        context["totals"] = queryset.aggregate(
+            hours=Coalesce(Sum("hours_on_activity"), 0, output_field=DecimalField()),
+            labour=Coalesce(Sum("acc_labour_cost"), 0, output_field=DecimalField()),
+            plant=Coalesce(Sum("acc_plant_cost"), 0, output_field=DecimalField()),
+            total=Coalesce(Sum("acc_total_cost"), 0, output_field=DecimalField()),
+            qty=Coalesce(Sum("quantity"), 0, output_field=DecimalField()),
+        )
+        return context
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "project:production-daily-log-list",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+    def get_breadcrumbs(self):
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {"title": "Daily Logs", "url": self.get_success_url()},
+            {"title": "Delete Log", "url": None},
+        ]
+
+
+class ProductionDailyLogDetailView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, DetailView
+):
+    """Detailed view of a Daily Activity Report."""
+
+    model = DailyActivityReport
+    template_name = "production_progress/log/details.html"
+    context_object_name = "report"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.object.project
+        # Prefetch entries and resource usage
+        entries = self.object.entries.select_related(
+            "production_plan"
+        ).prefetch_related("labour_usage__resource", "plant_usage__resource")
+        context["entries"] = entries
+        
+        # Calculate daily totals
+        # Note: Summing model properties in Python for a single report is acceptable.
+        context["report_total_cost"] = sum(entry.total_cost for entry in entries)
+        return context
+
+    def get_breadcrumbs(self):
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Daily Logs",
+                "url": reverse_lazy(
+                    "project:production-daily-log-list",
+                    kwargs={"project_pk": self.object.project_id},
+                ),
+            },
+            {"title": "Log Details", "url": None},
+        ]
+
+
+class DailyLogActivityDataAjaxView(LoginRequiredMixin, TemplateView):
+    """Returns metadata for a specific production plan to facilitate autofill."""
+
+    def get(self, request, *args, **kwargs):
+        plan_id = request.GET.get("plan_id")
+        plan = get_object_or_404(ProductionPlan, pk=plan_id)
+
+        # Plant types are now cached on the ProductionPlan model
+        plant_types = plan.plant_types
+
+        # Crew Info
+        crew_info = {"skilled": 0, "semi_skilled": 0, "general": 0}
+        if plan.labour_activity and plan.labour_activity.crew:
+            crew = plan.labour_activity.crew
+            crew_info = {
+                "skilled": crew.skilled,
+                "semi_skilled": crew.semi_skilled,
+                "general": crew.general,
+            }
+
+        return JsonResponse(
+            {
+                "unit": plan.unit_display,
+                "plant_types": list(plant_types),
+                "crew": crew_info,
+            }
+        )

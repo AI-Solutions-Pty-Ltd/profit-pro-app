@@ -42,8 +42,16 @@ class ProductionPlan(BaseModel):
         related_name="children",
         help_text="Parent activity for nesting",
     )
-    section = models.CharField(max_length=200, blank=True, help_text="Manual section or inherited from Activity")
-    bill_no = models.CharField(max_length=200, blank=True, help_text="Manual bill no or inherited from Activity")
+    section = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Manual section or inherited from Activity",
+    )
+    bill_no = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Manual bill no or inherited from Activity",
+    )
     labour_activity = models.ForeignKey(
         "estimator.ProjectLabourSpecification",
         null=True,
@@ -59,6 +67,9 @@ class ProductionPlan(BaseModel):
         on_delete=models.SET_NULL,
         related_name="production_plans",
         help_text="Optional Plant Specification for this plan",
+    )
+    plant_types = models.JSONField(
+        default=list, blank=True, help_text="Cached list of plant types from BOQ"
     )
     start_date = models.DateField()
     finish_date = models.DateField()
@@ -115,8 +126,33 @@ class ProductionPlan(BaseModel):
         # Handle automatic hierarchy generation ONLY for leaf items (Labour activities)
         if self.labour_activity and not self.parent and (self.section or self.bill_no):
             self._ensure_hierarchy()
+            self.refresh_plant_types()
 
         super().save(*args, **kwargs)
+
+    def refresh_plant_types(self):
+        """Updates plant_types field from BOQItems."""
+        from django.apps import apps
+
+        BOQItem = apps.get_model("estimator", "BOQItem")
+
+        if not self.labour_activity:
+            self.plant_types = []
+            return
+
+        types = list(
+            BOQItem.objects.filter(
+                project=self.project,
+                section=self.section,
+                bill_no=self.bill_no,
+                labour_specification=self.labour_activity,
+                plant_specification__isnull=False,
+            )
+            .values_list("plant_specification__plant_type__name", flat=True)
+            .distinct()
+        )
+
+        self.plant_types = sorted(types)
 
     def _ensure_hierarchy(self):
         """Automatically creates Section and Bill levels if they don't exist."""
@@ -133,7 +169,7 @@ class ProductionPlan(BaseModel):
                 "activity": self.section,
                 "start_date": self.start_date or timezone.now().date(),
                 "finish_date": self.finish_date or timezone.now().date(),
-                "quantity": 0,
+                "quantity": 1,
                 "unit": "SUM",
             },
         )
@@ -154,7 +190,7 @@ class ProductionPlan(BaseModel):
                 "parent": section_parent,
                 "start_date": self.start_date or timezone.now().date(),
                 "finish_date": self.finish_date or timezone.now().date(),
-                "quantity": 0,
+                "quantity": 1,
                 "unit": "SUM",
             },
         )
@@ -182,9 +218,12 @@ class ProductionPlan(BaseModel):
     @property
     def total_labour_cost(self):
         # Manual resources cost
-        manual_cost = self.resources.filter(resource_type="LABOUR").aggregate(
-            total=models.Sum("total_cost")
-        )["total"] or 0
+        manual_cost = (
+            self.resources.filter(resource_type="LABOUR").aggregate(
+                total=models.Sum("total_cost")
+            )["total"]
+            or 0
+        )
 
         # Crew-based specification cost
         spec_cost = 0
@@ -196,9 +235,12 @@ class ProductionPlan(BaseModel):
     @property
     def total_plant_cost(self):
         # Manual resources cost
-        manual_cost = self.resources.filter(resource_type="PLANT").aggregate(
-            total=models.Sum("total_cost")
-        )["total"] or 0
+        manual_cost = (
+            self.resources.filter(resource_type="PLANT").aggregate(
+                total=models.Sum("total_cost")
+            )["total"]
+            or 0
+        )
 
         # Specification-based plant cost
         spec_cost = 0
@@ -210,15 +252,30 @@ class ProductionPlan(BaseModel):
         else:
             # Fallback: Pull from related BOQItems
             from app.Estimator.models import BOQItem, ProjectPlantSpecification
-            spec_ids = BOQItem.objects.filter(
+
+            qs = BOQItem.objects.filter(
                 project=self.project,
                 section=self.section,
                 bill_no=self.bill_no,
-                plant_specification__isnull=False
-            ).values_list("plant_specification", flat=True).distinct()
+                plant_specification__isnull=False,
+            )
+
+            if self.labour_activity:
+                qs = qs.filter(labour_specification=self.labour_activity)
+
+            spec_ids = qs.values_list("plant_specification", flat=True).distinct()
 
             if spec_ids:
-                for spec in ProjectPlantSpecification.objects.filter(pk__in=spec_ids):
+                specs = ProjectPlantSpecification.objects.filter(
+                    pk__in=spec_ids
+                ).select_related("plant_type")
+                unique_specs = {}
+                for spec in specs:
+                    name = spec.plant_type.name if spec.plant_type else spec.name
+                    if name not in unique_specs:
+                        unique_specs[name] = spec
+
+                for spec in unique_specs.values():
                     spec_cost += spec.hourly_cost * 8 * (self.duration or 0)
 
         return manual_cost + spec_cost
@@ -363,6 +420,12 @@ class DailyActivityEntry(BaseModel):
     quantity = models.DecimalField(
         max_digits=15, decimal_places=2, default=0, validators=[MinValueValidator(0)]
     )
+    hours_on_activity = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        help_text="Total hours spent on this activity",
+    )
 
     if TYPE_CHECKING:
         labour_usage: "RelatedManager[DailyLabourUsage]"
@@ -457,6 +520,13 @@ class DailyPlantUsage(BaseModel):
     number = models.IntegerField(default=1, validators=[MinValueValidator(0)])
     hours = models.DecimalField(
         max_digits=5, decimal_places=2, default=8, validators=[MinValueValidator(0)]
+    )
+    quantity = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0)],
+        help_text="Production quantity achieved by this specific plant resource.",
     )
 
     class Meta:

@@ -231,6 +231,46 @@
             document.body.classList.remove("overflow-hidden");
         }
 
+        async function refreshPlanResources(planId, btn) {
+           // if (!confirm('Are you sure you want to refresh the resources for this activity? This will fetch updated specifications from the BOQ.')) return;
+
+            const btnText = btn.querySelector('.btn-text');
+            const spinner = btn.querySelector('.loading');
+            
+            // UI state: loading
+            btn.disabled = true;
+            btnText.classList.add('opacity-50');
+            spinner.classList.remove('hidden');
+
+            try {
+                const response = await fetch('{% url "project:production-plan-refresh-ajax" project.pk 999 %}'.replace('999', planId), {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Show success toast (using simple alert for now, can be improved)
+                    alert(data.message);
+                    // Optionally reload or update UI parts if needed
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error occurred.'));
+                }
+            } catch (error) {
+                console.error('Error refreshing plan resources:', error);
+                alert('Network error. Please try again.');
+            } finally {
+                // UI state: reset
+                btn.disabled = false;
+                btnText.classList.remove('opacity-50');
+                spinner.classList.add('hidden');
+            }
+        }
+
         document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideDeleteModal(); });
     </script>
 {% endblock production_content %}

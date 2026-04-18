@@ -1,3 +1,8 @@
+from .activity_views import (
+    GetProjectLaborActivitiesAjaxView,
+    LaborActivityDetailView,
+    LaborActivityListView,
+)
 from .dashboard_views import (
     PlanProductivityDashboardView,
     ProductionActivityDetailView,
@@ -5,7 +10,8 @@ from .dashboard_views import (
     ProductionProgressDashboardView,
 )
 from .planning_views import (
-    PlanResourcesAjaxView,
+    GetProjectBillsAjaxView,
+    GetProjectItemsAjaxView,
     ProductionCostBreakdownDetailView,
     ProductionCostBreakdownView,
     ProductionPlanAjaxDetailView,
@@ -14,26 +20,24 @@ from .planning_views import (
     ProductionPlanDetailView,
     ProductionPlanGanttView,
     ProductionPlanListView,
+    ProductionPlanRefreshAjaxView,
     ProductionPlanUpdateView,
     ProductionResourceCreateView,
-    GetProjectBillsAjaxView,
-    GetProjectItemsAjaxView,
 )
 from .productivity_views import (
+    DailyLogActivityDataAjaxView,
     DailyProductionCreateView,
-    DailyProductivityCreateView,
+    ProductionDailyLogCreateView,
+    ProductionDailyLogDeleteView,
+    ProductionDailyLogDetailView,
+    ProductionDailyLogListView,
+    ProductionDailyLogUpdateView,
 )
 from .reports_views import (
     ProductionForecastDashboardView,
     ProductivityLogsView,
 )
 from .tracking_views import ProgressTrackingView
-from .activity_views import (
-    LaborActivityListView,
-    LaborActivityDetailView,
-    GetProjectLaborActivitiesAjaxView,
-)
-
 
 __all__ = [
     "ProductionDashboardView",
@@ -49,9 +53,7 @@ __all__ = [
     "ProductionCostBreakdownView",
     "ProductionCostBreakdownDetailView",
     "ProductionResourceCreateView",
-    "PlanResourcesAjaxView",
     "DailyProductionCreateView",
-    "DailyProductivityCreateView",
     "ProductivityLogsView",
     "ProductionForecastDashboardView",
     "ProgressTrackingView",
@@ -61,4 +63,11 @@ __all__ = [
     "LaborActivityListView",
     "LaborActivityDetailView",
     "GetProjectLaborActivitiesAjaxView",
+    "ProductionDailyLogListView",
+    "ProductionDailyLogCreateView",
+    "ProductionDailyLogDetailView",
+    "DailyLogActivityDataAjaxView",
+    "ProductionPlanRefreshAjaxView",
+    "ProductionDailyLogUpdateView",
+    "ProductionDailyLogDeleteView",
 ]

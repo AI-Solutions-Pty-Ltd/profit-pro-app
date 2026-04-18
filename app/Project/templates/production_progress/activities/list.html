@@ -87,7 +87,7 @@
                             <th scope="col" class="px-3 py-3.5 text-xs font-bold text-left text-gray-600 uppercase">Section</th>
                             <th scope="col" class="px-3 py-3.5 text-xs font-bold text-left text-gray-600 uppercase">Bill No</th>
                             <th scope="col" class="px-3 py-3.5 text-xs font-bold text-left text-gray-600 uppercase">Crew</th>
-                            <th scope="col" class="px-3 py-3.5 text-xs font-bold text-left text-gray-600 uppercase">Plant Type</th>
+                            <th scope="col" class="px-3 py-3.5 text-xs font-bold text-left text-gray-600 uppercase">Plants</th>
                             <th scope="col" class="px-3 py-3.5 text-xs font-bold text-center text-gray-600 uppercase">Unit</th>
                             <th scope="col" class="px-3 py-3.5 text-xs font-bold text-right text-gray-600 uppercase">Daily Prod.</th>
                             <th scope="col" class="px-3 py-3.5 text-xs font-bold text-center text-gray-600 uppercase">Items</th>
@@ -115,8 +115,17 @@
                                     {{ activity.labour_specification__crew__crew_type|default:"No Crew" }}
                                 </span>
                             </td>
-                            <td class="px-3 py-4 text-sm text-gray-500 italic whitespace-nowrap">
-                                {{ activity.plant_types }}
+                            <td class="px-3 py-4 text-sm whitespace-nowrap">
+                                {% if activity.plant_count > 0 %}
+                                <div class="flex flex-col gap-1 items-start">
+                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 rounded-md ring-1 ring-inset ring-amber-600/20 tooltip tooltip-right" data-tip="{{ activity.plant_types }}">
+                                        {{ activity.plant_count }} Plant{{ activity.plant_count|pluralize }}
+                                    </span>
+                                    <span class="text-[10px] text-gray-400 truncate max-w-[130px] italic" title="{{ activity.plant_types }}">{{ activity.plant_types }}</span>
+                                </div>
+                                {% else %}
+                                <span class="text-xs text-gray-400 italic">None</span>
+                                {% endif %}
                             </td>
                             <td class="px-3 py-4 text-sm font-medium text-center text-gray-500 whitespace-nowrap">
                                 {{ activity.labour_specification__unit }}

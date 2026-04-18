@@ -5,8 +5,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models as db_models
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.template.loader import render_to_string
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -23,8 +23,6 @@ from app.Estimator.models import BOQItem
 from app.Project.models import Project
 
 from ..production_forms import (
-    AggregatedLabourFormSet,
-    DailyPlantUsageFormSet,
     PlanDependencyFormSet,
     ProductionPlanForm,
     ProductionResourceForm,
@@ -619,7 +617,6 @@ class ProductionCostBreakdownDetailView(
             context["activity_line_items"] = items
 
         # Fallback plant specs logic for when direct spec is missing
-        # We search by section and bill to match the ProductionPlan.total_plant_cost property logic
         if (
             not selected_plan.plant_specification
             and selected_plan.section
@@ -627,19 +624,33 @@ class ProductionCostBreakdownDetailView(
         ):
             from app.Estimator.models import BOQItem, ProjectPlantSpecification
 
-            unique_spec_ids = (
-                BOQItem.objects.filter(
-                    project=project,
-                    section=selected_plan.section,
-                    bill_no=selected_plan.bill_no,
-                    plant_specification__isnull=False,
-                )
-                .values_list("plant_specification", flat=True)
-                .distinct()
+            qs = BOQItem.objects.filter(
+                project=project,
+                section=selected_plan.section,
+                bill_no=selected_plan.bill_no,
+                plant_specification__isnull=False,
             )
-            context["fallback_plant_specs"] = ProjectPlantSpecification.objects.filter(
+
+            # If the plan represents a specific labour activity, filter by it so we don't aggregate
+            # plants from unrelated activities in the same section and bill.
+            if selected_plan.labour_activity:
+                qs = qs.filter(labour_specification=selected_plan.labour_activity)
+
+            unique_spec_ids = qs.values_list(
+                "plant_specification", flat=True
+            ).distinct()
+            specs = ProjectPlantSpecification.objects.filter(
                 pk__in=unique_spec_ids
-            )
+            ).select_related("plant_type")
+
+            # Deduplicate by plant type name so we don't show the same plant type twice
+            unique_specs = {}
+            for spec in specs:
+                name = spec.plant_type.name if spec.plant_type else spec.name
+                if name not in unique_specs:
+                    unique_specs[name] = spec
+
+            context["fallback_plant_specs"] = unique_specs.values()
 
         return context
 
@@ -791,161 +802,6 @@ class ProductionResourceCreateView(
         ]
 
 
-class PlanResourcesAjaxView(
-    SubscriptionRequiredMixin, LoginRequiredMixin, TemplateView
-):
-    """
-    Returns the Labour and Plant formsets for given plan_ids as an AJAX fragment.
-    """
-
-    required_tiers = [Subscription.PROFIT_AND_LOSS]
-
-    def get(self, request, *args, **kwargs):
-        project_pk = self.kwargs["project_pk"]
-        project = get_object_or_404(Project, pk=project_pk)
-
-        plan_ids_raw = request.GET.getlist("plan_ids")
-        plan_ids = []
-        for item in plan_ids_raw:
-            plan_ids.extend([pid.strip() for pid in item.split(",") if pid.strip()])
-
-        selected_plans = ProductionPlan.objects.filter(
-            id__in=plan_ids, project=project
-        ).order_by("id")
-
-        plan_resources = {}
-        plant_formsets = {}
-
-        for plan in selected_plans:
-            # Check for specification-based resources
-            has_skilled_crew = False
-            has_semi_crew = False
-            has_general_crew = False
-            has_plant_spec = False
-
-            if plan.labour_activity and plan.labour_activity.crew:
-                crew = plan.labour_activity.crew
-                has_skilled_crew = crew.skilled > 0
-                has_semi_crew = crew.semi_skilled > 0
-                has_general_crew = crew.general > 0
-
-            if plan.plant_specification:
-                has_plant_spec = True
-
-            has_skilled = (
-                has_skilled_crew
-                or ProductionResource.objects.filter(
-                    production_plan=plan,
-                    resource_type="LABOUR",
-                    skill_type__name__icontains="skilled",
-                )
-                .exclude(skill_type__name__icontains="semi")
-                .exists()
-            )
-
-            has_semi_skilled = (
-                has_semi_crew
-                or ProductionResource.objects.filter(
-                    production_plan=plan,
-                    resource_type="LABOUR",
-                    skill_type__name__icontains="semi",
-                ).exists()
-            )
-
-            has_unskilled = (
-                has_general_crew
-                or ProductionResource.objects.filter(
-                    production_plan=plan,
-                    resource_type="LABOUR",
-                    skill_type__name__icontains="unskilled",
-                ).exists()
-            )
-
-            has_plant = (
-                has_plant_spec
-                or ProductionResource.objects.filter(
-                    production_plan=plan, resource_type="PLANT"
-                ).exists()
-            )
-
-            plan_resources[plan.id] = {
-                "skilled": has_skilled,
-                "semi_skilled": has_semi_skilled,
-                "unskilled": has_unskilled,
-                "plant": has_plant,
-                "has_crew_spec": has_skilled_crew or has_semi_crew or has_general_crew,
-                "has_plant_spec": has_plant_spec,
-            }
-
-            planned_plants = ProductionResource.objects.filter(
-                production_plan=plan, resource_type="PLANT"
-            )
-            plant_initial = [
-                {
-                    "resource": res.id,
-                    "number": int(res.number),
-                    "hours": 8.0,
-                    "activity": plan.id,
-                }
-                for res in planned_plants
-            ]
-            plant_formset = DailyPlantUsageFormSet(
-                prefix=f"plant_{plan.id}", initial=plant_initial
-            )
-            for f in plant_formset.forms:
-                f.fields["resource"].queryset = planned_plants
-                f.fields["activity"].queryset = ProductionPlan.objects.filter(
-                    id=plan.id
-                )
-            plant_formsets[plan.id] = plant_formset
-
-        # Build initial data for labour using Crew Spec if available
-        labour_initial = []
-        for plan in selected_plans:
-            initial = {"activity": plan.id}
-            if plan.labour_activity and plan.labour_activity.crew:
-                crew = plan.labour_activity.crew
-                initial.update(
-                    {
-                        "skilled_number": crew.skilled,
-                        "semi_skilled_number": crew.semi_skilled,
-                        "unskilled_number": crew.general,
-                        "total_hours": 8.0,  # Standard daily hours
-                    }
-                )
-            labour_initial.append(initial)
-
-        labour_formset = AggregatedLabourFormSet(
-            prefix="labour", initial=labour_initial
-        )
-
-        for form, plan in zip(labour_formset.forms, selected_plans, strict=True):
-            form.fields["activity"].queryset = ProductionPlan.objects.filter(id=plan.id)
-            if not plan_resources[plan.id]["skilled"]:
-                form.fields["skilled_number"].disabled = True
-            if not plan_resources[plan.id]["semi_skilled"]:
-                form.fields["semi_skilled_number"].disabled = True
-            if not plan_resources[plan.id]["unskilled"]:
-                form.fields["unskilled_number"].disabled = True
-
-        # Render the partial and return as JSON
-        context = {
-            "project": project,
-            "selected_plans": selected_plans,
-            "labour_formset": labour_formset,
-            "labour_forms_with_plans": zip(labour_formset.forms, selected_plans),
-            "plan_resources": plan_resources,
-            "plant_formsets": plant_formsets,
-        }
-
-        html = render_to_string(
-            "production_progress/partials/resource_formsets_multi.html",
-            context,
-            request=request,
-        )
-        return JsonResponse({"html": html})
-
-
 class ProductionPlanAjaxDetailView(LoginRequiredMixin, TemplateView):
     """
     Returns the metadata (structure, bill, package) for a given plan as JSON.
@@ -1027,3 +883,27 @@ class GetProjectItemsAjaxView(LoginRequiredMixin, TemplateView):
         ]
 
         return JsonResponse({"items": data})
+
+
+class ProductionPlanRefreshAjaxView(LoginRequiredMixin, View):
+    """Refreshes the plant_types cache for a specific production plan."""
+
+    def post(self, request, *args, **kwargs):
+        project_pk = self.kwargs.get("project_pk")
+        plan_pk = self.kwargs.get("pk")
+        plan = get_object_or_404(ProductionPlan, pk=plan_pk, project_id=project_pk)
+
+        try:
+            # Re-fetch specifications from BOQ
+            plan.refresh_plant_types()
+            plan.save()
+
+            return JsonResponse(
+                {
+                    "status": "success",
+                    "message": f"Resources for '{plan.activity}' refreshed successfully.",
+                    "plant_types": plan.plant_types,
+                }
+            )
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=400)
