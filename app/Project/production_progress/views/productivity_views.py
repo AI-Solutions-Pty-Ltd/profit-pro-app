@@ -1,7 +1,21 @@
 import json
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Count, DecimalField, ExpressionWrapper, F, OuterRef, Subquery, Sum, Value
+from django.db import models
+from django.db.models import (
+    Avg,
+    Case,
+    Count,
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    Max,
+    OuterRef,
+    Subquery,
+    Sum,
+    Value,
+    When,
+)
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -96,9 +110,6 @@ class ProductionDailyLogListView(
                 labour_specification_id=OuterRef("production_plan__labour_activity_id"),
                 plant_specification__isnull=False,
             )
-            .values("labour_specification_id")
-            .annotate(total_rate=Sum("plant_specification__plant_type__hourly_rate"))
-            .values("total_rate")
         )
 
         return (
@@ -115,34 +126,62 @@ class ProductionDailyLogListView(
                 # Formula: (skilled * rate + semi * rate + general * rate) / 8.0
                 hourly_labour_rate=ExpressionWrapper(
                     (
-                        F("production_plan__labour_activity__crew__skilled")
-                        * F("production_plan__labour_activity__crew__skilled_rate")
-                        + F("production_plan__labour_activity__crew__semi_skilled")
-                        * F("production_plan__labour_activity__crew__semi_skilled_rate")
-                        + F("production_plan__labour_activity__crew__general")
-                        * F("production_plan__labour_activity__crew__general_rate")
+                        Coalesce(
+                            F("production_plan__labour_activity__crew__skilled"),
+                            Value(0),
+                        )
+                        * Coalesce(
+                            F("production_plan__labour_activity__crew__skilled_rate"),
+                            Value(0),
+                        )
+                        + Coalesce(
+                            F("production_plan__labour_activity__crew__semi_skilled"),
+                            Value(0),
+                        )
+                        * Coalesce(
+                            F(
+                                "production_plan__labour_activity__crew__semi_skilled_rate"
+                            ),
+                            Value(0),
+                        )
+                        + Coalesce(
+                            F("production_plan__labour_activity__crew__general"),
+                            Value(0),
+                        )
+                        * Coalesce(
+                            F("production_plan__labour_activity__crew__general_rate"),
+                            Value(0),
+                        )
                     )
-                    / Value(8.0),
-                    output_field=DecimalField(),
+                    / Value(
+                        8.0, output_field=DecimalField(max_digits=10, decimal_places=2)
+                    ),
+                    output_field=models.DecimalField(max_digits=10, decimal_places=2),
                 ),
                 hourly_plant_rate=Coalesce(
-                    Subquery(plant_rates, output_field=DecimalField()),
-                    Value(0),
-                    output_field=DecimalField(),
+                    Subquery(
+                        plant_rates.values("labour_specification_id")
+                        .annotate(total_rate=Sum("plant_specification__plant_type__hourly_rate"))
+                        .values("total_rate")[:1]
+                    ),
+                    Value(0, output_field=models.DecimalField()),
                 ),
             )
             .annotate(
-                acc_labour_cost=ExpressionWrapper(
+                acc_labour_cost=Coalesce(
                     F("hours_on_activity") * F("hourly_labour_rate"),
-                    output_field=DecimalField(),
+                    Value(0, output_field=models.DecimalField()),
                 ),
-                acc_plant_cost=ExpressionWrapper(
+                acc_plant_cost=Coalesce(
                     F("hours_on_activity") * F("hourly_plant_rate"),
-                    output_field=DecimalField(),
+                    Value(0, output_field=models.DecimalField()),
                 ),
             )
             .annotate(
-                acc_total_cost=F("acc_labour_cost") + F("acc_plant_cost"),
+                acc_total_cost=Coalesce(
+                    F("acc_labour_cost") + F("acc_plant_cost"),
+                    Value(0, output_field=models.DecimalField()),
+                ),
             )
             .order_by("-report__date", "-created_at")
         )
@@ -350,16 +389,6 @@ class ProductionDailyLogDeleteView(
         context = super().get_context_data(**kwargs)
         project_pk = self.kwargs["project_pk"]
         context["project"] = get_object_or_404(Project, pk=project_pk)
-        
-        # Calculate Project Totals for the current list
-        queryset = self.get_queryset()
-        context["totals"] = queryset.aggregate(
-            hours=Coalesce(Sum("hours_on_activity"), 0, output_field=DecimalField()),
-            labour=Coalesce(Sum("acc_labour_cost"), 0, output_field=DecimalField()),
-            plant=Coalesce(Sum("acc_plant_cost"), 0, output_field=DecimalField()),
-            total=Coalesce(Sum("acc_total_cost"), 0, output_field=DecimalField()),
-            qty=Coalesce(Sum("quantity"), 0, output_field=DecimalField()),
-        )
         return context
 
     def get_success_url(self):

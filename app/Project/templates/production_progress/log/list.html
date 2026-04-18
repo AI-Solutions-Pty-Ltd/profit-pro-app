@@ -121,12 +121,12 @@
                     {% if entries %}
                     <tfoot class="bg-gray-50/80 border-t-2 border-indigo-100">
                         <tr class="font-black text-gray-900">
-                            <td colspan="2" class="py-4 pr-3 pl-6 text-xs font-black text-indigo-600 uppercase tracking-widest text-right">Aggregate Totals (Current List)</td>
-                            <td class="px-3 py-4 text-right text-sm font-mono tabular-nums">{{ totals.qty|qty }}</td>
-                            <td class="px-3 py-4 text-right text-sm font-mono tabular-nums">{{ totals.hours|qty }}<span class="text-[10px] ml-1 text-gray-400 uppercase">hrs</span></td>
-                            <td class="px-3 py-4 text-right text-sm font-mono tabular-nums text-gray-600">{{ totals.labour|currency }}</td>
-                            <td class="px-3 py-4 text-right text-sm font-mono tabular-nums text-gray-600">{{ totals.plant|currency }}</td>
-                            <td class="px-3 py-4 text-right text-lg font-black text-indigo-700 font-mono tabular-nums">{{ totals.total|currency }}</td>
+                            <td colspan="2" class="py-4 pr-3 pl-6 text-xs font-black text-indigo-600 uppercase tracking-widest text-right whitespace-nowrap">Aggregate Totals (Current List)</td>
+                            <td class="px-3 py-4 text-right text-sm font-mono tabular-nums whitespace-nowrap">{{ totals.qty|qty }}</td>
+                            <td class="px-3 py-4 text-right text-sm font-mono tabular-nums whitespace-nowrap">{{ totals.hours|qty }}<span class="text-[10px] ml-1 text-gray-400 uppercase">hrs</span></td>
+                            <td class="px-3 py-4 text-right text-sm font-mono tabular-nums text-gray-600 whitespace-nowrap">{{ totals.labour|currency }}</td>
+                            <td class="px-3 py-4 text-right text-sm font-mono tabular-nums text-gray-600 whitespace-nowrap">{{ totals.plant|currency }}</td>
+                            <td class="px-3 py-4 text-right text-sm font-black text-indigo-700 font-mono tabular-nums whitespace-nowrap">{{ totals.total|currency }}</td>
                             <td class="pr-6"></td>
                         </tr>
                     </tfoot>

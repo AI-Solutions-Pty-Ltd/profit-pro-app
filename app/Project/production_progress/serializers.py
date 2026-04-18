@@ -46,6 +46,7 @@ class DailyLogEntrySerializer(serializers.ModelSerializer):
             "id",
             "production_plan_id",
             "quantity",
+            "hours_on_activity",
             "labour_details",
             "plant_usage",
         ]

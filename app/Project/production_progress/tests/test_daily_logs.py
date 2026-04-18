@@ -94,6 +94,7 @@ class TestProductionDailyLog:
 
         entry = DailyActivityEntry.objects.get(report=report)
         assert entry.production_plan == plan
+        assert entry.hours_on_activity == 8.0
         assert entry.labour_usage.count() == 2
         assert entry.plant_usage.count() == 1
 
