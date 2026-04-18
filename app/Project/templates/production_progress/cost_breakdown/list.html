@@ -17,7 +17,6 @@
             </div>
         </div>
     </div>
-
     <!-- Plans Table -->
     <div class="overflow-hidden bg-white rounded-lg border border-gray-100 shadow-sm">
         <div class="overflow-x-auto">
@@ -27,18 +26,10 @@
                         <th class="px-6 py-4 w-1/3 text-xs font-bold tracking-wide text-left text-gray-600 uppercase">
                             Description / Line Item
                         </th>
-                        <th class="px-6 py-4 text-xs font-bold tracking-wide text-right text-gray-600 uppercase">
-                            Labour Cost
-                        </th>
-                        <th class="px-6 py-4 text-xs font-bold tracking-wide text-right text-gray-600 uppercase">
-                            Plant Cost
-                        </th>
-                        <th class="px-6 py-4 text-xs font-bold tracking-wide text-right text-gray-600 uppercase">
-                            Total Cost
-                        </th>
-                        <th class="px-6 py-4 text-xs font-bold tracking-wide text-right text-gray-600 uppercase">
-                            Actions
-                        </th>
+                        <th class="px-6 py-4 text-xs font-bold tracking-wide text-right text-gray-600 uppercase">Labour Cost</th>
+                        <th class="px-6 py-4 text-xs font-bold tracking-wide text-right text-gray-600 uppercase">Plant Cost</th>
+                        <th class="px-6 py-4 text-xs font-bold tracking-wide text-right text-gray-600 uppercase">Total Cost</th>
+                        <th class="px-6 py-4 text-xs font-bold tracking-wide text-right text-gray-600 uppercase">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-50">
@@ -46,18 +37,13 @@
                         <tr class="transition-all cursor-pointer hover:bg-indigo-50/30 group">
                             <td class="px-6 py-4">
                                 <div class="flex flex-col">
-                                    <span class="text-sm font-bold text-gray-900 transition-colors group-hover:text-indigo-600">
-                                        {{ plan.activity }}
-                                    </span>
-                                    
+                                    <span class="text-sm font-bold text-gray-900 transition-colors group-hover:text-indigo-600">{{ plan.activity }}</span>
                                     {% if plan.section or plan.bill_no %}
                                         <div class="flex gap-1.5 items-center mt-0.5">
                                             {% if plan.section %}
                                                 <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{{ plan.section }}</span>
                                             {% endif %}
-                                            {% if plan.section and plan.bill_no %}
-                                                <span class="text-[10px] text-gray-200">/</span>
-                                            {% endif %}
+                                            {% if plan.section and plan.bill_no %}<span class="text-[10px] text-gray-200">/</span>{% endif %}
                                             {% if plan.bill_no %}
                                                 <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{{ plan.bill_no }}</span>
                                             {% endif %}
@@ -81,7 +67,8 @@
                                     R {{ total|floatformat:2|intcomma }}
                                 {% endwith %}
                             </td>
-                            <td class="px-6 py-4 text-right whitespace-nowrap" onclick="event.stopPropagation()">
+                            <td class="px-6 py-4 text-right whitespace-nowrap"
+                                onclick="event.stopPropagation()">
                                 <a href="{% url 'project:production-cost-breakdown-detail' project.pk plan.pk %}"
                                    class="inline-flex gap-1 items-center text-xs font-bold text-indigo-600 transition-colors hover:text-indigo-800">
                                     View Details
@@ -109,9 +96,7 @@
                 {% if all_plans %}
                     <tfoot class="border-t border-gray-100 bg-gray-50/60">
                         <tr>
-                            <td class="px-6 py-4 text-xs font-bold text-right text-gray-600 uppercase">
-                                Project Totals
-                            </td>
+                            <td class="px-6 py-4 text-xs font-bold text-right text-gray-600 uppercase">Project Totals</td>
                             <td class="px-6 py-4 text-sm font-semibold text-right text-gray-800 whitespace-nowrap">
                                 R {{ total_labour|floatformat:2|intcomma }}
                             </td>
@@ -128,7 +113,6 @@
             </table>
         </div>
     </div>
-
     <!-- Footer -->
     <div class="px-6 py-4 mt-10 bg-white rounded-2xl border border-gray-50 shadow-sm">
         <div class="flex justify-between items-center text-sm font-bold">

@@ -285,16 +285,22 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
     if not plan_id:
         return {}
 
-
     plan = get_object_or_404(ProductionPlan, pk=plan_id)
-    
+
     # Hierarchical aggregation
     all_plans = [plan]
     if not plan.labour_activity:
         if not plan.bill_no:
-            all_plans = ProductionPlan.objects.filter(project=plan.project, section=plan.section, deleted=False)
+            all_plans = ProductionPlan.objects.filter(
+                project=plan.project, section=plan.section, deleted=False
+            )
         else:
-            all_plans = ProductionPlan.objects.filter(project=plan.project, section=plan.section, bill_no=plan.bill_no, deleted=False)
+            all_plans = ProductionPlan.objects.filter(
+                project=plan.project,
+                section=plan.section,
+                bill_no=plan.bill_no,
+                deleted=False,
+            )
 
     entries_qs = (
         DailyActivityEntry.objects.filter(production_plan__in=all_plans)
@@ -321,12 +327,16 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
     total_planned_qty = plan.quantity
     if not plan.labour_activity:
         total_planned_qty = sum(p.quantity for p in all_plans if p.labour_activity)
-    
+
     for p in all_plans:
-        if p.labour_activity: # Only sum leaf nodes for targets to avoid double counting
+        if (
+            p.labour_activity
+        ):  # Only sum leaf nodes for targets to avoid double counting
             for res in p.resources.filter(resource_type="LABOUR"):
                 planned_man_hours += (res.number or 0) * (res.days or 0) * 8
-            planned_cost += (p.total_labour_cost + p.total_plant_cost + p.total_other_cost)
+            planned_cost += (
+                p.total_labour_cost + p.total_plant_cost + p.total_other_cost
+            )
 
     target_productivity = Decimal("0.0")
     if planned_man_hours > 0:
@@ -523,16 +533,22 @@ def get_forecasting_dashboard_data(plan_id, start_date=None, end_date=None):
     if not plan_id:
         return {}
 
-
     plan = get_object_or_404(ProductionPlan, pk=plan_id)
-    
+
     # Hierarchical aggregation
     all_plans = [plan]
     if not plan.labour_activity:
         if not plan.bill_no:
-            all_plans = ProductionPlan.objects.filter(project=plan.project, section=plan.section, deleted=False)
+            all_plans = ProductionPlan.objects.filter(
+                project=plan.project, section=plan.section, deleted=False
+            )
         else:
-            all_plans = ProductionPlan.objects.filter(project=plan.project, section=plan.section, bill_no=plan.bill_no, deleted=False)
+            all_plans = ProductionPlan.objects.filter(
+                project=plan.project,
+                section=plan.section,
+                bill_no=plan.bill_no,
+                deleted=False,
+            )
 
     entries_qs = (
         DailyActivityEntry.objects.filter(production_plan__in=all_plans)
@@ -571,14 +587,20 @@ def get_forecasting_dashboard_data(plan_id, start_date=None, end_date=None):
         total_planned_qty = sum(p.quantity for p in all_plans if p.labour_activity)
 
     remaining_qty = max(0, float(total_planned_qty) - float(actual_total_qty))
-    
+
     # Planned budget for all plans in scope
     budget_allocation = Decimal("0.0")
     for p in all_plans:
         if p.labour_activity:
-            budget_allocation += (p.total_labour_cost + p.total_plant_cost + p.total_other_cost)
+            budget_allocation += (
+                p.total_labour_cost + p.total_plant_cost + p.total_other_cost
+            )
     progress_pct = (
-        (float(actual_total_qty) / float(total_planned_qty) * 100 if total_planned_qty > 0 else 0)
+        (
+            float(actual_total_qty) / float(total_planned_qty) * 100
+            if total_planned_qty > 0
+            else 0
+        )
         if plan.quantity > 0
         else 0
     )

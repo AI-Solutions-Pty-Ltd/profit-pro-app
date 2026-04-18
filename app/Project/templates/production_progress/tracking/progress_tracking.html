@@ -30,9 +30,7 @@
                                     {% if data.plan.section %}
                                         <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{{ data.plan.section }}</span>
                                     {% endif %}
-                                    {% if data.plan.section and data.plan.bill_no %}
-                                        <span class="text-[10px] text-gray-300">/</span>
-                                    {% endif %}
+                                    {% if data.plan.section and data.plan.bill_no %}<span class="text-[10px] text-gray-300">/</span>{% endif %}
                                     {% if data.plan.bill_no %}
                                         <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{{ data.plan.bill_no }}</span>
                                     {% endif %}
@@ -49,7 +47,7 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50/50">
                             <tr>
-                                <th class="px-6 py-3 text-xs font-bold tracking-wider text-left text-gray-500 uppercase w-64">Metric</th>
+                                <th class="px-6 py-3 w-64 text-xs font-bold tracking-wider text-left text-gray-500 uppercase">Metric</th>
                                 {% for day in data.days_list %}
                                     <th class="px-6 py-3 text-xs font-bold tracking-wider text-center text-gray-500 uppercase">{{ day }}</th>
                                 {% endfor %}
@@ -81,7 +79,7 @@
                                 {% endfor %}
                             </tr>
                             <tr class="transition-colors bg-indigo-50/40 hover:bg-indigo-50/60">
-                                <td class="px-6 py-4 text-sm font-black text-indigo-800 bg-indigo-50/20 uppercase tracking-tight">
+                                <td class="px-6 py-4 text-sm font-black tracking-tight text-indigo-800 uppercase bg-indigo-50/20">
                                     Work Productivity (Units/MH)
                                 </td>
                                 {% for day in data.days_list %}
@@ -91,7 +89,7 @@
                                 {% endfor %}
                             </tr>
                             <tr class="transition-colors bg-red-50/40 hover:bg-red-50/60">
-                                <td class="px-6 py-4 text-sm font-black text-red-800 bg-red-50/20 uppercase tracking-tight">Cost per Item</td>
+                                <td class="px-6 py-4 text-sm font-black tracking-tight text-red-800 uppercase bg-red-50/20">Cost per Item</td>
                                 {% for day in data.days_list %}
                                     <td class="px-6 py-4 text-sm font-black text-center text-red-600 border-l border-red-100">
                                         R {{ data.day_data|get_item:day|get_item:'cost_per_item'|floatformat:2|intcomma }}
@@ -104,7 +102,7 @@
             </div>
         {% endif %}
     {% empty %}
-        <div class="px-6 py-24 text-center bg-white border-2 border-dashed border-gray-200 rounded-2xl">
+        <div class="px-6 py-24 text-center bg-white rounded-2xl border-2 border-gray-200 border-dashed">
             <div class="flex justify-center items-center mx-auto mb-6 w-20 h-20 text-indigo-400 bg-indigo-50 rounded-full">
                 {% heroicon_outline "presentation-chart-line" class="w-10 h-10" %}
             </div>

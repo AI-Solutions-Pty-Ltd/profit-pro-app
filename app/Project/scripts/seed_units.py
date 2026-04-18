@@ -3,12 +3,12 @@ import sys
 
 import django
 
+from app.Project.models.unit_models import UnitOfMeasure
+
 # Setup Django environment
 sys.path.append(os.getcwd())
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings.local")
 django.setup()
-
-from app.Project.models.unit_models import UnitOfMeasure
 
 
 def seed_units():

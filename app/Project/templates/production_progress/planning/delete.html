@@ -35,7 +35,8 @@
                             <button type="submit"
                                     class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-bold rounded-xl text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 shadow-lg shadow-red-200 transition-all duration-200">
                                 {% heroicon_solid "archive-box-x-mark" class="w-4 h-4 mr-2" %}
-                                Archive{% if object.children.exists %} All{% endif %}
+                                Archive
+                                {% if object.children.exists %}All{% endif %}
                             </button>
                         </form>
                     </div>

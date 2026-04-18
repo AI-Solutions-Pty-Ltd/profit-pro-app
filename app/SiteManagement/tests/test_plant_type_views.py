@@ -23,7 +23,7 @@ class TestPlantTypeViews:
 
         url = reverse(
             "site_management:plant-type-list",
-            kwargs={"project_pk": project.pk},
+            kwargs={"project_pk": project.pk},  # ty:ignore[unresolved-attribute]
         )
         response = client.get(url)
 
@@ -39,7 +39,7 @@ class TestPlantTypeViews:
 
         url = reverse(
             "site_management:plant-type-create",
-            kwargs={"project_pk": project.pk},
+            kwargs={"project_pk": project.pk},  # ty:ignore[unresolved-attribute]
         )
         response = client.get(url)
 
@@ -54,7 +54,7 @@ class TestPlantTypeViews:
 
         url = reverse(
             "site_management:plant-type-create",
-            kwargs={"project_pk": project.pk},
+            kwargs={"project_pk": project.pk},  # ty:ignore[unresolved-attribute]
         )
         data = {
             "name": "New Plant Type",
@@ -74,7 +74,7 @@ class TestPlantTypeViews:
 
         url = reverse(
             "site_management:plant-type-update",
-            kwargs={"project_pk": project.pk, "pk": plant_type.pk},
+            kwargs={"project_pk": project.pk, "pk": plant_type.pk},  # ty:ignore[unresolved-attribute]
         )
         data = {
             "name": "Updated Name",
@@ -83,7 +83,7 @@ class TestPlantTypeViews:
         response = client.post(url, data)
 
         assert response.status_code == 302
-        plant_type.refresh_from_db()
+        plant_type.refresh_from_db()  # ty:ignore[unresolved-attribute]
         assert plant_type.name == "Updated Name"
 
     def test_plant_type_delete_view(self, client, superuser):
@@ -95,11 +95,11 @@ class TestPlantTypeViews:
 
         url = reverse(
             "site_management:plant-type-delete",
-            kwargs={"project_pk": project.pk, "pk": plant_type.pk},
+            kwargs={"project_pk": project.pk, "pk": plant_type.pk},  # ty:ignore[unresolved-attribute]
         )
         response = client.post(url)
 
         assert response.status_code == 302
         # Check for soft delete
-        deleted_pt = PlantType.all_objects.get(pk=plant_type.pk)
+        deleted_pt = PlantType.all_objects.get(pk=plant_type.pk)  # ty:ignore[unresolved-attribute]
         assert deleted_pt.deleted is True

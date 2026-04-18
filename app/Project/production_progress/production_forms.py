@@ -164,7 +164,7 @@ class ProductionPlanForm(forms.ModelForm):
                 .distinct()
                 .order_by("section")
             )
-            self.fields["section"].choices = [("", "---------")] + [
+            self.fields["section"].choices = [("", "---------")] + [  # ty:ignore[unresolved-attribute]
                 (s, s) for s in sections if s
             ]
 
@@ -175,7 +175,7 @@ class ProductionPlanForm(forms.ModelForm):
                 .distinct()
                 .order_by("bill_no")
             )
-            self.fields["bill_no"].choices = [("", "---------")] + [
+            self.fields["bill_no"].choices = [("", "---------")] + [  # ty:ignore[unresolved-attribute]
                 (b, b) for b in all_bills if b
             ]
 
@@ -183,10 +183,10 @@ class ProductionPlanForm(forms.ModelForm):
             project_specs = ProjectLabourSpecification.objects.filter(
                 project_id=project_id
             )
-            self.fields["labour_activity"].queryset = project_specs
+            self.fields["labour_activity"].queryset = project_specs  # ty:ignore[unresolved-attribute]
             self.fields[
                 "plant_specification"
-            ].queryset = ProjectPlantSpecification.objects.filter(project_id=project_id)
+            ].queryset = ProjectPlantSpecification.objects.filter(project_id=project_id)  # ty:ignore[unresolved-attribute]
 
             # Configure plant_specification choice metadata
             if self.instance.pk and self.instance.plant_specification:
@@ -221,7 +221,7 @@ class ProductionPlanForm(forms.ModelForm):
             if self.instance.pk:
                 parent_qs = parent_qs.exclude(pk=self.instance.pk)
 
-            self.fields["parent"].queryset = parent_qs
+            self.fields["parent"].queryset = parent_qs  # ty:ignore[unresolved-attribute]
             self.fields["parent"].widget.choice_data = {
                 str(plan.pk): {
                     "data-section": plan.section or "",
@@ -230,10 +230,12 @@ class ProductionPlanForm(forms.ModelForm):
                 for plan in parent_qs
             }
 
-        self.fields["section"].required = False
-        self.fields["bill_no"].required = False
+        self.fields["section"].required = not parent_id
+        self.fields["bill_no"].required = not parent_id
         self.fields["labour_activity"].required = False
-        self.fields["activity"].required = False
+        self.fields[
+            "activity"
+        ].required = not parent_id  # Activity name usually required
 
     def clean(self):
         cleaned_data = super().clean()
@@ -299,7 +301,7 @@ class ProductionPlanForm(forms.ModelForm):
                 error_msg = f"An active plan for '{activity}' already exists in this section/bill within this date range."
                 raise ValidationError(error_msg)
 
-        # Enforce rule: Cannot change structure/parent if it has children
+        # Enforce rule: Cannot change hierarchy/parent if it has children
         if (
             self.instance.pk
             and hasattr(self.instance, "children")
@@ -307,23 +309,21 @@ class ProductionPlanForm(forms.ModelForm):
         ):
             old_instance = ProductionPlan.objects.get(pk=self.instance.pk)
             new_parent = cleaned_data.get("parent")
-            new_structure = cleaned_data.get("structure")
-            new_bill = cleaned_data.get("bill")
-            new_package = cleaned_data.get("package")
+            new_section = cleaned_data.get("section")
+            new_bill_no = cleaned_data.get("bill_no")
 
             if (
                 old_instance.parent != new_parent
-                or old_instance.structure != new_structure
-                or old_instance.bill != new_bill
-                or old_instance.package != new_package
+                or old_instance.section != new_section
+                or old_instance.bill_no != new_bill_no
             ):
                 raise ValidationError(
-                    "Cannot change WBS structure or parent activity because it has dependent children."
+                    "Cannot change hierarchy or parent activity because it has dependent children."
                 )
 
         if (
             cleaned_data.get("parent")
-            and cleaned_data.get("parent").pk == self.instance.pk
+            and cleaned_data.get("parent").id == self.instance.pk  # ty:ignore[unresolved-attribute]
         ):
             raise ValidationError({"parent": "An activity cannot be its own parent."})
 
@@ -482,7 +482,7 @@ class PlanDependencyForm(forms.ModelForm):
             qs = ProductionPlan.objects.filter(project_id=project_id, is_archived=False)
             if plan_id:
                 qs = qs.exclude(pk=plan_id)
-            predecessor_field.queryset = qs
+            predecessor_field.queryset = qs  # ty:ignore[unresolved-attribute]
 
 
 PlanDependencyFormSet = inlineformset_factory(

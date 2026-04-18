@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("Project", "0083_dailyactivityentry_hours_on_activity_and_more"),
     ]

@@ -34,7 +34,7 @@ class TestProductionDailyLog:
         response = client.get(url)
 
         assert response.status_code == 200
-        assert report.date.strftime("%d %b %Y") in response.content.decode()
+        assert report.date.strftime("%d %b %Y") in response.content.decode()  # ty:ignore[unresolved-attribute]
 
     def test_daily_log_ajax_data_view(self, client, project):
         """Test the AJAX view returns activity metadata."""
@@ -46,7 +46,7 @@ class TestProductionDailyLog:
         url = reverse(
             "project:ajax-daily-log-activity-data", kwargs={"project_pk": project.pk}
         )
-        response = client.get(f"{url}?plan_id={plan.id}")
+        response = client.get(f"{url}?plan_id={plan.id}")  # ty:ignore[unresolved-attribute]
 
         assert response.status_code == 200
         data = response.json()
@@ -67,7 +67,7 @@ class TestProductionDailyLog:
             "notes": "Testing submission",
             "entries": [
                 {
-                    "production_plan_id": str(plan.id),
+                    "production_plan_id": str(plan.id),  # ty:ignore[unresolved-attribute]
                     "quantity": 50,
                     "hours_on_activity": 8,
                     "labour_details": {
@@ -108,9 +108,9 @@ class TestProductionDailyLog:
 
         url = reverse(
             "project:production-daily-log-detail",
-            kwargs={"project_pk": project.pk, "pk": report.pk},
+            kwargs={"project_pk": project.pk, "pk": report.pk},  # ty:ignore[unresolved-attribute]
         )
         response = client.get(url)
 
         assert response.status_code == 200
-        assert entry.production_plan.activity in response.content.decode()
+        assert entry.production_plan.activity in response.content.decode()  # ty:ignore[unresolved-attribute]

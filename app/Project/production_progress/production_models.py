@@ -202,7 +202,7 @@ class ProductionPlan(BaseModel):
     def soft_delete(self):
         from django.core.exceptions import ValidationError
 
-        if self.children.filter(deleted=False).exists():
+        if self.children.filter(deleted=False).exists():  # ty:ignore[unresolved-attribute]
             raise ValidationError(
                 "Cannot delete an activity that has children. Please delete them first."
             )
@@ -213,13 +213,13 @@ class ProductionPlan(BaseModel):
         """Calculates total crew hourly rate based on (Count * Rate) for each skill."""
         if not self.labour_activity or not self.labour_activity.crew:
             return Decimal("0")
-        
+
         crew = self.labour_activity.crew
         # Formula: (Count * Rate) summed across all 3 levels
         total_daily = (
-            Decimal(str(crew.skilled)) * crew.skilled_rate +
-            Decimal(str(crew.semi_skilled)) * crew.semi_skilled_rate +
-            Decimal(str(crew.general)) * crew.general_rate
+            Decimal(str(crew.skilled)) * crew.skilled_rate
+            + Decimal(str(crew.semi_skilled)) * crew.semi_skilled_rate
+            + Decimal(str(crew.general)) * crew.general_rate
         )
         # Convert daily crew cost to hourly (assuming 8h day)
         return total_daily / Decimal("8.0")
@@ -228,22 +228,22 @@ class ProductionPlan(BaseModel):
     def hourly_plant_rate(self) -> Decimal:
         """Sums hourly_rate for each physical plant assigned to this activity via BOQItems."""
         from app.Estimator.models import BOQItem
-        
+
         # Get all BOQ items contributing to this activity
         items = BOQItem.objects.filter(
             project=self.project,
             section=self.section,
             bill_no=self.bill_no,
             labour_specification=self.labour_activity,
-            plant_specification__isnull=False
+            plant_specification__isnull=False,
         ).select_related("plant_specification__plant_type")
-        
+
         # Sum hourly rate for each item (physical plant unit)
         total_hourly = Decimal("0")
         for item in items:
             if item.plant_specification and item.plant_specification.plant_type:
                 total_hourly += item.plant_specification.plant_type.hourly_rate
-        
+
         return total_hourly
 
     @property
@@ -358,7 +358,7 @@ class PlanDependency(BaseModel):
     def clean(self):
         from django.core.exceptions import ValidationError
 
-        if self.predecessor_id == self.successor_id:
+        if self.predecessor_id == self.successor_id:  # ty:ignore[unresolved-attribute]
             raise ValidationError("An activity cannot depend on itself.")
 
         # Check circular dependency using ancestor graph
@@ -375,7 +375,7 @@ class PlanDependency(BaseModel):
                     return True
             return False
 
-        if self.predecessor_id and self.successor_id:
+        if self.predecessor_id and self.successor_id:  # ty:ignore[unresolved-attribute]
             if is_ancestor(self.predecessor, self.successor.id):
                 raise ValidationError("This dependency creates a circular reference.")
 
@@ -497,19 +497,28 @@ class DailyActivityEntry(BaseModel):
     @property
     def total_labour_cost(self):
         """Calculated labour cost based on crew spec rates and tracked hours."""
-        return self.production_plan.hourly_labour_rate * Decimal(str(self.hours_on_activity))
+        return self.production_plan.hourly_labour_rate * Decimal(
+            str(self.hours_on_activity)
+        )
 
     @property
     def total_plant_cost(self):
         """Calculated plant cost based on assigned unit rates and tracked hours."""
-        return self.production_plan.hourly_plant_rate * Decimal(str(self.hours_on_activity))
+        return self.production_plan.hourly_plant_rate * Decimal(
+            str(self.hours_on_activity)
+        )
 
     @property
     def man_hours(self):
         """Calculated man hours based on crew size and tracked activity duration."""
         crew_size = Decimal("0")
-        if self.production_plan.labour_activity and self.production_plan.labour_activity.crew:
-            crew_size = Decimal(str(self.production_plan.labour_activity.crew.crew_size))
+        if (
+            self.production_plan.labour_activity
+            and self.production_plan.labour_activity.crew
+        ):
+            crew_size = Decimal(
+                str(self.production_plan.labour_activity.crew.crew_size)
+            )
         return crew_size * Decimal(str(self.hours_on_activity))
 
     @property

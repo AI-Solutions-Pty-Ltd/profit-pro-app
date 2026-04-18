@@ -2,20 +2,16 @@
 {% load static %}
 {% load heroicons %}
 {% load estimator_tags %}
-
 {% block title %}
     Daily Logs - {{ project.name }} - {{ block.super }}
 {% endblock title %}
-
 {% block production_content %}
     <div class="space-y-6">
         <!-- Page Header -->
         <div class="sm:flex sm:items-center sm:justify-between">
             <div>
                 <h1 class="text-2xl font-bold tracking-tight text-gray-900">Production Daily Logs</h1>
-                <p class="mt-1 text-sm text-gray-500">
-                    Historical record of daily plant and labor performance on project activities.
-                </p>
+                <p class="mt-1 text-sm text-gray-500">Historical record of daily plant and labor performance on project activities.</p>
             </div>
             <div class="mt-4 sm:ml-16 sm:mt-0">
                 <a href="{% url 'project:production-daily-log-create' project_pk=project.pk %}"
@@ -25,20 +21,40 @@
                 </a>
             </div>
         </div>
-
         <!-- Logs Table -->
         <div class="overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50/50">
                         <tr>
-                            <th scope="col" class="py-4 pr-3 pl-6 text-xs font-bold text-left text-gray-500 uppercase tracking-wider">Date</th>
-                            <th scope="col" class="px-3 py-4 text-xs font-bold text-left text-gray-500 uppercase tracking-wider">Activity</th>
-                            <th scope="col" class="px-3 py-4 text-xs font-bold text-right text-gray-500 uppercase tracking-wider">Qty Achieved</th>
-                            <th scope="col" class="px-3 py-4 text-xs font-bold text-right text-gray-500 uppercase tracking-wider">Total Hours</th>
-                            <th scope="col" class="px-3 py-4 text-xs font-bold text-right text-gray-500 uppercase tracking-wider">Labour Cost</th>
-                            <th scope="col" class="px-3 py-4 text-xs font-bold text-right text-gray-500 uppercase tracking-wider">Plant Cost</th>
-                            <th scope="col" class="px-3 py-4 text-xs font-bold text-right text-indigo-600 uppercase tracking-wider">Total Cost</th>
+                            <th scope="col"
+                                class="py-4 pr-3 pl-6 text-xs font-bold text-left text-gray-500 uppercase tracking-wider">
+                                Date
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-4 text-xs font-bold text-left text-gray-500 uppercase tracking-wider">
+                                Activity
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-4 text-xs font-bold text-right text-gray-500 uppercase tracking-wider">
+                                Qty Achieved
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-4 text-xs font-bold text-right text-gray-500 uppercase tracking-wider">
+                                Total Hours
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-4 text-xs font-bold text-right text-gray-500 uppercase tracking-wider">
+                                Labour Cost
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-4 text-xs font-bold text-right text-gray-500 uppercase tracking-wider">
+                                Plant Cost
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-4 text-xs font-bold text-right text-indigo-600 uppercase tracking-wider">
+                                Total Cost
+                            </th>
                             <th scope="col" class="relative py-4 pr-6 pl-3">
                                 <span class="sr-only">Actions</span>
                             </th>
@@ -46,90 +62,100 @@
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100">
                         {% for entry in entries %}
-                        <tr class="transition-all hover:bg-indigo-50/30 group">
-                            <td class="py-5 pr-3 pl-6 text-sm font-semibold text-gray-900 whitespace-nowrap">
-                                <div class="flex flex-col">
-                                    <span>{{ entry.report.date|date:"d M Y" }}</span>
-                                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{{ entry.report.date|date:"l" }}</span>
-                                </div>
-                            </td>
-                            <td class="px-3 py-5 text-sm whitespace-nowrap">
-                                <div class="flex flex-col">
-                                    <span class="font-bold text-gray-900 uppercase truncate max-w-[200px]">{{ entry.production_plan.activity }}</span>
-                                    <span class="text-[10px] text-indigo-500 font-bold uppercase tracking-tighter">
-                                        {{ entry.production_plan.section }} / {{ entry.production_plan.bill_no }}
-                                    </span>
-                                </div>
-                            </td>
-                            <td class="px-3 py-5 text-sm font-mono tabular-nums text-right text-gray-900 whitespace-nowrap">
-                                <div class="flex flex-col items-end">
-                                    <span class="font-black">{{ entry.quantity|qty }}</span>
-                                    <span class="text-[10px] text-gray-400 font-bold uppercase">{{ entry.production_plan.unit_display }}</span>
-                                </div>
-                            </td>
-                            <td class="px-3 py-5 text-sm font-mono tabular-nums text-right text-gray-700 whitespace-nowrap">
-                                {{ entry.hours_on_activity|qty }}<span class="text-[10px] ml-1 text-gray-400 uppercase font-bold">hrs</span>
-                            </td>
-                            <td class="px-3 py-5 text-sm font-mono tabular-nums text-right text-gray-600 whitespace-nowrap">
-                                {{ entry.acc_labour_cost|currency }}
-                            </td>
-                            <td class="px-3 py-5 text-sm font-mono tabular-nums text-right text-gray-600 whitespace-nowrap">
-                                {{ entry.acc_plant_cost|currency }}
-                            </td>
-                            <td class="px-3 py-5 text-sm font-mono tabular-nums text-right font-black text-indigo-600 whitespace-nowrap border-r border-transparent group-hover:border-indigo-100 transition-all">
-                                {{ entry.acc_total_cost|currency }}
-                            </td>
-                            <td class="relative py-5 pr-6 pl-3 text-sm font-medium text-right whitespace-nowrap">
-                                <div class="flex justify-end items-center space-x-2">
-                                    <a href="{% url 'project:production-daily-log-detail' project_pk=project.pk pk=entry.report.pk %}" 
-                                       title="View Log Details"
-                                       class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
-                                        {% heroicon_outline "eye" class="w-5 h-5" %}
-                                    </a>
-                                    <a href="{% url 'project:production-daily-log-edit' project_pk=project.pk pk=entry.report.pk %}" 
-                                       title="Edit Log"
-                                       class="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all">
-                                        {% heroicon_outline "pencil-square" class="w-5 h-5" %}
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="8" class="px-6 py-20 text-center bg-gray-50/30">
-                                <div class="flex flex-col items-center">
-                                    <div class="p-4 mb-4 bg-white rounded-2xl ring-1 ring-gray-200 shadow-sm">
-                                        {% heroicon_outline "document-plus" class="w-10 h-10 text-gray-400" %}
+                            <tr class="transition-all hover:bg-indigo-50/30 group">
+                                <td class="py-5 pr-3 pl-6 text-sm font-semibold text-gray-900 whitespace-nowrap">
+                                    <div class="flex flex-col">
+                                        <span>{{ entry.report.date|date:"d M Y" }}</span>
+                                        <span class="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{{ entry.report.date|date:"l" }}</span>
                                     </div>
-                                    <h3 class="text-base font-bold text-gray-900">No Productivity Entries</h3>
-                                    <p class="mx-auto mt-1 max-w-xs text-sm text-gray-500">
-                                        Start tracking daily performance by capturing your first activity log.
-                                    </p>
-                                    <div class="mt-6">
-                                        <a href="{% url 'project:production-daily-log-create' project_pk=project.pk %}"
-                                           class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-500 transition-all">
-                                            {% heroicon_outline "plus" class="mr-2 w-4 h-4" %}
-                                            Capture First Log
+                                </td>
+                                <td class="px-3 py-5 text-sm whitespace-nowrap">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-gray-900 uppercase truncate max-w-[200px]">{{ entry.production_plan.activity }}</span>
+                                        <span class="text-[10px] text-indigo-500 font-bold uppercase tracking-tighter">
+                                            {{ entry.production_plan.section }} / {{ entry.production_plan.bill_no }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="px-3 py-5 text-sm font-mono tabular-nums text-right text-gray-900 whitespace-nowrap">
+                                    <div class="flex flex-col items-end">
+                                        <span class="font-black">{{ entry.quantity|qty }}</span>
+                                        <span class="text-[10px] text-gray-400 font-bold uppercase">{{ entry.production_plan.unit_display }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-3 py-5 text-sm font-mono tabular-nums text-right text-gray-700 whitespace-nowrap">
+                                    {{ entry.hours_on_activity|qty }}<span class="text-[10px] ml-1 text-gray-400 uppercase font-bold">hrs</span>
+                                </td>
+                                <td class="px-3 py-5 text-sm font-mono tabular-nums text-right text-gray-600 whitespace-nowrap">
+                                    {{ entry.acc_labour_cost|currency }}
+                                </td>
+                                <td class="px-3 py-5 text-sm font-mono tabular-nums text-right text-gray-600 whitespace-nowrap">
+                                    {{ entry.acc_plant_cost|currency }}
+                                </td>
+                                <td class="px-3 py-5 text-sm font-mono tabular-nums text-right font-black text-indigo-600 whitespace-nowrap border-r border-transparent group-hover:border-indigo-100 transition-all">
+                                    {{ entry.acc_total_cost|currency }}
+                                </td>
+                                <td class="relative py-5 pr-6 pl-3 text-sm font-medium text-right whitespace-nowrap">
+                                    <div class="flex justify-end items-center space-x-2">
+                                        <a href="{% url 'project:production-daily-log-detail' project_pk=project.pk pk=entry.report.pk %}"
+                                           title="View Log Details"
+                                           class="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all">
+                                            {% heroicon_outline "eye" class="w-5 h-5" %}
+                                        </a>
+                                        <a href="{% url 'project:production-daily-log-edit' project_pk=project.pk pk=entry.report.pk %}"
+                                           title="Edit Log"
+                                           class="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all">
+                                            {% heroicon_outline "pencil-square" class="w-5 h-5" %}
                                         </a>
                                     </div>
-                                </div>
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="8" class="px-6 py-20 text-center bg-gray-50/30">
+                                    <div class="flex flex-col items-center">
+                                        <div class="p-4 mb-4 bg-white rounded-2xl ring-1 ring-gray-200 shadow-sm">
+                                            {% heroicon_outline "document-plus" class="w-10 h-10 text-gray-400" %}
+                                        </div>
+                                        <h3 class="text-base font-bold text-gray-900">No Productivity Entries</h3>
+                                        <p class="mx-auto mt-1 max-w-xs text-sm text-gray-500">
+                                            Start tracking daily performance by capturing your first activity log.
+                                        </p>
+                                        <div class="mt-6">
+                                            <a href="{% url 'project:production-daily-log-create' project_pk=project.pk %}"
+                                               class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow-sm hover:bg-indigo-500 transition-all">
+                                                {% heroicon_outline "plus" class="mr-2 w-4 h-4" %}
+                                                Capture First Log
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
                         {% endfor %}
                     </tbody>
-
                     {% if entries %}
-                    <tfoot class="bg-gray-50/80 border-t-2 border-indigo-100">
-                        <tr class="font-black text-gray-900">
-                            <td colspan="2" class="py-4 pr-3 pl-6 text-xs font-black text-indigo-600 uppercase tracking-widest text-right whitespace-nowrap">Aggregate Totals (Current List)</td>
-                            <td class="px-3 py-4 text-right text-sm font-mono tabular-nums whitespace-nowrap">{{ totals.qty|qty }}</td>
-                            <td class="px-3 py-4 text-right text-sm font-mono tabular-nums whitespace-nowrap">{{ totals.hours|qty }}<span class="text-[10px] ml-1 text-gray-400 uppercase">hrs</span></td>
-                            <td class="px-3 py-4 text-right text-sm font-mono tabular-nums text-gray-600 whitespace-nowrap">{{ totals.labour|currency }}</td>
-                            <td class="px-3 py-4 text-right text-sm font-mono tabular-nums text-gray-600 whitespace-nowrap">{{ totals.plant|currency }}</td>
-                            <td class="px-3 py-4 text-right text-sm font-black text-indigo-700 font-mono tabular-nums whitespace-nowrap">{{ totals.total|currency }}</td>
-                            <td class="pr-6"></td>
-                        </tr>
-                    </tfoot>
+                        <tfoot class="bg-gray-50/80 border-t-2 border-indigo-100">
+                            <tr class="font-black text-gray-900">
+                                <td colspan="2"
+                                    class="py-4 pr-3 pl-6 text-xs font-black text-indigo-600 uppercase tracking-widest text-right whitespace-nowrap">
+                                    Aggregate Totals (Current List)
+                                </td>
+                                <td class="px-3 py-4 text-right text-sm font-mono tabular-nums whitespace-nowrap">{{ totals.qty|qty }}</td>
+                                <td class="px-3 py-4 text-right text-sm font-mono tabular-nums whitespace-nowrap">
+                                    {{ totals.hours|qty }}<span class="text-[10px] ml-1 text-gray-400 uppercase">hrs</span>
+                                </td>
+                                <td class="px-3 py-4 text-right text-sm font-mono tabular-nums text-gray-600 whitespace-nowrap">
+                                    {{ totals.labour|currency }}
+                                </td>
+                                <td class="px-3 py-4 text-right text-sm font-mono tabular-nums text-gray-600 whitespace-nowrap">
+                                    {{ totals.plant|currency }}
+                                </td>
+                                <td class="px-3 py-4 text-right text-sm font-black text-indigo-700 font-mono tabular-nums whitespace-nowrap">
+                                    {{ totals.total|currency }}
+                                </td>
+                                <td class="pr-6"></td>
+                            </tr>
+                        </tfoot>
                     {% endif %}
                 </table>
             </div>

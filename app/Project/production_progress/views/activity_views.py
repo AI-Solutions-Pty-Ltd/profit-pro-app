@@ -1,5 +1,15 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Case, Count, DecimalField, ExpressionWrapper, F, Sum, Value, When
+from django.db.models import (
+    Case,
+    Count,
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    Sum,
+    Value,
+    When,
+)
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
@@ -90,9 +100,7 @@ class LaborActivityListView(
                     output_field=DecimalField(),
                 ),
             )
-            .annotate(
-                total_daily_cost=F("daily_labour_cost") + F("daily_plant_cost")
-            )
+            .annotate(total_daily_cost=F("daily_labour_cost") + F("daily_plant_cost"))
             .order_by("section", "bill_no", "labour_specification__name")
         )
 
@@ -126,7 +134,7 @@ class LaborActivityListView(
         # Add rate information to activities
         activities = context["activities"]
         labour_specs = ProjectLabourSpecification.objects.filter(project_id=project_pk)
-        spec_map = {spec.id: spec for spec in labour_specs}
+        spec_map = {spec.id: spec for spec in labour_specs}  # ty:ignore[unresolved-attribute]
 
         # Map plant types in bulk to avoid N+1 queries
         plant_mapping_data = (
@@ -237,6 +245,11 @@ class LaborActivityDetailView(
         context["total_amount"] = metrics["total_amount"] or 0
 
         # Unique plant types summary
+        plant_types = sorted(
+            group_items.exclude(plant_specification__plant_type__name=None)
+            .values_list("plant_specification__plant_type__name", flat=True)
+            .distinct()
+        )
         context["plant_types_summary"] = (
             ", ".join(plant_types) if plant_types else "None"
         )

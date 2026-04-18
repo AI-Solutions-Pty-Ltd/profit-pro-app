@@ -48,7 +48,8 @@
                     <!-- Activity and Parent -->
                     <div class="grid grid-cols-1 gap-6 md:col-span-2">
                         <!-- Parent Context Breadcrumbs -->
-                        <div id="hierarchy_context" class="hidden p-4 bg-indigo-50/50 rounded-lg border border-indigo-100 mb-2">
+                        <div id="hierarchy_context"
+                             class="hidden p-4 bg-indigo-50/50 rounded-lg border border-indigo-100 mb-2">
                             <div class="flex items-center space-x-2 text-sm text-indigo-900 overflow-x-auto pb-1">
                                 <span class="font-semibold whitespace-nowrap">Context:</span>
                                 <div id="breadcrumb_list" class="flex items-center space-x-2">
@@ -56,31 +57,19 @@
                                 </div>
                             </div>
                         </div>
-
-
                         <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <div id="parent_field_container" class="{% if form.is_top_level %}hidden{% endif %}">
+                            <div id="parent_field_container"
+                                 class="{% if form.is_top_level %}hidden{% endif %}">
                                 {{ form.parent|as_crispy_field }}
                             </div>
                             <!-- Hierarchical steps hidden by default in favors of direct line item selection -->
-                            <div id="section_field_container" class="hidden">
-                                {{ form.section|as_crispy_field }}
-                            </div>
-                            <div id="bill_no_field_container" class="hidden">
-                                {{ form.bill_no|as_crispy_field }}
-                            </div>
-                            <div id="labour_activity_field_container">
-                                {{ form.labour_activity|as_crispy_field }}
-                            </div>
-                            <div id="plant_specification_field_container" class="hidden">
-                                {{ form.plant_specification|as_crispy_field }}
-                            </div>
+                            <div id="section_field_container" class="hidden">{{ form.section|as_crispy_field }}</div>
+                            <div id="bill_no_field_container" class="hidden">{{ form.bill_no|as_crispy_field }}</div>
+                            <div id="labour_activity_field_container">{{ form.labour_activity|as_crispy_field }}</div>
+                            <div id="plant_specification_field_container" class="hidden">{{ form.plant_specification|as_crispy_field }}</div>
                         </div>
-                        
                         <!-- Hidden Activity Title -->
-                        <div id="activity_field_wrapper" class="hidden">
-                            {{ form.activity|as_crispy_field }}
-                        </div>
+                        <div id="activity_field_wrapper" class="hidden">{{ form.activity|as_crispy_field }}</div>
                     </div>
                     <!-- Scheduling -->
                     <div class="grid grid-cols-1 gap-6 p-4 bg-gray-50 rounded-lg md:col-span-2 md:grid-cols-3">
@@ -94,8 +83,15 @@
                         <div>{{ form.unit|as_crispy_field }}</div>
                         <div>
                             <div id="div_id_daily_rate" class="mb-3">
-                                <label for="daily_rate" class="block text-xs font-semibold text-gray-500 uppercase mb-1">Daily Prod. Rate</label>
-                                <input type="text" id="daily_rate" class="block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" readonly value="0">
+                                <label for="daily_rate"
+                                       class="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                                    Daily Prod. Rate
+                                </label>
+                                <input type="text"
+                                       id="daily_rate"
+                                       class="block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                       readonly
+                                       value="0">
                                 <p class="mt-1 text-xs text-gray-400">Fetched from project specifications</p>
                             </div>
                         </div>

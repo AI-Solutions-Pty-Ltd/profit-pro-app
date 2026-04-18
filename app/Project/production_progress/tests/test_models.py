@@ -11,14 +11,10 @@ class TestProductionPlanModel:
 
     def test_production_plan_creation(self):
         """Test creating a production plan with mandatory WBS fields."""
-        plan = ProductionPlanFactory.create()
+        plan = ProductionPlanFactory.create(section="Section A", bill_no="Bill 1")
         assert plan.id is not None
-        assert plan.structure is not None
-        assert plan.bill is not None
-        assert plan.package is not None
-        assert plan.structure.project == plan.project
-        assert plan.bill.structure == plan.structure
-        assert plan.package.bill == plan.bill
+        assert plan.section == "Section A"
+        assert plan.bill_no == "Bill 1"
 
     def test_production_plan_str(self):
         """Test the string representation of ProductionPlan."""

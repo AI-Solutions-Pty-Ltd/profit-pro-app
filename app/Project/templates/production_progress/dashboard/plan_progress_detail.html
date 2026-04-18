@@ -28,9 +28,7 @@
                                         {% if plan.section %}
                                             <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{{ plan.section }}</span>
                                         {% endif %}
-                                        {% if plan.section and plan.bill_no %}
-                                            <span class="text-[10px] text-gray-300">/</span>
-                                        {% endif %}
+                                        {% if plan.section and plan.bill_no %}<span class="text-[10px] text-gray-300">/</span>{% endif %}
                                         {% if plan.bill_no %}
                                             <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{{ plan.bill_no }}</span>
                                         {% endif %}

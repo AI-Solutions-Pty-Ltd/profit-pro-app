@@ -3,18 +3,15 @@
 {% load heroicons %}
 {% load humanize %}
 {% load project_tags %}
-
 {% block title %}
     Cost Forecasting - {{ selected_plan.activity|default:"Analytics" }} - {{ block.super }}
 {% endblock title %}
-
 {% block extra_css %}
     <style>
     .metric-value { font-feature-settings: "tnum"; }
     .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
     </style>
 {% endblock extra_css %}
-
 {% block production_content %}
     <!-- Filter Header -->
     <div class="flex flex-col gap-4 justify-between items-start mb-8 sm:flex-row sm:items-center">
@@ -32,7 +29,6 @@
             </button>
         </div>
     </div>
-
     {% if not selected_plan %}
         <div class="px-6 py-24 text-center bg-white rounded-2xl border-2 border-gray-200 border-dashed">
             <div class="flex justify-center items-center mx-auto mb-6 w-20 h-20 text-indigo-400 bg-indigo-50 rounded-full">
@@ -57,9 +53,7 @@
                                 {% if selected_plan.section %}
                                     <span class="text-[10px] font-bold uppercase tracking-tighter text-gray-400">{{ selected_plan.section }}</span>
                                 {% endif %}
-                                {% if selected_plan.section and selected_plan.bill_no %}
-                                    <span class="text-[10px] text-gray-300">/</span>
-                                {% endif %}
+                                {% if selected_plan.section and selected_plan.bill_no %}<span class="text-[10px] text-gray-300">/</span>{% endif %}
                                 {% if selected_plan.bill_no %}
                                     <span class="text-[10px] font-bold uppercase tracking-tighter text-gray-400">{{ selected_plan.bill_no }}</span>
                                 {% endif %}
@@ -121,7 +115,6 @@
                 </p>
             </div>
         </div>
-
         <!-- KPI Grid -->
         <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-3">
             <!-- Avg Daily Output -->
@@ -174,7 +167,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Charts Section -->
         <div class="grid grid-cols-1 gap-8 mb-12 lg:grid-cols-2">
             <!-- Production Trajectory -->
@@ -203,7 +195,6 @@
             </div>
         </div>
     {% endif %}
-
     <!-- Footer Nav -->
     <div class="flex flex-col gap-4 justify-between items-center px-8 py-6 mt-12 mb-8 bg-white rounded-2xl border border-gray-100 shadow-sm sm:flex-row">
         <a href="{% url 'project:production-progress-dashboard' project.pk %}"
@@ -213,7 +204,6 @@
         <div class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Last Model Refresh: {% now "H:i" %}</div>
     </div>
 {% endblock production_content %}
-
 {% block extra_js %}
     <script src="{% static 'js/searchable_select.js' %}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

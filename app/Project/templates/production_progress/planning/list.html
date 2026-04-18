@@ -12,46 +12,40 @@
             <p class="text-sm text-gray-500">Manage activities, dependencies, and hierarchical structure.</p>
         </div>
         <div class="flex items-center space-x-3">
-          
             <a href="{% url 'project:production-plan-create' project.pk %}"
                class="inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 {% heroicon_solid "plus" class="mr-2 w-4 h-4" %} Add Activity
             </a>
         </div>
     </div>
-     
     <div class="flex justify-between items-center mb-4">
-       
         <!-- Expand / Collapse -->
-            <div class="flex items-center p-1 bg-white rounded-md border border-gray-200 shadow-sm">
-                <button type="button"
-                        id="global-expand-btn"
-                        onclick="expandAll()"
-                        class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-gray-700 rounded-lg border-r border-gray-100 transition-colors hover:bg-gray-50">
-                    {% heroicon_outline "arrows-pointing-out" class="mr-1.5 w-4 h-4" %} Expand All
-                </button>
-                <button type="button"
-                        id="global-collapse-btn"
-                        onclick="collapseAll()"
-                        class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-gray-700 rounded-lg transition-colors hover:bg-gray-50">
-                    {% heroicon_outline "arrows-pointing-in" class="mr-1.5 w-4 h-4" %} Collapse All
-                </button>
-            </div>
-            <!-- View Toggle -->
-            <div class="flex items-center p-1 bg-white rounded-md border border-gray-200 shadow-sm">
-                <button type="button"
-                        class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-100 rounded-lg border border-indigo-600 transition-colors">
-                    {% heroicon_outline "list-bullet" class="mr-1.5 w-4 h-4" %} List
-                </button>
-                <a href="{% url 'project:production-planning-gantt' project.pk %}"
-                   class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-gray-600 rounded-lg transition-colors hover:bg-gray-50">
-                    {% heroicon_outline "chart-bar" class="mr-1.5 w-4 h-4 rotate-90" %} Gantt
-                </a>
-            </div>
-          
- 
+        <div class="flex items-center p-1 bg-white rounded-md border border-gray-200 shadow-sm">
+            <button type="button"
+                    id="global-expand-btn"
+                    onclick="expandAll()"
+                    class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-gray-700 rounded-lg border-r border-gray-100 transition-colors hover:bg-gray-50">
+                {% heroicon_outline "arrows-pointing-out" class="mr-1.5 w-4 h-4" %} Expand All
+            </button>
+            <button type="button"
+                    id="global-collapse-btn"
+                    onclick="collapseAll()"
+                    class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-gray-700 rounded-lg transition-colors hover:bg-gray-50">
+                {% heroicon_outline "arrows-pointing-in" class="mr-1.5 w-4 h-4" %} Collapse All
+            </button>
+        </div>
+        <!-- View Toggle -->
+        <div class="flex items-center p-1 bg-white rounded-md border border-gray-200 shadow-sm">
+            <button type="button"
+                    class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-indigo-600 bg-indigo-100 rounded-lg border border-indigo-600 transition-colors">
+                {% heroicon_outline "list-bullet" class="mr-1.5 w-4 h-4" %} List
+            </button>
+            <a href="{% url 'project:production-planning-gantt' project.pk %}"
+               class="inline-flex items-center px-3 py-1.5 text-xs font-bold text-gray-600 rounded-lg transition-colors hover:bg-gray-50">
+                {% heroicon_outline "chart-bar" class="mr-1.5 w-4 h-4 rotate-90" %} Gantt
+            </a>
+        </div>
     </div>
-    
     <!-- Hierarchical List Container -->
     <div class="space-y-4">
         {% if root_plans %}
@@ -102,9 +96,9 @@
             to { opacity: 1; transform: translateY(0); }
         }
     </style>
-
     <!-- Delete Confirmation Modal -->
-    <div id="delete-modal" class="flex hidden fixed inset-0 z-50 justify-center items-center p-4">
+    <div id="delete-modal"
+         class="flex hidden fixed inset-0 z-50 justify-center items-center p-4">
         <!-- Backdrop -->
         <div class="absolute inset-0 bg-gray-900/70" onclick="hideDeleteModal()"></div>
         <!-- Dialog -->
@@ -140,7 +134,6 @@
             </div>
         </div>
     </div>
-
     <script>
         function toggleChildren(planId) {
             const childrenDiv = document.getElementById(`children-${planId}`);

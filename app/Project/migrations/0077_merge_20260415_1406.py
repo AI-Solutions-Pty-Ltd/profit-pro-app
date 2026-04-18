@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("Project", "0073_make_material_entity_nullable"),
         ("Project", "0076_remove_productionplan_trade_code"),

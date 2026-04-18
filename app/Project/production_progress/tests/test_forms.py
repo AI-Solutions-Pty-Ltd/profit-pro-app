@@ -1,12 +1,7 @@
-"""Tests for ProductionPlan forms."""
-
 import pytest
 
-from app.BillOfQuantities.tests.factories import (
-    BillFactory,
-    PackageFactory,
-    StructureFactory,
-)
+from app.Estimator.models import BOQItem
+from app.Project.models.unit_models import UnitOfMeasure
 from app.Project.production_progress.production_forms import ProductionPlanForm
 from app.Project.tests.factories import ProjectFactory
 
@@ -18,15 +13,20 @@ class TestProductionPlanForm:
     def test_form_validation_with_wbs(self):
         """Test form validation with mandatory WBS fields."""
         project = ProjectFactory.create()
-        structure = StructureFactory.create(project=project)
-        bill = BillFactory.create(structure=structure)
-        package = PackageFactory.create(bill=bill)
+        # Create UnitOfMeasure for 'unit' field validation
+        UnitOfMeasure.objects.create(name="Meter", short_name="m")
+        # Create BOQItem to populate 'section' and 'bill_no' choices
+        BOQItem.objects.create(
+            project=project,
+            section="Section A",
+            bill_no="Bill 1",
+            description="Test Item",
+        )
 
         data = {
             "activity": "Test Activity",
-            "structure": structure.id,
-            "bill": bill.id,
-            "package": package.id,
+            "section": "Section A",
+            "bill_no": "Bill 1",
             "start_date": "2026-04-12",
             "finish_date": "2026-04-22",
             "quantity": 100,
@@ -47,6 +47,5 @@ class TestProductionPlanForm:
         }
         form = ProductionPlanForm(data=data, project_id=project.id)
         assert not form.is_valid()
-        assert "structure" in form.errors
-        assert "bill" in form.errors
-        assert "package" in form.errors
+        assert "section" in form.errors
+        assert "bill_no" in form.errors

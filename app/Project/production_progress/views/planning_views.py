@@ -812,18 +812,8 @@ class ProductionPlanAjaxDetailView(LoginRequiredMixin, TemplateView):
         plan = get_object_or_404(ProductionPlan, pk=self.kwargs["pk"])
         return JsonResponse(
             {
-                "structure": {
-                    "id": plan.structure_id,
-                    "label": str(plan.structure) if plan.structure else "",
-                },
-                "bill": {
-                    "id": plan.bill_id,
-                    "label": str(plan.bill) if plan.bill else "",
-                },
-                "package": {
-                    "id": plan.package_id,
-                    "label": str(plan.package) if plan.package else "",
-                },
+                "section": plan.section or "",
+                "bill_no": plan.bill_no or "",
             }
         )
 
@@ -866,7 +856,7 @@ class GetProjectItemsAjaxView(LoginRequiredMixin, TemplateView):
 
         data = [
             {
-                "id": item.id,
+                "id": item.id,  # ty:ignore[unresolved-attribute]
                 "label": f"[{item.section}][{item.bill_no}] {item.description}"
                 if not (section and bill_no)
                 else item.description,
