@@ -12,12 +12,57 @@
             <p class="text-sm text-gray-500">Manage activities, dependencies, and hierarchical structure.</p>
         </div>
         <div class="flex items-center space-x-3">
+            <button type="button" 
+                    onclick="autofill_modal.showModal()"
+                    class="inline-flex items-center px-4 py-2 text-sm font-bold text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                {% heroicon_outline "sparkles" class="mr-2 w-4 h-4" %} Autofill from Estimator
+            </button>
             <a href="{% url 'project:production-plan-create' project.pk %}"
                class="inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 {% heroicon_solid "plus" class="mr-2 w-4 h-4" %} Add Activity
             </a>
         </div>
     </div>
+
+    <!-- Autofill Confirmation Modal -->
+    <dialog id="autofill_modal" class="modal modal-bottom sm:modal-middle">
+        <div class="modal-box bg-white p-0 overflow-hidden rounded-2xl shadow-2xl">
+            <div class="p-6">
+                <div class="flex items-start space-x-4">
+                    <div class="flex flex-shrink-0 justify-center items-center w-12 h-12 bg-indigo-100 rounded-full">
+                        {% heroicon_outline "sparkles" class="w-6 h-6 text-indigo-600" %}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="text-lg font-black text-gray-900">Autofill Project Schedule</h3>
+                        <p class="mt-1 text-sm text-gray-500">
+                            This will automatically create production plans for all labor items in the Project Estimator.
+                        </p>
+                        <div class="mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                            <p class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Note:</p>
+                            <p class="text-xs text-indigo-600 mt-1">Existing activities for the same section and bill will be skipped to avoid duplicates.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-row-reverse gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
+                <form action="{% url 'project:production-plan-autofill' project.pk %}" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="inline-flex justify-center items-center px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 rounded-md shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        {% heroicon_solid "bolt" class="mr-2 w-4 h-4" %} Start Autofill
+                    </button>
+                </form>
+                <form method="dialog">
+                    <button class="inline-flex justify-center items-center px-5 py-2.5 text-sm font-bold text-gray-700 bg-white rounded-md border border-gray-300 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Cancel
+                    </button>
+                </form>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
     <div class="flex justify-between items-center mb-4">
         <!-- Expand / Collapse -->
         <div class="flex items-center p-1 bg-white rounded-md border border-gray-200 shadow-sm">

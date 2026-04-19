@@ -32,6 +32,9 @@ from ..production_models import (
     ProductionResource,
 )
 
+from django.db.models import Sum
+from django.utils import timezone
+
 
 class ProductionPlanGanttView(
     SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
@@ -298,6 +301,104 @@ class ProductionPlanDetailView(
 
     model = ProductionPlan
     template_name = "production_progress/planning/detail.html"
+    context_object_name = "plan"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.object.project
+        return context
+
+
+class ProductionPlanAutofillView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, View
+):
+    """
+    Autofills the production schedule from the Project Estimator (BOQItems).
+    Groups BOQItems by section, bill_no, and labour_specification.
+    """
+
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def post(self, request, *args, **kwargs):
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+
+        # Fetch BOQItems that have a labour specification and are not headers
+        boq_items = (
+            BOQItem.objects.filter(
+                project=project,
+                labour_specification__isnull=False,
+                is_section_header=False,
+            )
+            .values("section", "bill_no", "labour_specification")
+            .annotate(total_quantity=Sum("contract_quantity"))
+        )
+
+        if not boq_items.exists():
+            messages.warning(
+                request, "No labour-based items found in the Project Estimator."
+            )
+            return redirect(
+                "project:production-planning", project_pk=project.pk
+            )
+
+        created_count = 0
+        skipped_count = 0
+
+        # Define default dates
+        start_date = project.start_date or timezone.now().date()
+        finish_date = start_date # User will manually update duration/finish date
+
+        for item in boq_items:
+            # Check if plan already exists for this grouping
+            existing = ProductionPlan.objects.filter(
+                project=project,
+                section=item["section"],
+                bill_no=item["bill_no"],
+                labour_activity_id=item["labour_specification"],
+                is_archived=False,
+            ).exists()
+
+            if existing:
+                skipped_count += 1
+                continue
+
+            # Fetch the first BOQItem to get the unit (or look it up from spec)
+            sample_item = BOQItem.objects.filter(
+                project=project,
+                section=item["section"],
+                bill_no=item["bill_no"],
+                labour_specification_id=item["labour_specification"],
+            ).first()
+
+            unit = sample_item.unit if sample_item else ""
+
+            # Create the ProductionPlan
+            # Note: Save() will trigger _ensure_hierarchy() to build the tree automatically
+            ProductionPlan.objects.create(
+                project=project,
+                section=item["section"],
+                bill_no=item["bill_no"],
+                labour_activity_id=item["labour_specification"],
+                quantity=item["total_quantity"] or 0,
+                unit=unit,
+                start_date=start_date,
+                finish_date=finish_date,
+            )
+            created_count += 1
+
+        if created_count > 0:
+            messages.success(
+                request,
+                f"Successfully created {created_count} activities from the Estimator.",
+            )
+        if skipped_count > 0:
+            messages.info(
+                request,
+                f"{skipped_count} activities already existed and were skipped.",
+            )
+
+        return redirect("project:production-planning", project_pk=project.pk)
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_queryset(self):
