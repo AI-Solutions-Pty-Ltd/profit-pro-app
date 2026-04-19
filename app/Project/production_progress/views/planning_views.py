@@ -3,6 +3,7 @@ import json
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models as db_models
+from django.db.models import Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
@@ -19,7 +20,7 @@ from django.views.generic import (
 from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Estimator.models import BOQItem
+from app.Estimator.models import BOQItem, ProjectLabourSpecification
 from app.Project.models import Project
 
 from ..production_forms import (
@@ -31,9 +32,6 @@ from ..production_models import (
     ProductionPlan,
     ProductionResource,
 )
-
-from django.db.models import Sum
-from django.utils import timezone
 
 
 class ProductionPlanGanttView(
@@ -84,7 +82,12 @@ class ProductionPlanGanttView(
         context["project"] = project
 
         all_plans = list(
-            ProductionPlan.objects.filter(project=project, is_archived=False)
+            ProductionPlan.objects.filter(
+                project=project,
+                is_archived=False,
+                start_date__isnull=False,
+                finish_date__isnull=False,
+            )
             .select_related("labour_activity", "parent")
             .prefetch_related(
                 "predecessors",
@@ -209,6 +212,8 @@ class ProductionPlanCreateView(
             initial["section"] = self.request.GET.get("section")
         if self.request.GET.get("bill_no"):
             initial["bill_no"] = self.request.GET.get("bill_no")
+        if self.request.GET.get("labour_activity"):
+            initial["labour_activity"] = self.request.GET.get("labour_activity")
         return initial
 
     def get_success_url(self):
@@ -310,9 +315,7 @@ class ProductionPlanDetailView(
         return context
 
 
-class ProductionPlanAutofillView(
-    SubscriptionRequiredMixin, LoginRequiredMixin, View
-):
+class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, View):
     """
     Autofills the production schedule from the Project Estimator (BOQItems).
     Groups BOQItems by section, bill_no, and labour_specification.
@@ -338,16 +341,14 @@ class ProductionPlanAutofillView(
             messages.warning(
                 request, "No labour-based items found in the Project Estimator."
             )
-            return redirect(
-                "project:production-planning", project_pk=project.pk
-            )
+            return redirect("project:production-planning", project_pk=project.pk)
 
         created_count = 0
         skipped_count = 0
 
-        # Define default dates
-        start_date = project.start_date or timezone.now().date()
-        finish_date = start_date # User will manually update duration/finish date
+        # Fetch Labour Specifications for this project to get daily rates
+        labour_specs = ProjectLabourSpecification.objects.filter(project=project)
+        spec_rate_map = {spec.id: (spec.daily_output or 0) for spec in labour_specs}
 
         for item in boq_items:
             # Check if plan already exists for this grouping
@@ -372,6 +373,7 @@ class ProductionPlanAutofillView(
             ).first()
 
             unit = sample_item.unit if sample_item else ""
+            daily_rate = spec_rate_map.get(item["labour_specification"], 0)
 
             # Create the ProductionPlan
             # Note: Save() will trigger _ensure_hierarchy() to build the tree automatically
@@ -382,8 +384,9 @@ class ProductionPlanAutofillView(
                 labour_activity_id=item["labour_specification"],
                 quantity=item["total_quantity"] or 0,
                 unit=unit,
-                start_date=start_date,
-                finish_date=finish_date,
+                daily_rate=daily_rate,
+                start_date=None,
+                finish_date=None,
             )
             created_count += 1
 
@@ -399,6 +402,7 @@ class ProductionPlanAutofillView(
             )
 
         return redirect("project:production-planning", project_pk=project.pk)
+
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_queryset(self):
@@ -999,6 +1003,7 @@ class ProductionPlanRefreshAjaxView(LoginRequiredMixin, View):
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)}, status=400)
 
+
 class ProductionCashflowForecastView(
     SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
 ):
@@ -1010,7 +1015,7 @@ class ProductionCashflowForecastView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         project_pk = self.kwargs.get("project_pk")
-        
+
         project = get_object_or_404(Project, pk=project_pk)
         context["project"] = project
 
@@ -1024,8 +1029,11 @@ class ProductionCashflowForecastView(
             history = 3
 
         from ..utils.production_utils import get_project_cashflow_data
-        cashflow_data = get_project_cashflow_data(project_pk, horizon_type=horizon, history_months=history)
-        
+
+        cashflow_data = get_project_cashflow_data(
+            project_pk, horizon_type=horizon, history_months=history
+        )
+
         context["cashflow_data"] = cashflow_data
         context["cashflow_json"] = json.dumps(cashflow_data, default=str)
         context["current_horizon"] = horizon

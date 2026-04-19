@@ -12,6 +12,7 @@ from .dashboard_views import (
 from .planning_views import (
     GetProjectBillsAjaxView,
     GetProjectItemsAjaxView,
+    ProductionCashflowForecastView,
     ProductionCostBreakdownDetailView,
     ProductionCostBreakdownView,
     ProductionPlanAjaxDetailView,
@@ -24,7 +25,6 @@ from .planning_views import (
     ProductionPlanRefreshAjaxView,
     ProductionPlanUpdateView,
     ProductionResourceCreateView,
-    ProductionCashflowForecastView,
 )
 from .productivity_views import (
     DailyLogActivityDataAjaxView,

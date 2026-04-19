@@ -18,9 +18,15 @@ def calculate_progress_status(produced, planned, start_date=None, finish_date=No
 
     progress_pct = (Decimal(produced) / Decimal(planned)) * 100
 
+    # Ensure we have dates for schedule-based status
+    if not start_date or not finish_date:
+        if progress_pct > 0:
+            return "In Progress", "yellow"
+        return "Not Started", "gray"
+
     # Check if behind schedule
     is_behind = False
-    if finish_date and timezone.now().date() > finish_date and progress_pct < 100:
+    if timezone.now().date() > finish_date and progress_pct < 100:
         is_behind = True
 
     if progress_pct >= 90 and not is_behind:
@@ -712,31 +718,36 @@ def get_forecasting_dashboard_data(plan_id, start_date=None, end_date=None):
         },
     }
 
+
 def get_project_cashflow_data(project_id, horizon_type="month", history_months=3):
     """
     Calculates project-wide cashflow trajectories: Planned, Actual, and Forecast.
     history_months: number of months back from today to start the graph (0 for project start).
     """
-    from datetime import date, timedelta
+    from datetime import timedelta
+
     from dateutil.relativedelta import relativedelta
 
     from app.Project.models import Project
+
     project = get_object_or_404(Project, pk=project_id)
     plans = ProductionPlan.objects.filter(project_id=project_id, is_archived=False)
-    entries = DailyActivityEntry.objects.filter(report__project_id=project_id).select_related("report")
+    entries = DailyActivityEntry.objects.filter(
+        report__project_id=project_id
+    ).select_related("report")
 
     today = timezone.now().date()
-    
-    # Determine timeframe
-    if not plans.exists():
-        return {
-            "labels": [], "planned": [], "actual": [], "forecast": [], "kpis": {}
-        }
 
-    # Project inception matches the earliest plan start
-    project_start = min(p.start_date for p in plans)
-    schedule_finish = max(p.finish_date for p in plans)
-    
+    # Determine timeframe - only consider plans WITH dates for timeline calculations
+    scheduled_plans = plans.filter(start_date__isnull=False, finish_date__isnull=False)
+
+    if not scheduled_plans.exists():
+        return {"labels": [], "planned": [], "actual": [], "forecast": [], "kpis": {}}
+
+    # Project inception matches the earliest scheduled plan start
+    project_start = min(p.start_date for p in scheduled_plans)
+    schedule_finish = max(p.finish_date for p in scheduled_plans)
+
     # End date based on horizon
     if horizon_type == "term":
         end_date = today + relativedelta(months=3)
@@ -744,33 +755,35 @@ def get_project_cashflow_data(project_id, horizon_type="month", history_months=3
         end_date = today + relativedelta(months=6)
     elif horizon_type == "year":
         end_date = today + relativedelta(years=1)
-    else: # month
+    else:  # month
         end_date = today + relativedelta(months=1)
-    
+
     # Display end date
     viz_end_date = max(end_date, schedule_finish)
-    
+
     # Display start date (history window)
     if history_months and history_months > 0:
         display_start = today - relativedelta(months=history_months)
         # Ensure we don't start before project start if we want to show inception
-        # display_start = max(display_start, project_start) 
+        # display_start = max(display_start, project_start)
         # Actually, let it start exactly at history_months even if before project start (for consistent width)
         # but capping at project_start is usually cleaner for S-Curves.
         # However, a fixed 3m window is what the user asked for.
     else:
         display_start = project_start
-    
+
     # Initialize trajectories
     daily_planned = defaultdict(Decimal)
     daily_actual = defaultdict(Decimal)
-    
-    # 1. Map Planned Costs
-    for plan in plans:
-        total_p_cost = plan.total_labour_cost + plan.total_plant_cost + plan.total_other_cost
+
+    # 1. Map Planned Costs (Only for scheduled plans)
+    for plan in scheduled_plans:
+        total_p_cost = (
+            plan.total_labour_cost + plan.total_plant_cost + plan.total_other_cost
+        )
         days = (plan.finish_date - plan.start_date).days + 1
         daily_p_cost = total_p_cost / Decimal(days) if days > 0 else total_p_cost
-        
+
         curr = plan.start_date
         while curr <= plan.finish_date:
             daily_planned[curr] += daily_p_cost
@@ -789,21 +802,21 @@ def get_project_cashflow_data(project_id, horizon_type="month", history_months=3
     planned_cum = []
     actual_cum = []
     forecast_cum = []
-    
+
     cum_planned = Decimal("0.0")
     cum_actual = Decimal("0.0")
     cum_forecast = Decimal("0.0")
-    
+
     # Iterate from project START to ensure cumulative totals are accurate
     curr = project_start
     current_month_p = Decimal("0.0")
     current_month_a = Decimal("0.0")
-    
+
     # Loop day by day to calculate cumulative values
     while curr <= viz_end_date:
         p_val = daily_planned.get(curr, Decimal("0.0"))
         a_val = daily_actual.get(curr, Decimal("0.0"))
-        
+
         cum_planned += p_val
         if curr <= today:
             cum_actual += a_val
@@ -811,25 +824,27 @@ def get_project_cashflow_data(project_id, horizon_type="month", history_months=3
             current_month_a += a_val
         else:
             cum_forecast += p_val
-            
+
         current_month_p += p_val
 
         # At the end of the month or at the vized_end_date, snapshot the data
         is_month_end = (curr + timedelta(days=1)).month != curr.month
         is_viz_end = curr == viz_end_date
-        
+
         if is_month_end or is_viz_end:
             # Only record if within display window (OR if it's the very first month of display_start)
             if curr >= display_start.replace(day=1):
                 labels.append(curr.strftime("%b %Y"))
-                
+
                 # Monthly Spend (Bars)
                 planned_inc.append(float(current_month_p))
-                if curr <= today or (curr.month == today.month and curr.year == today.year):
+                if curr <= today or (
+                    curr.month == today.month and curr.year == today.year
+                ):
                     actual_inc.append(float(current_month_a))
                 else:
-                    actual_inc.append(0.0) # No actuals for future months
-                
+                    actual_inc.append(0.0)  # No actuals for future months
+
                 # Cumulative To Date (Lines)
                 planned_cum.append(float(cum_planned))
                 if curr <= today:
@@ -847,21 +862,40 @@ def get_project_cashflow_data(project_id, horizon_type="month", history_months=3
 
     # 4. Calculate KPIs (remains the same)
     month_start = today.replace(day=1)
-    
+
     # Current Month Actual so far
-    month_actual = sum(daily_actual.get(d, Decimal("0.0")) for d in [month_start + timedelta(days=i) for i in range((today - month_start).days + 1)])
-    
+    month_actual = sum(
+        daily_actual.get(d, Decimal("0.0"))
+        for d in [
+            month_start + timedelta(days=i)
+            for i in range((today - month_start).days + 1)
+        ]
+    )
+
     # Current Month Planned total
     month_end = (month_start + relativedelta(months=1)) - timedelta(days=1)
-    month_planned = sum(daily_planned.get(month_start + timedelta(days=i), Decimal("0.0")) for i in range((month_end - month_start).days + 1))
-    
+    month_planned = sum(
+        daily_planned.get(month_start + timedelta(days=i), Decimal("0.0"))
+        for i in range((month_end - month_start).days + 1)
+    )
+
     f_end = today + relativedelta(months=1)
-    if horizon_type == "term": f_end = today + relativedelta(months=3)
-    elif horizon_type == "half": f_end = today + relativedelta(months=6)
-    elif horizon_type == "year": f_end = today + relativedelta(years=1)
-        
+    if horizon_type == "term":
+        f_end = today + relativedelta(months=3)
+    elif horizon_type == "half":
+        f_end = today + relativedelta(months=6)
+    elif horizon_type == "year":
+        f_end = today + relativedelta(years=1)
+
     f_start = today + timedelta(days=1)
-    period_forecast = sum(daily_planned.get(f_start + timedelta(days=i), Decimal("0.0")) for i in range((f_end - f_start).days+1)) if f_end >= f_start else 0
+    period_forecast = (
+        sum(
+            daily_planned.get(f_start + timedelta(days=i), Decimal("0.0"))
+            for i in range((f_end - f_start).days + 1)
+        )
+        if f_end >= f_start
+        else 0
+    )
 
     monthly_variance = float(month_actual - month_planned)
     is_healthy = monthly_variance <= 0
@@ -881,6 +915,6 @@ def get_project_cashflow_data(project_id, horizon_type="month", history_months=3
             "period_forecast": float(period_forecast),
             "total_budget": float(cum_planned),
             "today": today.strftime("%Y-%m-%d"),
-            "horizon_label": horizon_type.capitalize()
-        }
+            "horizon_label": horizon_type.capitalize(),
+        },
     }
