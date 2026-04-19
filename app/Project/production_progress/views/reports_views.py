@@ -190,15 +190,7 @@ class ProductionForecastDashboardView(
         # Prepare Searchable Select Widget
         plan_choices = []
         for p in all_plans:
-            label = p.activity
-            hierarchy = []
-            if p.section:
-                hierarchy.append(p.section)
-            if p.bill_no:
-                hierarchy.append(p.bill_no)
-            if hierarchy:
-                label = f"{label} ({' / '.join(hierarchy)})"
-            plan_choices.append((p.pk, label))
+            plan_choices.append((p.pk, p.activity))
 
         plan_widget = SearchableSelectWidget(choices=plan_choices)
         plan_selector_widget = plan_widget.render(

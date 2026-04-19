@@ -73,7 +73,7 @@
     </div>
     <!-- Hidden native select for form data -->
     <div class="hidden">
-        <select name="{{ widget.name }}" id="{{ widget.attrs.id }}">
+        <select name="{{ widget.name }}" id="{{ widget.attrs.id }}" {% for key, val in widget.attrs.items %}{% if key != 'id' %}{{ key }}="{{ val }}" {% endif %}{% endfor %}>
             {% for group, options, index in widget.optgroups %}
                 {% for option in options %}
                     <option value="{{ option.value }}"
