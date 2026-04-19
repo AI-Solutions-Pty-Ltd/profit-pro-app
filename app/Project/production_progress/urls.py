@@ -1,5 +1,4 @@
 from django.urls import path
-
 from . import views
 
 urlpatterns = [
@@ -87,6 +86,11 @@ urlpatterns = [
         "<int:project_pk>/forecast-dashboard/",
         views.ProductionForecastDashboardView.as_view(),
         name="production-forecast-dashboard",
+    ),
+    path(
+        "<int:project_pk>/cashflow-forecast/",
+        views.ProductionCashflowForecastView.as_view(),
+        name="production-cashflow-forecast",
     ),
     path(
         "<int:project_pk>/plan/<int:pk>/data/",

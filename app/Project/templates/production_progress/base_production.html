@@ -51,9 +51,15 @@
                         </a>
                         <!-- Forecast Hub -->
                         <a href="{% url 'project:production-forecast-dashboard' project.pk %}"
-                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'forecast' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'forecast' in current_url and 'cashflow' not in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
                             {% heroicon_outline "chart-pie" class="inline-block mr-1 w-4 h-4" %}
-                            Cost Forecast
+                            Productivity Forecast
+                        </a>
+                        <!-- Cashflow Forecast -->
+                        <a href="{% url 'project:production-cashflow-forecast' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'cashflow' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "banknotes" class="inline-block mr-1 w-4 h-4" %}
+                            Cashflow Forecast
                         </a>
                         <!-- Daily Logs -->
                         <a href="{% url 'project:production-daily-log-list' project.pk %}"

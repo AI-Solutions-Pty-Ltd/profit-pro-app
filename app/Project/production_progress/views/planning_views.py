@@ -998,3 +998,56 @@ class ProductionPlanRefreshAjaxView(LoginRequiredMixin, View):
             )
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
+class ProductionCashflowForecastView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """Renders a dedicated Cashflow Forecast Dashboard with S-Curve and KPIs."""
+
+    template_name = "production_progress/planning/cashflow_forecast.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs.get("project_pk")
+        
+        project = get_object_or_404(Project, pk=project_pk)
+        context["project"] = project
+
+        horizon = self.request.GET.get("horizon", "month").lower()
+        if horizon not in ["month", "term", "half", "year"]:
+            horizon = "month"
+
+        try:
+            history = int(self.request.GET.get("history", 3))
+        except (ValueError, TypeError):
+            history = 3
+
+        from ..utils.production_utils import get_project_cashflow_data
+        cashflow_data = get_project_cashflow_data(project_pk, horizon_type=horizon, history_months=history)
+        
+        context["cashflow_data"] = cashflow_data
+        context["cashflow_json"] = json.dumps(cashflow_data, default=str)
+        context["current_horizon"] = horizon
+        context["current_history"] = history
+
+        return context
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {
+                "title": "Production Planning",
+                "url": reverse_lazy(
+                    "project:production-planning", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": "Cashflow Forecast", "url": None},
+        ]
