@@ -131,7 +131,6 @@ class DashboardView(ProjectEstimatorMixin, ListView):
                 "labour_specification",
                 "labour_specification__crew",
                 "plant_specification",
-                "plant_specification__plant_type",
                 "preliminary_specification",
                 "material",
             )
@@ -929,7 +928,6 @@ class PricedBoqReportView(ProjectEstimatorMixin, ListView):
                 "labour_specification",
                 "labour_specification__crew",
                 "plant_specification",
-                "plant_specification__plant_type",
                 "preliminary_specification",
                 "material",
             )
@@ -2239,9 +2237,9 @@ class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
 
     def get_queryset(self):
         project = self.get_project()
-        qs = ProjectPlantSpecification.objects.filter(project=project).select_related(
-            "plant_type"
-        )
+        qs = ProjectPlantSpecification.objects.filter(
+            project=project
+        ).prefetch_related("components__plant_type")
         section = self.request.GET.get("section")
         if section:
             qs = qs.filter(section=section)
@@ -2314,7 +2312,6 @@ class UpdatePlantSpecView(View):
         "trade_name": "str",
         "name": "str",
         "unit": "str",
-        "plant_type": "fk",
         "daily_production": "decimal",
         "operator_factor": "decimal",
         "site_factor": "decimal",
@@ -2339,13 +2336,6 @@ class UpdatePlantSpecView(View):
         try:
             if field_type == "decimal":
                 setattr(item, field, Decimal(str(value)))
-            elif field_type == "fk":
-                if value:
-                    item.plant_type = ProjectPlantCost.objects.get(
-                        pk=int(value), project_id=project_pk
-                    )
-                else:
-                    item.plant_type = None
             else:
                 setattr(item, field, str(value))
         except Exception:
@@ -2356,9 +2346,8 @@ class UpdatePlantSpecView(View):
             {
                 "ok": True,
                 "daily_output": str(item.daily_output),
-                "hourly_cost": str(item.hourly_cost),
+                "daily_cost": str(item.daily_cost),
                 "rate_per_unit": str(item.rate_per_unit),
-                "plant_name": item.plant_type.name if item.plant_type else None,
             }
         )
 
@@ -3833,7 +3822,6 @@ class UpdateSystemPlantSpecView(SystemLibraryMixin, View):
         "trade_name": "str",
         "name": "str",
         "unit": "str",
-        "plant_type": "fk",
         "daily_production": "decimal",
         "operator_factor": "decimal",
         "site_factor": "decimal",
@@ -3856,11 +3844,6 @@ class UpdateSystemPlantSpecView(SystemLibraryMixin, View):
         try:
             if field_type == "decimal":
                 setattr(item, field, Decimal(str(value)))
-            elif field_type == "fk":
-                if value:
-                    item.plant_type = SystemPlantCost.objects.get(pk=int(value))
-                else:
-                    item.plant_type = None
             else:
                 setattr(item, field, str(value))
         except Exception:
@@ -3871,9 +3854,8 @@ class UpdateSystemPlantSpecView(SystemLibraryMixin, View):
             {
                 "ok": True,
                 "daily_output": str(item.daily_output),
-                "hourly_cost": str(item.hourly_cost),
+                "daily_cost": str(item.daily_cost),
                 "rate_per_unit": str(item.rate_per_unit),
-                "plant_name": item.plant_type.name if item.plant_type else None,
             }
         )
 

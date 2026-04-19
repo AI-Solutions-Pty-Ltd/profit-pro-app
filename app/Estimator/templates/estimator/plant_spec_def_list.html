@@ -71,10 +71,6 @@
                             <div class="mt-1">{{ form.unit }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_plant_type" class="block text-sm font-medium text-gray-700">Plant Type</label>
-                            <div class="mt-1">{{ form.plant_type }}</div>
-                        </div>
-                        <div class="sm:col-span-1">
                             <label for="id_daily_production"
                                    class="block text-sm font-medium text-gray-700">Daily Production</label>
                             <div class="mt-1">{{ form.daily_production }}</div>
@@ -89,6 +85,9 @@
                             <div class="mt-1">{{ form.site_factor }}</div>
                         </div>
                     </div>
+                    <p class="mt-3 text-xs text-gray-500">
+                        Plant types and hours are managed per spec in Django admin or via Excel upload.
+                    </p>
                     <div class="mt-4 flex justify-end gap-x-3">
                         <button type="button"
                                 onclick="document.getElementById('plant-spec-form').classList.add('hidden')"
@@ -127,7 +126,7 @@
                         </th>
                         <th scope="col"
                             class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Plant Type
+                            Plant &amp; Hours
                         </th>
                         <th scope="col"
                             class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -174,18 +173,12 @@
                                        data-field="unit"
                                        value="{{ ps.unit }}">
                             </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
-                                <select class="inline-edit w-32 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                        data-item-id="{{ ps.id }}"
-                                        data-field="plant_type">
-                                    <option value="">---</option>
-                                    {% for p in plants %}
-                                        <option value="{{ p.id }}"
-                                                {% if ps.plant_type_id == p.id %}selected{% endif %}>
-                                            {{ p.name }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
+                            <td class="px-3 py-3 text-xs text-gray-600">
+                                {% for comp in ps.components.all %}
+                                    <div>{{ comp.plant_type.name|default:"—" }} <span class="text-gray-400">· {{ comp.hours }}h</span></div>
+                                {% empty %}
+                                    <span class="text-gray-400">—</span>
+                                {% endfor %}
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                 <input type="number"

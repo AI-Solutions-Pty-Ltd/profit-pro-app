@@ -4,6 +4,7 @@ from app.Estimator.models import (
     ProjectMaterial,
     ProjectPlantCost,
     ProjectPlantSpecification,
+    ProjectPlantSpecificationComponent,
     ProjectPreliminaryCost,
     ProjectPreliminarySpecification,
     ProjectSpecification,
@@ -117,21 +118,27 @@ def initialize_project_estimator(project):
 
     # ── Plant Specifications ──
     pspec_count = 0
-    for sps in SystemPlantSpecification.objects.all():
-        ProjectPlantSpecification.objects.create(
+    for sps in SystemPlantSpecification.objects.prefetch_related("components"):
+        pps = ProjectPlantSpecification.objects.create(
             project=project,
             source=sps,
             section=sps.section,
             trade_name=sps.trade_name,
             name=sps.name,
             unit=sps.unit,
-            plant_type=plant_map.get(getattr(sps, "plant_type_id", None))
-            if getattr(sps, "plant_type_id", None)
-            else None,
             daily_production=sps.daily_production,
             operator_factor=sps.operator_factor,
             site_factor=sps.site_factor,
         )
+        for comp in sps.components.all():
+            ProjectPlantSpecificationComponent.objects.create(
+                specification=pps,
+                plant_type=plant_map.get(getattr(comp, "plant_type_id", None))
+                if getattr(comp, "plant_type_id", None)
+                else None,
+                hours=comp.hours,
+                sort_order=comp.sort_order,
+            )
         pspec_count += 1
     results["plant_specs"] = pspec_count
 
@@ -337,19 +344,25 @@ def clone_from_project(target_project, source_project):
     pspec_count = 0
     for sps in ProjectPlantSpecification.objects.filter(
         project=source_project
-    ).select_related("plant_type"):
-        ProjectPlantSpecification.objects.create(
+    ).prefetch_related("components"):
+        pps = ProjectPlantSpecification.objects.create(
             project=target_project,
             source=sps.source,
             section=sps.section,
             trade_name=sps.trade_name,
             name=sps.name,
             unit=sps.unit,
-            plant_type=plant_map.get(sps.plant_type.pk) if sps.plant_type else None,
             daily_production=sps.daily_production,
             operator_factor=sps.operator_factor,
             site_factor=sps.site_factor,
         )
+        for comp in sps.components.all():
+            ProjectPlantSpecificationComponent.objects.create(
+                specification=pps,
+                plant_type=plant_map.get(comp.plant_type_id) if comp.plant_type_id else None,  # ty:ignore[unresolved-attribute]
+                hours=comp.hours,
+                sort_order=comp.sort_order,
+            )
         pspec_count += 1
     results["plant_specs"] = pspec_count
 
@@ -802,12 +815,38 @@ def sync_labour_specs_from_system(project):
     return {"updated": updated, "created": created}
 
 
+def _resolve_project_plant_cost(project, system_plant_type_id):
+    if not system_plant_type_id:
+        return None
+    return ProjectPlantCost.objects.filter(
+        project=project, source_id=system_plant_type_id
+    ).first()
+
+
+def _rebuild_plant_spec_components_from_source(pps, project):
+    """Replace a project plant spec's components with a fresh copy of the
+    system source's components."""
+    pps.components.all().delete()
+    if not pps.source_id:  # ty:ignore[unresolved-attribute]
+        return
+    for comp in pps.source.components.all():
+        ProjectPlantSpecificationComponent.objects.create(
+            specification=pps,
+            plant_type=_resolve_project_plant_cost(
+                project,
+                comp.plant_type_id,  # ty:ignore[unresolved-attribute]
+            ),
+            hours=comp.hours,
+            sort_order=comp.sort_order,
+        )
+
+
 def sync_plant_specs_from_system(project):
     """Sync project plant specifications with current system library values."""
     updated = 0
     for pps in ProjectPlantSpecification.objects.filter(
         project=project, source__isnull=False
-    ).select_related("source", "source__plant_type"):
+    ).select_related("source"):
         pps.section = pps.source.section
         pps.trade_name = pps.source.trade_name
         pps.name = pps.source.name
@@ -815,13 +854,8 @@ def sync_plant_specs_from_system(project):
         pps.daily_production = pps.source.daily_production
         pps.operator_factor = pps.source.operator_factor
         pps.site_factor = pps.source.site_factor
-        if pps.source.plant_type_id:
-            pps.plant_type = ProjectPlantCost.objects.filter(
-                project=project, source_id=pps.source.plant_type_id
-            ).first()
-        else:
-            pps.plant_type = None
         pps.save()
+        _rebuild_plant_spec_components_from_source(pps, project)
         updated += 1
 
     existing_source_ids = set(
@@ -837,27 +871,30 @@ def sync_plant_specs_from_system(project):
     created = 0
     for sps in SystemPlantSpecification.objects.exclude(
         pk__in=existing_source_ids
-    ).select_related("plant_type"):
+    ).prefetch_related("components"):
         if sps.name in existing_names:
             continue
-        plant_type = None
-        if sps.plant_type_id:  # ty:ignore[unresolved-attribute]
-            plant_type = ProjectPlantCost.objects.filter(
-                project=project,
-                source_id=sps.plant_type_id,  # ty:ignore[unresolved-attribute]
-            ).first()
-        ProjectPlantSpecification.objects.create(
+        pps = ProjectPlantSpecification.objects.create(
             project=project,
             source=sps,
             section=sps.section,
             trade_name=sps.trade_name,
             name=sps.name,
             unit=sps.unit,
-            plant_type=plant_type,
             daily_production=sps.daily_production,
             operator_factor=sps.operator_factor,
             site_factor=sps.site_factor,
         )
+        for comp in sps.components.all():
+            ProjectPlantSpecificationComponent.objects.create(
+                specification=pps,
+                plant_type=_resolve_project_plant_cost(
+                    project,
+                    comp.plant_type_id,  # ty:ignore[unresolved-attribute]
+                ),
+                hours=comp.hours,
+                sort_order=comp.sort_order,
+            )
         created += 1
 
     return {"updated": updated, "created": created}
