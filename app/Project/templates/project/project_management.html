@@ -36,7 +36,7 @@
                 </div>
             </div>
         </div>
-        {% include "project/reports_nav.html" %}
+        <div class="w-full">{% include "project/reports_nav.html" %}</div>
     </div>
     <!-- Project Management Section -->
     <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
@@ -154,6 +154,16 @@
                                         <span class="text-sm font-medium text-emerald-700">Historic Documents</span>
                                         {% heroicon_outline "arrow-right" size="16" class="text-emerald-500 opacity-0 transition-opacity group-hover/btn:opacity-100" %}
                                     </a>
+                                    <a href="#"
+                                       class="flex justify-between items-center px-3 py-2 w-full bg-white rounded-lg border border-blue-200 transition-colors hover:bg-blue-50 group/btn">
+                                        <span class="text-sm font-medium text-blue-700">Handover</span>
+                                        {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 transition-opacity group-hover/btn:opacity-100" %}
+                                    </a>
+                                    <a href="#"
+                                       class="flex justify-between items-center px-3 py-2 w-full bg-white rounded-lg border border-rose-200 transition-colors hover:bg-rose-50 group/btn">
+                                        <span class="text-sm font-medium text-rose-700">Close Out</span>
+                                        {% heroicon_outline "arrow-right" size="16" class="text-rose-500 opacity-0 transition-opacity group-hover/btn:opacity-100" %}
+                                    </a>
                                 {% endif %}
                             {% endif %}
                         </div>
@@ -219,23 +229,21 @@
                             {% endif %}
                             <!-- Meetings & Tracking -->
                             {% if request.user|projectroles:project|userhasrole:'ADMIN,User' %}
-                                <div class="pt-2 mt-2 border-t border-gray-100">
-                                    <h4 class="mb-2 text-xs font-bold tracking-wider text-gray-400 uppercase">Meetings & Tracking</h4>
+                                <div>
+                                    {% comment %} <h4 class="mb-2 text-xs font-bold tracking-wider text-gray-400 uppercase">Meetings & Tracking</h4> {% endcomment %}
                                     <a href="{% url 'site_management:meeting-list' project.pk %}"
                                        class="flex justify-between items-center px-3 py-2 mb-2 w-full bg-white rounded-lg border border-cyan-200 transition-colors hover:bg-cyan-50 group/btn">
                                         <span class="text-sm font-medium text-cyan-700">Meetings</span>
                                         {% heroicon_outline "arrow-right" size="16" class="text-cyan-500 opacity-0 transition-opacity group-hover/btn:opacity-100" %}
                                     </a>
-                                    <a href="{% url 'project:action-tracker-report' project.pk %}"
-                                       class="flex justify-between items-center px-3 py-2 mb-2 w-full bg-white rounded-lg border border-rose-200 transition-colors hover:bg-rose-50 group/btn">
+                                    {% comment %} <a href="{% url 'project:action-tracker-report' project.pk %}" class="flex justify-between items-center px-3 py-2 mb-2 w-full bg-white rounded-lg border border-rose-200 transition-colors hover:bg-rose-50 group/btn">
                                         <span class="text-sm font-medium text-rose-700">Action Tracker</span>
                                         {% heroicon_outline "arrow-right" size="16" class="text-rose-500 opacity-0 transition-opacity group-hover/btn:opacity-100" %}
                                     </a>
-                                    <a href="{% url 'project:decision-log-report' project.pk %}"
-                                       class="flex justify-between items-center px-3 py-2 w-full bg-white rounded-lg border border-blue-200 transition-colors hover:bg-blue-50 group/btn">
+                                    <a href="{% url 'project:decision-log-report' project.pk %}" class="flex justify-between items-center px-3 py-2 w-full bg-white rounded-lg border border-blue-200 transition-colors hover:bg-blue-50 group/btn">
                                         <span class="text-sm font-medium text-blue-700">Decision Log</span>
                                         {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 transition-opacity group-hover/btn:opacity-100" %}
-                                    </a>
+                                    </a> {% endcomment %}
                                 </div>
                             {% endif %}
                             <a href="{% url 'project:compliance-dashboard' project.pk %}"
@@ -323,8 +331,14 @@
                         <span class="text-sm font-medium text-rose-700">Photos</span>
                         {% heroicon_outline "arrow-right" size="16" class="text-rose-500 opacity-0 transition-opacity group-hover/btn:opacity-100" %}
                     </a>
+                    <a href="#"
+                       class="flex justify-between items-center px-3 py-2 w-full bg-white rounded-lg border border-blue-200 transition-colors hover:bg-blue-50 group/btn">
+                        <span class="text-sm font-medium text-blue-700">Final Account</span>
+                        {% heroicon_outline "arrow-right" size="16" class="text-blue-500 opacity-0 transition-opacity group-hover/btn:opacity-100" %}
+                    </a>
                 </div>
             {% else %}
+                S
                 <div class="p-4 text-center">
                     <span class="text-sm text-gray-500">Only available in Payments and Invoices module</span>
                 </div>
