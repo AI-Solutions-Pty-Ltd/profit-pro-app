@@ -2,11 +2,11 @@
 {% load static %}
 {% load heroicons %}
 {% load humanize %}
-
-{% block title %}Cashflow Forecast - {{ project.name }} - {{ block.super }}{% endblock title %}
-
+{% block title %}
+    Cashflow Forecast - {{ project.name }} - {{ block.super }}
+{% endblock title %}
 {% block extra_css %}
-<style>
+    <style>
     .glass-card {
         background: rgba(255, 255, 255, 0.7);
         backdrop-filter: blur(10px);
@@ -30,145 +30,165 @@
     .legend-item.hidden-dataset {
         opacity: 0.3; text-decoration: line-through;
     }
-</style>
+    </style>
 {% endblock extra_css %}
-
 {% block production_content %}
-<div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-    <!-- Header & Selectors -->
-    <div class="flex flex-col gap-6 justify-between items-start mb-10 lg:flex-row lg:items-end">
-        <div class="max-w-2xl">
-            <h2 class="text-4xl font-black tracking-tight text-gray-900 uppercase leading-none">
-                Cashflow <span class="text-indigo-600">Forecast</span>
-            </h2>
-            <p class="mt-3 text-sm font-medium text-gray-500 max-w-md">
-                Project-wide expenditure trajectory and liquidity forecasting based on planned schedule and actual production logs.
-            </p>
+    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <!-- Header & Selectors -->
+        <div class="flex flex-col gap-6 justify-between items-start mb-10 lg:flex-row lg:items-end">
+            <div class="max-w-2xl">
+                <h2 class="text-4xl font-black tracking-tight text-gray-900 uppercase leading-none">
+                    Cashflow <span class="text-indigo-600">Forecast</span>
+                </h2>
+                <p class="mt-3 text-sm font-medium text-gray-500 max-w-md">
+                    Project-wide expenditure trajectory and liquidity forecasting based on planned schedule and actual production logs.
+                </p>
+            </div>
+            <div class="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+                <!-- Historical Window Selector -->
+                <div class="flex flex-col gap-1.5 w-full sm:w-auto">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-1">History Window</label>
+                    <div class="join shadow-sm border border-gray-200 bg-white p-1 rounded-xl">
+                        <button onclick="updateParams({history: 1})"
+                                class="join-item btn btn-xs h-8 px-3 {% if current_history == 1 %}btn-indigo text-white{% else %}btn-ghost text-gray-500{% endif %}">
+                            1m
+                        </button>
+                        <button onclick="updateParams({history: 3})"
+                                class="join-item btn btn-xs h-8 px-3 {% if current_history == 3 %}btn-indigo text-white{% else %}btn-ghost text-gray-500{% endif %}">
+                            3m
+                        </button>
+                        <button onclick="updateParams({history: 6})"
+                                class="join-item btn btn-xs h-8 px-3 {% if current_history == 6 %}btn-indigo text-white{% else %}btn-ghost text-gray-500{% endif %}">
+                            6m
+                        </button>
+                        <button onclick="updateParams({history: 0})"
+                                class="join-item btn btn-xs h-8 px-3 {% if current_history == 0 %}btn-indigo text-white{% else %}btn-ghost text-gray-500{% endif %}">
+                            All
+                        </button>
+                    </div>
+                </div>
+                <!-- Forecast Horizon Selector -->
+                <div class="flex flex-col gap-1.5 w-full sm:w-auto">
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-1">Forecast Horizon</label>
+                    <div class="join shadow-sm border border-gray-200 bg-white p-1 rounded-xl">
+                        <button onclick="updateParams({horizon: 'month'})"
+                                class="join-item btn btn-xs h-8 px-3 {% if current_horizon == 'month' %}btn-indigo text-white{% else %}btn-ghost text-gray-500{% endif %}">
+                            M
+                        </button>
+                        <button onclick="updateParams({horizon: 'term'})"
+                                class="join-item btn btn-xs h-8 px-3 {% if current_horizon == 'term' %}btn-indigo text-white{% else %}btn-ghost text-gray-500{% endif %}">
+                            3M
+                        </button>
+                        <button onclick="updateParams({horizon: 'half'})"
+                                class="join-item btn btn-xs h-8 px-3 {% if current_horizon == 'half' %}btn-indigo text-white{% else %}btn-ghost text-gray-500{% endif %}">
+                            6M
+                        </button>
+                        <button onclick="updateParams({horizon: 'year'})"
+                                class="join-item btn btn-xs h-8 px-3 {% if current_horizon == 'year' %}btn-indigo text-white{% else %}btn-ghost text-gray-500{% endif %}">
+                            1Y
+                        </button>
+                    </div>
+                </div>
+                <button onclick="window.print()"
+                        class="btn btn-sm h-10 w-full sm:w-auto btn-outline border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl mt-auto">
+                    {% heroicon_outline "printer" size="18" %}
+                    Export
+                </button>
+            </div>
         </div>
-
-        <div class="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
-            <!-- Historical Window Selector -->
-            <div class="flex flex-col gap-1.5 w-full sm:w-auto">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-1">History Window</label>
-                <div class="join shadow-sm border border-gray-200 bg-white p-1 rounded-xl">
-                    <button onclick="updateParams({history: 1})" class="join-item btn btn-xs h-8 px-3 {% if current_history == 1 %}btn-indigo text-white{% else %}btn-ghost text-gray-500{% endif %}">1m</button>
-                    <button onclick="updateParams({history: 3})" class="join-item btn btn-xs h-8 px-3 {% if current_history == 3 %}btn-indigo text-white{% else %}btn-ghost text-gray-500{% endif %}">3m</button>
-                    <button onclick="updateParams({history: 6})" class="join-item btn btn-xs h-8 px-3 {% if current_history == 6 %}btn-indigo text-white{% else %}btn-ghost text-gray-500{% endif %}">6m</button>
-                    <button onclick="updateParams({history: 0})" class="join-item btn btn-xs h-8 px-3 {% if current_history == 0 %}btn-indigo text-white{% else %}btn-ghost text-gray-500{% endif %}">All</button>
+        <!-- KPI Dashboard -->
+        <div class="grid grid-cols-1 gap-6 mb-10 md:grid-cols-2 lg:grid-cols-4">
+            <!-- Monthly Accumulation -->
+            <div class="glass-card p-6 rounded-2xl shadow-sm transition-all hover:shadow-md group">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex justify-center items-center w-10 h-10 text-indigo-600 bg-indigo-50 rounded-xl group-hover:scale-110 transition-transform">
+                        {% heroicon_outline "calendar" class="w-5 h-5" %}
+                    </div>
+                    <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">LIVE</span>
+                </div>
+                <div class="flex flex-col">
+                    <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Monthly Cost</h3>
+                    <span class="text-3xl font-black tabular-nums text-gray-900 leading-tight">R {{ cashflow_data.kpis.month_actual|floatformat:0|intcomma }}</span>
+                    <div class="flex items-center gap-2 mt-2">
+                        <span class="text-[10px] font-bold text-gray-400 uppercase">Target: R{{ cashflow_data.kpis.month_planned|floatformat:0|intcomma }}</span>
+                    </div>
                 </div>
             </div>
-
-            <!-- Forecast Horizon Selector -->
-            <div class="flex flex-col gap-1.5 w-full sm:w-auto">
-                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-1">Forecast Horizon</label>
-                <div class="join shadow-sm border border-gray-200 bg-white p-1 rounded-xl">
-                    <button onclick="updateParams({horizon: 'month'})" class="join-item btn btn-xs h-8 px-3 {% if current_horizon == 'month' %}btn-indigo text-white{% else %}btn-ghost text-gray-500{% endif %}">M</button>
-                    <button onclick="updateParams({horizon: 'term'})" class="join-item btn btn-xs h-8 px-3 {% if current_horizon == 'term' %}btn-indigo text-white{% else %}btn-ghost text-gray-500{% endif %}">3M</button>
-                    <button onclick="updateParams({horizon: 'half'})" class="join-item btn btn-xs h-8 px-3 {% if current_horizon == 'half' %}btn-indigo text-white{% else %}btn-ghost text-gray-500{% endif %}">6M</button>
-                    <button onclick="updateParams({horizon: 'year'})" class="join-item btn btn-xs h-8 px-3 {% if current_horizon == 'year' %}btn-indigo text-white{% else %}btn-ghost text-gray-500{% endif %}">1Y</button>
+            <!-- Next Period Forecast -->
+            <div class="glass-card p-6 rounded-2xl shadow-sm transition-all hover:shadow-md group border-amber-100">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex justify-center items-center w-10 h-10 text-amber-600 bg-amber-50 rounded-xl group-hover:scale-110 transition-transform">
+                        {% heroicon_outline "presentation-chart-line" class="w-5 h-5" %}
+                    </div>
+                </div>
+                <div class="flex flex-col">
+                    <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">
+                        Forecast ({{ cashflow_data.kpis.horizon_label }})
+                    </h3>
+                    <span class="text-3xl font-black tabular-nums text-gray-900 leading-tight">R {{ cashflow_data.kpis.period_forecast|floatformat:0|intcomma }}</span>
+                    <span class="text-[10px] font-bold text-amber-600 mt-2 uppercase flex items-center gap-1">
+                        {% heroicon_mini "bolt" size="12" %} Estimated Outflow
+                    </span>
                 </div>
             </div>
-            
-            <button onclick="window.print()" class="btn btn-sm h-10 w-full sm:w-auto btn-outline border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl mt-auto">
-                {% heroicon_outline "printer" size="18" %}
-                Export
-            </button>
+            <!-- Total Project Budget -->
+            <div class="glass-card p-6 rounded-2xl shadow-sm transition-all hover:shadow-md group">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex justify-center items-center w-10 h-10 text-slate-600 bg-slate-50 rounded-xl group-hover:scale-110 transition-transform">
+                        {% heroicon_outline "banknotes" class="w-5 h-5" %}
+                    </div>
+                </div>
+                <div class="flex flex-col">
+                    <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Total Baseline</h3>
+                    <span class="text-3xl font-black tabular-nums text-gray-900 leading-tight">R {{ cashflow_data.kpis.total_budget|floatformat:0|intcomma }}</span>
+                    <span class="text-[10px] font-bold text-gray-400 mt-2 uppercase">Overall Project Value</span>
+                </div>
+            </div>
+            <!-- Financial Health -->
+            <div class="glass-card p-6 rounded-2xl bg-slate-900 border-none shadow-xl group border-l-4 {% if cashflow_data.kpis.is_healthy %}border-emerald-500{% else %}border-rose-500{% endif %}">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex justify-center items-center w-10 h-10 text-white bg-white/10 rounded-xl">
+                        {% heroicon_outline "shield-check" class="w-5 h-5" %}
+                    </div>
+                    <span class="text-[10px] font-bold text-slate-500">{{ cashflow_data.kpis.today }}</span>
+                </div>
+                <div class="flex flex-col">
+                    <h3 class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Financial State</h3>
+                    <span class="text-2xl font-black {% if cashflow_data.kpis.is_healthy %}text-emerald-400{% else %}text-rose-400{% endif %} uppercase tracking-tight">
+                        {% if cashflow_data.kpis.is_healthy %}
+                            On Target
+                        {% else %}
+                            Over Budget
+                        {% endif %}
+                    </span>
+                    <div class="mt-2 h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                        <div class="h-full w-[85%] {% if cashflow_data.kpis.is_healthy %}bg-emerald-500{% else %}bg-rose-500{% endif %}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- S-Curve Chart Section -->
+        <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 mb-10">
+            <!-- Interactive Custom Legend -->
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-10 gap-6">
+                <div class="flex flex-col">
+                    <h3 class="text-xl font-black tracking-tight text-gray-900 uppercase leading-none">Trajectory Analysis</h3>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Cumulative S-Curve (Value Over Time)</span>
+                </div>
+                <div id="chartLegend"
+                     class="flex flex-wrap items-center justify-center gap-6">
+                    <!-- Legend Items populated via JS -->
+                </div>
+            </div>
+            <div class="curve-chart-container">
+                <canvas id="cashflowSCurve"></canvas>
+            </div>
         </div>
     </div>
-
-    <!-- KPI Dashboard -->
-    <div class="grid grid-cols-1 gap-6 mb-10 md:grid-cols-2 lg:grid-cols-4">
-        <!-- Monthly Accumulation -->
-        <div class="glass-card p-6 rounded-2xl shadow-sm transition-all hover:shadow-md group">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex justify-center items-center w-10 h-10 text-indigo-600 bg-indigo-50 rounded-xl group-hover:scale-110 transition-transform">
-                    {% heroicon_outline "calendar" class="w-5 h-5" %}
-                </div>
-                <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">LIVE</span>
-            </div>
-            <div class="flex flex-col">
-                <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Monthly Cost</h3>
-                <span class="text-3xl font-black tabular-nums text-gray-900 leading-tight">R {{ cashflow_data.kpis.month_actual|floatformat:0|intcomma }}</span>
-                <div class="flex items-center gap-2 mt-2">
-                    <span class="text-[10px] font-bold text-gray-400 uppercase">Target: R{{ cashflow_data.kpis.month_planned|floatformat:0|intcomma }}</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Next Period Forecast -->
-        <div class="glass-card p-6 rounded-2xl shadow-sm transition-all hover:shadow-md group border-amber-100">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex justify-center items-center w-10 h-10 text-amber-600 bg-amber-50 rounded-xl group-hover:scale-110 transition-transform">
-                    {% heroicon_outline "presentation-chart-line" class="w-5 h-5" %}
-                </div>
-            </div>
-            <div class="flex flex-col">
-                <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Forecast ({{ cashflow_data.kpis.horizon_label }})</h3>
-                <span class="text-3xl font-black tabular-nums text-gray-900 leading-tight">R {{ cashflow_data.kpis.period_forecast|floatformat:0|intcomma }}</span>
-                <span class="text-[10px] font-bold text-amber-600 mt-2 uppercase flex items-center gap-1">
-                    {% heroicon_mini "bolt" size="12" %} Estimated Outflow
-                </span>
-            </div>
-        </div>
-
-        <!-- Total Project Budget -->
-        <div class="glass-card p-6 rounded-2xl shadow-sm transition-all hover:shadow-md group">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex justify-center items-center w-10 h-10 text-slate-600 bg-slate-50 rounded-xl group-hover:scale-110 transition-transform">
-                    {% heroicon_outline "banknotes" class="w-5 h-5" %}
-                </div>
-            </div>
-            <div class="flex flex-col">
-                <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Total Baseline</h3>
-                <span class="text-3xl font-black tabular-nums text-gray-900 leading-tight">R {{ cashflow_data.kpis.total_budget|floatformat:0|intcomma }}</span>
-                <span class="text-[10px] font-bold text-gray-400 mt-2 uppercase">Overall Project Value</span>
-            </div>
-        </div>
-
-        <!-- Financial Health -->
-        <div class="glass-card p-6 rounded-2xl bg-slate-900 border-none shadow-xl group border-l-4 {% if cashflow_data.kpis.is_healthy %}border-emerald-500{% else %}border-rose-500{% endif %}">
-            <div class="flex items-center justify-between mb-4">
-                <div class="flex justify-center items-center w-10 h-10 text-white bg-white/10 rounded-xl">
-                    {% heroicon_outline "shield-check" class="w-5 h-5" %}
-                </div>
-                <span class="text-[10px] font-bold text-slate-500">{{ cashflow_data.kpis.today }}</span>
-            </div>
-            <div class="flex flex-col">
-                <h3 class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Financial State</h3>
-                <span class="text-2xl font-black {% if cashflow_data.kpis.is_healthy %}text-emerald-400{% else %}text-rose-400{% endif %} uppercase tracking-tight">
-                    {% if cashflow_data.kpis.is_healthy %}On Target{% else %}Over Budget{% endif %}
-                </span>
-                <div class="mt-2 h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                    <div class="h-full {% if cashflow_data.kpis.is_healthy %}bg-emerald-500{% else %}bg-rose-500{% endif %}" style="width: 85%"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- S-Curve Chart Section -->
-    <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 mb-10">
-        <!-- Interactive Custom Legend -->
-        <div class="flex flex-col sm:flex-row justify-between items-center mb-10 gap-6">
-            <div class="flex flex-col">
-                <h3 class="text-xl font-black tracking-tight text-gray-900 uppercase leading-none">Trajectory Analysis</h3>
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Cumulative S-Curve (Value Over Time)</span>
-            </div>
-            
-            <div id="chartLegend" class="flex flex-wrap items-center justify-center gap-6">
-                <!-- Legend Items populated via JS -->
-            </div>
-        </div>
-
-        <div class="curve-chart-container">
-            <canvas id="cashflowSCurve"></canvas>
-        </div>
-    </div>
-</div>
 {% endblock production_content %}
-
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
     // Parameter Persistence
     function updateParams(newParams) {
         const url = new URL(window.location);
@@ -344,5 +364,5 @@
             legendContainer.appendChild(item);
         });
     });
-</script>
+    </script>
 {% endblock extra_js %}

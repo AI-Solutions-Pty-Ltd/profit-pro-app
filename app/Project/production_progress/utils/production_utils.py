@@ -730,7 +730,7 @@ def get_project_cashflow_data(project_id, horizon_type="month", history_months=3
 
     from app.Project.models import Project
 
-    project = get_object_or_404(Project, pk=project_id)
+    get_object_or_404(Project, pk=project_id)
     plans = ProductionPlan.objects.filter(project_id=project_id, is_archived=False)
     entries = DailyActivityEntry.objects.filter(
         report__project_id=project_id

@@ -69,9 +69,7 @@ class TestCashflowForecast:
         report = DailyActivityReportFactory(
             project=self.project, date=today - timedelta(days=5)
         )
-        entry = DailyActivityEntryFactory(
-            report=report, production_plan=plan, quantity=10
-        )
+        DailyActivityEntryFactory(report=report, production_plan=plan, quantity=10)
         # Mock actual cost by adding resource usage or direct entry total_cost override
         # Actually, let's just check the utility returns the values
 
