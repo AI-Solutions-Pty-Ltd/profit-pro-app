@@ -2,11 +2,9 @@
 {% load static %}
 {% load heroicons %}
 {% load estimator_tags %}
-
 {% block title %}
     Daily Log: {{ report.date|date:"d M Y" }} - {{ project.name }}
 {% endblock title %}
-
 {% block content %}
     <div class="pb-12">
         <!-- Main Header Card -->
@@ -54,7 +52,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Summary Stats -->
             <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
                 <div class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100">
@@ -67,34 +64,27 @@
                     </div>
                 </div>
                 <div class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100">
-                    <div class="p-2.5 bg-purple-100 text-purple-600 rounded-lg mr-3">
-                        {% heroicon_mini "user-group" class="w-5 h-5" %}
-                    </div>
+                    <div class="p-2.5 bg-purple-100 text-purple-600 rounded-lg mr-3">{% heroicon_mini "user-group" class="w-5 h-5" %}</div>
                     <div>
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Labour Cost</p>
                         <p class="text-lg font-black text-gray-900">{{ report_total_labour_cost|currency }}</p>
                     </div>
                 </div>
                 <div class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100">
-                    <div class="p-2.5 bg-emerald-100 text-emerald-600 rounded-lg mr-3">
-                        {% heroicon_mini "truck" class="w-5 h-5" %}
-                    </div>
+                    <div class="p-2.5 bg-emerald-100 text-emerald-600 rounded-lg mr-3">{% heroicon_mini "truck" class="w-5 h-5" %}</div>
                     <div>
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Plant Cost</p>
                         <p class="text-lg font-black text-gray-900">{{ report_total_plant_cost|currency }}</p>
                     </div>
                 </div>
                 <div class="flex items-center p-4 text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-100">
-                    <div class="p-2.5 bg-white/10 rounded-lg mr-3">
-                        {% heroicon_mini "banknotes" class="w-5 h-5" %}
-                    </div>
+                    <div class="p-2.5 bg-white/10 rounded-lg mr-3">{% heroicon_mini "banknotes" class="w-5 h-5" %}</div>
                     <div>
                         <p class="text-[10px] font-bold text-indigo-100 uppercase tracking-widest">Daily Total</p>
                         <p class="text-lg font-black">{{ report_total_cost|currency }}</p>
                     </div>
                 </div>
             </div>
-
             {% if report.notes %}
                 <div class="px-6 pb-6">
                     <div class="flex gap-3 items-start p-4 bg-amber-50 rounded-xl border border-amber-100">
@@ -107,14 +97,12 @@
                 </div>
             {% endif %}
         </div>
-
         <!-- Activity Breakdown -->
         <div class="space-y-8">
             <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-2 flex items-center gap-2">
                 <span class="w-8 h-px bg-gray-200"></span>
                 Activity Logs
             </h3>
-
             {% for entry in entries %}
                 <div class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
                     <!-- Entry Header -->
@@ -134,7 +122,9 @@
                             </div>
                             <div class="text-left md:text-right">
                                 <div class="text-[10px] font-bold text-gray-400 uppercase">Input Hours</div>
-                                <div class="text-lg font-black text-gray-900 tabular-nums">{{ entry.hours_on_activity|qty }} <span class="text-xs font-medium text-gray-400">hrs</span></div>
+                                <div class="text-lg font-black text-gray-900 tabular-nums">
+                                    {{ entry.hours_on_activity|qty }} <span class="text-xs font-medium text-gray-400">hrs</span>
+                                </div>
                             </div>
                             <div class="text-left md:text-right">
                                 <div class="text-[10px] font-bold text-gray-400 uppercase">Allocated Cost</div>
@@ -142,7 +132,6 @@
                             </div>
                         </div>
                     </div>
-
                     <!-- Usage Details -->
                     <div class="grid grid-cols-1 gap-8 p-6 lg:grid-cols-2">
                         <!-- Labour -->
@@ -178,7 +167,6 @@
                                 </table>
                             </div>
                         </div>
-
                         <!-- Plant -->
                         <div>
                             <div class="flex gap-2 items-center mb-3">
@@ -214,7 +202,6 @@
                 </div>
             {% endfor %}
         </div>
-
         <!-- Dashboard Footer -->
         <div class="flex justify-between items-center py-6 mt-12 border-t border-gray-100">
             <a href="{% url 'project:production-daily-log-list' project_pk=project.pk %}"
@@ -230,4 +217,3 @@
         </div>
     </div>
 {% endblock content %}
-

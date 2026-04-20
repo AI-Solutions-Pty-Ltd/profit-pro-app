@@ -3,11 +3,9 @@
 {% load heroicons %}
 {% load humanize %}
 {% load project_tags %}
-
 {% block title %}
     Productivity Logs - {{ project.name }}
 {% endblock title %}
-
 {% block content %}
     <div class="pb-12">
         <!-- Header Card -->
@@ -34,7 +32,6 @@
                 </div>
             </div>
         </div>
-
         {% for data in logs_data %}
             <div class="mb-16">
                 <!-- Activity Header Card -->
@@ -47,7 +44,6 @@
                         <p class="text-sm text-gray-500">Detailed productivity metrics and resource logs</p>
                     </div>
                 </div>
-
                 <!-- Productivity Table -->
                 <div class="overflow-hidden mb-8 bg-white rounded-2xl border border-gray-200 shadow-sm">
                     <div class="flex items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
@@ -111,7 +107,6 @@
                         </table>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
                     <!-- Labour Log -->
                     <div class="overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm">
@@ -136,7 +131,9 @@
                                         <tr class="transition-colors hover:bg-gray-50/50">
                                             <td class="px-4 py-3">
                                                 <div class="text-sm font-bold text-gray-700">{{ res.name }}</div>
-                                                <div class="text-[10px] text-gray-400 font-medium font-mono uppercase tracking-tighter">R {{ res.rate|floatformat:2|intcomma }}/day</div>
+                                                <div class="text-[10px] text-gray-400 font-medium font-mono uppercase tracking-tighter">
+                                                    R {{ res.rate|floatformat:2|intcomma }}/day
+                                                </div>
                                             </td>
                                             {% for day in data.days_list %}
                                                 <td class="px-4 py-3 text-sm text-center text-gray-900 tabular-nums">
@@ -157,13 +154,10 @@
                             </table>
                         </div>
                     </div>
-
                     <!-- Plant Log -->
                     <div class="overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm">
                         <div class="flex items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                            <div class="p-1.5 mr-3 text-emerald-600 bg-emerald-100 rounded-lg">
-                                {% heroicon_outline "truck" class="w-4 h-4" %}
-                            </div>
+                            <div class="p-1.5 mr-3 text-emerald-600 bg-emerald-100 rounded-lg">{% heroicon_outline "truck" class="w-4 h-4" %}</div>
                             <h3 class="text-sm font-black text-gray-900 uppercase tracking-wider">Plant & Equipment</h3>
                         </div>
                         <div class="overflow-x-auto">
@@ -181,7 +175,9 @@
                                         <tr class="transition-colors hover:bg-gray-50/50">
                                             <td class="px-4 py-3">
                                                 <div class="text-sm font-bold text-gray-700">{{ res.name }}</div>
-                                                <div class="text-[10px] text-gray-400 font-medium font-mono uppercase tracking-tighter">R {{ res.rate|floatformat:2|intcomma }}/hr</div>
+                                                <div class="text-[10px] text-gray-400 font-medium font-mono uppercase tracking-tighter">
+                                                    R {{ res.rate|floatformat:2|intcomma }}/hr
+                                                </div>
                                             </td>
                                             {% for day in data.days_list %}
                                                 <td class="px-4 py-3 text-sm text-center text-gray-900 tabular-nums">
@@ -213,7 +209,6 @@
                 <p class="mt-2 text-gray-500">Start by capturing daily activity data for your planning items.</p>
             </div>
         {% endfor %}
-
         <!-- Footer Nav -->
         <div class="flex flex-col gap-4 justify-between items-center py-6 mt-12 border-t border-gray-100 sm:flex-row">
             <a href="{% url 'project:production-dashboard' project.pk %}"
@@ -227,4 +222,3 @@
         </div>
     </div>
 {% endblock content %}
-

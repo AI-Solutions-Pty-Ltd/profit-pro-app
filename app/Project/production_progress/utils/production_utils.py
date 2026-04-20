@@ -974,15 +974,15 @@ def get_project_performance_summary(project_id):
         "total_planned_cost": total_planned_cost,
         "ppi": round(ppi, 2),
         "cpi": round(cpi, 2),
-        "overall_progress_pct": round(
-            (total_produced_qty / total_planned_qty * 100), 1
-        )
+        "overall_progress_pct": round((total_produced_qty / total_planned_qty * 100), 1)
         if total_planned_qty > 0
         else 0,
     }
 
 
-def get_project_productivity_report_data(project_id, history_horizon="3m", forecast_horizon="3m"):
+def get_project_productivity_report_data(
+    project_id, history_horizon="3m", forecast_horizon="3m"
+):
     """
     Generates comprehensive data for the Productivity & Cost Report.
     Includes monthly accumulation, multi-horizon forecasts, and activity projections.
@@ -1177,12 +1177,9 @@ def get_project_productivity_report_data(project_id, history_horizon="3m", forec
     # 4. Activity Specific Projections
     activity_projections = []
     for plan in plans.filter(finish_date__gte=today).order_by("finish_date")[:10]:
-        plan_actual_qty = (
-            entries.filter(production_plan=plan).aggregate(total=Sum("quantity"))[
-                "total"
-            ]
-            or Decimal("0")
-        )
+        plan_actual_qty = entries.filter(production_plan=plan).aggregate(
+            total=Sum("quantity")
+        )["total"] or Decimal("0")
         remaining_qty = max(Decimal("0"), plan.quantity - plan_actual_qty)
 
         if remaining_qty > 0:

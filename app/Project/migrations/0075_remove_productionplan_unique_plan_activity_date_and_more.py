@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("Project", "0074_plandependency_and_more"),
         ("estimator", "0011_boqitem_plant_prelim_specs"),

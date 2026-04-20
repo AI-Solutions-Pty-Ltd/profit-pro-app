@@ -2,11 +2,9 @@
 {% load static %}
 {% load heroicons %}
 {% load humanize %}
-
 {% block title %}
     Production Plan — {{ object.activity }} - {{ project.name }}
 {% endblock title %}
-
 {% block content %}
     <div class="pb-12">
         <!-- Header & Breadcrumbs -->
@@ -44,7 +42,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Dashboard Stats Grid -->
             <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
                 <div class="p-4 bg-gray-50 rounded-lg border border-gray-100 transition-all hover:bg-white hover:shadow-md">
@@ -58,22 +55,27 @@
                 </div>
                 <div class="p-4 bg-gray-50 rounded-lg border border-gray-100 transition-all hover:bg-white hover:shadow-md">
                     <dt class="mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Planned Volume</dt>
-                    <dd class="text-xl font-black text-gray-900">{{ object.quantity|floatformat:1 }} <span class="text-xs font-medium text-gray-400">{{ object.unit }}</span></dd>
+                    <dd class="text-xl font-black text-gray-900">
+                        {{ object.quantity|floatformat:1 }} <span class="text-xs font-medium text-gray-400">{{ object.unit }}</span>
+                    </dd>
                     <div class="mt-2 text-xs font-semibold text-emerald-600">Production Goal</div>
                 </div>
                 <div class="p-4 bg-gray-50 rounded-lg border border-gray-100 transition-all hover:bg-white hover:shadow-md">
                     <dt class="mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Labour Budget</dt>
-                    <dd class="text-xl font-black text-gray-900">R {{ object.total_labour_cost|floatformat:0|intcomma }}</dd>
+                    <dd class="text-xl font-black text-gray-900">
+                        R {{ object.total_labour_cost|floatformat:0|intcomma }}
+                    </dd>
                     <div class="mt-2 text-xs font-semibold text-blue-600">Resource Allocation</div>
                 </div>
                 <div class="p-4 text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-100 transition-all hover:shadow-xl">
                     <dt class="mb-1 text-[10px] font-bold text-indigo-100 uppercase tracking-widest">Plant Budget</dt>
-                    <dd class="text-xl font-black">R {{ object.total_plant_cost|floatformat:0|intcomma }}</dd>
+                    <dd class="text-xl font-black">
+                        R {{ object.total_plant_cost|floatformat:0|intcomma }}
+                    </dd>
                     <div class="mt-2 text-xs font-semibold text-indigo-200">Equipment Allocation</div>
                 </div>
             </div>
         </div>
-
         <!-- Resource Breakdown -->
         <div class="space-y-8">
             {% for category in resource_categories %}
@@ -131,7 +133,6 @@
                 </div>
             {% endfor %}
         </div>
-
         <!-- Dashboard Footer -->
         <div class="flex justify-between items-center py-6 mt-12 border-t border-gray-100">
             <a href="{% url 'project:production-planning' project.pk %}"
@@ -147,4 +148,3 @@
         </div>
     </div>
 {% endblock content %}
-
