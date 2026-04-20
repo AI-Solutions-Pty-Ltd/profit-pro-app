@@ -98,10 +98,16 @@ class StructureExcelUploadForm(forms.Form):
 class LineItemExcelUploadForm(forms.ModelForm):
     """Form for uploading line items via Excel file."""
 
-    project = forms.ModelChoiceField(queryset=Project.objects.all())
+    project = forms.ModelChoiceField(queryset=Project.objects.none())
     structure = forms.CharField()
     bill = forms.CharField()
     package = forms.CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        project_field = self.fields["project"]
+        if hasattr(project_field, "queryset"):
+            project_field.queryset = Project.objects.all()  # type: ignore
 
     class Meta:
         model = LineItem

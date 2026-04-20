@@ -20,6 +20,11 @@ urlpatterns = [
         name="project-management",
     ),
     path(
+        "<int:pk>/order-amendments/",
+        project_views.OrderAmendmentsView.as_view(),
+        name="order-amendments",
+    ),
+    path(
         "<int:pk>/edit/",
         project_views.ProjectSetupView.as_view(),
         name="project-setup",

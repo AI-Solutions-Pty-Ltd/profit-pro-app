@@ -291,7 +291,7 @@ class CompanyDashboardView(
             company = filter_form.cleaned_data.get("company")
             if company:
                 return redirect(
-                    "project:company-detail-dashboard",
+                    "project:company-management",
                     pk=company.pk,
                 )
 
@@ -347,6 +347,11 @@ class CompanyDetailDashboardView(
     template_name = "company/company_detail_dashboard.html"
     context_object_name = "company"
     required_tiers = [Subscription.BUSINESS_MANAGEMENT]
+
+    def get(self, request, *args, **kwargs):
+        """Redirect to company management as detail dashboard is disabled."""
+        self.object = self.get_object()
+        return redirect("project:company-management", pk=self.object.pk)
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
         return [
