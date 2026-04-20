@@ -35,7 +35,7 @@ class ProjectClientForm(forms.Form):
     """Form to select a client for a project."""
 
     client = forms.ModelChoiceField(
-        queryset=Company.objects.filter(type=Company.Type.CLIENT),
+        queryset=Company.objects.none(),
         widget=forms.Select(
             attrs={
                 "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
@@ -47,24 +47,33 @@ class ProjectClientForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         project = kwargs.pop("project", None)
-        user: Account = kwargs.pop("user", None)
-        projects = user.get_projects
+        user: Account | None = kwargs.pop("user", None)
 
         # Pop instance before calling super() to avoid passing it to Form
         self.instance = kwargs.pop("instance", None)
         super().__init__(*args, **kwargs)
         self.fields["client"].label = "Client Company"
 
-        # Filter to only show client companies
-        queryset = Company.objects.filter(
-            client_projects__in=projects, type=Company.Type.CLIENT
-        ).order_by("name")
+        if user:
+            projects = user.get_projects
 
-        # Exclude the currently assigned client if project is provided
-        if project and project.client:
-            queryset = queryset.exclude(pk=project.client.pk)
+            # Filter to only show client companies
+            queryset = Company.objects.filter(
+                client_projects__in=projects, type=Company.Type.CLIENT
+            ).order_by("name")
 
-        # Type: ModelChoiceField has queryset attribute
-        client_field = self.fields["client"]
-        if hasattr(client_field, "queryset"):
-            client_field.queryset = queryset.distinct()  # type: ignore
+            # Exclude the currently assigned client if project is provided
+            if project and project.client:
+                queryset = queryset.exclude(pk=project.client.pk)
+
+            # Type: ModelChoiceField has queryset attribute
+            client_field = self.fields["client"]
+            if hasattr(client_field, "queryset"):
+                client_field.queryset = queryset.distinct()  # type: ignore
+        else:
+            # Fallback for all client companies if user is not provided
+            client_field = self.fields["client"]
+            if hasattr(client_field, "queryset"):
+                client_field.queryset = Company.objects.filter(  # type: ignore
+                    type=Company.Type.CLIENT
+                ).order_by("name")

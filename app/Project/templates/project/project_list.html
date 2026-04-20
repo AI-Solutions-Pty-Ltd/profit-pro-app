@@ -94,17 +94,17 @@
                             </select>
                             {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
                         </div>
-                        <!-- Subcategory Filter -->
+                        <!-- Area Filter -->
                         <div class="relative">
-                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Subcategory</span>
-                            <select name="project_subcategory"
+                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Area</span>
+                            <select name="area"
                                     onchange="this.form.submit()"
                                     class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
                                 <option value="">All</option>
-                                {% for subcategory in filter_form.project_subcategory.field.queryset %}
-                                    <option value="{{ subcategory.pk }}"
-                                            {% if filter_form.project_subcategory.value|stringformat:"s" == subcategory.pk|stringformat:"s" %}selected{% endif %}>
-                                        {{ subcategory.name }}
+                                {% for area in filter_form.area.field.queryset %}
+                                    <option value="{{ area.pk }}"
+                                            {% if filter_form.area.value|stringformat:"s" == area.pk|stringformat:"s" %}selected{% endif %}>
+                                        {{ area.municipality_name }}
                                     </option>
                                 {% endfor %}
                             </select>
@@ -204,7 +204,8 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sector</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
@@ -223,6 +224,15 @@
                                 {% if project.project_category %}
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                                         {{ project.project_category.name }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-sm text-gray-400">--</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if project.area %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        {{ project.area.municipality_name }}
                                     </span>
                                 {% else %}
                                     <span class="text-sm text-gray-400">--</span>
