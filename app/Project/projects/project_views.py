@@ -731,7 +731,7 @@ class OrderAmendmentsView(ProjectMixin, DetailView):
 
         # Get original contract value (from line items total)
         line_items = project.line_items.all()
-        original_contract_value = (
+        original_contract_value = float(
             line_items.aggregate(total=Sum("total_price"))["total"] or 0
         )
 

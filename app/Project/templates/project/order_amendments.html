@@ -218,9 +218,9 @@
         new Chart(pieCtx, {
             type: 'pie',
             data: {
-                labels: {{ category_labels| safe |default: "['Scope Change', 'Design Change', 'Rate Adjustment', 'Quantity Variance', 'Delay Costs', 'Other']" }},
+                labels: {{ category_labels|default:"['Scope Change', 'Design Change', 'Rate Adjustment', 'Quantity Variance', 'Delay Costs', 'Other']"|safe }},
         datasets: [{
-            data: {{ category_values| safe |default: "[0, 0, 0, 0, 0, 0]" }},
+            data: {{ category_values|default:"[0, 0, 0, 0, 0, 0]"|safe }},
         backgroundColor: [
             'rgba(59, 130, 246, 0.8)',   // Blue - Scope Change
             'rgba(16, 185, 129, 0.8)',   // Green - Design Change
@@ -269,8 +269,8 @@
 
     // Waterfall Chart - Budget Impact
     const waterfallCtx = document.getElementById('amendmentsWaterfallChart').getContext('2d');
-    const waterfallData = {{ waterfall_values| safe |default: "[0]" }};
-    const waterfallLabels = {{ waterfall_labels| safe |default: "['Original Budget']" }};
+    const waterfallData = {{ waterfall_values|default:"[0]"|safe }};
+    const waterfallLabels = {{ waterfall_labels|default:"['Original Budget']"|safe }};
 
     new Chart(waterfallCtx, {
         type: 'bar',

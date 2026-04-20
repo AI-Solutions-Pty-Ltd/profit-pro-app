@@ -12,4 +12,7 @@ urlpatterns = [
         "email-verification/",
         include("app.Account.urls.email_verification_urls", "email-verification"),
     ),
+    path(
+        "municipalities/", include("app.Account.urls.municipality_urls", "municipality")
+    ),
 ]

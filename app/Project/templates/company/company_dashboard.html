@@ -20,7 +20,7 @@
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     <!-- Company Jump -->
                     <form method="get"
-                          action="{% url 'project:company-management' %}"
+                          action="{% url 'project:company-dashboard' %}"
                           class="centered-content">
                         <div class="min-w-[200px]">{{ filter_form.company|as_crispy_field }}</div>
                     </form>

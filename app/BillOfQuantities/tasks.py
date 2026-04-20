@@ -130,7 +130,6 @@ def generate_abridged_payment_certificate_pdf(payment_certificate) -> ContentFil
         "is_abridged": True,
         "special_items": special_items,
     }
-
     return generate_payment_certificate_pdf(context)
 
 
@@ -184,8 +183,10 @@ def generate_and_save_pdf(
             update_fields.append("abridged_pdf")
             update_fields.append("abridged_pdf_generating")
             logger.info(
-                f"Abridged PDF generated successfully for certificate {payment_certificate.certificate_number}"
+                f"Full PDF generated successfully for certificate {payment_certificate.certificate_number}. Progressive to date: {payment_certificate.progressive_to_date}"
             )
+            with open("debug_progressive_to_date.txt", "a") as f:
+                f.write(f"Full PDF: {payment_certificate.progressive_to_date}\n")
 
         payment_certificate.save(update_fields=update_fields)
 
