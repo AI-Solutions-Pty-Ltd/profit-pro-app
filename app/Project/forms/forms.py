@@ -41,24 +41,35 @@ class ProjectContractorForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         project = kwargs.pop("project", None)
-        user: Account = kwargs.pop("user", None)
-        projects = user.get_projects
+        user: Account | None = kwargs.pop("user", None)
 
         super().__init__(*args, **kwargs)
 
-        # Filter to only show contractor companies
-        queryset = Company.objects.filter(
-            contractor_projects__in=projects, type=Company.Type.CONTRACTOR
-        ).order_by("name")
+        if user:
+            projects = user.get_projects
 
-        # Exclude the currently assigned contractor if project is provided
-        if project and project.contractor:
-            queryset = queryset.exclude(pk=project.contractor.pk)
+            # Filter to only show contractor companies
+            queryset = Company.objects.filter(
+                contractor_projects__in=projects, type=Company.Type.CONTRACTOR
+            ).order_by("name")
 
-        # Type: ModelChoiceField has queryset attribute
-        contractor_field = self.fields["contractor"]
-        if hasattr(contractor_field, "queryset"):
-            cast(ModelChoiceField, contractor_field).queryset = queryset.distinct()
+            # Exclude the currently assigned contractor if project is provided
+            if project and project.contractor:
+                queryset = queryset.exclude(pk=project.contractor.pk)
+
+            # Type: ModelChoiceField has queryset attribute
+            contractor_field = self.fields["contractor"]
+            if hasattr(contractor_field, "queryset"):
+                cast(ModelChoiceField, contractor_field).queryset = queryset.distinct()
+        else:
+            # Fallback for all contractor companies if user is not provided
+            contractor_field = self.fields["contractor"]
+            if hasattr(contractor_field, "queryset"):
+                cast(
+                    ModelChoiceField, contractor_field
+                ).queryset = Company.objects.filter(
+                    type=Company.Type.CONTRACTOR
+                ).order_by("name")
 
 
 class ProjectLeadConsultantForm(forms.ModelForm):
