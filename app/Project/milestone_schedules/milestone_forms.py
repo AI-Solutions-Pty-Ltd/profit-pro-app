@@ -241,12 +241,12 @@ class MilestoneForm(forms.ModelForm):
         return cleaned_data
 
     def __init__(self, *args, **kwargs):
+        from app.Account.models import Municipality
         from app.Project.projects.projects_models import (
             Category,
             Discipline,
             Group,
         )
-        from app.Account.models import Municipality
 
         project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)

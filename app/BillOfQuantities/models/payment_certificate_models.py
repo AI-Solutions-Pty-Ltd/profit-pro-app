@@ -334,7 +334,7 @@ class PaymentCertificate(BaseModel):
     # Helper functions for ledger totals
     def _get_ledger_total(self, model_class) -> Decimal:
         """Helper to calculate net total (Debit - Credit) for a ledger model."""
-        from django.db.models import Case, When
+        from django.db.models import Case, Sum, When
 
         transactions = model_class.objects.filter(payment_certificate=self)
         total = transactions.aggregate(

@@ -5,43 +5,73 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Account', '0011_alter_municipality_district'),
-        ('Project', '0075_remove_orderamendment_unique_amendment_number_per_project_and_more'),
+        ("Account", "0011_alter_municipality_district"),
+        (
+            "Project",
+            "0075_remove_orderamendment_unique_amendment_number_per_project_and_more",
+        ),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='milestone',
-            name='project_sub_category',
+            model_name="milestone",
+            name="project_sub_category",
         ),
         migrations.RemoveField(
-            model_name='project',
-            name='project_sub_category',
+            model_name="project",
+            name="project_sub_category",
         ),
         migrations.RemoveField(
-            model_name='projectdocument',
-            name='project_sub_category',
+            model_name="projectdocument",
+            name="project_sub_category",
         ),
         migrations.AddField(
-            model_name='milestone',
-            name='area',
-            field=models.ForeignKey(blank=True, help_text='Project area (Municipality)', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='milestones', to='Account.municipality'),
+            model_name="milestone",
+            name="area",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Project area (Municipality)",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="milestones",
+                to="Account.municipality",
+            ),
         ),
         migrations.AddField(
-            model_name='project',
-            name='area',
-            field=models.ForeignKey(blank=True, help_text='Project area (Municipality)', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='projects', to='Account.municipality'),
+            model_name="project",
+            name="area",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Project area (Municipality)",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="projects",
+                to="Account.municipality",
+            ),
         ),
         migrations.AddField(
-            model_name='projectdocument',
-            name='area',
-            field=models.ForeignKey(blank=True, help_text='Project area (Municipality)', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='documents', to='Account.municipality'),
+            model_name="projectdocument",
+            name="area",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Project area (Municipality)",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="documents",
+                to="Account.municipality",
+            ),
         ),
         migrations.AlterField(
-            model_name='project',
-            name='project_category',
-            field=models.ForeignKey(blank=True, help_text='Project sector (e.g., Education, Health, Roads)', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='projects', to='Project.projectcategory'),
+            model_name="project",
+            name="project_category",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Project sector (e.g., Education, Health, Roads)",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="projects",
+                to="Project.projectcategory",
+            ),
         ),
     ]

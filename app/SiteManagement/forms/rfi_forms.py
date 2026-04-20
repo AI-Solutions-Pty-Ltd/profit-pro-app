@@ -85,11 +85,11 @@ class RFIForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        from app.Account.models import Municipality
         from app.Project.projects.projects_models import (
             Category,
             Discipline,
         )
-        from app.Account.models import Municipality
 
         project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
@@ -98,27 +98,18 @@ class RFIForm(forms.ModelForm):
             # Filter categories, areas, and disciplines by project
 
             # Filter for project-specific categories
-            self.fields["project_category"].queryset = Category.objects.filter(
-                project=project, deleted=False
-            )
-            self.fields["area"].queryset = Municipality.objects.filter(
-                projects=project
-            )
-            self.fields["project_discipline"].queryset = Discipline.objects.filter(
-                project=project, deleted=False
-            )
             category_field = self.fields["project_category"]
             if hasattr(category_field, "queryset"):
                 category_field.queryset = Category.objects.filter(  # type: ignore
                     project=project, deleted=False
                 ).order_by("name")
 
-            # Filter for project-specific subcategories
-            subcategory_field = self.fields["project_sub_category"]
-            if hasattr(subcategory_field, "queryset"):
-                subcategory_field.queryset = SubCategory.objects.filter(  # type: ignore
-                    project=project, deleted=False
-                ).order_by("name")
+            # Filter for project-specific areas
+            area_field = self.fields["area"]
+            if hasattr(area_field, "queryset"):
+                area_field.queryset = Municipality.objects.filter(  # type: ignore
+                    projects=project
+                ).order_by("municipality_name")
 
             # Filter for project-specific disciplines
             discipline_field = self.fields["project_discipline"]
@@ -129,7 +120,7 @@ class RFIForm(forms.ModelForm):
 
             # Make fields optional
             self.fields["project_category"].required = False
-            self.fields["project_sub_category"].required = False
+            self.fields["area"].required = False
             self.fields["project_discipline"].required = False
 
 

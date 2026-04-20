@@ -1,6 +1,5 @@
 {% load project_tags %}
 {% load template_extras %}
-
 <div class="overflow-x-auto">
     <table class="w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
@@ -18,48 +17,60 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-2 text-sm text-gray-900">Advance Payments</td>
                         <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R {{ prev|floatformat:2|intcomma }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R {{ current|floatformat:2|intcomma }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R {{ prev|varadd:current|floatformat:2|intcomma }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
+                            R {{ current|floatformat:2|intcomma }}
+                        </td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                            R {{ prev|varadd:current|floatformat:2|intcomma }}
+                        </td>
                     </tr>
                 {% endif %}
             {% endwith %}
-
             <!-- Retention -->
             {% with current=payment_certificate.get_retention_total prev=payment_certificate.previous_retention_total %}
                 {% if current != 0 or prev != 0 %}
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-2 text-sm text-gray-900">Retention</td>
                         <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R {{ prev|floatformat:2|intcomma }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R {{ current|floatformat:2|intcomma }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R {{ prev|varadd:current|floatformat:2|intcomma }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
+                            R {{ current|floatformat:2|intcomma }}
+                        </td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                            R {{ prev|varadd:current|floatformat:2|intcomma }}
+                        </td>
                     </tr>
                 {% endif %}
             {% endwith %}
-
             <!-- Materials on Site -->
             {% with current=payment_certificate.get_materials_on_site_total prev=payment_certificate.previous_materials_on_site_total %}
                 {% if current != 0 or prev != 0 %}
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-2 text-sm text-gray-900">Materials on Site</td>
                         <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R {{ prev|floatformat:2|intcomma }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R {{ current|floatformat:2|intcomma }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R {{ prev|varadd:current|floatformat:2|intcomma }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
+                            R {{ current|floatformat:2|intcomma }}
+                        </td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                            R {{ prev|varadd:current|floatformat:2|intcomma }}
+                        </td>
                     </tr>
                 {% endif %}
             {% endwith %}
-
             <!-- Escalation -->
             {% with current=payment_certificate.get_escalation_total prev=payment_certificate.previous_escalation_total %}
                 {% if current != 0 or prev != 0 %}
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-2 text-sm text-gray-900">Escalation</td>
                         <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R {{ prev|floatformat:2|intcomma }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R {{ current|floatformat:2|intcomma }}</td>
-                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R {{ prev|varadd:current|floatformat:2|intcomma }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
+                            R {{ current|floatformat:2|intcomma }}
+                        </td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                            R {{ prev|varadd:current|floatformat:2|intcomma }}
+                        </td>
                     </tr>
                 {% endif %}
             {% endwith %}
-
             <!-- Special Items -->
             {% with totals_by_type=payment_certificate.get_special_item_totals_by_type prev_totals_by_type=payment_certificate.previous_special_item_totals_by_type %}
                 {% for item_type, current in totals_by_type.items %}
@@ -68,8 +79,12 @@
                             <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-2 text-sm text-gray-900">{{ item_type }}</td>
                                 <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R {{ prev|floatformat:2|intcomma }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">R {{ current|floatformat:2|intcomma }}</td>
-                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">R {{ prev|varadd:current|floatformat:2|intcomma }}</td>
+                                <td class="px-4 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
+                                    R {{ current|floatformat:2|intcomma }}
+                                </td>
+                                <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
+                                    R {{ prev|varadd:current|floatformat:2|intcomma }}
+                                </td>
                             </tr>
                         {% endif %}
                     {% endwith %}

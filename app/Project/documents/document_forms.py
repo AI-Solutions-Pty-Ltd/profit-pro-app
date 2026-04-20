@@ -79,11 +79,11 @@ class ProjectDocumentForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        from app.Account.models import Municipality
         from app.Project.projects.projects_models import (
             Category,
             Discipline,
         )
-        from app.Account.models import Municipality
 
         project = kwargs.pop("project", None)
         is_edit = kwargs.pop("is_edit", False)

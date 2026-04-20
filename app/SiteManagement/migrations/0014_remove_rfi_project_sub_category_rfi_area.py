@@ -5,20 +5,29 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Account', '0011_alter_municipality_district'),
-        ('SiteManagement', '0013_labourlog_labour_entity_materialslog_material_entity_and_more'),
+        ("Account", "0011_alter_municipality_district"),
+        (
+            "SiteManagement",
+            "0013_labourlog_labour_entity_materialslog_material_entity_and_more",
+        ),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='rfi',
-            name='project_sub_category',
+            model_name="rfi",
+            name="project_sub_category",
         ),
         migrations.AddField(
-            model_name='rfi',
-            name='area',
-            field=models.ForeignKey(blank=True, help_text='Project area (Municipality)', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='rfis', to='Account.municipality'),
+            model_name="rfi",
+            name="area",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="Project area (Municipality)",
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="rfis",
+                to="Account.municipality",
+            ),
         ),
     ]
