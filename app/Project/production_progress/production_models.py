@@ -72,12 +72,15 @@ class ProductionPlan(BaseModel):
     plant_types = models.JSONField(
         default=list, blank=True, help_text="Cached list of plant types from BOQ"
     )
-    start_date = models.DateField()
-    finish_date = models.DateField()
+    start_date = models.DateField(null=True, blank=True)
+    finish_date = models.DateField(null=True, blank=True)
     quantity = models.DecimalField(
         max_digits=15, decimal_places=2, validators=[MinValueValidator(0)]
     )
     unit = models.CharField(max_length=50)
+    daily_rate = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, help_text="Daily production rate"
+    )
     duration = models.IntegerField(default=0, help_text="Duration in days")
     is_archived = models.BooleanField(default=False)
 
@@ -92,7 +95,6 @@ class ProductionPlan(BaseModel):
             models.UniqueConstraint(
                 fields=["project", "section", "bill_no", "activity", "start_date"],
                 name="unique_plan_activity_date",
-                condition=models.Q(is_archived=False),
             )
         ]
 
@@ -260,6 +262,8 @@ class ProductionPlan(BaseModel):
         if self.is_archived:
             return False
         today = timezone.now().date()
+        if not self.start_date or not self.finish_date:
+            return False
         return self.start_date <= today <= self.finish_date
 
     @property

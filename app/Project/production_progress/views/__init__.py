@@ -12,9 +12,11 @@ from .dashboard_views import (
 from .planning_views import (
     GetProjectBillsAjaxView,
     GetProjectItemsAjaxView,
+    ProductionCashflowForecastView,
     ProductionCostBreakdownDetailView,
     ProductionCostBreakdownView,
     ProductionPlanAjaxDetailView,
+    ProductionPlanAutofillView,
     ProductionPlanCreateView,
     ProductionPlanDeleteView,
     ProductionPlanDetailView,
@@ -35,6 +37,7 @@ from .productivity_views import (
 )
 from .reports_views import (
     ProductionForecastDashboardView,
+    ProductionPerformanceReportView,
     ProductivityLogsView,
 )
 from .tracking_views import ProgressTrackingView
@@ -70,4 +73,7 @@ __all__ = [
     "ProductionPlanRefreshAjaxView",
     "ProductionDailyLogUpdateView",
     "ProductionDailyLogDeleteView",
+    "ProductionPlanAutofillView",
+    "ProductionCashflowForecastView",
+    "ProductionPerformanceReportView",
 ]

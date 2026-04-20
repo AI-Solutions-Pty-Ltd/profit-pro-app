@@ -24,7 +24,7 @@
                 {{ plan_selector_widget|safe }}
             </form>
             <button onclick="window.location.reload()"
-                    class="p-2 text-gray-400 bg-white rounded-xl border border-gray-200 shadow-sm transition-colors hover:bg-gray-50 hover:text-indigo-600">
+                    class="p-2 bg-white rounded-xl border border-gray-200 shadow-sm transition-colors hover:bg-gray-50 hover:text-indigo-600">
                 {% heroicon_outline "arrow-path" class="w-5 h-5" %}
             </button>
         </div>
@@ -40,29 +40,31 @@
     {% else %}
         <!-- Activity Context Card -->
         <div class="grid grid-cols-1 gap-6 mb-8 lg:grid-cols-3">
-            <div class="col-span-1 border-l-4  bg-white p-6 shadow-sm rounded-2xl border border-gray-200 lg:col-span-2 {% if summary.status_color == 'emerald' %}border-l-emerald-500{% elif summary.status_color == 'amber' %}border-l-amber-500{% else %}border-l-rose-500{% endif %}">
+            <div class="col-span-1   bg-white p-6 shadow-sm rounded-xl border border-gray-200 lg:col-span-2 {% if summary.status_color == 'emerald' %}border-emerald-200{% elif summary.status_color == 'amber' %}border-amber-200{% else %}border-rose-200{% endif %}">
                 <div class="flex justify-between items-start mb-6">
                     <div>
                         <div class="flex items-center mb-1.5">
                             <span class="status-dot {% if summary.status_color == 'emerald' %}bg-emerald-500{% elif summary.status_color == 'amber' %}bg-amber-500{% else %}bg-rose-500{% endif %}"></span>
-                            <span class="text-[10px] font-black uppercase tracking-wider {% if summary.status_color == 'emerald' %}text-emerald-600{% elif summary.status_color == 'amber' %}text-amber-600{% else %}text-rose-600{% endif %}">{{ summary.status }}</span>
+                            <span class="text-xs font-bold text-gray-500  uppercase tracking-wider {% if summary.status_color == 'emerald' %}text-emerald-600{% elif summary.status_color == 'amber' %}text-amber-600{% else %}text-rose-600{% endif %}">{{ summary.status }}</span>
                         </div>
                         <h3 class="text-lg font-black tracking-tight text-gray-900 uppercase">{{ selected_plan.activity }}</h3>
                         {% if selected_plan.section or selected_plan.bill_no %}
                             <div class="flex gap-1.5 items-center mt-0.5">
                                 {% if selected_plan.section %}
-                                    <span class="text-[10px] font-bold uppercase tracking-tighter text-gray-400">{{ selected_plan.section }}</span>
+                                    <span class="text-xs font-bold tracking-tighter text-gray-500 uppercase">{{ selected_plan.section }}</span>
                                 {% endif %}
-                                {% if selected_plan.section and selected_plan.bill_no %}<span class="text-[10px] text-gray-300">/</span>{% endif %}
+                                {% if selected_plan.section and selected_plan.bill_no %}
+                                    <span class="text-xs font-bold text-gray-300">/</span>
+                                {% endif %}
                                 {% if selected_plan.bill_no %}
-                                    <span class="text-[10px] font-bold uppercase tracking-tighter text-gray-400">{{ selected_plan.bill_no }}</span>
+                                    <span class="text-xs font-bold tracking-tighter text-gray-500 uppercase">{{ selected_plan.bill_no }}</span>
                                 {% endif %}
                             </div>
                         {% endif %}
                     </div>
                     <div class="text-right">
                         <div class="text-2xl font-black tabular-nums text-gray-900">{{ summary.progress_pct }}%</div>
-                        <div class="text-[10px] font-bold uppercase text-gray-400">Complete</div>
+                        <div class="text-xs font-bold text-gray-500 uppercase">Complete</div>
                     </div>
                 </div>
                 <div class="mb-6 w-full h-3 bg-gray-100 rounded-full">
@@ -71,7 +73,7 @@
                 </div>
                 <div class="grid grid-cols-2 gap-8">
                     <div>
-                        <div class="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">Time Forecast</div>
+                        <div class="mb-1 text-xs font-bold tracking-wider text-gray-500 uppercase">Time Forecast</div>
                         <div class="text-xl font-black tabular-nums text-gray-900">{{ summary.forecast_days }} Days</div>
                         <div class="text-xs font-bold {% if summary.time_variance >= 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
                             {% if summary.time_variance >= 0 %}
@@ -82,7 +84,7 @@
                         </div>
                     </div>
                     <div>
-                        <div class="mb-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">Cost Forecast</div>
+                        <div class="mb-1 text-xs font-bold tracking-wider text-gray-500 uppercase">Cost Forecast</div>
                         <div class="text-xl font-black tabular-nums text-gray-900">R {{ summary.forecast_cost|floatformat:0|intcomma }}</div>
                         <div class="text-xs font-bold {% if summary.budget_variance >= 0 %}text-emerald-600{% else %}text-rose-600{% endif %}">
                             {% if summary.budget_variance >= 0 %}
@@ -94,23 +96,23 @@
                     </div>
                 </div>
             </div>
-            <div class="rounded-2xl bg-indigo-600 p-6 shadow-lg transition-transform hover:scale-[1.01]">
+            <div class="p-6 bg-indigo-900 rounded-xl shadow-sm">
                 <h4 class="mb-4 text-xs font-black tracking-wider text-indigo-100 uppercase">Target Metrics</h4>
                 <div class="space-y-4">
                     <div class="flex justify-between items-center py-2 border-b border-indigo-500/50">
-                        <span class="text-[10px] font-bold uppercase text-indigo-200">Days Remaining</span>
+                        <span class="text-xs font-bold text-indigo-200 uppercase t">Days Remaining</span>
                         <span class="text-xl font-black tabular-nums text-white">{{ summary.days_remaining }}</span>
                     </div>
                     <div class="flex justify-between items-center py-2 border-b border-indigo-500/50">
-                        <span class="text-[10px] font-bold uppercase text-indigo-200">Units Remaining</span>
+                        <span class="text-xs font-bold text-indigo-200 uppercase t">Units Remaining</span>
                         <span class="text-xl font-black tabular-nums text-white">{{ summary.units_remaining|floatformat:0 }}</span>
                     </div>
                     <div class="flex justify-between items-center py-2">
-                        <span class="text-[10px] font-bold uppercase text-indigo-200">Budget Used</span>
+                        <span class="text-xs font-bold text-indigo-200 uppercase t">Budget Used</span>
                         <span class="text-xl font-black tabular-nums text-white">{{ summary.budget_used_pct }}%</span>
                     </div>
                 </div>
-                <p class="mt-6 text-[10px] italic leading-relaxed text-indigo-200">
+                <p class="mt-6 text-[10px] italic font-bold leading-relaxed text-indigo-200 ">
                     Models based on cumulative performance as of {% now "M d, Y" %}.
                 </p>
             </div>
@@ -118,16 +120,16 @@
         <!-- KPI Grid -->
         <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-3">
             <!-- Avg Daily Output -->
-            <div class="p-5 bg-white rounded-2xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
+            <div class="p-5 bg-white rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
                 <div class="flex items-center mb-4">
                     <div class="flex justify-center items-center mr-3 w-10 h-10 text-blue-600 bg-blue-50 rounded-xl">
                         {% heroicon_outline "chart-bar" class="w-5 h-5" %}
                     </div>
-                    <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-400">Avg Daily Output</h3>
+                    <h3 class="text-xs font-bold text-gray-500 uppercase">Avg Daily Output</h3>
                 </div>
                 <div class="flex justify-between items-end">
-                    <div class="text-2xl font-black tabular-nums text-gray-900">
-                        {{ kpis.daily_output.actual|floatformat:1 }} <span class="text-xs font-bold text-gray-400">{{ selected_plan.unit }}</span>
+                    <div class="text-2xl font-bold tabular-nums text-gray-900">
+                        {{ kpis.daily_output.actual|floatformat:1 }} <span class="text-xs font-bold text-gray-600">{{ selected_plan.unit }}</span>
                     </div>
                     <div class="text-sm font-bold {% if kpis.daily_output.variance >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
                         {{ kpis.daily_output.variance|stringformat:"+0.1f" }}%
@@ -140,7 +142,7 @@
                     <div class="flex justify-center items-center mr-3 w-10 h-10 text-emerald-600 bg-emerald-50 rounded-xl">
                         {% heroicon_outline "tag" class="w-5 h-5" %}
                     </div>
-                    <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-400">Cost Per Unit</h3>
+                    <h3 class="text-xs font-bold text-gray-500 uppercase">Cost Per Unit</h3>
                 </div>
                 <div class="flex justify-between items-end">
                     <div class="text-2xl font-black tabular-nums text-gray-900">R {{ kpis.cost.actual|floatformat:2 }}</div>
@@ -155,11 +157,11 @@
                     <div class="flex justify-center items-center mr-3 w-10 h-10 text-purple-600 bg-purple-50 rounded-xl">
                         {% heroicon_outline "bolt" class="w-5 h-5" %}
                     </div>
-                    <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-400">Work Productivity</h3>
+                    <h3 class="text-xs font-bold text-gray-500 uppercase">Work Productivity</h3>
                 </div>
                 <div class="flex justify-between items-end">
                     <div class="text-2xl font-black tabular-nums text-gray-900">
-                        {{ kpis.productivity.actual|floatformat:2 }} <span class="text-xs font-bold text-gray-400">U/MH</span>
+                        {{ kpis.productivity.actual|floatformat:2 }} <span class="text-xs font-bold">U/MH</span>
                     </div>
                     <div class="text-sm font-bold {% if kpis.productivity.variance >= 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
                         {{ kpis.productivity.variance|stringformat:"+0.1f" }}%
@@ -172,7 +174,7 @@
             <!-- Production Trajectory -->
             <div class="flex overflow-hidden flex-col bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                    <h3 class="flex items-center text-[10px] font-black uppercase tracking-wider text-gray-900">
+                    <h3 class="flex items-center text-xs font-bold tracking-wider text-gray-500 text-gray-600 text-gray-900 uppercase">
                         {% heroicon_outline "presentation-chart-line" class="mr-2 w-4 h-4 text-indigo-500" %}
                         Production Trajectory Forecast
                     </h3>
@@ -184,7 +186,7 @@
             <!-- Cost Trajectory -->
             <div class="flex overflow-hidden flex-col bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                    <h3 class="flex items-center text-[10px] font-black uppercase tracking-wider text-gray-900">
+                    <h3 class="flex items-center text-xs font-bold tracking-wider text-gray-500 text-gray-600 text-gray-900 uppercase">
                         {% heroicon_outline "banknotes" class="mr-2 w-4 h-4 text-emerald-500" %}
                         Cost Trajectory Forecast
                     </h3>
@@ -198,10 +200,10 @@
     <!-- Footer Nav -->
     <div class="flex flex-col gap-4 justify-between items-center px-8 py-6 mt-12 mb-8 bg-white rounded-2xl border border-gray-100 shadow-sm sm:flex-row">
         <a href="{% url 'project:production-progress-dashboard' project.pk %}"
-           class="inline-flex items-center text-sm font-bold text-gray-400 transition-colors hover:text-indigo-600">
+           class="inline-flex items-center text-sm font-bold transition-colors hover:text-indigo-600">
             {% heroicon_outline "chevron-left" class="mr-2 w-4 h-4" %} Back to Dashboard
         </a>
-        <div class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Last Model Refresh: {% now "H:i" %}</div>
+        <div class="text-xs font-bold tracking-widest text-gray-500 uppercase">Last Model Refresh: {% now "H:i" %}</div>
     </div>
 {% endblock production_content %}
 {% block extra_js %}
@@ -265,8 +267,17 @@
             data: {
                 labels: labels,
                 datasets: [
+                 {
+                        label: 'Planned ',
+                        data: chartData.planned_prod,
+                        borderColor: '#cbd5e1',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false,
+                        order: 1
+                    },
                     {
-                        label: 'Actual Production',
+                        label: 'Actual',
                         data: chartData.actual_prod,
                         borderColor: '#4f46e5',
                         backgroundColor: 'rgba(79, 70, 229, 0.1)',
@@ -274,27 +285,19 @@
                         borderWidth: 4,
                         pointRadius: 0,
                         tension: 0.1,
-                        order: 1
+                        order: 2
                     },
                     {
-                        label: 'Forecasted',
+                        label: 'Forecast',
                         data: chartData.forecast_prod,
                         borderColor: '#fb923c',
                         borderDash: [8, 4],
                         borderWidth: 3,
                         pointRadius: 0,
                         fill: false,
-                        order: 2
-                    },
-                    {
-                        label: 'Planned Path',
-                        data: chartData.planned_prod,
-                        borderColor: '#cbd5e1',
-                        borderWidth: 2,
-                        pointRadius: 0,
-                        fill: false,
                         order: 3
                     },
+                   
                     {
                         label: 'Target',
                         data: Array(labels.length).fill(chartData.target_qty),
@@ -318,40 +321,40 @@
                 labels: labels,
                 datasets: [
                     {
-                        label: 'Actual Cost',
+                        label: 'Actual ',
                         data: chartData.actual_cost,
-                        borderColor: '#059669',
-                        backgroundColor: 'rgba(5, 150, 105, 0.08)',
+                        borderColor: '#4f46e5',
+                          backgroundColor: 'rgba(79, 70, 229, 0.1)',
                         fill: true,
                         borderWidth: 4,
                         pointRadius: 0,
                         tension: 0.1,
-                        order: 1
+                        order: 2
                     },
                     {
-                        label: 'Forecasted',
+                        label: 'Forecast',
                         data: chartData.forecast_cost,
                         borderColor: '#fb923c',
                         borderDash: [8, 4],
                         borderWidth: 3,
                         pointRadius: 0,
                         fill: false,
-                        order: 2
+                        order: 3
                     },
                     {
-                        label: 'Budget Path',
+                        label: 'Planned',
                         data: chartData.planned_cost,
                         borderColor: '#cbd5e1',
-                        borderWidth: 2,
+                        borderWidth: 3,
                         pointRadius: 0,
                         fill: false,
-                        order: 3
+                        order: 1
                     },
                     {
                         label: 'Budget Limit',
                         data: Array(labels.length).fill(chartData.target_budget),
                         borderColor: '#10b981',
-                        borderWidth: 2,
+                        borderWidth: 3,
                         borderDash: [5, 5],
                         pointRadius: 0,
                         fill: false,

@@ -18,9 +18,15 @@ def calculate_progress_status(produced, planned, start_date=None, finish_date=No
 
     progress_pct = (Decimal(produced) / Decimal(planned)) * 100
 
+    # Ensure we have dates for schedule-based status
+    if not start_date or not finish_date:
+        if progress_pct > 0:
+            return "In Progress", "yellow"
+        return "Not Started", "gray"
+
     # Check if behind schedule
     is_behind = False
-    if finish_date and timezone.now().date() > finish_date and progress_pct < 100:
+    if timezone.now().date() > finish_date and progress_pct < 100:
         is_behind = True
 
     if progress_pct >= 90 and not is_behind:
@@ -710,4 +716,512 @@ def get_forecasting_dashboard_data(plan_id, start_date=None, end_date=None):
             "target_budget": float(budget_allocation),
             "daily_variance": productive_data.get("daily_summaries", []),
         },
+    }
+
+
+def get_project_cashflow_data(project_id, horizon_type="month", history_months=3):
+    """
+    Calculates project-wide cashflow trajectories: Planned, Actual, and Forecast.
+    history_months: number of months back from today to start the graph (0 for project start).
+    """
+    from datetime import timedelta
+
+    from dateutil.relativedelta import relativedelta
+
+    from app.Project.models import Project
+
+    get_object_or_404(Project, pk=project_id)
+    plans = ProductionPlan.objects.filter(project_id=project_id, is_archived=False)
+    entries = DailyActivityEntry.objects.filter(
+        report__project_id=project_id
+    ).select_related("report")
+
+    today = timezone.now().date()
+
+    # Determine timeframe - only consider plans WITH dates for timeline calculations
+    scheduled_plans = plans.filter(start_date__isnull=False, finish_date__isnull=False)
+
+    if not scheduled_plans.exists():
+        return {"labels": [], "planned": [], "actual": [], "forecast": [], "kpis": {}}
+
+    # Project inception matches the earliest scheduled plan start
+    project_start = min(p.start_date for p in scheduled_plans)
+    schedule_finish = max(p.finish_date for p in scheduled_plans)
+
+    # End date based on horizon
+    if horizon_type == "term":
+        end_date = today + relativedelta(months=3)
+    elif horizon_type == "half":
+        end_date = today + relativedelta(months=6)
+    elif horizon_type == "year":
+        end_date = today + relativedelta(years=1)
+    else:  # month
+        end_date = today + relativedelta(months=1)
+
+    # Display end date
+    viz_end_date = max(end_date, schedule_finish)
+
+    # Display start date (history window)
+    if history_months and history_months > 0:
+        display_start = today - relativedelta(months=history_months)
+        # Ensure we don't start before project start if we want to show inception
+        # display_start = max(display_start, project_start)
+        # Actually, let it start exactly at history_months even if before project start (for consistent width)
+        # but capping at project_start is usually cleaner for S-Curves.
+        # However, a fixed 3m window is what the user asked for.
+    else:
+        display_start = project_start
+
+    # Initialize trajectories
+    daily_planned = defaultdict(Decimal)
+    daily_actual = defaultdict(Decimal)
+
+    # 1. Map Planned Costs (Only for scheduled plans)
+    for plan in scheduled_plans:
+        total_p_cost = (
+            plan.total_labour_cost + plan.total_plant_cost + plan.total_other_cost
+        )
+        days = (plan.finish_date - plan.start_date).days + 1
+        daily_p_cost = total_p_cost / Decimal(days) if days > 0 else total_p_cost
+
+        curr = plan.start_date
+        while curr <= plan.finish_date:
+            daily_planned[curr] += daily_p_cost
+            curr += timedelta(days=1)
+
+    # 2. Map Actual Costs
+    for entry in entries:
+        daily_actual[entry.report.date] += entry.total_cost
+
+    # 3. Build Monthly Data series
+    labels = []
+    # Incremental (Monthly)
+    planned_inc = []
+    actual_inc = []
+    # Cumulative (S-Curve)
+    planned_cum = []
+    actual_cum = []
+    forecast_cum = []
+
+    cum_planned = Decimal("0.0")
+    cum_actual = Decimal("0.0")
+    cum_forecast = Decimal("0.0")
+
+    # Iterate from project START to ensure cumulative totals are accurate
+    curr = project_start
+    current_month_p = Decimal("0.0")
+    current_month_a = Decimal("0.0")
+
+    # Loop day by day to calculate cumulative values
+    while curr <= viz_end_date:
+        p_val = daily_planned.get(curr, Decimal("0.0"))
+        a_val = daily_actual.get(curr, Decimal("0.0"))
+
+        cum_planned += p_val
+        if curr <= today:
+            cum_actual += a_val
+            cum_forecast = cum_actual
+            current_month_a += a_val
+        else:
+            cum_forecast += p_val
+
+        current_month_p += p_val
+
+        # At the end of the month or at the vized_end_date, snapshot the data
+        is_month_end = (curr + timedelta(days=1)).month != curr.month
+        is_viz_end = curr == viz_end_date
+
+        if is_month_end or is_viz_end:
+            # Only record if within display window (OR if it's the very first month of display_start)
+            if curr >= display_start.replace(day=1):
+                labels.append(curr.strftime("%b %Y"))
+
+                # Monthly Spend (Bars)
+                planned_inc.append(float(current_month_p))
+                if curr <= today or (
+                    curr.month == today.month and curr.year == today.year
+                ):
+                    actual_inc.append(float(current_month_a))
+                else:
+                    actual_inc.append(0.0)  # No actuals for future months
+
+                # Cumulative To Date (Lines)
+                planned_cum.append(float(cum_planned))
+                if curr <= today:
+                    actual_cum.append(float(cum_actual))
+                    forecast_cum.append(float(cum_forecast))
+                else:
+                    actual_cum.append(None)
+                    forecast_cum.append(float(cum_forecast))
+
+            # Reset monthly counters
+            current_month_p = Decimal("0.0")
+            current_month_a = Decimal("0.0")
+
+        curr += timedelta(days=1)
+
+    # 4. Calculate KPIs (remains the same)
+    month_start = today.replace(day=1)
+
+    # Current Month Actual so far
+    month_actual = sum(
+        daily_actual.get(d, Decimal("0.0"))
+        for d in [
+            month_start + timedelta(days=i)
+            for i in range((today - month_start).days + 1)
+        ]
+    )
+
+    # Current Month Planned total
+    month_end = (month_start + relativedelta(months=1)) - timedelta(days=1)
+    month_planned = sum(
+        daily_planned.get(month_start + timedelta(days=i), Decimal("0.0"))
+        for i in range((month_end - month_start).days + 1)
+    )
+
+    f_end = today + relativedelta(months=1)
+    if horizon_type == "term":
+        f_end = today + relativedelta(months=3)
+    elif horizon_type == "half":
+        f_end = today + relativedelta(months=6)
+    elif horizon_type == "year":
+        f_end = today + relativedelta(years=1)
+
+    f_start = today + timedelta(days=1)
+    period_forecast = (
+        sum(
+            daily_planned.get(f_start + timedelta(days=i), Decimal("0.0"))
+            for i in range((f_end - f_start).days + 1)
+        )
+        if f_end >= f_start
+        else 0
+    )
+
+    monthly_variance = float(month_actual - month_planned)
+    is_healthy = monthly_variance <= 0
+
+    return {
+        "labels": labels,
+        "planned_cum": planned_cum,
+        "actual_cum": actual_cum,
+        "forecast_cum": forecast_cum,
+        "planned_inc": planned_inc,
+        "actual_inc": actual_inc,
+        "kpis": {
+            "month_actual": float(month_actual),
+            "month_planned": float(month_planned),
+            "monthly_variance": float(monthly_variance),
+            "is_healthy": is_healthy,
+            "period_forecast": float(period_forecast),
+            "total_budget": float(cum_planned),
+            "today": today.strftime("%Y-%m-%d"),
+            "horizon_label": horizon_type.capitalize(),
+        },
+    }
+
+
+def get_project_performance_summary(project_id):
+    """
+    Calculates high-level project-wide performance indices (PPI, CPI).
+    """
+    plans = ProductionPlan.objects.filter(project_id=project_id, is_archived=False)
+    entries = DailyActivityEntry.objects.filter(report__project_id=project_id)
+
+    total_planned_qty = plans.aggregate(total=Sum("quantity"))["total"] or Decimal("0")
+    total_produced_qty = entries.aggregate(total=Sum("quantity"))["total"] or Decimal(
+        "0"
+    )
+
+    total_actual_cost = Decimal("0")
+    total_actual_hours = Decimal("0")
+    for entry in entries:
+        total_actual_cost += entry.total_cost
+        total_actual_hours += entry.man_hours
+
+    # Planned Totals
+    total_planned_cost = Decimal("0")
+    total_planned_hours = Decimal("0")
+    for plan in plans:
+        if plan.labour_activity:
+            total_planned_cost += (
+                plan.total_labour_cost + plan.total_plant_cost + plan.total_other_cost
+            )
+            for res in plan.resources.filter(resource_type="LABOUR"):
+                total_planned_hours += (res.number or 0) * (res.days or 0) * 8
+
+    # Performance Indices
+    ppi = Decimal("1.0")  # Production Performance Index
+    if total_planned_hours > 0 and total_planned_qty > 0:
+        planned_productivity = total_planned_qty / total_planned_hours
+        actual_productivity = (
+            total_produced_qty / total_actual_hours if total_actual_hours > 0 else 0
+        )
+        if planned_productivity > 0:
+            ppi = actual_productivity / planned_productivity
+
+    cpi = Decimal("1.0")  # Cost Performance Index
+    earned_value = Decimal("0")
+    if total_planned_qty > 0:
+        earned_value = (total_produced_qty / total_planned_qty) * total_planned_cost
+
+    if total_actual_cost > 0:
+        cpi = earned_value / total_actual_cost
+
+    return {
+        "total_planned_qty": total_planned_qty,
+        "total_produced_qty": total_produced_qty,
+        "total_actual_cost": total_actual_cost,
+        "total_planned_cost": total_planned_cost,
+        "ppi": round(ppi, 2),
+        "cpi": round(cpi, 2),
+        "overall_progress_pct": round((total_produced_qty / total_planned_qty * 100), 1)
+        if total_planned_qty > 0
+        else 0,
+    }
+
+
+def get_project_productivity_report_data(
+    project_id, history_horizon="3m", forecast_horizon="3m"
+):
+    """
+    Generates comprehensive data for the Productivity & Cost Report.
+    Includes monthly accumulation, multi-horizon forecasts, and activity projections.
+    """
+    from datetime import timedelta
+
+    from dateutil.relativedelta import relativedelta
+
+    summary = get_project_performance_summary(project_id)
+    plans = ProductionPlan.objects.filter(project_id=project_id, is_archived=False)
+    entries = DailyActivityEntry.objects.filter(
+        report__project_id=project_id
+    ).select_related("report")
+
+    if not entries.exists() and not plans.exists():
+        return {"summary": summary, "charts": {}, "forecasts": {}, "activities": []}
+
+    today = timezone.now().date()
+
+    # 1. Monthly Aggregation for Charts
+    # Map horizons to delta dates
+    if history_horizon == "1m":
+        start_date = today - relativedelta(months=1)
+    elif history_horizon == "3m":
+        start_date = today - relativedelta(months=3)
+    elif history_horizon == "6m":
+        start_date = today - relativedelta(months=6)
+    else:  # 'all'
+        first_entry = entries.order_by("report__date").first()
+        if first_entry:
+            start_date = first_entry.report.date.replace(day=1)
+        else:
+            start_date = today - relativedelta(months=6)
+
+    # Forecast end date
+    if forecast_horizon == "m":
+        end_date = today + relativedelta(months=1)
+    elif forecast_horizon == "3m":
+        end_date = today + relativedelta(months=3)
+    elif forecast_horizon == "6m":
+        end_date = today + relativedelta(months=6)
+    elif forecast_horizon == "1y":
+        end_date = today + relativedelta(years=1)
+    else:
+        end_date = today + relativedelta(months=3)
+
+    # Monthly buckets
+    monthly_data = {}
+    curr = start_date.replace(day=1)
+    while curr <= end_date:
+        monthly_data[curr.strftime("%Y-%m")] = {
+            "label": curr.strftime("%b %y"),
+            "planned_qty": Decimal("0"),
+            "actual_qty": Decimal("0"),
+            "planned_cost": Decimal("0"),
+            "actual_cost": Decimal("0"),
+            "actual_hours": Decimal("0"),
+        }
+        curr += relativedelta(months=1)
+
+    # Initial cumulative totals (Pre-window)
+    running_p_prod = Decimal("0")
+    running_a_prod = Decimal("0")
+
+    # Fill Planned (Distributed linearly across duration)
+    for plan in plans:
+        if plan.start_date and plan.finish_date:
+            duration_days = (plan.finish_date - plan.start_date).days + 1
+            daily_qty = plan.quantity / Decimal(duration_days)
+            total_p_cost = (
+                plan.total_labour_cost + plan.total_plant_cost + plan.total_other_cost
+            )
+            daily_cost = total_p_cost / Decimal(duration_days)
+
+            p_curr = plan.start_date
+            while p_curr <= plan.finish_date:
+                if p_curr < start_date:
+                    running_p_prod += daily_qty
+                else:
+                    month_key = p_curr.strftime("%Y-%m")
+                    if month_key in monthly_data:
+                        monthly_data[month_key]["planned_qty"] += daily_qty
+                        monthly_data[month_key]["planned_cost"] += daily_cost
+                p_curr += timedelta(days=1)
+
+    # Fill Actuals
+    for entry in entries:
+        if entry.report.date < start_date:
+            running_a_prod += entry.quantity
+        else:
+            month_key = entry.report.date.strftime("%Y-%m")
+            if month_key in monthly_data:
+                monthly_data[month_key]["actual_qty"] += entry.quantity
+                monthly_data[month_key]["actual_cost"] += entry.total_cost
+                monthly_data[month_key]["actual_hours"] += entry.man_hours
+
+    # 2. Build Chart Series
+    sorted_months = sorted(monthly_data.keys())
+    labels = []
+    prod_planned = []
+    prod_actual = []
+    cost_planned = []
+    cost_actual = []
+    productivity_actual = []  # Qty / Hours
+
+    cum_prod_planned = []
+    cum_prod_actual = []
+    cum_cost_planned = []
+    cum_cost_actual = []
+
+    running_p_prod = Decimal("0")
+    running_a_prod = Decimal("0")
+    running_p_cost = Decimal("0")
+    running_a_cost = Decimal("0")
+
+    forecast_start_idx = 0
+    found_forecast = False
+
+    for i, m_key in enumerate(sorted_months):
+        data = monthly_data[m_key]
+        labels.append(data["label"])
+
+        # Monthly Incremental
+        prod_planned.append(float(data["planned_qty"]))
+        cost_planned.append(float(data["planned_cost"]))
+
+        # S-Curve Cumulative
+        running_p_prod += data["planned_qty"]
+        running_p_cost += data["planned_cost"]
+        cum_prod_planned.append(float(running_p_prod))
+        cum_cost_planned.append(float(running_p_cost))
+
+        # Handle Actuals vs Forecast
+        is_past = m_key <= today.strftime("%Y-%m")
+        if is_past:
+            prod_actual.append(float(data["actual_qty"]))
+            cost_actual.append(float(data["actual_cost"]))
+            running_a_prod += data["actual_qty"]
+            running_a_cost += data["actual_cost"]
+            cum_prod_actual.append(float(running_a_prod))
+            cum_cost_actual.append(float(running_a_cost))
+
+            hours = data["actual_hours"]
+            productivity_actual.append(
+                float(data["actual_qty"] / hours) if hours > 0 else 0
+            )
+        else:
+            if not found_forecast:
+                forecast_start_idx = i
+                found_forecast = True
+
+            # In forecasting range
+            prod_actual.append(None)
+            cost_actual.append(None)
+            cum_prod_actual.append(None)
+            cum_cost_actual.append(None)
+            productivity_actual.append(None)
+
+    # 3. Multi-Horizon Forecasts
+    ppi = summary["ppi"]
+
+    def get_planned_in_range(start, end):
+        total = Decimal("0")
+        for plan in plans:
+            if plan.start_date and plan.finish_date:
+                overlap_start = max(plan.start_date, start)
+                overlap_end = min(plan.finish_date, end)
+                if overlap_start <= overlap_end:
+                    overlap_days = (overlap_end - overlap_start).days + 1
+                    total_p_days = (plan.finish_date - plan.start_date).days + 1
+                    total += (plan.quantity / Decimal(total_p_days)) * Decimal(
+                        overlap_days
+                    )
+        return total
+
+    horizons = {
+        "next_month": today + relativedelta(months=1),
+        "term": today + relativedelta(months=3),
+        "half_year": today + relativedelta(months=6),
+        "year": today + relativedelta(years=1),
+    }
+
+    forecasts = {}
+    for key, date_limit in horizons.items():
+        planned_qty_future = get_planned_in_range(today + timedelta(days=1), date_limit)
+        forecasts[key] = {
+            "planned_qty": float(planned_qty_future),
+            "forecast_qty": float(planned_qty_future * ppi),
+            "accuracy_factor": float(ppi),
+        }
+
+    # 4. Activity Specific Projections
+    activity_projections = []
+    for plan in plans.filter(finish_date__gte=today).order_by("finish_date")[:10]:
+        plan_actual_qty = entries.filter(production_plan=plan).aggregate(
+            total=Sum("quantity")
+        )["total"] or Decimal("0")
+        remaining_qty = max(Decimal("0"), plan.quantity - plan_actual_qty)
+
+        if remaining_qty > 0:
+            current_daily_rate = plan.daily_rate * ppi
+            if current_daily_rate > 0:
+                est_days_remaining = remaining_qty / current_daily_rate
+                est_finish_date = today + timedelta(days=int(est_days_remaining))
+            else:
+                est_finish_date = plan.finish_date
+
+            variance_days = (est_finish_date - plan.finish_date).days
+
+            activity_projections.append(
+                {
+                    "activity": plan.activity,
+                    "section": plan.section,
+                    "bill_no": plan.bill_no,
+                    "planned_finish": plan.finish_date,
+                    "estimated_finish": est_finish_date,
+                    "variance_days": variance_days,
+                    "status": "Delayed" if variance_days > 0 else "On track",
+                    "status_color": "rose" if variance_days > 0 else "emerald",
+                    "remaining_qty": float(remaining_qty),
+                    "unit": plan.unit_display,
+                }
+            )
+
+    return {
+        "summary": summary,
+        "charts": {
+            "labels": labels,
+            "prod_planned": prod_planned,
+            "prod_actual": prod_actual,
+            "cost_planned": cost_planned,
+            "cost_actual": cost_actual,
+            "productivity_actual": productivity_actual,
+            "cum_prod_planned": cum_prod_planned,
+            "cum_prod_actual": cum_prod_actual,
+            "cum_cost_planned": cum_cost_planned,
+            "cum_cost_actual": cum_cost_actual,
+            "forecast_start_index": forecast_start_idx,
+        },
+        "forecasts": forecasts,
+        "activities": activity_projections,
     }
