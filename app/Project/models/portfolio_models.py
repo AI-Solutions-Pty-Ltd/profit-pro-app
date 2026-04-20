@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 class Portfolio(BaseModel):
     """Portfolio model for grouping and aggregating project metrics."""
 
-    users = models.ManyToManyField(Account, null=True, related_name="portfolios")
+    users = models.ManyToManyField(Account, blank=True, related_name="portfolios")
 
     def __str__(self) -> str:
         return super().__str__()
