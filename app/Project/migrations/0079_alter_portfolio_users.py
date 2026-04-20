@@ -5,16 +5,20 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('Project', '0078_merge_0074_plandependency_and_more_0077_merge_0074_orderamendment_0076'),
+        (
+            "Project",
+            "0078_merge_0074_plandependency_and_more_0077_merge_0074_orderamendment_0076",
+        ),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='portfolio',
-            name='users',
-            field=models.ManyToManyField(blank=True, related_name='portfolios', to=settings.AUTH_USER_MODEL),
+            model_name="portfolio",
+            name="users",
+            field=models.ManyToManyField(
+                blank=True, related_name="portfolios", to=settings.AUTH_USER_MODEL
+            ),
         ),
     ]
