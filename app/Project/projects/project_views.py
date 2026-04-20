@@ -702,3 +702,164 @@ class ProjectDeleteView(ProjectMixin, DeleteView):
         from django.shortcuts import redirect
 
         return redirect("project:project-management", pk=self.kwargs["pk"])
+
+
+class OrderAmendmentsView(ProjectMixin, DetailView):
+    """Display Order Amendments register with charts and form."""
+
+    model = Project
+    template_name = "project/order_amendments.html"
+    roles = [Role.USER]
+    project_slug = "pk"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        return [
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=f"{self.object.name} Dashboard",
+                url=reverse("project:project-dashboard", kwargs={"pk": self.object.pk}),
+            ),
+            BreadcrumbItem(title="Order Amendments", url=None),
+        ]
+
+    def get_context_data(self, **kwargs):
+        """Add amendment data and chart data to context."""
+        context = super().get_context_data(**kwargs)
+        project = self.object
+
+        # Get original contract value (from line items total)
+        line_items = project.line_items.all()
+        original_contract_value = (
+            line_items.aggregate(total=Sum("total_price"))["total"] or 0
+        )
+
+        # Get amendments from database
+        from app.Project.models import OrderAmendment
+
+        db_amendments = project.order_amendments.filter(
+            status=OrderAmendment.Status.APPROVED
+        ).order_by("amendment_number")
+
+        # Convert to list format for template
+        amendments = []
+        for amendment in db_amendments:
+            amendments.append(
+                {
+                    "amendment_number": amendment.amendment_number,
+                    "name": amendment.name,
+                    "description": amendment.description,
+                    "variation_amount": float(amendment.variation_amount),
+                    "category": amendment.category,
+                    "date_approved": amendment.date_approved,
+                    "status": amendment.status,
+                }
+            )
+
+        # Calculate running totals
+        running_total = original_contract_value
+        for amendment in amendments:
+            running_total += amendment["variation_amount"]
+            amendment["approved_contract_amount"] = running_total
+            amendment["percent_change"] = (
+                (amendment["variation_amount"] / original_contract_value) * 100
+                if original_contract_value > 0
+                else 0
+            )
+
+        # Summary statistics
+        total_variations = sum(a["variation_amount"] for a in amendments)
+        final_contract_value = original_contract_value + total_variations
+        total_percent_change = (
+            (total_variations / original_contract_value) * 100
+            if original_contract_value > 0
+            else 0
+        )
+
+        # Get pending amendments value
+        pending_value = (
+            project.order_amendments.filter(
+                status=OrderAmendment.Status.PENDING
+            ).aggregate(total=Sum("variation_amount"))["total"]
+            or 0
+        )
+
+        # Category data for pie chart
+        category_totals = {}
+        category_names = {
+            "scope_change": "Scope Change",
+            "design_change": "Design Change",
+            "rate_adjustment": "Rate Adjustment",
+            "quantity_variance": "Quantity Variance",
+            "delay_costs": "Delay Costs",
+            "other": "Other",
+        }
+        for amendment in amendments:
+            cat = amendment["category"]
+            category_totals[cat] = (
+                category_totals.get(cat, 0) + amendment["variation_amount"]
+            )
+
+        category_labels = [category_names.get(k, k) for k in category_totals.keys()]
+        category_values = list(category_totals.values())
+
+        # Waterfall chart data
+        waterfall_labels = (
+            ["Original Contract"]
+            + [f"Amendment {a['amendment_number']}" for a in amendments]
+            + ["Final Contract"]
+        )
+        waterfall_values = (
+            [original_contract_value]
+            + [a["variation_amount"] for a in amendments]
+            + [final_contract_value]
+        )
+
+        # Initialize form
+        from app.Project.forms import OrderAmendmentForm
+
+        form = OrderAmendmentForm()
+
+        context.update(
+            {
+                "project": project,
+                "amendments": amendments,
+                "form": form,
+                "original_contract_value": original_contract_value,
+                "total_variations": total_variations,
+                "final_contract_value": final_contract_value,
+                "total_percent_change": total_percent_change,
+                "amendments_count": len(amendments),
+                "total_approved_value": total_variations,
+                "pending_value": float(pending_value),
+                "budget_impact_percentage": round(total_percent_change, 1),
+                "category_labels": json.dumps(category_labels),
+                "category_values": json.dumps(category_values),
+                "waterfall_labels": json.dumps(waterfall_labels),
+                "waterfall_values": json.dumps(waterfall_values),
+                "current_date": datetime.now(),
+            }
+        )
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        """Handle form submission for new amendment."""
+        self.object = self.get_object()
+        project = self.object
+
+        from app.Project.forms import OrderAmendmentForm
+
+        form = OrderAmendmentForm(request.POST, project=project, user=request.user)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Amendment added successfully.")
+        else:
+            messages.error(request, "Please correct the errors below.")
+            context = self.get_context_data()
+            context["form"] = form
+            return self.render_to_response(context)
+
+        return HttpResponseRedirect(request.path)

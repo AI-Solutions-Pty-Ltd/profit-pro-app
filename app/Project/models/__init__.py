@@ -47,6 +47,7 @@ from .entity_definitions import (
     SubcontractorEntity,
 )
 from .impact_models import ProjectImpact
+from .order_amendment_models import OrderAmendment
 from .planned_value_models import PlannedValue
 from .portfolio_models import Portfolio
 from .project_roles_models import ProjectRole, Role
@@ -98,6 +99,7 @@ __all__ = [
     "LabourCostTracker",
     "MaterialCostTracker",
     "OverheadCostTracker",
+    "OrderAmendment",
     "SubcontractorCostTracker",
     "PlantCostTracker",
     "UnitOfMeasure",
