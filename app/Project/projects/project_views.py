@@ -76,14 +76,16 @@ class ProjectListView(
         client_queryset = None
         contractor_queryset = None
         category_queryset = None
-        subcategory_queryset = None
+        area_queryset = None
         discipline_queryset = None
 
         if request.user.is_authenticated:
-            from app.Project.models import (
+            from app.Account.models import (
                 Company,
+                Municipality,
+            )
+            from app.Project.models import (
                 ProjectDiscipline,
-                ProjectSubCategory,
             )
 
             # Get user's projects
@@ -108,11 +110,11 @@ class ProjectListView(
                 contractor_projects__in=projects_queryset
             ).distinct()
 
-            # Get unique categories, subcategories and disciplines from user's projects
+            # Get unique categories, areas and disciplines from user's projects
             category_queryset = ProjectCategory.objects.filter(
                 projects__in=projects_queryset
             ).distinct()
-            subcategory_queryset = ProjectSubCategory.objects.filter(
+            area_queryset = Municipality.objects.filter(
                 projects__in=projects_queryset
             ).distinct()
             discipline_queryset = ProjectDiscipline.objects.filter(
@@ -127,7 +129,7 @@ class ProjectListView(
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
-            subcategory_queryset=subcategory_queryset,
+            area_queryset=area_queryset,
             discipline_queryset=discipline_queryset,
         )
 
@@ -151,7 +153,7 @@ class ProjectListView(
         search = self.filter_form.cleaned_data.get("search")
         active_only = self.filter_form.cleaned_data.get("active_projects")
         category = self.filter_form.cleaned_data.get("project_category")
-        subcategory = self.filter_form.cleaned_data.get("project_subcategory")
+        area = self.filter_form.cleaned_data.get("area")
         discipline = self.filter_form.cleaned_data.get("project_discipline")
 
         if search:
@@ -160,8 +162,8 @@ class ProjectListView(
         if category:
             projects = projects.filter(project_category=category)
 
-        if subcategory:
-            projects = projects.filter(project_sub_category=subcategory)
+        if area:
+            projects = projects.filter(area=area)
 
         if discipline:
             projects = projects.filter(project_discipline=discipline)
@@ -805,16 +807,19 @@ class OrderAmendmentsView(ProjectMixin, DetailView):
         category_values = list(category_totals.values())
 
         # Waterfall chart data
-        waterfall_labels = (
-            ["Original Contract"]
-            + [f"Amendment {a['amendment_number']}" for a in amendments]
-            + ["Final Contract"]
-        )
-        waterfall_values = (
-            [original_contract_value]
-            + [a["variation_amount"] for a in amendments]
-            + [final_contract_value]
-        )
+        waterfall_labels = ["Original Contract"]
+        # Use [start, end] for floating bars in Chart.js
+        waterfall_values = [[0, original_contract_value]]
+
+        current_value = original_contract_value
+        for a in amendments:
+            waterfall_labels.append(f"Amendment {a['amendment_number']}")
+            variation = a["variation_amount"]
+            waterfall_values.append([current_value, current_value + variation])
+            current_value += variation
+
+        waterfall_labels.append("Final Contract")
+        waterfall_values.append([0, final_contract_value])
 
         # Initialize form
         from app.Project.forms import OrderAmendmentForm

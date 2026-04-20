@@ -269,7 +269,7 @@
 
     // Waterfall Chart - Budget Impact
     const waterfallCtx = document.getElementById('amendmentsWaterfallChart').getContext('2d');
-    const waterfallData = {{ waterfall_values|default:"[0]"|safe }};
+    const waterfallData = {{ waterfall_values|default:"[[0, 0]]"|safe }};
     const waterfallLabels = {{ waterfall_labels|default:"['Original Budget']"|safe }};
 
     new Chart(waterfallCtx, {
@@ -282,12 +282,15 @@
                 backgroundColor: waterfallData.map((value, index) => {
                     if (index === 0) return 'rgba(59, 130, 246, 0.8)'; // Original Budget - Blue
                     if (index === waterfallData.length - 1) return 'rgba(16, 185, 129, 0.8)'; // Final - Green
-                    return value >= 0 ? 'rgba(239, 68, 68, 0.8)' : 'rgba(16, 185, 129, 0.8)'; // Positive (red), Negative (green)
+                    // For amendments, check if it's an increase or decrease
+                    const diff = value[1] - value[0];
+                    return diff >= 0 ? 'rgba(239, 68, 68, 0.8)' : 'rgba(16, 185, 129, 0.8)'; // Positive (red), Negative (green)
                 }),
                 borderColor: waterfallData.map((value, index) => {
                     if (index === 0) return 'rgba(59, 130, 246, 1)';
                     if (index === waterfallData.length - 1) return 'rgba(16, 185, 129, 1)';
-                    return value >= 0 ? 'rgba(239, 68, 68, 1)' : 'rgba(16, 185, 129, 1)';
+                    const diff = value[1] - value[0];
+                    return diff >= 0 ? 'rgba(239, 68, 68, 1)' : 'rgba(16, 185, 129, 1)';
                 }),
                 borderWidth: 2
             }]
@@ -300,6 +303,11 @@
                 tooltip: {
                     callbacks: {
                         label: function (context) {
+                            const val = context.parsed._custom;
+                            if (val) {
+                                const diff = val.end - val.start;
+                                return (diff >= 0 ? '+' : '') + 'R ' + diff.toLocaleString() + ' (Total: R ' + val.end.toLocaleString() + ')';
+                            }
                             return 'R ' + context.parsed.y.toLocaleString();
                         }
                     }
@@ -310,7 +318,12 @@
                     beginAtZero: true,
                     ticks: {
                         callback: function (value) {
-                            return 'R ' + (value / 1000000).toFixed(1) + 'M';
+                            if (value >= 1000000 || value <= -1000000) {
+                                return 'R ' + (value / 1000000).toFixed(1) + 'M';
+                            } else if (value >= 1000 || value <= -1000) {
+                                return 'R ' + (value / 1000).toFixed(1) + 'k';
+                            }
+                            return 'R ' + value.toLocaleString();
                         }
                     }
                 }

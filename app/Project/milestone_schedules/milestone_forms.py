@@ -17,7 +17,7 @@ class MilestoneForm(forms.ModelForm):
             "project_category",
             "project_category_start_date",
             "project_category_end_date",
-            "project_sub_category",
+            "area",
             "project_sub_category_start_date",
             "project_sub_category_end_date",
             "project_group",
@@ -98,7 +98,7 @@ class MilestoneForm(forms.ModelForm):
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
             ),
-            "project_sub_category": forms.Select(
+            "area": forms.Select(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
@@ -175,9 +175,9 @@ class MilestoneForm(forms.ModelForm):
             "project_category": "WBS Level 1",
             "project_category_start_date": "L1 Start Date",
             "project_category_end_date": "L1 End Date",
-            "project_sub_category": "WBS Level 2",
-            "project_sub_category_start_date": "L2 Start Date",
-            "project_sub_category_end_date": "L2 End Date",
+            "area": "Area",
+            "project_sub_category_start_date": "Area Start Date",
+            "project_sub_category_end_date": "Area End Date",
             "project_group": "WBS Level 3 - Group",
             "project_group_start_date": "L3 Start Date",
             "project_group_end_date": "L3 End Date",
@@ -197,9 +197,9 @@ class MilestoneForm(forms.ModelForm):
             "project_category": "Select the WBS Level 1 classification",
             "project_category_start_date": "Start date for WBS Level 1",
             "project_category_end_date": "End date for WBS Level 1",
-            "project_sub_category": "Select the WBS Level 2 classification",
-            "project_sub_category_start_date": "Start date for WBS Level 2",
-            "project_sub_category_end_date": "End date for WBS Level 2",
+            "area": "Select the Area classification",
+            "project_sub_category_start_date": "Start date for Area",
+            "project_sub_category_end_date": "End date for Area",
             "project_group": "Select the WBS Level 3 Group classification",
             "project_group_start_date": "Start date for WBS Level 3 Group",
             "project_group_end_date": "End date for WBS Level 3 Group",
@@ -245,14 +245,14 @@ class MilestoneForm(forms.ModelForm):
             Category,
             Discipline,
             Group,
-            SubCategory,
         )
+        from app.Account.models import Municipality
 
         project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
 
         if project:
-            # Filter categories, subcategories, and disciplines by project
+            # Filter categories, areas, and disciplines by project
 
             # Filter for project-specific categories
             category_field = self.fields["project_category"]
@@ -261,12 +261,12 @@ class MilestoneForm(forms.ModelForm):
                     project_id=project.pk, deleted=False
                 ).order_by("name")
 
-            # Filter for project-specific subcategories
-            subcategory_field = self.fields["project_sub_category"]
-            if hasattr(subcategory_field, "queryset"):
-                subcategory_field.queryset = SubCategory.objects.filter(  # type: ignore
-                    project_id=project.pk, deleted=False
-                ).order_by("name")
+            # Filter for project-specific areas
+            area_field = self.fields["area"]
+            if hasattr(area_field, "queryset"):
+                area_field.queryset = Municipality.objects.filter(  # type: ignore
+                    projects=project
+                ).order_by("municipality_name")
 
             # Filter for project-specific groups
             group_field = self.fields["project_group"]
@@ -284,6 +284,6 @@ class MilestoneForm(forms.ModelForm):
 
             # Make fields optional
             self.fields["project_category"].required = False
-            self.fields["project_sub_category"].required = False
+            self.fields["area"].required = False
             self.fields["project_group"].required = False
             self.fields["project_discipline"].required = False
