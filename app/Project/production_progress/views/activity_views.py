@@ -309,6 +309,10 @@ class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
                 "labour_specification__name",
                 "labour_specification__unit",
                 "labour_specification__daily_production",
+                "labour_specification__team_mix",
+                "labour_specification__site_factor",
+                "labour_specification__tools_factor",
+                "labour_specification__leadership_factor",
                 "section",
                 "bill_no",
             )
@@ -381,6 +385,13 @@ class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
                     "quantity": str(item["total_quantity"] or 0),
                     "daily_production": str(
                         item["labour_specification__daily_production"] or 0
+                    ),
+                    "daily_output": str(
+                        (item["labour_specification__daily_production"] or 0)
+                        * (item["labour_specification__team_mix"] or 1)
+                        * (item["labour_specification__site_factor"] or 1)
+                        * (item["labour_specification__tools_factor"] or 1)
+                        * (item["labour_specification__leadership_factor"] or 1)
                     ),
                     "plant_specs": plant_spec_map.get(key, []),
                     "plant_types": sorted(plant_type_map.get(key, [])),

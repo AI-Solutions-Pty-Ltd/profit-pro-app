@@ -3,6 +3,7 @@ import json
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models as db_models
+from django.db.models import Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
@@ -19,7 +20,7 @@ from django.views.generic import (
 from app.Account.subscription_config import Subscription
 from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
-from app.Estimator.models import BOQItem
+from app.Estimator.models import BOQItem, ProjectLabourSpecification
 from app.Project.models import Project
 
 from ..production_forms import (
@@ -81,7 +82,12 @@ class ProductionPlanGanttView(
         context["project"] = project
 
         all_plans = list(
-            ProductionPlan.objects.filter(project=project, is_archived=False)
+            ProductionPlan.objects.filter(
+                project=project,
+                is_archived=False,
+                start_date__isnull=False,
+                finish_date__isnull=False,
+            )
             .select_related("labour_activity", "parent")
             .prefetch_related(
                 "predecessors",
@@ -206,6 +212,8 @@ class ProductionPlanCreateView(
             initial["section"] = self.request.GET.get("section")
         if self.request.GET.get("bill_no"):
             initial["bill_no"] = self.request.GET.get("bill_no")
+        if self.request.GET.get("labour_activity"):
+            initial["labour_activity"] = self.request.GET.get("labour_activity")
         return initial
 
     def get_success_url(self):
@@ -298,6 +306,103 @@ class ProductionPlanDetailView(
 
     model = ProductionPlan
     template_name = "production_progress/planning/detail.html"
+    context_object_name = "plan"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.object.project
+        return context
+
+
+class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, View):
+    """
+    Autofills the production schedule from the Project Estimator (BOQItems).
+    Groups BOQItems by section, bill_no, and labour_specification.
+    """
+
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def post(self, request, *args, **kwargs):
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+
+        # Fetch BOQItems that have a labour specification and are not headers
+        boq_items = (
+            BOQItem.objects.filter(
+                project=project,
+                labour_specification__isnull=False,
+                is_section_header=False,
+            )
+            .values("section", "bill_no", "labour_specification")
+            .annotate(total_quantity=Sum("contract_quantity"))
+        )
+
+        if not boq_items.exists():
+            messages.warning(
+                request, "No labour-based items found in the Project Estimator."
+            )
+            return redirect("project:production-planning", project_pk=project.pk)
+
+        created_count = 0
+        skipped_count = 0
+
+        # Fetch Labour Specifications for this project to get daily rates
+        labour_specs = ProjectLabourSpecification.objects.filter(project=project)
+        spec_rate_map = {spec.id: (spec.daily_output or 0) for spec in labour_specs}
+
+        for item in boq_items:
+            # Check if plan already exists for this grouping
+            existing = ProductionPlan.objects.filter(
+                project=project,
+                section=item["section"],
+                bill_no=item["bill_no"],
+                labour_activity_id=item["labour_specification"],
+                is_archived=False,
+            ).exists()
+
+            if existing:
+                skipped_count += 1
+                continue
+
+            # Fetch the first BOQItem to get the unit (or look it up from spec)
+            sample_item = BOQItem.objects.filter(
+                project=project,
+                section=item["section"],
+                bill_no=item["bill_no"],
+                labour_specification_id=item["labour_specification"],
+            ).first()
+
+            unit = sample_item.unit if sample_item else ""
+            daily_rate = spec_rate_map.get(item["labour_specification"], 0)
+
+            # Create the ProductionPlan
+            # Note: Save() will trigger _ensure_hierarchy() to build the tree automatically
+            ProductionPlan.objects.create(
+                project=project,
+                section=item["section"],
+                bill_no=item["bill_no"],
+                labour_activity_id=item["labour_specification"],
+                quantity=item["total_quantity"] or 0,
+                unit=unit,
+                daily_rate=daily_rate,
+                start_date=None,
+                finish_date=None,
+            )
+            created_count += 1
+
+        if created_count > 0:
+            messages.success(
+                request,
+                f"Successfully created {created_count} activities from the Estimator.",
+            )
+        if skipped_count > 0:
+            messages.info(
+                request,
+                f"{skipped_count} activities already existed and were skipped.",
+            )
+
+        return redirect("project:production-planning", project_pk=project.pk)
+
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_queryset(self):
@@ -897,3 +1002,60 @@ class ProductionPlanRefreshAjaxView(LoginRequiredMixin, View):
             )
         except Exception as e:
             return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
+
+class ProductionCashflowForecastView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """Renders a dedicated Cashflow Forecast Dashboard with S-Curve and KPIs."""
+
+    template_name = "production_progress/planning/cashflow_forecast.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs.get("project_pk")
+
+        project = get_object_or_404(Project, pk=project_pk)
+        context["project"] = project
+
+        horizon = self.request.GET.get("horizon", "month").lower()
+        if horizon not in ["month", "term", "half", "year"]:
+            horizon = "month"
+
+        try:
+            history = int(self.request.GET.get("history", 3))
+        except (ValueError, TypeError):
+            history = 3
+
+        from ..utils.production_utils import get_project_cashflow_data
+
+        cashflow_data = get_project_cashflow_data(
+            project_pk, horizon_type=horizon, history_months=history
+        )
+
+        context["cashflow_data"] = cashflow_data
+        context["cashflow_json"] = json.dumps(cashflow_data, default=str)
+        context["current_horizon"] = horizon
+        context["current_history"] = history
+
+        return context
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {
+                "title": "Production Planning",
+                "url": reverse_lazy(
+                    "project:production-planning", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": "Cashflow Forecast", "url": None},
+        ]

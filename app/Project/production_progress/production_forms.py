@@ -51,6 +51,16 @@ class ProductionPlanForm(forms.ModelForm):
             }
         ),
     )
+    daily_rate = forms.DecimalField(
+        required=False,
+        widget=forms.NumberInput(
+            attrs={
+                "id": "daily_rate",
+                "readonly": "readonly",
+                "tabindex": "-1",
+            }
+        ),
+    )
 
     section = forms.ChoiceField(
         required=False,
@@ -99,6 +109,7 @@ class ProductionPlanForm(forms.ModelForm):
             "start_date",
             "finish_date",
             "duration",
+            "daily_rate",
             "quantity",
             "unit",
         ]
@@ -137,7 +148,7 @@ class ProductionPlanForm(forms.ModelForm):
             ),
             "unit": SearchableSelectWidget(
                 resource_type="unit_of_measure",
-                attrs={"id": "unit"},
+                attrs={"id": "unit", "readonly": "readonly"},
             ),
         }
 
@@ -211,6 +222,7 @@ class ProductionPlanForm(forms.ModelForm):
                         "data-quantity": str(self.instance.quantity),
                         "data-unit": self.instance.unit,
                         "data-activity_name": self.instance.activity,
+                        "data-daily-output": str(self.instance.daily_rate),
                     }
                 }
 

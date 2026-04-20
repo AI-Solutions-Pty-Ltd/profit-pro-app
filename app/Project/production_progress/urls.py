@@ -24,6 +24,11 @@ urlpatterns = [
         name="production-plan-create",
     ),
     path(
+        "<int:project_pk>/planning/autofill/",
+        views.ProductionPlanAutofillView.as_view(),
+        name="production-plan-autofill",
+    ),
+    path(
         "<int:project_pk>/cost-breakdown/",
         views.ProductionCostBreakdownView.as_view(),
         name="production-cost-breakdown",
@@ -82,6 +87,16 @@ urlpatterns = [
         "<int:project_pk>/forecast-dashboard/",
         views.ProductionForecastDashboardView.as_view(),
         name="production-forecast-dashboard",
+    ),
+    path(
+        "<int:project_pk>/cashflow-forecast/",
+        views.ProductionCashflowForecastView.as_view(),
+        name="production-cashflow-forecast",
+    ),
+    path(
+        "<int:project_pk>/performance-report/",
+        views.ProductionPerformanceReportView.as_view(),
+        name="performance-report",
     ),
     path(
         "<int:project_pk>/plan/<int:pk>/data/",
