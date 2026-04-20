@@ -61,11 +61,11 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         user: Account = self.request.user  # type: ignore
         projects = user.get_projects.order_by("-created_at")
 
-        from app.Account.models import Municipality
         from app.Project.models import (
             Company,
             ProjectCategory,
             ProjectDiscipline,
+            ProjectSubCategory,
         )
 
         # Get unique clients and contractors from user's projects
@@ -76,11 +76,13 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique categories, areas and disciplines from user's projects
+        # Get unique categories, subcategories and disciplines from user's projects
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
+        subcategory_queryset = ProjectSubCategory.objects.filter(
+            projects__in=projects
+        ).distinct()
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -93,7 +95,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
-            area_queryset=area_queryset,
+            subcategory_queryset=subcategory_queryset,
             discipline_queryset=discipline_queryset,
         )
 
@@ -115,11 +117,11 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         projects = user.get_projects.order_by("-created_at")
 
         # Initialize filter form with the base queryset
-        from app.Account.models import Municipality
         from app.Project.models import (
             Company,
             ProjectCategory,
             ProjectDiscipline,
+            ProjectSubCategory,
         )
 
         # Get unique clients and contractors from user's projects
@@ -130,11 +132,13 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique categories, areas and disciplines from user's projects
+        # Get unique categories, subcategories and disciplines from user's projects
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
+        subcategory_queryset = ProjectSubCategory.objects.filter(
+            projects__in=projects
+        ).distinct()
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -146,7 +150,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
-            area_queryset=area_queryset,
+            subcategory_queryset=subcategory_queryset,
             discipline_queryset=discipline_queryset,
         )
 
@@ -157,7 +161,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         # Apply filters from form
         search = self.filter_form.cleaned_data.get("search")
         category = self.filter_form.cleaned_data.get("project_category")
-        area = self.filter_form.cleaned_data.get("area")
+        subcategory = self.filter_form.cleaned_data.get("project_subcategory")
         discipline = self.filter_form.cleaned_data.get("project_discipline")
 
         if search:
@@ -166,8 +170,8 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         if category:
             projects = projects.filter(project_category=category)
 
-        if area:
-            projects = projects.filter(area=area)
+        if subcategory:
+            projects = projects.filter(project_sub_category=subcategory)
 
         if discipline:
             projects = projects.filter(project_discipline=discipline)
@@ -206,11 +210,11 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
 
         # Initialize filter form if not already done
         if not self.filter_form:
-            from app.Account.models import Municipality
             from app.Project.models import (
                 Company,
                 ProjectCategory,
                 ProjectDiscipline,
+                ProjectSubCategory,
             )
 
             # Get unique clients and contractors from user's projects
@@ -221,11 +225,11 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
                 contractor_projects__in=projects
             ).distinct()
 
-            # Get unique categories, areas and disciplines from user's projects
+            # Get unique categories, subcategories and disciplines from user's projects
             category_queryset = ProjectCategory.objects.filter(
                 projects__in=projects
             ).distinct()
-            area_queryset = Municipality.objects.filter(
+            subcategory_queryset = ProjectSubCategory.objects.filter(
                 projects__in=projects
             ).distinct()
             discipline_queryset = ProjectDiscipline.objects.filter(
@@ -239,7 +243,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
                 client_queryset=client_queryset,
                 contractor_queryset=contractor_queryset,
                 category_queryset=category_queryset,
-                area_queryset=area_queryset,
+                subcategory_queryset=subcategory_queryset,
                 discipline_queryset=discipline_queryset,
             )
 

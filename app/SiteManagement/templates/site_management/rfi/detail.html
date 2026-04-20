@@ -102,10 +102,10 @@
                                         </span>
                                     </div>
                                 {% endif %}
-                                {% if object.area %}
+                                {% if object.project_sub_category %}
                                     <div class="flex items-center">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-green-100 text-green-800">
-                                            Area: {{ object.area.municipality_name }}
+                                            L2: {{ object.project_sub_category.name }}
                                         </span>
                                     </div>
                                 {% endif %}
@@ -116,7 +116,7 @@
                                         </span>
                                     </div>
                                 {% endif %}
-                                {% if not object.project_category and not object.area and not object.project_discipline %}
+                                {% if not object.project_category and not object.project_sub_category and not object.project_discipline %}
                                     <span class="text-gray-400">—</span>
                                 {% endif %}
                             </div>

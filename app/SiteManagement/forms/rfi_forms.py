@@ -17,7 +17,7 @@ class RFIForm(forms.ModelForm):
             "respond_by_date",
             "attachment",
             "project_category",
-            "area",
+            "project_sub_category",
             "project_discipline",
         ]
         widgets = {
@@ -56,7 +56,7 @@ class RFIForm(forms.ModelForm):
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
             ),
-            "area": forms.Select(
+            "project_sub_category": forms.Select(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
@@ -73,29 +73,29 @@ class RFIForm(forms.ModelForm):
             "message": "Message",
             "respond_by_date": "Response Required By",
             "attachment": "Attachment",
-            "project_category": "Sector",
-            "area": "Area",
-            "project_discipline": "Project Stage",
+            "project_category": "WBS Level 1",
+            "project_sub_category": "WBS Level 2",
+            "project_discipline": "WBS Level 3",
         }
         help_texts = {
             "attachment": "Optional: Attach any supporting documents",
-            "project_category": "Select the Sector",
-            "area": "Select the Area (Municipality)",
-            "project_discipline": "Select the Project Stage",
+            "project_category": "Select the WBS Level 1 classification",
+            "project_sub_category": "Select the WBS Level 2 classification",
+            "project_discipline": "Select the WBS Level 3 classification",
         }
 
     def __init__(self, *args, **kwargs):
-        from app.Account.models import Municipality
         from app.Project.projects.projects_models import (
             Category,
             Discipline,
+            SubCategory,
         )
 
         project = kwargs.pop("project", None)
         super().__init__(*args, **kwargs)
 
         if project:
-            # Filter categories, areas, and disciplines by project
+            # Filter categories, subcategories, and disciplines by project
 
             # Filter for project-specific categories
             category_field = self.fields["project_category"]
@@ -104,12 +104,12 @@ class RFIForm(forms.ModelForm):
                     project=project, deleted=False
                 ).order_by("name")
 
-            # Filter for project-specific areas
-            area_field = self.fields["area"]
-            if hasattr(area_field, "queryset"):
-                area_field.queryset = Municipality.objects.filter(  # type: ignore
-                    projects=project
-                ).order_by("municipality_name")
+            # Filter for project-specific subcategories
+            subcategory_field = self.fields["project_sub_category"]
+            if hasattr(subcategory_field, "queryset"):
+                subcategory_field.queryset = SubCategory.objects.filter(  # type: ignore
+                    project=project, deleted=False
+                ).order_by("name")
 
             # Filter for project-specific disciplines
             discipline_field = self.fields["project_discipline"]
@@ -120,7 +120,7 @@ class RFIForm(forms.ModelForm):
 
             # Make fields optional
             self.fields["project_category"].required = False
-            self.fields["area"].required = False
+            self.fields["project_sub_category"].required = False
             self.fields["project_discipline"].required = False
 
 

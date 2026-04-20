@@ -79,8 +79,8 @@
                         <td class="text-right">R {{ project.addendum_contract_value|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
-                        <td>Sub Total (Excl. VAT)</td>
-                        <td class="text-right">R {{ project.total_contract_value|floatformat:2|intcomma }}</td>
+                        <td>Sub Total</td>
+                        <td class="text-right">R {{ project.addendum_contract_value|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
                         <td>
@@ -95,7 +95,7 @@
                         <td class="text-right">R {{ vat_value|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr class="total-row">
-                        <td>Total Contract Value (Incl. VAT)</td>
+                        <td>Total Contract Value</td>
                         <td class="text-right">R {{ project.total_contract_value|add:vat_value|floatformat:2|intcomma }}</td>
                     </tr>
                 </tbody>
@@ -150,24 +150,24 @@
                         <td class="text-right">R {{ payment_certificate.progressive_previous|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
-                        <td>NET AMOUNT NOW CERTIFIED</td>
+                        <td>Sub Total</td>
                         <td class="text-right">R {{ payment_certificate.current_claim_total|floatformat:2|intcomma }}</td>
                     </tr>
                     <tr>
                         <td>
                             {% if project.vat %}
-                                {% define payment_certificate.current_claim_total|mul:vat_rate as vat_now %}
+                                {% define payment_certificate.current_claim_total|mul:1.15 as vat_incl %}
                                 VAT 15%
                             {% else %}
-                                {% define 0 as vat_now %}
+                                {% define 0 as vat_incl %}
                                 No VAT
                             {% endif %}
                         </td>
-                        <td class="text-right">R {{ vat_now|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ vat_incl|floatformat:2|intcomma }}</td>
                     </tr>
-                    <tr class="total-row">
+                    <tr>
                         <td>TOTAL AMOUNT NOW CERTIFIED</td>
-                        <td class="text-right">R {{ payment_certificate.current_claim_total|add:vat_now|floatformat:2|intcomma }}</td>
+                        <td class="text-right">R {{ payment_certificate.current_claim_total|add:vat_incl|floatformat:2|intcomma }}</td>
                     </tr>
                 </tbody>
             </table>

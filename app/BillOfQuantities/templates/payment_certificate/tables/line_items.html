@@ -35,7 +35,7 @@
                                         R {{ line_item.unit_price|floatformat:2|intcomma }} / {{ line_item.unit_measurement }}
                                     </td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-gray-900 text-right">
-                                        {{ line_item.total_qty|floatformat:2|intcomma }}
+                                        R {{ line_item.total_qty|floatformat:2|intcomma }}
                                     </td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
                                         {{ line_item.previous_qty|floatformat:2|intcomma }}
@@ -47,10 +47,10 @@
                                         R {{ line_item.total_claimed|floatformat:2|intcomma }}
                                     </td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900 text-right">
-                                        R {{ line_item.previous_claimed|floatformat:2|intcomma }}
+                                        {{ line_item.previous_claimed|floatformat:2|intcomma }}
                                     </td>
                                     <td class="px-3 py-2 whitespace-nowrap text-sm font-semibold text-indigo-600 text-right">
-                                        R {{ line_item.current_claim|floatformat:2|intcomma }}
+                                        {{ line_item.current_claim|floatformat:2|intcomma }}
                                     </td>
                                 </tr>
                             {% endfor %}

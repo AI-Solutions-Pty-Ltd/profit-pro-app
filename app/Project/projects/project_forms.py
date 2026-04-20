@@ -3,12 +3,13 @@
 from django import forms
 from django.db.models import QuerySet
 
-from app.Account.models import Account, Municipality
+from app.Account.models import Account
 from app.Project.models import (
     Company,
     Project,
     ProjectCategory,
     ProjectDiscipline,
+    ProjectSubCategory,
 )
 
 
@@ -18,7 +19,7 @@ class BasicProjectCreateForm(forms.ModelForm):
         fields = [
             "name",
             "project_category",
-            "area",
+            "project_sub_category",
             "project_discipline",
         ]
         widgets = {
@@ -40,7 +41,7 @@ class ProjectForm(forms.ModelForm):
             "description",
             "logo",
             "project_category",
-            "area",
+            "project_sub_category",
             "project_discipline",
             "start_date",
             "end_date",
@@ -95,8 +96,6 @@ class ProjectForm(forms.ModelForm):
         labels = {
             "name": "Project Name",
             "logo": "Project Logo",
-            "project_category": "Sector",
-            "area": "Area",
             "contract_number": "Payment Certificate Contract Number",
             "contract_clause": "Payment Certificate Contract Clause",
             "bank_account_name": "Account Name",
@@ -107,8 +106,7 @@ class ProjectForm(forms.ModelForm):
         }
         help_texts = {
             "logo": "Upload a logo for invoices and documents (JPG, PNG, GIF, SVG). Recommended size: 900x600px",
-            "project_category": "Select the project sector",
-            "area": "Select the project area (Municipality)",
+            "category": "Select the project category",
         }
 
     def clean(self):
@@ -137,19 +135,19 @@ class ProjectFilterForm(forms.Form):
     project_category = forms.ModelChoiceField(
         queryset=ProjectCategory.objects.all(),
         required=False,
-        label="Sectors",
-        empty_label="All Sectors",
+        label="Categories",
+        empty_label="All Categories",
         widget=forms.Select(
             attrs={
                 "onchange": "this.form.submit()",
             }
         ),
     )
-    area = forms.ModelChoiceField(
-        queryset=Municipality.objects.all(),
+    project_subcategory = forms.ModelChoiceField(
+        queryset=ProjectSubCategory.objects.all(),
         required=False,
-        label="Areas",
-        empty_label="All Areas",
+        label="Subcategories",
+        empty_label="All Subcategories",
         widget=forms.Select(
             attrs={
                 "onchange": "this.form.submit()",
@@ -234,7 +232,7 @@ class ProjectFilterForm(forms.Form):
         client_queryset: QuerySet[Company] | None = None,
         contractor_queryset: QuerySet[Company] | None = None,
         category_queryset: QuerySet[ProjectCategory] | None = None,
-        area_queryset: QuerySet[Municipality] | None = None,
+        subcategory_queryset: QuerySet[ProjectSubCategory] | None = None,
         discipline_queryset: QuerySet[ProjectDiscipline] | None = None,
         **kwargs,
     ):
@@ -252,7 +250,7 @@ class ProjectFilterForm(forms.Form):
             self.fields["contractor"].queryset = contractor_queryset  # type: ignore
         if category_queryset is not None:
             self.fields["project_category"].queryset = category_queryset  # type: ignore
-        if area_queryset is not None:
-            self.fields["area"].queryset = area_queryset  # type: ignore
+        if subcategory_queryset is not None:
+            self.fields["project_subcategory"].queryset = subcategory_queryset  # type: ignore
         if discipline_queryset is not None:
             self.fields["project_discipline"].queryset = discipline_queryset  # type: ignore

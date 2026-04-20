@@ -82,11 +82,11 @@
                                                 </span>
                                             </div>
                                         {% endif %}
-                                        {% if document.area %}
+                                        {% if document.project_sub_category %}
                                             <div class="flex items-center">
                                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                                                     {% heroicon_outline "tag" class="w-3 h-3 mr-1" %}
-                                                    {{ document.area.municipality_name }}
+                                                    {{ document.project_sub_category.name }}
                                                 </span>
                                             </div>
                                         {% endif %}
@@ -98,7 +98,7 @@
                                                 </span>
                                             </div>
                                         {% endif %}
-                                        {% if not document.project_category and not document.area and not document.project_discipline %}
+                                        {% if not document.project_category and not document.project_sub_category and not document.project_discipline %}
                                             <span class="text-gray-400">—</span>
                                         {% endif %}
                                     </div>

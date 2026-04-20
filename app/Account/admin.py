@@ -5,7 +5,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from app.core.Utilities.admin import SoftDeleteImportExportAdmin
 
-from .models import Account, Municipality, Suburb, Town
+from .models import Account, Suburb, Town
 
 
 @admin.register(Account)
@@ -113,18 +113,3 @@ class TownAdmin(SoftDeleteImportExportAdmin):
     list_display = ["town", "deleted", "created_at"]
     list_filter = ["deleted", "created_at"]
     search_fields = ["town"]
-
-
-@admin.register(Municipality)
-class MunicipalityAdmin(SoftDeleteImportExportAdmin):
-    list_display = [
-        "province",
-        "municipality_name",
-        "code",
-        "district",
-        "deleted",
-        "created_at",
-    ]
-    list_filter = ["province", "district", "deleted", "created_at"]
-    search_fields = ["province", "municipality_name", "code", "district"]
-    ordering = ["province", "municipality_name"]

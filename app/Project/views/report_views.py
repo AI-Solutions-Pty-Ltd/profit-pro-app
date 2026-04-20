@@ -101,10 +101,10 @@ class PortfolioReportMixin:
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)  # type: ignore
-        from app.Account.models import Municipality
         from app.Project.models import (
             Company,
             ProjectDiscipline,
+            ProjectSubCategory,
         )
 
         # Get user's projects
@@ -119,11 +119,13 @@ class PortfolioReportMixin:
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique categories, areas and disciplines from user's projects
+        # Get unique categories, subcategories and disciplines from user's projects
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
+        subcategory_queryset = ProjectSubCategory.objects.filter(
+            projects__in=projects
+        ).distinct()
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -135,7 +137,7 @@ class PortfolioReportMixin:
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
-            area_queryset=area_queryset,
+            subcategory_queryset=subcategory_queryset,
             discipline_queryset=discipline_queryset,
         )
 
@@ -149,9 +151,9 @@ class PortfolioReportMixin:
             category = self.filter_form.cleaned_data.get("project_category")
             if category:
                 projects = projects.filter(project_category=category)
-            area = self.filter_form.cleaned_data.get("area")
-            if area:
-                projects = projects.filter(area=area)
+            subcategory = self.filter_form.cleaned_data.get("project_subcategory")
+            if subcategory:
+                projects = projects.filter(project_sub_category=subcategory)
             discipline = self.filter_form.cleaned_data.get("project_discipline")
             if discipline:
                 projects = projects.filter(project_discipline=discipline)
@@ -450,10 +452,10 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        from app.Account.models import Municipality
         from app.Project.models import (
             Company,
             ProjectDiscipline,
+            ProjectSubCategory,
         )
 
         # Get user's projects
@@ -468,11 +470,13 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique categories, areas and disciplines from user's projects
+        # Get unique categories, subcategories and disciplines from user's projects
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
+        subcategory_queryset = ProjectSubCategory.objects.filter(
+            projects__in=projects
+        ).distinct()
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -484,7 +488,7 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
-            area_queryset=area_queryset,
+            subcategory_queryset=subcategory_queryset,
             discipline_queryset=discipline_queryset,
         )
 
@@ -514,9 +518,9 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             category = self.filter_form.cleaned_data.get("project_category")
             if category:
                 projects = projects.filter(project_category=category)
-            area = self.filter_form.cleaned_data.get("area")
-            if area:
-                projects = projects.filter(area=area)
+            subcategory = self.filter_form.cleaned_data.get("project_subcategory")
+            if subcategory:
+                projects = projects.filter(project_sub_category=subcategory)
             discipline = self.filter_form.cleaned_data.get("project_discipline")
             if discipline:
                 projects = projects.filter(project_discipline=discipline)
@@ -652,10 +656,10 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        from app.Account.models import Municipality
         from app.Project.models import (
             Company,
             ProjectDiscipline,
+            ProjectSubCategory,
         )
 
         # Get user's projects
@@ -670,11 +674,13 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique categories, areas and disciplines from user's projects
+        # Get unique categories, subcategories and disciplines from user's projects
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
+        subcategory_queryset = ProjectSubCategory.objects.filter(
+            projects__in=projects
+        ).distinct()
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -686,7 +692,7 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
-            area_queryset=area_queryset,
+            subcategory_queryset=subcategory_queryset,
             discipline_queryset=discipline_queryset,
         )
 
@@ -716,9 +722,9 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             category = self.filter_form.cleaned_data.get("project_category")
             if category:
                 projects = projects.filter(project_category=category)
-            area = self.filter_form.cleaned_data.get("area")
-            if area:
-                projects = projects.filter(area=area)
+            subcategory = self.filter_form.cleaned_data.get("project_subcategory")
+            if subcategory:
+                projects = projects.filter(project_sub_category=subcategory)
             discipline = self.filter_form.cleaned_data.get("project_discipline")
             if discipline:
                 projects = projects.filter(project_discipline=discipline)
@@ -856,10 +862,10 @@ class TrendReportView(SubscriptionRequiredMixin, ProjectAccessMixin, TemplateVie
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
-        from app.Account.models import Municipality
         from app.Project.models import (
             Company,
             ProjectDiscipline,
+            ProjectSubCategory,
         )
 
         # Get user's projects
@@ -874,11 +880,13 @@ class TrendReportView(SubscriptionRequiredMixin, ProjectAccessMixin, TemplateVie
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique categories, areas and disciplines from user's projects
+        # Get unique categories, subcategories and disciplines from user's projects
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
+        subcategory_queryset = ProjectSubCategory.objects.filter(
+            projects__in=projects
+        ).distinct()
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -890,7 +898,7 @@ class TrendReportView(SubscriptionRequiredMixin, ProjectAccessMixin, TemplateVie
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
-            area_queryset=area_queryset,
+            subcategory_queryset=subcategory_queryset,
             discipline_queryset=discipline_queryset,
         )
 

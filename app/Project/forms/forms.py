@@ -41,35 +41,24 @@ class ProjectContractorForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         project = kwargs.pop("project", None)
-        user: Account | None = kwargs.pop("user", None)
+        user: Account = kwargs.pop("user", None)
+        projects = user.get_projects
 
         super().__init__(*args, **kwargs)
 
-        if user:
-            projects = user.get_projects
+        # Filter to only show contractor companies
+        queryset = Company.objects.filter(
+            contractor_projects__in=projects, type=Company.Type.CONTRACTOR
+        ).order_by("name")
 
-            # Filter to only show contractor companies
-            queryset = Company.objects.filter(
-                contractor_projects__in=projects, type=Company.Type.CONTRACTOR
-            ).order_by("name")
+        # Exclude the currently assigned contractor if project is provided
+        if project and project.contractor:
+            queryset = queryset.exclude(pk=project.contractor.pk)
 
-            # Exclude the currently assigned contractor if project is provided
-            if project and project.contractor:
-                queryset = queryset.exclude(pk=project.contractor.pk)
-
-            # Type: ModelChoiceField has queryset attribute
-            contractor_field = self.fields["contractor"]
-            if hasattr(contractor_field, "queryset"):
-                cast(ModelChoiceField, contractor_field).queryset = queryset.distinct()
-        else:
-            # Fallback for all contractor companies if user is not provided
-            contractor_field = self.fields["contractor"]
-            if hasattr(contractor_field, "queryset"):
-                cast(
-                    ModelChoiceField, contractor_field
-                ).queryset = Company.objects.filter(
-                    type=Company.Type.CONTRACTOR
-                ).order_by("name")
+        # Type: ModelChoiceField has queryset attribute
+        contractor_field = self.fields["contractor"]
+        if hasattr(contractor_field, "queryset"):
+            cast(ModelChoiceField, contractor_field).queryset = queryset.distinct()
 
 
 class ProjectLeadConsultantForm(forms.ModelForm):
