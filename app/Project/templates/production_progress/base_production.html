@@ -35,7 +35,7 @@
                         <a href="{% url 'project:labor-activity-list' project.pk %}"
                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'labor-activity' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
                             {% heroicon_outline "squares-2x2" class="inline-block mr-1 w-4 h-4" %}
-                            Labor Activities
+                            Activities
                         </a>
                         <!-- Resources -->
                         <a href="{% url 'project:production-cost-breakdown' project.pk %}"
@@ -51,9 +51,15 @@
                         </a>
                         <!-- Forecast Hub -->
                         <a href="{% url 'project:production-forecast-dashboard' project.pk %}"
-                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'forecast' in current_url and 'cashflow' not in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'forecast' in current_url and 'cashflow' not in current_url and 'performance' not in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
                             {% heroicon_outline "chart-pie" class="inline-block mr-1 w-4 h-4" %}
                             Productivity Forecast
+                        </a>
+                        <!-- Performance Analytics -->
+                        <a href="{% url 'project:performance-report' project.pk %}"
+                           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if 'performance-report' in current_url %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+                            {% heroicon_outline "presentation-chart-line" class="inline-block mr-1 w-4 h-4" %}
+                            Performance Analytics
                         </a>
                         <!-- Cashflow Forecast -->
                         <a href="{% url 'project:production-cashflow-forecast' project.pk %}"
@@ -67,12 +73,12 @@
                             {% heroicon_outline "calendar-days" class="inline-block mr-1 w-4 h-4" %}
                             Daily Logs
                         </a>
-                        <!-- History -->
+                        {% comment %} <!-- History -->
                         <a href="{% url 'project:production-list' project.pk %}"
                            class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {% if current_url == 'production-list' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
                             {% heroicon_outline "book-open" class="inline-block mr-1 w-4 h-4" %}
                             Log Progress
-                        </a>
+                        </a> {% endcomment %}
                     {% endwith %}
                 </nav>
             </div>

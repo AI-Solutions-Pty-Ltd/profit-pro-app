@@ -1,191 +1,209 @@
-{% extends "production_progress/base_production.html" %}
+{% extends "base.html" %}
 {% load static %}
 {% load heroicons %}
 {% load estimator_tags %}
+
 {% block title %}
-    Log Details: {{ report.date|date:"d M Y" }} - {{ project.name }}
+    Daily Log: {{ report.date|date:"d M Y" }} - {{ project.name }}
 {% endblock title %}
-{% block production_content %}
-    <div class="max-w-6xl mx-auto space-y-8">
-        <!-- Breadcrumbs & Header -->
-        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-            <div>
-                <nav class="flex mb-4" aria-label="Breadcrumb">
-                    <ol class="inline-flex items-center space-x-1 md:space-x-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                        <li class="inline-flex items-center">
-                            <a href="{% url 'project:production-daily-log-list' project_pk=project.pk %}"
-                               class="hover:text-indigo-600 transition-colors">Daily Logs</a>
-                        </li>
+
+{% block content %}
+    <div class="pb-12">
+        <!-- Main Header Card -->
+        <div class="overflow-hidden mb-8 bg-white rounded-xl border border-gray-100 shadow-sm">
+            <div class="flex flex-col gap-2 justify-between items-start px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <nav class="flex" aria-label="Breadcrumb">
+                    <ol role="list" class="flex items-center space-x-2">
                         <li>
-                            <div class="flex items-center">
-                                {% heroicon_outline "chevron-right" class="w-3 h-3 mx-1" %}
-                                <span class="text-gray-900">Details</span>
+                            <div>
+                                <a href="{% url 'project:production-daily-log-list' project_pk=project.pk %}"
+                                   class="flex items-center text-gray-400 transition-colors hover:text-indigo-600">
+                                    {% heroicon_outline "chevron-left" class="mr-1.5 w-4 h-4" %}
+                                    <span class="text-sm font-semibold">Daily Logs</span>
+                                </a>
                             </div>
                         </li>
                     </ol>
                 </nav>
-                <h1 class="text-3xl font-black text-gray-900 tracking-tight flex items-center">
-                    <span class="bg-gray-100 text-gray-500 px-3 py-1 rounded-xl text-lg mr-4 font-mono">{{ report.date|date:"D" }}</span>
-                    {{ report.date|date:"d F Y" }}
-                </h1>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="window.print()"
-                        class="inline-flex items-center px-4 py-2 border border-gray-200 rounded-xl bg-white text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all">
-                    {% heroicon_outline "printer" class="w-4 h-4 mr-2" %} Print Report
-                </button>
-                <a href="{% url 'project:production-daily-log-edit' project_pk=project.pk pk=report.pk %}"
-                   class="inline-flex items-center px-4 py-2 bg-indigo-600 rounded-xl text-sm font-bold text-white hover:bg-indigo-700 shadow-md shadow-indigo-100 transition-all">
-                    {% heroicon_outline "pencil-square" class="w-4 h-4 mr-2" %} Edit Log
-                </a>
-                <a href="{% url 'project:production-daily-log-delete' project_pk=project.pk pk=report.pk %}"
-                   class="inline-flex items-center px-4 py-2 border border-red-200 rounded-xl bg-white text-sm font-bold text-red-600 hover:bg-red-50 transition-all">
-                    {% heroicon_outline "trash" class="w-4 h-4 mr-2" %} Delete
-                </a>
-            </div>
-        </div>
-        <!-- Summary Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center">
-                <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl mr-3">
-                    {% heroicon_outline "squares-2x2" class="w-5 h-5" %}
-                </div>
-                <div>
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Activities</p>
-                    <p class="text-lg font-black text-gray-900">{{ entries|length }}</p>
-                </div>
-            </div>
-            <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center">
-                <div class="p-3 bg-purple-50 text-purple-600 rounded-xl mr-3">{% heroicon_outline "users" class="w-5 h-5" %}</div>
-                <div>
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Labour Cost</p>
-                    <p class="text-lg font-black text-gray-900">{{ report_total_labour_cost|currency }}</p>
-                </div>
-            </div>
-            <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center">
-                <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl mr-3">{% heroicon_outline "truck" class="w-5 h-5" %}</div>
-                <div>
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Plant Cost</p>
-                    <p class="text-lg font-black text-gray-900">{{ report_total_plant_cost|currency }}</p>
-                </div>
-            </div>
-            <div class="bg-indigo-600 p-5 rounded-2xl shadow-lg shadow-indigo-100 flex items-center text-white">
-                <div class="p-3 bg-white/10 rounded-xl mr-3">{% heroicon_outline "banknotes" class="w-5 h-5" %}</div>
-                <div>
-                    <p class="text-[10px] font-bold text-indigo-100 uppercase tracking-widest">Total cost</p>
-                    <p class="text-lg font-black">{{ report_total_cost|currency }}</p>
-                </div>
-            </div>
-        </div>
-        <!-- Notes if any -->
-        {% if report.notes %}
-            <div class="bg-amber-50/50 border border-amber-100 p-4 rounded-xl flex items-start gap-3">
-                {% heroicon_outline "information-circle" class="w-5 h-5 text-amber-500 mt-0.5" %}
-                <div>
-                    <p class="text-xs font-bold text-amber-800 uppercase tracking-wider mb-1">Daily Notes</p>
-                    <p class="text-sm text-amber-900/80">{{ report.notes }}</p>
-                </div>
-            </div>
-        {% endif %}
-        <!-- Activity Detail Cards -->
-        <div class="space-y-10">
-            <h3 class="text-xs font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100 pb-2">
-                Activity Breakdown
-            </h3>
-            {% for entry in entries %}
-                <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden">
-                    <!-- Entry Header -->
-                    <div class="bg-gray-50/50 px-8 py-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100">
-                        <div>
-                            <div class="text-[10px] font-black text-indigo-500 uppercase tracking-wider mb-1">
-                                {{ entry.production_plan.section|default:"No Section" }} / {{ entry.production_plan.bill_no|default:"No Bill" }}
-                            </div>
-                            <h4 class="text-lg font-black text-gray-900 uppercase">{{ entry.production_plan.activity }}</h4>
+                <div class="flex flex-col gap-4 justify-between w-full md:flex-row md:items-end">
+                    <div class="flex gap-4 items-center">
+                        <div class="px-3 py-1 font-mono text-lg font-black text-gray-500 bg-gray-100 rounded-xl">
+                            {{ report.date|date:"D" }}
                         </div>
-                        <div class="flex items-center gap-6">
-                            <div class="text-right">
-                                <div class="text-[10px] font-bold text-gray-400 uppercase">Quantity Achieved</div>
-                                <div class="text-lg font-black text-indigo-600 font-mono">
+                        <div>
+                            <h2 class="text-xl font-bold tracking-tight text-gray-900">{{ report.date|date:"d F Y" }}</h2>
+                            <p class="text-sm text-gray-500">Daily production report and resource utilization.</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="window.print()"
+                                class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md ring-1 ring-inset ring-gray-300 shadow-sm transition-all hover:bg-gray-50">
+                            {% heroicon_outline "printer" class="mr-2 w-4 h-4 text-gray-400" %}
+                            Print
+                        </button>
+                        <a href="{% url 'project:production-daily-log-edit' project_pk=project.pk pk=report.pk %}"
+                           class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow-sm transition-all hover:bg-indigo-500">
+                            {% heroicon_outline "pencil-square" class="mr-2 w-4 h-4" %}
+                            Edit Log
+                        </a>
+                        <a href="{% url 'project:production-daily-log-delete' project_pk=project.pk pk=report.pk %}"
+                           class="inline-flex items-center px-4 py-2 text-sm font-semibold text-rose-600 bg-white rounded-md ring-1 ring-inset ring-rose-200 shadow-sm transition-all hover:bg-rose-50">
+                            {% heroicon_outline "trash" class="mr-2 w-4 h-4" %}
+                            Delete
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100">
+                    <div class="p-2.5 bg-indigo-100 text-indigo-600 rounded-lg mr-3">
+                        {% heroicon_mini "rectangle-group" class="w-5 h-5" %}
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Activities</p>
+                        <p class="text-lg font-black text-gray-900">{{ entries|length }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100">
+                    <div class="p-2.5 bg-purple-100 text-purple-600 rounded-lg mr-3">
+                        {% heroicon_mini "user-group" class="w-5 h-5" %}
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Labour Cost</p>
+                        <p class="text-lg font-black text-gray-900">{{ report_total_labour_cost|currency }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-100">
+                    <div class="p-2.5 bg-emerald-100 text-emerald-600 rounded-lg mr-3">
+                        {% heroicon_mini "truck" class="w-5 h-5" %}
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Plant Cost</p>
+                        <p class="text-lg font-black text-gray-900">{{ report_total_plant_cost|currency }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center p-4 text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-100">
+                    <div class="p-2.5 bg-white/10 rounded-lg mr-3">
+                        {% heroicon_mini "banknotes" class="w-5 h-5" %}
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-indigo-100 uppercase tracking-widest">Daily Total</p>
+                        <p class="text-lg font-black">{{ report_total_cost|currency }}</p>
+                    </div>
+                </div>
+            </div>
+
+            {% if report.notes %}
+                <div class="px-6 pb-6">
+                    <div class="flex gap-3 items-start p-4 bg-amber-50 rounded-xl border border-amber-100">
+                        {% heroicon_mini "information-circle" class="mt-0.5 w-5 h-5 text-amber-500" %}
+                        <div>
+                            <p class="text-[10px] font-bold text-amber-800 uppercase tracking-widest">Daily Narrative</p>
+                            <p class="mt-0.5 text-sm leading-relaxed text-amber-900/80">{{ report.notes }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Activity Breakdown -->
+        <div class="space-y-8">
+            <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-2 flex items-center gap-2">
+                <span class="w-8 h-px bg-gray-200"></span>
+                Activity Logs
+            </h3>
+
+            {% for entry in entries %}
+                <div class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
+                    <!-- Entry Header -->
+                    <div class="flex flex-col gap-4 justify-between items-start px-6 py-4 border-b border-gray-100 bg-gray-50/30 md:flex-row md:items-center">
+                        <div>
+                            <div class="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">
+                                {{ entry.production_plan.section|default:"General Section" }} / {{ entry.production_plan.bill_no|default:"MOU" }}
+                            </div>
+                            <h4 class="text-lg font-black text-gray-900">{{ entry.production_plan.activity }}</h4>
+                        </div>
+                        <div class="flex flex-wrap gap-4 md:gap-8">
+                            <div class="text-left md:text-right">
+                                <div class="text-[10px] font-bold text-gray-400 uppercase">Quantity</div>
+                                <div class="text-lg font-black text-indigo-600 tabular-nums">
                                     {{ entry.quantity|qty }} <span class="text-xs font-medium text-gray-400">{{ entry.production_plan.unit_display }}</span>
                                 </div>
                             </div>
-                            <div class="h-8 w-px bg-gray-200"></div>
-                            <div class="text-right">
-                                <div class="text-[10px] font-bold text-gray-400 uppercase">Total Hours</div>
-                                <div class="text-lg font-black text-gray-900 font-mono">{{ entry.hours_on_activity|qty }} hrs</div>
+                            <div class="text-left md:text-right">
+                                <div class="text-[10px] font-bold text-gray-400 uppercase">Input Hours</div>
+                                <div class="text-lg font-black text-gray-900 tabular-nums">{{ entry.hours_on_activity|qty }} <span class="text-xs font-medium text-gray-400">hrs</span></div>
                             </div>
-                            <div class="h-8 w-px bg-gray-200"></div>
-                            <div class="text-right">
-                                <div class="text-[10px] font-bold text-gray-400 uppercase">Total Cost</div>
-                                <div class="text-lg font-black text-emerald-600 font-mono">{{ entry.total_cost|currency }}</div>
+                            <div class="text-left md:text-right">
+                                <div class="text-[10px] font-bold text-gray-400 uppercase">Allocated Cost</div>
+                                <div class="text-lg font-black text-emerald-600 tabular-nums">{{ entry.total_cost|currency }}</div>
                             </div>
                         </div>
                     </div>
-                    <div class="p-8 grid grid-cols-1 lg:grid-cols-2 gap-12">
-                        <!-- Labour Table -->
+
+                    <!-- Usage Details -->
+                    <div class="grid grid-cols-1 gap-8 p-6 lg:grid-cols-2">
+                        <!-- Labour -->
                         <div>
-                            <div class="flex items-center gap-2 mb-4">
-                                <div class="w-1.5 h-4 bg-purple-500 rounded-full"></div>
-                                <h5 class="text-xs font-black text-gray-900 uppercase tracking-wider">Labour Resources</h5>
+                            <div class="flex gap-2 items-center mb-3">
+                                <div class="w-1 h-3 bg-purple-500 rounded-full"></div>
+                                <h5 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Labour Usage</h5>
                             </div>
-                            <div class="overflow-hidden bg-gray-50/50 rounded-2xl border border-gray-100">
-                                <table class="w-full text-sm">
-                                    <thead class="bg-gray-100/50">
-                                        <tr>
-                                            <th class="px-4 py-3 text-[10px] font-black text-gray-500 uppercase text-left">Category</th>
-                                            <th class="px-4 py-3 text-[10px] font-black text-gray-500 uppercase text-center">People</th>
-                                            <th class="px-4 py-3 text-[10px] font-black text-gray-500 uppercase text-center">Hours</th>
-                                            <th class="px-4 py-3 text-[10px] font-black text-gray-500 uppercase text-right">Man Hours</th>
+                            <div class="overflow-hidden rounded-lg border border-gray-100">
+                                <table class="table table-zebra table-sm">
+                                    <thead>
+                                        <tr class="bg-gray-50">
+                                            <th class="text-[10px] font-bold text-gray-600 uppercase">Category</th>
+                                            <th class="text-center text-[10px] font-bold text-gray-600 uppercase">No.</th>
+                                            <th class="text-center text-[10px] font-bold text-gray-600 uppercase">Hrs</th>
+                                            <th class="text-right text-[10px] font-bold text-gray-600 uppercase">Man Hrs</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-gray-100">
+                                    <tbody>
                                         {% for lab in entry.labour_usage.all %}
-                                            <tr class="hover:bg-white transition-colors">
-                                                <td class="px-4 py-3 font-bold text-gray-700">{{ lab.resource.name }}</td>
-                                                <td class="px-4 py-3 text-center font-black text-gray-900">{{ lab.number }}</td>
-                                                <td class="px-4 py-3 text-center text-gray-500 font-mono">{{ lab.hours }}</td>
-                                                <td class="px-4 py-3 text-right font-black text-indigo-600 font-mono">{{ lab.man_hours|qty }}</td>
+                                            <tr class="transition-colors hover:bg-indigo-50/30">
+                                                <td class="text-xs font-bold text-gray-700">{{ lab.resource.name }}</td>
+                                                <td class="text-center text-xs font-black text-gray-900">{{ lab.number }}</td>
+                                                <td class="text-center text-xs font-mono text-gray-500">{{ lab.hours }}</td>
+                                                <td class="text-right text-xs font-black text-indigo-600 tabular-nums">{{ lab.man_hours|qty }}</td>
                                             </tr>
                                         {% empty %}
                                             <tr>
-                                                <td colspan="4"
-                                                    class="px-4 py-8 text-center text-xs text-gray-400 italic">
-                                                    No labour usage recorded
-                                                </td>
+                                                <td colspan="4" class="py-4 text-xs italic text-center text-gray-400">No labour tracked</td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>
                                 </table>
                             </div>
                         </div>
-                        <!-- Plant Table -->
+
+                        <!-- Plant -->
                         <div>
-                            <div class="flex items-center gap-2 mb-4">
-                                <div class="w-1.5 h-4 bg-emerald-500 rounded-full"></div>
-                                <h5 class="text-xs font-black text-gray-900 uppercase tracking-wider">Plant & Equipment</h5>
+                            <div class="flex gap-2 items-center mb-3">
+                                <div class="w-1 h-3 bg-emerald-500 rounded-full"></div>
+                                <h5 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Plant & Equipment</h5>
                             </div>
-                            <div class="overflow-hidden bg-gray-50/50 rounded-2xl border border-gray-100">
-                                <table class="w-full text-sm">
-                                    <thead class="bg-gray-100/50">
-                                        <tr>
-                                            <th class="px-4 py-3 text-[10px] font-black text-gray-500 uppercase text-left">Item Name</th>
-                                            <th class="px-4 py-3 text-[10px] font-black text-gray-500 uppercase text-center">Hours</th>
-                                            <th class="px-4 py-3 text-[10px] font-black text-gray-500 uppercase text-right">Production</th>
+                            <div class="overflow-hidden rounded-lg border border-gray-100">
+                                <table class="table table-zebra table-sm">
+                                    <thead>
+                                        <tr class="bg-gray-50">
+                                            <th class="text-[10px] font-bold text-gray-600 uppercase">Equipment</th>
+                                            <th class="text-center text-[10px] font-bold text-gray-600 uppercase">Hours</th>
+                                            <th class="text-right text-[10px] font-bold text-gray-600 uppercase">Production</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-gray-100">
+                                    <tbody>
                                         {% for plant in entry.plant_usage.all %}
-                                            <tr class="hover:bg-white transition-colors">
-                                                <td class="px-4 py-3 font-bold text-gray-700">{{ plant.resource.name }}</td>
-                                                <td class="px-4 py-3 text-center text-gray-500 font-mono">{{ plant.hours }}</td>
-                                                <td class="px-4 py-3 text-right font-black text-gray-900 font-mono">{{ plant.quantity|qty }}</td>
+                                            <tr class="transition-colors hover:bg-emerald-50/30">
+                                                <td class="text-xs font-bold text-gray-700">{{ plant.resource.name }}</td>
+                                                <td class="text-center text-xs font-mono text-gray-500">{{ plant.hours }}</td>
+                                                <td class="text-right text-xs font-black text-gray-900 tabular-nums">{{ plant.quantity|qty }}</td>
                                             </tr>
                                         {% empty %}
                                             <tr>
-                                                <td colspan="3"
-                                                    class="px-4 py-8 text-center text-xs text-gray-400 italic">
-                                                    No plant usage recorded
-                                                </td>
+                                                <td colspan="3" class="py-4 text-xs italic text-center text-gray-400">No plant tracked</td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>
@@ -196,12 +214,20 @@
                 </div>
             {% endfor %}
         </div>
-        <!-- Actions Footer -->
-        <div class="flex justify-start py-6 border-t border-gray-100">
+
+        <!-- Dashboard Footer -->
+        <div class="flex justify-between items-center py-6 mt-12 border-t border-gray-100">
             <a href="{% url 'project:production-daily-log-list' project_pk=project.pk %}"
-               class="text-sm font-bold text-gray-400 hover:text-indigo-600 flex items-center transition-colors">
-                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-2" %} Back to Daily Logs List
+               class="inline-flex items-center text-xs font-bold text-gray-500 transition-colors hover:text-indigo-600">
+                {% heroicon_mini "chevron-left" class="mr-2 w-4 h-4" %} Back to Logs
             </a>
+            <div class="flex gap-4">
+                <a href="{% url 'project:production-dashboard' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 text-xs font-bold text-indigo-600 bg-white rounded-lg border border-indigo-100 shadow-sm transition-all hover:bg-indigo-50">
+                    Production Dashboard {% heroicon_mini "chevron-right" class="ml-2 w-4 h-4" %}
+                </a>
+            </div>
         </div>
     </div>
-{% endblock production_content %}
+{% endblock content %}
+

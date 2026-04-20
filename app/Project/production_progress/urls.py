@@ -94,6 +94,11 @@ urlpatterns = [
         name="production-cashflow-forecast",
     ),
     path(
+        "<int:project_pk>/performance-report/",
+        views.ProductionPerformanceReportView.as_view(),
+        name="performance-report",
+    ),
+    path(
         "<int:project_pk>/plan/<int:pk>/data/",
         views.ProductionPlanAjaxDetailView.as_view(),
         name="production-plan-data-ajax",
