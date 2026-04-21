@@ -906,6 +906,24 @@ class PreliminaryCostImporter:
         "total",
     }
 
+    # Header labels recognised in the master-workbook layout. Each maps a
+    # lowercased cell value to the model field it supplies.
+    COLUMN_LABELS = {
+        "items": "name_col",
+        "name": "name_col",
+        "sum": "sum_value",
+        "number/month": "number_per_month",
+        "number / month": "number_per_month",
+        "monthly rate": "monthly_rate",
+        "months": "months",
+        "amount": "amount",
+    }
+
+    # Fallback name column when a section header doesn't label it (the time
+    # sections omit a "Name" header — col 0 is trade code, col 1 is blank or
+    # the type phrase, col 2 is the item name).
+    DEFAULT_NAME_COL = 2
+
     def __init__(self, file_path, project=None):
         self.file_path = file_path
         self.project = project
@@ -941,7 +959,7 @@ class PreliminaryCostImporter:
             return self._import_flat(
                 ws, flat_header_row, co, sheet_name, fell_back, all_sheets
             )
-        return self._import_hierarchical(ws, co, sheet_name, fell_back, all_sheets)
+        return self._import_by_labels(ws, co, sheet_name, fell_back, all_sheets)
 
     def _upsert(self, name, ptype, defaults):
         if self.project:
@@ -1003,53 +1021,97 @@ class PreliminaryCostImporter:
             "all_sheets": all_sheets,
         }
 
-    def _import_hierarchical(self, ws, co, sheet_name, fell_back, all_sheets):
+    def _detect_column_map(self, row):
+        """Scan a row for known header labels and return {field: col_index}.
+
+        Matching is by exact (case-insensitive, whitespace-stripped) cell value
+        so unrelated text like "Trade Name" doesn't claim the "Name" slot.
+        When a label appears more than once (the fixed section has two
+        "Amount" columns) the left-most occurrence wins.
+        """
+        col_map = {}
+        for ci, cell in enumerate(row or ()):
+            if cell is None:
+                continue
+            s = str(cell).strip().lower()
+            if not s:
+                continue
+            field = self.COLUMN_LABELS.get(s)
+            if field is not None:
+                col_map.setdefault(field, ci)
+        return col_map
+
+    def _scan_type_match(self, row):
+        """Return the first type-phrase match found anywhere in the row."""
+        for cell in row or ():
+            if cell is None:
+                continue
+            m = self._match_type(str(cell))
+            if m:
+                return m
+        return None
+
+    def _import_by_labels(self, ws, co, sheet_name, fell_back, all_sheets):
+        """Import the master-workbook layout.
+
+        The trade-code column is ignored. The type phrase may appear in any
+        column (repeated per row in the fixed section, and once as a header in
+        each time section). Numeric columns are resolved by header label
+        ('Sum', 'Amount', 'Number/Month', 'Monthly Rate', 'Months'), so the
+        parser is tolerant of shifted columns and duplicate 'Amount' cells.
+        """
         created = updated = 0
         current_type = None
-        is_time = False
+        col_map = {}
 
         for row in ws.iter_rows(min_row=1, values_only=True):
-            ncols = len(row) if row else 0
-            first = _safe_str(row[co]) if ncols > co else ""
-            if not first:
+            type_match = self._scan_type_match(row)
+            new_col_map = self._detect_column_map(row)
+
+            if new_col_map:
+                col_map = new_col_map
+                if type_match:
+                    current_type = type_match
+                continue  # header row — never a data row
+
+            if type_match:
+                current_type = type_match
+
+            if not current_type or not col_map:
                 continue
 
-            first_lower = first.lower().strip()
-
-            # Section headers change the current_type. They are recognised
-            # because the next cell is a label like "Sum" or "Number/Month"
-            # — but we also match by phrase to be resilient.
-            matched = self._match_type(first)
-            if matched:
-                current_type = matched
-                is_time = matched.startswith("time_")
+            name_col = col_map.get("name_col", self.DEFAULT_NAME_COL)
+            name = _safe_str(row[name_col]) if len(row) > name_col else ""
+            if not name:
                 continue
 
-            # Skip super-headers and subtotal rows.
-            if any(phrase in first_lower for phrase in self.SKIP_PHRASES):
+            name_lower = name.lower().strip()
+            # Skip rows where the "name" cell is actually a section header
+            # (e.g. the time sections list the type phrase at the name column).
+            if self._match_type(name):
+                continue
+            if any(phrase in name_lower for phrase in self.SKIP_PHRASES):
                 continue
 
-            if current_type is None:
-                continue
+            is_time = current_type.startswith("time_")
+            defaults = {
+                "sum_value": Decimal("0"),
+                "amount": Decimal("0"),
+                "number_per_month": Decimal("0"),
+                "monthly_rate": Decimal("0"),
+                "months": Decimal("0"),
+            }
+            for field in defaults:
+                idx = col_map.get(field)
+                if idx is None or idx >= len(row):
+                    continue
+                val = _safe_decimal(row[idx])
+                if val is not None:
+                    defaults[field] = val
 
-            name = first
+            # Drop rows with no numeric payload — prevents the label/subtotal
+            # rows that slip through from creating zero-value records.
             if is_time:
-                defaults = {
-                    "sum_value": Decimal("0"),
-                    "number_per_month": (
-                        _safe_decimal(row[co + 1]) if ncols > co + 1 else None
-                    )
-                    or Decimal("0"),
-                    "monthly_rate": (
-                        _safe_decimal(row[co + 2]) if ncols > co + 2 else None
-                    )
-                    or Decimal("0"),
-                    "months": (_safe_decimal(row[co + 3]) if ncols > co + 3 else None)
-                    or Decimal("0"),
-                    "amount": (_safe_decimal(row[co + 4]) if ncols > co + 4 else None)
-                    or Decimal("0"),
-                }
-                # A row with no numeric values is noise, skip it.
                 if (
                     defaults["number_per_month"] == 0
                     and defaults["monthly_rate"] == 0
@@ -1058,16 +1120,6 @@ class PreliminaryCostImporter:
                 ):
                     continue
             else:
-                total = _safe_decimal(row[co + 3]) if ncols > co + 3 else None
-                unit_amt = _safe_decimal(row[co + 2]) if ncols > co + 2 else None
-                sum_v = _safe_decimal(row[co + 1]) if ncols > co + 1 else None
-                defaults = {
-                    "sum_value": sum_v or Decimal("0"),
-                    "amount": total or unit_amt or Decimal("0"),
-                    "number_per_month": Decimal("0"),
-                    "monthly_rate": Decimal("0"),
-                    "months": Decimal("0"),
-                }
                 if defaults["sum_value"] == 0 and defaults["amount"] == 0:
                     continue
 
@@ -1116,7 +1168,11 @@ class PreliminarySpecImporter:
         created = updated = 0
 
         co = _col_offset(ws)
-        header_row = _find_header_row(ws, ["section", "preliminar"])
+        # "Unit" is present in both the downloaded template ("Section | Trade
+        # Name | Name | Unit | Amount") and the master workbook ("Element |
+        # Trade Name | Preliminaries | Unit | Amount"), and never appears as
+        # a cell value in data rows — so it uniquely anchors the header row.
+        header_row = _find_header_row(ws, ["unit"])
         data_start = header_row + 1
 
         for row in ws.iter_rows(min_row=data_start, values_only=True):
