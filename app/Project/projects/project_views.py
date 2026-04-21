@@ -80,11 +80,9 @@ class ProjectListView(
         discipline_queryset = None
 
         if request.user.is_authenticated:
-            from app.Account.models import (
-                Company,
-                Municipality,
-            )
+            from app.Account.models import Municipality
             from app.Project.models import (
+                Company,
                 ProjectDiscipline,
             )
 
