@@ -359,7 +359,9 @@ def clone_from_project(target_project, source_project):
         for comp in sps.components.all():
             ProjectPlantSpecificationComponent.objects.create(
                 specification=pps,
-                plant_type=plant_map.get(comp.plant_type_id) if comp.plant_type_id else None,  # ty:ignore[unresolved-attribute]
+                plant_type=plant_map.get(comp.plant_type_id)
+                if comp.plant_type_id
+                else None,  # ty:ignore[unresolved-attribute]
                 hours=comp.hours,
                 sort_order=comp.sort_order,
             )

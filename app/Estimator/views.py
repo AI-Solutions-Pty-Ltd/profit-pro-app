@@ -1797,13 +1797,16 @@ class BulkUpdateBoqSpecsView(View):
                         except (TypeError, ValueError):
                             pass
                         if related is None:
-                            related = model_cls.objects.filter(
-                                name=str(value),
-                                section=item.section,
-                                project_id=project_pk,
-                            ).first() or model_cls.objects.filter(
-                                name=str(value), project_id=project_pk
-                            ).first()
+                            related = (
+                                model_cls.objects.filter(
+                                    name=str(value),
+                                    section=item.section,
+                                    project_id=project_pk,
+                                ).first()
+                                or model_cls.objects.filter(
+                                    name=str(value), project_id=project_pk
+                                ).first()
+                            )
                         setattr(item, field, related)
                 else:
                     return JsonResponse(
@@ -2358,9 +2361,9 @@ class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
 
     def get_queryset(self):
         project = self.get_project()
-        qs = ProjectPlantSpecification.objects.filter(
-            project=project
-        ).prefetch_related("components__plant_type")
+        qs = ProjectPlantSpecification.objects.filter(project=project).prefetch_related(
+            "components__plant_type"
+        )
         section = self.request.GET.get("section")
         if section:
             qs = qs.filter(section=section)
@@ -4213,7 +4216,9 @@ class AddSystemPlantSpecComponentView(SystemLibraryMixin, View):
         plant_type = None
         if plant_type_id not in (None, "", 0, "0"):
             try:
-                plant_type = SystemPlantCost.objects.filter(pk=int(plant_type_id)).first()
+                plant_type = SystemPlantCost.objects.filter(
+                    pk=int(plant_type_id)
+                ).first()
             except (TypeError, ValueError):
                 plant_type = None
 

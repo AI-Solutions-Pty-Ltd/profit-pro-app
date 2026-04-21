@@ -12,9 +12,7 @@
             <a href="{% url 'estimator:report_baseline_assessment' project_pk=project_pk %}"
                class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-blue-100 p-2">
-                        {% heroicon_outline "chart-bar" class="w-5 h-5 text-blue-600" %}
-                    </div>
+                    <div class="rounded-lg bg-blue-100 p-2">{% heroicon_outline "chart-bar" class="w-5 h-5 text-blue-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Baseline Assessment</h3>
                 </div>
                 <p class="text-xs text-gray-500">Compares contract rates vs new baseline rates based on original quantities</p>
@@ -42,9 +40,7 @@
             <a href="{% url 'estimator:report_key_rates_assessment' project_pk=project_pk %}"
                class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-amber-100 p-2">
-                        {% heroicon_outline "key" class="w-5 h-5 text-amber-600" %}
-                    </div>
+                    <div class="rounded-lg bg-amber-100 p-2">{% heroicon_outline "key" class="w-5 h-5 text-amber-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Key Rates Assessment</h3>
                 </div>
                 <p class="text-xs text-gray-500">Contract vs new rates for items with computable material/labour rates</p>
@@ -58,9 +54,7 @@
             <a href="{% url 'estimator:report_material_list_baseline' project_pk=project_pk %}"
                class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-blue-100 p-2">
-                        {% heroicon_outline "cube" class="w-5 h-5 text-blue-600" %}
-                    </div>
+                    <div class="rounded-lg bg-blue-100 p-2">{% heroicon_outline "cube" class="w-5 h-5 text-blue-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Baseline</h3>
                 </div>
                 <p class="text-xs text-gray-500">Material breakdown using contract quantities and new rates</p>
@@ -68,9 +62,7 @@
             <a href="{% url 'estimator:report_material_list_progress' project_pk=project_pk %}"
                class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-green-100 p-2">
-                        {% heroicon_outline "cube" class="w-5 h-5 text-green-600" %}
-                    </div>
+                    <div class="rounded-lg bg-green-100 p-2">{% heroicon_outline "cube" class="w-5 h-5 text-green-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Progress</h3>
                 </div>
                 <p class="text-xs text-gray-500">Material breakdown using progress quantities and new rates</p>
@@ -78,9 +70,7 @@
             <a href="{% url 'estimator:report_material_list_forecast' project_pk=project_pk %}"
                class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-purple-100 p-2">
-                        {% heroicon_outline "cube" class="w-5 h-5 text-purple-600" %}
-                    </div>
+                    <div class="rounded-lg bg-purple-100 p-2">{% heroicon_outline "cube" class="w-5 h-5 text-purple-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Forecast</h3>
                 </div>
                 <p class="text-xs text-gray-500">Material breakdown using forecast quantities and new rates</p>
@@ -94,9 +84,7 @@
             <a href="{% url 'estimator:report_labour_list_baseline' project_pk=project_pk %}"
                class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-blue-100 p-2">
-                        {% heroicon_outline "user-group" class="w-5 h-5 text-blue-600" %}
-                    </div>
+                    <div class="rounded-lg bg-blue-100 p-2">{% heroicon_outline "user-group" class="w-5 h-5 text-blue-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Baseline</h3>
                 </div>
                 <p class="text-xs text-gray-500">Labour/crew breakdown using contract quantities</p>
@@ -104,9 +92,7 @@
             <a href="{% url 'estimator:report_labour_list_progress' project_pk=project_pk %}"
                class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-green-100 p-2">
-                        {% heroicon_outline "user-group" class="w-5 h-5 text-green-600" %}
-                    </div>
+                    <div class="rounded-lg bg-green-100 p-2">{% heroicon_outline "user-group" class="w-5 h-5 text-green-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Progress</h3>
                 </div>
                 <p class="text-xs text-gray-500">Labour/crew breakdown using progress quantities</p>
@@ -114,9 +100,7 @@
             <a href="{% url 'estimator:report_labour_list_forecast' project_pk=project_pk %}"
                class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-purple-100 p-2">
-                        {% heroicon_outline "user-group" class="w-5 h-5 text-purple-600" %}
-                    </div>
+                    <div class="rounded-lg bg-purple-100 p-2">{% heroicon_outline "user-group" class="w-5 h-5 text-purple-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Forecast</h3>
                 </div>
                 <p class="text-xs text-gray-500">Labour/crew breakdown using forecast quantities</p>
@@ -130,9 +114,7 @@
             <a href="{% url 'estimator:report_plant_list_baseline' project_pk=project_pk %}"
                class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-blue-100 p-2">
-                        {% heroicon_outline "truck" class="w-5 h-5 text-blue-600" %}
-                    </div>
+                    <div class="rounded-lg bg-blue-100 p-2">{% heroicon_outline "truck" class="w-5 h-5 text-blue-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Baseline</h3>
                 </div>
                 <p class="text-xs text-gray-500">Plant breakdown using contract quantities</p>
@@ -140,9 +122,7 @@
             <a href="{% url 'estimator:report_plant_list_progress' project_pk=project_pk %}"
                class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-green-100 p-2">
-                        {% heroicon_outline "truck" class="w-5 h-5 text-green-600" %}
-                    </div>
+                    <div class="rounded-lg bg-green-100 p-2">{% heroicon_outline "truck" class="w-5 h-5 text-green-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Progress</h3>
                 </div>
                 <p class="text-xs text-gray-500">Plant breakdown using progress quantities</p>
@@ -150,9 +130,7 @@
             <a href="{% url 'estimator:report_plant_list_forecast' project_pk=project_pk %}"
                class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-purple-100 p-2">
-                        {% heroicon_outline "truck" class="w-5 h-5 text-purple-600" %}
-                    </div>
+                    <div class="rounded-lg bg-purple-100 p-2">{% heroicon_outline "truck" class="w-5 h-5 text-purple-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Forecast</h3>
                 </div>
                 <p class="text-xs text-gray-500">Plant breakdown using forecast quantities</p>
@@ -166,9 +144,7 @@
             <a href="{% url 'estimator:report_prelim_list_baseline' project_pk=project_pk %}"
                class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-blue-100 p-2">
-                        {% heroicon_outline "newspaper" class="w-5 h-5 text-blue-600" %}
-                    </div>
+                    <div class="rounded-lg bg-blue-100 p-2">{% heroicon_outline "newspaper" class="w-5 h-5 text-blue-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Baseline</h3>
                 </div>
                 <p class="text-xs text-gray-500">Preliminaries breakdown using contract quantities</p>
@@ -176,9 +152,7 @@
             <a href="{% url 'estimator:report_prelim_list_progress' project_pk=project_pk %}"
                class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-green-100 p-2">
-                        {% heroicon_outline "newspaper" class="w-5 h-5 text-green-600" %}
-                    </div>
+                    <div class="rounded-lg bg-green-100 p-2">{% heroicon_outline "newspaper" class="w-5 h-5 text-green-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Progress</h3>
                 </div>
                 <p class="text-xs text-gray-500">Preliminaries breakdown using progress quantities</p>
@@ -186,9 +160,7 @@
             <a href="{% url 'estimator:report_prelim_list_forecast' project_pk=project_pk %}"
                class="group rounded-lg bg-white shadow-sm p-5 hover:shadow-md hover:ring-indigo-200 transition">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="rounded-lg bg-purple-100 p-2">
-                        {% heroicon_outline "newspaper" class="w-5 h-5 text-purple-600" %}
-                    </div>
+                    <div class="rounded-lg bg-purple-100 p-2">{% heroicon_outline "newspaper" class="w-5 h-5 text-purple-600" %}</div>
                     <h3 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">Forecast</h3>
                 </div>
                 <p class="text-xs text-gray-500">Preliminaries breakdown using forecast quantities</p>
