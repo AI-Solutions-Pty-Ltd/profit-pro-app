@@ -20,3 +20,13 @@ class TestProductionPlanModel:
         """Test the string representation of ProductionPlan."""
         plan = ProductionPlanFactory.create(activity="Excavation")
         assert str(plan) == f"{plan.project.name} - Excavation"
+
+    def test_production_plan_nullable_dates(self):
+        """Test creating a production plan without start and finish dates."""
+        plan = ProductionPlanFactory.create(
+            start_date=None, finish_date=None, daily_rate=150.50
+        )
+        assert plan.id is not None
+        assert plan.start_date is None
+        assert plan.finish_date is None
+        assert plan.daily_rate == 150.50

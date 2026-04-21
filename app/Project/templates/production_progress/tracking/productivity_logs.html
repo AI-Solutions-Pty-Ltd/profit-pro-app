@@ -1,123 +1,105 @@
-{% extends "production_progress/base_production.html" %}
+{% extends "base.html" %}
 {% load static %}
 {% load heroicons %}
 {% load humanize %}
 {% load project_tags %}
 {% block title %}
-    Productivity Logs - {{ project.name }} - {{ block.super }}
+    Productivity Logs - {{ project.name }}
 {% endblock title %}
-{% block production_content %}
-    {% for data in logs_data %}
-        <div class="mb-16">
-            <!-- Activity Header Card -->
-            <div class="flex items-center px-6 py-4 mb-6 bg-white rounded-xl border-l-4 border-indigo-500 shadow-sm">
-                <div class="flex justify-center items-center mr-4 w-12 h-12 text-indigo-600 bg-indigo-50 rounded-xl">
-                    {% heroicon_outline "clipboard-document-check" class="w-6 h-6" %}
-                </div>
-                <div>
-                    <h2 class="text-lg font-black text-gray-900 uppercase tracking-tight">Activity: {{ data.plan.activity }}</h2>
-                    <p class="text-sm text-gray-500">Detailed productivity metrics and resource logs</p>
-                </div>
-            </div>
-            <!-- Productivity Table -->
-            <div class="overflow-hidden mb-8 bg-white rounded-2xl border border-gray-200 shadow-sm">
-                <div class="flex items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                    <div class="p-1.5 mr-3 text-emerald-600 bg-emerald-100 rounded-lg">
-                        {% heroicon_outline "chart-bar" class="w-4 h-4" %}
+{% block content %}
+    <div class="pb-12">
+        <!-- Header Card -->
+        <div class="overflow-hidden mb-8 bg-white rounded-xl border border-gray-100 shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <nav class="flex mb-2" aria-label="Breadcrumb">
+                    <ol role="list" class="flex items-center space-x-2">
+                        <li>
+                            <div>
+                                <a href="{% url 'project:production-dashboard' project.pk %}"
+                                   class="flex items-center text-gray-400 transition-colors hover:text-indigo-600">
+                                    {% heroicon_outline "chevron-left" class="mr-1.5 w-4 h-4" %}
+                                    <span class="text-sm font-semibold">Production</span>
+                                </a>
+                            </div>
+                        </li>
+                    </ol>
+                </nav>
+                <div class="flex flex-col gap-4 justify-between items-start md:flex-row md:items-end">
+                    <div>
+                        <h2 class="text-xl font-bold tracking-tight text-gray-900">Productivity Logs</h2>
+                        <p class="text-sm text-gray-500">Historical performance metrics and resource utilization by activity.</p>
                     </div>
-                    <h3 class="text-sm font-black text-gray-900 uppercase tracking-wider">Productivity Metrics</h3>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-xs font-bold tracking-wider text-left text-gray-500 uppercase">Metric Description</th>
-                                {% for day in data.days_list %}
-                                    <th class="px-6 py-3 text-xs font-bold tracking-wider text-center text-gray-500 uppercase">{{ day }}</th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <tr class="transition-colors hover:bg-gray-50/50">
-                                <td class="px-6 py-4 text-sm font-bold text-gray-900">Total Production</td>
-                                {% for day in data.days_list %}
-                                    <td class="px-6 py-4 text-sm font-bold text-center text-gray-900">
-                                        {{ data.day_data|get_item:day|get_item:'production'|floatformat:0|intcomma }}
-                                    </td>
-                                {% endfor %}
-                            </tr>
-                            <tr class="transition-colors hover:bg-gray-50/50">
-                                <td class="px-6 py-4 text-sm text-gray-600">Total Activity Cost</td>
-                                {% for day in data.days_list %}
-                                    <td class="px-6 py-4 text-sm text-center text-gray-700">
-                                        R {{ data.day_data|get_item:day|get_item:'total_cost'|floatformat:2|intcomma }}
-                                    </td>
-                                {% endfor %}
-                            </tr>
-                            <tr class="transition-colors hover:bg-gray-50/50">
-                                <td class="px-6 py-4 text-sm text-gray-600">Total Man Hours</td>
-                                {% for day in data.days_list %}
-                                    <td class="px-6 py-4 text-sm text-center text-gray-700">
-                                        {{ data.day_data|get_item:day|get_item:'man_hours'|floatformat:1 }}
-                                    </td>
-                                {% endfor %}
-                            </tr>
-                            <tr class="bg-indigo-50/30">
-                                <td class="px-6 py-4 text-sm font-black text-indigo-700 uppercase tracking-tight">Work Productivity (Units/MH)</td>
-                                {% for day in data.days_list %}
-                                    <td class="px-6 py-4 text-sm font-black text-center text-indigo-600">
-                                        {{ data.day_data|get_item:day|get_item:'productivity'|floatformat:4 }}
-                                    </td>
-                                {% endfor %}
-                            </tr>
-                            <tr class="bg-red-50/30">
-                                <td class="px-6 py-4 text-sm font-black text-red-700 uppercase tracking-tight">Cost per Item</td>
-                                {% for day in data.days_list %}
-                                    <td class="px-6 py-4 text-sm font-black text-center text-red-600">
-                                        R {{ data.day_data|get_item:day|get_item:'cost_per_item'|floatformat:2|intcomma }}
-                                    </td>
-                                {% endfor %}
-                            </tr>
-                        </tbody>
-                    </table>
                 </div>
             </div>
-            <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
-                <!-- Labour Log -->
-                <div class="overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm">
+        </div>
+        {% for data in logs_data %}
+            <div class="mb-16">
+                <!-- Activity Header Card -->
+                <div class="flex items-center px-6 py-4 mb-6 bg-white rounded-xl border-l-4 border-indigo-500 shadow-sm">
+                    <div class="flex justify-center items-center mr-4 w-12 h-12 text-indigo-600 bg-indigo-50 rounded-xl">
+                        {% heroicon_outline "clipboard-document-check" class="w-6 h-6" %}
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-black text-gray-900 uppercase tracking-tight">Activity: {{ data.plan.activity }}</h2>
+                        <p class="text-sm text-gray-500">Detailed productivity metrics and resource logs</p>
+                    </div>
+                </div>
+                <!-- Productivity Table -->
+                <div class="overflow-hidden mb-8 bg-white rounded-2xl border border-gray-200 shadow-sm">
                     <div class="flex items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <div class="p-1.5 mr-3 text-blue-600 bg-blue-100 rounded-lg">{% heroicon_outline "users" class="w-4 h-4" %}</div>
-                        <h3 class="text-sm font-black text-gray-900 uppercase tracking-wider">Labour Log</h3>
+                        <div class="p-1.5 mr-3 text-emerald-600 bg-emerald-100 rounded-lg">
+                            {% heroicon_outline "chart-bar" class="w-4 h-4" %}
+                        </div>
+                        <h3 class="text-sm font-black text-gray-900 uppercase tracking-wider">Productivity Metrics</h3>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
+                        <table class="table table-zebra table-sm">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-4 py-3 text-xs font-bold tracking-wider text-left text-gray-500 uppercase">Resource & Rate</th>
+                                    <th class="px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Metric Description</th>
                                     {% for day in data.days_list %}
-                                        <th class="px-4 py-3 text-xs font-bold tracking-wider text-center text-gray-500 uppercase">{{ day }}</th>
+                                        <th class="px-6 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">{{ day }}</th>
                                     {% endfor %}
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200 bg-white">
-                                {% for res in data.labour_resources %}
-                                    <tr class="transition-colors hover:bg-gray-50/50">
-                                        <td class="px-4 py-3">
-                                            <div class="text-sm font-bold text-gray-900">{{ res.name }}</div>
-                                            <div class="text-xs text-gray-500">R {{ res.rate|floatformat:2|intcomma }}/day</div>
-                                        </td>
-                                        {% for day in data.days_list %}
-                                            <td class="px-4 py-3 text-sm text-center text-gray-900">
-                                                {{ data.day_data|get_item:day|get_item:'labour_usage'|get_item:res.id|default:0 }}
-                                            </td>
-                                        {% endfor %}
-                                    </tr>
-                                {% endfor %}
-                                <tr class="bg-gray-50">
-                                    <td class="px-4 py-3 text-sm font-bold text-gray-900 uppercase tracking-tight">Daily Total Cost</td>
+                            <tbody class="divide-y divide-gray-100">
+                                <tr class="transition-colors hover:bg-gray-50/50">
+                                    <td class="px-6 py-4 text-sm font-bold text-gray-700">Total Production</td>
                                     {% for day in data.days_list %}
-                                        <td class="px-4 py-3 text-sm font-black text-center text-indigo-600">
-                                            R {{ data.day_data|get_item:day|get_item:'total_labour_cost'|floatformat:0|intcomma }}
+                                        <td class="px-6 py-4 text-sm font-black text-center text-gray-900 tabular-nums">
+                                            {{ data.day_data|get_item:day|get_item:'production'|floatformat:0|intcomma }}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                                <tr class="transition-colors hover:bg-gray-50/50">
+                                    <td class="px-6 py-4 text-sm text-gray-600">Total Activity Cost</td>
+                                    {% for day in data.days_list %}
+                                        <td class="px-6 py-4 text-sm text-center text-gray-700 tabular-nums">
+                                            R {{ data.day_data|get_item:day|get_item:'total_cost'|floatformat:2|intcomma }}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                                <tr class="transition-colors hover:bg-gray-50/50">
+                                    <td class="px-6 py-4 text-sm text-gray-600">Total Man Hours</td>
+                                    {% for day in data.days_list %}
+                                        <td class="px-6 py-4 text-sm text-center text-gray-700 tabular-nums">
+                                            {{ data.day_data|get_item:day|get_item:'man_hours'|floatformat:1 }}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                                <tr class="bg-indigo-50/30">
+                                    <td class="px-6 py-4 text-sm font-black text-indigo-700 uppercase tracking-tight">Work Productivity (Units/MH)</td>
+                                    {% for day in data.days_list %}
+                                        <td class="px-6 py-4 text-sm font-black text-center text-indigo-600 tabular-nums">
+                                            {{ data.day_data|get_item:day|get_item:'productivity'|floatformat:4 }}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                                <tr class="bg-rose-50/30">
+                                    <td class="px-6 py-4 text-sm font-black text-rose-700 uppercase tracking-tight">Cost per Item</td>
+                                    {% for day in data.days_list %}
+                                        <td class="px-6 py-4 text-sm font-black text-center text-rose-600 tabular-nums">
+                                            R {{ data.day_data|get_item:day|get_item:'cost_per_item'|floatformat:2|intcomma }}
                                         </td>
                                     {% endfor %}
                                 </tr>
@@ -125,68 +107,118 @@
                         </table>
                     </div>
                 </div>
-                <!-- Plant Log -->
-                <div class="overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm">
-                    <div class="flex items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <div class="p-1.5 mr-3 text-orange-600 bg-orange-100 rounded-lg">{% heroicon_outline "truck" class="w-4 h-4" %}</div>
-                        <h3 class="text-sm font-black text-gray-900 uppercase tracking-wider">Plant & Equipment</h3>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-3 text-xs font-bold tracking-wider text-left text-gray-500 uppercase">Resource & Rate</th>
-                                    {% for day in data.days_list %}
-                                        <th class="px-4 py-3 text-xs font-bold tracking-wider text-center text-gray-500 uppercase">{{ day }}</th>
-                                    {% endfor %}
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 bg-white">
-                                {% for res in data.plant_resources %}
-                                    <tr class="transition-colors hover:bg-gray-50/50">
-                                        <td class="px-4 py-3">
-                                            <div class="text-sm font-bold text-gray-900">{{ res.name }}</div>
-                                            <div class="text-xs text-gray-500">R {{ res.rate|floatformat:2|intcomma }}/day</div>
-                                        </td>
+                <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
+                    <!-- Labour Log -->
+                    <div class="overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm">
+                        <div class="flex items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                            <div class="p-1.5 mr-3 text-purple-600 bg-purple-100 rounded-lg">
+                                {% heroicon_outline "user-group" class="w-4 h-4" %}
+                            </div>
+                            <h3 class="text-sm font-black text-gray-900 uppercase tracking-wider">Labour Log</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="table table-zebra table-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Resource & Rate</th>
                                         {% for day in data.days_list %}
-                                            <td class="px-4 py-3 text-sm text-center text-gray-900">
-                                                {{ data.day_data|get_item:day|get_item:'plant_usage'|get_item:res.id|default:0 }}
+                                            <th class="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">{{ day }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    {% for res in data.labour_resources %}
+                                        <tr class="transition-colors hover:bg-gray-50/50">
+                                            <td class="px-4 py-3">
+                                                <div class="text-sm font-bold text-gray-700">{{ res.name }}</div>
+                                                <div class="text-[10px] text-gray-400 font-medium font-mono uppercase tracking-tighter">
+                                                    R {{ res.rate|floatformat:2|intcomma }}/day
+                                                </div>
+                                            </td>
+                                            {% for day in data.days_list %}
+                                                <td class="px-4 py-3 text-sm text-center text-gray-900 tabular-nums">
+                                                    {{ data.day_data|get_item:day|get_item:'labour_usage'|get_item:res.id|default:0 }}
+                                                </td>
+                                            {% endfor %}
+                                        </tr>
+                                    {% endfor %}
+                                    <tr class="bg-gray-50/50">
+                                        <td class="px-4 py-3 text-xs font-bold text-gray-900 uppercase tracking-tight">Daily Total Cost</td>
+                                        {% for day in data.days_list %}
+                                            <td class="px-4 py-3 text-sm font-black text-center text-indigo-600 tabular-nums">
+                                                R {{ data.day_data|get_item:day|get_item:'total_labour_cost'|floatformat:0|intcomma }}
                                             </td>
                                         {% endfor %}
                                     </tr>
-                                {% endfor %}
-                                <tr class="bg-gray-50">
-                                    <td class="px-4 py-3 text-sm font-bold text-gray-900 uppercase tracking-tight">Daily Total Cost</td>
-                                    {% for day in data.days_list %}
-                                        <td class="px-4 py-3 text-sm font-black text-center text-indigo-600">
-                                            R {{ data.day_data|get_item:day|get_item:'total_plant_cost'|floatformat:0|intcomma }}
-                                        </td>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Plant Log -->
+                    <div class="overflow-hidden bg-white rounded-2xl border border-gray-200 shadow-sm">
+                        <div class="flex items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                            <div class="p-1.5 mr-3 text-emerald-600 bg-emerald-100 rounded-lg">{% heroicon_outline "truck" class="w-4 h-4" %}</div>
+                            <h3 class="text-sm font-black text-gray-900 uppercase tracking-wider">Plant & Equipment</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="table table-zebra table-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Resource & Rate</th>
+                                        {% for day in data.days_list %}
+                                            <th class="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">{{ day }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    {% for res in data.plant_resources %}
+                                        <tr class="transition-colors hover:bg-gray-50/50">
+                                            <td class="px-4 py-3">
+                                                <div class="text-sm font-bold text-gray-700">{{ res.name }}</div>
+                                                <div class="text-[10px] text-gray-400 font-medium font-mono uppercase tracking-tighter">
+                                                    R {{ res.rate|floatformat:2|intcomma }}/hr
+                                                </div>
+                                            </td>
+                                            {% for day in data.days_list %}
+                                                <td class="px-4 py-3 text-sm text-center text-gray-900 tabular-nums">
+                                                    {{ data.day_data|get_item:day|get_item:'plant_usage'|get_item:res.id|default:0 }}
+                                                </td>
+                                            {% endfor %}
+                                        </tr>
                                     {% endfor %}
-                                </tr>
-                            </tbody>
-                        </table>
+                                    <tr class="bg-gray-50/50">
+                                        <td class="px-4 py-3 text-xs font-bold text-gray-900 uppercase tracking-tight">Daily Total Cost</td>
+                                        {% for day in data.days_list %}
+                                            <td class="px-4 py-3 text-sm font-black text-center text-indigo-600 tabular-nums">
+                                                R {{ data.day_data|get_item:day|get_item:'total_plant_cost'|floatformat:0|intcomma }}
+                                            </td>
+                                        {% endfor %}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    {% empty %}
-        <div class="px-6 py-24 text-center bg-white border border-gray-200 rounded-2xl shadow-sm">
-            <div class="flex justify-center items-center mx-auto mb-6 w-20 h-20 text-indigo-600 bg-indigo-50 rounded-full">
-                {% heroicon_outline "document-magnifying-glass" class="w-10 h-10" %}
+        {% empty %}
+            <div class="px-6 py-24 text-center bg-white border border-gray-200 rounded-2xl shadow-sm">
+                <div class="flex justify-center items-center mx-auto mb-6 w-20 h-20 text-indigo-600 bg-indigo-50 rounded-full">
+                    {% heroicon_outline "document-magnifying-glass" class="w-10 h-10" %}
+                </div>
+                <h3 class="text-xl font-black text-gray-900">No productivity logs found</h3>
+                <p class="mt-2 text-gray-500">Start by capturing daily activity data for your planning items.</p>
             </div>
-            <h3 class="text-xl font-black text-gray-900">No productivity logs found</h3>
-            <p class="mt-2 text-gray-500">Start by capturing daily activity data for your planning items.</p>
+        {% endfor %}
+        <!-- Footer Nav -->
+        <div class="flex flex-col gap-4 justify-between items-center py-6 mt-12 border-t border-gray-100 sm:flex-row">
+            <a href="{% url 'project:production-dashboard' project.pk %}"
+               class="inline-flex items-center text-xs font-bold text-gray-500 transition-colors hover:text-indigo-600">
+                {% heroicon_mini "chevron-left" class="mr-2 w-4 h-4" %} Back to Dashboard
+            </a>
+            <a href="{% url 'project:production-list' project.pk %}"
+               class="inline-flex items-center px-4 py-2 text-xs font-bold text-indigo-600 bg-white rounded-lg border border-indigo-100 shadow-sm transition-all hover:bg-indigo-50">
+                View Tracking Summary {% heroicon_mini "chevron-right" class="ml-2 w-4 h-4" %}
+            </a>
         </div>
-    {% endfor %}
-    <!-- Footer Nav -->
-    <div class="flex flex-col gap-4 justify-between items-center px-8 py-6 mt-12 mb-8 bg-white rounded-2xl border border-gray-100 shadow-sm sm:flex-row">
-        <a href="{% url 'project:company-management' project.pk %}"
-           class="inline-flex items-center text-sm font-bold text-gray-400 transition-colors hover:text-indigo-600">
-            {% heroicon_outline "chevron-left" class="mr-2 w-4 h-4" %} Business Management
-        </a>
-        <a href="{% url 'project:production-dashboard' project.pk %}"
-           class="inline-flex items-center px-5 py-2 text-sm font-bold text-indigo-600 bg-indigo-50 rounded-xl transition-all hover:bg-indigo-100">
-            Production Dashboard {% heroicon_outline "chevron-right" class="ml-2 w-4 h-4" %}
-        </a>
     </div>
-{% endblock production_content %}
+{% endblock content %}

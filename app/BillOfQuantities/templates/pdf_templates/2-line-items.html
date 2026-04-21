@@ -14,12 +14,12 @@
         <div class="landscape-section">
             <div id="section-c-line-items" class="new-page">
                 <h2 class="section-header">C. DETAILED LINE ITEMS - CURRENT CLAIM</h2>
-                {% include "pdf_templates/line_items_table.html" with line_items=grouped_line_items total=payment_certificate.contract_current_claim_total %}
+                {% include "pdf_templates/line_items_table.html" with line_items=grouped_line_items total=payment_certificate.contract_current_claim_total previous_total=payment_certificate.contract_progressive_previous cumulative_total=payment_certificate.contract_progressive_to_date contract_value=project.original_contract_value %}
             </div>
             {% if addendum_items %}
                 <div id="section-c-addendum_items">
                     <h2 class="section-header">D. CONTRACT AMENDMENTS</h2>
-                    {% include "pdf_templates/line_items_table.html" with line_items=addendum_items total=payment_certificate.addendum_current_claim_total %}
+                    {% include "pdf_templates/line_items_table.html" with line_items=addendum_items total=payment_certificate.addendum_current_claim_total previous_total=payment_certificate.addendum_progressive_previous cumulative_total=payment_certificate.addendum_progressive_to_date contract_value=project.addendum_contract_value %}
                 </div>
             {% endif %}
         </div>

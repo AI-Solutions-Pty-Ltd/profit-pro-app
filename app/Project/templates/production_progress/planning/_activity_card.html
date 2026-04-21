@@ -149,9 +149,15 @@
                                 <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Labor Specification</h4>
                                 <p class="text-sm font-bold text-gray-700">{{ plan.labour_activity|default:"Not Linked" }}</p>
                             </div>
-                            <div>
-                                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Unit of Measure</h4>
-                                <p class="text-sm font-bold text-gray-700">{{ plan.unit_display }}</p>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Unit</h4>
+                                    <p class="text-sm font-bold text-gray-700">{{ plan.unit_display }}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Daily Rate</h4>
+                                    <p class="text-sm font-bold text-gray-700">{{ plan.daily_rate|floatformat:2 }}</p>
+                                </div>
                             </div>
                         </div>
                         <div class="space-y-3">

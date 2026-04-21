@@ -18,6 +18,7 @@ from ..production_models import (
 )
 from ..utils.production_utils import (
     get_forecasting_dashboard_data,
+    get_project_productivity_report_data,
 )
 
 
@@ -190,15 +191,7 @@ class ProductionForecastDashboardView(
         # Prepare Searchable Select Widget
         plan_choices = []
         for p in all_plans:
-            label = p.activity
-            hierarchy = []
-            if p.section:
-                hierarchy.append(p.section)
-            if p.bill_no:
-                hierarchy.append(p.bill_no)
-            if hierarchy:
-                label = f"{label} ({' / '.join(hierarchy)})"
-            plan_choices.append((p.pk, label))
+            plan_choices.append((p.pk, p.activity))
 
         plan_widget = SearchableSelectWidget(choices=plan_choices)
         plan_selector_widget = plan_widget.render(
@@ -217,6 +210,63 @@ class ProductionForecastDashboardView(
                 "plan_selector_widget": plan_selector_widget,
                 **forecast_data,
                 "charts_json": charts_json,
+            }
+        )
+        return context
+
+
+class ProductionPerformanceReportView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """
+    Comprehensive Project Performance Report.
+    Focuses on Project-wide Productivity Index (PPI), Cost Performance Index (CPI),
+    and multi-horizon accumulation forecasts.
+    """
+
+    template_name = "production_progress/reports/performance_report.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": "Performance Analytics", "url": None},
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+
+        # Extract horizons from GET parameters
+        history_horizon = self.request.GET.get("history", "3m")
+        forecast_horizon = self.request.GET.get("forecast", "3m")
+
+        # Fetch comprehensive report data
+        data = get_project_productivity_report_data(
+            project_pk, history_horizon, forecast_horizon
+        )
+
+        # JSON serialize charts for Chart.js
+        charts_json = json.dumps(data.get("charts", {}))
+
+        context.update(
+            {
+                "project": project,
+                "summary": data.get("summary", {}),
+                "charts": data.get("charts", {}),
+                "forecasts": data.get("forecasts", {}),
+                "activities": data.get("activities", []),
+                "charts_json": charts_json,
+                "active_history": history_horizon,
+                "active_forecast": forecast_horizon,
             }
         )
         return context

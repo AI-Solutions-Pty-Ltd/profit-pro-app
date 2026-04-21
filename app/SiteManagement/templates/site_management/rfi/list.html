@@ -97,10 +97,10 @@
                                             </span>
                                         </div>
                                     {% endif %}
-                                    {% if rfi.project_sub_category %}
+                                    {% if rfi.area %}
                                         <div class="flex items-center">
                                             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                                L2: {{ rfi.project_sub_category.name }}
+                                                Area: {{ rfi.area.municipality_name }}
                                             </span>
                                         </div>
                                     {% endif %}
@@ -111,7 +111,7 @@
                                             </span>
                                         </div>
                                     {% endif %}
-                                    {% if not rfi.project_category and not rfi.project_sub_category and not rfi.project_discipline %}
+                                    {% if not rfi.project_category and not rfi.area and not rfi.project_discipline %}
                                         <span class="text-gray-400">—</span>
                                     {% endif %}
                                 </div>

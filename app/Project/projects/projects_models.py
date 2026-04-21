@@ -14,7 +14,6 @@ from app.core.Utilities.image_resize import ImageResize
 from app.core.Utilities.models import BaseModel, sum_queryset
 from app.Project.categories.category_models import (
     ProjectCategory,
-    ProjectSubCategory,
 )
 from app.Project.models import Company, ProjectDiscipline
 
@@ -197,15 +196,15 @@ class Project(BaseModel):
         null=True,
         blank=True,
         related_name="projects",
-        help_text="Project category (e.g., Education, Health, Roads)",
+        help_text="Project sector (e.g., Education, Health, Roads)",
     )
-    project_sub_category = models.ForeignKey(
-        ProjectSubCategory,
+    area = models.ForeignKey(
+        "Account.Municipality",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="projects",
-        help_text="Project category (e.g., Education, Health, Roads)",
+        help_text="Project area (Municipality)",
     )
     project_discipline = models.ForeignKey(
         ProjectDiscipline,
@@ -262,6 +261,11 @@ class Project(BaseModel):
         categories: QuerySet["Category"]
         subcategories: QuerySet["SubCategory"]
         disciplines: QuerySet["Discipline"]
+
+    @property
+    def project_sub_category(self):
+        """Alias for area for backward compatibility."""
+        return self.area
 
     def __str__(self):
         return self.name
@@ -466,10 +470,10 @@ class Project(BaseModel):
 
     @property
     def total_certified_to_date_percentage(self: "Project") -> Decimal:
-        if not self.total_certified_to_date:
+        if not self.total_contract_value or not self.total_certified_to_date:
             return Decimal(0)
         return Decimal(
-            round(self.total_contract_value / self.total_certified_to_date * 100, 2)
+            round(self.total_certified_to_date / self.total_contract_value * 100, 2)
         )
 
     @property

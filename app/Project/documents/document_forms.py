@@ -18,7 +18,7 @@ class ProjectDocumentForm(forms.ModelForm):
             "file",
             "notes",
             "project_category",
-            "project_sub_category",
+            "area",
             "project_discipline",
         ]
         widgets = {
@@ -51,7 +51,7 @@ class ProjectDocumentForm(forms.ModelForm):
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
             ),
-            "project_sub_category": forms.Select(
+            "area": forms.Select(
                 attrs={
                     "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
                 }
@@ -67,22 +67,22 @@ class ProjectDocumentForm(forms.ModelForm):
             "title": "Document Title",
             "file": "File",
             "notes": "Notes (Optional)",
-            "project_category": "WBS Level 1",
-            "project_sub_category": "WBS Level 2",
-            "project_discipline": "WBS Level 3",
+            "project_category": "Sector",
+            "area": "Area",
+            "project_discipline": "Project Stage",
         }
         help_texts = {
             "file": "Accepted formats: PDF, Word, Excel, Images, ZIP",
-            "project_category": "Select the WBS Level 1 classification",
-            "project_sub_category": "Select the WBS Level 2 classification",
-            "project_discipline": "Select the WBS Level 3 classification",
+            "project_category": "Select the project sector",
+            "area": "Select the project area (Municipality)",
+            "project_discipline": "Select the project stage",
         }
 
     def __init__(self, *args, **kwargs):
+        from app.Account.models import Municipality
         from app.Project.projects.projects_models import (
             Category,
             Discipline,
-            SubCategory,
         )
 
         project = kwargs.pop("project", None)
@@ -95,7 +95,7 @@ class ProjectDocumentForm(forms.ModelForm):
             self.fields["file"].help_text = "Leave empty to keep the current file"
 
         if project:
-            # Filter categories, subcategories, and disciplines by project
+            # Filter categories, areas, and disciplines by project
 
             # Filter for project-specific categories
             category_field = self.fields["project_category"]
@@ -104,12 +104,12 @@ class ProjectDocumentForm(forms.ModelForm):
                     project_id=project.pk, deleted=False
                 ).order_by("name")
 
-            # Filter for project-specific subcategories
-            subcategory_field = self.fields["project_sub_category"]
-            if hasattr(subcategory_field, "queryset"):
-                subcategory_field.queryset = SubCategory.objects.filter(  # type: ignore
-                    project_id=project.pk, deleted=False
-                ).order_by("name")
+            # Filter for project-specific areas
+            area_field = self.fields["area"]
+            if hasattr(area_field, "queryset"):
+                area_field.queryset = Municipality.objects.filter(  # type: ignore
+                    projects=project
+                ).order_by("municipality_name")
 
             # Filter for project-specific disciplines
             discipline_field = self.fields["project_discipline"]
@@ -120,5 +120,5 @@ class ProjectDocumentForm(forms.ModelForm):
 
             # Make fields optional
             self.fields["project_category"].required = False
-            self.fields["project_sub_category"].required = False
+            self.fields["area"].required = False
             self.fields["project_discipline"].required = False
