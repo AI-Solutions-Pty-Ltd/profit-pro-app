@@ -56,6 +56,7 @@ from .models import (
     ProjectMaterial,
     ProjectPlantCost,
     ProjectPlantSpecification,
+    ProjectPlantSpecificationComponent,
     ProjectPreliminaryCost,
     ProjectPreliminarySpecification,
     ProjectSpecification,
@@ -66,6 +67,7 @@ from .models import (
     SystemMaterial,
     SystemPlantCost,
     SystemPlantSpecification,
+    SystemPlantSpecificationComponent,
     SystemPreliminaryCost,
     SystemPreliminarySpecification,
     SystemSpecification,
@@ -131,7 +133,6 @@ class DashboardView(ProjectEstimatorMixin, ListView):
                 "labour_specification",
                 "labour_specification__crew",
                 "plant_specification",
-                "plant_specification__plant_type",
                 "preliminary_specification",
                 "material",
             )
@@ -163,17 +164,16 @@ class DashboardView(ProjectEstimatorMixin, ListView):
         elif mat_spec:
             qs = qs.filter(specification__name=mat_spec)
 
-        lab_spec = self.request.GET.get("lab_spec")
-        if lab_spec == "none":
-            qs = qs.filter(labour_specification__isnull=True)
-        elif lab_spec:
-            qs = qs.filter(labour_specification__name=lab_spec)
-
-        plant_spec = self.request.GET.get("plant_spec")
-        if plant_spec == "none":
-            qs = qs.filter(plant_specification__isnull=True)
-        elif plant_spec:
-            qs = qs.filter(plant_specification__name=plant_spec)
+        lab_plant_spec = self.request.GET.get("lab_plant_spec")
+        if lab_plant_spec == "none":
+            qs = qs.filter(
+                labour_specification__isnull=True, plant_specification__isnull=True
+            )
+        elif lab_plant_spec:
+            qs = qs.filter(
+                models.Q(labour_specification__name=lab_plant_spec)
+                | models.Q(plant_specification__name=lab_plant_spec)
+            )
 
         prelim_spec = self.request.GET.get("prelim_spec")
         if prelim_spec == "none":
@@ -233,6 +233,9 @@ class DashboardView(ProjectEstimatorMixin, ListView):
             .distinct()
             .order_by("name")
         )
+        context["labour_plant_spec_names"] = sorted(
+            set(context["labour_spec_names"]) | set(context["plant_spec_names"])
+        )
         context["prelim_spec_names"] = (
             ProjectPreliminarySpecification.objects.filter(project=project)
             .exclude(name="")
@@ -246,8 +249,7 @@ class DashboardView(ProjectEstimatorMixin, ListView):
         context["f_bill_no"] = self.request.GET.get("bill_no", "")
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_mat_spec"] = self.request.GET.get("mat_spec", "")
-        context["f_lab_spec"] = self.request.GET.get("lab_spec", "")
-        context["f_plant_spec"] = self.request.GET.get("plant_spec", "")
+        context["f_lab_plant_spec"] = self.request.GET.get("lab_plant_spec", "")
         context["f_prelim_spec"] = self.request.GET.get("prelim_spec", "")
 
         # Project assumptions (wastage)
@@ -929,7 +931,6 @@ class PricedBoqReportView(ProjectEstimatorMixin, ListView):
                 "labour_specification",
                 "labour_specification__crew",
                 "plant_specification",
-                "plant_specification__plant_type",
                 "preliminary_specification",
                 "material",
             )
@@ -1625,6 +1626,31 @@ class UpdateBoqItemView(View):
             item.save()
             return self._build_response(item)
 
+        if field == "labour_plant_specification":
+            if value is None or value == "" or value == 0:
+                item.labour_specification = None
+                item.plant_specification = None
+            else:
+                name = str(value)
+                item.labour_specification = (
+                    ProjectLabourSpecification.objects.filter(
+                        name=name, section=item.section, project_id=project_pk
+                    ).first()
+                    or ProjectLabourSpecification.objects.filter(
+                        name=name, project_id=project_pk
+                    ).first()
+                )
+                item.plant_specification = (
+                    ProjectPlantSpecification.objects.filter(
+                        name=name, section=item.section, project_id=project_pk
+                    ).first()
+                    or ProjectPlantSpecification.objects.filter(
+                        name=name, project_id=project_pk
+                    ).first()
+                )
+            item.save()
+            return self._build_response(item)
+
         if field not in self.ALLOWED_FIELDS:
             return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
 
@@ -1693,6 +1719,102 @@ class UpdateBoqItemView(View):
                 "new_preliminary_amount": fmt(item.new_preliminary_amount),
             }
         )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class BulkUpdateBoqSpecsView(View):
+    """AJAX endpoint to apply one or more spec FKs to many BOQItems at once.
+
+    Payload: {"ids": [int, ...], "updates": {field: value, ...}}
+    Allowed fields mirror UpdateBoqItemView; only fields present in `updates`
+    are written. A value of "" (or null) clears that FK on all selected items.
+    """
+
+    FK_FIELDS = {
+        "trade_code": ProjectTradeCode,
+        "specification": ProjectSpecification,
+        "preliminary_specification": ProjectPreliminarySpecification,
+    }
+
+    def post(self, request, project_pk):
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        ids = data.get("ids") or []
+        updates = data.get("updates") or {}
+
+        if not isinstance(ids, list) or not ids:
+            return JsonResponse({"error": "No items selected"}, status=400)
+        if not isinstance(updates, dict) or not updates:
+            return JsonResponse({"error": "No fields to update"}, status=400)
+
+        items = list(
+            BOQItem.objects.filter(
+                pk__in=ids, project_id=project_pk, is_section_header=False
+            )
+        )
+        if not items:
+            return JsonResponse({"error": "No matching items"}, status=404)
+
+        for item in items:
+            for field, value in updates.items():
+                cleared = value is None or value == ""
+
+                if field == "labour_plant_specification":
+                    if cleared:
+                        item.labour_specification = None
+                        item.plant_specification = None
+                    else:
+                        name = str(value)
+                        item.labour_specification = (
+                            ProjectLabourSpecification.objects.filter(
+                                name=name, section=item.section, project_id=project_pk
+                            ).first()
+                            or ProjectLabourSpecification.objects.filter(
+                                name=name, project_id=project_pk
+                            ).first()
+                        )
+                        item.plant_specification = (
+                            ProjectPlantSpecification.objects.filter(
+                                name=name, section=item.section, project_id=project_pk
+                            ).first()
+                            or ProjectPlantSpecification.objects.filter(
+                                name=name, project_id=project_pk
+                            ).first()
+                        )
+                elif field in self.FK_FIELDS:
+                    model_cls = self.FK_FIELDS[field]
+                    if cleared:
+                        setattr(item, field, None)
+                    else:
+                        related = None
+                        try:
+                            related = model_cls.objects.filter(
+                                pk=int(value), project_id=project_pk
+                            ).first()
+                        except (TypeError, ValueError):
+                            pass
+                        if related is None:
+                            related = (
+                                model_cls.objects.filter(
+                                    name=str(value),
+                                    section=item.section,
+                                    project_id=project_pk,
+                                ).first()
+                                or model_cls.objects.filter(
+                                    name=str(value), project_id=project_pk
+                                ).first()
+                            )
+                        setattr(item, field, related)
+                else:
+                    return JsonResponse(
+                        {"error": f'Field "{field}" not allowed'}, status=400
+                    )
+            item.save()
+
+        return JsonResponse({"ok": True, "updated": len(items)})
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -2239,8 +2361,8 @@ class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
 
     def get_queryset(self):
         project = self.get_project()
-        qs = ProjectPlantSpecification.objects.filter(project=project).select_related(
-            "plant_type"
+        qs = ProjectPlantSpecification.objects.filter(project=project).prefetch_related(
+            "components__plant_type"
         )
         section = self.request.GET.get("section")
         if section:
@@ -2314,7 +2436,6 @@ class UpdatePlantSpecView(View):
         "trade_name": "str",
         "name": "str",
         "unit": "str",
-        "plant_type": "fk",
         "daily_production": "decimal",
         "operator_factor": "decimal",
         "site_factor": "decimal",
@@ -2339,13 +2460,6 @@ class UpdatePlantSpecView(View):
         try:
             if field_type == "decimal":
                 setattr(item, field, Decimal(str(value)))
-            elif field_type == "fk":
-                if value:
-                    item.plant_type = ProjectPlantCost.objects.get(
-                        pk=int(value), project_id=project_pk
-                    )
-                else:
-                    item.plant_type = None
             else:
                 setattr(item, field, str(value))
         except Exception:
@@ -2356,9 +2470,134 @@ class UpdatePlantSpecView(View):
             {
                 "ok": True,
                 "daily_output": str(item.daily_output),
-                "hourly_cost": str(item.hourly_cost),
+                "daily_cost": str(item.daily_cost),
                 "rate_per_unit": str(item.rate_per_unit),
-                "plant_name": item.plant_type.name if item.plant_type else None,
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdatePlantSpecComponentView(View):
+    """AJAX endpoint to update plant_type or hours on a ProjectPlantSpecificationComponent."""
+
+    ALLOWED_FIELDS = {"plant_type", "hours"}
+
+    def post(self, request, project_pk, pk):
+        comp = get_object_or_404(
+            ProjectPlantSpecificationComponent,
+            pk=pk,
+            specification__project_id=project_pk,
+        )
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        try:
+            if field == "hours":
+                comp.hours = Decimal(str(value or 0))
+            else:
+                if value in (None, "", 0, "0"):
+                    comp.plant_type = None
+                else:
+                    comp.plant_type = ProjectPlantCost.objects.filter(
+                        pk=int(value), project_id=project_pk
+                    ).first()
+                    if comp.plant_type is None:
+                        return JsonResponse(
+                            {"error": "Plant type not found"}, status=404
+                        )
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        comp.save()
+        spec = comp.specification
+        return JsonResponse(
+            {
+                "ok": True,
+                "daily_cost": str(spec.daily_cost),
+                "rate_per_unit": str(spec.rate_per_unit),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class AddPlantSpecComponentView(View):
+    """AJAX endpoint to add a new component to a ProjectPlantSpecification."""
+
+    def post(self, request, project_pk, pk):
+        spec = get_object_or_404(
+            ProjectPlantSpecification, pk=pk, project_id=project_pk
+        )
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            data = {}
+
+        plant_type_id = data.get("plant_type")
+        hours_raw = data.get("hours", 0)
+
+        plant_type = None
+        if plant_type_id not in (None, "", 0, "0"):
+            try:
+                plant_type = ProjectPlantCost.objects.filter(
+                    pk=int(plant_type_id), project_id=project_pk
+                ).first()
+            except (TypeError, ValueError):
+                plant_type = None
+
+        try:
+            hours = Decimal(str(hours_raw or 0))
+        except Exception:
+            hours = Decimal("0")
+
+        next_order = (
+            spec.components.aggregate(models.Max("sort_order"))["sort_order__max"] or 0
+        ) + 1
+        comp = ProjectPlantSpecificationComponent.objects.create(
+            specification=spec,
+            plant_type=plant_type,
+            hours=hours,
+            sort_order=next_order,
+        )
+        return JsonResponse(
+            {
+                "ok": True,
+                "component": {
+                    "id": comp.id,
+                    "plant_type_id": comp.plant_type_id,
+                    "plant_type_name": comp.plant_type.name if comp.plant_type else "",
+                    "hours": str(comp.hours),
+                },
+                "daily_cost": str(spec.daily_cost),
+                "rate_per_unit": str(spec.rate_per_unit),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeletePlantSpecComponentView(View):
+    """AJAX endpoint to delete a ProjectPlantSpecificationComponent."""
+
+    def post(self, request, project_pk, pk):
+        comp = get_object_or_404(
+            ProjectPlantSpecificationComponent,
+            pk=pk,
+            specification__project_id=project_pk,
+        )
+        spec = comp.specification
+        comp.delete()
+        return JsonResponse(
+            {
+                "ok": True,
+                "daily_cost": str(spec.daily_cost),
+                "rate_per_unit": str(spec.rate_per_unit),
             }
         )
 
@@ -3833,7 +4072,6 @@ class UpdateSystemPlantSpecView(SystemLibraryMixin, View):
         "trade_name": "str",
         "name": "str",
         "unit": "str",
-        "plant_type": "fk",
         "daily_production": "decimal",
         "operator_factor": "decimal",
         "site_factor": "decimal",
@@ -3856,11 +4094,6 @@ class UpdateSystemPlantSpecView(SystemLibraryMixin, View):
         try:
             if field_type == "decimal":
                 setattr(item, field, Decimal(str(value)))
-            elif field_type == "fk":
-                if value:
-                    item.plant_type = SystemPlantCost.objects.get(pk=int(value))
-                else:
-                    item.plant_type = None
             else:
                 setattr(item, field, str(value))
         except Exception:
@@ -3871,9 +4104,8 @@ class UpdateSystemPlantSpecView(SystemLibraryMixin, View):
             {
                 "ok": True,
                 "daily_output": str(item.daily_output),
-                "hourly_cost": str(item.hourly_cost),
+                "daily_cost": str(item.daily_cost),
                 "rate_per_unit": str(item.rate_per_unit),
-                "plant_name": item.plant_type.name if item.plant_type else None,
             }
         )
 
@@ -3917,6 +4149,122 @@ class DownloadSystemPlantSpecTemplateView(SystemLibraryMixin, View):
                 "Site",
             ],
             "system_plant_specs_template.xlsx",
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateSystemPlantSpecComponentView(SystemLibraryMixin, View):
+    """AJAX endpoint to update plant_type or hours on a SystemPlantSpecificationComponent."""
+
+    ALLOWED_FIELDS = {"plant_type", "hours"}
+
+    def post(self, request, pk):
+        comp = get_object_or_404(SystemPlantSpecificationComponent, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        try:
+            if field == "hours":
+                comp.hours = Decimal(str(value or 0))
+            else:
+                if value in (None, "", 0, "0"):
+                    comp.plant_type = None
+                else:
+                    comp.plant_type = SystemPlantCost.objects.filter(
+                        pk=int(value)
+                    ).first()
+                    if comp.plant_type is None:
+                        return JsonResponse(
+                            {"error": "Plant type not found"}, status=404
+                        )
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        comp.save()
+        spec = comp.specification
+        return JsonResponse(
+            {
+                "ok": True,
+                "daily_cost": str(spec.daily_cost),
+                "rate_per_unit": str(spec.rate_per_unit),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class AddSystemPlantSpecComponentView(SystemLibraryMixin, View):
+    """AJAX endpoint to add a new component to a SystemPlantSpecification."""
+
+    def post(self, request, pk):
+        spec = get_object_or_404(SystemPlantSpecification, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            data = {}
+
+        plant_type_id = data.get("plant_type")
+        hours_raw = data.get("hours", 0)
+
+        plant_type = None
+        if plant_type_id not in (None, "", 0, "0"):
+            try:
+                plant_type = SystemPlantCost.objects.filter(
+                    pk=int(plant_type_id)
+                ).first()
+            except (TypeError, ValueError):
+                plant_type = None
+
+        try:
+            hours = Decimal(str(hours_raw or 0))
+        except Exception:
+            hours = Decimal("0")
+
+        next_order = (
+            spec.components.aggregate(models.Max("sort_order"))["sort_order__max"] or 0
+        ) + 1
+        comp = SystemPlantSpecificationComponent.objects.create(
+            specification=spec,
+            plant_type=plant_type,
+            hours=hours,
+            sort_order=next_order,
+        )
+        return JsonResponse(
+            {
+                "ok": True,
+                "component": {
+                    "id": comp.id,
+                    "plant_type_id": comp.plant_type_id,
+                    "plant_type_name": comp.plant_type.name if comp.plant_type else "",
+                    "hours": str(comp.hours),
+                },
+                "daily_cost": str(spec.daily_cost),
+                "rate_per_unit": str(spec.rate_per_unit),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeleteSystemPlantSpecComponentView(SystemLibraryMixin, View):
+    """AJAX endpoint to delete a SystemPlantSpecificationComponent."""
+
+    def post(self, request, pk):
+        comp = get_object_or_404(SystemPlantSpecificationComponent, pk=pk)
+        spec = comp.specification
+        comp.delete()
+        return JsonResponse(
+            {
+                "ok": True,
+                "daily_cost": str(spec.daily_cost),
+                "rate_per_unit": str(spec.rate_per_unit),
+            }
         )
 
 

@@ -24,6 +24,7 @@ from .models import (
     ProjectMaterial,
     ProjectPlantCost,
     ProjectPlantSpecification,
+    ProjectPlantSpecificationComponent,
     ProjectPreliminaryCost,
     ProjectPreliminarySpecification,
     ProjectSpecification,
@@ -34,6 +35,7 @@ from .models import (
     SystemMaterial,
     SystemPlantCost,
     SystemPlantSpecification,
+    SystemPlantSpecificationComponent,
     SystemPreliminaryCost,
     SystemPreliminarySpecification,
     SystemSpecification,
@@ -697,8 +699,18 @@ class PlantCostImporter:
 class PlantSpecImporter:
     """Import Plant Specifications from Excel.
 
-    Expected columns: Section | Trade Name | Plant Specification | Unit |
-                      Plant Type | Daily Production | Operator | Site
+    Master layout (one row = one spec with up to 4 plant components):
+        Section | Trade Name | Specification | Unit
+        | Plant Type 1 | Hours 1 | Plant Type 2 | Hours 2
+        | Plant 3 | Hours 3 | Plant 4 | Hours 4
+        | Daily Production | Operator | Site | (Daily Output/Daily Cost/Rate/BoQ/Total — ignored)
+
+    Template layout (one row = one spec with a single plant component):
+        Section | Trade Name | Plant Specification | Unit | Plant Type
+        | Daily Production | Operator | Site
+
+    The two layouts are distinguished by checking whether the header row
+    contains more than one "plant" column.
     """
 
     SHEET_KEYWORDS = [
@@ -714,6 +726,24 @@ class PlantSpecImporter:
         self.file_path = file_path
         self.project = project
 
+    def _lookup_plant_cost(self, name):
+        if not name:
+            return None
+        if self.project:
+            return ProjectPlantCost.objects.filter(
+                project=self.project, name=name
+            ).first()
+        return SystemPlantCost.objects.filter(name=name).first()
+
+    def _header_is_master(self, ws, header_row, co):
+        """Return True if the header row has multiple plant columns (master layout)."""
+        plant_header_count = 0
+        for c in range(co, (ws.max_column or 1)):
+            v = ws.cell(row=header_row, column=c + 1).value
+            if v and "plant" in str(v).lower():
+                plant_header_count += 1
+        return plant_header_count > 1
+
     def run(self):
         wb = openpyxl.load_workbook(self.file_path, data_only=True)
         ws, sheet_name, fell_back = _find_sheet_with_name(wb, self.SHEET_KEYWORDS)
@@ -723,6 +753,16 @@ class PlantSpecImporter:
         co = _col_offset(ws)
         header_row = _find_header_row(ws, ["section", "plant"])
         data_start = header_row + 1
+        is_master = self._header_is_master(ws, header_row, co)
+
+        spec_model = (
+            ProjectPlantSpecification if self.project else SystemPlantSpecification
+        )
+        comp_model = (
+            ProjectPlantSpecificationComponent
+            if self.project
+            else SystemPlantSpecificationComponent
+        )
 
         for row in ws.iter_rows(min_row=data_start, values_only=True):
             ncols = len(row) if row else 0
@@ -730,50 +770,60 @@ class PlantSpecImporter:
             if not name:
                 continue
 
-            plant_type_str = _safe_str(row[co + 4]) if ncols > co + 4 else ""
-            if self.project:
-                plant_type = (
-                    ProjectPlantCost.objects.filter(
-                        project=self.project, name=plant_type_str
-                    ).first()
-                    if plant_type_str
-                    else None
-                )
+            if is_master:
+                # Master layout: 4 plant-type/hours pairs at cols 4..11,
+                # productivity at cols 12..14.
+                component_specs = []
+                for i in range(4):
+                    pt_col = co + 4 + (i * 2)
+                    hr_col = pt_col + 1
+                    pt_name = _safe_str(row[pt_col]) if ncols > pt_col else ""
+                    if not pt_name:
+                        continue
+                    hours = _safe_decimal(row[hr_col]) if ncols > hr_col else None
+                    component_specs.append((pt_name, hours or Decimal("0")))
+                daily_prod = _safe_decimal(row[co + 12]) if ncols > co + 12 else None
+                operator = _safe_decimal(row[co + 13]) if ncols > co + 13 else None
+                site = _safe_decimal(row[co + 14]) if ncols > co + 14 else None
             else:
-                plant_type = (
-                    SystemPlantCost.objects.filter(name=plant_type_str).first()
-                    if plant_type_str
-                    else None
-                )
+                # Template layout: single plant type at col 4, productivity at 5..7.
+                pt_name = _safe_str(row[co + 4]) if ncols > co + 4 else ""
+                component_specs = [(pt_name, Decimal("1"))] if pt_name else []
+                daily_prod = _safe_decimal(row[co + 5]) if ncols > co + 5 else None
+                operator = _safe_decimal(row[co + 6]) if ncols > co + 6 else None
+                site = _safe_decimal(row[co + 7]) if ncols > co + 7 else None
 
             defaults = {
                 "section": _safe_str(row[co + 0]) if ncols > co + 0 else "",
                 "trade_name": _safe_str(row[co + 1]) if ncols > co + 1 else "",
                 "unit": _safe_str(row[co + 3]) if ncols > co + 3 else "",
-                "plant_type": plant_type,
-                "daily_production": (
-                    _safe_decimal(row[co + 5]) if ncols > co + 5 else None
-                )
-                or Decimal("0"),
-                "operator_factor": (
-                    _safe_decimal(row[co + 6]) if ncols > co + 6 else None
-                )
-                or Decimal("1"),
-                "site_factor": (_safe_decimal(row[co + 7]) if ncols > co + 7 else None)
-                or Decimal("1"),
+                "daily_production": daily_prod or Decimal("0"),
+                "operator_factor": operator or Decimal("1"),
+                "site_factor": site or Decimal("1"),
             }
 
             if self.project:
-                _, was_created = ProjectPlantSpecification.objects.update_or_create(
+                spec, was_created = spec_model.objects.update_or_create(
                     project=self.project,
                     name=name,
                     defaults=defaults,
                 )
             else:
-                _, was_created = SystemPlantSpecification.objects.update_or_create(
+                spec, was_created = spec_model.objects.update_or_create(
                     name=name,
                     defaults=defaults,
                 )
+
+            # Rebuild components from scratch — avoids stale entries on re-import.
+            spec.components.all().delete()
+            for i, (pt_name, hours) in enumerate(component_specs):
+                comp_model.objects.create(
+                    specification=spec,
+                    plant_type=self._lookup_plant_cost(pt_name),
+                    hours=hours,
+                    sort_order=i,
+                )
+
             if was_created:
                 created += 1
             else:

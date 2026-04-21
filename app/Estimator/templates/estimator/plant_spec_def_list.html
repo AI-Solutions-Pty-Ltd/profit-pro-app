@@ -14,52 +14,24 @@
                 <button type="submit"
                         class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50"
                         onclick="return confirm('This will sync plant specifications with the system library. Existing specs linked to system data will be overwritten. Continue?')">
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                         fill="none"
-                         viewBox="0 0 24 24"
-                         stroke-width="1.5"
-                         stroke="currentColor"
-                         class="w-4 h-4 mr-1.5 -ml-0.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
-                    </svg>
+                    {% heroicon_outline "arrow-path" class="w-4 h-4 mr-1.5 -ml-0.5" %}
                     Sync with System
                 </button>
             </form>
             <a href="{% url 'estimator:download_plant_spec_template' project_pk=project_pk %}"
                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     fill="none"
-                     viewBox="0 0 24 24"
-                     stroke-width="1.5"
-                     stroke="currentColor"
-                     class="w-4 h-4 mr-1.5 -ml-0.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
+                {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
                 Template
             </a>
             <a href="{% url 'estimator:plant_spec_upload' project_pk=project_pk %}"
                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     fill="none"
-                     viewBox="0 0 24 24"
-                     stroke-width="1.5"
-                     stroke="currentColor"
-                     class="w-4 h-4 mr-1.5 -ml-0.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                </svg>
+                {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
                 Upload
             </a>
             <button type="button"
                     onclick="document.getElementById('plant-spec-form').classList.toggle('hidden')"
                     class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     fill="none"
-                     viewBox="0 0 24 24"
-                     stroke-width="1.5"
-                     stroke="currentColor"
-                     class="w-5 h-5 mr-1.5 -ml-0.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
+                {% heroicon_outline "plus" class="w-5 h-5 mr-1.5 -ml-0.5" %}
                 Add Spec
             </button>
         </div>
@@ -99,10 +71,6 @@
                             <div class="mt-1">{{ form.unit }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_plant_type" class="block text-sm font-medium text-gray-700">Plant Type</label>
-                            <div class="mt-1">{{ form.plant_type }}</div>
-                        </div>
-                        <div class="sm:col-span-1">
                             <label for="id_daily_production"
                                    class="block text-sm font-medium text-gray-700">Daily Production</label>
                             <div class="mt-1">{{ form.daily_production }}</div>
@@ -117,6 +85,9 @@
                             <div class="mt-1">{{ form.site_factor }}</div>
                         </div>
                     </div>
+                    <p class="mt-3 text-xs text-gray-500">
+                        Plant types and hours are managed per spec in Django admin or via Excel upload.
+                    </p>
                     <div class="mt-4 flex justify-end gap-x-3">
                         <button type="button"
                                 onclick="document.getElementById('plant-spec-form').classList.add('hidden')"
@@ -155,7 +126,7 @@
                         </th>
                         <th scope="col"
                             class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            Plant Type
+                            Plant &amp; Hours
                         </th>
                         <th scope="col"
                             class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -202,18 +173,44 @@
                                        data-field="unit"
                                        value="{{ ps.unit }}">
                             </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
-                                <select class="inline-edit w-32 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                        data-item-id="{{ ps.id }}"
-                                        data-field="plant_type">
-                                    <option value="">---</option>
-                                    {% for p in plants %}
-                                        <option value="{{ p.id }}"
-                                                {% if ps.plant_type_id == p.id %}selected{% endif %}>
-                                            {{ p.name }}
-                                        </option>
+                            <td class="px-3 py-3 text-xs text-gray-600"
+                                data-spec-components="{{ ps.id }}">
+                                <div class="space-y-1" data-components-list>
+                                    {% for comp in ps.components.all %}
+                                        <div class="flex items-center gap-1" data-component-id="{{ comp.id }}">
+                                            <select class="plant-comp-edit w-36 rounded border-0 bg-transparent text-xs text-gray-700 p-0 pr-5 focus:ring-2 focus:ring-indigo-500"
+                                                    data-component-id="{{ comp.id }}"
+                                                    data-field="plant_type">
+                                                <option value="">—</option>
+                                                {% for p in plants %}
+                                                    <option value="{{ p.id }}"
+                                                            {% if comp.plant_type_id == p.id %}selected{% endif %}>
+                                                        {{ p.name }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                            <input type="number"
+                                                   step="0.01"
+                                                   value="{{ comp.hours }}"
+                                                   class="plant-comp-edit w-16 text-right rounded border-0 bg-transparent text-xs text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500"
+                                                   data-component-id="{{ comp.id }}"
+                                                   data-field="hours">
+                                            <span class="text-gray-400 text-[10px]">h</span>
+                                            <button type="button"
+                                                    class="plant-comp-delete text-gray-400 hover:text-red-500 ml-0.5"
+                                                    data-component-id="{{ comp.id }}"
+                                                    title="Remove component">
+                                                {% heroicon_outline "trash" class="w-3.5 h-3.5" %}
+                                            </button>
+                                        </div>
                                     {% endfor %}
-                                </select>
+                                </div>
+                                <button type="button"
+                                        class="plant-comp-add inline-flex items-center gap-1 mt-1 text-[11px] text-indigo-600 hover:text-indigo-800"
+                                        data-spec-id="{{ ps.id }}">
+                                    {% heroicon_outline "plus" class="w-3 h-3" %}
+                                    Add component
+                                </button>
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
                                 <input type="number"
@@ -250,36 +247,119 @@
         </div>
     </div>
     <script>
-document.querySelectorAll('.inline-edit').forEach(input => {
-    let original = input.value;
-    input.addEventListener('focus', () => { original = input.value; });
-    input.addEventListener('change', () => {
-        if (input.value === original) return;
-        const id = input.dataset.itemId;
-        const field = input.dataset.field;
-        fetch(`/estimator/project/{{ project_pk }}/api/plant-spec/${id}/update/`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({field, value: input.value})
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.ok) {
-                input.classList.add('ring-2', 'ring-green-500');
-                setTimeout(() => input.classList.remove('ring-2', 'ring-green-500'), 800);
-                original = input.value;
-            } else {
-                input.classList.add('ring-2', 'ring-red-500');
-                setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);
+(function() {
+    const projectPk = {{ project_pk }};
+    const plantOptions = `<option value="">—</option>{% for p in plants %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}`;
+
+    function flash(el, ok) {
+        const cls = ok ? 'ring-green-500' : 'ring-red-500';
+        el.classList.add('ring-2', cls);
+        setTimeout(() => el.classList.remove('ring-2', cls), 800);
+    }
+
+    document.querySelectorAll('.inline-edit').forEach(input => {
+        let original = input.value;
+        input.addEventListener('focus', () => { original = input.value; });
+        input.addEventListener('change', () => {
+            if (input.value === original) return;
+            const id = input.dataset.itemId;
+            const field = input.dataset.field;
+            fetch(`/estimator/project/${projectPk}/api/plant-spec/${id}/update/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({field, value: input.value})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    flash(input, true);
+                    original = input.value;
+                } else {
+                    flash(input, false);
+                    input.value = original;
+                }
+            })
+            .catch(() => {
+                flash(input, false);
                 input.value = original;
-            }
-        })
-        .catch(() => {
-            input.classList.add('ring-2', 'ring-red-500');
-            setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);
-            input.value = original;
+            });
         });
     });
-});
+
+    function bindComponentEdit(el) {
+        let original = el.value;
+        el.addEventListener('focus', () => { original = el.value; });
+        el.addEventListener('change', () => {
+            if (el.value === original) return;
+            const id = el.dataset.componentId;
+            const field = el.dataset.field;
+            fetch(`/estimator/project/${projectPk}/api/plant-spec-component/${id}/update/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({field, value: el.value})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) { flash(el, true); original = el.value; }
+                else { flash(el, false); el.value = original; }
+            })
+            .catch(() => { flash(el, false); el.value = original; });
+        });
+    }
+
+    function bindComponentDelete(btn) {
+        btn.addEventListener('click', () => {
+            if (!confirm('Remove this component?')) return;
+            const id = btn.dataset.componentId;
+            fetch(`/estimator/project/${projectPk}/api/plant-spec-component/${id}/delete/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: '{}'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    const row = btn.closest('[data-component-id]');
+                    if (row) row.remove();
+                }
+            });
+        });
+    }
+
+    document.querySelectorAll('.plant-comp-edit').forEach(bindComponentEdit);
+    document.querySelectorAll('.plant-comp-delete').forEach(bindComponentDelete);
+
+    document.querySelectorAll('.plant-comp-add').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const specId = btn.dataset.specId;
+            fetch(`/estimator/project/${projectPk}/api/plant-spec/${specId}/components/add/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({plant_type: '', hours: 0})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) return;
+                const comp = data.component;
+                const list = document.querySelector(`[data-spec-components="${specId}"] [data-components-list]`);
+                if (!list) return;
+                const row = document.createElement('div');
+                row.className = 'flex items-center gap-1';
+                row.dataset.componentId = comp.id;
+                row.innerHTML = `
+                    <select class="plant-comp-edit w-36 rounded border-0 bg-transparent text-xs text-gray-700 p-0 pr-5 focus:ring-2 focus:ring-indigo-500" data-component-id="${comp.id}" data-field="plant_type">
+                        ${plantOptions}
+                    </select>
+                    <input type="number" step="0.01" value="${comp.hours}" class="plant-comp-edit w-16 text-right rounded border-0 bg-transparent text-xs text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500" data-component-id="${comp.id}" data-field="hours">
+                    <span class="text-gray-400 text-[10px]">h</span>
+                    <button type="button" class="plant-comp-delete text-gray-400 hover:text-red-500 ml-0.5" data-component-id="${comp.id}" title="Remove component">✕</button>
+                `;
+                list.appendChild(row);
+                row.querySelectorAll('.plant-comp-edit').forEach(bindComponentEdit);
+                row.querySelectorAll('.plant-comp-delete').forEach(bindComponentDelete);
+            });
+        });
+    });
+})();
     </script>
 {% endblock %}

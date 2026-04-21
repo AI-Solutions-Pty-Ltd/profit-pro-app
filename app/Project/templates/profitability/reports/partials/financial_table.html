@@ -38,7 +38,7 @@
             </tr>
             <!-- Cost of Sales -->
             <tr class="transition-colors hover:bg-gray-50">
-                <td class="px-6 py-4 pl-10 text-sm font-medium text-gray-600 whitespace-nowrap">Cost of Sales (COGS)</td>
+                <td class="px-6 py-4 pl-10 text-sm font-medium text-gray-600 whitespace-nowrap">Production Cost</td>
                 <td class="px-6 py-4 text-sm font-semibold text-right text-gray-800 whitespace-nowrap">
                     R {{ financial_table.cost_of_sales.actual_to_date|floatformat:0|intcomma }}
                 </td>
@@ -85,18 +85,18 @@
                 </td>
             </tr>
             <!-- Net Profit -->
-            <tr class="text-white bg-indigo-600">
+            <tr class="text-indigo-600 bg-indigo-100">
                 <td class="px-6 py-5 text-sm font-bold whitespace-nowrap">Net Profit</td>
                 <td class="px-6 py-5 text-base font-bold text-right whitespace-nowrap">
                     R {{ financial_table.net_profit.actual_to_date|floatformat:0|intcomma }}
                 </td>
-                <td class="px-6 py-5 text-sm font-semibold text-right text-indigo-200 whitespace-nowrap">
+                <td class="px-6 py-5 text-sm font-semibold text-right text-indigo-600 whitespace-nowrap">
                     R {{ financial_table.net_profit.planned_to_date|floatformat:0|intcomma }}
                 </td>
-                <td class="px-6 py-5 text-base font-bold text-right text-white whitespace-nowrap bg-indigo-700">
+                <td class="px-6 py-5 text-base font-bold text-right text-indigo-700 whitespace-nowrap bg-indigo-200">
                     R {{ financial_table.net_profit.actual_this_month|floatformat:0|intcomma }}
                 </td>
-                <td class="px-6 py-5 text-base font-bold text-right text-white whitespace-nowrap bg-indigo-800">
+                <td class="px-6 py-5 text-base font-bold text-right text-indigo-800 whitespace-nowrap bg-indigo-300">
                     R {{ financial_table.net_profit.forecast|floatformat:0|intcomma }}
                 </td>
             </tr>

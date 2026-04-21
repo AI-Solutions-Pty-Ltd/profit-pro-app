@@ -257,13 +257,6 @@ class SystemPlantSpecification(models.Model):
     trade_name = models.CharField(max_length=200, blank=True)
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
-    plant_type = models.ForeignKey(
-        SystemPlantCost,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="plant_specs",
-    )
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     operator_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
@@ -271,6 +264,9 @@ class SystemPlantSpecification(models.Model):
     class Meta:
         ordering = ["section", "name"]
         verbose_name = "System Plant Specification"
+
+    if TYPE_CHECKING:
+        components: "Manager[SystemPlantSpecificationComponent]"
 
     def __str__(self):
         return self.name
@@ -280,16 +276,45 @@ class SystemPlantSpecification(models.Model):
         return self.daily_production * self.operator_factor * self.site_factor
 
     @property
-    def hourly_cost(self):
-        if self.plant_type:
-            return self.plant_type.hourly_rate
-        return Decimal("0")
+    def daily_cost(self):
+        total = Decimal("0")
+        for comp in self.components.select_related("plant_type").all():
+            if comp.plant_type:
+                total += comp.plant_type.hourly_rate * comp.hours
+        return total
 
     @property
     def rate_per_unit(self):
-        if self.daily_production and self.daily_production > 0:
-            return self.hourly_cost / self.daily_production
+        output = self.daily_output
+        if output and output > 0:
+            return self.daily_cost / output
         return Decimal("0")
+
+
+class SystemPlantSpecificationComponent(models.Model):
+    """A single plant-type/hours entry attached to a system plant spec."""
+
+    specification = models.ForeignKey(
+        SystemPlantSpecification,
+        on_delete=models.CASCADE,
+        related_name="components",
+    )
+    plant_type = models.ForeignKey(
+        SystemPlantCost,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="spec_components",
+    )
+    hours = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    sort_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort_order"]
+
+    def __str__(self):
+        name = self.plant_type.name if self.plant_type else "—"
+        return f"{self.specification.name} · {name} ({self.hours}h)"
 
 
 class SystemPreliminaryCost(models.Model):
@@ -740,13 +765,6 @@ class ProjectPlantSpecification(models.Model):
     trade_name = models.CharField(max_length=200, blank=True)
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
-    plant_type = models.ForeignKey(
-        ProjectPlantCost,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="plant_specs",
-    )
     daily_production = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     operator_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
     site_factor = models.DecimalField(max_digits=6, decimal_places=4, default=1)
@@ -756,6 +774,9 @@ class ProjectPlantSpecification(models.Model):
         unique_together = [("project", "name")]
         verbose_name = "Project Plant Specification"
 
+    if TYPE_CHECKING:
+        components: "Manager[ProjectPlantSpecificationComponent]"
+
     def __str__(self):
         return self.name
 
@@ -764,16 +785,45 @@ class ProjectPlantSpecification(models.Model):
         return self.daily_production * self.operator_factor * self.site_factor
 
     @property
-    def hourly_cost(self):
-        if self.plant_type:
-            return self.plant_type.hourly_rate
-        return Decimal("0")
+    def daily_cost(self):
+        total = Decimal("0")
+        for comp in self.components.select_related("plant_type").all():
+            if comp.plant_type:
+                total += comp.plant_type.hourly_rate * comp.hours
+        return total
 
     @property
     def rate_per_unit(self):
-        if self.daily_production and self.daily_production > 0:
-            return self.hourly_cost / self.daily_production
+        output = self.daily_output
+        if output and output > 0:
+            return self.daily_cost / output
         return Decimal("0")
+
+
+class ProjectPlantSpecificationComponent(models.Model):
+    """A single plant-type/hours entry attached to a project plant spec."""
+
+    specification = models.ForeignKey(
+        ProjectPlantSpecification,
+        on_delete=models.CASCADE,
+        related_name="components",
+    )
+    plant_type = models.ForeignKey(
+        ProjectPlantCost,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="spec_components",
+    )
+    hours = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    sort_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort_order"]
+
+    def __str__(self):
+        name = self.plant_type.name if self.plant_type else "—"
+        return f"{self.specification.name} · {name} ({self.hours}h)"
 
 
 class ProjectPreliminaryCost(models.Model):

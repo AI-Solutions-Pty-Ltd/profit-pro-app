@@ -33,25 +33,5 @@
                 </div>
             </div>
         </div>
-        <!-- Table Section -->
-        <div class="overflow-hidden mb-8 bg-white rounded-lg border border-gray-200 shadow-sm">
-            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
-                <h3 class="text-lg font-bold text-gray-900">Actual vs. Planned vs. Forecast</h3>
-            </div>
-            {% include "profitability/reports/partials/financial_table.html" %}
-        </div>
-        <!-- Footnote Section -->
-        <div class="p-6 bg-gray-50 rounded-xl border border-gray-100">
-            <h3 class="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4 flex items-center">
-                {% heroicon_outline "information-circle" size="16" class="mr-2" %}
-                Notes & Assumptions
-            </h3>
-            <ul class="pl-5 space-y-2 text-xs list-disc text-gray-500">
-                <li>Revenue is calculated from cumulative approved payment certificates.</li>
-                <li>COGS includes all recorded Material, Labour, Subcontractor, and Plant equipment costs.</li>
-                <li>Planned figures are derived from the approved Baseline Cashflow (approx. 60% COGS / 12% OpEx allocation).</li>
-                <li>Forecast figures represent estimated values from the Expenditure Forecast.</li>
-            </ul>
-        </div>
     </div>
 {% endblock content %}
