@@ -16,6 +16,7 @@ from app.Project.models import (
     OverheadCostTracker,
     PlantCostTracker,
     SubcontractorCostTracker,
+    ProfitabilityBaseline,
 )
 
 
@@ -23,12 +24,21 @@ class FinancialCalculationMixin:
     """Mixin to provide financial calculation methods for profitability reporting."""
 
     def get_baseline_assumptions(self):
-        """Hardcoded baseline assumptions."""
-        return {
-            "cost_of_sales_percent": 60.0,
-            "operating_expenses_percent": 12.0,
-            "net_profit_percent": 28.0,
-        }
+        """Fetch baseline assumptions from DB or use defaults."""
+        project = self.project  # type: ignore
+        try:
+            baseline = project.profitability_baseline
+            return {
+                "cost_of_sales_percent": float(baseline.cost_of_sales_percent),
+                "operating_expenses_percent": float(baseline.operating_expenses_percent),
+                "net_profit_percent": float(baseline.net_profit_percent),
+            }
+        except (AttributeError, ProfitabilityBaseline.DoesNotExist):
+            return {
+                "cost_of_sales_percent": 60.0,
+                "operating_expenses_percent": 12.0,
+                "net_profit_percent": 28.0,
+            }
 
     def get_financial_table_data(self, start_date=None, end_date=None):
         """Calculate values for the financial performance table."""
@@ -69,6 +79,21 @@ class FinancialCalculationMixin:
         cos = BaseProjectEntity.ExpenseCode.COS
         opex = BaseProjectEntity.ExpenseCode.OPEX
 
+        def get_manual_journal_totals(start=None, end=None, categories=None):
+            """Internal helper to sum manual journals."""
+            filters = {"project": project, "source_log_id__isnull": True, "transaction_type": JournalEntry.EntryType.DEBIT}
+            if start:
+                filters["date__gte"] = start
+            if end:
+                filters["date__lte"] = end
+            if categories:
+                filters["category__in"] = categories
+            
+            return (
+                JournalEntry.objects.filter(**filters).aggregate(total=Sum("amount"))["total"]
+                or Decimal("0.00")
+            )
+
         def get_tracker_totals(start=None, end=None, code=cos):
             """Internal helper to sum costs from all trackers for a given classification."""
             filters = {"project": project}
@@ -107,47 +132,40 @@ class FinancialCalculationMixin:
                 ).aggregate(total=Sum(F("amount_of_days") * F("rate")))["total"]
                 or 0
             )
-            return (
+            
+            tracker_total = (
                 Decimal(str(mat))
                 + Decimal(str(lab))
                 + Decimal(str(sub))
                 + Decimal(str(plt))
                 + Decimal(str(ovh))
             )
+            
+            # Add manual journals for these categories
+            if code == cos:
+                # COS categories
+                journal_total = get_manual_journal_totals(start, end, [
+                    JournalEntry.Category.MATERIAL,
+                    JournalEntry.Category.LABOUR,
+                    JournalEntry.Category.SUBCONTRACTOR,
+                    JournalEntry.Category.PLANT,
+                ])
+            else:
+                # OpEx categories
+                journal_total = get_manual_journal_totals(start, end, [
+                    JournalEntry.Category.OVERHEAD,
+                    JournalEntry.Category.OTHER,
+                ])
+                
+            return tracker_total + journal_total
 
         # 1. Totals to Date
         actual_cogs_to_date = get_tracker_totals(end=end_date, code=cos)
-        actual_opex_trackers_to_date = get_tracker_totals(end=end_date, code=opex)
-
-        journal_overhead_actual = (
-            JournalEntry.objects.filter(
-                project=project,
-                category=JournalEntry.Category.OVERHEAD,
-                date__lte=end_date,
-            ).aggregate(total=Sum("amount"))["total"]
-            or 0
-        )
-        actual_opex_to_date = actual_opex_trackers_to_date + Decimal(
-            str(journal_overhead_actual)
-        )
+        actual_opex_to_date = get_tracker_totals(end=end_date, code=opex)
 
         # 2. This Month Totals
         actual_cogs_this_month = get_tracker_totals(start=this_month_start, code=cos)
-        actual_opex_trackers_month = get_tracker_totals(
-            start=this_month_start, code=opex
-        )
-
-        journal_overhead_month = (
-            JournalEntry.objects.filter(
-                project=project,
-                category=JournalEntry.Category.OVERHEAD,
-                date__gte=this_month_start,
-            ).aggregate(total=Sum("amount"))["total"]
-            or 0
-        )
-        actual_opex_this_month = actual_opex_trackers_month + Decimal(
-            str(journal_overhead_month)
-        )
+        actual_opex_this_month = get_tracker_totals(start=this_month_start, code=opex)
 
         planned_cogs_to_date = planned_revenue_to_date * Decimal("0.60")
         planned_opex_to_date = planned_revenue_to_date * Decimal("0.12")
@@ -302,15 +320,43 @@ class FinancialCalculationMixin:
                     or 0
                 )
 
-        labour = get_m_total(LabourCostTracker, "date", ("amount_of_days", "salary"))
-        subcontractor = get_m_total(
+        def get_m_journal_total(categories):
+            """Internal helper to sum manual journals for this month."""
+            return (
+                JournalEntry.objects.filter(
+                    project=project,
+                    transaction_type=JournalEntry.EntryType.DEBIT,
+                    source_log_id__isnull=True,
+                    category__in=categories,
+                    date__gte=this_month_start,
+                ).aggregate(total=Sum("amount"))["total"]
+                or Decimal("0.00")
+            )
+
+        labour_tracker = get_m_total(LabourCostTracker, "date", ("amount_of_days", "salary"))
+        labour_manual = get_m_journal_total([JournalEntry.Category.LABOUR])
+        labour = Decimal(str(labour_tracker)) + labour_manual
+
+        subcontractor_tracker = get_m_total(
             SubcontractorCostTracker, "date", ("amount_of_days", "rate")
         )
-        overhead = get_m_total(OverheadCostTracker, "date", ("amount_of_days", "rate"))
+        subcontractor_manual = get_m_journal_total([JournalEntry.Category.SUBCONTRACTOR])
+        subcontractor = Decimal(str(subcontractor_tracker)) + subcontractor_manual
+
+        overhead_tracker = get_m_total(OverheadCostTracker, "date", ("amount_of_days", "rate"))
+        overhead_manual = get_m_journal_total([
+            JournalEntry.Category.OVERHEAD,
+            JournalEntry.Category.OTHER
+        ])
+        overhead = Decimal(str(overhead_tracker)) + overhead_manual
 
         mat_logs = get_m_total(MaterialCostTracker, "date", ("quantity", "rate"))
         plt_logs = get_m_total(PlantCostTracker, "date", ("usage_hours", "hourly_rate"))
-        material = mat_logs + plt_logs
+        material_manual = get_m_journal_total([
+            JournalEntry.Category.MATERIAL,
+            JournalEntry.Category.PLANT
+        ])
+        material = Decimal(str(mat_logs)) + Decimal(str(plt_logs)) + material_manual
 
         total_expense = labour + subcontractor + overhead + material
 

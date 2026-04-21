@@ -10,6 +10,7 @@ from app.Project.models import (
     OverheadCostTracker,
     PlantCostTracker,
     SubcontractorCostTracker,
+    ProfitabilityBaseline,
 )
 
 
@@ -203,3 +204,31 @@ class PlantCostTrackerForm(ProfitabilityBaseForm):
             self.fields["plant_entity"].widget.choice_data = {
                 str(e.id): {"data-rate": str(e.rate)} for e in entities
             }
+
+
+class ProfitabilityBaselineForm(ProfitabilityBaseForm):
+    class Meta:
+        model = ProfitabilityBaseline
+        fields = [
+            "cost_of_sales_percent",
+            "operating_expenses_percent",
+            "net_profit_percent",
+        ]
+        labels = {
+            "cost_of_sales_percent": "Cost of Sales (%)",
+            "operating_expenses_percent": "Operating Expenses (%)",
+            "net_profit_percent": "Net Profit (%)",
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cos = cleaned_data.get("cost_of_sales_percent") or 0
+        opex = cleaned_data.get("operating_expenses_percent") or 0
+        profit = cleaned_data.get("net_profit_percent") or 0
+
+        total = cos + opex + profit
+        if total != 100:
+            raise forms.ValidationError(
+                f"Percentages must sum to 100%. Current total: {total}%"
+            )
+        return cleaned_data

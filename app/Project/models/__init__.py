@@ -8,6 +8,7 @@ from app.Project.documents.document_models import ProjectDocument
 from app.Project.profitability.materials.models import MaterialCostTracker
 from app.Project.profitability.overheads.models import OverheadCostTracker
 from app.Project.profitability.plant_equipment.models import PlantCostTracker
+from app.Project.profitability.baseline.models import ProfitabilityBaseline
 from app.Project.profitability.subcontractor.models import SubcontractorCostTracker
 from app.Project.projects.projects_models import (
     Category,
@@ -110,5 +111,6 @@ __all__ = [
     "OrderAmendment",
     "SubcontractorCostTracker",
     "PlantCostTracker",
+    "ProfitabilityBaseline",
     "UnitOfMeasure",
 ]

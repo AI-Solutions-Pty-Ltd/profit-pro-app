@@ -13,6 +13,7 @@ from app.Project.models import (
     OverheadEntity,
     SubcontractorCostTracker,
     SubcontractorEntity,
+    ProfitabilityBaseline,
 )
 from app.Project.tests.factories import ProjectFactory
 
@@ -109,3 +110,14 @@ class OverheadCostTrackerFactory(DjangoModelFactory):
     date = factory.Faker("date_this_month")
     amount_of_days = 5
     rate = 100.00
+
+
+class ProfitabilityBaselineFactory(DjangoModelFactory):
+    class Meta:
+        model = ProfitabilityBaseline
+
+    project = SubFactory(ProjectFactory)
+    cost_of_sales_percent = 60.0
+    operating_expenses_percent = 12.0
+    net_profit_percent = 28.0
+
