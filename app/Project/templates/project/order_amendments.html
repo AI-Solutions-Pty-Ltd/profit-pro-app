@@ -137,7 +137,7 @@
                         </th>
                         <th scope="col"
                             class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Approved
+                            Revised
                             Contract Amount
                         </th>
                         <th scope="col"
@@ -257,9 +257,12 @@
                     label: function (context) {
                         let label = context.label || '';
                         let value = context.parsed || 0;
+                        const signedValues = {{ category_signed_values|default:"[0, 0, 0, 0, 0, 0]"|safe }};
+                        const signed = signedValues[context.dataIndex] || 0;
                         let total = context.dataset.data.reduce((a, b) => a + b, 0);
                         let percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                        return label + ': R ' + value.toLocaleString() + ' (' + percentage + '%)';
+                        const prefix = signed >= 0 ? '+' : '-';
+                        return label + ': ' + prefix + 'R ' + value.toLocaleString() + ' (' + percentage + '%)';
                     }
                 }
             }
@@ -269,8 +272,24 @@
 
     // Waterfall Chart - Budget Impact
     const waterfallCtx = document.getElementById('amendmentsWaterfallChart').getContext('2d');
-    const waterfallData = {{ waterfall_values|default:"[[0, 0]]"|safe }};
-    const waterfallLabels = {{ waterfall_labels|default:"['Original Budget']"|safe }};
+    const waterfallData = {{ waterfall_values|default:"[0]"|safe }};
+    const waterfallLabels = {{ waterfall_labels|default:"['Original Contract']"|safe }};
+
+    const originalContractValue = waterfallData.length ? waterfallData[0] : 0;
+    const isTotal = (label) => String(label || '').toLowerCase().includes('original') || String(label || '').toLowerCase().includes('revised');
+
+    const barColors = waterfallData.map((value, index) => {
+        if (index === 0) return 'rgba(59, 130, 246, 0.8)';
+        if (index === waterfallData.length - 1) return 'rgba(16, 185, 129, 0.8)';
+        if (isTotal(waterfallLabels[index])) return 'rgba(16, 185, 129, 0.8)';
+        return value >= 0 ? 'rgba(239, 68, 68, 0.8)' : 'rgba(16, 185, 129, 0.8)';
+    });
+    const barBorders = waterfallData.map((value, index) => {
+        if (index === 0) return 'rgba(59, 130, 246, 1)';
+        if (index === waterfallData.length - 1) return 'rgba(16, 185, 129, 1)';
+        if (isTotal(waterfallLabels[index])) return 'rgba(16, 185, 129, 1)';
+        return value >= 0 ? 'rgba(239, 68, 68, 1)' : 'rgba(16, 185, 129, 1)';
+    });
 
     new Chart(waterfallCtx, {
         type: 'bar',
@@ -279,19 +298,8 @@
             datasets: [{
                 label: 'Budget Impact',
                 data: waterfallData,
-                backgroundColor: waterfallData.map((value, index) => {
-                    if (index === 0) return 'rgba(59, 130, 246, 0.8)'; // Original Budget - Blue
-                    if (index === waterfallData.length - 1) return 'rgba(16, 185, 129, 0.8)'; // Final - Green
-                    // For amendments, check if it's an increase or decrease
-                    const diff = value[1] - value[0];
-                    return diff >= 0 ? 'rgba(239, 68, 68, 0.8)' : 'rgba(16, 185, 129, 0.8)'; // Positive (red), Negative (green)
-                }),
-                borderColor: waterfallData.map((value, index) => {
-                    if (index === 0) return 'rgba(59, 130, 246, 1)';
-                    if (index === waterfallData.length - 1) return 'rgba(16, 185, 129, 1)';
-                    const diff = value[1] - value[0];
-                    return diff >= 0 ? 'rgba(239, 68, 68, 1)' : 'rgba(16, 185, 129, 1)';
-                }),
+                backgroundColor: barColors,
+                borderColor: barBorders,
                 borderWidth: 2
             }]
         },
@@ -303,12 +311,19 @@
                 tooltip: {
                     callbacks: {
                         label: function (context) {
-                            const val = context.parsed._custom;
-                            if (val) {
-                                const diff = val.end - val.start;
-                                return (diff >= 0 ? '+' : '') + 'R ' + diff.toLocaleString() + ' (Total: R ' + val.end.toLocaleString() + ')';
+                            const idx = context.dataIndex;
+                            const label = context.label || '';
+                            const raw = context.raw || 0;
+                            const isFirst = idx === 0;
+                            const isLast = idx === waterfallData.length - 1;
+
+                            if (isFirst || isLast || isTotal(label)) {
+                                return label + ': R ' + Number(raw).toLocaleString();
                             }
-                            return 'R ' + context.parsed.y.toLocaleString();
+
+                            const signed = raw >= 0 ? '+' : '';
+                            const revised = originalContractValue + waterfallData.slice(1, idx + 1).reduce((sum, v) => sum + (Number(v) || 0), 0);
+                            return label + ': ' + signed + 'R ' + Number(raw).toLocaleString() + ' (Revised: R ' + revised.toLocaleString() + ')';
                         }
                     }
                 }

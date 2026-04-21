@@ -5,7 +5,7 @@ from datetime import datetime
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import QuerySet, Sum
+from django.db.models import Q, QuerySet, Sum
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -47,7 +47,9 @@ class ProjectMixin(
     required_tiers = [Subscription.FREE_TIER]
 
     def get_queryset(self: "ProjectMixin") -> QuerySet[Project]:
-        return Project.objects.filter(users=self.request.user).order_by("-created_at")
+        return Project.objects.filter(
+            Q(users=self.request.user) | Q(is_demo=True)
+        ).order_by("-created_at")
 
     def get_object(self: "ProjectMixin") -> Project:
         return self.get_project()
@@ -88,13 +90,13 @@ class ProjectListView(
 
             # Get user's projects
             projects_queryset = Project.objects.filter(
-                users=request.user,
+                Q(users=request.user) | Q(is_demo=True),
                 status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
             ).order_by("name")
 
             # Get unique lead consultants from user's projects
             consultant_ids = (
-                Project.objects.filter(users=request.user)
+                Project.objects.filter(Q(users=request.user) | Q(is_demo=True))
                 .values_list("lead_consultants", flat=True)
                 .distinct()
             )
@@ -729,11 +731,8 @@ class OrderAmendmentsView(ProjectMixin, DetailView):
         context = super().get_context_data(**kwargs)
         project = self.object
 
-        # Get original contract value (from line items total)
-        line_items = project.line_items.all()
-        original_contract_value = float(
-            line_items.aggregate(total=Sum("total_price"))["total"] or 0
-        )
+        original_contract_value = float(project.original_contract_value or 0)
+        revised_contract_value = float(project.revised_contract_value or 0)
 
         # Get amendments from database
         from app.Project.models import OrderAmendment
@@ -769,8 +768,8 @@ class OrderAmendmentsView(ProjectMixin, DetailView):
             )
 
         # Summary statistics
-        total_variations = sum(a["variation_amount"] for a in amendments)
-        final_contract_value = original_contract_value + total_variations
+        total_variations = revised_contract_value - original_contract_value
+        final_contract_value = revised_contract_value
         total_percent_change = (
             (total_variations / original_contract_value) * 100
             if original_contract_value > 0
@@ -786,7 +785,7 @@ class OrderAmendmentsView(ProjectMixin, DetailView):
         )
 
         # Category data for pie chart
-        category_totals = {}
+        category_totals: dict[str, float] = {}
         category_names = {
             "scope_change": "Scope Change",
             "design_change": "Design Change",
@@ -801,23 +800,25 @@ class OrderAmendmentsView(ProjectMixin, DetailView):
                 category_totals.get(cat, 0) + amendment["variation_amount"]
             )
 
-        category_labels = [category_names.get(k, k) for k in category_totals.keys()]
-        category_values = list(category_totals.values())
+        category_labels = [category_names[k] for k in category_names.keys()]
+        category_signed_values = [
+            category_totals.get(k, 0) for k in category_names.keys()
+        ]
+        category_values = [abs(v) for v in category_signed_values]
 
         # Waterfall chart data
         waterfall_labels = ["Original Contract"]
-        # Use [start, end] for floating bars in Chart.js
-        waterfall_values = [[0, original_contract_value]]
+        waterfall_values = [original_contract_value]
 
         current_value = original_contract_value
         for a in amendments:
             waterfall_labels.append(f"Amendment {a['amendment_number']}")
             variation = a["variation_amount"]
-            waterfall_values.append([current_value, current_value + variation])
+            waterfall_values.append(variation)
             current_value += variation
 
-        waterfall_labels.append("Final Contract")
-        waterfall_values.append([0, final_contract_value])
+        waterfall_labels.append("Revised Contract Amount")
+        waterfall_values.append(final_contract_value)
 
         # Initialize form
         from app.Project.forms import OrderAmendmentForm
@@ -839,6 +840,7 @@ class OrderAmendmentsView(ProjectMixin, DetailView):
                 "budget_impact_percentage": round(total_percent_change, 1),
                 "category_labels": json.dumps(category_labels),
                 "category_values": json.dumps(category_values),
+                "category_signed_values": json.dumps(category_signed_values),
                 "waterfall_labels": json.dumps(waterfall_labels),
                 "waterfall_values": json.dumps(waterfall_values),
                 "current_date": datetime.now(),

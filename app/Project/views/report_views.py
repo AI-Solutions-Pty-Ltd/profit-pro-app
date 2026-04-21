@@ -2073,7 +2073,7 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
         elif milestones_achieved.exists() and not delayed_milestones:
             overall_status = "Ahead / on schedule"
 
-        contract_value = getattr(project, "contract_value", None) or 0
+        contract_value = project.total_contract_value
         claims_value = sum((v.variation_amount or 0) for v in variations)
         all_claims_value = sum((v.variation_amount or 0) for v in all_variations)
 
@@ -2085,7 +2085,7 @@ class ContractorsReportView(ContractualReportMixin, TemplateView):
             .first()
         )
         forecast_to_completion = (
-            latest_forecast.total_forecast if latest_forecast else "-"
+            latest_forecast.total_forecast if latest_forecast else None
         )
 
         # Get project actual completion/actual end date
@@ -3463,12 +3463,6 @@ class ComplianceReportView(ContractualReportView):
         contractual_in_period = contractual_items.filter(
             due_date__range=(period_start, period_end)
         )
-        contractual_completed = contractual_in_period.filter(
-            status=ContractualCompliance.Status.COMPLETED
-        )
-        contractual_overdue = contractual_in_period.filter(
-            status=ContractualCompliance.Status.OVERDUE
-        )
 
         # Administrative Compliance
         admin_items = AdministrativeCompliance.objects.filter(
@@ -3478,12 +3472,6 @@ class ComplianceReportView(ContractualReportView):
             Q(submission_due_date__range=(period_start, period_end))
             | Q(approval_due_date__range=(period_start, period_end))
         )
-        admin_approved = admin_in_period.filter(
-            status=AdministrativeCompliance.Status.APPROVED
-        )
-        admin_overdue = admin_in_period.filter(
-            status=AdministrativeCompliance.Status.OVERDUE
-        )
 
         # Final Account Compliance
         final_items = FinalAccountCompliance.objects.filter(
@@ -3492,9 +3480,6 @@ class ComplianceReportView(ContractualReportView):
         final_in_period = final_items.filter(
             Q(submission_date__range=(period_start, period_end))
             | Q(approval_date__range=(period_start, period_end))
-        )
-        final_approved = final_in_period.filter(
-            status=FinalAccountCompliance.Status.APPROVED
         )
 
         # Non-Conformances (NCRs)
@@ -3548,6 +3533,26 @@ class ComplianceReportView(ContractualReportView):
         )
 
         # Build register overview
+        contractual_open_items_count = contractual_in_period.exclude(
+            status__in=[
+                ContractualCompliance.Status.COMPLETED,
+                ContractualCompliance.Status.NOT_APPLICABLE,
+            ]
+        ).count()
+        contractual_closed_items_count = (
+            contractual_in_period.count() - contractual_open_items_count
+        )
+
+        admin_open_items_count = admin_in_period.exclude(
+            status=AdministrativeCompliance.Status.APPROVED
+        ).count()
+        admin_closed_items_count = admin_in_period.count() - admin_open_items_count
+
+        final_open_items_count = final_in_period.exclude(
+            status=FinalAccountCompliance.Status.APPROVED
+        ).count()
+        final_closed_items_count = final_in_period.count() - final_open_items_count
+
         context["register_overview"] = [
             {
                 "register_type": "Contractual Compliance",
@@ -3556,15 +3561,10 @@ class ComplianceReportView(ContractualReportView):
                 ),
                 "total_to_date": contractual_items.count(),
                 "current_entries": contractual_in_period.count(),
-                "open_items": contractual_in_period.exclude(
-                    status__in=[
-                        ContractualCompliance.Status.COMPLETED,
-                        ContractualCompliance.Status.NOT_APPLICABLE,
-                    ]
-                ).count(),
+                "open_items": contractual_open_items_count,
                 "closed_percentage": round(
                     (
-                        contractual_completed.count()
+                        contractual_closed_items_count
                         / contractual_in_period.count()
                         * 100
                     ),
@@ -3573,7 +3573,11 @@ class ComplianceReportView(ContractualReportView):
                 if contractual_in_period.count()
                 else 0,
                 "open_percentage": round(
-                    (contractual_overdue.count() / contractual_in_period.count() * 100),
+                    (
+                        contractual_open_items_count
+                        / contractual_in_period.count()
+                        * 100
+                    ),
                     1,
                 )
                 if contractual_in_period.count()
@@ -3587,16 +3591,14 @@ class ComplianceReportView(ContractualReportView):
                 ),
                 "total_to_date": admin_items.count(),
                 "current_entries": admin_in_period.count(),
-                "open_items": admin_in_period.exclude(
-                    status=AdministrativeCompliance.Status.APPROVED
-                ).count(),
+                "open_items": admin_open_items_count,
                 "closed_percentage": round(
-                    (admin_approved.count() / admin_in_period.count() * 100), 1
+                    (admin_closed_items_count / admin_in_period.count() * 100), 1
                 )
                 if admin_in_period.count()
                 else 0,
                 "open_percentage": round(
-                    (admin_overdue.count() / admin_in_period.count() * 100), 1
+                    (admin_open_items_count / admin_in_period.count() * 100), 1
                 )
                 if admin_in_period.count()
                 else 0,
@@ -3609,15 +3611,17 @@ class ComplianceReportView(ContractualReportView):
                 ),
                 "total_to_date": final_items.count(),
                 "current_entries": final_in_period.count(),
-                "open_items": final_in_period.exclude(
-                    status=FinalAccountCompliance.Status.APPROVED
-                ).count(),
+                "open_items": final_open_items_count,
                 "closed_percentage": round(
-                    (final_approved.count() / final_in_period.count() * 100), 1
+                    (final_closed_items_count / final_in_period.count() * 100), 1
                 )
                 if final_in_period.count()
                 else 0,
-                "open_percentage": 0,  # Final account items don't have overdue status
+                "open_percentage": round(
+                    (final_open_items_count / final_in_period.count() * 100), 1
+                )
+                if final_in_period.count()
+                else 0,
                 "impact_value": None,
             },
             {
@@ -3895,7 +3899,7 @@ class ActionTrackerReportView(ComplianceReportView):
                     "source": source,
                     "description": f"{rfi.reference_number}: {rfi.subject}",
                     "responsible": "Consultant/Client",
-                    "due_date": rfi.due_date,
+                    "due_date": rfi.respond_by_date,
                     "status": "Open",
                     "link": reverse(
                         "site_management:rfi-detail", args=[project.pk, rfi.pk]
@@ -3942,7 +3946,7 @@ class ActionTrackerReportView(ComplianceReportView):
                     "source": source,
                     "description": f"{ew.reference_number}: {ew.subject}",
                     "responsible": "Project Manager",
-                    "due_date": ew.date,
+                    "due_date": ew.respond_by_date,
                     "status": "Open",
                     "link": reverse(
                         "site_management:early-warning-list", args=[project.pk]
@@ -3988,7 +3992,15 @@ class ActionTrackerReportView(ComplianceReportView):
             )
 
         # Sort actions by due date (overdue first)
-        actions.sort(key=lambda x: x["due_date"] if x["due_date"] else date.max)
+        def _sort_due_date(value):
+            due = value.get("due_date")
+            if isinstance(due, datetime):
+                return due.date()
+            if isinstance(due, date):
+                return due
+            return date.max
+
+        actions.sort(key=_sort_due_date)
 
         context.update(
             {
