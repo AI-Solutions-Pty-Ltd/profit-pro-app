@@ -576,7 +576,9 @@ def sync_labour_costs_from_system(project):
         plc.save()
         updated += 1
 
-    # Add system crews not yet in the project
+    # Add system crews not yet in the project. Adopt an orphan project crew
+    # (imported via Excel, no source FK) that shares the same crew_type name
+    # rather than failing on the (project, crew_type) unique constraint.
     existing_source_ids = set(
         ProjectLabourCrew.objects.filter(
             project=project, source__isnull=False
@@ -586,20 +588,26 @@ def sync_labour_costs_from_system(project):
     from app.Estimator.models import SystemLabourCrew
 
     for slc in SystemLabourCrew.objects.exclude(pk__in=existing_source_ids):
-        ProjectLabourCrew.objects.create(
+        defaults = {
+            "source": slc,
+            "crew_size": slc.crew_size,
+            "skilled": slc.skilled,
+            "semi_skilled": slc.semi_skilled,
+            "general": slc.general,
+            "daily_production": slc.daily_production,
+            "skilled_rate": slc.skilled_rate,
+            "semi_skilled_rate": slc.semi_skilled_rate,
+            "general_rate": slc.general_rate,
+        }
+        _, was_created = ProjectLabourCrew.objects.update_or_create(
             project=project,
-            source=slc,
             crew_type=slc.crew_type,
-            crew_size=slc.crew_size,
-            skilled=slc.skilled,
-            semi_skilled=slc.semi_skilled,
-            general=slc.general,
-            daily_production=slc.daily_production,
-            skilled_rate=slc.skilled_rate,
-            semi_skilled_rate=slc.semi_skilled_rate,
-            general_rate=slc.general_rate,
+            defaults=defaults,
         )
-        created += 1
+        if was_created:
+            created += 1
+        else:
+            updated += 1
 
     return {"updated": updated, "created": created}
 
