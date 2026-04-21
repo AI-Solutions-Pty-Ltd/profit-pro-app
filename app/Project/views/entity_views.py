@@ -1,8 +1,9 @@
 """Views for Project Entity Management."""
 
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views import View
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
@@ -25,6 +26,8 @@ from app.Project.models.entity_definitions import (
     SubcontractorEntity,
 )
 from app.Project.models.unit_models import UnitOfMeasure
+from app.SiteManagement.models.plant_type import PlantType
+from app.SiteManagement.models.skill_type import SkillType
 
 
 class ProjectEntityMixin(LoginRequiredMixin):
@@ -393,3 +396,233 @@ class EntityDetailView(LoginRequiredMixin, View):
             }
 
         return JsonResponse(data)
+
+
+# ==========================================
+# Excel Upload/Download Views
+# ==========================================
+
+
+class EntityExcelTemplateView(ProjectEntityMixin, View):
+    """View to download a blank Excel template for entity uploads."""
+
+    def get(self, request, *args, **kwargs):
+        import io
+
+        import pandas as pd
+
+        entity_type = kwargs.get("entity_type")
+
+        # Define headers based on entity type
+        headers = {
+            "labour": [
+                "Person Name",
+                "ID Number",
+                "Trade",
+                "Skill Type",
+                "Date Joined (YYYY-MM-DD)",
+                "Unit",
+                "Rate",
+                "Expense Code (COS/OPEX)",
+                "Description",
+            ],
+            "material": [
+                "Name",
+                "Supplier",
+                "Items Received",
+                "Invoice Number",
+                "Quantity",
+                "Date Received (YYYY-MM-DD)",
+                "Unit",
+                "Rate",
+                "Expense Code (COS/OPEX)",
+                "Description",
+            ],
+            "plant": [
+                "Name",
+                "Plant Type",
+                "Specific Info",
+                "Supplier",
+                "Breakdown Status (OPERATIONAL/BREAKDOWN/etc)",
+                "Date (YYYY-MM-DD)",
+                "Unit",
+                "Rate",
+                "Expense Code (COS/OPEX)",
+                "Description",
+            ],
+            "subcontractor": [
+                "Name",
+                "Trade",
+                "Scope",
+                "Start Date (YYYY-MM-DD)",
+                "Planned Finish Date (YYYY-MM-DD)",
+                "Actual Finish Date (YYYY-MM-DD)",
+                "Unit",
+                "Rate",
+                "Expense Code (COS/OPEX)",
+                "Description",
+            ],
+            "overhead": [
+                "Name",
+                "Category",
+                "Unit",
+                "Rate",
+                "Expense Code (COS/OPEX)",
+                "Description",
+            ],
+        }
+
+        columns = headers.get(str(entity_type), ["Name", "Description", "Rate"])
+        df = pd.DataFrame(columns=columns)
+
+        # Create Excel file in memory
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False, sheet_name="Template")
+
+        output.seek(0)
+
+        response = HttpResponse(
+            output.read(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="{entity_type}_template.xlsx"'
+        )
+        return response
+
+
+class EntityExcelUploadView(ProjectEntityMixin, View):
+    """View to handle Excel upload and project entity creation."""
+
+    def post(self, request, *args, **kwargs):
+        import pandas as pd
+
+        entity_type = kwargs.get("entity_type")
+        excel_file = request.FILES.get("excel_file")
+
+        if not excel_file:
+            messages.error(request, "Please select an Excel file to upload.")
+            return redirect(
+                reverse(
+                    f"project:entity-{entity_type}-list",
+                    kwargs={"project_pk": self.project.pk},
+                )
+            )
+
+        try:
+            df = pd.read_excel(excel_file)
+            df = df.where(pd.notnull(df), None)  # Replace NaN with None
+
+            success_count = 0
+            errors = []
+
+            for index, (_, row) in enumerate(df.iterrows()):
+                try:
+                    data = {
+                        "project": self.project,
+                        "name": row.get("Name") or row.get("Person Name"),
+                        "unit": row.get("Unit"),
+                        "rate": row.get("Rate", 0) or 0,
+                        "expense_code": row.get("Expense Code (COS/OPEX)", "COS"),
+                        "description": row.get("Description", ""),
+                    }
+
+                    # Basic validation: Name is required
+                    if not data["name"]:
+                        errors.append(f"Row {index + 2}: Name/Person Name is required.")
+                        continue
+
+                    # Expense code normalization
+                    if data["expense_code"] not in ["COS", "OPEX"]:
+                        data["expense_code"] = "COS"
+
+                    # Handle specific entity types
+                    if entity_type == "labour":
+                        skill_type_name = row.get("Skill Type")
+                        skill_type = None
+                        if skill_type_name:
+                            skill_type = SkillType.objects.filter(
+                                project=self.project, name__iexact=skill_type_name
+                            ).first()
+
+                        LabourEntity.objects.create(
+                            **data,
+                            person_name=row.get("Person Name") or data["name"],
+                            id_number=str(row.get("ID Number", "")) or "",
+                            trade=row.get("Trade", ""),
+                            skill_type=skill_type,
+                            date_joined=row.get("Date Joined (YYYY-MM-DD)"),
+                        )
+                    elif entity_type == "material":
+                        MaterialEntity.objects.create(
+                            **data,
+                            supplier=row.get("Supplier", ""),
+                            items_received=row.get("Items Received", ""),
+                            invoice_number=str(row.get("Invoice Number", "")) or "",
+                            quantity=row.get("Quantity", 0) or 0,
+                            date_received=row.get("Date Received (YYYY-MM-DD)"),
+                        )
+                    elif entity_type == "plant":
+                        plant_type_name = row.get("Plant Type")
+                        plant_type = None
+                        if plant_type_name:
+                            plant_type = PlantType.objects.filter(
+                                project=self.project, name__iexact=plant_type_name
+                            ).first()
+
+                        PlantEntity.objects.create(
+                            **data,
+                            plant_type=plant_type,
+                            specific_info=row.get("Specific Info", ""),
+                            supplier=row.get("Supplier", ""),
+                            breakdown_status=row.get(
+                                "Breakdown Status (OPERATIONAL/BREAKDOWN/etc)",
+                                "OPERATIONAL",
+                            ),
+                            date=row.get("Date (YYYY-MM-DD)"),
+                        )
+                    elif entity_type == "subcontractor":
+                        SubcontractorEntity.objects.create(
+                            **data,
+                            trade=row.get("Trade", ""),
+                            scope=row.get("Scope", ""),
+                            start_date=row.get("Start Date (YYYY-MM-DD)"),
+                            planned_finish_date=row.get(
+                                "Planned Finish Date (YYYY-MM-DD)"
+                            ),
+                            actual_finish_date=row.get(
+                                "Actual Finish Date (YYYY-MM-DD)"
+                            ),
+                        )
+                    elif entity_type == "overhead":
+                        OverheadEntity.objects.create(
+                            **data,
+                            category=row.get("Category", ""),
+                        )
+
+                    success_count += 1
+
+                except Exception as e:
+                    errors.append(f"Row {index + 2}: {str(e)}")
+
+            if success_count > 0:
+                messages.success(
+                    request, f"Successfully imported {success_count} entries."
+                )
+
+            if errors:
+                for err in errors[:5]:  # Show first 5 errors to avoid flooding
+                    messages.error(request, err)
+                if len(errors) > 5:
+                    messages.error(request, f"...and {len(errors) - 5} more errors.")
+
+        except Exception as e:
+            messages.error(request, f"Error processing Excel file: {str(e)}")
+
+        return redirect(
+            reverse(
+                f"project:entity-{entity_type}-list",
+                kwargs={"project_pk": self.project.pk},
+            )
+        )

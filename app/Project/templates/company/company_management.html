@@ -223,13 +223,12 @@
                     </div>
                 </a>
                 <!-- Setup Entities (Master Definitions) -->
-                <a href="{% url 'project:entity-labour-list' company.pk %}"
-                   class="flex justify-between items-center px-3 py-2.5 w-full bg-indigo-50 rounded-lg border border-indigo-200 transition-colors hover:bg-indigo-100 group/btn">
+                {% comment %} <a href="{% url 'project:entity-labour-list' company.pk %}" class="flex justify-between items-center px-3 py-2.5 w-full bg-indigo-50 rounded-lg border border-indigo-200 transition-colors hover:bg-indigo-100 group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "cog-6-tooth" class="mr-2 w-4 h-4 text-indigo-500" %}
                         <span class="text-sm font-medium text-indigo-700">Setup Entities</span>
                     </div>
-                </a>
+                </a> {% endcomment %}
             </div>
         </div>
         <!-- Row 4: Project Estimator -->

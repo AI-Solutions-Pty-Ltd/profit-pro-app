@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .baseline import views as baseline_views
 from .dashboard import views as dashboard_views
 from .journal import views as journal_views
 from .labour import views as labour_views
@@ -58,6 +59,11 @@ urlpatterns = [
         "<int:project_pk>/profitability/material/create/",
         material_views.MaterialCostTrackerCreateView.as_view(),
         name="profitability-material-create",
+    ),
+    path(
+        "<int:project_pk>/profitability/material/bulk-create/",
+        material_views.MaterialCostTrackerBulkCreateView.as_view(),
+        name="profitability-material-bulk-create",
     ),
     path(
         "<int:project_pk>/profitability/material/<int:pk>/update/",
@@ -165,8 +171,19 @@ urlpatterns = [
         name="profitability-performance-breakdown",
     ),
     path(
+        "<int:project_pk>/profitability/reports/income-statement/",
+        report_views.IncomeStatementView.as_view(),
+        name="profitability-income-statement",
+    ),
+    path(
         "<int:project_pk>/profitability/performance-report/data/",
         report_views.FinancialPerformanceDataView.as_view(),
         name="profitability-performance-data",
+    ),
+    # Baseline
+    path(
+        "<int:project_pk>/profitability/baseline/",
+        baseline_views.ProfitabilityBaselineUpdateView.as_view(),
+        name="profitability-baseline",
     ),
 ]
