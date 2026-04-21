@@ -1,10 +1,11 @@
-import pytest
 from decimal import Decimal
+
+import pytest
 from django.core.exceptions import ValidationError
 
+from app.Project.profitability.mixins import FinancialCalculationMixin
 from app.Project.profitability.tests.factories import ProfitabilityBaselineFactory
 from app.Project.tests.factories import ProjectFactory
-from app.Project.profitability.mixins import FinancialCalculationMixin
 
 
 @pytest.mark.django_db

@@ -2,27 +2,29 @@
 {% load static %}
 {% load heroicons %}
 {% load humanize %}
-
 {% block title %}
     Income Statement - {{ project.name }} - {{ block.super }}
 {% endblock title %}
-
 {% block content %}
-<div class="px-4 py-8 mx-auto max-w-7xl">
-    <!-- Header & Navigation -->
-    <div class="flex flex-col gap-4 justify-between items-start mb-8 md:flex-row md:items-center">
-        <div>
-            <div class="mb-1 text-sm text-gray-500 breadcrumbs">
-                <ul>
-                    <li><a href="{% url 'project:profitability-dashboard' project.pk %}" class="transition-colors hover:text-indigo-600">Profitability</a></li>
-                    <li><a href="{% url 'project:profitability-performance-report' project.pk %}" class="transition-colors hover:text-indigo-600">Reports</a></li>
-                    <li class="italic font-semibold text-indigo-600">Income Statement</li>
-                </ul>
+    <div class="px-4 py-8 mx-auto max-w-7xl">
+        <!-- Header & Navigation -->
+        <div class="flex flex-col gap-4 justify-between items-start mb-8 md:flex-row md:items-center">
+            <div>
+                <div class="mb-1 text-sm text-gray-500 breadcrumbs">
+                    <ul>
+                        <li>
+                            <a href="{% url 'project:profitability-dashboard' project.pk %}"
+                               class="transition-colors hover:text-indigo-600">Profitability</a>
+                        </li>
+                        <li>
+                            <a href="{% url 'project:profitability-performance-report' project.pk %}"
+                               class="transition-colors hover:text-indigo-600">Reports</a>
+                        </li>
+                        <li class="italic font-semibold text-indigo-600">Income Statement</li>
+                    </ul>
+                </div>
             </div>
-           
-        </div>
-
-        {% comment %} <div class="flex gap-2">
+            {% comment %} <div class="flex gap-2">
             <button onclick="window.print()" class="gap-2 btn btn-outline btn-sm">
                 {% heroicon_outline "printer" size="16" %}
                 Print
@@ -37,10 +39,8 @@
                     <li><a>Export as CSV</a></li>
                 </ul>
             </div>
-        </div> {% endcomment %}
-    </div>
-
-  
+            </div> {% endcomment %}
+        </div>
         <!-- Header Card -->
         <div class="mb-6 bg-white rounded-lg border border-gray-200 shadow-sm">
             <div class="px-6 py-4">
@@ -67,192 +67,204 @@
                 </div>
             </div>
         </div>
-
-    <!-- KPI Stats Section -->
-    <div class="flex overflow-hidden flex-col mb-8 bg-white rounded-xl border border-gray-100 shadow sm:flex-row">
-        <div class="flex-1 p-6 border-b border-gray-100 transition-colors sm:border-b-0 sm:border-r hover:bg-slate-50 group">
-            <div class="flex justify-between items-start mb-2">
-                <div class="text-xs font-black text-gray-500 uppercase">Total Revenue</div>
-                <div class="text-indigo-600">{% heroicon_outline "banknotes" size="20" %}</div>
+        <!-- KPI Stats Section -->
+        <div class="flex overflow-hidden flex-col mb-8 bg-white rounded-xl border border-gray-100 shadow sm:flex-row">
+            <div class="flex-1 p-6 border-b border-gray-100 transition-colors sm:border-b-0 sm:border-r hover:bg-slate-50 group">
+                <div class="flex justify-between items-start mb-2">
+                    <div class="text-xs font-black text-gray-500 uppercase">Total Revenue</div>
+                    <div class="text-indigo-600">{% heroicon_outline "banknotes" size="20" %}</div>
+                </div>
+                <div class="font-mono text-3xl font-black text-gray-900">
+                    R {{ income_statement.revenue.total|floatformat:0|intcomma }}
+                </div>
+                <div class="mt-1 text-xs font-bold text-indigo-600 uppercase">100% of Income Source</div>
             </div>
-            <div class="font-mono text-3xl font-black text-gray-900">R {{ income_statement.revenue.total|floatformat:0|intcomma }}</div>
-            <div class="mt-1 text-xs font-bold text-indigo-600 uppercase">100% of Income Source</div>
+            <div class="flex-1 p-6 border-b border-gray-100 transition-colors sm:border-b-0 sm:border-r hover:bg-slate-50 group">
+                <div class="flex justify-between items-start mb-2">
+                    <div class="text-xs font-black text-gray-500 uppercase text-emerald-600/60">Gross Operating Profit</div>
+                    <div class="text-emerald-600">{% heroicon_outline "receipt-percent" size="20" %}</div>
+                </div>
+                <div class="font-mono text-3xl font-black text-emerald-700">
+                    R {{ income_statement.gross_profit.amount|floatformat:0|intcomma }}
+                </div>
+                <div class="flex gap-1 items-center mt-1 text-xs font-bold text-emerald-600 uppercase">
+                    {% heroicon_outline "arrow-trending-up" size="12" %}
+                    {{ income_statement.gross_profit.margin|floatformat:1 }}% Margin Result
+                </div>
+            </div>
+            <div class="flex-1 p-6 transition-colors hover:bg-slate-50 group">
+                <div class="flex justify-between items-start mb-2">
+                    <div class="text-xs font-black text-gray-500 uppercase text-indigo-600/60">Net Profit Margin</div>
+                    <div class="text-indigo-600">{% heroicon_outline "chart-pie" size="20" %}</div>
+                </div>
+                <div class="font-mono text-3xl font-black text-indigo-600">
+                    {{ income_statement.net_profit.margin|floatformat:1 }}%
+                </div>
+                <div class="mt-1 text-xs italic font-bold text-gray-500 uppercase">Net Operating Efficiency</div>
+            </div>
         </div>
-        
-        <div class="flex-1 p-6 border-b border-gray-100 transition-colors sm:border-b-0 sm:border-r hover:bg-slate-50 group">
-            <div class="flex justify-between items-start mb-2">
-                <div class="text-xs font-black text-gray-500 uppercase text-emerald-600/60">Gross Operating Profit</div>
-                <div class="text-emerald-600">{% heroicon_outline "receipt-percent" size="20" %}</div>
+        <!-- Main Report Table -->
+        <div class="overflow-hidden bg-white border border-gray-100 shadow-md card">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-slate-50/80">
+                <span class="text-xs font-bold text-gray-600 uppercase">Financial Performance Ledger</span>
+                <div class="flex gap-4 items-center text-xs font-bold text-gray-500 uppercase">
+                    <span class="flex gap-1 items-center">
+                        <div class="w-2 h-2 bg-indigo-600 rounded-full"></div>
+                    Revenue</span>
+                    <span class="flex gap-1 items-center">
+                        <div class="w-2 h-2 bg-amber-600 rounded-full"></div>
+                    COS</span>
+                    <span class="flex gap-1 items-center">
+                        <div class="w-2 h-2 bg-red-600 rounded-full"></div>
+                    OpEx</span>
+                </div>
             </div>
-            <div class="font-mono text-3xl font-black text-emerald-700">R {{ income_statement.gross_profit.amount|floatformat:0|intcomma }}</div>
-            <div class="flex gap-1 items-center mt-1 text-xs font-bold text-emerald-600 uppercase">
-                {% heroicon_outline "arrow-trending-up" size="12" %}
-                {{ income_statement.gross_profit.margin|floatformat:1 }}% Margin Result
+            <div class="overflow-x-auto">
+                <table class="table w-full table-sm">
+                    <thead class="bg-slate-50">
+                        <tr class="border-b border-gray-200">
+                            <th class="py-5 pl-6 text-xs font-bold text-gray-500 uppercase">Line Item / Category Source</th>
+                            <th class="py-5 pr-10 text-xs font-bold text-right text-gray-500 uppercase">Amount (ZAR)</th>
+                            <th class="py-5 pr-6 text-xs font-bold text-right text-gray-500 uppercase">% Contribution</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-700">
+                        <!-- REVENUE SECTION -->
+                        <tr class="bg-indigo-50/20">
+                            <td colspan="3"
+                                class="py-4 pl-6 text-xs font-black text-indigo-900 uppercase border-l-4 border-indigo-600 bg-indigo-50/40">
+                                <span class="flex gap-2 items-center">{% heroicon_outline "building-office" size="14" %} Project Income & Certificates</span>
+                            </td>
+                        </tr>
+                        {% for item in income_statement.revenue.items %}
+                            <tr class="border-b transition-colors hover border-slate-100">
+                                <td class="py-4 pl-10 text-sm font-semibold tracking-tight uppercase text-slate-600">{{ item.label }}</td>
+                                <td class="pr-10 font-mono font-bold text-right text-slate-900">R {{ item.amount|floatformat:2|intcomma }}</td>
+                                <td class="pr-6 font-mono text-xs text-right underline text-slate-400 decoration-indigo-200 decoration-2 underline-offset-4">
+                                    {{ item.pct|floatformat:1 }}%
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        <tr class="font-black bg-indigo-100 border-indigo-300 bordert">
+                            <td class="py-5 pl-10 text-xs tracking-wider text-indigo-900 uppercase">TOTAL PROJECT REVENUE</td>
+                            <td class="pr-10 font-mono text-xl font-black text-right text-indigo-600">
+                                R {{ income_statement.revenue.total|floatformat:2|intcomma }}
+                            </td>
+                            <td class="pr-6 font-mono font-black text-right text-indigo-600">100.0%</td>
+                        </tr>
+                        <!-- SPARE ROW FOR SPACING -->
+                        <tr class="h-8 bg-transparent">
+                            <td colspan="3"></td>
+                        </tr>
+                        <!-- COST OF SALES -->
+                        <tr class="bg-amber-50/20">
+                            <td colspan="3"
+                                class="py-4 pl-6 text-xs font-black text-amber-900 uppercase border-l-4 border-amber-600 bg-amber-50/40">
+                                <span class="flex gap-2 items-center">{% heroicon_outline "wrench-screwdriver" size="14" %} Production Cost</span>
+                            </td>
+                        </tr>
+                        {% for item in income_statement.cos.items %}
+                            <tr class="border-b transition-colors hover group border-slate-100">
+                                <td class="py-4 pl-10 text-sm font-medium text-slate-600">
+                                    <div class="flex justify-between items-center">
+                                        {{ item.label }}
+                                        <span class="hidden opacity-30 group-hover:inline">{% heroicon_outline "chevron-double-right" size="12" %}</span>
+                                    </div>
+                                </td>
+                                <td class="pr-10 font-mono font-bold text-right text-slate-800">R {{ item.amount|floatformat:2|intcomma }}</td>
+                                <td class="pr-6 text-right">
+                                    <div class="font-mono text-xs tabular-nums badge badge-indigo">{{ item.pct|floatformat:1 }}%</div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        <tr class="font-black bg-amber-100 border-amber-200">
+                            <td class="py-5 pl-10 text-xs tracking-wider text-amber-900 uppercase">TOTAL PRODUCTION COST</td>
+                            <td class="pr-10 font-mono text-xl font-black text-right text-amber-700">
+                                R {{ income_statement.cos.total|floatformat:2|intcomma }}
+                            </td>
+                            <td class="pr-6 font-mono italic text-right text-amber-600">({{ income_statement.cos.pct|floatformat:1 }}%)</td>
+                        </tr>
+                        <!-- GROSS PROFIT ROW (The Success Anchor) -->
+                        <tr class="text-emerald-600 bg-emerald-100">
+                            <td class="py-6 pl-8">
+                                <div class="flex flex-col">
+                                    <span class="text-lg font-black tracking-tighter uppercase">Gross Operating Profit</span>
+                                    <span class="text-[9px] font-bold opacity-60  uppercase">Revenue - Direct Production Costs</span>
+                                </div>
+                            </td>
+                            <td class="pr-10 font-mono text-2xl font-black text-right">
+                                R {{ income_statement.gross_profit.amount|floatformat:2|intcomma }}
+                            </td>
+                            <td class="pr-6 font-mono text-lg italic font-black text-right underline decoration-white/30 decoration-2 underline-offset-4">
+                                {{ income_statement.gross_profit.margin|floatformat:1 }}%
+                            </td>
+                        </tr>
+                        <!-- SPARE ROW -->
+                        <tr class="h-4 bg-transparent">
+                            <td colspan="3"></td>
+                        </tr>
+                        <!-- OPERATING EXPENSES -->
+                        <tr class="bg-red-50/20">
+                            <td colspan="3"
+                                class="py-4 pl-6 text-xs font-black text-red-900 uppercase border-l-4 border-red-600 bg-red-50/40">
+                                <span class="flex gap-2 items-center">{% heroicon_outline "presentation-chart-bar" size="14" %} Indirect Operating Overheads (OpEx)</span>
+                            </td>
+                        </tr>
+                        {% for item in income_statement.opex.items %}
+                            <tr class="border-b transition-colors hover group border-slate-100">
+                                <td class="py-4 pl-10 text-sm italic font-medium text-slate-600">{{ item.label }}</td>
+                                <td class="pr-10 font-mono font-bold text-right text-slate-800">R {{ item.amount|floatformat:2|intcomma }}</td>
+                                <td class="pr-6 text-right">
+                                    <div class="font-mono text-xs tabular-nums text-red-600 badge badge-ghost">{{ item.pct|floatformat:1 }}%</div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        <tr class="font-black border-t-2 border-red-100 bg-slate-50">
+                            <td class="py-5 pl-10 text-xs tracking-wider text-red-900 uppercase">TOTAL OPERATING EXPENSES</td>
+                            <td class="pr-10 font-mono text-xl font-black text-right text-red-700">
+                                R {{ income_statement.opex.total|floatformat:2|intcomma }}
+                            </td>
+                            <td class="pr-6 font-mono italic text-right text-red-600">({{ income_statement.opex.pct|floatformat:1 }}%)</td>
+                        </tr>
+                        <!-- SPARE ROW -->
+                        <tr class="h-4 bg-transparent">
+                            <td colspan="3"></td>
+                        </tr>
+                        <!-- FINAL NET PROFIT SECTION (The Indigo Cap) -->
+                        <tr class="font-black text-indigo-900 bg-indigo-100">
+                            <td class="py-8 pl-8">
+                                <div class="flex flex-col">
+                                    <span class="flex gap-3 items-center text-2xl font-black tracking-tighter uppercase">Net Profit</span>
+                                    <span class="mt-1 text-xs font-bold text-indigo-800 uppercase opacity-80">Bottom Line Result for this Period</span>
+                                </div>
+                            </td>
+                            <td class="pr-10 text-right">
+                                <div class="flex flex-col items-end">
+                                    <span class="font-mono text-3xl font-black text-indigo-900">R {{ income_statement.net_profit.amount|floatformat:2|intcomma }}</span>
+                                    <span class="mt-1 text-xs font-bold text-indigo-800 uppercase opacity-80">ZAR Total Carry</span>
+                                </div>
+                            </td>
+                            <td class="pr-6 text-right">
+                                <div class="flex flex-col items-end">
+                                    <span class="font-mono text-xl italic font-black text-indigo-900">{{ income_statement.net_profit.margin|floatformat:1 }}%</span>
+                                    <span class="text-[9px] font-bold text-gray-500 uppercase mt-1">Efficiency</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-        </div>
-
-        <div class="flex-1 p-6 transition-colors hover:bg-slate-50 group">
-            <div class="flex justify-between items-start mb-2">
-                <div class="text-xs font-black text-gray-500 uppercase text-indigo-600/60">Net Profit Margin</div>
-                <div class="text-indigo-600">{% heroicon_outline "chart-pie" size="20" %}</div>
+            <!-- Footer / Auditor Stamp -->
+            <div class="flex flex-col gap-4 justify-between items-center px-8 py-6 text-xs font-bold text-gray-500 uppercase border-t border-gray-100 bg-slate-50 md:flex-row">
+                <div class="flex gap-3 items-center"></div>
+                <div class="flex flex-col items-end text-right">
+                    <span>Timestamp: {{ generated_at|date:"d M Y H:i" }}</span>
+                    <span class="font-black text-indigo-600 opacity-60">Profit Pro Finance Unit</span>
+                </div>
             </div>
-            <div class="font-mono text-3xl font-black text-indigo-600">{{ income_statement.net_profit.margin|floatformat:1 }}%</div>
-            <div class="mt-1 text-xs italic font-bold text-gray-500 uppercase">Net Operating Efficiency</div>
         </div>
     </div>
-
-    <!-- Main Report Table -->
-    <div class="overflow-hidden bg-white border border-gray-100 shadow-md card">
-        <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-slate-50/80">
-            <span class="text-xs font-bold text-gray-600 uppercase">Financial Performance Ledger</span>
-            <div class="flex gap-4 items-center text-xs font-bold text-gray-500 uppercase">
-                <span class="flex gap-1 items-center"><div class="w-2 h-2 bg-indigo-600 rounded-full"></div> Revenue</span>
-                <span class="flex gap-1 items-center"><div class="w-2 h-2 bg-amber-600 rounded-full"></div> COS</span>
-                <span class="flex gap-1 items-center"><div class="w-2 h-2 bg-red-600 rounded-full"></div> OpEx</span>
-            </div>
-        </div>
-
-        <div class="overflow-x-auto">
-            <table class="table w-full table-sm">
-                <thead class="bg-slate-50">
-                    <tr class="border-b border-gray-200">
-                        <th class="py-5 pl-6 text-xs font-bold text-gray-500 uppercase">Line Item / Category Source</th>
-                        <th class="py-5 pr-10 text-xs font-bold text-right text-gray-500 uppercase">Amount (ZAR)</th>
-                        <th class="py-5 pr-6 text-xs font-bold text-right text-gray-500 uppercase">% Contribution</th>
-                    </tr>
-                </thead>
-                <tbody class="text-gray-700">
-                    <!-- REVENUE SECTION -->
-                    <tr class="bg-indigo-50/20">
-                        <td colspan="3" class="py-4 pl-6 text-xs font-black text-indigo-900 uppercase border-l-4 border-indigo-600 bg-indigo-50/40">
-                            <span class="flex gap-2 items-center">{% heroicon_outline "building-office" size="14" %} Project Income & Certificates</span>
-                        </td>
-                    </tr>
-                    {% for item in income_statement.revenue.items %}
-                    <tr class="border-b transition-colors hover border-slate-100">
-                        <td class="py-4 pl-10 text-sm font-semibold tracking-tight uppercase text-slate-600">{{ item.label }}</td>
-                        <td class="pr-10 font-mono font-bold text-right text-slate-900">R {{ item.amount|floatformat:2|intcomma }}</td>
-                        <td class="pr-6 font-mono text-xs text-right underline text-slate-400 decoration-indigo-200 decoration-2 underline-offset-4">{{ item.pct|floatformat:1 }}%</td>
-                    </tr>
-                    {% endfor %}
-                    <tr class="font-black bg-indigo-100 border-indigo-300 bordert">
-                        <td class="py-5 pl-10 text-xs tracking-wider text-indigo-900 uppercase">TOTAL PROJECT REVENUE</td>
-                        <td class="pr-10 font-mono text-xl font-black text-right text-indigo-600">R {{ income_statement.revenue.total|floatformat:2|intcomma }}</td>
-                        <td class="pr-6 font-mono font-black text-right text-indigo-600">100.0%</td>
-                    </tr>
-
-                    <!-- SPARE ROW FOR SPACING -->
-                    <tr class="h-8 bg-transparent"><td colspan="3"></td></tr>
-
-                    <!-- COST OF SALES -->
-                    <tr class="bg-amber-50/20">
-                        <td colspan="3" class="py-4 pl-6 text-xs font-black text-amber-900 uppercase border-l-4 border-amber-600 bg-amber-50/40">
-                            <span class="flex gap-2 items-center">{% heroicon_outline "wrench-screwdriver" size="14" %} Production Cost</span>
-                        </td>
-                    </tr>
-                    {% for item in income_statement.cos.items %}
-                    <tr class="border-b transition-colors hover group border-slate-100">
-                        <td class="py-4 pl-10 text-sm font-medium text-slate-600">
-                            <div class="flex justify-between items-center">
-                                {{ item.label }}
-                                <span class="hidden opacity-30 group-hover:inline">{% heroicon_outline "chevron-double-right" size="12" %}</span>
-                            </div>
-                        </td>
-                        <td class="pr-10 font-mono font-bold text-right text-slate-800">R {{ item.amount|floatformat:2|intcomma }}</td>
-                        <td class="pr-6 text-right">
-                            <div class="font-mono text-xs tabular-nums badge badge-indigo">{{ item.pct|floatformat:1 }}%</div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    <tr class="font-black bg-amber-100 border-amber-200">
-                        <td class="py-5 pl-10 text-xs tracking-wider text-amber-900 uppercase">TOTAL PRODUCTION COST</td>
-                        <td class="pr-10 font-mono text-xl font-black text-right text-amber-700">R {{ income_statement.cos.total|floatformat:2|intcomma }}</td>
-                        <td class="pr-6 font-mono italic text-right text-amber-600">({{ income_statement.cos.pct|floatformat:1 }}%)</td>
-                    </tr>
-                      
-
-                    <!-- GROSS PROFIT ROW (The Success Anchor) -->
-                    <tr class="text-emerald-600 bg-emerald-100">
-                        <td class="py-6 pl-8">
-                            <div class="flex flex-col">
-                                <span class="text-lg font-black tracking-tighter uppercase">Gross Operating Profit</span>
-                                <span class="text-[9px] font-bold opacity-60  uppercase">Revenue - Direct Production Costs</span>
-                            </div>
-                        </td>
-                        <td class="pr-10 font-mono text-2xl font-black text-right">R {{ income_statement.gross_profit.amount|floatformat:2|intcomma }}</td>
-                        <td class="pr-6 font-mono text-lg italic font-black text-right underline decoration-white/30 decoration-2 underline-offset-4">{{ income_statement.gross_profit.margin|floatformat:1 }}%</td>
-                    </tr>
-
-                    <!-- SPARE ROW -->
-                    <tr class="h-4 bg-transparent"><td colspan="3"></td></tr>
-
-                    <!-- OPERATING EXPENSES -->
-                    <tr class="bg-red-50/20">
-                        <td colspan="3" class="py-4 pl-6 text-xs font-black text-red-900 uppercase border-l-4 border-red-600 bg-red-50/40">
-                            <span class="flex gap-2 items-center">{% heroicon_outline "presentation-chart-bar" size="14" %} Indirect Operating Overheads (OpEx)</span>
-                        </td>
-                    </tr>
-                    {% for item in income_statement.opex.items %}
-                    <tr class="border-b transition-colors hover group border-slate-100">
-                        <td class="py-4 pl-10 text-sm italic font-medium text-slate-600">{{ item.label }}</td>
-                        <td class="pr-10 font-mono font-bold text-right text-slate-800">R {{ item.amount|floatformat:2|intcomma }}</td>
-                        <td class="pr-6 text-right">
-                             <div class="font-mono text-xs tabular-nums text-red-600 badge badge-ghost">{{ item.pct|floatformat:1 }}%</div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    <tr class="font-black border-t-2 border-red-100 bg-slate-50">
-                        <td class="py-5 pl-10 text-xs tracking-wider text-red-900 uppercase">TOTAL OPERATING EXPENSES</td>
-                        <td class="pr-10 font-mono text-xl font-black text-right text-red-700">R {{ income_statement.opex.total|floatformat:2|intcomma }}</td>
-                        <td class="pr-6 font-mono italic text-right text-red-600">({{ income_statement.opex.pct|floatformat:1 }}%)</td>
-                    </tr>
-
-                    <!-- SPARE ROW -->
-                    <tr class="h-4 bg-transparent"><td colspan="3"></td></tr>
-
-                    <!-- FINAL NET PROFIT SECTION (The Indigo Cap) -->
-                    <tr class="font-black text-indigo-900 bg-indigo-100">
-                        <td class="py-8 pl-8">
-                            <div class="flex flex-col">
-                                <span class="flex gap-3 items-center text-2xl font-black tracking-tighter uppercase">
-                                  Net Profit
-                                  
-                                </span>
-                                <span class="mt-1 text-xs font-bold text-indigo-800 uppercase opacity-80">Bottom Line Result for this Period</span>
-                            </div>
-                        </td>
-                        <td class="pr-10 text-right">
-                            <div class="flex flex-col items-end">
-                                <span class="font-mono text-3xl font-black text-indigo-900">R {{ income_statement.net_profit.amount|floatformat:2|intcomma }}</span>
-                                <span class="mt-1 text-xs font-bold text-indigo-800 uppercase opacity-80">ZAR Total Carry</span>
-                            </div>
-                        </td>
-                        <td class="pr-6 text-right">
-                            <div class="flex flex-col items-end">
-                                <span class="font-mono text-xl italic font-black text-indigo-900">{{ income_statement.net_profit.margin|floatformat:1 }}%</span>
-                                <span class="text-[9px] font-bold text-gray-500 uppercase mt-1">Efficiency</span>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Footer / Auditor Stamp -->
-        <div class="flex flex-col gap-4 justify-between items-center px-8 py-6 text-xs font-bold text-gray-500 uppercase border-t border-gray-100 bg-slate-50 md:flex-row">
-            <div class="flex gap-3 items-center">
-                
-             
-            </div>
-            <div class="flex flex-col items-end text-right">
-                <span>Timestamp: {{ generated_at|date:"d M Y H:i" }}</span>
-                <span class="font-black text-indigo-600 opacity-60">Profit Pro Finance Unit</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<style>
+    <style>
     /* Printing enhancements */
     @media print {
         .btn, .breadcrumbs, .dropdown, .card-actions { display: none !important; }
@@ -260,5 +272,5 @@
         body { background: white !important; }
         .stats { border: 1px solid #e2e8f0 !important; }
     }
-</style>
+    </style>
 {% endblock content %}

@@ -21,6 +21,10 @@
                             {% heroicon_outline "cog-6-tooth" size="16" %} Business Setup
                         </a>
                     {% endif %}
+                    <a href="{% url 'project:entity-labour-list' company.pk %}"
+                       class="inline-flex items-center p-2 font-medium text-gray-600 bg-white rounded-md border border-gray-600 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                        {% heroicon_outline "cog-6-tooth" size="16" %} Setup
+                    </a>
                     <a href="{% url 'project:project-management' company.pk %}"
                        class="inline-flex items-center p-2 font-medium text-purple-600 bg-white rounded-md border border-purple-600 shadow-sm transition-colors hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
                         {% heroicon_outline "folder-open" size="16" class="mr-1.5" %} Project Management
@@ -223,13 +227,12 @@
                     </div>
                 </a>
                 <!-- Setup Entities (Master Definitions) -->
-                <a href="{% url 'project:entity-labour-list' company.pk %}"
-                   class="flex justify-between items-center px-3 py-2.5 w-full bg-indigo-50 rounded-lg border border-indigo-200 transition-colors hover:bg-indigo-100 group/btn">
+                {% comment %} <a href="{% url 'project:entity-labour-list' company.pk %}" class="flex justify-between items-center px-3 py-2.5 w-full bg-indigo-50 rounded-lg border border-indigo-200 transition-colors hover:bg-indigo-100 group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "cog-6-tooth" class="mr-2 w-4 h-4 text-indigo-500" %}
                         <span class="text-sm font-medium text-indigo-700">Setup Entities</span>
                     </div>
-                </a>
+                </a> {% endcomment %}
             </div>
         </div>
         <!-- Row 4: Project Estimator -->

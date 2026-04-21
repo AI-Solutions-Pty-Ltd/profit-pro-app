@@ -1,6 +1,5 @@
 from django.db.models import Sum
 from django.urls import reverse
-
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from app.Project.forms.profitability_forms import JournalEntryForm
@@ -19,9 +18,13 @@ class JournalEntryListView(ProfitabilityMixin, ListView):
 
         # Calculate summary of expenses by category for the filtered queryset
         # Note: self.get_queryset() already handles project and monthly filtering via ProfitabilityMixin
-        expenses = self.get_queryset().filter(transaction_type=JournalEntry.EntryType.DEBIT)
+        expenses = self.get_queryset().filter(
+            transaction_type=JournalEntry.EntryType.DEBIT
+        )
         summary_query = (
-            expenses.values("category").annotate(total=Sum("amount")).order_by("category")
+            expenses.values("category")
+            .annotate(total=Sum("amount"))
+            .order_by("category")
         )
 
         # Mapping for UI richness (Matching premium style guide colors)
@@ -29,9 +32,15 @@ class JournalEntryListView(ProfitabilityMixin, ListView):
             JournalEntry.Category.MATERIAL: {"icon": "cube", "color": "indigo"},
             JournalEntry.Category.LABOUR: {"icon": "user-group", "color": "purple"},
             JournalEntry.Category.SUBCONTRACTOR: {"icon": "briefcase", "color": "blue"},
-            JournalEntry.Category.OVERHEAD: {"icon": "building-office", "color": "gray"},
+            JournalEntry.Category.OVERHEAD: {
+                "icon": "building-office",
+                "color": "gray",
+            },
             JournalEntry.Category.PLANT: {"icon": "truck", "color": "amber"},
-            JournalEntry.Category.OTHER: {"icon": "ellipsis-horizontal", "color": "slate"},
+            JournalEntry.Category.OTHER: {
+                "icon": "ellipsis-horizontal",
+                "color": "slate",
+            },
             JournalEntry.Category.REVENUE: {"icon": "banknotes", "color": "emerald"},
         }
 
@@ -40,12 +49,15 @@ class JournalEntryListView(ProfitabilityMixin, ListView):
         total_revenue = 0
 
         # Calculate Total Revenue
-        revenue_total = expenses.model.objects.filter(
-            project=self.project,
-            date__month=self.display_date.month,
-            date__year=self.display_date.year,
-            transaction_type=JournalEntry.EntryType.CREDIT,
-        ).aggregate(total=Sum("amount"))["total"] or 0
+        revenue_total = (
+            expenses.model.objects.filter(
+                project=self.project,
+                date__month=self.display_date.month,
+                date__year=self.display_date.year,
+                transaction_type=JournalEntry.EntryType.CREDIT,
+            ).aggregate(total=Sum("amount"))["total"]
+            or 0
+        )
         total_revenue = revenue_total
 
         for item in summary_query:

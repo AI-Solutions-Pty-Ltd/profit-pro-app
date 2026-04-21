@@ -35,25 +35,33 @@
                 <div class="flex gap-2 items-center mt-2">
                     <!-- Table Settings / Pinning -->
                     <div class="dropdown dropdown-end">
-                        <div tabindex="0" role="button" class="text-gray-500 btn btn-ghost btn-sm hover:bg-indigo-50">
+                        <div tabindex="0"
+                             role="button"
+                             class="text-gray-500 btn btn-ghost btn-sm hover:bg-indigo-50">
                             {% heroicon_outline "cog-6-tooth" class="mr-1 w-4 h-4" %}
                             <span class="text-xs font-bold uppercase">Table Settings</span>
                         </div>
-                        <ul tabindex="0" class="dropdown-content z-[40] menu p-2 shadow-xl bg-white rounded-xl border border-gray-100 w-56">
+                        <ul tabindex="0"
+                            class="dropdown-content z-[40] menu p-2 shadow-xl bg-white rounded-xl border border-gray-100 w-56">
                             <li class="flex flex-row justify-between items-center px-4 py-2 menu-title">
                                 <span class="text-xs font-black tracking-widest text-gray-400 uppercase">Pin Columns</span>
-                          
                             </li>
                             <li>
                                 <label class="px-4 py-2 rounded-lg cursor-pointer label hover:bg-gray-50">
-                                    <span class="text-sm font-medium text-gray-700">Date</span> 
-                                    <input type="checkbox" class="checkbox checkbox-primary checkbox-xs" data-table-pin="plant-table" data-column-index="0">
+                                    <span class="text-sm font-medium text-gray-700">Date</span>
+                                    <input type="checkbox"
+                                           class="checkbox checkbox-primary checkbox-xs"
+                                           data-table-pin="plant-table"
+                                           data-column-index="0">
                                 </label>
                             </li>
                             <li>
                                 <label class="px-4 py-2 rounded-lg cursor-pointer label hover:bg-gray-50">
-                                    <span class="text-sm font-medium text-gray-700"> Plant/Equipment</span> 
-                                    <input type="checkbox" class="checkbox checkbox-primary checkbox-xs" data-table-pin="plant-table" data-column-index="1">
+                                    <span class="text-sm font-medium text-gray-700">Plant/Equipment</span>
+                                    <input type="checkbox"
+                                           class="checkbox checkbox-primary checkbox-xs"
+                                           data-table-pin="plant-table"
+                                           data-column-index="1">
                                 </label>
                             </li>
                         </ul>
@@ -102,10 +110,13 @@
                             </td>
                             <td class="px-6 py-4 text-right whitespace-nowrap">
                                 <div class="dropdown dropdown-left dropdown-end">
-                                    <div tabindex="0" role="button" class="text-gray-400 btn btn-ghost btn-xs hover:text-indigo-600">
+                                    <div tabindex="0"
+                                         role="button"
+                                         class="text-gray-400 btn btn-ghost btn-xs hover:text-indigo-600">
                                         {% heroicon_outline "ellipsis-vertical" class="w-5 h-5" %}
                                     </div>
-                                    <ul tabindex="0" class="dropdown-content z-[50] menu p-2 shadow-2xl bg-white rounded-xl border border-gray-100 w-48">
+                                    <ul tabindex="0"
+                                        class="dropdown-content z-[50] menu p-2 shadow-2xl bg-white rounded-xl border border-gray-100 w-48">
                                         <li>
                                             <a href="{% url 'project:profitability-plant-update' project.pk log.pk %}"
                                                class="flex items-center px-4 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-indigo-50 hover:text-indigo-700">

@@ -1,8 +1,6 @@
 from django.urls import path
 
-from .dashboard import views as dashboard_views
-from django.urls import path
-
+from .baseline import views as baseline_views
 from .dashboard import views as dashboard_views
 from .journal import views as journal_views
 from .labour import views as labour_views
@@ -11,7 +9,6 @@ from .overheads import views as overhead_views
 from .plant_equipment import views as plant_views
 from .reports import views as report_views
 from .subcontractor import views as subcontractor_views
-from .baseline import views as baseline_views
 from .views import ComingSoonView, ImportLogsView
 
 urlpatterns = [
@@ -62,6 +59,11 @@ urlpatterns = [
         "<int:project_pk>/profitability/material/create/",
         material_views.MaterialCostTrackerCreateView.as_view(),
         name="profitability-material-create",
+    ),
+    path(
+        "<int:project_pk>/profitability/material/bulk-create/",
+        material_views.MaterialCostTrackerBulkCreateView.as_view(),
+        name="profitability-material-bulk-create",
     ),
     path(
         "<int:project_pk>/profitability/material/<int:pk>/update/",

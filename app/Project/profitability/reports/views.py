@@ -141,28 +141,24 @@ class IncomeStatementView(FinancialBaseView):
         # 1. Revenue
         revenue_items = []
         # Certificates
-        cert_rev = (
-            ActualTransaction.objects.filter(
-                line_item__project=project,
-                payment_certificate__status=PaymentCertificate.Status.APPROVED,
-                payment_certificate__approved_on__date__range=(start_date, end_date),
-            ).aggregate(total=Sum("total_price"))["total"]
-            or Decimal("0.00")
-        )
+        cert_rev = ActualTransaction.objects.filter(
+            line_item__project=project,
+            payment_certificate__status=PaymentCertificate.Status.APPROVED,
+            payment_certificate__approved_on__date__range=(start_date, end_date),
+        ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
         if cert_rev > 0:
             revenue_items.append({"label": "Certified Work", "amount": cert_rev})
 
         # Journal Credits
-        journal_rev = (
-            JournalEntry.objects.filter(
-                project=project,
-                transaction_type=JournalEntry.EntryType.CREDIT,
-                date__range=(start_date, end_date),
-            ).aggregate(total=Sum("amount"))["total"]
-            or Decimal("0.00")
-        )
+        journal_rev = JournalEntry.objects.filter(
+            project=project,
+            transaction_type=JournalEntry.EntryType.CREDIT,
+            date__range=(start_date, end_date),
+        ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
         if journal_rev > 0:
-            revenue_items.append({"label": "Other Income (Journals)", "amount": journal_rev})
+            revenue_items.append(
+                {"label": "Other Income (Journals)", "amount": journal_rev}
+            )
 
         total_revenue = cert_rev + journal_rev
 
@@ -170,17 +166,14 @@ class IncomeStatementView(FinancialBaseView):
         def get_manual_journal_total(categories):
             if isinstance(categories, str):
                 categories = [categories]
-                
-            return (
-                JournalEntry.objects.filter(
-                    project=project,
-                    transaction_type=JournalEntry.EntryType.DEBIT,
-                    category__in=categories,
-                    source_log_id__isnull=True,  # Manual entries only
-                    date__range=(start_date, end_date),
-                ).aggregate(total=Sum("amount"))["total"]
-                or Decimal("0.00")
-            )
+
+            return JournalEntry.objects.filter(
+                project=project,
+                transaction_type=JournalEntry.EntryType.DEBIT,
+                category__in=categories,
+                source_log_id__isnull=True,  # Manual entries only
+                date__range=(start_date, end_date),
+            ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
 
         # Helper for tracker summaries
         def get_tracker_summary(code):
@@ -198,7 +191,7 @@ class IncomeStatementView(FinancialBaseView):
             # If we are in COS, add manual labour journals.
             if code == cos_code:
                 lab_manual = get_manual_journal_total(JournalEntry.Category.LABOUR)
-                
+
             lab_total = Decimal(str(lab_tracker)) + lab_manual
             if lab_total > 0:
                 items.append({"label": "Labour Costs", "amount": lab_total})
@@ -227,7 +220,9 @@ class IncomeStatementView(FinancialBaseView):
             )
             sub_manual = Decimal("0.00")
             if code == cos_code:
-                sub_manual = get_manual_journal_total(JournalEntry.Category.SUBCONTRACTOR)
+                sub_manual = get_manual_journal_total(
+                    JournalEntry.Category.SUBCONTRACTOR
+                )
 
             sub_total = Decimal(str(sub_tracker)) + sub_manual
             if sub_total > 0:
@@ -258,14 +253,17 @@ class IncomeStatementView(FinancialBaseView):
             ovh_manual = Decimal("0.00")
             # Overheads manual journals go to OpEx usually
             if code == opex_code:
-                ovh_manual = get_manual_journal_total([
-                    JournalEntry.Category.OVERHEAD,
-                    JournalEntry.Category.OTHER
-                ])
+                ovh_manual = get_manual_journal_total(
+                    [JournalEntry.Category.OVERHEAD, JournalEntry.Category.OTHER]
+                )
 
             ovh_total = Decimal(str(ovh_tracker)) + ovh_manual
             if ovh_total > 0:
-                label = "Administrative Overheads" if code == opex_code else "Direct Overheads"
+                label = (
+                    "Administrative Overheads"
+                    if code == opex_code
+                    else "Direct Overheads"
+                )
                 items.append({"label": label, "amount": ovh_total})
 
             return items
@@ -280,7 +278,7 @@ class IncomeStatementView(FinancialBaseView):
 
         # 3. Operating Expenses (OpEx)
         opex_items = get_tracker_summary(opex_code)
-        
+
         total_opex = sum(item["amount"] for item in opex_items)
 
         # Net profit
@@ -321,7 +319,7 @@ class IncomeStatementView(FinancialBaseView):
         context["tab"] = "performance_report"
         context["report_name"] = "Income Statement"
         context["generated_at"] = datetime.now()
-        
+
         return context
 
 

@@ -20,7 +20,13 @@
                 </span>
             </div>
             <div>
-                <h3 class="text-sm font-semibold text-gray-600">{% if item.label == 'Cost Of Sales' %}Production Cost{% else %}{{ item.label }}{% endif %}</h3>
+                <h3 class="text-sm font-semibold text-gray-600">
+                    {% if item.label == 'Cost Of Sales' %}
+                        Production Cost
+                    {% else %}
+                        {{ item.label }}
+                    {% endif %}
+                </h3>
                 <div class="mt-1 text-xl font-bold text-gray-900">R {{ item.actual|floatformat:0|intcomma }}</div>
                 <div class="flex items-center mt-2 text-xs font-bold">
                     <span class="{% if item.variance_pct > 0 and item.label == 'Cost Of Sales' or item.variance_pct < 0 and item.label == 'Revenue' %}text-rose-600{% else %}text-emerald-600{% endif %} flex items-center">

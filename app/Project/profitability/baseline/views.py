@@ -1,14 +1,16 @@
+from django.contrib import messages
 from django.urls import reverse
 from django.views.generic import UpdateView
-from django.contrib import messages
 
 from app.Project.forms.profitability_forms import ProfitabilityBaselineForm
 from app.Project.models import ProfitabilityBaseline
-from app.Project.profitability.views import ProfitabilityMixin
 from app.Project.profitability.mixins import FinancialCalculationMixin
+from app.Project.profitability.views import ProfitabilityMixin
 
 
-class ProfitabilityBaselineUpdateView(ProfitabilityMixin, FinancialCalculationMixin, UpdateView):
+class ProfitabilityBaselineUpdateView(
+    ProfitabilityMixin, FinancialCalculationMixin, UpdateView
+):
     """
     View to capture and update baseline assumptions for a project.
     Since it's a OneToOne relationship, we ensure the object exists for the project.

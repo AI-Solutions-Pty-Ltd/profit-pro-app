@@ -11,9 +11,9 @@ from app.Project.models import (
     MaterialEntity,
     OverheadCostTracker,
     OverheadEntity,
+    ProfitabilityBaseline,
     SubcontractorCostTracker,
     SubcontractorEntity,
-    ProfitabilityBaseline,
 )
 from app.Project.tests.factories import ProjectFactory
 
@@ -120,4 +120,3 @@ class ProfitabilityBaselineFactory(DjangoModelFactory):
     cost_of_sales_percent = 60.0
     operating_expenses_percent = 12.0
     net_profit_percent = 28.0
-
