@@ -21,10 +21,6 @@
                             {% heroicon_outline "cog-6-tooth" size="16" %} Business Setup
                         </a>
                     {% endif %}
-                    <a href="{% url 'project:entity-labour-list' company.pk %}"
-                       class="inline-flex items-center p-2 font-medium text-gray-600 bg-white rounded-md border border-gray-600 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                        {% heroicon_outline "cog-6-tooth" size="16" %} Setup
-                    </a>
                     <a href="{% url 'project:project-management' company.pk %}"
                        class="inline-flex items-center p-2 font-medium text-purple-600 bg-white rounded-md border border-purple-600 shadow-sm transition-colors hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
                         {% heroicon_outline "folder-open" size="16" class="mr-1.5" %} Project Management
