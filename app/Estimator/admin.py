@@ -7,6 +7,7 @@ from .models import (
     ProjectMaterial,
     ProjectPlantCost,
     ProjectPlantSpecification,
+    ProjectPlantSpecificationComponent,
     ProjectPreliminaryCost,
     ProjectPreliminarySpecification,
     ProjectSpecification,
@@ -17,6 +18,7 @@ from .models import (
     SystemMaterial,
     SystemPlantCost,
     SystemPlantSpecification,
+    SystemPlantSpecificationComponent,
     SystemPreliminaryCost,
     SystemPreliminarySpecification,
     SystemSpecification,
@@ -88,10 +90,16 @@ class SystemPlantCostAdmin(admin.ModelAdmin):
     list_display = ["name", "hourly_production", "hourly_rate"]
 
 
+class SystemPlantSpecificationComponentInline(admin.TabularInline):
+    model = SystemPlantSpecificationComponent
+    extra = 1
+
+
 @admin.register(SystemPlantSpecification)
 class SystemPlantSpecificationAdmin(admin.ModelAdmin):
-    list_display = ["section", "name", "unit", "plant_type", "daily_production"]
+    list_display = ["section", "name", "unit", "daily_production", "rate_per_unit"]
     list_filter = ["section"]
+    inlines = [SystemPlantSpecificationComponentInline]
 
 
 @admin.register(SystemPreliminaryCost)
@@ -177,6 +185,11 @@ class ProjectPlantCostAdmin(admin.ModelAdmin):
     list_filter = ["project"]
 
 
+class ProjectPlantSpecificationComponentInline(admin.TabularInline):
+    model = ProjectPlantSpecificationComponent
+    extra = 1
+
+
 @admin.register(ProjectPlantSpecification)
 class ProjectPlantSpecificationAdmin(admin.ModelAdmin):
     list_display = [
@@ -184,10 +197,11 @@ class ProjectPlantSpecificationAdmin(admin.ModelAdmin):
         "section",
         "name",
         "unit",
-        "plant_type",
         "daily_production",
+        "rate_per_unit",
     ]
     list_filter = ["project", "section"]
+    inlines = [ProjectPlantSpecificationComponentInline]
 
 
 @admin.register(ProjectPreliminaryCost)

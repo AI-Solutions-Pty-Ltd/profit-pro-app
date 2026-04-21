@@ -489,7 +489,6 @@ class PlantSpecificationForm(forms.ModelForm):
             "trade_name",
             "name",
             "unit",
-            "plant_type",
             "daily_production",
             "operator_factor",
             "site_factor",
@@ -506,7 +505,6 @@ class PlantSpecificationForm(forms.ModelForm):
             "unit": forms.TextInput(
                 attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. m3"}
             ),
-            "plant_type": forms.Select(attrs={"class": TAILWIND_SELECT}),
             "daily_production": forms.NumberInput(
                 attrs={"class": TAILWIND_INPUT, "step": "0.01"}
             ),
@@ -520,10 +518,6 @@ class PlantSpecificationForm(forms.ModelForm):
 
     def __init__(self, *args, project=None, **kwargs):
         super().__init__(*args, **kwargs)
-        if project:
-            cast(
-                ModelChoiceField, self.fields["plant_type"]
-            ).queryset = ProjectPlantCost.objects.filter(project=project)
 
 
 class SystemPlantSpecificationForm(forms.ModelForm):
@@ -534,7 +528,6 @@ class SystemPlantSpecificationForm(forms.ModelForm):
             "trade_name",
             "name",
             "unit",
-            "plant_type",
             "daily_production",
             "operator_factor",
             "site_factor",
@@ -551,7 +544,6 @@ class SystemPlantSpecificationForm(forms.ModelForm):
             "unit": forms.TextInput(
                 attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. m3"}
             ),
-            "plant_type": forms.Select(attrs={"class": TAILWIND_SELECT}),
             "daily_production": forms.NumberInput(
                 attrs={"class": TAILWIND_INPUT, "step": "0.01"}
             ),
@@ -562,12 +554,6 @@ class SystemPlantSpecificationForm(forms.ModelForm):
                 attrs={"class": TAILWIND_INPUT, "step": "0.0001"}
             ),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        cast(
-            ModelChoiceField, self.fields["plant_type"]
-        ).queryset = SystemPlantCost.objects.all()
 
 
 # ── Preliminary Cost Forms ───────────────────────────────────────

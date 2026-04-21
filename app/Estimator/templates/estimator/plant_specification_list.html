@@ -49,13 +49,15 @@
                     <tr class="border-b border-gray-200">
                         <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Section</th>
                         <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Plant Spec</th>
-                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Plant Type</th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                            Plant &amp; Hours
+                        </th>
                         <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Unit</th>
                         <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">
                             Daily Output
                         </th>
                         <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                            Hourly Cost
+                            Daily Cost
                         </th>
                         <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">
                             Rate / Unit
@@ -69,10 +71,18 @@
                         <tr class="hover:bg-gray-50/50">
                             <td class="px-3 py-1.5 text-gray-700">{{ row.section }}</td>
                             <td class="px-3 py-1.5 text-gray-700">{{ row.spec.name }}</td>
-                            <td class="px-3 py-1.5 text-gray-600">{{ row.spec.plant_type.name|default:"-" }}</td>
+                            <td class="px-3 py-1.5 text-gray-600">
+                                {% for comp in row.spec.components.all %}
+                                    <div>
+                                        {{ comp.plant_type.name|default:"—" }} <span class="text-gray-400">· {{ comp.hours }}h</span>
+                                    </div>
+                                {% empty %}
+                                    —
+                                {% endfor %}
+                            </td>
                             <td class="px-3 py-1.5 text-gray-500">{{ row.spec.unit }}</td>
                             <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.spec.daily_output|qty }}</td>
-                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.spec.hourly_cost|currency }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.spec.daily_cost|currency }}</td>
                             <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.rate|currency }}</td>
                             <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.boq_qty|qty }}</td>
                             <td class="px-3 py-1.5 text-right tabular-nums text-gray-900 font-medium">{{ row.amount|currency }}</td>
