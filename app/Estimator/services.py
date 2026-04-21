@@ -752,6 +752,22 @@ def sync_material_specs_from_system(project):
     return {"updated": updated, "created": created}
 
 
+def _resolve_project_labour_crew(project, system_crew):
+    """Match a system labour crew to the project copy by `source` FK, falling
+    back to `crew_type` name for crews imported via Excel (which don't set
+    source)."""
+    if not system_crew:
+        return None
+    return (
+        ProjectLabourCrew.objects.filter(
+            project=project, source_id=system_crew.pk
+        ).first()
+        or ProjectLabourCrew.objects.filter(
+            project=project, crew_type=system_crew.crew_type
+        ).first()
+    )
+
+
 def sync_labour_specs_from_system(project):
     """Sync project labour specifications with current system library values."""
     updated = 0
@@ -767,12 +783,7 @@ def sync_labour_specs_from_system(project):
         pls.site_factor = pls.source.site_factor
         pls.tools_factor = pls.source.tools_factor
         pls.leadership_factor = pls.source.leadership_factor
-        if pls.source.crew:
-            pls.crew = ProjectLabourCrew.objects.filter(
-                project=project, source_id=pls.source.crew.pk
-            ).first()
-        else:
-            pls.crew = None
+        pls.crew = _resolve_project_labour_crew(project, pls.source.crew)
         pls.save()
         updated += 1
 
@@ -792,12 +803,7 @@ def sync_labour_specs_from_system(project):
     ).select_related("crew"):
         if sls.name in existing_names:
             continue
-        crew = None
-        if sls.crew_id:  # ty:ignore[unresolved-attribute]
-            crew = ProjectLabourCrew.objects.filter(
-                project=project,
-                source_id=sls.crew_id,  # ty:ignore[unresolved-attribute]
-            ).first()
+        crew = _resolve_project_labour_crew(project, sls.crew)
         ProjectLabourSpecification.objects.create(
             project=project,
             source=sls,

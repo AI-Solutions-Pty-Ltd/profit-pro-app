@@ -725,7 +725,7 @@ class LabourSpecificationListView(ProjectEstimatorMixin, TemplateView):
                     "daily_output": ls.daily_output,
                     "daily_cost": ls.daily_cost,
                     "rate_per_unit": ls.rate_per_unit,
-                    "total_cost": boq_qty * ls.daily_cost if boq_qty else Decimal("0"),
+                    "total_cost": boq_qty * ls.rate_per_unit if boq_qty else Decimal("0"),
                 }
             )
         return rows
