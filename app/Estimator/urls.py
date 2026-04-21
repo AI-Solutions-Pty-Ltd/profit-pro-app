@@ -243,6 +243,21 @@ urlpatterns = [
         name="update_plant_spec",
     ),
     path(
+        "project/<int:project_pk>/api/plant-spec/<int:pk>/components/add/",
+        views.AddPlantSpecComponentView.as_view(),
+        name="add_plant_spec_component",
+    ),
+    path(
+        "project/<int:project_pk>/api/plant-spec-component/<int:pk>/update/",
+        views.UpdatePlantSpecComponentView.as_view(),
+        name="update_plant_spec_component",
+    ),
+    path(
+        "project/<int:project_pk>/api/plant-spec-component/<int:pk>/delete/",
+        views.DeletePlantSpecComponentView.as_view(),
+        name="delete_plant_spec_component",
+    ),
+    path(
         "project/<int:project_pk>/api/preliminary-cost/<int:pk>/update/",
         views.UpdatePreliminaryCostView.as_view(),
         name="update_preliminary_cost",
@@ -256,6 +271,11 @@ urlpatterns = [
         "project/<int:project_pk>/api/bulk-markup/",
         views.BulkMarkupUpdateView.as_view(),
         name="bulk_markup_update",
+    ),
+    path(
+        "project/<int:project_pk>/api/bulk-boq-specs/",
+        views.BulkUpdateBoqSpecsView.as_view(),
+        name="bulk_boq_specs_update",
     ),
     # Reports
     path(
@@ -625,6 +645,21 @@ urlpatterns = [
         "system/api/plant-spec/<int:pk>/update/",
         views.UpdateSystemPlantSpecView.as_view(),
         name="sys_update_plant_spec",
+    ),
+    path(
+        "system/api/plant-spec/<int:pk>/components/add/",
+        views.AddSystemPlantSpecComponentView.as_view(),
+        name="sys_add_plant_spec_component",
+    ),
+    path(
+        "system/api/plant-spec-component/<int:pk>/update/",
+        views.UpdateSystemPlantSpecComponentView.as_view(),
+        name="sys_update_plant_spec_component",
+    ),
+    path(
+        "system/api/plant-spec-component/<int:pk>/delete/",
+        views.DeleteSystemPlantSpecComponentView.as_view(),
+        name="sys_delete_plant_spec_component",
     ),
     path(
         "system/api/preliminary-cost/<int:pk>/update/",
