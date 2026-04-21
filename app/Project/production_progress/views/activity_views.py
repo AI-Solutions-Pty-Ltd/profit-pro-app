@@ -68,7 +68,7 @@ class LaborActivityListView(
             )
             .annotate(
                 num_items=Count("id"),
-                plant_count=Count("plant_specification__plant_type", distinct=True),
+                plant_count=Count("plant_specification__components__plant_type", distinct=True),
                 total_tracker=Sum(
                     Case(
                         When(
@@ -95,7 +95,9 @@ class LaborActivityListView(
                 ),
                 # Confirmed Formula: Sum(plant_rate) * 8.0 for all units in group
                 daily_plant_cost=Sum(
-                    Coalesce(F("plant_specification__plant_type__hourly_rate"), 0)
+                    Coalesce(
+                        F("plant_specification__components__plant_type__hourly_rate"), 0
+                    )
                     * Value(8.0),
                     output_field=DecimalField(),
                 ),
@@ -138,12 +140,14 @@ class LaborActivityListView(
 
         # Map plant types in bulk to avoid N+1 queries
         plant_mapping_data = (
-            all_activities.filter(plant_specification__plant_type__isnull=False)
+            all_activities.filter(
+                plant_specification__components__plant_type__isnull=False
+            )
             .values(
                 "section",
                 "bill_no",
                 "labour_specification",
-                "plant_specification__plant_type__name",
+                "plant_specification__components__plant_type__name",
             )
             .distinct()
         )
@@ -153,7 +157,7 @@ class LaborActivityListView(
             key = (row["section"], row["bill_no"], row["labour_specification"])
             if key not in plant_map:
                 plant_map[key] = []
-            plant_map[key].append(row["plant_specification__plant_type__name"])
+            plant_map[key].append(row["plant_specification__components__plant_type__name"])
 
         for activity in activities:
             spec = spec_map.get(activity["labour_specification"])
@@ -210,7 +214,7 @@ class LaborActivityDetailView(
                 section=self.section,
                 bill_no=self.bill_no,
             )
-            .select_related("plant_specification__plant_type")
+            .prefetch_related("plant_specification__components__plant_type")
             .order_by("id")
         )
 
@@ -246,8 +250,8 @@ class LaborActivityDetailView(
 
         # Unique plant types summary
         plant_types = sorted(
-            group_items.exclude(plant_specification__plant_type__name=None)
-            .values_list("plant_specification__plant_type__name", flat=True)
+            group_items.exclude(plant_specification__components__plant_type__name=None)
+            .values_list("plant_specification__components__plant_type__name", flat=True)
             .distinct()
         )
         context["plant_types_summary"] = (
@@ -263,7 +267,9 @@ class LaborActivityDetailView(
         # Confirmed Formula No 2: Sum(plant_rate) * 8.0
         plant_metrics = group_items.aggregate(
             plant_cost=Sum(
-                Coalesce(F("plant_specification__plant_type__hourly_rate"), 0)
+                Coalesce(
+                    F("plant_specification__components__plant_type__hourly_rate"), 0
+                )
                 * Value(8.0),
                 output_field=DecimalField(),
             )
@@ -347,7 +353,7 @@ class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
                 "labour_specification",
                 "plant_specification",
                 "plant_specification__name",
-                "plant_specification__plant_type__name",
+                "plant_specification__components__plant_type__name",
             )
             .distinct()
         )
@@ -364,10 +370,10 @@ class GetProjectLaborActivitiesAjaxView(LoginRequiredMixin, TemplateView):
                 {
                     "id": p["plant_specification"],
                     "name": p["plant_specification__name"],
-                    "type": p["plant_specification__plant_type__name"],
+                    "type": p["plant_specification__components__plant_type__name"],
                 }
             )
-            plant_type_map[key].add(p["plant_specification__plant_type__name"])
+            plant_type_map[key].add(p["plant_specification__components__plant_type__name"])
 
         data = []
         for item in items:

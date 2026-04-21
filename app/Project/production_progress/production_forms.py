@@ -201,11 +201,13 @@ class ProductionPlanForm(forms.ModelForm):
 
             # Configure plant_specification choice metadata
             if self.instance.pk and self.instance.plant_specification:
+                components = self.instance.plant_specification.components.all().select_related(
+                    "plant_type"
+                )
+                types = [c.plant_type.name for c in components if c.plant_type]
                 self.fields["plant_specification"].widget.choice_data = {
                     str(self.instance.plant_specification_id): {
-                        "data-type": self.instance.plant_specification.plant_type.name
-                        if self.instance.plant_specification.plant_type
-                        else ""
+                        "data-type": ", ".join(sorted(set(types))) if types else ""
                     }
                 }
 

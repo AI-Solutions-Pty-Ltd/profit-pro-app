@@ -746,12 +746,16 @@ class ProductionCostBreakdownDetailView(
             ).distinct()
             specs = ProjectPlantSpecification.objects.filter(
                 pk__in=unique_spec_ids
-            ).select_related("plant_type")
+            ).prefetch_related("components__plant_type")
 
             # Deduplicate by plant type name so we don't show the same plant type twice
             unique_specs = {}
             for spec in specs:
-                name = spec.plant_type.name if spec.plant_type else spec.name
+                # Get all type names from components
+                type_names = [
+                    c.plant_type.name for c in spec.components.all() if c.plant_type
+                ]
+                name = ", ".join(sorted(set(type_names))) if type_names else spec.name
                 if name not in unique_specs:
                     unique_specs[name] = spec
 

@@ -151,7 +151,7 @@ class ProductionPlan(BaseModel):
                 labour_specification=self.labour_activity,
                 plant_specification__isnull=False,
             )
-            .values_list("plant_specification__plant_type__name", flat=True)
+            .values_list("plant_specification__components__plant_type__name", flat=True)
             .distinct()
         )
 
@@ -238,13 +238,16 @@ class ProductionPlan(BaseModel):
             bill_no=self.bill_no,
             labour_specification=self.labour_activity,
             plant_specification__isnull=False,
-        ).select_related("plant_specification__plant_type")
+        ).prefetch_related("plant_specification__components__plant_type")
 
         # Sum hourly rate for each item (physical plant unit)
         total_hourly = Decimal("0")
         for item in items:
-            if item.plant_specification and item.plant_specification.plant_type:
-                total_hourly += item.plant_specification.plant_type.hourly_rate
+            if item.plant_specification:
+                # Sum all components of this spec
+                for comp in item.plant_specification.components.all():
+                    if comp.plant_type:
+                        total_hourly += comp.plant_type.hourly_rate
 
         return total_hourly
 
@@ -295,11 +298,8 @@ class ProductionPlan(BaseModel):
 
         # Specification-based plant cost
         spec_cost = 0
-        if self.plant_specification and self.plant_specification.plant_type:
-            # Assuming plant specification cost is plant_type hourly_rate * 8 hours (standard day) * duration
-            # We can use daily_production/rate_per_unit logic if available,
-            # but usually it's spec.hourly_cost * 8 * duration
-            spec_cost = self.plant_specification.hourly_cost * 8 * (self.duration or 0)
+        if self.plant_specification:
+            spec_cost = self.plant_specification.daily_cost * (self.duration or 0)
         else:
             # Fallback: Pull from related BOQItems
             from app.Estimator.models import BOQItem, ProjectPlantSpecification
@@ -319,15 +319,21 @@ class ProductionPlan(BaseModel):
             if spec_ids:
                 specs = ProjectPlantSpecification.objects.filter(
                     pk__in=spec_ids
-                ).select_related("plant_type")
+                ).prefetch_related("components__plant_type")
                 unique_specs = {}
                 for spec in specs:
-                    name = spec.plant_type.name if spec.plant_type else spec.name
+                    # Get all type names from components
+                    type_names = [
+                        c.plant_type.name
+                        for c in spec.components.all()
+                        if c.plant_type
+                    ]
+                    name = ", ".join(sorted(set(type_names))) if type_names else spec.name
                     if name not in unique_specs:
                         unique_specs[name] = spec
 
                 for spec in unique_specs.values():
-                    spec_cost += spec.hourly_cost * 8 * (self.duration or 0)
+                    spec_cost += spec.daily_cost * (self.duration or 0)
 
         return manual_cost + spec_cost
 

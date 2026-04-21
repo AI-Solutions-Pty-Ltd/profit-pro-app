@@ -153,7 +153,7 @@ class ProductionDailyLogListView(
                         plant_rates.values("labour_specification_id")
                         .annotate(
                             total_rate=Sum(
-                                "plant_specification__plant_type__hourly_rate"
+                                "plant_specification__components__plant_type__hourly_rate"
                             )
                         )
                         .values("total_rate")[:1]
