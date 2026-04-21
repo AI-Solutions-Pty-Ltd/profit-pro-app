@@ -7,7 +7,6 @@ from app.core.Utilities.models import BaseModel
 from app.Project.projects.projects_models import (
     Category,
     Discipline,
-    SubCategory,
 )
 
 
@@ -102,13 +101,13 @@ class ProjectDocument(BaseModel):
         related_name="documents",
         help_text="Project category (e.g., Education, Health, Roads)",
     )
-    project_sub_category = models.ForeignKey(
-        SubCategory,
+    area = models.ForeignKey(
+        "Account.Municipality",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="documents",
-        help_text="Project category (e.g., Education, Health, Roads)",
+        help_text="Project area (Municipality)",
     )
     project_discipline = models.ForeignKey(
         Discipline,

@@ -77,7 +77,10 @@
             {% for group, options, index in widget.optgroups %}
                 {% for option in options %}
                     <option value="{{ option.value }}"
-                            {% if option.selected %}selected{% endif %}>{{ option.label }}</option>
+                            {% if option.selected %}selected{% endif %}
+                            {% for key, val in option.data.items %}{{ key }}="{{ val }}"{% endfor %}>
+                        {{ option.label }}
+                    </option>
                 {% endfor %}
             {% endfor %}
         </select>

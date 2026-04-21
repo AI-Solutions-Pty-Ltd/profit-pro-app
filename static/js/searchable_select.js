@@ -16,7 +16,7 @@ function toggleSearchableSelect(btn) {
 
     const dropdown = container.querySelector('.searchable-dropdown') || container.querySelector('[id$="-dropdown"]');
     const arrow = container.querySelector('[id$="-selector-arrow"]');
-    
+
     if (!dropdown) return;
 
     const isHidden = dropdown.classList.contains('hidden');
@@ -37,7 +37,7 @@ function toggleSearchableSelect(btn) {
         dropdown.offsetHeight;
         dropdown.classList.remove('scale-95', 'opacity-0');
         dropdown.classList.add('scale-100', 'opacity-100');
-        
+
         if (arrow) arrow.classList.add('rotate-180');
         const searchInput = dropdown.querySelector('input[type="text"]');
         if (searchInput) {
@@ -65,7 +65,7 @@ function filterSearchableOptions(input) {
     const items = container.querySelectorAll('.option-item');
     const sections = container.querySelectorAll('.searchable-section');
     const noResults = container.querySelector('[id$="-no-results"]');
-    
+
     let hasResults = false;
 
     items.forEach(item => {
@@ -108,11 +108,20 @@ function selectSearchableOption(target, id, label) {
         hiddenInput.value = id;
         hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
     }
-    
+
     if (displayLabel) displayLabel.textContent = label;
-    
-    // Autofill Logic: Check for data attributes to populate other fields in the form
-    // We look for common field names like rate, salary, hourly_rate
+
+    // Trigger field-specific selection logic via custom event
+    const selectionEvent = new CustomEvent('searchableSelect:selected', {
+        detail: {
+            id: id,
+            label: label,
+            dataset: target.dataset
+        },
+        bubbles: true
+    });
+    container.dispatchEvent(selectionEvent);
+
     const rate = target.dataset.rate;
     if (rate) {
         // Try various common rate-related field IDs
@@ -212,20 +221,20 @@ function submitDynamicQuickCreate(event) {
             'X-CSRFToken': formData.get('csrfmiddlewaretoken')
         }
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const widgetId = activeQuickCreateSelectId;
-            const optionsList = document.getElementById(`${widgetId}-options-list`);
-            
-            if (optionsList) {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'w-full text-left flex items-center px-4 py-2.5 rounded-lg hover:bg-indigo-50/80 group transition-all duration-200 option-item';
-                btn.dataset.id = data.id;
-                btn.dataset.label = data.name.toLowerCase();
-                btn.onclick = (e) => selectSearchableOption(e.target.closest('button'), data.id, data.name);
-                btn.innerHTML = `
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const widgetId = activeQuickCreateSelectId;
+                const optionsList = document.getElementById(`${widgetId}-options-list`);
+
+                if (optionsList) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'w-full text-left flex items-center px-4 py-2.5 rounded-lg hover:bg-indigo-50/80 group transition-all duration-200 option-item';
+                    btn.dataset.id = data.id;
+                    btn.dataset.label = data.name.toLowerCase();
+                    btn.onclick = (e) => selectSearchableOption(e.target.closest('button'), data.id, data.name);
+                    btn.innerHTML = `
                     <div class="flex-1">
                         <span class="block text-sm font-semibold text-gray-700 group-hover:text-indigo-900">${data.name}</span>
                     </div>
@@ -234,49 +243,49 @@ function submitDynamicQuickCreate(event) {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                         </svg>
                     </div>`;
-                optionsList.insertBefore(btn, optionsList.firstChild);
-            }
+                    optionsList.insertBefore(btn, optionsList.firstChild);
+                }
 
-            // Also append to the native select to ensure value persistence
-            const nativeSelect = document.getElementById(widgetId);
-            if (nativeSelect && nativeSelect.tagName === 'SELECT') {
-                const opt = document.createElement('option');
-                opt.value = data.id;
-                opt.textContent = data.name;
-                opt.selected = true;
-                nativeSelect.appendChild(opt);
-            }
+                // Also append to the native select to ensure value persistence
+                const nativeSelect = document.getElementById(widgetId);
+                if (nativeSelect && nativeSelect.tagName === 'SELECT') {
+                    const opt = document.createElement('option');
+                    opt.value = data.id;
+                    opt.textContent = data.name;
+                    opt.selected = true;
+                    nativeSelect.appendChild(opt);
+                }
 
-            // Select the new option immediately
-            const widgetContainer = document.getElementById(`${widgetId}-selector-container`);
-            if (widgetContainer) {
-                selectSearchableOption(widgetContainer, data.id, data.name);
-            }
-            
-            closeDynamicQuickCreateModal();
-            
-            if (typeof showToast === 'function') {
-                showToast('Created and selected successfully!', 'success');
-            }
-        } else {
-            if (errorContainer && errorList) {
-                errorContainer.classList.remove('hidden');
-                errorList.innerHTML = '';
-                for (const [field, errors] of Object.entries(data.errors)) {
-                    errorList.innerHTML += `<p class="font-bold uppercase text-[10px] tracking-tight mt-1">${field}:</p> ${errors.join(', ')}<br>`;
+                // Select the new option immediately
+                const widgetContainer = document.getElementById(`${widgetId}-selector-container`);
+                if (widgetContainer) {
+                    selectSearchableOption(widgetContainer, data.id, data.name);
+                }
+
+                closeDynamicQuickCreateModal();
+
+                if (typeof showToast === 'function') {
+                    showToast('Created and selected successfully!', 'success');
+                }
+            } else {
+                if (errorContainer && errorList) {
+                    errorContainer.classList.remove('hidden');
+                    errorList.innerHTML = '';
+                    for (const [field, errors] of Object.entries(data.errors)) {
+                        errorList.innerHTML += `<p class="font-bold uppercase text-[10px] tracking-tight mt-1">${field}:</p> ${errors.join(', ')}<br>`;
+                    }
                 }
             }
-        }
-    })
-    .finally(() => {
-        if (submitBtn) submitBtn.disabled = false;
-        if (submitText) submitText.textContent = 'Create & Select';
-        if (submitSpinner) submitSpinner.classList.add('hidden');
-    });
+        })
+        .finally(() => {
+            if (submitBtn) submitBtn.disabled = false;
+            if (submitText) submitText.textContent = 'Create & Select';
+            if (submitSpinner) submitSpinner.classList.add('hidden');
+        });
 }
 
 // Global click handler to close dropdowns when clicking outside
-document.addEventListener('click', function(event) {
+document.addEventListener('click', function (event) {
     if (!event.target.closest('.searchable-select-container')) {
         document.querySelectorAll('.searchable-dropdown, [id$="-dropdown"]').forEach(dropdown => {
             dropdown.classList.add('hidden');
@@ -289,13 +298,13 @@ document.addEventListener('click', function(event) {
 
 // Polyfill for closest if needed (though modern browsers support it)
 if (window.Element && !Element.prototype.closest) {
-    Element.prototype.closest = function(s) {
+    Element.prototype.closest = function (s) {
         var matches = (this.document || this.ownerDocument).querySelectorAll(s),
             i,
             el = this;
         do {
             i = matches.length;
-            while (--i >= 0 && matches.item(i) !== el) {};
+            while (--i >= 0 && matches.item(i) !== el) { };
         } while ((i < 0) && (el = el.parentElement));
         return el;
     };

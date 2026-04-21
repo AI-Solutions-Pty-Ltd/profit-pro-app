@@ -11,7 +11,6 @@ from app.Project.models import (
     Category,
     Discipline,
     Project,
-    SubCategory,
 )
 
 
@@ -123,13 +122,13 @@ class RFI(BaseModel):
         related_name="rfis",
         help_text="WBS Level 1 classification",
     )
-    project_sub_category = models.ForeignKey(
-        SubCategory,
+    area = models.ForeignKey(
+        "Account.Municipality",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="rfis",
-        help_text="WBS Level 2 classification",
+        help_text="Project area (Municipality)",
     )
     project_discipline = models.ForeignKey(
         Discipline,

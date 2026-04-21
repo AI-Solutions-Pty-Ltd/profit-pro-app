@@ -5,20 +5,7 @@
 {% block content %}
     <!-- Dashboard Navigation Tabs -->
     <div class="bg-white rounded-lg shadow-sm mb-6 sticky top-0 z-10">
-        <div class="border-b border-gray-200">
-            <nav class="-mb-px flex space-x-8 px-6" aria-label="Dashboard tabs">
-                <a href="{% url 'project:company-dashboard' %}"
-                   class="border-b-2 border-indigo-500 py-4 px-1 text-sm font-medium text-indigo-600">
-                    {% heroicon_outline "building-office" class="w-5 h-5 inline mr-2" %}
-                    Business Dashboard
-                </a>
-                <a href="#"
-                   class="border-b-2 border-indigo-500 py-4 px-1 text-sm font-medium text-indigo-600">
-                    {% heroicon_outline "document-text" class="w-5 h-5 inline mr-2" %}
-                    Financial Report
-                </a>
-            </nav>
-        </div>
+        <div class="border-b border-gray-200">{% include "company/reports_nav.html" with tab="dashboard" %}</div>
     </div>
     <!-- Page Header -->
     <header class="bg-white shadow-sm rounded-lg mb-6">
@@ -32,7 +19,9 @@
                 <!-- Filter Actions -->
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                     <!-- Company Jump -->
-                    <form method="get" class="centered-content">
+                    <form method="get"
+                          action="{% url 'project:company-dashboard' %}"
+                          class="centered-content">
                         <div class="min-w-[200px]">{{ filter_form.company|as_crispy_field }}</div>
                     </form>
                 </div>
@@ -126,7 +115,8 @@
     </div>
     <!-- ==========================================
              Group 2 - Income Statement
-             ========================================== -->
+
+========================================== -->
     <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-4">
         <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-2">
             <h5 class="text-sm font-semibold text-white flex items-center">
@@ -140,34 +130,36 @@
         </div>
         <div class="p-4">
             <!-- Income Statement Summary -->
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-                <!-- Revenue -->
-                <div class="bg-green-50 rounded-lg p-2 text-center border border-green-100">
-                    <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Total Profits</p>
-                    <p class="text-lg font-bold text-green-700 mt-1">R {{ revenue|default:0|floatformat:0|intcomma }}</p>
-                </div>
-                <!-- Gross Profit -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <!-- Baseline Profit -->
                 <div class="bg-blue-50 rounded-lg p-2 text-center border border-blue-100">
-                    <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Gross Profit</p>
-                    <p class="text-lg font-bold text-blue-700 mt-1">R {{ gross_profit|default:0|floatformat:0|intcomma }}</p>
-                    <p class="text-xs text-blue-500">({{ gross_profit_margin|default:0|floatformat:1 }}%)</p>
+                    <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Baseline Profit</p>
+                    <p class="text-lg font-bold text-blue-700 mt-1">R {{ baseline_profit|default:0|floatformat:0|intcomma }}</p>
+                    <p class="text-xs text-blue-500">({{ baseline_profit_margin|default:0|floatformat:1 }}%)</p>
                 </div>
-                <!-- Variable Costs -->
-                <div class="bg-orange-50 rounded-lg p-2 text-center border border-orange-100">
-                    <p class="text-xs font-medium text-orange-600 uppercase tracking-wider">Variable Costs</p>
-                    <p class="text-lg font-bold text-orange-700 mt-1">R {{ variable_costs|default:0|floatformat:0|intcomma }}</p>
+                <!-- Progress Profit -->
+                <div class="bg-green-50 rounded-lg p-2 text-center border border-green-100">
+                    <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Progress Profit</p>
+                    <p class="text-lg font-bold text-green-700 mt-1">
+                        R {{ progress_profit|default:0|floatformat:0|intcomma
+                        }}
+                    </p>
+                    <p class="text-xs text-green-500">({{ progress_profit_margin|default:0|floatformat:1 }}%)</p>
                 </div>
-                <!-- Net Profit -->
-                <div class="bg-purple-50 rounded-lg p-2 text-center border border-purple-100">
-                    <p class="text-xs font-medium text-purple-600 uppercase tracking-wider">Net Profit</p>
-                    <p class="text-lg font-bold text-purple-700 mt-1">R {{ net_profit|default:0|floatformat:0|intcomma }}</p>
-                    <p class="text-xs text-purple-500">({{ net_profit_margin|default:0|floatformat:1 }}%)</p>
-                </div>
-                <!-- Forecast Profit at Completion -->
+                <!-- Forecast Profit -->
                 <div class="bg-amber-50 rounded-lg p-2 text-center border border-amber-100">
                     <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Forecast Profit</p>
-                    <p class="text-lg font-bold text-amber-700 mt-1">R {{ forecast_profit|default:0|floatformat:0|intcomma }}</p>
-                    <p class="text-xs text-amber-500">at completion</p>
+                    <p class="text-lg font-bold text-amber-700 mt-1">
+                        R {{ forecast_profit|default:0|floatformat:0|intcomma
+                        }}
+                    </p>
+                    <p class="text-xs text-amber-500">({{ forecast_profit_margin|default:0|floatformat:1 }}%)</p>
+                </div>
+                <!-- Overheads -->
+                <div class="bg-rose-50 rounded-lg p-2 text-center border border-rose-100">
+                    <p class="text-xs font-medium text-rose-600 uppercase tracking-wider">Overheads</p>
+                    <p class="text-lg font-bold text-rose-700 mt-1">R {{ total_overheads|default:0|floatformat:0|intcomma }}</p>
+                    <p class="text-xs text-rose-500">({{ overheads_percentage|default:0|floatformat:1 }}%)</p>
                 </div>
             </div>
             <!-- Profit Trend Charts -->
@@ -209,127 +201,250 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Performance Index Charts (6 months)
+    document.addEventListener('DOMContentLoaded', function () {
+
+        // Performance Index Charts (6 months)
 
 
-            // Profit Trend Charts (6 months)
-            const profitLabels = {{ profit_labels|safe }};
-            const grossProfitData = {{ gross_profit_percentage_data|safe }};
-            const netProfitData = {{ net_profit_data|safe }};
-            
-            // Gross Profit Chart
-            const grossProfitCtx = document.getElementById('grossProfitChart').getContext('2d');
-            new Chart(grossProfitCtx, {
-                type: 'line',
-                data: {
-                    labels: profitLabels,
-                    datasets: [{
-                        label: 'Gross Profit %',
-                        data: grossProfitData,
-                        borderColor: 'rgb(59, 130, 246)',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        fill: true,
-                        borderWidth: 2,
-                        tension: 0.3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            padding: 10,
-                            titleFont: { size: 11 },
-                            bodyFont: { size: 10 },
-                            callbacks: {
-                                label: function(context) {
-                                    return `Gross Profit: ${context.parsed.y.toFixed(1)}%`;
-                                }
-                            }
+
+
+
+        // Profit Trend Charts (6 months)
+
+        const profitLabels = {{ profit_labels| safe
+    }};
+
+    const grossProfitData = {{ gross_profit_percentage_data| safe }};
+
+    const netProfitData = {{ net_profit_data| safe }};
+
+
+
+    // Gross Profit Chart
+
+    const grossProfitCtx = document.getElementById('grossProfitChart').getContext('2d');
+
+    new Chart(grossProfitCtx, {
+
+        type: 'line',
+
+        data: {
+
+            labels: profitLabels,
+
+            datasets: [{
+
+                label: 'Gross Profit %',
+
+                data: grossProfitData,
+
+                borderColor: 'rgb(59, 130, 246)',
+
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+
+                fill: true,
+
+                borderWidth: 2,
+
+                tension: 0.3
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            plugins: {
+
+                legend: { display: false },
+
+                tooltip: {
+
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+
+                    padding: 10,
+
+                    titleFont: { size: 11 },
+
+                    bodyFont: { size: 10 },
+
+                    callbacks: {
+
+                        label: function (context) {
+
+                            return `Gross Profit: ${context.parsed.y.toFixed(1)}%`;
+
                         }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: { size: 9 } }
-                        },
-                        y: {
-                            min: 0,
-                            max: 30,
-                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                            ticks: { 
-                                font: { size: 9 },
-                                callback: function(value) {
-                                    return value + '%';
-                                }
-                            }
-                        }
-                    },
-                    elements: {
-                        point: { radius: 3, hoverRadius: 5 }
+
                     }
-                }
-            });
 
-            // Net Profit Chart
-            const netProfitCtx = document.getElementById('netProfitChart').getContext('2d');
-            new Chart(netProfitCtx, {
-                type: 'line',
-                data: {
-                    labels: profitLabels,
-                    datasets: [{
-                        label: 'Net Profit',
-                        data: netProfitData,
-                        borderColor: 'rgb(147, 51, 234)',
-                        backgroundColor: 'rgba(147, 51, 234, 0.1)',
-                        fill: true,
-                        borderWidth: 2,
-                        tension: 0.3
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            padding: 10,
-                            titleFont: { size: 11 },
-                            bodyFont: { size: 10 },
-                            callbacks: {
-                                label: function(context) {
-                                    return `Net Profit: R ${context.parsed.y.toLocaleString()}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: { size: 9 } }
-                        },
-                        y: {
-                            min: 0,
-                            max: 2000000,
-                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
-                            ticks: { 
-                                font: { size: 9 },
-                                callback: function(value) {
-                                    return 'R ' + (value / 1000000).toFixed(1) + 'M';
-                                }
-                            }
-                        }
-                    },
-                    elements: {
-                        point: { radius: 3, hoverRadius: 5 }
-                    }
                 }
-            });
+
+            },
+
+            scales: {
+
+                x: {
+
+                    grid: { display: false },
+
+                    ticks: { font: { size: 9 } }
+
+                },
+
+                y: {
+
+                    min: 0,
+
+                    max: 30,
+
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+
+                    ticks: {
+
+                        font: { size: 9 },
+
+                        callback: function (value) {
+
+                            return value + '%';
+
+                        }
+
+                    }
+
+                }
+
+            },
+
+            elements: {
+
+                point: { radius: 3, hoverRadius: 5 }
+
+            }
+
+        }
+
+    });
+
+
+
+    // Net Profit Chart
+
+    const netProfitCtx = document.getElementById('netProfitChart').getContext('2d');
+
+    new Chart(netProfitCtx, {
+
+        type: 'line',
+
+        data: {
+
+            labels: profitLabels,
+
+            datasets: [{
+
+                label: 'Net Profit',
+
+                data: netProfitData,
+
+                borderColor: 'rgb(147, 51, 234)',
+
+                backgroundColor: 'rgba(147, 51, 234, 0.1)',
+
+                fill: true,
+
+                borderWidth: 2,
+
+                tension: 0.3
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            plugins: {
+
+                legend: { display: false },
+
+                tooltip: {
+
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+
+                    padding: 10,
+
+                    titleFont: { size: 11 },
+
+                    bodyFont: { size: 10 },
+
+                    callbacks: {
+
+                        label: function (context) {
+
+                            return `Net Profit: R ${context.parsed.y.toLocaleString()}`;
+
+                        }
+
+                    }
+
+                }
+
+            },
+
+            scales: {
+
+                x: {
+
+                    grid: { display: false },
+
+                    ticks: { font: { size: 9 } }
+
+                },
+
+                y: {
+
+                    min: 0,
+
+                    max: 2000000,
+
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+
+                    ticks: {
+
+                        font: { size: 9 },
+
+                        callback: function (value) {
+
+                            return 'R ' + (value / 1000000).toFixed(1) + 'M';
+
+                        }
+
+                    }
+
+                }
+
+            },
+
+            elements: {
+
+                point: { radius: 3, hoverRadius: 5 }
+
+            }
+
+        }
+
+    });
+
+
 
         });
+
     </script>
 {% endblock content %}

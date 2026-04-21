@@ -89,24 +89,22 @@ class ProjectAccessMixin(UserHasGroupGenericMixin, BreadcrumbMixin):
         )
 
 
-class FinancialReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView):
-    """Financial Report - Project List with Budget, Forecast, Variances, Certified, CPI & SPI."""
+class PortfolioReportMixin:
+    """Mixin for portfolio-level reports with common filtering logic."""
 
     model = Project
-    template_name = "portfolio/reports/financial_report.html"
     context_object_name = "projects"
     permissions = ["contractor"]
     required_tiers = [Subscription.FREE_TIER]
-
     filter_form: ProjectFilterForm | None = None
 
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
-        super().setup(request, *args, **kwargs)
+        super().setup(request, *args, **kwargs)  # type: ignore
+        from app.Account.models import Municipality
         from app.Project.models import (
             Company,
             ProjectDiscipline,
-            ProjectSubCategory,
         )
 
         # Get user's projects
@@ -121,13 +119,11 @@ class FinancialReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListVie
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique categories, subcategories and disciplines from user's projects
+        # Get unique categories, areas and disciplines from user's projects
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        subcategory_queryset = ProjectSubCategory.objects.filter(
-            projects__in=projects
-        ).distinct()
+        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -139,31 +135,13 @@ class FinancialReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListVie
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
-            subcategory_queryset=subcategory_queryset,
+            area_queryset=area_queryset,
             discipline_queryset=discipline_queryset,
         )
 
-    def get_breadcrumbs(self: "FinancialReportView") -> list[BreadcrumbItem]:
-        """Return breadcrumbs for financial report."""
-        return [
-            BreadcrumbItem(
-                title="Portfolio",
-                url=reverse("project:portfolio-dashboard"),
-            ),
-            BreadcrumbItem(
-                title="Reports",
-                url=None,
-            ),
-            BreadcrumbItem(
-                title="Financial Report",
-                url=None,
-            ),
-        ]
-
-    def get_queryset(self: "FinancialReportView") -> QuerySet[Project]:
-        """Get filtered projects for financial report view."""
-        # Initialize filter form with user's projects
-        user: Account = self.request.user  # type: ignore
+    def get_queryset(self: Any) -> QuerySet[Project]:
+        """Get filtered projects for report view."""
+        user: Account = self.request.user
         projects = user.get_projects.order_by("-created_at")
 
         # Apply filters if valid
@@ -171,9 +149,9 @@ class FinancialReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListVie
             category = self.filter_form.cleaned_data.get("project_category")
             if category:
                 projects = projects.filter(project_category=category)
-            subcategory = self.filter_form.cleaned_data.get("project_subcategory")
-            if subcategory:
-                projects = projects.filter(project_sub_category=subcategory)
+            area = self.filter_form.cleaned_data.get("area")
+            if area:
+                projects = projects.filter(area=area)
             discipline = self.filter_form.cleaned_data.get("project_discipline")
             if discipline:
                 projects = projects.filter(project_discipline=discipline)
@@ -191,6 +169,31 @@ class FinancialReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListVie
                 projects = projects.filter(contractor=contractor)
 
         return projects
+
+
+class FinancialReportView(
+    SubscriptionRequiredMixin, PortfolioReportMixin, ProjectAccessMixin, ListView
+):
+    """Financial Report - Project List with Budget, Forecast, Variances, Certified, CPI & SPI."""
+
+    template_name = "portfolio/reports/financial_report.html"
+
+    def get_breadcrumbs(self: "FinancialReportView") -> list[BreadcrumbItem]:
+        """Return breadcrumbs for financial report."""
+        return [
+            BreadcrumbItem(
+                title="Portfolio",
+                url=reverse("project:portfolio-dashboard"),
+            ),
+            BreadcrumbItem(
+                title="Reports",
+                url=None,
+            ),
+            BreadcrumbItem(
+                title="Financial Report",
+                url=None,
+            ),
+        ]
 
     def get_context_data(self: "FinancialReportView", **kwargs: Any) -> dict[str, Any]:
         """Add financial metrics to context."""
@@ -341,6 +344,98 @@ class FinancialReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListVie
         return context
 
 
+class PortfolioProductionReportView(
+    SubscriptionRequiredMixin, PortfolioReportMixin, ProjectAccessMixin, ListView
+):
+    """Production Report - Project List with Productivity Metrics."""
+
+    template_name = "portfolio/reports/production_report.html"
+
+    def get_breadcrumbs(self: "PortfolioProductionReportView") -> list[BreadcrumbItem]:
+        return [
+            BreadcrumbItem(
+                title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(title="Reports", url=None),
+            BreadcrumbItem(title="Production Report", url=None),
+        ]
+
+    def get_context_data(
+        self: "PortfolioProductionReportView", **kwargs: Any
+    ) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        projects: QuerySet[Project] = context["projects"]
+        current_date = datetime.now()
+
+        report_data = []
+        for project in projects:
+            # Aggregate productivity metrics from ProductivityLog for this project
+            try:
+                productivity_index = project.get_cost_performance_index(current_date)
+                efficiency = project.get_schedule_performance_index(current_date)
+            except (ZeroDivisionError, TypeError):
+                productivity_index = None
+                efficiency = None
+
+            report_data.append(
+                {
+                    "project": project,
+                    "productivity_index": productivity_index,
+                    "efficiency": efficiency,
+                }
+            )
+
+        context["report_data"] = report_data
+        context["filter_form"] = self.filter_form
+        return context
+
+
+class PortfolioProgressReportView(
+    SubscriptionRequiredMixin, PortfolioReportMixin, ProjectAccessMixin, ListView
+):
+    """Progress Report - Project List with Construction Progress Metrics."""
+
+    template_name = "portfolio/reports/progress_report.html"
+
+    def get_breadcrumbs(self: "PortfolioProgressReportView") -> list[BreadcrumbItem]:
+        return [
+            BreadcrumbItem(
+                title="Portfolio", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(title="Reports", url=None),
+            BreadcrumbItem(title="Progress Report", url=None),
+        ]
+
+    def get_context_data(
+        self: "PortfolioProgressReportView", **kwargs: Any
+    ) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        projects: QuerySet[Project] = context["projects"]
+        current_date = datetime.now()
+
+        report_data = []
+        for project in projects:
+            # Construction progress metrics
+            try:
+                percentage_complete = project.get_actual_cost_percentage(current_date)
+            except (ZeroDivisionError, TypeError, AttributeError):
+                percentage_complete = 0
+
+            report_data.append(
+                {
+                    "project": project,
+                    "percentage_complete": percentage_complete,
+                    "status": project.status,
+                    "start_date": project.start_date,
+                    "end_date": project.end_date,
+                }
+            )
+
+        context["report_data"] = report_data
+        context["filter_form"] = self.filter_form
+        return context
+
+
 class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView):
     """Schedule Report - Project List with Start/End Dates, Durations, Progress & SPI."""
 
@@ -355,10 +450,10 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
+        from app.Account.models import Municipality
         from app.Project.models import (
             Company,
             ProjectDiscipline,
-            ProjectSubCategory,
         )
 
         # Get user's projects
@@ -373,13 +468,11 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique categories, subcategories and disciplines from user's projects
+        # Get unique categories, areas and disciplines from user's projects
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        subcategory_queryset = ProjectSubCategory.objects.filter(
-            projects__in=projects
-        ).distinct()
+        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -391,7 +484,7 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
-            subcategory_queryset=subcategory_queryset,
+            area_queryset=area_queryset,
             discipline_queryset=discipline_queryset,
         )
 
@@ -421,9 +514,9 @@ class ScheduleReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             category = self.filter_form.cleaned_data.get("project_category")
             if category:
                 projects = projects.filter(project_category=category)
-            subcategory = self.filter_form.cleaned_data.get("project_subcategory")
-            if subcategory:
-                projects = projects.filter(project_sub_category=subcategory)
+            area = self.filter_form.cleaned_data.get("area")
+            if area:
+                projects = projects.filter(area=area)
             discipline = self.filter_form.cleaned_data.get("project_discipline")
             if discipline:
                 projects = projects.filter(project_discipline=discipline)
@@ -559,10 +652,10 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
+        from app.Account.models import Municipality
         from app.Project.models import (
             Company,
             ProjectDiscipline,
-            ProjectSubCategory,
         )
 
         # Get user's projects
@@ -577,13 +670,11 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique categories, subcategories and disciplines from user's projects
+        # Get unique categories, areas and disciplines from user's projects
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        subcategory_queryset = ProjectSubCategory.objects.filter(
-            projects__in=projects
-        ).distinct()
+        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -595,7 +686,7 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
-            subcategory_queryset=subcategory_queryset,
+            area_queryset=area_queryset,
             discipline_queryset=discipline_queryset,
         )
 
@@ -625,9 +716,9 @@ class CashflowReportView(SubscriptionRequiredMixin, ProjectAccessMixin, ListView
             category = self.filter_form.cleaned_data.get("project_category")
             if category:
                 projects = projects.filter(project_category=category)
-            subcategory = self.filter_form.cleaned_data.get("project_subcategory")
-            if subcategory:
-                projects = projects.filter(project_sub_category=subcategory)
+            area = self.filter_form.cleaned_data.get("area")
+            if area:
+                projects = projects.filter(area=area)
             discipline = self.filter_form.cleaned_data.get("project_discipline")
             if discipline:
                 projects = projects.filter(project_discipline=discipline)
@@ -765,10 +856,10 @@ class TrendReportView(SubscriptionRequiredMixin, ProjectAccessMixin, TemplateVie
     def setup(self, request, *args, **kwargs):
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
+        from app.Account.models import Municipality
         from app.Project.models import (
             Company,
             ProjectDiscipline,
-            ProjectSubCategory,
         )
 
         # Get user's projects
@@ -783,13 +874,11 @@ class TrendReportView(SubscriptionRequiredMixin, ProjectAccessMixin, TemplateVie
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique categories, subcategories and disciplines from user's projects
+        # Get unique categories, areas and disciplines from user's projects
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        subcategory_queryset = ProjectSubCategory.objects.filter(
-            projects__in=projects
-        ).distinct()
+        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
@@ -801,7 +890,7 @@ class TrendReportView(SubscriptionRequiredMixin, ProjectAccessMixin, TemplateVie
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
-            subcategory_queryset=subcategory_queryset,
+            area_queryset=area_queryset,
             discipline_queryset=discipline_queryset,
         )
 
