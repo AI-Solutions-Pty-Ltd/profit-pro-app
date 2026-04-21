@@ -9,6 +9,7 @@ from app.Project.models import (
     MaterialCostTracker,
     OverheadCostTracker,
     PlantCostTracker,
+    ProfitabilityBaseline,
     SubcontractorCostTracker,
 )
 
@@ -172,6 +173,94 @@ class MaterialCostTrackerForm(ProfitabilityBaseForm):
             }
 
 
+class MaterialCostTrackerBulkHeaderForm(forms.Form):
+    """Header form for shared material tracking data (invoice/receipt)."""
+
+    date = forms.DateField(
+        widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+        help_text="Date of receipt",
+    )
+    invoice_number = forms.CharField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"placeholder": "Invoice #", "class": "form-control"}
+        ),
+    )
+    supplier = forms.CharField(
+        max_length=255,
+        required=False,
+        widget=forms.TextInput(
+            attrs={"placeholder": "Supplier Name", "class": "form-control"}
+        ),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+
+
+class MaterialCostTrackerBulkItemForm(forms.ModelForm):
+    """Line item form for material cost entries."""
+
+    class Meta:
+        model = MaterialCostTracker
+        fields = [
+            "material_entity",
+            "quantity",
+            "rate",
+            "intended_usage",
+            "comments",
+        ]
+        widgets = {
+            "material_entity": SearchableSelectWidget(
+                create_url=True,
+                resource_type="material_entity",
+                attrs={"class": "form-control select2-input"},
+            ),
+            "quantity": forms.NumberInput(
+                attrs={"placeholder": "Qty", "step": "0.01", "class": "form-control"}
+            ),
+            "rate": forms.NumberInput(
+                attrs={"placeholder": "Rate", "step": "0.01", "class": "form-control"}
+            ),
+            "intended_usage": forms.TextInput(
+                attrs={"placeholder": "Usage", "class": "form-control"}
+            ),
+            "comments": forms.TextInput(
+                attrs={"placeholder": "Comments", "class": "form-control"}
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.project = kwargs.pop("project", None)
+        super().__init__(*args, **kwargs)
+        if self.project:
+            self.fields[
+                "material_entity"
+            ].queryset = self.project.materialentity_entities.all()
+            # Add rate data for auto-fill in JS
+            entities = self.project.materialentity_entities.all()
+            self.fields["material_entity"].widget.choice_data = {
+                str(e.id): {"data-rate": str(e.rate)} for e in entities
+            }
+
+        # Apply basic styling
+        for _name, field in self.fields.items():
+            field.widget.attrs.setdefault("class", "")
+            if "form-control" not in field.widget.attrs["class"]:
+                field.widget.attrs["class"] += " form-control"
+
+
+MaterialCostTrackerItemFormSet = forms.modelformset_factory(
+    MaterialCostTracker,
+    form=MaterialCostTrackerBulkItemForm,
+    extra=0,
+    can_delete=True,
+)
+
+
 class PlantCostTrackerForm(ProfitabilityBaseForm):
     class Meta:
         model = PlantCostTracker
@@ -203,3 +292,31 @@ class PlantCostTrackerForm(ProfitabilityBaseForm):
             self.fields["plant_entity"].widget.choice_data = {
                 str(e.id): {"data-rate": str(e.rate)} for e in entities
             }
+
+
+class ProfitabilityBaselineForm(ProfitabilityBaseForm):
+    class Meta:
+        model = ProfitabilityBaseline
+        fields = [
+            "cost_of_sales_percent",
+            "operating_expenses_percent",
+            "net_profit_percent",
+        ]
+        labels = {
+            "cost_of_sales_percent": "Cost of Sales (%)",
+            "operating_expenses_percent": "Operating Expenses (%)",
+            "net_profit_percent": "Net Profit (%)",
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        cos = cleaned_data.get("cost_of_sales_percent") or 0
+        opex = cleaned_data.get("operating_expenses_percent") or 0
+        profit = cleaned_data.get("net_profit_percent") or 0
+
+        total = cos + opex + profit
+        if total != 100:
+            raise forms.ValidationError(
+                f"Percentages must sum to 100%. Current total: {total}%"
+            )
+        return cleaned_data

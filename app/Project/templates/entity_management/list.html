@@ -28,6 +28,50 @@
     </a>
 {% endblock header_actions %}
 {% block entity_content %}
+    <!-- Bulk Import Section -->
+    <div class="mb-6 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+            <h3 class="text-sm font-semibold text-gray-900 flex items-center">
+                {% heroicon_outline "document-arrow-up" size="18" class="mr-2 text-indigo-500" %}
+                Bulk Import from Excel
+            </h3>
+        </div>
+        <div class="p-6">
+            <form action="{% url 'project:entity-excel-upload' project.pk entity_type %}"
+                  method="post"
+                  enctype="multipart/form-data"
+                  class="flex flex-col space-y-4 md:flex-row md:items-end md:space-y-0 md:space-x-4">
+                {% csrf_token %}
+                <div class="flex-grow">
+                    <label for="excel_file"
+                           class="block mb-2 text-xs font-semibold text-gray-500 uppercase">
+                        Select Excel File (.xlsx)
+                    </label>
+                    <input type="file"
+                           name="excel_file"
+                           id="excel_file"
+                           accept=".xlsx"
+                           required
+                           class="block w-full text-sm text-gray-500 rounded-md border border-gray-300 shadow-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 focus:ring-indigo-500 focus:border-indigo-500" />
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button type="submit"
+                            class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow-sm transition-all hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        {% heroicon_outline "arrow-up-tray" size="18" class="mr-2" %}
+                        Upload
+                    </button>
+                    <a href="{% url 'project:entity-excel-template' project.pk entity_type %}"
+                       class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md shadow-sm ring-1 ring-inset ring-gray-300 transition-all hover:bg-gray-50">
+                        {% heroicon_outline "arrow-down-tray" size="18" class="mr-2 text-gray-400" %}
+                        Download Template
+                    </a>
+                </div>
+            </form>
+            <p class="mt-3 text-xs text-gray-400">
+                Download the template, fill in the details, and upload it to bulk create definitions.
+            </p>
+        </div>
+    </div>
     <div>
         <div class="overflow-hidden bg-white rounded-xl border border-gray-200 shadow-sm">
             <div class="overflow-x-auto">

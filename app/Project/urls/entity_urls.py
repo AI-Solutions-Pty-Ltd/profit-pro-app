@@ -116,4 +116,15 @@ urlpatterns = [
         entity_views.EntityDetailView.as_view(),
         name="entity-detail-json",
     ),
+    # Excel Bulk Operations
+    path(
+        "<int:project_pk>/entities/<str:entity_type>/download-template/",
+        entity_views.EntityExcelTemplateView.as_view(),
+        name="entity-excel-template",
+    ),
+    path(
+        "<int:project_pk>/entities/<str:entity_type>/upload-excel/",
+        entity_views.EntityExcelUploadView.as_view(),
+        name="entity-excel-upload",
+    ),
 ]

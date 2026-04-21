@@ -1,0 +1,148 @@
+{% extends "profitability/base_profitability.html" %}
+{% load crispy_forms_tags %}
+{% load heroicons %}
+{% block profitability_content %}
+    <div class="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <!-- Header Section -->
+        <div class="flex flex-col gap-4 mb-8 md:flex-row md:items-center md:justify-between">
+            <div>
+                <h2 class="text-2xl font-bold tracking-tight text-gray-900">Baseline Assumptions</h2>
+                <p class="mt-1 text-sm text-gray-500">Define the targeted financial percentages for this project.</p>
+            </div>
+            <div class="flex gap-2 items-center">
+                <div class="badge badge-info gap-2 p-4 font-semibold uppercase tracking-wider text-[10px]">
+                    {% heroicon_outline "information-circle" class="w-4 h-4" %}
+                    Audit Ready
+                </div>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <!-- Summary Cards -->
+            <div class="space-y-6 lg:col-span-1">
+                <div class="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                    <h3 class="mb-4 text-sm font-bold tracking-widest text-gray-900 uppercase">Active Assumptions</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-4 bg-indigo-50 rounded-xl border border-indigo-100">
+                            <div class="flex gap-3 items-center">
+                                <div class="p-2 bg-white rounded-lg shadow-sm">{% heroicon_outline "banknotes" class="w-5 h-5 text-indigo-600" %}</div>
+                                <span class="text-sm font-semibold text-indigo-900">Cost of Sales</span>
+                            </div>
+                            <span class="font-mono text-lg font-bold text-indigo-700">{{ current_baseline.cost_of_sales_percent|floatformat:1 }}%</span>
+                        </div>
+                        <div class="flex justify-between items-center p-4 bg-purple-50 rounded-xl border border-purple-100">
+                            <div class="flex gap-3 items-center">
+                                <div class="p-2 bg-white rounded-lg shadow-sm">
+                                    {% heroicon_outline "building-office" class="w-5 h-5 text-purple-600" %}
+                                </div>
+                                <span class="text-sm font-semibold text-purple-900">Overheads</span>
+                            </div>
+                            <span class="font-mono text-lg font-bold text-purple-700">{{ current_baseline.operating_expenses_percent|floatformat:1 }}%</span>
+                        </div>
+                        <div class="flex justify-between items-center p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                            <div class="flex gap-3 items-center">
+                                <div class="p-2 bg-white rounded-lg shadow-sm">
+                                    {% heroicon_outline "chart-bar" class="w-5 h-5 text-emerald-600" %}
+                                </div>
+                                <span class="text-sm font-semibold text-emerald-900">Net Profit</span>
+                            </div>
+                            <span class="font-mono text-lg font-bold text-emerald-700">{{ current_baseline.net_profit_percent|floatformat:1 }}%</span>
+                        </div>
+                    </div>
+                    <div class="p-4 mt-8 rounded-xl border border-gray-200 border-dashed bg-gray-50/50">
+                        <div class="flex gap-3 items-center text-gray-500">
+                            {% heroicon_outline "light-bulb" class="w-5 h-5" %}
+                            <span class="text-xs italic font-medium">These targets drive the "Baseline" columns in your financial performance reports.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Form Section -->
+            <div class="lg:col-span-2">
+                <form method="post"
+                      class="p-8 bg-white rounded-2xl border border-gray-100 shadow-sm"
+                      id="baselineForm">
+                    {% csrf_token %}
+                    <div class="flex justify-between items-center pb-4 mb-6 border-b border-gray-100">
+                        <h3 class="text-lg font-bold text-gray-900">Update Targets</h3>
+                        <div id="totalBadge" class="gap-2 font-mono font-bold badge badge-lg">
+                            Total: <span id="totalPercent">0.0</span>%
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div class="space-y-4">
+                            {{ form.cost_of_sales_percent|as_crispy_field }}
+                            {{ form.operating_expenses_percent|as_crispy_field }}
+                            {{ form.net_profit_percent|as_crispy_field }}
+                        </div>
+                        <div class="flex flex-col justify-center items-center p-8 text-center rounded-2xl border bg-slate-50 border-slate-100">
+                            <div class="mb-4 text-slate-400">{% heroicon_outline "scale" class="mx-auto w-12 h-12 opacity-50" %}</div>
+                            <h4 class="text-sm font-bold text-slate-700">Balanced Structure</h4>
+                            <p class="mt-2 text-xs leading-relaxed text-slate-500">
+                                Your targets must add up exactly to <strong>100%</strong> of the contract value.
+                            </p>
+                            <div class="mt-6 w-full max-w-[200px]">
+                                <div class="overflow-hidden w-full h-2 rounded-full bg-slate-200">
+                                    <div id="totalBar"
+                                         class="w-0 h-full bg-indigo-500 transition-all duration-500"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 justify-end pt-6 mt-10 border-t border-gray-100">
+                        <a href="{% url 'project:profitability-dashboard' project.pk %}"
+                           class="btn btn-ghost btn-sm">Cancel</a>
+                        <button type="submit" class="px-8 btn btn-primary btn-sm" id="submitBtn">Save Assumptions</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cosInput = document.querySelector('input[name="cost_of_sales_percent"]');
+        const opexInput = document.querySelector('input[name="operating_expenses_percent"]');
+        const profitInput = document.querySelector('input[name="net_profit_percent"]');
+        const totalSpan = document.getElementById('totalPercent');
+        const totalBadge = document.getElementById('totalBadge');
+        const totalBar = document.getElementById('totalBar');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function updateTotal() {
+            const cos = parseFloat(cosInput.value) || 0;
+            const opex = parseFloat(opexInput.value) || 0;
+            const profit = parseFloat(profitInput.value) || 0;
+            
+            const total = (cos + opex + profit).toFixed(1);
+            totalSpan.textContent = total;
+
+            // UI Feedback
+            if (total == 100.0) {
+                totalBadge.classList.remove('badge-warning', 'badge-error');
+                totalBadge.classList.add('badge-success');
+                totalBar.classList.remove('bg-amber-500', 'bg-red-500');
+                totalBar.classList.add('bg-emerald-500');
+                totalBar.style.width = '100%';
+            } else if (total > 100.0) {
+                totalBadge.classList.remove('badge-success', 'badge-warning');
+                totalBadge.classList.add('badge-error');
+                totalBar.classList.remove('bg-emerald-500', 'bg-amber-500');
+                totalBar.classList.add('bg-red-500');
+                totalBar.style.width = '100%';
+            } else {
+                totalBadge.classList.remove('badge-success', 'badge-error');
+                totalBadge.classList.add('badge-warning');
+                totalBar.classList.remove('bg-emerald-500', 'bg-red-500');
+                totalBar.classList.add('bg-amber-500');
+                totalBar.style.width = total + '%';
+            }
+        }
+
+        [cosInput, opexInput, profitInput].forEach(input => {
+            input.addEventListener('input', updateTotal);
+        });
+
+        // Initial run
+        updateTotal();
+    });
+    </script>
+{% endblock profitability_content %}
