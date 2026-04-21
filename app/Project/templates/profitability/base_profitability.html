@@ -80,4 +80,66 @@
             {% endblock profitability_content %}
         </div>
     </div>
+
+    <!-- Table Pinning Logic -->
+    <script>
+        function toggleColumnPin(tableId, columnIndex) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+
+            const storageKey = `pin-${tableId}-${columnIndex}`;
+            const isPinned = localStorage.getItem(storageKey) === 'true';
+            const newState = !isPinned;
+
+            // Update localStorage
+            localStorage.setItem(storageKey, newState);
+
+            // Apply classes
+            applyPinStyles(table, columnIndex, newState);
+        }
+
+        function applyPinStyles(table, columnIndex, isPinned) {
+            // columnIndex is 0-indexed across the row
+            const nth = columnIndex + 1;
+            const cells = table.querySelectorAll(`th:nth-child(${nth}), td:nth-child(${nth})`);
+            
+            cells.forEach(cell => {
+                if (isPinned) {
+                    cell.classList.add('sticky', 'left-0', 'z-20', 'bg-white', 'shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]');
+                    // Ensure the header has a higher z-index if it's already sticky top
+                    if (cell.tagName === 'TH') {
+                        cell.classList.add('z-30');
+                    }
+                } else {
+                    cell.classList.remove('sticky', 'left-0', 'z-20', 'bg-white', 'shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]', 'z-30');
+                }
+            });
+        }
+
+        function initTablePins(tableId) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+
+            // Find all toggle checkboxes for this table
+            const toggles = document.querySelectorAll(`[data-table-pin="${tableId}"]`);
+            toggles.forEach(toggle => {
+                const idx = parseInt(toggle.dataset.columnIndex);
+                const isPinned = localStorage.getItem(`pin-${tableId}-${idx}`) === 'true';
+                
+                if (isPinned) {
+                    toggle.checked = true;
+                    applyPinStyles(table, idx, true);
+                }
+
+                toggle.addEventListener('change', (e) => {
+                    toggleColumnPin(tableId, idx);
+                });
+            });
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+             // Tables will call initTablePins in their own templates
+        });
+    </script>
 {% endblock content %}

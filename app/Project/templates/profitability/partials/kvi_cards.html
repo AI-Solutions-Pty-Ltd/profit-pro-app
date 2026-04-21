@@ -18,22 +18,7 @@
             </div>
             <div class="p-3 bg-red-100 rounded-xl">{% heroicon_outline "banknotes" class="w-6 h-6 text-red-600" %}</div>
         </div>
-        <div class="mt-4">
-            <p class="mb-1 text-xs font-bold tracking-wider text-gray-400 uppercase">Budget Status</p>
-            <p class="text-sm font-medium {% if kvi_under_budget >= 0 %}text-indigo-600{% else %}text-red-600{% endif %}"
-               title="R{{ kvi_under_budget|abs|floatformat:2|intcomma }}">
-                {% if kvi_under_budget|abs > 100000 %}
-                    R{{ kvi_under_budget|abs|intword }}
-                {% else %}
-                    R{{ kvi_under_budget|abs|floatformat:2|intcomma }}
-                {% endif %}
-                {% if kvi_under_budget >= 0 %}
-                    under budget
-                {% else %}
-                    over budget
-                {% endif %}
-            </p>
-        </div>
+      
     </div>
     <!-- Card 2: Volume Metric (Hours, Days, Qty) -->
     <div class="overflow-hidden relative p-6 bg-white rounded-xl border border-indigo-200 shadow-sm">

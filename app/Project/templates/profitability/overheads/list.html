@@ -32,42 +32,51 @@
                     </a>
                 </div>
                 {% include "profitability/partials/pagination_month.html" %}
+                <div class="flex gap-2 items-center mt-2">
+                    <!-- Table Settings / Pinning -->
+                    <div class="dropdown dropdown-end">
+                        <div tabindex="0" role="button" class="btn btn-ghost btn-sm text-gray-500 hover:bg-indigo-50">
+                            {% heroicon_outline "cog-6-tooth" class="mr-1 w-4 h-4" %}
+                            <span class="text-xs font-bold uppercase">Table Settings</span>
+                        </div>
+                        <ul tabindex="0" class="dropdown-content z-[40] menu p-2 shadow-xl bg-white rounded-xl border border-gray-100 w-56">
+                            <li class="menu-title flex flex-row justify-between items-center px-4 py-2">
+                                <span class="text-xs font-black tracking-widest text-gray-400 uppercase">Columns</span>
+                                
+                            </li>
+                            <li>
+                                <label class="label cursor-pointer px-4 py-2 hover:bg-gray-50 rounded-lg">
+                                    <span class="text-sm font-medium text-gray-700"> Date</span> 
+                                    <input type="checkbox" class="checkbox checkbox-primary checkbox-xs" data-table-pin="overheads-table" data-column-index="0">
+                                </label>
+                            </li>
+                            <li>
+                                <label class="label cursor-pointer px-4 py-2 hover:bg-gray-50 rounded-lg">
+                                    <span class="text-sm font-medium text-gray-700"> Description</span> 
+                                    <input type="checkbox" class="checkbox checkbox-primary checkbox-xs" data-table-pin="overheads-table" data-column-index="1">
+                                </label>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
         <!-- Table -->
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col"
-                            class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                            Date
-                        </th>
-                        <th scope="col"
-                            class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                            Description
-                        </th>
-                        <th scope="col"
-                            class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">
-                            Days
-                        </th>
-                        <th scope="col"
-                            class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">
-                            Rate
-                        </th>
-                        <th scope="col"
-                            class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">
-                            Amount Paid
-                        </th>
-                        <th scope="col"
-                            class="px-6 py-3 text-xs font-medium tracking-wider text-right text-gray-500 uppercase">
-                            Actions
-                        </th>
+            <table id="overheads-table" class="table table-zebra table-sm min-w-full">
+                <thead>
+                    <tr class="bg-gray-50/50">
+                        <th class="px-6 py-4 text-xs font-bold tracking-widest text-left text-gray-400 uppercase">Date</th>
+                        <th class="px-6 py-4 text-xs font-bold tracking-widest text-left text-gray-400 uppercase">Description</th>
+                        <th class="px-6 py-4 text-xs font-bold tracking-widest text-right text-gray-400 uppercase">Days</th>
+                        <th class="px-6 py-4 text-xs font-bold tracking-widest text-right text-gray-400 uppercase">Rate</th>
+                        <th class="px-6 py-4 text-xs font-bold tracking-widest text-right text-gray-400 uppercase">Amount Paid</th>
+                        <th class="px-6 py-4 text-xs font-bold tracking-widest text-right text-gray-400 uppercase">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white">
                     {% for log in logs %}
-                        <tr class="transition-colors hover:bg-gray-50">
+                        <tr class="hover:bg-indigo-50/30 transition-all duration-200 group">
                             <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">{{ log.date|date:"d M Y" }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900">{{ log.overhead_entity.name }}</div>
@@ -82,14 +91,27 @@
                                     R{{ log.cost|floatformat:2|intcomma }}
                                 {% endif %}
                             </td>
-                            <td class="px-6 py-4 text-sm font-medium text-right whitespace-nowrap">
-                                <div class="flex justify-end items-center space-x-3">
-                                    <a href="{% url 'project:profitability-overhead-update' project.pk log.pk %}"
-                                       class="text-indigo-600 hover:text-indigo-900"
-                                       title="Edit">{% heroicon_outline "pencil-square" class="w-5 h-5" %}</a>
-                                    <a href="{% url 'project:profitability-overhead-delete' project.pk log.pk %}"
-                                       class="text-red-600 hover:text-red-900"
-                                       title="Delete">{% heroicon_outline "trash" class="w-5 h-5" %}</a>
+                            <td class="px-6 py-4 text-right whitespace-nowrap">
+                                <div class="dropdown dropdown-left dropdown-end">
+                                    <div tabindex="0" role="button" class="btn btn-ghost btn-xs text-gray-400 hover:text-indigo-600">
+                                        {% heroicon_outline "ellipsis-vertical" class="w-5 h-5" %}
+                                    </div>
+                                    <ul tabindex="0" class="dropdown-content z-[50] menu p-2 shadow-2xl bg-white rounded-xl border border-gray-100 w-48">
+                                        <li>
+                                            <a href="{% url 'project:profitability-overhead-update' project.pk log.pk %}"
+                                               class="flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg">
+                                                {% heroicon_outline "pencil-square" class="mr-3 w-4 h-4" %}
+                                                Edit Entry
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{% url 'project:profitability-overhead-delete' project.pk log.pk %}"
+                                               class="flex items-center px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 hover:text-rose-700 rounded-lg">
+                                                {% heroicon_outline "trash" class="mr-3 w-4 h-4" %}
+                                                Delete Entry
+                                            </a>
+                                        </li>
+                                    </ul>
                                 </div>
                             </td>
                         </tr>
@@ -126,4 +148,9 @@
             </table>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initTablePins('overheads-table');
+        });
+    </script>
 {% endblock profitability_content %}
