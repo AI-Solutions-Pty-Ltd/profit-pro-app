@@ -715,7 +715,7 @@ class PortfolioReportMixin(
         """Get active projects for the current user."""
         return list(
             Project.objects.filter(
-                users=self.request.user,
+                Q(users=self.request.user) | Q(is_demo=True),
                 status=Project.Status.ACTIVE,
             ).order_by("name")
         )
