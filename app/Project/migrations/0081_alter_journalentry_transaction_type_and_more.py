@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("Project", "0080_remove_productionplan_unique_plan_activity_date_and_more"),
     ]
