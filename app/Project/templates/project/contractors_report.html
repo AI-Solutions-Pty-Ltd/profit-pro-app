@@ -60,7 +60,7 @@
                     </div>
                     <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
                         <p class="text-xs uppercase tracking-wide text-gray-500">Contract Value</p>
-                        <p class="font-medium text-gray-900">{{ contract_value|intcomma }}</p>
+                        <p class="font-medium text-gray-900">R {{ contract_value|floatformat:2|intcomma }}</p>
                     </div>
                     <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
                         <p class="text-xs uppercase tracking-wide text-gray-500">Client / Employer</p>
@@ -76,7 +76,13 @@
                     </div>
                     <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
                         <p class="text-xs uppercase tracking-wide text-gray-500">Forecast Completion</p>
-                        <p class="font-medium text-gray-900">{{ forecast_to_completion|default:"-" }}</p>
+                        <p class="font-medium text-gray-900">
+                            {% if forecast_to_completion %}
+                                R {{ forecast_to_completion|floatformat:2|intcomma }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </p>
                     </div>
                     <div class="bg-gray-50 rounded-lg border border-gray-200 p-3">
                         <p class="text-xs uppercase tracking-wide text-gray-500">Actual Completion</p>

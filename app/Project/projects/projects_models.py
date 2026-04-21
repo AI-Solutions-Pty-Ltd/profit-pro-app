@@ -65,6 +65,10 @@ class Project(BaseModel):
     )
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    is_demo = models.BooleanField(
+        default=False,
+        help_text="Demo project: visible to all logged-in users but read-only for non-staff",
+    )
     logo = models.ImageField(
         upload_to="project_logos/",
         null=True,

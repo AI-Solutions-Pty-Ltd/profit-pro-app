@@ -31,6 +31,19 @@ class SubscriptionAndRoleRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self) -> bool:
         """Check both subscription and project role permissions."""
         user: Account = self.request.user  # type: ignore
+        project = self.get_project()
+        request = getattr(self, "request", None)
+        if (
+            getattr(project, "is_demo", False)
+            and request
+            and request.method
+            in {
+                "GET",
+                "HEAD",
+                "OPTIONS",
+            }
+        ):
+            return True
 
         # First check subscription
         if not user.has_subscription_tier(self.required_tiers):
@@ -46,7 +59,6 @@ class SubscriptionAndRoleRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
         if not self.project_slug:
             raise ValueError("Project slug must be specified.")
 
-        project = self.get_project()
         return user.has_project_role(project, self.roles)
 
     def get_project(self) -> Project:
