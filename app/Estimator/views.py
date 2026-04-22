@@ -7,7 +7,7 @@ from pathlib import Path
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db import models
-from django.http import FileResponse, JsonResponse
+from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -725,7 +725,9 @@ class LabourSpecificationListView(ProjectEstimatorMixin, TemplateView):
                     "daily_output": ls.daily_output,
                     "daily_cost": ls.daily_cost,
                     "rate_per_unit": ls.rate_per_unit,
-                    "total_cost": boq_qty * ls.daily_cost if boq_qty else Decimal("0"),
+                    "total_cost": boq_qty * ls.rate_per_unit
+                    if boq_qty
+                    else Decimal("0"),
                 }
             )
         return rows
@@ -2824,39 +2826,72 @@ def _handle_upload(request, importer_class, success_url, entity_name, project=No
 
 
 def _generate_template(headers, filename):
-    """Generate an Excel template with headers and return a FileResponse."""
+    """Generate an Excel template styled to match the master workbook.
+
+    Returns HttpResponse (not FileResponse/BytesIO-streaming) because some
+    WSGI/proxy setups strip Content-Length from streaming responses and the
+    client ends up with a 500.
+    """
     import io
 
     import openpyxl
+    from openpyxl.styles import Alignment, Border, Font, Side
 
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Data"
 
-    from openpyxl.styles import Alignment, Font, PatternFill
-
-    header_font = Font(bold=True, color="FFFFFF", size=11)
-    header_fill = PatternFill(
-        start_color="4472C4", end_color="4472C4", fill_type="solid"
-    )
+    header_font = Font(name="Aptos Narrow", size=11, bold=True)
+    data_font = Font(name="Aptos Narrow", size=11)
+    center = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    medium = Side(style="medium", color="000000")
+    thin = Side(style="thin", color="000000")
+    last_col = len(headers)
 
     for col_idx, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col_idx, value=header)
         cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = Alignment(horizontal="center")
+        cell.alignment = center
+        cell.border = Border(
+            top=medium,
+            bottom=medium,
+            left=medium if col_idx == 1 else thin,
+            right=medium if col_idx == last_col else thin,
+        )
         ws.column_dimensions[cell.column_letter].width = max(len(header) + 4, 14)
+
+    # Reserve 20 empty data rows framed by the same outer border so the user
+    # sees a clean table outline matching the uploaded sheets.
+    data_row_count = 20
+    for r in range(2, 2 + data_row_count):
+        is_last_row = r == 1 + data_row_count
+        for col_idx in range(1, last_col + 1):
+            cell = ws.cell(row=r, column=col_idx)
+            cell.font = data_font
+            cell.alignment = center
+            cell.border = Border(
+                top=thin,
+                bottom=medium if is_last_row else thin,
+                left=medium if col_idx == 1 else thin,
+                right=medium if col_idx == last_col else thin,
+            )
+
+    ws.row_dimensions[1].height = 20
+    ws.freeze_panes = "A2"
 
     buffer = io.BytesIO()
     wb.save(buffer)
-    buffer.seek(0)
     wb.close()
+    data = buffer.getvalue()
 
-    response = FileResponse(buffer, as_attachment=True)
-    response["Content-Disposition"] = f'attachment; filename="{filename}"'
-    response["Content-Type"] = (
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    response = HttpResponse(
+        data,
+        content_type=(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ),
     )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response["Content-Length"] = str(len(data))
     return response
 
 
@@ -3261,7 +3296,7 @@ class PlantSpecUploadView(ProjectEstimatorMixin, FormView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["parent_template"] = "estimator/base_baseline_costs.html"
+        ctx["parent_template"] = "estimator/base_plant_estimator.html"
         ctx["upload_title"] = "Upload Plant Specifications"
         ctx["upload_description"] = (
             "Upload plant specification definitions with production factors."
@@ -3383,7 +3418,7 @@ class PreliminarySpecUploadView(ProjectEstimatorMixin, FormView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["parent_template"] = "estimator/base_baseline_costs.html"
+        ctx["parent_template"] = "estimator/base_prelim_estimator.html"
         ctx["upload_title"] = "Upload Preliminary Specifications"
         ctx["upload_description"] = "Upload preliminary specification definitions."
         ctx["download_url_name"] = "estimator:download_preliminary_spec_template"

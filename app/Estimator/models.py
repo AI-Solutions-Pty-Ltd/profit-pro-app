@@ -222,13 +222,14 @@ class SystemLabourSpecification(models.Model):
 
     @property
     def rate_per_unit(self):
-        if self.daily_production and self.daily_production > 0:
-            return self.daily_cost / self.daily_production
+        output = self.daily_output
+        if output and output > 0:
+            return self.daily_cost / output
         return Decimal("0")
 
     @property
     def total_cost(self):
-        return self.baseline_boq_quantity * self.daily_cost
+        return self.baseline_boq_quantity * self.rate_per_unit
 
     @property
     def baseline_boq_quantity(self):
@@ -704,13 +705,14 @@ class ProjectLabourSpecification(models.Model):
 
     @property
     def rate_per_unit(self):
-        if self.daily_production and self.daily_production > 0:
-            return self.daily_cost / self.daily_production
+        output = self.daily_output
+        if output and output > 0:
+            return self.daily_cost / output
         return Decimal("0")
 
     @property
     def total_cost(self):
-        return self.baseline_boq_quantity * self.daily_cost
+        return self.baseline_boq_quantity * self.rate_per_unit
 
     @property
     def baseline_boq_quantity(self):
