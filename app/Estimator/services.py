@@ -13,7 +13,6 @@ from app.Estimator.models import (
     SystemLabourCrew,
     SystemLabourSpecification,
     SystemMaterial,
-    SystemMaterialSpec,
     SystemPlantCost,
     SystemPlantSpecification,
     SystemPreliminaryCost,
@@ -761,15 +760,14 @@ def sync_material_specs_from_system(project):
     table and is not maintained by this sync.
     """
     existing_by_name = {
-        ps.name: ps
-        for ps in ProjectSpecification.objects.filter(project=project)
+        ps.name: ps for ps in ProjectSpecification.objects.filter(project=project)
     }
 
     updated = 0
     created = 0
-    for ss in SystemSpecification.objects.select_related(
-        "trade_code"
-    ).prefetch_related("spec_components__material"):
+    for ss in SystemSpecification.objects.select_related("trade_code").prefetch_related(
+        "spec_components__material"
+    ):
         trade_code = _resolve_project_trade_code(project, ss.trade_code)
         ps = existing_by_name.get(ss.name)
         if ps is None:

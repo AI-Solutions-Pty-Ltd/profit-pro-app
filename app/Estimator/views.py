@@ -3263,7 +3263,7 @@ class PlantSpecUploadView(ProjectEstimatorMixin, FormView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["parent_template"] = "estimator/base_baseline_costs.html"
+        ctx["parent_template"] = "estimator/base_plant_estimator.html"
         ctx["upload_title"] = "Upload Plant Specifications"
         ctx["upload_description"] = (
             "Upload plant specification definitions with production factors."
@@ -3385,7 +3385,7 @@ class PreliminarySpecUploadView(ProjectEstimatorMixin, FormView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["parent_template"] = "estimator/base_baseline_costs.html"
+        ctx["parent_template"] = "estimator/base_prelim_estimator.html"
         ctx["upload_title"] = "Upload Preliminary Specifications"
         ctx["upload_description"] = "Upload preliminary specification definitions."
         ctx["download_url_name"] = "estimator:download_preliminary_spec_template"
