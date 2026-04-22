@@ -528,7 +528,10 @@ def sync_materials_from_system(project):
         pm.save()
         updated += 1
 
-    # Add system materials not yet in the project
+    # Add system materials not yet in the project. Adopt an orphan project
+    # material (imported via Excel, no source FK) that shares the same
+    # material_code rather than failing on the (project, material_code)
+    # unique constraint.
     existing_source_ids = set(
         ProjectMaterial.objects.filter(
             project=project, source__isnull=False
@@ -538,17 +541,23 @@ def sync_materials_from_system(project):
     from app.Estimator.models import SystemMaterial
 
     for sm in SystemMaterial.objects.exclude(pk__in=existing_source_ids):
-        ProjectMaterial.objects.create(
+        defaults = {
+            "source": sm,
+            "trade_name": sm.trade_name,
+            "unit": sm.unit,
+            "market_rate": sm.market_rate,
+            "material_variety": sm.material_variety,
+            "market_spec": sm.market_spec,
+        }
+        _, was_created = ProjectMaterial.objects.update_or_create(
             project=project,
-            source=sm,
-            trade_name=sm.trade_name,
             material_code=sm.material_code,
-            unit=sm.unit,
-            market_rate=sm.market_rate,
-            material_variety=sm.material_variety,
-            market_spec=sm.market_spec,
+            defaults=defaults,
         )
-        created += 1
+        if was_created:
+            created += 1
+        else:
+            updated += 1
 
     return {"updated": updated, "created": created}
 
@@ -635,14 +644,20 @@ def sync_plant_costs_from_system(project):
     )
     created = 0
     for spc in SystemPlantCost.objects.exclude(pk__in=existing_source_ids):
-        ProjectPlantCost.objects.create(
+        defaults = {
+            "source": spc,
+            "hourly_production": spc.hourly_production,
+            "hourly_rate": spc.hourly_rate,
+        }
+        _, was_created = ProjectPlantCost.objects.update_or_create(
             project=project,
-            source=spc,
             name=spc.name,
-            hourly_production=spc.hourly_production,
-            hourly_rate=spc.hourly_rate,
+            defaults=defaults,
         )
-        created += 1
+        if was_created:
+            created += 1
+        else:
+            updated += 1
 
     return {"updated": updated, "created": created}
 
@@ -667,13 +682,34 @@ def sync_preliminary_costs_from_system(project):
         ppc.save()
         updated += 1
 
+    # Adopt orphan project rows (imported via Excel, no source FK) keyed by
+    # (name, preliminary_type), since the same name can legitimately appear
+    # under different types.
     existing_source_ids = set(
         ProjectPreliminaryCost.objects.filter(
             project=project, source__isnull=False
         ).values_list("source_id", flat=True)
     )
+    orphan_by_key = {
+        (ppc.name, ppc.preliminary_type): ppc
+        for ppc in ProjectPreliminaryCost.objects.filter(
+            project=project, source__isnull=True
+        )
+    }
     created = 0
     for spc in SystemPreliminaryCost.objects.exclude(pk__in=existing_source_ids):
+        key = (spc.name, spc.preliminary_type)
+        ppc = orphan_by_key.pop(key, None)
+        if ppc is not None:
+            ppc.source = spc
+            ppc.sum_value = spc.sum_value
+            ppc.amount = spc.amount
+            ppc.number_per_month = spc.number_per_month
+            ppc.monthly_rate = spc.monthly_rate
+            ppc.months = spc.months
+            ppc.save()
+            updated += 1
+            continue
         ProjectPreliminaryCost.objects.create(
             project=project,
             source=spc,
@@ -690,72 +726,77 @@ def sync_preliminary_costs_from_system(project):
     return {"updated": updated, "created": created}
 
 
+def _resolve_project_material(project, system_material):
+    """Match a system material to the project copy by `source` FK, falling back
+    to `material_code` for materials imported via Excel (which don't set
+    source)."""
+    if not system_material:
+        return None
+    return (
+        ProjectMaterial.objects.filter(
+            project=project, source_id=system_material.pk
+        ).first()
+        or ProjectMaterial.objects.filter(
+            project=project, material_code=system_material.material_code
+        ).first()
+    )
+
+
+def _resolve_project_trade_code(project, system_trade_code):
+    if not system_trade_code:
+        return None
+    return ProjectTradeCode.objects.filter(
+        project=project, prefix=system_trade_code.prefix
+    ).first()
+
+
 def sync_material_specs_from_system(project):
-    """Sync project material specifications with current system library values.
+    """Sync project material specifications with the SystemSpecification
+    library — the model populated by the UI and MaterialSpecImporter.
 
-    Updates existing rows that have a source FK (including rebuilding their
-    components) and creates new rows for system specs not yet in the project.
+    Specs are matched by name (unique within a project). Each sync rebuilds
+    the component list from the system source.
+
+    Note: `ProjectSpecification.source` FK targets the legacy SystemMaterialSpec
+    table and is not maintained by this sync.
     """
-    updated = 0
-    for ps in ProjectSpecification.objects.filter(
-        project=project, source__isnull=False
-    ).select_related("source"):
-        ps.name = ps.source.name
-        ps.unit_label = ps.source.unit
-        ps.save()
-        ps.spec_components.all().delete()
-        for comp in ps.source.system_spec_components.all():
-            mat = None
-            if comp.material_id:
-                mat = ProjectMaterial.objects.filter(
-                    project=project, source_id=comp.material_id
-                ).first()
-            ProjectSpecificationComponent.objects.create(
-                specification=ps,
-                material=mat,
-                label=comp.label,
-                qty_per_unit=comp.qty_per_unit,
-                sort_order=comp.sort_order,
-            )
-        updated += 1
+    existing_by_name = {
+        ps.name: ps
+        for ps in ProjectSpecification.objects.filter(project=project)
+    }
 
-    existing_source_ids = set(
-        ProjectSpecification.objects.filter(
-            project=project, source__isnull=False
-        ).values_list("source_id", flat=True)
-    )
-    existing_names = set(
-        ProjectSpecification.objects.filter(project=project).values_list(
-            "name", flat=True
-        )
-    )
+    updated = 0
     created = 0
-    for sms in SystemMaterialSpec.objects.exclude(
-        pk__in=existing_source_ids
-    ).prefetch_related("system_spec_components"):
-        if sms.name in existing_names:
-            continue
-        ps = ProjectSpecification.objects.create(
-            project=project,
-            source=sms,
-            name=sms.name,
-            unit_label=sms.unit,
-        )
-        for comp in sms.system_spec_components.all():
-            mat = None
-            if comp.material:
-                mat = ProjectMaterial.objects.filter(
-                    project=project,
-                    source_id=comp.material_id,  # ty:ignore[unresolved-attribute]
-                ).first()
+    for ss in SystemSpecification.objects.select_related(
+        "trade_code"
+    ).prefetch_related("spec_components__material"):
+        trade_code = _resolve_project_trade_code(project, ss.trade_code)
+        ps = existing_by_name.get(ss.name)
+        if ps is None:
+            ps = ProjectSpecification.objects.create(
+                project=project,
+                name=ss.name,
+                section=ss.section,
+                trade_code=trade_code,
+                unit_label=ss.unit_label,
+            )
+            created += 1
+        else:
+            ps.section = ss.section
+            ps.trade_code = trade_code
+            ps.unit_label = ss.unit_label
+            ps.save()
+            updated += 1
+
+        ps.spec_components.all().delete()
+        for comp in ss.spec_components.all():
             ProjectSpecificationComponent.objects.create(
                 specification=ps,
-                material=mat,
+                material=_resolve_project_material(project, comp.material),
                 label=comp.label,
                 qty_per_unit=comp.qty_per_unit,
                 sort_order=comp.sort_order,
             )
-        created += 1
 
     return {"updated": updated, "created": created}
 
@@ -800,18 +841,32 @@ def sync_labour_specs_from_system(project):
             project=project, source__isnull=False
         ).values_list("source_id", flat=True)
     )
-    existing_names = set(
-        ProjectLabourSpecification.objects.filter(project=project).values_list(
-            "name", flat=True
+    orphan_by_name = {
+        pls.name: pls
+        for pls in ProjectLabourSpecification.objects.filter(
+            project=project, source__isnull=True
         )
-    )
+    }
     created = 0
     for sls in SystemLabourSpecification.objects.exclude(
         pk__in=existing_source_ids
     ).select_related("crew"):
-        if sls.name in existing_names:
-            continue
         crew = _resolve_project_labour_crew(project, sls.crew)
+        pls = orphan_by_name.pop(sls.name, None)
+        if pls is not None:
+            pls.source = sls
+            pls.section = sls.section
+            pls.trade_name = sls.trade_name
+            pls.unit = sls.unit
+            pls.crew = crew
+            pls.daily_production = sls.daily_production
+            pls.team_mix = sls.team_mix
+            pls.site_factor = sls.site_factor
+            pls.tools_factor = sls.tools_factor
+            pls.leadership_factor = sls.leadership_factor
+            pls.save()
+            updated += 1
+            continue
         ProjectLabourSpecification.objects.create(
             project=project,
             source=sls,
@@ -879,16 +934,28 @@ def sync_plant_specs_from_system(project):
             project=project, source__isnull=False
         ).values_list("source_id", flat=True)
     )
-    existing_names = set(
-        ProjectPlantSpecification.objects.filter(project=project).values_list(
-            "name", flat=True
+    orphan_by_name = {
+        pps.name: pps
+        for pps in ProjectPlantSpecification.objects.filter(
+            project=project, source__isnull=True
         )
-    )
+    }
     created = 0
     for sps in SystemPlantSpecification.objects.exclude(
         pk__in=existing_source_ids
     ).prefetch_related("components"):
-        if sps.name in existing_names:
+        pps = orphan_by_name.pop(sps.name, None)
+        if pps is not None:
+            pps.source = sps
+            pps.section = sps.section
+            pps.trade_name = sps.trade_name
+            pps.unit = sps.unit
+            pps.daily_production = sps.daily_production
+            pps.operator_factor = sps.operator_factor
+            pps.site_factor = sps.site_factor
+            pps.save()
+            _rebuild_plant_spec_components_from_source(pps, project)
+            updated += 1
             continue
         pps = ProjectPlantSpecification.objects.create(
             project=project,
@@ -935,16 +1002,25 @@ def sync_preliminary_specs_from_system(project):
             project=project, source__isnull=False
         ).values_list("source_id", flat=True)
     )
-    existing_names = set(
-        ProjectPreliminarySpecification.objects.filter(project=project).values_list(
-            "name", flat=True
+    orphan_by_name = {
+        pps.name: pps
+        for pps in ProjectPreliminarySpecification.objects.filter(
+            project=project, source__isnull=True
         )
-    )
+    }
     created = 0
     for sps in SystemPreliminarySpecification.objects.exclude(
         pk__in=existing_source_ids
     ):
-        if sps.name in existing_names:
+        pps = orphan_by_name.pop(sps.name, None)
+        if pps is not None:
+            pps.source = sps
+            pps.section = sps.section
+            pps.trade_name = sps.trade_name
+            pps.unit = sps.unit
+            pps.amount = sps.amount
+            pps.save()
+            updated += 1
             continue
         ProjectPreliminarySpecification.objects.create(
             project=project,
