@@ -7,7 +7,7 @@ from pathlib import Path
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db import models
-from django.http import FileResponse, JsonResponse
+from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -2826,16 +2826,20 @@ def _handle_upload(request, importer_class, success_url, entity_name, project=No
 
 
 def _generate_template(headers, filename):
-    """Generate an Excel template with headers and return a FileResponse."""
+    """Generate an Excel template with headers and return an HttpResponse.
+
+    Returns HttpResponse (not FileResponse/BytesIO-streaming) because some
+    WSGI/proxy setups strip Content-Length from streaming responses and the
+    client ends up with a 500.
+    """
     import io
 
     import openpyxl
+    from openpyxl.styles import Alignment, Font, PatternFill
 
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Data"
-
-    from openpyxl.styles import Alignment, Font, PatternFill
 
     header_font = Font(bold=True, color="FFFFFF", size=11)
     header_fill = PatternFill(
@@ -2851,14 +2855,17 @@ def _generate_template(headers, filename):
 
     buffer = io.BytesIO()
     wb.save(buffer)
-    buffer.seek(0)
     wb.close()
+    data = buffer.getvalue()
 
-    response = FileResponse(buffer, as_attachment=True)
-    response["Content-Disposition"] = f'attachment; filename="{filename}"'
-    response["Content-Type"] = (
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    response = HttpResponse(
+        data,
+        content_type=(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ),
     )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response["Content-Length"] = str(len(data))
     return response
 
 
@@ -3263,7 +3270,7 @@ class PlantSpecUploadView(ProjectEstimatorMixin, FormView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["parent_template"] = "estimator/base_baseline_costs.html"
+        ctx["parent_template"] = "estimator/base_plant_estimator.html"
         ctx["upload_title"] = "Upload Plant Specifications"
         ctx["upload_description"] = (
             "Upload plant specification definitions with production factors."
@@ -3385,7 +3392,7 @@ class PreliminarySpecUploadView(ProjectEstimatorMixin, FormView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["parent_template"] = "estimator/base_baseline_costs.html"
+        ctx["parent_template"] = "estimator/base_prelim_estimator.html"
         ctx["upload_title"] = "Upload Preliminary Specifications"
         ctx["upload_description"] = "Upload preliminary specification definitions."
         ctx["download_url_name"] = "estimator:download_preliminary_spec_template"
