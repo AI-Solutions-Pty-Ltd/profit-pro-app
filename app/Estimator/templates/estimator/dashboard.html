@@ -536,7 +536,7 @@
             </div>
         </div>
         <div class="overflow-x-auto">
-            <table class="text-xs min-w-[4160px]"  id="boq-table">
+            <table class="text-xs min-w-[3335px]"  id="boq-table">
                 <thead>
                     <!-- Column group headers -->
                     <tr class="border-b border-gray-200">
@@ -550,15 +550,15 @@
                             </label>
                         </th>
                         <th colspan="3"
-                            class="bg-gray-50 px-2 py-1.5 text-left text-[9px] font-bold uppercase tracking-widest text-gray-400 border-r border-gray-200 column-group-item-details">
+                            class="bg-gray-50 px-2 py-1.5 text-center text-[9px] font-bold uppercase tracking-widest text-gray-400 border-r border-gray-200 column-group-item-details">
                             Item Details
                         </th>
                         <th colspan="3"
                             class="bg-gray-50 px-2 py-1.5 text-center text-[9px] font-bold uppercase tracking-widest text-gray-400 border-r border-gray-200 column-group-item-details">
-                            Spec
+                            Specifications
                         </th>
                         <th colspan="2"
-                            class="bg-gray-50 px-2 py-1.5 text-left text-[9px] font-bold uppercase tracking-widest text-gray-400 border-r border-gray-200">
+                            class="bg-gray-50 px-2 py-1.5 text-center text-[9px] font-bold uppercase tracking-widest text-gray-400 border-r border-gray-200">
                             Details
                         </th>
                         <th colspan="3"
@@ -604,17 +604,17 @@
                         <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[100px]">
                             Bill No.
                         </th>
-                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[320px]">
+                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[120px]">
                             Trade Code
                         </th>
-                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[360px]">
-                            Mat
+                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[135px]">
+                            Material
                         </th>
-                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[360px]">
-                            Lab &amp; Plant
+                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[135px]">
+                            Labour &amp; Plant
                         </th>
-                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[280px]">
-                            Prelim
+                        <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 column-group-item-details w-[105px]">
+                            preliminaries
                         </th>
                         <th class="bg-gray-50 px-1 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-gray-600 border-r border-gray-200 w-[280px]">
                             Details
@@ -718,7 +718,7 @@
                                     {{ item.bill_no }}
                                 </td>
                                 <!-- Trade Code (editable dropdown) -->
-                                <td class="px-1 py-0.5 column-group-item-details col-trade-code whitespace-normal w-[320px]">
+                                <td class="px-1 py-0.5 column-group-item-details col-trade-code whitespace-normal w-[120px]">
                                     <select class="boq-edit-select w-full rounded border-0 py-0.5 pl-1 pr-5 text-[10px] text-gray-700 ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-indigo-500 bg-white"
                                             data-item-id="{{ item.id }}"
                                             data-field="trade_code">
@@ -732,7 +732,7 @@
                                     </select>
                                 </td>
                                 <!-- Material Spec (editable dropdown) -->
-                                <td class="px-1 py-0.5 column-group-item-details col-mat-spec whitespace-normal w-[360px]">
+                                <td class="px-1 py-0.5 column-group-item-details col-mat-spec whitespace-normal w-[135px]">
                                     <select class="boq-edit-select w-full rounded border-0 py-0.5 pl-1 pr-5 text-[10px] text-gray-700 ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-indigo-500 bg-white"
                                             data-item-id="{{ item.id }}"
                                             data-field="specification">
@@ -746,7 +746,7 @@
                                     </select>
                                 </td>
                                 <!-- Labour & Plant Spec (editable dropdown) -->
-                                <td class="px-1 py-0.5 column-group-item-details col-lab-plant-spec whitespace-normal w-[360px]">
+                                <td class="px-1 py-0.5 column-group-item-details col-lab-plant-spec whitespace-normal w-[135px]">
                                     <select class="boq-edit-select w-full rounded border-0 py-0.5 pl-1 pr-5 text-[10px] text-gray-700 ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-indigo-500 bg-white"
                                             data-item-id="{{ item.id }}"
                                             data-field="labour_plant_specification">
@@ -760,7 +760,7 @@
                                     </select>
                                 </td>
                                 <!-- Prelim Spec (editable dropdown) -->
-                                <td class="px-1 py-0.5 column-group-item-details col-prelim-spec whitespace-normal w-[280px]">
+                                <td class="px-1 py-0.5 column-group-item-details col-prelim-spec whitespace-normal w-[105px]">
                                     <select class="boq-edit-select w-full rounded border-0 py-0.5 pl-1 pr-5 text-[10px] text-gray-700 ring-1 ring-inset ring-gray-200 focus:ring-2 focus:ring-indigo-500 bg-white"
                                             data-item-id="{{ item.id }}"
                                             data-field="preliminary_specification">
