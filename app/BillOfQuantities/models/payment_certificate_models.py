@@ -278,49 +278,32 @@ class PaymentCertificate(BaseModel):
 
     @property
     def total_submitted(self) -> Decimal:
-        """Sum of all items submitted in this certificate."""
-        ledger_totals = self.get_all_ledger_totals()
-        total = self.items_submitted
-        total += ledger_totals["advance_payments"]
-        total += ledger_totals["retention"]
-        total += ledger_totals["materials_on_site"]
-        total += ledger_totals["escalation"]
-        total += ledger_totals["special_items"]
+        total = Decimal(0)
+        total += self.items_submitted
+        # leaving space for other categories to be added at a later stage
         return total
 
     @property
     def total_claimed(self) -> Decimal:
-        """Sum of all items claimed in this certificate."""
-        ledger_totals = self.get_all_ledger_totals()
-        total = self.items_claimed
-        total += ledger_totals["advance_payments"]
-        total += ledger_totals["retention"]
-        total += ledger_totals["materials_on_site"]
-        total += ledger_totals["escalation"]
-        total += ledger_totals["special_items"]
+        total = Decimal(0)
+        total += self.items_claimed
+        # leaving space for other categories to be added at a later stage
         return total
 
     # wholistic properties
     @property
     def progressive_previous(self) -> Decimal:
-        """Calculate total of all previously approved certificates (all items)."""
+        """Calculate total of all previously approved certificates."""
         previous_certificates = self.previous_certificates
-        total = Decimal("0.00")
-        for cert in previous_certificates:
-            total += cert.total_claimed
-        return total
+        actual_transactions = ActualTransaction.objects.filter(
+            payment_certificate__in=previous_certificates
+        )
+        return sum_queryset(actual_transactions, "total_price")
 
     @property
     def current_claim_total(self) -> Decimal:
-        """Calculate total for current certificate (all items)."""
-        ledger_totals = self.get_all_ledger_totals()
-        total = sum_queryset(self.all_actual_transactions, "total_price")
-        total += ledger_totals["advance_payments"]
-        total += ledger_totals["retention"]
-        total += ledger_totals["materials_on_site"]
-        total += ledger_totals["escalation"]
-        total += ledger_totals["special_items"]
-        return total
+        """Calculate total for current certificate (all actual transactions)."""
+        return sum_queryset(self.all_actual_transactions, "total_price")
 
     @property
     def progressive_to_date(self) -> Decimal:
@@ -332,62 +315,40 @@ class PaymentCertificate(BaseModel):
     # add properties
 
     # Helper functions for ledger totals
-    def _get_ledger_total(self, model_class) -> Decimal:
-        """Helper to calculate net total (Debit - Credit) for a ledger model."""
-        from django.db.models import Case, Sum, When
-
-        transactions = model_class.objects.filter(payment_certificate=self)
-        total = transactions.aggregate(
-            net_total=Coalesce(
-                Sum(
-                    Case(
-                        When(
-                            transaction_type="DEBIT",
-                            then="amount",
-                        ),
-                        When(
-                            transaction_type="CREDIT",
-                            then=-models.F("amount"),
-                        ),
-                        default=Value(0),
-                        output_field=DecimalField(),
-                    )
-                ),
-                Value(Decimal("0.00")),
-                output_field=DecimalField(),
-            )
-        )["net_total"]
-        return total
-
     def get_advance_payment_total(self) -> Decimal:
         """Get total advance payment transactions for this certificate."""
         from .ledger_models import AdvancePayment
 
-        return self._get_ledger_total(AdvancePayment)
+        advance_payments = AdvancePayment.objects.filter(payment_certificate=self)
+        return sum_queryset(advance_payments, "amount")
 
     def get_retention_total(self) -> Decimal:
         """Get total retention transactions for this certificate."""
         from .ledger_models import Retention
 
-        return self._get_ledger_total(Retention)
+        retention_items = Retention.objects.filter(payment_certificate=self)
+        return sum_queryset(retention_items, "amount")
 
     def get_materials_on_site_total(self) -> Decimal:
         """Get total materials on site transactions for this certificate."""
         from .ledger_models import MaterialsOnSite
 
-        return self._get_ledger_total(MaterialsOnSite)
+        materials = MaterialsOnSite.objects.filter(payment_certificate=self)
+        return sum_queryset(materials, "amount")
 
     def get_escalation_total(self) -> Decimal:
         """Get total escalation transactions for this certificate."""
         from .ledger_models import Escalation
 
-        return self._get_ledger_total(Escalation)
+        escalations = Escalation.objects.filter(payment_certificate=self)
+        return sum_queryset(escalations, "amount")
 
     def get_special_item_total(self) -> Decimal:
         """Get total special item transactions for this certificate."""
         from .ledger_models import SpecialItemTransaction
 
-        return self._get_ledger_total(SpecialItemTransaction)
+        special_items = SpecialItemTransaction.objects.filter(payment_certificate=self)
+        return sum_queryset(special_items, "amount")
 
     def get_special_item_totals_by_type(self) -> dict:
         """Get special item totals grouped by type for this certificate."""
