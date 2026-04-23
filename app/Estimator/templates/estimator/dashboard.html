@@ -38,7 +38,9 @@
     <div class="grid grid-cols-2 gap-4 mb-8 lg:grid-cols-6">
         <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
             <div class="flex gap-2 items-center min-w-0">
-                <div class="p-1.5 bg-gray-100 rounded-lg shrink-0">{% heroicon_outline "banknotes" class="w-5 h-5 text-gray-500" %}</div>
+                <div class="p-1.5 bg-gray-100 rounded-lg shrink-0">
+                    {% heroicon_outline "banknotes" class="w-5 h-5 text-gray-500" %}
+                </div>
                 <div class="min-w-0">
                     <p class="text-xs font-medium text-gray-500 truncate">Contract Amount</p>
                     <p class="text-sm font-bold text-gray-900 whitespace-nowrap">{{ total_contract_amount|currency }}</p>
@@ -56,7 +58,9 @@
         </div>
         <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
             <div class="flex gap-2 items-center min-w-0">
-                <div class="p-1.5 bg-purple-50 rounded-lg shrink-0">{% heroicon_outline "user-group" class="w-5 h-5 text-purple-600" %}</div>
+                <div class="p-1.5 bg-purple-50 rounded-lg shrink-0">
+                    {% heroicon_outline "user-group" class="w-5 h-5 text-purple-600" %}
+                </div>
                 <div class="min-w-0">
                     <p class="text-xs font-medium text-gray-500 truncate">Labour Rate</p>
                     <p class="text-sm font-bold text-purple-700 whitespace-nowrap">{{ total_labour_rate|currency }}</p>
@@ -65,7 +69,9 @@
         </div>
         <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
             <div class="flex gap-2 items-center min-w-0">
-                <div class="p-1.5 bg-orange-50 rounded-lg shrink-0">{% heroicon_outline "truck" class="w-5 h-5 text-orange-600" %}</div>
+                <div class="p-1.5 bg-orange-50 rounded-lg shrink-0">
+                    {% heroicon_outline "truck" class="w-5 h-5 text-orange-600" %}
+                </div>
                 <div class="min-w-0">
                     <p class="text-xs font-medium text-gray-500 truncate">Plant Rate</p>
                     <p class="text-sm font-bold text-orange-700 whitespace-nowrap">{{ total_plant_rate|currency }}</p>
@@ -74,7 +80,9 @@
         </div>
         <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
             <div class="flex gap-2 items-center min-w-0">
-                <div class="p-1.5 bg-green-50 rounded-lg shrink-0">{% heroicon_outline "arrow-trending-up" class="w-5 h-5 text-green-600" %}</div>
+                <div class="p-1.5 bg-green-50 rounded-lg shrink-0">
+                    {% heroicon_outline "arrow-trending-up" class="w-5 h-5 text-green-600" %}
+                </div>
                 <div class="min-w-0">
                     <p class="text-xs font-medium text-gray-500 truncate">Progress Amount</p>
                     <p class="text-sm font-bold text-green-700 whitespace-nowrap">{{ total_progress_amount|currency }}</p>
@@ -83,7 +91,9 @@
         </div>
         <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
             <div class="flex gap-2 items-center min-w-0">
-                <div class="p-1.5 bg-blue-50 rounded-lg shrink-0">{% heroicon_outline "chart-bar" class="w-5 h-5 text-blue-600" %}</div>
+                <div class="p-1.5 bg-blue-50 rounded-lg shrink-0">
+                    {% heroicon_outline "chart-bar" class="w-5 h-5 text-blue-600" %}
+                </div>
                 <div class="min-w-0">
                     <p class="text-xs font-medium text-gray-500 truncate">Forecast Amount</p>
                     <p class="text-sm font-bold text-blue-700 whitespace-nowrap">{{ total_forecast_amount|currency }}</p>
@@ -93,7 +103,9 @@
     </div>
     <!-- Filters -->
     <div class="p-4 mb-4 bg-white rounded-lg shadow-sm">
-        <form method="get" id="filter-form" class="flex flex-wrap gap-2 items-end lg:flex-nowrap">
+        <form method="get"
+              id="filter-form"
+              class="flex flex-wrap gap-2 items-end lg:flex-nowrap">
             <div class="flex-1 min-w-0">
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Section</label>
                 <select name="section"

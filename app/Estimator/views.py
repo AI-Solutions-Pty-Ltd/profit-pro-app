@@ -1914,9 +1914,7 @@ class UpdateSpecComponentView(View):
                         pk=int(value), project_id=project_pk
                     ).first()
                     if material is None:
-                        return JsonResponse(
-                            {"error": "Material not found"}, status=404
-                        )
+                        return JsonResponse({"error": "Material not found"}, status=404)
                     item.material = material
                     if not item.label:
                         item.label = material.material_code
