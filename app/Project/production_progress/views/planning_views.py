@@ -309,10 +309,56 @@ class ProductionPlanDetailView(
     context_object_name = "plan"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
+    def get_queryset(self):
+        return ProductionPlan.objects.filter(project_id=self.kwargs["project_pk"])
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        plan = self.get_object()
         context["project"] = self.object.project
+
+        resource_categories = []
+        for type_code, type_name in ProductionResource.RESOURCE_TYPES:
+            resources = plan.resources.filter(resource_type=type_code)
+            total_cost = 0
+            if type_code == "LABOUR":
+                total_cost = plan.total_labour_cost
+            elif type_code == "PLANT":
+                total_cost = plan.total_plant_cost
+            else:
+                total_cost = plan.total_other_cost
+
+            resource_categories.append(
+                {
+                    "type_code": type_code,
+                    "type_name": type_name,
+                    "resources": resources,
+                    "total_cost": total_cost,
+                }
+            )
+
+        context["resource_categories"] = resource_categories
         return context
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        plan = self.get_object()
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {
+                "title": "Production Planning",
+                "url": reverse_lazy(
+                    "project:production-planning", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": f"Plan: {plan.activity}", "url": None},
+        ]
 
 
 class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, View):
@@ -403,58 +449,7 @@ class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, 
 
         return redirect("project:production-planning", project_pk=project.pk)
 
-    required_tiers = [Subscription.PROFIT_AND_LOSS]
-
-    def get_queryset(self):
-        return ProductionPlan.objects.filter(project_id=self.kwargs["project_pk"])
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        plan = self.get_object()
-        context["project"] = Project.objects.get(pk=self.kwargs["project_pk"])
-
-        resource_categories = []
-        for type_code, type_name in ProductionResource.RESOURCE_TYPES:
-            resources = plan.resources.filter(resource_type=type_code)
-            total_cost = 0
-            if type_code == "LABOUR":
-                total_cost = plan.total_labour_cost
-            elif type_code == "PLANT":
-                total_cost = plan.total_plant_cost
-            else:
-                total_cost = plan.total_other_cost
-
-            resource_categories.append(
-                {
-                    "type_code": type_code,
-                    "type_name": type_name,
-                    "resources": resources,
-                    "total_cost": total_cost,
-                }
-            )
-
-        context["resource_categories"] = resource_categories
-        return context
-
-    def get_breadcrumbs(self):
-        project_pk = self.kwargs["project_pk"]
-        plan = self.get_object()
-        return [
-            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
-            {
-                "title": "Production Dashboard",
-                "url": reverse_lazy(
-                    "project:production-dashboard", kwargs={"project_pk": project_pk}
-                ),
-            },
-            {
-                "title": "Production Planning",
-                "url": reverse_lazy(
-                    "project:production-planning", kwargs={"project_pk": project_pk}
-                ),
-            },
-            {"title": f"Plan: {plan.activity}", "url": None},
-        ]
+        return redirect("project:production-planning", project_pk=project.pk)
 
 
 class ProductionPlanUpdateView(

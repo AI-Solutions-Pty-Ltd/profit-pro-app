@@ -163,19 +163,30 @@ class ProductionPlan(BaseModel):
             return
 
         # 1. Ensure Section Level exists
-        section_parent, _ = ProductionPlan.objects.get_or_create(
-            project=self.project,
-            section=self.section,
-            bill_no="",
-            labour_activity=None,
-            defaults={
-                "activity": self.section,
-                "start_date": self.start_date or timezone.now().date(),
-                "finish_date": self.finish_date or timezone.now().date(),
-                "quantity": 1,
-                "unit": "SUM",
-            },
+        section_parent = (
+            ProductionPlan.objects.filter(
+                project=self.project,
+                section=self.section,
+                bill_no="",
+                labour_activity=None,
+                deleted=False,
+            )
+            .order_by("created_at")
+            .first()
         )
+
+        if not section_parent:
+            section_parent = ProductionPlan.objects.create(
+                project=self.project,
+                section=self.section,
+                bill_no="",
+                labour_activity=None,
+                activity=self.section,
+                start_date=self.start_date or timezone.now().date(),
+                finish_date=self.finish_date or timezone.now().date(),
+                quantity=1,
+                unit="SUM",
+            )
 
         if not self.bill_no:
             if self != section_parent:
@@ -183,20 +194,31 @@ class ProductionPlan(BaseModel):
             return
 
         # 2. Ensure Bill Level exists under Section
-        bill_parent, _ = ProductionPlan.objects.get_or_create(
-            project=self.project,
-            section=self.section,
-            bill_no=self.bill_no,
-            labour_activity=None,
-            defaults={
-                "activity": f"Bill {self.bill_no}",
-                "parent": section_parent,
-                "start_date": self.start_date or timezone.now().date(),
-                "finish_date": self.finish_date or timezone.now().date(),
-                "quantity": 1,
-                "unit": "SUM",
-            },
+        bill_parent = (
+            ProductionPlan.objects.filter(
+                project=self.project,
+                section=self.section,
+                bill_no=self.bill_no,
+                labour_activity=None,
+                deleted=False,
+            )
+            .order_by("created_at")
+            .first()
         )
+
+        if not bill_parent:
+            bill_parent = ProductionPlan.objects.create(
+                project=self.project,
+                section=self.section,
+                bill_no=self.bill_no,
+                labour_activity=None,
+                activity=f"Bill {self.bill_no}",
+                parent=section_parent,
+                start_date=self.start_date or timezone.now().date(),
+                finish_date=self.finish_date or timezone.now().date(),
+                quantity=1,
+                unit="SUM",
+            )
 
         if self != bill_parent and self != section_parent:
             self.parent = bill_parent
@@ -324,11 +346,11 @@ class ProductionPlan(BaseModel):
                 for spec in specs:
                     # Get all type names from components
                     type_names = [
-                        c.plant_type.name
-                        for c in spec.components.all()
-                        if c.plant_type
+                        c.plant_type.name for c in spec.components.all() if c.plant_type
                     ]
-                    name = ", ".join(sorted(set(type_names))) if type_names else spec.name
+                    name = (
+                        ", ".join(sorted(set(type_names))) if type_names else spec.name
+                    )
                     if name not in unique_specs:
                         unique_specs[name] = spec
 
