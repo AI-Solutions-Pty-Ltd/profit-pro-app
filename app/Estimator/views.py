@@ -535,6 +535,9 @@ class MaterialSpecListView(ProjectEstimatorMixin, ListView):
         context["names"] = (
             project_specs.values_list("name", flat=True).distinct().order_by("name")
         )
+        context["materials"] = ProjectMaterial.objects.filter(project=project).order_by(
+            "material_code"
+        )
 
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
@@ -1879,11 +1882,12 @@ class UpdateMaterialView(View):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateSpecComponentView(View):
-    """AJAX endpoint to update qty_per_unit on a ProjectSpecificationComponent."""
+    """AJAX endpoint to update fields on a ProjectSpecificationComponent."""
+
+    ALLOWED_FIELDS = {"qty_per_unit", "material", "label"}
 
     def post(self, request, project_pk, pk):
         item = get_object_or_404(ProjectSpecificationComponent, pk=pk)
-        # Validate project ownership
         if item.specification.project_id != int(project_pk):
             return JsonResponse({"error": "Not found"}, status=404)
         try:
@@ -1894,11 +1898,28 @@ class UpdateSpecComponentView(View):
         field = data.get("field")
         value = data.get("value")
 
-        if field != "qty_per_unit":
+        if field not in self.ALLOWED_FIELDS:
             return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
 
         try:
-            item.qty_per_unit = Decimal(str(value))
+            if field == "qty_per_unit":
+                item.qty_per_unit = Decimal(str(value or 0))
+            elif field == "label":
+                item.label = (value or "").strip()
+            else:  # material
+                if value in (None, "", 0, "0"):
+                    item.material = None
+                else:
+                    material = ProjectMaterial.objects.filter(
+                        pk=int(value), project_id=project_pk
+                    ).first()
+                    if material is None:
+                        return JsonResponse(
+                            {"error": "Material not found"}, status=404
+                        )
+                    item.material = material
+                    if not item.label:
+                        item.label = material.material_code
         except Exception:
             return JsonResponse({"error": "Invalid value"}, status=400)
 
@@ -1908,7 +1929,86 @@ class UpdateSpecComponentView(View):
             {
                 "ok": True,
                 "qty_per_unit": str(round(item.qty_per_unit, 4)),
+                "label": item.label,
+                "material_id": item.material_id,
                 "spec_id": spec.id,
+                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class AddSpecComponentView(View):
+    """AJAX endpoint to add a new component to a ProjectSpecification."""
+
+    def post(self, request, project_pk, pk):
+        spec = get_object_or_404(ProjectSpecification, pk=pk, project_id=project_pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            data = {}
+
+        material_id = data.get("material")
+        label = (data.get("label") or "").strip()
+        qty_raw = data.get("qty_per_unit", 0)
+
+        material = None
+        if material_id not in (None, "", 0, "0"):
+            try:
+                material = ProjectMaterial.objects.filter(
+                    pk=int(material_id), project_id=project_pk
+                ).first()
+            except (TypeError, ValueError):
+                material = None
+
+        if not label and material is not None:
+            label = material.material_code
+
+        try:
+            qty = Decimal(str(qty_raw or 0))
+        except Exception:
+            qty = Decimal("0")
+
+        next_order = (
+            spec.spec_components.aggregate(models.Max("sort_order"))["sort_order__max"]
+            or 0
+        ) + 1
+        comp = ProjectSpecificationComponent.objects.create(
+            specification=spec,
+            material=material,
+            label=label,
+            qty_per_unit=qty,
+            sort_order=next_order,
+        )
+        return JsonResponse(
+            {
+                "ok": True,
+                "component": {
+                    "id": comp.id,
+                    "material_id": comp.material_id,
+                    "label": comp.label,
+                    "qty_per_unit": str(comp.qty_per_unit),
+                },
+                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeleteSpecComponentView(View):
+    """AJAX endpoint to delete a ProjectSpecificationComponent."""
+
+    def post(self, request, project_pk, pk):
+        comp = get_object_or_404(
+            ProjectSpecificationComponent,
+            pk=pk,
+            specification__project_id=project_pk,
+        )
+        spec = comp.specification
+        comp.delete()
+        return JsonResponse(
+            {
+                "ok": True,
                 "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
             }
         )
