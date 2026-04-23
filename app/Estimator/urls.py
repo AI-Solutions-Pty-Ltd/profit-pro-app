@@ -218,6 +218,16 @@ urlpatterns = [
         name="update_spec_component",
     ),
     path(
+        "project/<int:project_pk>/api/spec/<int:pk>/components/add/",
+        views.AddSpecComponentView.as_view(),
+        name="add_spec_component",
+    ),
+    path(
+        "project/<int:project_pk>/api/spec-component/<int:pk>/delete/",
+        views.DeleteSpecComponentView.as_view(),
+        name="delete_spec_component",
+    ),
+    path(
         "project/<int:project_pk>/api/labour-spec/<int:pk>/update/",
         views.UpdateLabourSpecView.as_view(),
         name="update_labour_spec",

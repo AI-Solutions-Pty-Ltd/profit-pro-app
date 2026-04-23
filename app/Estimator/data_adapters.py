@@ -146,6 +146,10 @@ class DjangoORMAdapter:
             if item.labour_specification:
                 labour_rate = item.labour_specification.rate_per_unit
 
+            plant_rate = None
+            if item.plant_specification:
+                plant_rate = item.plant_specification.rate_per_unit
+
             results.append(
                 {
                     "section": item.section,
@@ -163,6 +167,7 @@ class DjangoORMAdapter:
                     "rate_override": material_rate,
                     "specification_rate": spec_rate,
                     "labour_rate": labour_rate,
+                    "plant_rate": plant_rate,
                     "is_section_header": item.is_section_header,
                 }
             )
