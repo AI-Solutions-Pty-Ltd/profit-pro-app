@@ -52,7 +52,7 @@
                                     </div>
                                     <!-- Subcategory Filter -->
                                     <div class="relative">
-                                        <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-white px-1">Aera</span>
+                                        <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-white px-1">Area</span>
                                         <select name="project_subcategory"
                                                 onchange="this.form.submit()"
                                                 class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
@@ -257,15 +257,15 @@
                     <p class="text-xl font-bold text-emerald-700 mt-1">{{ portfolio_compliance_percentage|default:"--" }}%</p>
                     <p class="text-xs text-emerald-500">Overall Portfolio Compliance</p>
                 </a>
-                <!-- Total Impact -->
+                <!-- Total Jobs -->
                 <a href="{% url 'project:impact-report' %}"
                    class="bg-amber-50 rounded-lg p-3 text-center border border-amber-100 hover:bg-amber-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
                     <div class="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-amber-600 transition-colors">
                         {% heroicon_outline "bolt" size="16" class="text-white" %}
                     </div>
-                    <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Total Impact</p>
+                    <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Total Jobs</p>
                     <p class="text-xl font-bold text-amber-700 mt-1">{{ total_jobs_count|default:"0" }}</p>
-                    <p class="text-xs text-amber-500">Total Jobs</p>
+                    <p class="text-xs text-amber-500">Total Jobs Created</p>
                 </a>
                 <!-- Local Spend -->
                 <a href="{% url 'project:impact-report' %}"
