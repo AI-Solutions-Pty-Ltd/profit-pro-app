@@ -194,6 +194,7 @@ class DashboardView(ProjectEstimatorMixin, ListView):
         context["total_contract_amount"] = summary["total_contract_amount"]
         context["total_materials_rate"] = summary["total_materials_rate"]
         context["total_labour_rate"] = summary["total_labour_rate"]
+        context["total_plant_rate"] = summary["total_plant_rate"]
         context["total_progress_amount"] = summary["total_progress_amount"]
         context["total_forecast_amount"] = summary["total_forecast_amount"]
 

@@ -35,57 +35,66 @@
         </div>
     </div>
     <!-- Summary cards -->
-    <div class="grid grid-cols-2 gap-4 mb-8 lg:grid-cols-5">
-        <div class="p-4 bg-white rounded-lg shadow">
-            <div class="flex gap-3 items-center">
-                <div class="p-2 bg-gray-100 rounded-lg">{% heroicon_outline "banknotes" class="w-6 h-6 text-gray-500" %}</div>
+    <div class="grid grid-cols-2 gap-4 mb-8 lg:grid-cols-6">
+        <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
+            <div class="flex gap-2 items-center min-w-0">
+                <div class="p-1.5 bg-gray-100 rounded-lg shrink-0">{% heroicon_outline "banknotes" class="w-5 h-5 text-gray-500" %}</div>
                 <div class="min-w-0">
                     <p class="text-xs font-medium text-gray-500 truncate">Contract Amount</p>
-                    <p class="text-base font-bold text-gray-900 truncate">{{ total_contract_amount|currency }}</p>
+                    <p class="text-sm font-bold text-gray-900 whitespace-nowrap">{{ total_contract_amount|currency }}</p>
                 </div>
             </div>
         </div>
-        <div class="p-4 bg-white rounded-lg shadow">
-            <div class="flex gap-3 items-center">
-                <div class="p-2 bg-amber-50 rounded-lg">{% heroicon_outline "cube" class="w-6 h-6 text-amber-600" %}</div>
+        <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
+            <div class="flex gap-2 items-center min-w-0">
+                <div class="p-1.5 bg-amber-50 rounded-lg shrink-0">{% heroicon_outline "cube" class="w-5 h-5 text-amber-600" %}</div>
                 <div class="min-w-0">
                     <p class="text-xs font-medium text-gray-500 truncate">Material Costs Rate</p>
-                    <p class="text-base font-bold text-amber-700 truncate">{{ total_materials_rate|currency }}</p>
+                    <p class="text-sm font-bold text-amber-700 whitespace-nowrap">{{ total_materials_rate|currency }}</p>
                 </div>
             </div>
         </div>
-        <div class="p-4 bg-white rounded-lg shadow">
-            <div class="flex gap-3 items-center">
-                <div class="p-2 bg-purple-50 rounded-lg">{% heroicon_outline "user-group" class="w-6 h-6 text-purple-600" %}</div>
+        <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
+            <div class="flex gap-2 items-center min-w-0">
+                <div class="p-1.5 bg-purple-50 rounded-lg shrink-0">{% heroicon_outline "user-group" class="w-5 h-5 text-purple-600" %}</div>
                 <div class="min-w-0">
                     <p class="text-xs font-medium text-gray-500 truncate">Labour Rate</p>
-                    <p class="text-base font-bold text-purple-700 truncate">{{ total_labour_rate|currency }}</p>
+                    <p class="text-sm font-bold text-purple-700 whitespace-nowrap">{{ total_labour_rate|currency }}</p>
                 </div>
             </div>
         </div>
-        <div class="p-4 bg-white rounded-lg shadow">
-            <div class="flex gap-3 items-center">
-                <div class="p-2 bg-green-50 rounded-lg">{% heroicon_outline "arrow-trending-up" class="w-6 h-6 text-green-600" %}</div>
+        <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
+            <div class="flex gap-2 items-center min-w-0">
+                <div class="p-1.5 bg-orange-50 rounded-lg shrink-0">{% heroicon_outline "truck" class="w-5 h-5 text-orange-600" %}</div>
+                <div class="min-w-0">
+                    <p class="text-xs font-medium text-gray-500 truncate">Plant Rate</p>
+                    <p class="text-sm font-bold text-orange-700 whitespace-nowrap">{{ total_plant_rate|currency }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
+            <div class="flex gap-2 items-center min-w-0">
+                <div class="p-1.5 bg-green-50 rounded-lg shrink-0">{% heroicon_outline "arrow-trending-up" class="w-5 h-5 text-green-600" %}</div>
                 <div class="min-w-0">
                     <p class="text-xs font-medium text-gray-500 truncate">Progress Amount</p>
-                    <p class="text-base font-bold text-green-700 truncate">{{ total_progress_amount|currency }}</p>
+                    <p class="text-sm font-bold text-green-700 whitespace-nowrap">{{ total_progress_amount|currency }}</p>
                 </div>
             </div>
         </div>
-        <div class="p-4 bg-white rounded-lg shadow">
-            <div class="flex gap-3 items-center">
-                <div class="p-2 bg-blue-50 rounded-lg">{% heroicon_outline "chart-bar" class="w-6 h-6 text-blue-600" %}</div>
+        <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
+            <div class="flex gap-2 items-center min-w-0">
+                <div class="p-1.5 bg-blue-50 rounded-lg shrink-0">{% heroicon_outline "chart-bar" class="w-5 h-5 text-blue-600" %}</div>
                 <div class="min-w-0">
                     <p class="text-xs font-medium text-gray-500 truncate">Forecast Amount</p>
-                    <p class="text-base font-bold text-blue-700 truncate">{{ total_forecast_amount|currency }}</p>
+                    <p class="text-sm font-bold text-blue-700 whitespace-nowrap">{{ total_forecast_amount|currency }}</p>
                 </div>
             </div>
         </div>
     </div>
     <!-- Filters -->
     <div class="p-4 mb-4 bg-white rounded-lg shadow-sm">
-        <form method="get" id="filter-form" class="flex flex-wrap gap-3 items-end">
-            <div class="min-w-0">
+        <form method="get" id="filter-form" class="flex flex-wrap gap-2 items-end lg:flex-nowrap">
+            <div class="flex-1 min-w-0">
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Section</label>
                 <select name="section"
                         onchange="this.form.submit()"
@@ -96,7 +105,7 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="min-w-0">
+            <div class="flex-1 min-w-0">
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Bill No.</label>
                 <select name="bill_no"
                         onchange="this.form.submit()"
@@ -107,7 +116,7 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="min-w-0">
+            <div class="flex-1 min-w-0">
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Trade Code</label>
                 <select name="trade_code"
                         onchange="this.form.submit()"
@@ -121,7 +130,7 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="min-w-0">
+            <div class="flex-1 min-w-0">
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Material Spec</label>
                 <select name="mat_spec"
                         onchange="this.form.submit()"
@@ -136,7 +145,7 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="min-w-0">
+            <div class="flex-1 min-w-0">
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">
                     Labour &amp; Plant Spec
                 </label>
@@ -151,7 +160,7 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="min-w-0">
+            <div class="flex-1 min-w-0">
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Prelim Spec</label>
                 <select name="prelim_spec"
                         onchange="this.form.submit()"
@@ -165,7 +174,7 @@
             </div>
             {% if f_section or f_bill_no or f_trade_code or f_mat_spec or f_lab_plant_spec or f_prelim_spec %}
                 <a href="{% url 'estimator:dashboard' project_pk=project_pk %}"
-                   class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md ring-1 ring-inset ring-gray-300 hover:bg-gray-200">
+                   class="inline-flex shrink-0 items-center px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-md ring-1 ring-inset ring-gray-300 hover:bg-gray-200">
                     {% heroicon_outline "x-mark" class="mr-1 w-3.5 h-3.5" %}
                     Clear
                 </a>
@@ -485,7 +494,7 @@
                 <span class="text-[10px] font-semibold uppercase tracking-wider text-indigo-700">Selected</span>
                 <span class="text-sm font-bold text-indigo-900"><span id="bulk-selected-count">0</span> rows</span>
             </div>
-            <div class="min-w-0">
+            <div class="flex-1 min-w-0">
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Trade Code</label>
                 <select id="bulk-trade-code"
                         class="block py-1 pl-2 pr-6 w-full text-xs text-gray-900 bg-white rounded-md border-0 ring-1 ring-inset ring-gray-300">
@@ -494,7 +503,7 @@
                     {% for tc in trade_codes %}<option value="{{ tc.id }}">{{ tc.prefix }}{{ tc.trade_name }}</option>{% endfor %}
                 </select>
             </div>
-            <div class="min-w-0">
+            <div class="flex-1 min-w-0">
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Material Spec</label>
                 <select id="bulk-mat-spec"
                         class="block py-1 pl-2 pr-6 w-full text-xs text-gray-900 bg-white rounded-md border-0 ring-1 ring-inset ring-gray-300">
@@ -503,7 +512,7 @@
                     {% for name in spec_names %}<option value="{{ name }}">{{ name }}</option>{% endfor %}
                 </select>
             </div>
-            <div class="min-w-0">
+            <div class="flex-1 min-w-0">
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">
                     Labour &amp; Plant Spec
                 </label>
@@ -514,7 +523,7 @@
                     {% for name in labour_plant_spec_names %}<option value="{{ name }}">{{ name }}</option>{% endfor %}
                 </select>
             </div>
-            <div class="min-w-0">
+            <div class="flex-1 min-w-0">
                 <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Prelim Spec</label>
                 <select id="bulk-prelim-spec"
                         class="block py-1 pl-2 pr-6 w-full text-xs text-gray-900 bg-white rounded-md border-0 ring-1 ring-inset ring-gray-300">
