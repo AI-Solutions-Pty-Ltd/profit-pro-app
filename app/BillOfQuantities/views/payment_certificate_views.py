@@ -155,10 +155,15 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
         revised_contract_value = project.total_contract_value
         context["revised_contract_value"] = revised_contract_value
 
-        # Total certified (from approved certificates)
+        # Total certified: cumulative total up to the last completed (approved) certificate
+        last_completed_certificate = (
+            completed_certificates.filter(status=PaymentCertificate.Status.APPROVED)
+            .order_by("-certificate_number")
+            .first()
+        )
         total_certified = (
-            sum(t.total_claimed for t in completed_certificates)
-            if completed_certificates
+            last_completed_certificate.progressive_to_date
+            if last_completed_certificate
             else Decimal(0)
         )
         context["total_certified"] = total_certified
