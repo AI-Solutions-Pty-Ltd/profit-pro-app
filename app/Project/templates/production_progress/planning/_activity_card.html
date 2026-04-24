@@ -92,6 +92,7 @@
                                             View Costs
                                         </a>
                                     </li>
+                                    {% if plan.is_leaf %}
                                     <li>
                                         <a href="{% url 'project:production-plan-edit' project.pk plan.pk %}"
                                            class="flex items-center">
@@ -101,19 +102,20 @@
                                     </li>
                                     <li>
                                         <button type="button"
+                                                onclick="event.preventDefault(); event.stopPropagation(); showDeleteModal('{% url 'project:production-plan-delete' project.pk plan.pk %}', '{{ plan.activity|escapejs }}');"
+                                                class="flex items-center w-full text-left text-red-600">
+                                            {% heroicon_outline "trash" class="mr-2 w-4 h-4" %}
+                                            Delete Activity
+                                        </button>
+                                    </li>
+                                    {% endif %}
+                                    <li>
+                                        <button type="button"
                                                 onclick="refreshPlanResources('{{ plan.pk }}', this)"
                                                 class="flex items-center text-indigo-600">
                                             {% heroicon_outline "arrow-path" class="mr-2 w-4 h-4" %}
                                             <span class="btn-text">Refresh Resources</span>
                                             <span class="hidden loading loading-spinner loading-xs"></span>
-                                        </button>
-                                    </li>
-                                    <li>
-                                        <button type="button"
-                                                onclick="event.preventDefault(); event.stopPropagation(); showDeleteModal('{% url 'project:production-plan-delete' project.pk plan.pk %}', '{{ plan.activity|escapejs }}');"
-                                                class="flex items-center w-full text-left text-red-600">
-                                            {% heroicon_outline "trash" class="mr-2 w-4 h-4" %}
-                                            Delete Activity
                                         </button>
                                     </li>
                                     {% if not plan.labour_activity %}

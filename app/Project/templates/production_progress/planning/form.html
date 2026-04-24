@@ -65,7 +65,9 @@
                             <!-- Hierarchical steps hidden by default in favors of direct line item selection -->
                             <div id="section_field_container" class="hidden">{{ form.section|as_crispy_field }}</div>
                             <div id="bill_no_field_container" class="hidden">{{ form.bill_no|as_crispy_field }}</div>
-                            <div id="labour_activity_field_container">{{ form.labour_activity|as_crispy_field }}</div>
+                            <div id="labour_activity_field_container" class="{% if form.instance.pk and not form.instance.is_leaf %}hidden{% endif %}">
+                                {{ form.labour_activity|as_crispy_field }}
+                            </div>
                             <div id="plant_specification_field_container" class="hidden">{{ form.plant_specification|as_crispy_field }}</div>
                         </div>
                         <!-- Hidden Activity Title -->

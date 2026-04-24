@@ -122,11 +122,12 @@ class ProductionPlan(BaseModel):
         return self.unit
 
     def save(self, *args, **kwargs):
-        # Auto-calculate duration
-        if self.start_date and self.finish_date:
-            self.duration = (self.finish_date - self.start_date).days
-        else:
-            self.duration = 0
+        # Auto-calculate duration for leaf nodes
+        if self.is_leaf:
+            if self.start_date and self.finish_date:
+                self.duration = (self.finish_date - self.start_date).days
+            else:
+                self.duration = 0
 
         # Handle automatic hierarchy generation for ANY leaf item (Spec linked)
         is_leaf_item = (
@@ -139,9 +140,9 @@ class ProductionPlan(BaseModel):
 
         super().save(*args, **kwargs)
 
-        # Trigger parent date sync if we have a parent
+        # Trigger parent metric sync if we have a parent
         if self.parent:
-            self.parent.sync_parent_dates()
+            self.parent.sync_parent_metrics()
 
     def refresh_plant_types(self):
         """Updates plant_types field from BOQItems."""
@@ -167,9 +168,10 @@ class ProductionPlan(BaseModel):
 
         self.plant_types = sorted(types)
 
-    def sync_parent_dates(self):
+    def sync_parent_metrics(self):
         """
-        Recalculates this node's dates based on its children.
+        Recalculates this node's metrics based on its children.
+        Includes dates, quantity (child count), and unit.
         Then, bubbles the update up to its own parent.
         """
         if self.is_leaf or self.deleted:
@@ -178,7 +180,9 @@ class ProductionPlan(BaseModel):
         # 1. Aggregate children
         children_qs = self.children.filter(deleted=False)
         stats = children_qs.aggregate(
-            min_start=models.Min("start_date"), max_finish=models.Max("finish_date")
+            min_start=models.Min("start_date"),
+            max_finish=models.Max("finish_date"),
+            child_count=models.Count("id"),
         )
 
         # 2. Handle empty parents
@@ -187,22 +191,40 @@ class ProductionPlan(BaseModel):
             self.soft_delete()
             return
 
-        # 3. Update self if changed (bypass save() to avoid recursion)
-        if stats["min_start"] and stats["max_finish"]:
-            if (
-                self.start_date != stats["min_start"]
-                or self.finish_date != stats["max_finish"]
-            ):
-                ProductionPlan.objects.filter(pk=self.pk).update(
-                    start_date=stats["min_start"], finish_date=stats["max_finish"]
-                )
-                # Sync local instance for the current session
-                self.start_date = stats["min_start"]
-                self.finish_date = stats["max_finish"]
+        # 3. Calculate and Update self if changed (bypass save() to avoid recursion)
+        start = stats["min_start"]
+        finish = stats["max_finish"]
+        qty = Decimal(str(stats["child_count"]))
+        unit = "Items"
+        duration = 0
+        if start and finish:
+            duration = (finish - start).days
 
-                # 4. Bubble up to grandparent
-                if self.parent:
-                    self.parent.sync_parent_dates()
+        # Check if anything changed to avoid redundant updates
+        if (
+            self.start_date != start
+            or self.finish_date != finish
+            or self.quantity != qty
+            or self.unit != unit
+            or self.duration != duration
+        ):
+            ProductionPlan.objects.filter(pk=self.pk).update(
+                start_date=start,
+                finish_date=finish,
+                quantity=qty,
+                unit=unit,
+                duration=duration,
+            )
+            # Sync local instance for the current session
+            self.start_date = start
+            self.finish_date = finish
+            self.quantity = qty
+            self.unit = unit
+            self.duration = duration
+
+            # 4. Bubble up to grandparent
+            if self.parent:
+                self.parent.sync_parent_metrics()
 
     def _ensure_hierarchy(self):
         """Automatically creates Section and Bill levels if they don't exist."""

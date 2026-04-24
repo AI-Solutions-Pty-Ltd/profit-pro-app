@@ -248,6 +248,30 @@ class ProductionPlanForm(forms.ModelForm):
 
         self.fields["section"].required = not parent_id
         self.fields["bill_no"].required = not parent_id
+
+        # ── Hardening Structural Headers ──────────────────────────────────────
+        # If we are editing a non-leaf node (Section/Bill), prevent direct metric edits
+        if self.instance.pk and not self.instance.is_leaf:
+            readonly_fields = [
+                "start_date",
+                "finish_date",
+                "duration",
+                "quantity",
+                "unit",
+                "labour_activity",
+                "plant_specification",
+                "daily_rate",
+                "section",
+                "bill_no",
+            ]
+            for field in readonly_fields:
+                if field in self.fields:
+                    self.fields[field].disabled = True
+                    # Add visual cues for disabled fields
+                    if "class" not in self.fields[field].widget.attrs:
+                        self.fields[field].widget.attrs["class"] = ""
+                    self.fields[field].widget.attrs["class"] += " bg-gray-50 cursor-not-allowed"
+                    self.fields[field].help_text = "Calculated from children (Read-only)"
         self.fields["labour_activity"].required = False
         self.fields[
             "activity"

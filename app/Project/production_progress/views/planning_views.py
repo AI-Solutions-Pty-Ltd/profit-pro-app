@@ -119,6 +119,7 @@ class ProductionPlanGanttView(
                     "duration": plan.duration,
                     "depth": depth,
                     "has_children": plan.children.exists(),
+                    "is_leaf": plan.is_leaf,
                     "predecessors": predecessor_ids,
                     "predecessor_names": predecessor_names,
                     "parent_id": plan.parent_id,
