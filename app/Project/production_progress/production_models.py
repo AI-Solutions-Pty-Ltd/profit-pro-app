@@ -43,6 +43,16 @@ class ProductionPlan(BaseModel):
         related_name="children",
         help_text="Parent activity for nesting",
     )
+    NODE_TYPES = [
+        ("SECTION", "Section Header"),
+        ("BILL", "Bill Header"),
+        ("ACTIVITY", "Work Activity"),
+    ]
+    node_type = models.CharField(max_length=20, choices=NODE_TYPES, default="ACTIVITY")
+    is_leaf = models.BooleanField(
+        default=True,
+        help_text="True if this is a work activity, False for structural headers.",
+    )
     section = models.CharField(
         max_length=200,
         blank=True,
@@ -118,20 +128,20 @@ class ProductionPlan(BaseModel):
         else:
             self.duration = 0
 
-        # Auto-naming from Labour Specification
-        if self.labour_activity:
-            if not self.activity:
-                self.activity = self.labour_activity.name
+        # Handle automatic hierarchy generation for ANY leaf item (Spec linked)
+        is_leaf_item = (
+            self.labour_activity or self.plant_specification
+        ) and self.is_leaf
 
-            # The section and bill_no should be assigned by the form/view
-            # based on the activity grouping selected by the user.
-
-        # Handle automatic hierarchy generation ONLY for leaf items (Labour activities)
-        if self.labour_activity and not self.parent and (self.section or self.bill_no):
+        if is_leaf_item and not self.parent and (self.section or self.bill_no):
             self._ensure_hierarchy()
             self.refresh_plant_types()
 
         super().save(*args, **kwargs)
+
+        # Trigger parent date sync if we have a parent
+        if self.parent:
+            self.parent.sync_parent_dates()
 
     def refresh_plant_types(self):
         """Updates plant_types field from BOQItems."""
@@ -157,9 +167,46 @@ class ProductionPlan(BaseModel):
 
         self.plant_types = sorted(types)
 
+    def sync_parent_dates(self):
+        """
+        Recalculates this node's dates based on its children.
+        Then, bubbles the update up to its own parent.
+        """
+        if self.is_leaf or self.deleted:
+            return  # Activities and deleted nodes don't aggregate.
+
+        # 1. Aggregate children
+        children_qs = self.children.filter(deleted=False)
+        stats = children_qs.aggregate(
+            min_start=models.Min("start_date"), max_finish=models.Max("finish_date")
+        )
+
+        # 2. Handle empty parents
+        if not children_qs.exists():
+            # If no children remain, this header is no longer needed
+            self.soft_delete()
+            return
+
+        # 3. Update self if changed (bypass save() to avoid recursion)
+        if stats["min_start"] and stats["max_finish"]:
+            if (
+                self.start_date != stats["min_start"]
+                or self.finish_date != stats["max_finish"]
+            ):
+                ProductionPlan.objects.filter(pk=self.pk).update(
+                    start_date=stats["min_start"], finish_date=stats["max_finish"]
+                )
+                # Sync local instance for the current session
+                self.start_date = stats["min_start"]
+                self.finish_date = stats["max_finish"]
+
+                # 4. Bubble up to grandparent
+                if self.parent:
+                    self.parent.sync_parent_dates()
+
     def _ensure_hierarchy(self):
         """Automatically creates Section and Bill levels if they don't exist."""
-        if not self.section:
+        if not self.section or not self.is_leaf:
             return
 
         # 1. Ensure Section Level exists
@@ -167,8 +214,7 @@ class ProductionPlan(BaseModel):
             ProductionPlan.objects.filter(
                 project=self.project,
                 section=self.section,
-                bill_no="",
-                labour_activity=None,
+                node_type="SECTION",
                 deleted=False,
             )
             .order_by("created_at")
@@ -180,7 +226,8 @@ class ProductionPlan(BaseModel):
                 project=self.project,
                 section=self.section,
                 bill_no="",
-                labour_activity=None,
+                node_type="SECTION",
+                is_leaf=False,
                 activity=self.section,
                 start_date=self.start_date or timezone.now().date(),
                 finish_date=self.finish_date or timezone.now().date(),
@@ -199,7 +246,7 @@ class ProductionPlan(BaseModel):
                 project=self.project,
                 section=self.section,
                 bill_no=self.bill_no,
-                labour_activity=None,
+                node_type="BILL",
                 deleted=False,
             )
             .order_by("created_at")
@@ -211,7 +258,8 @@ class ProductionPlan(BaseModel):
                 project=self.project,
                 section=self.section,
                 bill_no=self.bill_no,
-                labour_activity=None,
+                node_type="BILL",
+                is_leaf=False,
                 activity=f"Bill {self.bill_no}",
                 parent=section_parent,
                 start_date=self.start_date or timezone.now().date(),
@@ -224,6 +272,7 @@ class ProductionPlan(BaseModel):
             self.parent = bill_parent
 
     def soft_delete(self):
+        """Override soft_delete to prevent deleting if children exist."""
         from django.core.exceptions import ValidationError
 
         if self.children.filter(deleted=False).exists():  # ty:ignore[unresolved-attribute]
