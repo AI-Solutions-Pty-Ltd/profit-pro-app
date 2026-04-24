@@ -2,7 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
-from django.db.models import Q, Sum
+from django.db.models import Sum
 from django.http import FileResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -155,10 +155,15 @@ class PaymentCertificateListView(PaymentCertificateMixin, ListView):
         revised_contract_value = project.total_contract_value
         context["revised_contract_value"] = revised_contract_value
 
-        # Total certified (from approved certificates)
+        # Total certified: cumulative total up to the last completed (approved) certificate
+        last_completed_certificate = (
+            completed_certificates.filter(status=PaymentCertificate.Status.APPROVED)
+            .order_by("-certificate_number")
+            .first()
+        )
         total_certified = (
-            sum(t.total_claimed for t in completed_certificates)
-            if completed_certificates
+            last_completed_certificate.progressive_to_date
+            if last_completed_certificate
             else Decimal(0)
         )
         context["total_certified"] = total_certified
@@ -830,10 +835,7 @@ class PaymentCertificateDownloadPDFView(PaymentCertificateMixin, View):
     def get(self, request, pk=None, project_pk=None):
         project = self.get_project()
         payment_certificate = get_object_or_404(
-            PaymentCertificate,
-            Q(pk=pk),
-            Q(project=project),
-            Q(project__users=request.user) | Q(project__is_demo=True),
+            PaymentCertificate, pk=pk, project=project, project__users=request.user
         )
 
         # Check if PDF is currently being generated
@@ -876,10 +878,7 @@ class PaymentCertificateDownloadAbridgedPDFView(PaymentCertificateMixin, View):
     def get(self, request, pk=None, project_pk=None):
         project = self.get_project()
         payment_certificate = get_object_or_404(
-            PaymentCertificate,
-            Q(pk=pk),
-            Q(project=project),
-            Q(project__users=request.user) | Q(project__is_demo=True),
+            PaymentCertificate, pk=pk, project=project, project__users=request.user
         )
 
         # Check if abridged PDF is currently being generated
@@ -922,10 +921,7 @@ class PaymentCertificatePDFStatusView(PaymentCertificateMixin, View):
     def get(self, request, pk=None, project_pk=None):
         project = self.get_project()
         payment_certificate = get_object_or_404(
-            PaymentCertificate,
-            Q(pk=pk),
-            Q(project=project),
-            Q(project__users=request.user) | Q(project__is_demo=True),
+            PaymentCertificate, pk=pk, project=project, project__users=request.user
         )
 
         return JsonResponse(
@@ -944,10 +940,7 @@ class PaymentCertificateEmailView(PaymentCertificateMixin, View):
     def post(self, request, pk=None, project_pk=None):
         project = self.get_project()
         payment_certificate = get_object_or_404(
-            PaymentCertificate,
-            Q(pk=pk),
-            Q(project=project),
-            Q(project__users=request.user) | Q(project__is_demo=True),
+            PaymentCertificate, pk=pk, project=project, project__users=request.user
         )
 
         # Check if payment certificate is approved
