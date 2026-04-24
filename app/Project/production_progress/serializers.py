@@ -13,12 +13,21 @@ from .production_models import (
 class DailyLogPlantUsageSerializer(serializers.ModelSerializer):
     """Serializer for individual plant usage in a daily log."""
 
+    plant_type_id = serializers.IntegerField(required=False, allow_null=True)
     resource_id = serializers.IntegerField(required=False, allow_null=True)
     plant_name = serializers.CharField(required=True)
 
     class Meta:
         model = DailyPlantUsage
-        fields = ["id", "resource_id", "plant_name", "number", "hours", "quantity"]
+        fields = [
+            "id",
+            "plant_type_id",
+            "resource_id",
+            "plant_name",
+            "number",
+            "hours",
+            "quantity",
+        ]
 
 
 class DailyLogLabourUsageSerializer(serializers.ModelSerializer):
@@ -60,8 +69,7 @@ class DailyLogEntrySerializer(serializers.ModelSerializer):
         project_id = report.project_id if report else None
 
         entry = DailyActivityEntry.objects.create(
-            production_plan_id=plan_id,
-            **validated_data
+            production_plan_id=plan_id, **validated_data
         )
 
         # Handle Labour (Skilled, Semi-Skilled, General)
@@ -123,28 +131,43 @@ class DailyLogEntrySerializer(serializers.ModelSerializer):
             )
 
     def _handle_plant_usage(self, entry, plan_id, plant_usage_data):
-        """Processes plant usage entries."""
+        """Processes plant usage entries, linking to specific plant types from specification."""
+        from app.Estimator.models import ProjectPlantCost
+
         for plant_data in plant_usage_data:
-            # Plant usage requires a name and hours
+            plant_type_id = plant_data.get("plant_type_id")
+            resource_id = plant_data.get("resource_id")
             name = plant_data.get("plant_name")
-            if not name:
+
+            if not plant_type_id and not resource_id and not name:
                 continue
 
-            # Find or create ProductionResource for this plant on this plan
-            resource, _ = ProductionResource.objects.get_or_create(
-                production_plan_id=plan_id,
-                resource_type="PLANT",
-                name=name,
-                defaults={"rate": 0},
-            )
+            plant_type = None
+            if plant_type_id:
+                plant_type = ProjectPlantCost.objects.filter(id=plant_type_id).first()
 
-            DailyPlantUsage.objects.create(
-                entry=entry,
-                resource=resource,
-                number=plant_data.get("number", 1),
-                hours=plant_data.get("hours", 0),
-                quantity=plant_data.get("quantity", 0),
-            )
+            resource = None
+            if not plant_type and resource_id:
+                resource = ProductionResource.objects.filter(
+                    id=resource_id, production_plan_id=plan_id, resource_type="PLANT"
+                ).first()
+
+            if not plant_type and not resource and name:
+                # Fallback to finding by name in project plant costs
+                plant_type = ProjectPlantCost.objects.filter(
+                    project_id=entry.report.project_id, name=name
+                ).first()
+
+            # Create usage record if we have either a spec plant type or a legacy resource
+            if plant_type or resource:
+                DailyPlantUsage.objects.create(
+                    entry=entry,
+                    plant_type=plant_type,
+                    resource=resource,
+                    number=plant_data.get("number", 1) or 1,
+                    hours=plant_data.get("hours", 0) or 0,
+                    quantity=plant_data.get("quantity", 0) or 0,
+                )
 
 
 class DailyLogReportSerializer(serializers.ModelSerializer):
@@ -192,4 +215,3 @@ class DailyLogReportSerializer(serializers.ModelSerializer):
             serializer = DailyLogEntrySerializer(data=entry_data)
             if serializer.is_valid(raise_exception=True):
                 serializer.save(report=report)
-

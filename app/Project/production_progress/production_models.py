@@ -432,6 +432,7 @@ class ProductionPlan(BaseModel):
 
                 allocations.append(
                     {
+                        "id": comp.plant_type_id,
                         "name": comp.plant_type.name,
                         "hours_per_day": hours_per_day,
                         "total_hours": total_hours,
@@ -637,10 +638,8 @@ class DailyActivityEntry(BaseModel):
 
     @property
     def total_plant_cost(self):
-        """Calculated plant cost based on assigned unit rates and tracked hours."""
-        return self.production_plan.hourly_plant_rate * Decimal(
-            str(self.hours_on_activity)
-        )
+        """Sum of actual plant usage costs from recorded resources."""
+        return sum(usage.total_cost for usage in self.plant_usage.all())
 
     @property
     def man_hours(self):
@@ -708,10 +707,21 @@ class DailyPlantUsage(BaseModel):
     entry = models.ForeignKey(
         DailyActivityEntry, on_delete=models.CASCADE, related_name="plant_usage"
     )
+    plant_type = models.ForeignKey(
+        "estimator.ProjectPlantCost",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="usages",
+        help_text="The master plant cost record from the specification.",
+    )
     resource = models.ForeignKey(
         ProductionResource,
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         limit_choices_to={"resource_type": "PLANT"},
+        help_text="Legacy: The specific plant resource allocated to the plan.",
     )
     number = models.IntegerField(default=1, validators=[MinValueValidator(0)])
     hours = models.DecimalField(
@@ -731,4 +741,9 @@ class DailyPlantUsage(BaseModel):
 
     @property
     def total_cost(self):
-        return (self.number or 0) * (self.hours or 0) * (self.resource.rate or 0)
+        rate = Decimal("0")
+        if self.plant_type:
+            rate = self.plant_type.hourly_rate
+        elif self.resource:
+            rate = self.resource.rate
+        return (self.number or 0) * (self.hours or 0) * (rate or 0)

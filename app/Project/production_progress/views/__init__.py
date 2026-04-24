@@ -27,6 +27,7 @@ from .planning_views import (
     ProductionResourceCreateView,
 )
 from .productivity_views import (
+    DailyActivityEntryUpdateView,
     DailyLogActivityDataAjaxView,
     DailyProductionCreateView,
     ProductionDailyLogCreateView,
@@ -34,7 +35,6 @@ from .productivity_views import (
     ProductionDailyLogDetailView,
     ProductionDailyLogListView,
     ProductionDailyLogUpdateView,
-    DailyActivityEntryUpdateView,
 )
 from .reports_views import (
     ProductionForecastDashboardView,

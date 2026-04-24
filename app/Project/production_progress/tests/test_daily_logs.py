@@ -5,13 +5,13 @@ import json
 import pytest
 from django.urls import reverse
 
+from app.Account.tests.factories import AccountFactory
 from app.Project.production_progress.factories import (
     DailyActivityEntryFactory,
     DailyActivityReportFactory,
     ProductionPlanFactory,
     ProductionResourceFactory,
 )
-from app.Account.tests.factories import AccountFactory
 from app.Project.production_progress.production_models import (
     DailyActivityEntry,
     DailyActivityReport,

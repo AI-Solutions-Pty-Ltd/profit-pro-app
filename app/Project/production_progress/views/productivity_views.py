@@ -91,17 +91,35 @@ class ProductionDailyLogListView(
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_queryset(self):
-        from app.Estimator.models import BOQItem
+        from decimal import Decimal
 
-        # Subquery for summing plant rates across BOQItems linked to this plan/activity
-        plant_rates = BOQItem.objects.filter(
-            project_id=OuterRef("production_plan__project_id"),
-            section=OuterRef("production_plan__section"),
-            bill_no=OuterRef("production_plan__bill_no"),
-            labour_specification_id=OuterRef("production_plan__labour_activity_id"),
-            plant_specification__isnull=False,
+        from app.Project.production_progress.production_models import (
+            DailyPlantUsage,
         )
 
+        # Subquery for plant cost sum
+        plant_costs = (
+            DailyPlantUsage.objects.filter(entry=OuterRef("pk"))
+            .annotate(
+                actual_rate=Coalesce(
+                    F("plant_type__hourly_rate"),
+                    F("resource__rate"),
+                    Decimal("0"),
+                    output_field=models.DecimalField(),
+                )
+            )
+            .annotate(
+                cost=ExpressionWrapper(
+                    F("number") * F("hours") * F("actual_rate"),
+                    output_field=models.DecimalField(),
+                )
+            )
+            .values("entry")
+            .annotate(total=Sum("cost"))
+            .values("total")
+        )
+
+        # Annotate with actual summed costs from usage records
         return (
             DailyActivityEntry.objects.filter(
                 report__project_id=self.kwargs["project_pk"]
@@ -148,35 +166,15 @@ class ProductionDailyLogListView(
                     ),
                     output_field=models.DecimalField(max_digits=10, decimal_places=2),
                 ),
-                hourly_plant_rate=Coalesce(
-                    Subquery(
-                        plant_rates.values("labour_specification_id")
-                        .annotate(
-                            total_rate=Sum(
-                                "plant_specification__components__plant_type__hourly_rate"
-                            )
-                        )
-                        .values("total_rate")[:1]
-                    ),
-                    Value(0, output_field=models.DecimalField()),
-                ),
-            )
-            .annotate(
-                acc_labour_cost=Coalesce(
+                actual_labour_cost=Coalesce(
                     F("hours_on_activity") * F("hourly_labour_rate"),
                     Value(0, output_field=models.DecimalField()),
                 ),
-                acc_plant_cost=Coalesce(
-                    F("hours_on_activity") * F("hourly_plant_rate"),
-                    Value(0, output_field=models.DecimalField()),
+                actual_plant_cost=Coalesce(
+                    Subquery(plant_costs), Value(0, output_field=models.DecimalField())
                 ),
             )
-            .annotate(
-                acc_total_cost=Coalesce(
-                    F("acc_labour_cost") + F("acc_plant_cost"),
-                    Value(0, output_field=models.DecimalField()),
-                ),
-            )
+            .annotate(acc_total_cost=F("actual_labour_cost") + F("actual_plant_cost"))
             .order_by("-report__date", "-created_at")
         )
 
@@ -190,8 +188,8 @@ class ProductionDailyLogListView(
         context["totals"] = qs.aggregate(
             qty=Sum("quantity"),
             hours=Sum("hours_on_activity"),
-            labour=Sum("acc_labour_cost"),
-            plant=Sum("acc_plant_cost"),
+            labour=Sum("actual_labour_cost"),
+            plant=Sum("actual_plant_cost"),
             total=Sum("acc_total_cost"),
         )
         return context
@@ -302,15 +300,31 @@ class ProductionDailyLogUpdateView(
 
             # Plant
             plant_usage = []
-            for usage in entry.plant_usage.all().select_related("resource"):
+            for usage in entry.plant_usage.all().select_related(
+                "plant_type", "resource"
+            ):
+                plant_name = "Unknown"
+                if usage.plant_type:
+                    plant_name = usage.plant_type.name
+                elif usage.resource:
+                    plant_name = usage.resource.name
+
                 plant_usage.append(
                     {
-                        "plant_name": usage.resource.name,
-                        "number": float(usage.number),
-                        "hours": float(usage.hours),
-                        "quantity": float(usage.quantity),
+                        "plant_type_id": usage.plant_type_id,
+                        "resource_id": usage.resource_id,
+                        "plant_name": plant_name,
+                        "number": float(usage.number or 0),
+                        "hours": float(usage.hours or 0),
+                        "quantity": float(usage.quantity or 0),
                     }
                 )
+
+            # Get available plants for selection (from Spec)
+            available_plants = [
+                {"id": a["id"], "name": a["name"]}
+                for a in entry.production_plan.get_plant_allocations()
+            ]
 
             entries_data.append(
                 {
@@ -328,7 +342,7 @@ class ProductionDailyLogUpdateView(
                     "labour_details": labour_details,
                     "plant_usage": plant_usage,
                     "unit": entry.production_plan.unit_display,
-                    "available_plants": list(entry.production_plan.plant_types),
+                    "available_plants": available_plants,
                 }
             )
 
@@ -438,12 +452,19 @@ class DailyActivityEntryUpdateView(
         for usage in entry.plant_usage.all().select_related("resource"):
             plant_usage.append(
                 {
+                    "resource_id": usage.resource_id,
                     "plant_name": usage.resource.name,
                     "number": float(usage.number),
                     "hours": float(usage.hours),
                     "quantity": float(usage.quantity),
                 }
             )
+
+        # Get available plants for selection (ID and Name)
+        available_plants = [
+            {"id": r.id, "name": r.name}
+            for r in entry.production_plan.resources.filter(resource_type="PLANT")
+        ]
 
         context["initial_data"] = json.dumps(
             {
@@ -461,7 +482,7 @@ class DailyActivityEntryUpdateView(
                 "labour_details": labour_details,
                 "plant_usage": plant_usage,
                 "unit": entry.production_plan.unit_display,
-                "available_plants": list(entry.production_plan.plant_types),
+                "available_plants": available_plants,
             }
         )
         return context
@@ -474,7 +495,10 @@ class DailyActivityEntryUpdateView(
             if serializer.is_valid():
                 serializer.save()
                 return JsonResponse(
-                    {"status": "success", "message": "Activity entry updated successfully"}
+                    {
+                        "status": "success",
+                        "message": "Activity entry updated successfully",
+                    }
                 )
             return JsonResponse(
                 {"status": "error", "errors": serializer.errors}, status=400
@@ -552,9 +576,6 @@ class DailyLogActivityDataAjaxView(LoginRequiredMixin, TemplateView):
         plan_id = request.GET.get("plan_id")
         plan = get_object_or_404(ProductionPlan, pk=plan_id)
 
-        # Plant types are now cached on the ProductionPlan model
-        plant_types = plan.plant_types
-
         # Crew Info
         crew_info = {"skilled": 0, "semi_skilled": 0, "general": 0}
         if plan.labour_activity and plan.labour_activity.crew:
@@ -565,13 +586,18 @@ class DailyLogActivityDataAjaxView(LoginRequiredMixin, TemplateView):
                 "general": crew.general,
             }
 
+        # Get available plants for selection (from Spec)
+        available_plants = [
+            {"id": a["id"], "name": a["name"]} for a in plan.get_plant_allocations()
+        ]
+
         return JsonResponse(
             {
                 "activity": plan.activity or str(plan),
                 "section": plan.section or "No Section",
                 "bill_no": plan.bill_no or "No Bill",
                 "unit": plan.unit_display,
-                "plant_types": list(plant_types),
+                "available_plants": available_plants,
                 "crew": crew_info,
             }
         )

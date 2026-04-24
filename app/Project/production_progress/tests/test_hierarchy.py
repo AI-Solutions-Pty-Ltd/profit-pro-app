@@ -63,7 +63,7 @@ class TestProductionHierarchy:
         assert section.finish_date == today + timedelta(days=2)
 
         # Add another child with a wider range
-        plan2 = ProductionPlan.objects.create(
+        ProductionPlan.objects.create(
             project=project,
             labour_activity=labour,
             section="Sync Section",

@@ -241,9 +241,16 @@
         });
 
         // Fill plants
-        initialData.plant_usage.forEach(plant => {
-            addPlantRow(plant.plant_name, plant.hours);
-        });
+        if (initialData.plant_usage && initialData.plant_usage.length > 0) {
+            initialData.plant_usage.forEach(plant => {
+                const pValue = plant.plant_type_id || plant.resource_id;
+                addPlantRow(pValue, plant.plant_name, plant.hours);
+            });
+        } else if (initialData.available_plants && initialData.available_plants.length > 0) {
+            initialData.available_plants.forEach(plant => {
+                addPlantRow(plant.id, plant.name);
+            });
+        }
 
         updatePlantEmptyState();
         calculateTotalActivityHours();
@@ -264,13 +271,17 @@
 
     function calculateTotalActivityHours() {
         let total = 0;
-        document.querySelectorAll('.lab-hours').forEach(input => total += parseFloat(input.value || 0));
+        document.querySelectorAll('.labour-group').forEach(group => {
+            const count = parseFloat(group.querySelector('.lab-count').value || 0);
+            const hours = parseFloat(group.querySelector('.lab-hours').value || 0);
+            total += (count * hours);
+        });
         document.querySelectorAll('.plant-hours-input').forEach(input => total += parseFloat(input.value || 0));
         const hoursInput = document.getElementById('activity-hours-input');
         if (hoursInput) hoursInput.value = total.toFixed(1);
     }
 
-    function addPlantRow(plantName = '', hours = '') {
+    function addPlantRow(resourceId = '', plantName = '', hours = '') {
         const plantRows = document.getElementById('plant-rows');
         const template = document.getElementById('plant-row-template').content;
         
@@ -279,14 +290,14 @@
         const select = tr.querySelector('.plant-select');
         
         // Add options from available_plants
-        initialData.available_plants.forEach(pName => {
+        initialData.available_plants.forEach(plant => {
             const opt = document.createElement('option');
-            opt.value = pName;
-            opt.innerText = pName;
+            opt.value = plant.id;
+            opt.innerText = plant.name;
             select.appendChild(opt);
         });
         
-        if (plantName) select.value = plantName;
+        if (resourceId) select.value = resourceId;
         if (hours) tr.querySelector('.plant-hours-input').value = hours;
         
         plantRows.appendChild(trCloned);
@@ -312,10 +323,11 @@
 
         const plants = [];
         document.querySelectorAll('.plant-row').forEach(pRow => {
-            const pName = pRow.querySelector('.plant-select').value;
-            if (pName) {
+            const plantId = pRow.querySelector('.plant-select').value;
+            if (plantId) {
                 plants.push({
-                    plant_name: pName,
+                    plant_type_id: plantId,
+                    plant_name: pRow.querySelector('.plant-select').options[pRow.querySelector('.plant-select').selectedIndex].text,
                     hours: pRow.querySelector('.plant-hours-input').value || 0,
                     quantity: 0
                 });
