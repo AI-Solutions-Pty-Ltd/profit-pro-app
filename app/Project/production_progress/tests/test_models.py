@@ -1,16 +1,17 @@
 """Tests for ProductionPlan models."""
 
+from datetime import date, timedelta
+from decimal import Decimal
+
 import pytest
 
-from decimal import Decimal
-from datetime import date, timedelta
-from app.Project.production_progress.factories import ProductionPlanFactory
 from app.Estimator.factories import (
-    ProjectPlantSpecificationFactory,
-    ProjectPlantSpecificationComponentFactory,
+    BOQItemFactory,
     ProjectPlantCostFactory,
-    BOQItemFactory
+    ProjectPlantSpecificationComponentFactory,
+    ProjectPlantSpecificationFactory,
 )
+from app.Project.production_progress.factories import ProductionPlanFactory
 
 
 @pytest.mark.django_db
@@ -44,21 +45,26 @@ class TestProductionPlanModel:
         start = date(2024, 1, 1)
         finish = start + timedelta(days=5)
 
-        plan = ProductionPlanFactory.create(
-            start_date=start,
-            finish_date=finish
-        )
+        plan = ProductionPlanFactory.create(start_date=start, finish_date=finish)
         # Verify duration was calculated correctly by model save()
         assert plan.duration == 5
 
         spec = ProjectPlantSpecificationFactory.create(project=plan.project)
 
         # Create components
-        type1 = ProjectPlantCostFactory.create(project=plan.project, name="Excavator", hourly_rate=200)
-        type2 = ProjectPlantCostFactory.create(project=plan.project, name="Dumper", hourly_rate=100)
+        type1 = ProjectPlantCostFactory.create(
+            project=plan.project, name="Excavator", hourly_rate=200
+        )
+        type2 = ProjectPlantCostFactory.create(
+            project=plan.project, name="Dumper", hourly_rate=100
+        )
 
-        ProjectPlantSpecificationComponentFactory.create(specification=spec, plant_type=type1, hours=4)
-        ProjectPlantSpecificationComponentFactory.create(specification=spec, plant_type=type2, hours=8)
+        ProjectPlantSpecificationComponentFactory.create(
+            specification=spec, plant_type=type1, hours=4
+        )
+        ProjectPlantSpecificationComponentFactory.create(
+            specification=spec, plant_type=type2, hours=8
+        )
 
         plan.plant_specification = spec
         plan.save()
@@ -89,24 +95,24 @@ class TestProductionPlanModel:
         finish = start + timedelta(days=2)
 
         plan = ProductionPlanFactory.create(
-            start_date=start,
-            finish_date=finish,
-            section="S1",
-            bill_no="B1"
+            start_date=start, finish_date=finish, section="S1", bill_no="B1"
         )
         assert plan.duration == 2
 
-        spec = ProjectPlantSpecificationFactory.create(project=plan.project, name="Fallback Spec")
+        spec = ProjectPlantSpecificationFactory.create(
+            project=plan.project, name="Fallback Spec"
+        )
 
-        type1 = ProjectPlantCostFactory.create(project=plan.project, name="Roller", hourly_rate=300)
-        ProjectPlantSpecificationComponentFactory.create(specification=spec, plant_type=type1, hours=6)
+        type1 = ProjectPlantCostFactory.create(
+            project=plan.project, name="Roller", hourly_rate=300
+        )
+        ProjectPlantSpecificationComponentFactory.create(
+            specification=spec, plant_type=type1, hours=6
+        )
 
         # Link spec to BOQItem
         BOQItemFactory.create(
-            project=plan.project,
-            section="S1",
-            bill_no="B1",
-            plant_specification=spec
+            project=plan.project, section="S1", bill_no="B1", plant_specification=spec
         )
 
         # Plan has NO direct spec
@@ -118,7 +124,7 @@ class TestProductionPlanModel:
         assert len(allocations) == 1
         roller = allocations[0]
         assert roller["name"] == "Roller"
-        assert roller["total_hours"] == 12 # 6 hrs/day * 2 days
+        assert roller["total_hours"] == 12  # 6 hrs/day * 2 days
         assert roller["total_cost"] == Decimal("3600.00")
         assert roller["is_fallback"] is True
 

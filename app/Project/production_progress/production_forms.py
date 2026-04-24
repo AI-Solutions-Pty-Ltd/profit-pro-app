@@ -270,8 +270,12 @@ class ProductionPlanForm(forms.ModelForm):
                     # Add visual cues for disabled fields
                     if "class" not in self.fields[field].widget.attrs:
                         self.fields[field].widget.attrs["class"] = ""
-                    self.fields[field].widget.attrs["class"] += " bg-gray-50 cursor-not-allowed"
-                    self.fields[field].help_text = "Calculated from children (Read-only)"
+                    self.fields[field].widget.attrs["class"] += (
+                        " bg-gray-50 cursor-not-allowed"
+                    )
+                    self.fields[
+                        field
+                    ].help_text = "Calculated from children (Read-only)"
         self.fields["labour_activity"].required = False
         self.fields[
             "activity"
