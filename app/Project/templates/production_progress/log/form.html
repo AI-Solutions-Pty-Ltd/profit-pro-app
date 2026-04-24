@@ -293,9 +293,11 @@
                         </h4>
                         <div class="flex gap-4 items-center">
                             <span class="text-xs italic font-bold text-gray-400 uppercase">Restricted to activity specs</span>
-                            {% comment %} <button type="button" onclick="addPlantRow(this)" class="inline-flex items-center px-3 py-1 text-xs font-black tracking-wider text-indigo-600 uppercase bg-indigo-50 rounded-lg border border-indigo-100 transition-all hover:bg-indigo-100">
-                            {% heroicon_outline "plus" class="mr-1 w-3 h-3" %} Add Resource
-                            </button> {% endcomment %}
+                            <button type="button"
+                                    onclick="addPlantRow(this)"
+                                    class="p-1.5 text-indigo-600 bg-indigo-50 rounded-lg transition-all hover:bg-indigo-100 active:scale-95">
+                                {% heroicon_outline "plus" class="w-4 h-4" %}
+                            </button>
                         </div>
                     </div>
                     <div class="plant-table-container min-h-[100px] bg-gray-50/30 rounded-2xl border border-gray-100">
@@ -333,11 +335,13 @@
                        class="px-3 py-2 w-full font-mono text-xs font-bold text-center bg-white rounded-lg border-0 ring-1 ring-inset ring-gray-200 transition-all plant-hours-input focus:ring-2 focus:ring-indigo-600"
                        placeholder="0.0">
             </td>
-            {% comment %} <td class="px-3 py-2 w-10 text-right">
-            <button type="button" onclick="removePlantRow(this)" class="p-1.5 text-gray-300 rounded-md transition-all hover:text-red-500">
-                {% heroicon_outline "x-mark" class="w-4 h-4" %}
-            </button>
-            </td> {% endcomment %}
+            <td class="px-3 py-2 w-10">
+                <button type="button"
+                        onclick="removePlantRow(this)"
+                        class="p-1 text-gray-300 transition-all hover:text-red-500 hover:bg-red-50 rounded-md">
+                    {% heroicon_outline "trash" class="w-4 h-4" %}
+                </button>
+            </td>
         </tr>
     </template>
     <script>
@@ -409,11 +413,11 @@
 
             const plantTbody = row.querySelector('.plant-rows');
             plantTbody.innerHTML = '';
-            row.dataset.availablePlants = JSON.stringify(data.plant_types || []);
+            row.dataset.availablePlants = JSON.stringify(data.available_plants || []);
             
-            if (data.plant_types && data.plant_types.length > 0) {
-                data.plant_types.forEach(name => {
-                    addPlantRow(row, name);
+            if (data.available_plants && data.available_plants.length > 0) {
+                data.available_plants.forEach(plant => {
+                    addPlantRow(row, plant.id, plant.name);
                 });
             }
             updatePlantEmptyState(row);
@@ -424,7 +428,7 @@
         }
     }
 
-    function addPlantRow(triggerTarget, plantName = '') {
+    function addPlantRow(triggerTarget, resourceId = '', plantName = '') {
         const row = triggerTarget.classList.contains('activity-row') ? triggerTarget : triggerTarget.closest('.activity-row');
         const availablePlants = JSON.parse(row.dataset.availablePlants || '[]');
         const tbody = row.querySelector('.plant-rows');
@@ -435,14 +439,14 @@
         const select = tr.querySelector('.plant-select');
         select.innerHTML = '<option value="">-- Pick Plant Type --</option>';
         
-        availablePlants.forEach(pName => {
+        availablePlants.forEach(plant => {
             const opt = document.createElement('option');
-            opt.value = pName;
-            opt.innerText = pName;
+            opt.value = plant.id;
+            opt.innerText = plant.name;
             select.appendChild(opt);
         });
 
-        if (plantName) select.value = plantName;
+        if (resourceId) select.value = resourceId;
         tbody.appendChild(trCloned);
         updatePlantEmptyState(row);
     }
@@ -493,10 +497,11 @@
 
             const plants = [];
             row.querySelectorAll('.plant-row').forEach(pRow => {
-                const pName = pRow.querySelector('.plant-select').value;
-                if (pName) {
+                const plantId = pRow.querySelector('.plant-select').value;
+                if (plantId) {
                     plants.push({
-                        plant_name: pName,
+                        plant_type_id: plantId,
+                        plant_name: pRow.querySelector('.plant-select').options[pRow.querySelector('.plant-select').selectedIndex].text,
                         hours: pRow.querySelector('.plant-hours-input').value || 0,
                         quantity: 0
                     });
@@ -631,12 +636,18 @@
                     group.querySelector('.lab-hours').value = details.hours || 0;
                 }
             });
+            newRow.dataset.availablePlants = JSON.stringify(entryData.available_plants || []);
+            
             if (entryData.plant_usage && entryData.plant_usage.length > 0) {
-                newRow.dataset.availablePlants = JSON.stringify(entryData.available_plants || []);
                 entryData.plant_usage.forEach(plant => {
-                    addPlantRow(newRow, plant.plant_name);
+                    const pValue = plant.plant_type_id || plant.resource_id;
+                    addPlantRow(newRow, pValue, plant.plant_name);
                     const lastPlantRow = Array.from(newRow.querySelectorAll('.plant-row')).pop();
                     if (lastPlantRow) lastPlantRow.querySelector('.plant-hours-input').value = plant.hours || 0;
+                });
+            } else if (entryData.available_plants && entryData.available_plants.length > 0) {
+                entryData.available_plants.forEach(plant => {
+                    addPlantRow(newRow, plant.id, plant.name);
                 });
             }
             updatePlantEmptyState(newRow);
@@ -650,7 +661,11 @@
     function calculateTotalActivityHours(row) {
         if (!row) return;
         let total = 0;
-        row.querySelectorAll('.lab-hours').forEach(input => total += parseFloat(input.value || 0));
+        row.querySelectorAll('.labour-group').forEach(group => {
+            const count = parseFloat(group.querySelector('.lab-count').value || 0);
+            const hours = parseFloat(group.querySelector('.lab-hours').value || 0);
+            total += (count * hours);
+        });
         row.querySelectorAll('.plant-hours-input').forEach(input => total += parseFloat(input.value || 0));
         const totalInput = row.querySelector('.activity-hours-input');
         if (totalInput) totalInput.value = total.toFixed(1);

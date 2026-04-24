@@ -27,6 +27,7 @@ from .planning_views import (
     ProductionResourceCreateView,
 )
 from .productivity_views import (
+    DailyActivityEntryUpdateView,
     DailyLogActivityDataAjaxView,
     DailyProductionCreateView,
     ProductionDailyLogCreateView,
@@ -76,4 +77,5 @@ __all__ = [
     "ProductionPlanAutofillView",
     "ProductionCashflowForecastView",
     "ProductionPerformanceReportView",
+    "DailyActivityEntryUpdateView",
 ]
