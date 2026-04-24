@@ -450,8 +450,6 @@ class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, 
 
         return redirect("project:production-planning", project_pk=project.pk)
 
-        return redirect("project:production-planning", project_pk=project.pk)
-
 
 class ProductionPlanUpdateView(
     SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, UpdateView
