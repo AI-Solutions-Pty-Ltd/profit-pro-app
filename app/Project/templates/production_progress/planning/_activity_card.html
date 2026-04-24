@@ -118,15 +118,6 @@
                                             <span class="hidden loading loading-spinner loading-xs"></span>
                                         </button>
                                     </li>
-                                    {% if not plan.labour_activity %}
-                                        <li>
-                                            <a href="{% url 'project:production-plan-create' project.pk %}?parent={{ plan.pk }}{% if plan.section %}&section={{ plan.section }}{% endif %}{% if plan.bill_no %}&bill_no={{ plan.bill_no }}{% endif %}"
-                                               class="flex items-center text-indigo-500">
-                                                {% heroicon_outline "plus" class="mr-2 w-4 h-4" %}
-                                                Add Activity
-                                            </a>
-                                        </li>
-                                    {% endif %}
                                 </ul>
                             </div>
                         </div>

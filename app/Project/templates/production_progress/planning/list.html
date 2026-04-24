@@ -18,13 +18,9 @@
             </a>
             <button type="button"
                     onclick="autofill_modal.showModal()"
-                    class="inline-flex items-center px-4 py-2 text-sm font-bold text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    class="inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 {% heroicon_outline "sparkles" class="mr-2 w-4 h-4" %} Autofill from Estimator
             </button>
-            <a href="{% url 'project:production-plan-create' project.pk %}"
-               class="inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                {% heroicon_solid "plus" class="mr-2 w-4 h-4" %} Add Activity
-            </a>
         </div>
     </div>
     <!-- Autofill Confirmation Modal -->
@@ -114,12 +110,19 @@
                 </div>
                 <h3 class="text-xl font-black text-gray-900">No activities planned yet</h3>
                 <p class="mx-auto mt-2 max-w-sm text-sm text-gray-500">
-                    Start by adding your first high-level activity or project milestone to build your production schedule.
+                    To build your schedule, ensure your project has labor items in the estimator, then use the <strong>Autofill</strong> tool.
                 </p>
-                <a href="{% url 'project:production-plan-create' project.pk %}"
-                   class="inline-flex items-center px-6 py-3 mt-8 text-sm font-bold text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700">
-                    {% heroicon_solid "plus" class="mr-2 w-4 h-4" %} Create First Activity
-                </a>
+                <div class="flex justify-center items-center mt-8 space-x-4">
+                    <a href="{% url 'estimator:dashboard' project.pk %}"
+                       class="inline-flex items-center px-6 py-3 text-sm font-bold text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-colors hover:bg-gray-50">
+                        {% heroicon_outline "calculator" class="mr-2 w-4 h-4" %} Go to Project Estimator
+                    </a>
+                    <button type="button"
+                            onclick="autofill_modal.showModal()"
+                            class="inline-flex items-center px-6 py-3 text-sm font-bold text-white bg-indigo-600 rounded-md border border-transparent shadow-sm transition-colors hover:bg-indigo-700">
+                        {% heroicon_solid "bolt" class="mr-2 w-4 h-4" %} Run Autofill Now
+                    </button>
+                </div>
             </div>
         {% endif %}
     </div>

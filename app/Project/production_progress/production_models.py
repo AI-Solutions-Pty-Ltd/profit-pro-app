@@ -379,20 +379,13 @@ class ProductionPlan(BaseModel):
 
         return manual_cost + spec_cost
 
-    @property
-    def total_plant_cost(self):
-        # Manual resources cost
-        manual_cost = (
-            self.resources.filter(resource_type="PLANT").aggregate(
-                total=models.Sum("total_cost")
-            )["total"]
-            or 0
-        )
+    def get_plant_allocations(self):
+        """Returns a list of granular plant allocations for this plan."""
+        allocations = []
+        unique_specs = {}
 
-        # Specification-based plant cost
-        spec_cost = 0
         if self.plant_specification:
-            spec_cost = self.plant_specification.daily_cost * (self.duration or 0)
+            unique_specs[self.plant_specification.name] = self.plant_specification
         else:
             # Fallback: Pull from related BOQItems
             from app.Estimator.models import BOQItem, ProjectPlantSpecification
@@ -413,7 +406,6 @@ class ProductionPlan(BaseModel):
                 specs = ProjectPlantSpecification.objects.filter(
                     pk__in=spec_ids
                 ).prefetch_related("components__plant_type")
-                unique_specs = {}
                 for spec in specs:
                     # Get all type names from components
                     type_names = [
@@ -425,8 +417,46 @@ class ProductionPlan(BaseModel):
                     if name not in unique_specs:
                         unique_specs[name] = spec
 
-                for spec in unique_specs.values():
-                    spec_cost += spec.daily_cost * (self.duration or 0)
+        # Expand unique specs into components
+        for display_name, spec in unique_specs.items():
+            for comp in spec.components.all():
+                if not comp.plant_type:
+                    continue
+
+                # duration = Decimal(str(self.duration or 0))
+                hours_per_day = comp.hours
+                total_hours = hours_per_day
+                rate = comp.plant_type.hourly_rate or Decimal("0")
+                total_cost = total_hours * rate
+
+                allocations.append(
+                    {
+                        "name": comp.plant_type.name,
+                        "hours_per_day": hours_per_day,
+                        "total_hours": total_hours,
+                        "rate": rate,
+                        "total_cost": total_cost,
+                        "source_name": spec.name,
+                        "display_name": display_name,
+                        "is_fallback": not self.plant_specification,
+                    }
+                )
+
+        return allocations
+
+    @property
+    def total_plant_cost(self):
+        # Manual resources cost
+        manual_cost = (
+            self.resources.filter(resource_type="PLANT").aggregate(
+                total=models.Sum("total_cost")
+            )["total"]
+            or 0
+        )
+
+        # Specification-based plant cost
+        allocs = self.get_plant_allocations()
+        spec_cost = sum(a["total_cost"] for a in allocs)
 
         return manual_cost + spec_cost
 

@@ -168,45 +168,36 @@
                                             {% endif %}
                                         {% endwith %}
                                     {% endif %}
-                                    <!-- Spec-based Resources: Plant Spec -->
+                                    <!-- Spec-based Resources: Plant Allocations -->
                                     {% if type_code == 'PLANT' %}
-                                        {% if selected_plan.plant_specification %}
-                                            {% with spec=selected_plan.plant_specification %}
-                                                <tr class="transition-all hover:bg-indigo-50/30 group">
-                                                    <td class="text-xs font-bold text-gray-700">{{ spec.plant_type.name|default:"Primary Plant" }}</td>
-                                                    <td class="text-xs text-gray-600">1</td>
-                                                    <td class="text-xs text-gray-600">{{ selected_plan.duration|multiply:8|qty }}</td>
-                                                    <td class="text-xs text-gray-600">
-                                                        {{ spec.hourly_cost|currency }} <span class="text-[9px]">/hr</span>
-                                                    </td>
-                                                    <td class="font-mono text-xs font-semibold text-right text-gray-900 whitespace-nowrap">
-                                                        {{ spec.hourly_cost|multiply:8|multiply:selected_plan.duration|currency }}
-                                                    </td>
-                                                    <td class="text-center">
-                                                        <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 rounded-full ring-1 ring-inset ring-emerald-700/10">Plant Spec</span>
-                                                    </td>
-                                                    <td></td>
-                                                </tr>
-                                            {% endwith %}
-                                        {% elif fallback_plant_specs %}
-                                            {% for spec in fallback_plant_specs %}
-                                                <tr class="transition-all hover:bg-teal-50/10 group">
-                                                    <td class="text-xs font-bold text-gray-700">{{ spec.plant_type.name|default:spec.name }}</td>
-                                                    <td class="text-xs text-gray-600">1</td>
-                                                    <td class="text-xs text-gray-600">{{ selected_plan.duration|multiply:8|qty }}</td>
-                                                    <td class="text-xs text-gray-600">
-                                                        {{ spec.hourly_cost|currency }} <span class="text-[9px]">/hr</span>
-                                                    </td>
-                                                    <td class="font-mono text-xs font-semibold text-right text-gray-900 whitespace-nowrap">
-                                                        {{ spec.hourly_cost|multiply:8|multiply:selected_plan.duration|currency }}
-                                                    </td>
-                                                    <td class="text-center">
+                                        {% for alloc in plant_allocations %}
+                                            <tr class="transition-all hover:bg-indigo-50/30 group">
+                                                <td class="text-xs font-bold text-gray-700">
+                                                    <div class="flex flex-col">
+                                                        <span>{{ alloc.name }}</span>
+                                                        <span class="text-[9px] text-gray-400 font-normal italic">{{ alloc.source_name }}</span>
+                                                    </div>
+                                                </td>
+                                                <td class="text-xs text-gray-600">1</td>
+                                                <td class="text-xs text-gray-600">
+                                                    {{ alloc.total_hours|qty }} <span class="text-[9px]">h</span>
+                                                </td>
+                                                <td class="text-xs text-gray-600">
+                                                    {{ alloc.rate|currency }} <span class="text-[9px]">/hr</span>
+                                                </td>
+                                                <td class="font-mono text-xs font-semibold text-right text-gray-900 whitespace-nowrap">
+                                                    {{ alloc.total_cost|currency }}
+                                                </td>
+                                                <td class="text-center">
+                                                    {% if alloc.is_fallback %}
                                                         <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-teal-700 bg-teal-50 rounded-full ring-1 ring-inset ring-teal-700/10">Fallback Spec</span>
-                                                    </td>
-                                                    <td></td>
-                                                </tr>
-                                            {% endfor %}
-                                        {% endif %}
+                                                    {% else %}
+                                                        <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold text-emerald-700 bg-emerald-50 rounded-full ring-1 ring-inset ring-emerald-700/10">Plant Spec</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td></td>
+                                            </tr>
+                                        {% endfor %}
                                     {% endif %}
                                     <!-- Manual Resources -->
                                     {% for resource in selected_plan.resources.all %}

@@ -717,45 +717,8 @@ class ProductionCostBreakdownDetailView(
                 items = items.filter(bill_no=selected_plan.bill_no)
             context["activity_line_items"] = items
 
-        # Fallback plant specs logic for when direct spec is missing
-        if (
-            not selected_plan.plant_specification
-            and selected_plan.section
-            and selected_plan.bill_no
-        ):
-            from app.Estimator.models import BOQItem, ProjectPlantSpecification
-
-            qs = BOQItem.objects.filter(
-                project=project,
-                section=selected_plan.section,
-                bill_no=selected_plan.bill_no,
-                plant_specification__isnull=False,
-            )
-
-            # If the plan represents a specific labour activity, filter by it so we don't aggregate
-            # plants from unrelated activities in the same section and bill.
-            if selected_plan.labour_activity:
-                qs = qs.filter(labour_specification=selected_plan.labour_activity)
-
-            unique_spec_ids = qs.values_list(
-                "plant_specification", flat=True
-            ).distinct()
-            specs = ProjectPlantSpecification.objects.filter(
-                pk__in=unique_spec_ids
-            ).prefetch_related("components__plant_type")
-
-            # Deduplicate by plant type name so we don't show the same plant type twice
-            unique_specs = {}
-            for spec in specs:
-                # Get all type names from components
-                type_names = [
-                    c.plant_type.name for c in spec.components.all() if c.plant_type
-                ]
-                name = ", ".join(sorted(set(type_names))) if type_names else spec.name
-                if name not in unique_specs:
-                    unique_specs[name] = spec
-
-            context["fallback_plant_specs"] = unique_specs.values()
+        # Provide granular plant allocations (direct or fallback)
+        context["plant_allocations"] = selected_plan.get_plant_allocations()
 
         return context
 
