@@ -1,11 +1,9 @@
 {% extends "base_full.html" %}
 {% load static %}
 {% load heroicons %}
-
 {% block title %}
     Edit Activity Log - {{ project.name }} - {{ block.super }}
 {% endblock title %}
-
 {% block content %}
     <div class="mx-auto max-w-7xl">
         <!-- Header -->
@@ -16,9 +14,7 @@
                     {% heroicon_outline "chevron-left" class="w-5 h-5 transition-transform group-hover:-translate-x-0.5" %}
                 </a>
                 <div>
-                    <h1 class="text-3xl font-black tracking-tight text-gray-900">
-                        Edit Activity Entry
-                    </h1>
+                    <h1 class="text-3xl font-black tracking-tight text-gray-900">Edit Activity Entry</h1>
                     <div class="flex gap-2 items-center mt-1 text-sm text-gray-500">
                         <span class="font-bold text-indigo-600">{{ project.name }}</span>
                         <span class="text-gray-300">•</span>
@@ -35,11 +31,11 @@
                 </button>
             </div>
         </div>
-
         <!-- Main Content -->
         <div class="space-y-6">
             <!-- Activity Detail Card -->
-            <div id="activity-row" class="overflow-hidden bg-white rounded-3xl border border-gray-200 shadow-lg duration-300 shadow-gray-100/50 group/row animate-in fade-in slide-in-from-bottom-4">
+            <div id="activity-row"
+                 class="overflow-hidden bg-white rounded-3xl border border-gray-200 shadow-lg duration-300 shadow-gray-100/50 group/row animate-in fade-in slide-in-from-bottom-4">
                 <!-- Row Header -->
                 <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                     <div class="flex flex-grow gap-4 items-center">
@@ -48,12 +44,12 @@
                         </div>
                         <div class="flex flex-col">
                             <span class="text-sm font-black text-gray-900" id="activity-title">Loading...</span>
-                            <span class="text-xs font-bold text-gray-400 uppercase" id="activity-subtitle">Loading...</span>
+                            <span class="text-xs font-bold text-gray-400 uppercase"
+                                  id="activity-subtitle">Loading...</span>
                             <input type="hidden" id="plan_id" value="">
                         </div>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-1 gap-8 p-6 lg:grid-cols-3">
                     <!-- Left: Production Metrics -->
                     <div class="space-y-6">
@@ -87,7 +83,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="pt-4 border-t border-gray-50">
                             <h4 class="flex items-center mb-4 text-xs font-black tracking-widest text-gray-400 uppercase">
                                 {% heroicon_outline "user-group" class="mr-2 w-4 h-4" %} Labour Coverage
@@ -153,7 +148,6 @@
                             </div>
                         </div>
                     </div>
-
                     <!-- Right: Plant Usage (Span 2) -->
                     <div class="pl-8 border-l border-gray-100 lg:col-span-2">
                         <div class="flex justify-between items-center mb-4">
@@ -182,16 +176,14 @@
                                     <!-- Dynamic plant rows -->
                                 </tbody>
                             </table>
-                            <div class="p-8 text-xs italic text-center text-gray-400" id="no-plants-msg">
-                                No plant resources captured for this activity.
-                            </div>
+                            <div class="p-8 text-xs italic text-center text-gray-400"
+                                 id="no-plants-msg">No plant resources captured for this activity.</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
     <!-- PLANT ROW TEMPLATE -->
     <template id="plant-row-template">
         <tr class="duration-200 plant-row group/plant animate-in fade-in zoom-in-95">
@@ -215,7 +207,6 @@
             </td>
         </tr>
     </template>
-
     <script>
     const initialData = {{ initial_data|safe }};
 
