@@ -37,7 +37,7 @@ from ..production_models import (
     DailyProduction,
     ProductionPlan,
 )
-from ..serializers import DailyLogReportSerializer
+from ..serializers import DailyLogEntrySerializer, DailyLogReportSerializer
 
 
 class DailyProductionCreateView(
@@ -401,6 +401,99 @@ class ProductionDailyLogDeleteView(
             {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
             {"title": "Daily Logs", "url": self.get_success_url()},
             {"title": "Delete Log", "url": None},
+        ]
+
+
+class DailyActivityEntryUpdateView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, DetailView
+):
+    """Granular Activity Entry Edit Form."""
+
+    model = DailyActivityEntry
+    template_name = "production_progress/log/entry_form.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+    context_object_name = "entry"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+        context["project"] = project
+
+        entry = self.object
+        # Labour
+        labour_details = {
+            "Skilled": {"number": 0.0, "hours": 0.0},
+            "Semi-Skilled": {"number": 0.0, "hours": 0.0},
+            "General": {"number": 0.0, "hours": 0.0},
+        }
+        for usage in entry.labour_usage.all().select_related("resource"):
+            labour_details[usage.resource.name] = {
+                "number": float(usage.number),
+                "hours": float(usage.hours),
+            }
+
+        # Plant
+        plant_usage = []
+        for usage in entry.plant_usage.all().select_related("resource"):
+            plant_usage.append(
+                {
+                    "plant_name": usage.resource.name,
+                    "number": float(usage.number),
+                    "hours": float(usage.hours),
+                    "quantity": float(usage.quantity),
+                }
+            )
+
+        context["initial_data"] = json.dumps(
+            {
+                "production_plan_id": entry.production_plan_id,
+                "activity": entry.production_plan.activity
+                or (
+                    entry.production_plan.labour_activity.name
+                    if entry.production_plan.labour_activity
+                    else f"Activity {entry.production_plan.id}"
+                ),
+                "section": entry.production_plan.section or "No Section",
+                "bill_no": entry.production_plan.bill_no or "No Bill",
+                "quantity": float(entry.quantity),
+                "hours_on_activity": float(entry.hours_on_activity),
+                "labour_details": labour_details,
+                "plant_usage": plant_usage,
+                "unit": entry.production_plan.unit_display,
+                "available_plants": list(entry.production_plan.plant_types),
+            }
+        )
+        return context
+
+    def post(self, request, *args, **kwargs) -> JsonResponse:
+        try:
+            instance = self.get_object()
+            data = json.loads(request.body)
+            serializer = DailyLogEntrySerializer(instance, data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse(
+                    {"status": "success", "message": "Activity entry updated successfully"}
+                )
+            return JsonResponse(
+                {"status": "error", "errors": serializer.errors}, status=400
+            )
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Daily Logs",
+                "url": reverse_lazy(
+                    "project:production-daily-log-list",
+                    kwargs={"project_pk": project_pk},
+                ),
+            },
+            {"title": "Edit Activity Log", "url": None},
         ]
 
 

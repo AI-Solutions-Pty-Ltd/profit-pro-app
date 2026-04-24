@@ -11,6 +11,7 @@ from .production_models import (
     DailyLabourUsage,
     DailyPlantUsage,
     ProductionPlan,
+    ProductionResource,
 )
 
 
@@ -75,3 +76,17 @@ class DailyPlantUsageFactory(DjangoModelFactory):
     plant_name = factory.Faker("word")
     hours = 8.0
     quantity = 50.0
+
+
+class ProductionResourceFactory(DjangoModelFactory):
+    """Factory for ProductionResource model."""
+
+    class Meta:
+        model = ProductionResource
+
+    production_plan = factory.SubFactory(ProductionPlanFactory)
+    resource_type = "PLANT"
+    name = factory.Faker("word")
+    number = 1
+    days = 1
+    rate = 100.0

@@ -1,0 +1,368 @@
+{% extends "base_full.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block title %}
+    Edit Activity Log - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+
+{% block content %}
+    <div class="mx-auto max-w-7xl">
+        <!-- Header -->
+        <div class="flex flex-col gap-6 mb-8 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex gap-4 items-center">
+                <a href="{% url 'project:production-daily-log-list' project_pk=project.pk %}"
+                   class="p-2.5 text-gray-400 bg-white rounded-xl border border-gray-200 shadow-sm transition-all hover:text-indigo-600 hover:border-indigo-100 group">
+                    {% heroicon_outline "chevron-left" class="w-5 h-5 transition-transform group-hover:-translate-x-0.5" %}
+                </a>
+                <div>
+                    <h1 class="text-3xl font-black tracking-tight text-gray-900">
+                        Edit Activity Entry
+                    </h1>
+                    <div class="flex gap-2 items-center mt-1 text-sm text-gray-500">
+                        <span class="font-bold text-indigo-600">{{ project.name }}</span>
+                        <span class="text-gray-300">•</span>
+                        <span>{{ entry.report.date|date:"l, d F Y" }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3 items-center">
+                <button type="button"
+                        onclick="submitEntryForm()"
+                        class="flex items-center px-6 py-3 text-sm font-bold text-white bg-indigo-600 rounded-xl shadow-lg transition-all hover:bg-indigo-700 shadow-indigo-200 active:scale-95">
+                    {% heroicon_outline "check-circle" class="mr-2 w-5 h-5" %}
+                    Update Activity Log
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="space-y-6">
+            <!-- Activity Detail Card -->
+            <div id="activity-row" class="overflow-hidden bg-white rounded-3xl border border-gray-200 shadow-lg duration-300 shadow-gray-100/50 group/row animate-in fade-in slide-in-from-bottom-4">
+                <!-- Row Header -->
+                <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                    <div class="flex flex-grow gap-4 items-center">
+                        <div class="flex flex-shrink-0 justify-center items-center w-8 h-8 text-xs font-black text-indigo-600 bg-indigo-100 rounded-lg">
+                            1
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-sm font-black text-gray-900" id="activity-title">Loading...</span>
+                            <span class="text-xs font-bold text-gray-400 uppercase" id="activity-subtitle">Loading...</span>
+                            <input type="hidden" id="plan_id" value="">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-8 p-6 lg:grid-cols-3">
+                    <!-- Left: Production Metrics -->
+                    <div class="space-y-6">
+                        <div>
+                            <h4 class="flex items-center mb-4 text-xs font-black tracking-widest text-gray-400 uppercase">
+                                {% heroicon_outline "presentation-chart-line" class="mr-2 w-4 h-4" %} Progress Metrics
+                            </h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block mb-1 ml-1 text-xs font-bold text-gray-500 uppercase">Quantity Achieved</label>
+                                    <div class="relative">
+                                        <input type="number"
+                                               step="0.01"
+                                               id="qty-input"
+                                               class="px-4 py-2.5 w-full font-mono text-sm bg-gray-50 rounded-xl border-0 ring-1 ring-inset ring-gray-200 transition-all focus:ring-2 focus:ring-indigo-600"
+                                               placeholder="0.00">
+                                        <div class="flex absolute inset-y-0 right-0 items-center pr-3 pointer-events-none">
+                                            <span class="text-xs font-bold text-gray-400" id="unit-display">UNIT</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block mb-1 ml-1 text-xs font-bold text-gray-500 uppercase">Total Activity Hours</label>
+                                    <input type="number"
+                                           step="0.5"
+                                           id="activity-hours-input"
+                                           class="px-4 py-2.5 w-full font-mono text-sm bg-indigo-50/30 rounded-xl border-0 ring-1 ring-inset ring-indigo-100 transition-all focus:ring-0 cursor-not-allowed"
+                                           placeholder="0.0"
+                                           readonly
+                                           tabindex="-1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-gray-50">
+                            <h4 class="flex items-center mb-4 text-xs font-black tracking-widest text-gray-400 uppercase">
+                                {% heroicon_outline "user-group" class="mr-2 w-4 h-4" %} Labour Coverage
+                            </h4>
+                            <div class="space-y-4">
+                                <!-- Skilled -->
+                                <div class="flex gap-4 items-center labour-group" data-cat="Skilled">
+                                    <div class="flex-grow">
+                                        <span class="text-xs font-bold text-gray-700">Skilled</span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <div class="w-20">
+                                            <input type="number"
+                                                   class="px-2 py-1.5 w-full text-xs font-bold text-center bg-gray-50 rounded-lg border-0 ring-1 ring-inset ring-gray-200 transition-all lab-count focus:ring-2 focus:ring-indigo-600"
+                                                   placeholder="Qty">
+                                        </div>
+                                        <div class="w-20">
+                                            <input type="number"
+                                                   step="0.5"
+                                                   class="px-2 py-1.5 w-full text-xs text-center bg-gray-50 rounded-lg border-0 ring-1 ring-inset ring-gray-200 transition-all lab-hours focus:ring-2 focus:ring-indigo-600"
+                                                   placeholder="Hours">
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Semi-Skilled -->
+                                <div class="flex gap-4 items-center labour-group" data-cat="Semi-Skilled">
+                                    <div class="flex-grow">
+                                        <span class="text-xs font-bold text-gray-700">Semi-Skilled</span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <div class="w-20">
+                                            <input type="number"
+                                                   class="px-2 py-1.5 w-full text-xs font-bold text-center bg-gray-50 rounded-lg border-0 ring-1 ring-inset ring-gray-200 transition-all lab-count focus:ring-2 focus:ring-indigo-600"
+                                                   placeholder="Qty">
+                                        </div>
+                                        <div class="w-20">
+                                            <input type="number"
+                                                   step="0.5"
+                                                   class="px-2 py-1.5 w-full text-xs text-center bg-gray-50 rounded-lg border-0 ring-1 ring-inset ring-gray-200 transition-all lab-hours focus:ring-2 focus:ring-indigo-600"
+                                                   placeholder="Hours">
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- General -->
+                                <div class="flex gap-4 items-center labour-group" data-cat="General">
+                                    <div class="flex-grow">
+                                        <span class="text-xs font-bold text-gray-700">General</span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <div class="w-20">
+                                            <input type="number"
+                                                   class="px-2 py-1.5 w-full text-xs font-bold text-center bg-gray-50 rounded-lg border-0 ring-1 ring-inset ring-gray-200 transition-all lab-count focus:ring-2 focus:ring-indigo-600"
+                                                   placeholder="Qty">
+                                        </div>
+                                        <div class="w-20">
+                                            <input type="number"
+                                                   step="0.5"
+                                                   class="px-2 py-1.5 w-full text-xs text-center bg-gray-50 rounded-lg border-0 ring-1 ring-inset ring-gray-200 transition-all lab-hours focus:ring-2 focus:ring-indigo-600"
+                                                   placeholder="Hours">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Plant Usage (Span 2) -->
+                    <div class="pl-8 border-l border-gray-100 lg:col-span-2">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="flex items-center text-xs font-black tracking-widest text-gray-400 uppercase">
+                                {% heroicon_outline "truck" class="mr-2 w-4 h-4" %} Plant & Equipment Usage
+                            </h4>
+                            <div class="flex gap-4 items-center">
+                                <span class="text-xs italic font-bold text-gray-400 uppercase">Restricted to activity specs</span>
+                                <button type="button"
+                                        onclick="addPlantRow()"
+                                        class="p-1.5 text-indigo-600 bg-indigo-50 rounded-lg transition-all hover:bg-indigo-100 active:scale-95">
+                                    {% heroicon_outline "plus" class="w-4 h-4" %}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="plant-table-container min-h-[100px] bg-gray-50/30 rounded-2xl border border-gray-100">
+                            <table class="w-full text-left">
+                                <thead>
+                                    <tr class="border-b border-gray-100">
+                                        <th class="px-4 py-2 text-xs font-black text-gray-400 uppercase">Plant Name / Type</th>
+                                        <th class="px-4 py-2 w-32 text-xs font-black text-center text-gray-400 uppercase">Production Hours</th>
+                                        <th class="px-4 py-2 w-10"></th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50" id="plant-rows">
+                                    <!-- Dynamic plant rows -->
+                                </tbody>
+                            </table>
+                            <div class="p-8 text-xs italic text-center text-gray-400" id="no-plants-msg">
+                                No plant resources captured for this activity.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PLANT ROW TEMPLATE -->
+    <template id="plant-row-template">
+        <tr class="duration-200 plant-row group/plant animate-in fade-in zoom-in-95">
+            <td class="px-3 py-2">
+                <select class="px-3 py-2 w-full text-xs font-bold bg-white rounded-lg border-0 ring-1 ring-inset ring-gray-200 transition-all plant-select focus:ring-2 focus:ring-indigo-600">
+                    <option value="">-- Pick Plant Type --</option>
+                </select>
+            </td>
+            <td class="px-3 py-2 w-32">
+                <input type="number"
+                       step="0.5"
+                       class="px-3 py-2 w-full font-mono text-xs font-bold text-center bg-white rounded-lg border-0 ring-1 ring-inset ring-gray-200 transition-all plant-hours-input focus:ring-2 focus:ring-indigo-600"
+                       placeholder="0.0">
+            </td>
+            <td class="px-3 py-2 w-10">
+                <button type="button"
+                        onclick="removePlantRow(this)"
+                        class="p-1 text-gray-300 transition-all hover:text-red-500 hover:bg-red-50 rounded-md">
+                    {% heroicon_outline "trash" class="w-4 h-4" %}
+                </button>
+            </td>
+        </tr>
+    </template>
+
+    <script>
+    const initialData = {{ initial_data|safe }};
+
+    window.addEventListener('load', () => {
+        if (!initialData) return;
+
+        // Fill basic info
+        document.getElementById('activity-title').innerText = initialData.activity;
+        document.getElementById('activity-subtitle').innerText = `${initialData.section} / ${initialData.bill_no}`;
+        document.getElementById('plan_id').value = initialData.production_plan_id;
+        document.getElementById('qty-input').value = initialData.quantity;
+        document.getElementById('unit-display').innerText = initialData.unit;
+        document.getElementById('activity-hours-input').value = initialData.hours_on_activity;
+
+        // Fill labour
+        document.querySelectorAll('.labour-group').forEach(group => {
+            const cat = group.dataset.cat;
+            const details = initialData.labour_details[cat];
+            if (details) {
+                group.querySelector('.lab-count').value = details.number || 0;
+                group.querySelector('.lab-hours').value = details.hours || 0;
+            }
+        });
+
+        // Fill plants
+        initialData.plant_usage.forEach(plant => {
+            addPlantRow(plant.plant_name, plant.hours);
+        });
+
+        updatePlantEmptyState();
+        calculateTotalActivityHours();
+
+        // Add event listeners for recalculation
+        document.getElementById('activity-row').addEventListener('input', (e) => {
+            if (e.target.classList.contains('lab-hours') || e.target.classList.contains('plant-hours-input')) {
+                calculateTotalActivityHours();
+            }
+        });
+    });
+
+    function updatePlantEmptyState() {
+        const rows = document.getElementById('plant-rows');
+        const msg = document.getElementById('no-plants-msg');
+        if (msg) msg.style.display = rows.children.length > 0 ? 'none' : 'block';
+    }
+
+    function calculateTotalActivityHours() {
+        let total = 0;
+        document.querySelectorAll('.lab-hours').forEach(input => total += parseFloat(input.value || 0));
+        document.querySelectorAll('.plant-hours-input').forEach(input => total += parseFloat(input.value || 0));
+        const hoursInput = document.getElementById('activity-hours-input');
+        if (hoursInput) hoursInput.value = total.toFixed(1);
+    }
+
+    function addPlantRow(plantName = '', hours = '') {
+        const plantRows = document.getElementById('plant-rows');
+        const template = document.getElementById('plant-row-template').content;
+        
+        const trCloned = template.cloneNode(true);
+        const tr = trCloned.querySelector('tr');
+        const select = tr.querySelector('.plant-select');
+        
+        // Add options from available_plants
+        initialData.available_plants.forEach(pName => {
+            const opt = document.createElement('option');
+            opt.value = pName;
+            opt.innerText = pName;
+            select.appendChild(opt);
+        });
+        
+        if (plantName) select.value = plantName;
+        if (hours) tr.querySelector('.plant-hours-input').value = hours;
+        
+        plantRows.appendChild(trCloned);
+        updatePlantEmptyState();
+    }
+
+    function removePlantRow(btn) {
+        btn.closest('tr').remove();
+        updatePlantEmptyState();
+        calculateTotalActivityHours();
+    }
+
+    async function submitEntryForm() {
+        const planId = document.getElementById('plan_id').value;
+        const labourDetails = {};
+        document.querySelectorAll('.labour-group').forEach(group => {
+            const cat = group.dataset.cat;
+            labourDetails[cat] = {
+                number: group.querySelector('.lab-count').value || 0,
+                hours: group.querySelector('.lab-hours').value || 0
+            };
+        });
+
+        const plants = [];
+        document.querySelectorAll('.plant-row').forEach(pRow => {
+            const pName = pRow.querySelector('.plant-select').value;
+            if (pName) {
+                plants.push({
+                    plant_name: pName,
+                    hours: pRow.querySelector('.plant-hours-input').value || 0,
+                    quantity: 0
+                });
+            }
+        });
+
+        const payload = {
+            production_plan_id: planId,
+            quantity: document.getElementById('qty-input').value || 0,
+            hours_on_activity: document.getElementById('activity-hours-input').value || 0,
+            labour_details: labourDetails,
+            plant_usage: plants
+        };
+
+        const btn = event.target.closest('button');
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<span class="mr-2 loading loading-spinner loading-sm"></span> Saving...`;
+
+        try {
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                window.location.href = "{% url 'project:production-daily-log-list' project_pk=project.pk %}";
+            } else {
+                alert('Error: ' + JSON.stringify(result.errors || result.message));
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        } catch (e) {
+            alert('A network error occurred: ' + e.message);
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
+    }
+    </script>
+    <style>
+    @keyframes slideInUp {
+        from { transform: translateY(10px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    .animate-in {
+        animation: slideInUp 0.3s ease-out forwards;
+    }
+    </style>
+{% endblock content %}

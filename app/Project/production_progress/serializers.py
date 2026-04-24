@@ -51,65 +51,50 @@ class DailyLogEntrySerializer(serializers.ModelSerializer):
             "plant_usage",
         ]
 
-
-class DailyLogReportSerializer(serializers.ModelSerializer):
-    """Top-level serializer for the Daily Activity Report."""
-
-    project_id = serializers.IntegerField()
-    entries = DailyLogEntrySerializer(many=True)
-
-    class Meta:
-        model = DailyActivityReport
-        fields = ["id", "project_id", "date", "notes", "entries"]
-
     @transaction.atomic
     def create(self, validated_data):
-        entries_data = validated_data.pop("entries")
-        project_id = validated_data.pop("project_id")
-        report = DailyActivityReport.objects.create(
-            project_id=project_id, **validated_data
+        plan_id = validated_data.pop("production_plan_id")
+        labour_details = validated_data.pop("labour_details")
+        plant_usage_data = validated_data.pop("plant_usage", [])
+        report = validated_data.get("report")
+        project_id = report.project_id if report else None
+
+        entry = DailyActivityEntry.objects.create(
+            production_plan_id=plan_id,
+            **validated_data
         )
 
-        self._process_entries(report, project_id, entries_data)
-        return report
+        # Handle Labour (Skilled, Semi-Skilled, General)
+        if project_id:
+            self._handle_labour_usage(entry, plan_id, project_id, labour_details)
+
+        # Handle Plants
+        self._handle_plant_usage(entry, plan_id, plant_usage_data)
+
+        return entry
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        entries_data = validated_data.pop("entries", None)
-        project_id = validated_data.pop("project_id", instance.project_id)
+        plan_id = validated_data.pop("production_plan_id", instance.production_plan_id)
+        labour_details = validated_data.pop("labour_details", None)
+        plant_usage_data = validated_data.pop("plant_usage", None)
+        project_id = instance.report.project_id
 
-        # Update report fields
-        instance.date = validated_data.get("date", instance.date)
-        instance.notes = validated_data.get("notes", instance.notes)
+        instance.quantity = validated_data.get("quantity", instance.quantity)
+        instance.hours_on_activity = validated_data.get(
+            "hours_on_activity", instance.hours_on_activity
+        )
         instance.save()
 
-        if entries_data is not None:
-            # Simple sync: Clear and recreate entries
-            # This is safer since the frontend doesn't track entry IDs
-            instance.entries.all().delete()
-            self._process_entries(instance, project_id, entries_data)
+        if labour_details is not None:
+            instance.labour_usage.all().delete()
+            self._handle_labour_usage(instance, plan_id, project_id, labour_details)
+
+        if plant_usage_data is not None:
+            instance.plant_usage.all().delete()
+            self._handle_plant_usage(instance, plan_id, plant_usage_data)
 
         return instance
-
-    def _process_entries(self, report, project_id, entries_data):
-        """Helper to create entries and associated usage from validated data."""
-        for entry_data in entries_data:
-            plan_id = entry_data.pop("production_plan_id")
-            labour_details = entry_data.pop("labour_details")
-            plant_usage_data = entry_data.pop("plant_usage", [])
-
-            entry = DailyActivityEntry.objects.create(
-                report=report,
-                production_plan_id=plan_id,
-                quantity=entry_data.get("quantity", 0),
-                hours_on_activity=entry_data.get("hours_on_activity", 0),
-            )
-
-            # Handle Labour (Skilled, Semi-Skilled, General)
-            self._handle_labour_usage(entry, plan_id, project_id, labour_details)
-
-            # Handle Plants
-            self._handle_plant_usage(entry, plan_id, plant_usage_data)
 
     def _handle_labour_usage(self, entry, plan_id, project_id, labour_details):
         """
@@ -160,3 +145,51 @@ class DailyLogReportSerializer(serializers.ModelSerializer):
                 hours=plant_data.get("hours", 0),
                 quantity=plant_data.get("quantity", 0),
             )
+
+
+class DailyLogReportSerializer(serializers.ModelSerializer):
+    """Top-level serializer for the Daily Activity Report."""
+
+    project_id = serializers.IntegerField()
+    entries = DailyLogEntrySerializer(many=True)
+
+    class Meta:
+        model = DailyActivityReport
+        fields = ["id", "project_id", "date", "notes", "entries"]
+
+    @transaction.atomic
+    def create(self, validated_data):
+        entries_data = validated_data.pop("entries")
+        project_id = validated_data.pop("project_id")
+        report = DailyActivityReport.objects.create(
+            project_id=project_id, **validated_data
+        )
+
+        self._process_entries(report, project_id, entries_data)
+        return report
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        entries_data = validated_data.pop("entries", None)
+        project_id = validated_data.pop("project_id", instance.project_id)
+
+        # Update report fields
+        instance.date = validated_data.get("date", instance.date)
+        instance.notes = validated_data.get("notes", instance.notes)
+        instance.save()
+
+        if entries_data is not None:
+            # Simple sync: Clear and recreate entries
+            # This is safer since the frontend doesn't track entry IDs
+            instance.entries.all().delete()
+            self._process_entries(instance, project_id, entries_data)
+
+        return instance
+
+    def _process_entries(self, report, project_id, entries_data):
+        """Helper to create entries and associated usage from validated data."""
+        for entry_data in entries_data:
+            serializer = DailyLogEntrySerializer(data=entry_data)
+            if serializer.is_valid(raise_exception=True):
+                serializer.save(report=report)
+

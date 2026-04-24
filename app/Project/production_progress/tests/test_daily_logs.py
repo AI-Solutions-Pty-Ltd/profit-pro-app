@@ -9,7 +9,9 @@ from app.Project.production_progress.factories import (
     DailyActivityEntryFactory,
     DailyActivityReportFactory,
     ProductionPlanFactory,
+    ProductionResourceFactory,
 )
+from app.Account.tests.factories import AccountFactory
 from app.Project.production_progress.production_models import (
     DailyActivityEntry,
     DailyActivityReport,
@@ -114,3 +116,75 @@ class TestProductionDailyLog:
 
         assert response.status_code == 200
         assert entry.production_plan.activity in response.content.decode()  # ty:ignore[unresolved-attribute]
+
+    def test_granular_update_serializer(self, client):
+        """Test that updating a single entry via serializer works."""
+        entry = DailyActivityEntryFactory()
+        user = AccountFactory()
+        client.force_login(user)
+
+        project = entry.report.project
+        plan = entry.production_plan
+
+        # Create a resource for the plan to match the payload
+        ProductionResourceFactory(
+            production_plan=plan, name="Excavator", resource_type="PLANT"
+        )
+
+        url = reverse(
+            "project:production-daily-log-entry-edit",
+            kwargs={"project_pk": project.pk, "pk": entry.pk},  # ty:ignore[unresolved-attribute]
+        )
+
+        # New data for the entry
+        payload = {
+            "production_plan_id": plan.id,  # ty:ignore[unresolved-attribute]
+            "quantity": 50.0,
+            "hours_on_activity": 10.0,
+            "labour_details": {
+                "Skilled": {"number": 2, "hours": 8},
+                "Semi-Skilled": {"number": 1, "hours": 8},
+            },
+            "plant_usage": [{"plant_name": "Excavator", "hours": 5}],
+        }
+
+        response = client.post(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+
+        assert response.status_code == 200
+        assert response.json()["status"] == "success"
+
+        # Verify database
+        entry.refresh_from_db()
+        assert float(entry.quantity) == 50.0
+        assert float(entry.hours_on_activity) == 10.0
+
+        # Verify usage
+        assert entry.labour_usage.count() == 2
+        assert entry.plant_usage.count() == 1
+        assert entry.plant_usage.first().resource.name == "Excavator"
+
+    def test_granular_update_initial_data(self, client):
+        """Test that the edit view returns the correct initial data."""
+        entry = DailyActivityEntryFactory(quantity=25.0, hours_on_activity=8.0)
+        user = AccountFactory()
+        client.force_login(user)
+
+        project = entry.report.project
+
+        url = reverse(
+            "project:production-daily-log-entry-edit",
+            kwargs={"project_pk": project.pk, "pk": entry.pk},  # ty:ignore[unresolved-attribute]
+        )
+
+        response = client.get(url)
+        assert response.status_code == 200
+
+        # Check context
+        initial_data = response.context["initial_data"]
+        data = json.loads(initial_data)
+
+        assert data["quantity"] == 25.0
+        assert data["hours_on_activity"] == 8.0
+        assert data["production_plan_id"] == entry.production_plan.id
