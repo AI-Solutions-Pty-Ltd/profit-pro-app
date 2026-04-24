@@ -43,6 +43,16 @@ class ProductionPlan(BaseModel):
         related_name="children",
         help_text="Parent activity for nesting",
     )
+    NODE_TYPES = [
+        ("SECTION", "Section Header"),
+        ("BILL", "Bill Header"),
+        ("ACTIVITY", "Work Activity"),
+    ]
+    node_type = models.CharField(max_length=20, choices=NODE_TYPES, default="ACTIVITY")
+    is_leaf = models.BooleanField(
+        default=True,
+        help_text="True if this is a work activity, False for structural headers.",
+    )
     section = models.CharField(
         max_length=200,
         blank=True,
@@ -112,26 +122,27 @@ class ProductionPlan(BaseModel):
         return self.unit
 
     def save(self, *args, **kwargs):
-        # Auto-calculate duration
-        if self.start_date and self.finish_date:
-            self.duration = (self.finish_date - self.start_date).days
-        else:
-            self.duration = 0
+        # Auto-calculate duration for leaf nodes
+        if self.is_leaf:
+            if self.start_date and self.finish_date:
+                self.duration = (self.finish_date - self.start_date).days
+            else:
+                self.duration = 0
 
-        # Auto-naming from Labour Specification
-        if self.labour_activity:
-            if not self.activity:
-                self.activity = self.labour_activity.name
+        # Handle automatic hierarchy generation for ANY leaf item (Spec linked)
+        is_leaf_item = (
+            self.labour_activity or self.plant_specification
+        ) and self.is_leaf
 
-            # The section and bill_no should be assigned by the form/view
-            # based on the activity grouping selected by the user.
-
-        # Handle automatic hierarchy generation ONLY for leaf items (Labour activities)
-        if self.labour_activity and not self.parent and (self.section or self.bill_no):
+        if is_leaf_item and not self.parent and (self.section or self.bill_no):
             self._ensure_hierarchy()
             self.refresh_plant_types()
 
         super().save(*args, **kwargs)
+
+        # Trigger parent metric sync if we have a parent
+        if self.parent:
+            self.parent.sync_parent_metrics()
 
     def refresh_plant_types(self):
         """Updates plant_types field from BOQItems."""
@@ -151,31 +162,100 @@ class ProductionPlan(BaseModel):
                 labour_specification=self.labour_activity,
                 plant_specification__isnull=False,
             )
-            .values_list("plant_specification__plant_type__name", flat=True)
+            .values_list("plant_specification__components__plant_type__name", flat=True)
             .distinct()
         )
 
         self.plant_types = sorted(types)
 
+    def sync_parent_metrics(self):
+        """
+        Recalculates this node's metrics based on its children.
+        Includes dates, quantity (child count), and unit.
+        Then, bubbles the update up to its own parent.
+        """
+        if self.is_leaf or self.deleted:
+            return  # Activities and deleted nodes don't aggregate.
+
+        # 1. Aggregate children
+        children_qs = self.children.filter(deleted=False)
+        stats = children_qs.aggregate(
+            min_start=models.Min("start_date"),
+            max_finish=models.Max("finish_date"),
+            child_count=models.Count("id"),
+        )
+
+        # 2. Handle empty parents
+        if not children_qs.exists():
+            # If no children remain, this header is no longer needed
+            self.soft_delete()
+            return
+
+        # 3. Calculate and Update self if changed (bypass save() to avoid recursion)
+        start = stats["min_start"]
+        finish = stats["max_finish"]
+        qty = Decimal(str(stats["child_count"]))
+        unit = "Items"
+        duration = 0
+        if start and finish:
+            duration = (finish - start).days
+
+        # Check if anything changed to avoid redundant updates
+        if (
+            self.start_date != start
+            or self.finish_date != finish
+            or self.quantity != qty
+            or self.unit != unit
+            or self.duration != duration
+        ):
+            ProductionPlan.objects.filter(pk=self.pk).update(
+                start_date=start,
+                finish_date=finish,
+                quantity=qty,
+                unit=unit,
+                duration=duration,
+            )
+            # Sync local instance for the current session
+            self.start_date = start
+            self.finish_date = finish
+            self.quantity = qty
+            self.unit = unit
+            self.duration = duration
+
+            # 4. Bubble up to grandparent
+            if self.parent:
+                self.parent.sync_parent_metrics()
+
     def _ensure_hierarchy(self):
         """Automatically creates Section and Bill levels if they don't exist."""
-        if not self.section:
+        if not self.section or not self.is_leaf:
             return
 
         # 1. Ensure Section Level exists
-        section_parent, _ = ProductionPlan.objects.get_or_create(
-            project=self.project,
-            section=self.section,
-            bill_no="",
-            labour_activity=None,
-            defaults={
-                "activity": self.section,
-                "start_date": self.start_date or timezone.now().date(),
-                "finish_date": self.finish_date or timezone.now().date(),
-                "quantity": 1,
-                "unit": "SUM",
-            },
+        section_parent = (
+            ProductionPlan.objects.filter(
+                project=self.project,
+                section=self.section,
+                node_type="SECTION",
+                deleted=False,
+            )
+            .order_by("created_at")
+            .first()
         )
+
+        if not section_parent:
+            section_parent = ProductionPlan.objects.create(
+                project=self.project,
+                section=self.section,
+                bill_no="",
+                node_type="SECTION",
+                is_leaf=False,
+                activity=self.section,
+                start_date=self.start_date or timezone.now().date(),
+                finish_date=self.finish_date or timezone.now().date(),
+                quantity=1,
+                unit="SUM",
+            )
 
         if not self.bill_no:
             if self != section_parent:
@@ -183,25 +263,38 @@ class ProductionPlan(BaseModel):
             return
 
         # 2. Ensure Bill Level exists under Section
-        bill_parent, _ = ProductionPlan.objects.get_or_create(
-            project=self.project,
-            section=self.section,
-            bill_no=self.bill_no,
-            labour_activity=None,
-            defaults={
-                "activity": f"Bill {self.bill_no}",
-                "parent": section_parent,
-                "start_date": self.start_date or timezone.now().date(),
-                "finish_date": self.finish_date or timezone.now().date(),
-                "quantity": 1,
-                "unit": "SUM",
-            },
+        bill_parent = (
+            ProductionPlan.objects.filter(
+                project=self.project,
+                section=self.section,
+                bill_no=self.bill_no,
+                node_type="BILL",
+                deleted=False,
+            )
+            .order_by("created_at")
+            .first()
         )
+
+        if not bill_parent:
+            bill_parent = ProductionPlan.objects.create(
+                project=self.project,
+                section=self.section,
+                bill_no=self.bill_no,
+                node_type="BILL",
+                is_leaf=False,
+                activity=f"Bill {self.bill_no}",
+                parent=section_parent,
+                start_date=self.start_date or timezone.now().date(),
+                finish_date=self.finish_date or timezone.now().date(),
+                quantity=1,
+                unit="SUM",
+            )
 
         if self != bill_parent and self != section_parent:
             self.parent = bill_parent
 
     def soft_delete(self):
+        """Override soft_delete to prevent deleting if children exist."""
         from django.core.exceptions import ValidationError
 
         if self.children.filter(deleted=False).exists():  # ty:ignore[unresolved-attribute]
@@ -238,13 +331,16 @@ class ProductionPlan(BaseModel):
             bill_no=self.bill_no,
             labour_specification=self.labour_activity,
             plant_specification__isnull=False,
-        ).select_related("plant_specification__plant_type")
+        ).prefetch_related("plant_specification__components__plant_type")
 
         # Sum hourly rate for each item (physical plant unit)
         total_hourly = Decimal("0")
         for item in items:
-            if item.plant_specification and item.plant_specification.plant_type:
-                total_hourly += item.plant_specification.plant_type.hourly_rate
+            if item.plant_specification:
+                # Sum all components of this spec
+                for comp in item.plant_specification.components.all():
+                    if comp.plant_type:
+                        total_hourly += comp.plant_type.hourly_rate
 
         return total_hourly
 
@@ -283,23 +379,13 @@ class ProductionPlan(BaseModel):
 
         return manual_cost + spec_cost
 
-    @property
-    def total_plant_cost(self):
-        # Manual resources cost
-        manual_cost = (
-            self.resources.filter(resource_type="PLANT").aggregate(
-                total=models.Sum("total_cost")
-            )["total"]
-            or 0
-        )
+    def get_plant_allocations(self):
+        """Returns a list of granular plant allocations for this plan."""
+        allocations = []
+        unique_specs = {}
 
-        # Specification-based plant cost
-        spec_cost = 0
-        if self.plant_specification and self.plant_specification.plant_type:
-            # Assuming plant specification cost is plant_type hourly_rate * 8 hours (standard day) * duration
-            # We can use daily_production/rate_per_unit logic if available,
-            # but usually it's spec.hourly_cost * 8 * duration
-            spec_cost = self.plant_specification.hourly_cost * 8 * (self.duration or 0)
+        if self.plant_specification:
+            unique_specs[self.plant_specification.name] = self.plant_specification
         else:
             # Fallback: Pull from related BOQItems
             from app.Estimator.models import BOQItem, ProjectPlantSpecification
@@ -319,15 +405,60 @@ class ProductionPlan(BaseModel):
             if spec_ids:
                 specs = ProjectPlantSpecification.objects.filter(
                     pk__in=spec_ids
-                ).select_related("plant_type")
-                unique_specs = {}
+                ).prefetch_related("components__plant_type")
                 for spec in specs:
-                    name = spec.plant_type.name if spec.plant_type else spec.name
+                    # Get all type names from components
+                    type_names = [
+                        c.plant_type.name for c in spec.components.all() if c.plant_type
+                    ]
+                    name = (
+                        ", ".join(sorted(set(type_names))) if type_names else spec.name
+                    )
                     if name not in unique_specs:
                         unique_specs[name] = spec
 
-                for spec in unique_specs.values():
-                    spec_cost += spec.hourly_cost * 8 * (self.duration or 0)
+        # Expand unique specs into components
+        for display_name, spec in unique_specs.items():
+            for comp in spec.components.all():
+                if not comp.plant_type:
+                    continue
+
+                # duration = Decimal(str(self.duration or 0))
+                hours_per_day = comp.hours
+                # total_hours = hours_per_day * duration
+                total_hours = hours_per_day
+                rate = comp.plant_type.hourly_rate or Decimal("0")
+                total_cost = total_hours * rate
+
+                allocations.append(
+                    {
+                        "id": comp.plant_type_id,
+                        "name": comp.plant_type.name,
+                        "hours_per_day": hours_per_day,
+                        "total_hours": total_hours,
+                        "rate": rate,
+                        "total_cost": total_cost,
+                        "source_name": spec.name,
+                        "display_name": display_name,
+                        "is_fallback": not self.plant_specification,
+                    }
+                )
+
+        return allocations
+
+    @property
+    def total_plant_cost(self):
+        # Manual resources cost
+        manual_cost = (
+            self.resources.filter(resource_type="PLANT").aggregate(
+                total=models.Sum("total_cost")
+            )["total"]
+            or 0
+        )
+
+        # Specification-based plant cost
+        allocs = self.get_plant_allocations()
+        spec_cost = sum(a["total_cost"] for a in allocs)
 
         return manual_cost + spec_cost
 
@@ -507,10 +638,8 @@ class DailyActivityEntry(BaseModel):
 
     @property
     def total_plant_cost(self):
-        """Calculated plant cost based on assigned unit rates and tracked hours."""
-        return self.production_plan.hourly_plant_rate * Decimal(
-            str(self.hours_on_activity)
-        )
+        """Sum of actual plant usage costs from recorded resources."""
+        return sum(usage.total_cost for usage in self.plant_usage.all())
 
     @property
     def man_hours(self):
@@ -578,10 +707,21 @@ class DailyPlantUsage(BaseModel):
     entry = models.ForeignKey(
         DailyActivityEntry, on_delete=models.CASCADE, related_name="plant_usage"
     )
+    plant_type = models.ForeignKey(
+        "estimator.ProjectPlantCost",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="usages",
+        help_text="The master plant cost record from the specification.",
+    )
     resource = models.ForeignKey(
         ProductionResource,
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         limit_choices_to={"resource_type": "PLANT"},
+        help_text="Legacy: The specific plant resource allocated to the plan.",
     )
     number = models.IntegerField(default=1, validators=[MinValueValidator(0)])
     hours = models.DecimalField(
@@ -601,4 +741,9 @@ class DailyPlantUsage(BaseModel):
 
     @property
     def total_cost(self):
-        return (self.number or 0) * (self.hours or 0) * (self.resource.rate or 0)
+        rate = Decimal("0")
+        if self.plant_type:
+            rate = self.plant_type.hourly_rate
+        elif self.resource:
+            rate = self.resource.rate
+        return (self.number or 0) * (self.hours or 0) * (rate or 0)

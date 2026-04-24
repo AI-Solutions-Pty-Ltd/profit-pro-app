@@ -155,6 +155,11 @@ urlpatterns = [
         name="production-daily-log-delete",
     ),
     path(
+        "<int:project_pk>/daily-logs/entry/<int:pk>/edit/",
+        views.DailyActivityEntryUpdateView.as_view(),
+        name="production-daily-log-entry-edit",
+    ),
+    path(
         "<int:project_pk>/ajax/daily-log-activity-data/",
         views.DailyLogActivityDataAjaxView.as_view(),
         name="ajax-daily-log-activity-data",

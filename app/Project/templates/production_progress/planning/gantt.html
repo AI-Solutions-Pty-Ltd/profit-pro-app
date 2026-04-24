@@ -460,8 +460,8 @@ if (!GANTT_DATA.length || !canvas) {
             div.style.borderBottom = '1px solid #f1f5f9';
             div.style.background   = i % 2 === 0 ? '#ffffff' : '#f8fafc';
             div.style.transition   = 'background 0.15s';
-            div.style.cursor       = 'pointer';
-            div.title = row.activity;
+            div.style.cursor       = row.is_leaf ? 'pointer' : 'default';
+            div.title = row.activity + (row.is_leaf ? '' : ' (Structural Header - Edit Children Instead)');
 
             // Expand/Collapse Chevron (if has children)
             if (row.has_children) {
@@ -523,11 +523,11 @@ if (!GANTT_DATA.length || !canvas) {
             div.appendChild(textWrap);
 
             // Hover effect
-            div.onmouseenter = () => { div.style.background = '#f1f5ff'; };
+            div.onmouseenter = () => { if (row.is_leaf) div.style.background = '#f1f5ff'; };
             div.onmouseleave = () => { div.style.background = i % 2 === 0 ? '#ffffff' : '#f8fafc'; };
 
             // Edit link on click
-            div.onclick = () => { window.location.href = row.edit_url; };
+            div.onclick = () => { if (row.is_leaf) window.location.href = row.edit_url; };
 
             labelEl.appendChild(div);
         });

@@ -62,11 +62,11 @@ class ProductionPlanForm(forms.ModelForm):
         ),
     )
 
-    section = forms.ChoiceField(
+    section = forms.CharField(
         required=False,
         widget=forms.Select(attrs={"id": "id_section", "class": "form-select"}),
     )
-    bill_no = forms.ChoiceField(
+    bill_no = forms.CharField(
         required=False,
         widget=forms.Select(attrs={"id": "id_bill_no", "class": "form-select"}),
     )
@@ -175,7 +175,7 @@ class ProductionPlanForm(forms.ModelForm):
                 .distinct()
                 .order_by("section")
             )
-            self.fields["section"].choices = [("", "---------")] + [  # ty:ignore[unresolved-attribute]
+            self.fields["section"].widget.choices = [("", "---------")] + [  # ty:ignore[unresolved-attribute]
                 (s, s) for s in sections if s
             ]
 
@@ -186,7 +186,7 @@ class ProductionPlanForm(forms.ModelForm):
                 .distinct()
                 .order_by("bill_no")
             )
-            self.fields["bill_no"].choices = [("", "---------")] + [  # ty:ignore[unresolved-attribute]
+            self.fields["bill_no"].widget.choices = [("", "---------")] + [  # ty:ignore[unresolved-attribute]
                 (b, b) for b in all_bills if b
             ]
 
@@ -201,11 +201,15 @@ class ProductionPlanForm(forms.ModelForm):
 
             # Configure plant_specification choice metadata
             if self.instance.pk and self.instance.plant_specification:
+                components = (
+                    self.instance.plant_specification.components.all().select_related(
+                        "plant_type"
+                    )
+                )
+                types = [c.plant_type.name for c in components if c.plant_type]
                 self.fields["plant_specification"].widget.choice_data = {
                     str(self.instance.plant_specification_id): {
-                        "data-type": self.instance.plant_specification.plant_type.name
-                        if self.instance.plant_specification.plant_type
-                        else ""
+                        "data-type": ", ".join(sorted(set(types))) if types else ""
                     }
                 }
 
@@ -217,8 +221,8 @@ class ProductionPlanForm(forms.ModelForm):
                 # Provide minimal metadata for the selected activity
                 self.fields["labour_activity"].widget.choice_data = {
                     str(self.instance.labour_activity_id): {
-                        "data-section": self.instance.section,
-                        "data-bill_no": self.instance.bill_no,
+                        "data-section": self.instance.section or "",
+                        "data-bill-no": self.instance.bill_no or "",
                         "data-quantity": str(self.instance.quantity),
                         "data-unit": self.instance.unit,
                         "data-activity_name": self.instance.activity,
@@ -244,6 +248,34 @@ class ProductionPlanForm(forms.ModelForm):
 
         self.fields["section"].required = not parent_id
         self.fields["bill_no"].required = not parent_id
+
+        # ── Hardening Structural Headers ──────────────────────────────────────
+        # If we are editing a non-leaf node (Section/Bill), prevent direct metric edits
+        if self.instance.pk and not self.instance.is_leaf:
+            readonly_fields = [
+                "start_date",
+                "finish_date",
+                "duration",
+                "quantity",
+                "unit",
+                "labour_activity",
+                "plant_specification",
+                "daily_rate",
+                "section",
+                "bill_no",
+            ]
+            for field in readonly_fields:
+                if field in self.fields:
+                    self.fields[field].disabled = True
+                    # Add visual cues for disabled fields
+                    if "class" not in self.fields[field].widget.attrs:
+                        self.fields[field].widget.attrs["class"] = ""
+                    self.fields[field].widget.attrs["class"] += (
+                        " bg-gray-50 cursor-not-allowed"
+                    )
+                    self.fields[
+                        field
+                    ].help_text = "Calculated from children (Read-only)"
         self.fields["labour_activity"].required = False
         self.fields[
             "activity"

@@ -119,6 +119,7 @@ class ProductionPlanGanttView(
                     "duration": plan.duration,
                     "depth": depth,
                     "has_children": plan.children.exists(),
+                    "is_leaf": plan.is_leaf,
                     "predecessors": predecessor_ids,
                     "predecessor_names": predecessor_names,
                     "parent_id": plan.parent_id,
@@ -309,10 +310,56 @@ class ProductionPlanDetailView(
     context_object_name = "plan"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
+    def get_queryset(self):
+        return ProductionPlan.objects.filter(project_id=self.kwargs["project_pk"])
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        plan = self.get_object()
         context["project"] = self.object.project
+
+        resource_categories = []
+        for type_code, type_name in ProductionResource.RESOURCE_TYPES:
+            resources = plan.resources.filter(resource_type=type_code)
+            total_cost = 0
+            if type_code == "LABOUR":
+                total_cost = plan.total_labour_cost
+            elif type_code == "PLANT":
+                total_cost = plan.total_plant_cost
+            else:
+                total_cost = plan.total_other_cost
+
+            resource_categories.append(
+                {
+                    "type_code": type_code,
+                    "type_name": type_name,
+                    "resources": resources,
+                    "total_cost": total_cost,
+                }
+            )
+
+        context["resource_categories"] = resource_categories
         return context
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        plan = self.get_object()
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {
+                "title": "Production Planning",
+                "url": reverse_lazy(
+                    "project:production-planning", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": f"Plan: {plan.activity}", "url": None},
+        ]
 
 
 class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, View):
@@ -402,59 +449,6 @@ class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, 
             )
 
         return redirect("project:production-planning", project_pk=project.pk)
-
-    required_tiers = [Subscription.PROFIT_AND_LOSS]
-
-    def get_queryset(self):
-        return ProductionPlan.objects.filter(project_id=self.kwargs["project_pk"])
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        plan = self.get_object()
-        context["project"] = Project.objects.get(pk=self.kwargs["project_pk"])
-
-        resource_categories = []
-        for type_code, type_name in ProductionResource.RESOURCE_TYPES:
-            resources = plan.resources.filter(resource_type=type_code)
-            total_cost = 0
-            if type_code == "LABOUR":
-                total_cost = plan.total_labour_cost
-            elif type_code == "PLANT":
-                total_cost = plan.total_plant_cost
-            else:
-                total_cost = plan.total_other_cost
-
-            resource_categories.append(
-                {
-                    "type_code": type_code,
-                    "type_name": type_name,
-                    "resources": resources,
-                    "total_cost": total_cost,
-                }
-            )
-
-        context["resource_categories"] = resource_categories
-        return context
-
-    def get_breadcrumbs(self):
-        project_pk = self.kwargs["project_pk"]
-        plan = self.get_object()
-        return [
-            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
-            {
-                "title": "Production Dashboard",
-                "url": reverse_lazy(
-                    "project:production-dashboard", kwargs={"project_pk": project_pk}
-                ),
-            },
-            {
-                "title": "Production Planning",
-                "url": reverse_lazy(
-                    "project:production-planning", kwargs={"project_pk": project_pk}
-                ),
-            },
-            {"title": f"Plan: {plan.activity}", "url": None},
-        ]
 
 
 class ProductionPlanUpdateView(
@@ -721,41 +715,8 @@ class ProductionCostBreakdownDetailView(
                 items = items.filter(bill_no=selected_plan.bill_no)
             context["activity_line_items"] = items
 
-        # Fallback plant specs logic for when direct spec is missing
-        if (
-            not selected_plan.plant_specification
-            and selected_plan.section
-            and selected_plan.bill_no
-        ):
-            from app.Estimator.models import BOQItem, ProjectPlantSpecification
-
-            qs = BOQItem.objects.filter(
-                project=project,
-                section=selected_plan.section,
-                bill_no=selected_plan.bill_no,
-                plant_specification__isnull=False,
-            )
-
-            # If the plan represents a specific labour activity, filter by it so we don't aggregate
-            # plants from unrelated activities in the same section and bill.
-            if selected_plan.labour_activity:
-                qs = qs.filter(labour_specification=selected_plan.labour_activity)
-
-            unique_spec_ids = qs.values_list(
-                "plant_specification", flat=True
-            ).distinct()
-            specs = ProjectPlantSpecification.objects.filter(
-                pk__in=unique_spec_ids
-            ).select_related("plant_type")
-
-            # Deduplicate by plant type name so we don't show the same plant type twice
-            unique_specs = {}
-            for spec in specs:
-                name = spec.plant_type.name if spec.plant_type else spec.name
-                if name not in unique_specs:
-                    unique_specs[name] = spec
-
-            context["fallback_plant_specs"] = unique_specs.values()
+        # Provide granular plant allocations (direct or fallback)
+        context["plant_allocations"] = selected_plan.get_plant_allocations()
 
         return context
 
