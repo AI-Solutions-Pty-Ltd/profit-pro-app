@@ -20,11 +20,9 @@ from app.BillOfQuantities.models.structure_models import LineItem
 from app.Project.models import Project
 
 from .calculations import (
-    calculate_boq_summary,
     calculate_pct_of_total,
     calculate_variance,
 )
-from .data_adapters import DjangoORMAdapter
 from .forms import (
     ExcelImportForm,
     LabourCrewForm,
@@ -213,16 +211,51 @@ class DashboardView(ProjectEstimatorMixin, ListView):
         context = super().get_context_data(**kwargs)
         project = self.get_project()
 
-        adapter = DjangoORMAdapter(project_id=project.pk)
-        boq_data = adapter.get_boq_items(project_id=project.pk)
-        summary = calculate_boq_summary(boq_data)
+        summary_items = (
+            BOQItem.objects.filter(project=project, is_section_header=False)
+            .select_related(
+                "specification",
+                "labour_specification",
+                "labour_specification__crew",
+                "plant_specification",
+                "preliminary_specification",
+                "material",
+                "project__estimator_assumptions",
+            )
+            .prefetch_related("specification__spec_components__material")
+        )
 
-        context["total_contract_amount"] = summary["total_contract_amount"]
-        context["total_materials_rate"] = summary["total_materials_rate"]
-        context["total_labour_rate"] = summary["total_labour_rate"]
-        context["total_plant_rate"] = summary["total_plant_rate"]
-        context["total_progress_amount"] = summary["total_progress_amount"]
-        context["total_forecast_amount"] = summary["total_forecast_amount"]
+        total_contract = Decimal("0")
+        total_material = Decimal("0")
+        total_labour = Decimal("0")
+        total_plant = Decimal("0")
+        total_preliminary = Decimal("0")
+        total_progress = Decimal("0")
+        total_forecast = Decimal("0")
+
+        for item in summary_items:
+            if item.contract_amount:
+                total_contract += item.contract_amount
+            if item.new_materials_amount:
+                total_material += item.new_materials_amount
+            if item.new_labour_amount:
+                total_labour += item.new_labour_amount
+            if item.new_plant_amount:
+                total_plant += item.new_plant_amount
+            if item.new_preliminary_amount:
+                total_preliminary += item.new_preliminary_amount
+            if item.progress_amount:
+                total_progress += item.progress_amount
+            if item.forecast_amount:
+                total_forecast += item.forecast_amount
+
+        context["total_contract_amount"] = total_contract
+        context["total_material_amount"] = total_material
+        context["total_labour_amount"] = total_labour
+        context["total_plant_amount"] = total_plant
+        context["total_preliminary_amount"] = total_preliminary
+        context["total_progress_amount"] = total_progress
+        context["total_forecast_amount"] = total_forecast
 
         # Filter options (scoped to project)
         project_items = BOQItem.objects.filter(project=project)
@@ -965,6 +998,7 @@ class PricedBoqReportView(ProjectEstimatorMixin, ListView):
                 "plant_specification",
                 "preliminary_specification",
                 "material",
+                "project__estimator_assumptions",
             )
             .prefetch_related(
                 "specification__spec_components__material",
@@ -1637,7 +1671,13 @@ class UpdateBoqItemView(View):
         ),
     }
 
-    DECIMAL_FIELDS = {"material_markup_pct", "labour_markup_pct", "transport_pct"}
+    DECIMAL_FIELDS = {
+        "material_markup_pct",
+        "labour_markup_pct",
+        "transport_pct",
+        "progress_quantity",
+        "forecast_quantity",
+    }
 
     def post(self, request, project_pk, pk):
         item = get_object_or_404(BOQItem, pk=pk, project_id=project_pk)

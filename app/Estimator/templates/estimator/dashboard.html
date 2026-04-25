@@ -39,7 +39,7 @@
         </div>
     </div>
     <!-- Summary cards -->
-    <div class="grid grid-cols-2 gap-4 mb-8 lg:grid-cols-6">
+    <div class="grid grid-cols-2 gap-4 mb-8 lg:grid-cols-7">
         <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
             <div class="flex gap-2 items-center min-w-0">
                 <div class="p-1.5 bg-gray-100 rounded-lg shrink-0">
@@ -55,8 +55,8 @@
             <div class="flex gap-2 items-center min-w-0">
                 <div class="p-1.5 bg-amber-50 rounded-lg shrink-0">{% heroicon_outline "cube" class="w-5 h-5 text-amber-600" %}</div>
                 <div class="min-w-0">
-                    <p class="text-xs font-medium text-gray-500 truncate">Material Costs Rate</p>
-                    <p class="text-sm font-bold text-amber-700 whitespace-nowrap">{{ total_materials_rate|currency }}</p>
+                    <p class="text-xs font-medium text-gray-500 truncate">Material Amount</p>
+                    <p class="text-sm font-bold text-amber-700 whitespace-nowrap">{{ total_material_amount|currency }}</p>
                 </div>
             </div>
         </div>
@@ -66,19 +66,30 @@
                     {% heroicon_outline "user-group" class="w-5 h-5 text-purple-600" %}
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xs font-medium text-gray-500 truncate">Labour Rate</p>
-                    <p class="text-sm font-bold text-purple-700 whitespace-nowrap">{{ total_labour_rate|currency }}</p>
+                    <p class="text-xs font-medium text-gray-500 truncate">Labour Amount</p>
+                    <p class="text-sm font-bold text-purple-700 whitespace-nowrap">{{ total_labour_amount|currency }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
+            <div class="flex gap-2 items-center min-w-0">
+                <div class="p-1.5 bg-rose-50 rounded-lg shrink-0">
+                    {% heroicon_outline "truck" class="w-5 h-5 text-rose-600" %}
+                </div>
+                <div class="min-w-0">
+                    <p class="text-xs font-medium text-gray-500 truncate">Plant Amount</p>
+                    <p class="text-sm font-bold text-rose-700 whitespace-nowrap">{{ total_plant_amount|currency }}</p>
                 </div>
             </div>
         </div>
         <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
             <div class="flex gap-2 items-center min-w-0">
                 <div class="p-1.5 bg-orange-50 rounded-lg shrink-0">
-                    {% heroicon_outline "truck" class="w-5 h-5 text-orange-600" %}
+                    {% heroicon_outline "clipboard-document-list" class="w-5 h-5 text-orange-600" %}
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xs font-medium text-gray-500 truncate">Plant Rate</p>
-                    <p class="text-sm font-bold text-orange-700 whitespace-nowrap">{{ total_plant_rate|currency }}</p>
+                    <p class="text-xs font-medium text-gray-500 truncate">Preliminary Amount</p>
+                    <p class="text-sm font-bold text-orange-700 whitespace-nowrap">{{ total_preliminary_amount|currency }}</p>
                 </div>
             </div>
         </div>
