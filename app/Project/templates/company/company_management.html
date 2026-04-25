@@ -253,28 +253,21 @@
                    class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-pink-200 transition-colors bg-white/70 hover:bg-pink-50 group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "document-text" class="mr-2 w-4 h-4 text-pink-500" %}
-                        <span class="text-sm font-medium text-pink-700">Progress Claims & Forecasts</span>
+                        <span class="text-sm font-medium text-pink-700">Baseline BoQ</span>
                     </div>
                 </a>
                 <a href="{% url 'estimator:dashboard' project_pk=company.pk %}"
                    class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-violet-200 transition-colors bg-white/70 hover:bg-violet-50 group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "user-group" class="mr-2 w-4 h-4 text-violet-500" %}
-                        <span class="text-sm font-medium text-violet-700">Resources Specifications</span>
+                        <span class="text-sm font-medium text-violet-700">Project Estimator</span>
                     </div>
                 </a>
                 <a href="{% url 'estimator:report_material_list_progress_contract' project_pk=company.pk %}"
                    class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-rose-200 transition-colors bg-white/70 hover:bg-rose-50 group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "shield-exclamation" class="mr-2 w-4 h-4 text-rose-500" %}
-                        <span class="text-sm font-medium text-rose-700">Baseline Risk Report</span>
-                    </div>
-                </a>
-                <a href="{% url 'estimator:report_labour_list_progress' project_pk=company.pk %}"
-                   class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-amber-200 transition-colors bg-white/70 hover:bg-amber-50 group/btn">
-                    <div class="flex items-center">
-                        {% heroicon_outline "arrow-path" class="mr-2 w-4 h-4 text-amber-500" %}
-                        <span class="text-sm font-medium text-amber-700">Progress Risk Report</span>
+                        <span class="text-sm font-medium text-rose-700">Risk Report</span>
                     </div>
                 </a>
                 <a href="{% url 'estimator:trade_codes' project_pk=company.pk %}"
