@@ -119,6 +119,31 @@ class ProjectAssumptionsView(ProjectEstimatorMixin, TemplateView):
         return self.render_to_response(context)
 
 
+class ApplyAssumptionsView(ProjectEstimatorMixin, View):
+    """Push current project assumption markups to all BOQItems in the project."""
+
+    def post(self, request, project_pk):
+        project = self.get_project()
+        assumptions = ProjectAssumptions.objects.filter(project=project).first()
+        if not assumptions:
+            messages.error(request, "No project assumptions to apply.")
+            return redirect(
+                "estimator:project_assumptions", project_pk=project_pk
+            )
+        updated = BOQItem.objects.filter(project=project).update(
+            material_markup_pct=assumptions.material_markup_pct,
+            labour_markup_pct=assumptions.labour_markup_pct,
+            transport_pct=assumptions.transport_pct,
+        )
+        messages.success(
+            request,
+            f"Applied assumptions to {updated} BoQ items.",
+        )
+        return redirect(
+            "estimator:project_assumptions", project_pk=project_pk
+        )
+
+
 class DashboardView(ProjectEstimatorMixin, ListView):
     model = BOQItem
     template_name = "estimator/dashboard.html"
@@ -135,6 +160,7 @@ class DashboardView(ProjectEstimatorMixin, ListView):
                 "plant_specification",
                 "preliminary_specification",
                 "material",
+                "project__estimator_assumptions",
             )
             .prefetch_related(
                 "specification__spec_components__material",

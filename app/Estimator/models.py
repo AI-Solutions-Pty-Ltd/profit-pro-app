@@ -1058,17 +1058,43 @@ class BOQItem(models.Model):
         return None
 
     @property
+    def _wastage_pct(self):
+        if not hasattr(self, "_cached_wastage_pct"):
+            try:
+                self._cached_wastage_pct = (
+                    self.project.estimator_assumptions.wastage_pct or Decimal("0")
+                )
+            except Exception:
+                self._cached_wastage_pct = Decimal("0")
+        return self._cached_wastage_pct
+
+    @property
+    def _material_factor(self):
+        wastage = self._wastage_pct
+        markup = (self.material_markup_pct or Decimal("0")) + (
+            self.transport_pct or Decimal("0")
+        )
+        return (Decimal("1") + wastage / Decimal("100")) * (
+            Decimal("1") + markup / Decimal("100")
+        )
+
+    @property
+    def _labour_factor(self):
+        markup = self.labour_markup_pct or Decimal("0")
+        return Decimal("1") + markup / Decimal("100")
+
+    @property
     def new_materials_amount(self):
         rate = self.new_materials_rate
         if rate and self.contract_quantity:
-            return rate * self.contract_quantity
+            return rate * self.contract_quantity * self._material_factor
         return None
 
     @property
     def new_labour_amount(self):
         rate = self.new_labour_rate
         if rate and self.contract_quantity:
-            return rate * self.contract_quantity
+            return rate * self.contract_quantity * self._labour_factor
         return None
 
     @property
@@ -1099,8 +1125,8 @@ class BOQItem(models.Model):
 
     @property
     def baseline_new_price(self):
-        mat = self.new_materials_rate or Decimal("0")
-        lab = self.new_labour_rate or Decimal("0")
+        mat = (self.new_materials_rate or Decimal("0")) * self._material_factor
+        lab = (self.new_labour_rate or Decimal("0")) * self._labour_factor
         plant = self.new_plant_rate or Decimal("0")
         prelim = self.new_preliminary_rate or Decimal("0")
         total = mat + lab + plant + prelim
@@ -1141,6 +1167,17 @@ def sync_boq_from_lineitems(project):
         )
     }
 
+    assumptions = ProjectAssumptions.objects.filter(project=project).first()
+    markup_defaults = (
+        {
+            "material_markup_pct": assumptions.material_markup_pct,
+            "labour_markup_pct": assumptions.labour_markup_pct,
+            "transport_pct": assumptions.transport_pct,
+        }
+        if assumptions
+        else {}
+    )
+
     seen_ids = set()
     created = 0
     updated = 0
@@ -1173,6 +1210,7 @@ def sync_boq_from_lineitems(project):
                 project=project,
                 source_line_item=li,
                 **baseline_fields,
+                **markup_defaults,
             )
             created += 1
 

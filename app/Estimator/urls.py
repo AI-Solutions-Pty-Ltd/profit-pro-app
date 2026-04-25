@@ -12,6 +12,11 @@ urlpatterns = [
         name="project_assumptions",
     ),
     path(
+        "project/<int:project_pk>/assumptions/apply/",
+        views.ApplyAssumptionsView.as_view(),
+        name="apply_assumptions",
+    ),
+    path(
         "project/<int:project_pk>/baseline/",
         views.BaselineBoqView.as_view(),
         name="baseline",

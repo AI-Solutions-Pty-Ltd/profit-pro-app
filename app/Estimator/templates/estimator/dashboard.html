@@ -822,7 +822,11 @@
                                 </td>
                                 <!-- Project Qty -->
                                 <td class="px-1 py-1.5 font-medium tabular-nums text-right text-teal-700 border-r border-gray-100 bg-teal-50/30 column-group-project-qty col-project-qty">
-                                    {{ item.contract_quantity|apply_wastage:wastage_pct|qty }}
+                                    {% if item.material_id or item.specification_id %}
+                                        {{ item.contract_quantity|apply_wastage:wastage_pct|qty }}
+                                    {% else %}
+                                        {{ item.contract_quantity|qty }}
+                                    {% endif %}
                                 </td>
                                 <!-- New Material Rate -->
                                 <td class="px-1 py-1.5 font-medium tabular-nums text-right text-amber-700 bg-amber-50/30 column-group-new-material col-mat-rate"
