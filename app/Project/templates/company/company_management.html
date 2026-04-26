@@ -263,7 +263,14 @@
                         <span class="text-sm font-medium text-violet-700">Project Estimator</span>
                     </div>
                 </a>
-                <a href="{% url 'estimator:report_material_list_progress_contract' project_pk=company.pk %}"
+                <a href="{% url 'estimator:material_specs' project_pk=company.pk %}"
+                   class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-fuchsia-200 transition-colors bg-white/70 hover:bg-fuchsia-50 group/btn">
+                    <div class="flex items-center">
+                        {% heroicon_outline "cube" class="mr-2 w-4 h-4 text-fuchsia-500" %}
+                        <span class="text-sm font-medium text-fuchsia-700">Resource Estimator</span>
+                    </div>
+                </a>
+                <a href="{% url 'estimator:report_material_list_baseline_contract' project_pk=company.pk %}"
                    class="flex justify-between items-center px-3 py-2.5 w-full rounded-lg border border-rose-200 transition-colors bg-white/70 hover:bg-rose-50 group/btn">
                     <div class="flex items-center">
                         {% heroicon_outline "shield-exclamation" class="mr-2 w-4 h-4 text-rose-500" %}
