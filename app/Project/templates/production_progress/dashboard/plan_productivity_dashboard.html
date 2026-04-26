@@ -140,20 +140,7 @@
                                 {{ kpis.productivity.variance|stringformat:"+0.1f" }}%
                             </span>
                         </div>
-                        <div class="flex items-center text-[10px] font-bold uppercase tracking-tight">
-                            {% if kpis.productivity.trend_pos %}
-                                <span class="flex items-center text-emerald-500">
-                                    {% heroicon_solid "arrow-trending-up" size="12" class="mr-1" %}
-                                    +{{ kpis.productivity.trend }}%
-                                </span>
-                            {% else %}
-                                <span class="flex items-center text-rose-500">
-                                    {% heroicon_solid "arrow-trending-down" size="12" class="mr-1" %}
-                                    {{ kpis.productivity.trend }}%
-                                </span>
-                            {% endif %}
-                            <span class="ml-2 text-gray-400">Vs Previous</span>
-                        </div>
+                        
                     </div>
                 </div>
                 <!-- Average Cost Per Item Card -->
@@ -174,20 +161,7 @@
                                 {{ kpis.cost.variance|stringformat:"+0.1f" }}%
                             </span>
                         </div>
-                        <div class="flex items-center text-[10px] font-bold uppercase tracking-tight">
-                            {% if kpis.cost.trend_pos %}
-                                <span class="flex items-center text-emerald-500">
-                                    {% heroicon_solid "arrow-trending-down" size="12" class="mr-1" %}
-                                    -{{ kpis.cost.trend }}%
-                                </span>
-                            {% else %}
-                                <span class="flex items-center text-rose-500">
-                                    {% heroicon_solid "arrow-trending-up" size="12" class="mr-1" %}
-                                    +{{ kpis.cost.trend }}%
-                                </span>
-                            {% endif %}
-                            <span class="ml-2 text-gray-400">Vs Previous</span>
-                        </div>
+                
                     </div>
                 </div>
                 <!-- Total Man Hours Card -->
@@ -206,11 +180,9 @@
                     <div class="pt-4 mt-4 space-y-3 border-t border-gray-50">
                         <div class="flex justify-between text-xs font-bold">
                             <span class="text-gray-400">PLANNED: {{ kpis.man_hours.planned|floatformat:0 }}h</span>
-                            <span class="px-1.5 py-0.5 text-gray-600 bg-gray-50 rounded">{{ kpis.man_hours.variance|floatformat:1 }}% vs plan</span>
+                            <span class="px-1.5 py-0.5 text-gray-600 bg-gray-50 rounded">{{ kpis.man_hours.variance|floatformat:1 }}% </span>
                         </div>
-                        <div class="flex items-center text-[10px] font-bold uppercase tracking-tight">
-                            <span class="text-gray-400">Resource Utilization</span>
-                        </div>
+                     
                     </div>
                 </div>
                 <!-- Average Daily Output Card -->
@@ -233,20 +205,7 @@
                                 {{ kpis.daily_output.variance|stringformat:"+0.1f" }}%
                             </span>
                         </div>
-                        <div class="flex items-center text-[10px] font-bold uppercase tracking-tight">
-                            {% if kpis.daily_output.trend_pos %}
-                                <span class="flex items-center text-emerald-500">
-                                    {% heroicon_solid "arrow-trending-up" size="12" class="mr-1" %}
-                                    +{{ kpis.daily_output.trend }}%
-                                </span>
-                            {% else %}
-                                <span class="flex items-center text-rose-500">
-                                    {% heroicon_solid "arrow-trending-down" size="12" class="mr-1" %}
-                                    -{{ kpis.daily_output.trend }}%
-                                </span>
-                            {% endif %}
-                            <span class="ml-2 text-gray-400">Vs Previous</span>
-                        </div>
+                       
                     </div>
                 </div>
             </div>
