@@ -19,7 +19,6 @@ from .production_models import (
 )
 
 
-
 class PlanFilterForm(forms.Form):
     """Form for filtering the productivity dashboard by plan."""
 
@@ -47,7 +46,7 @@ class PlanFilterForm(forms.Form):
                 .order_by("activity")
             )
             self.fields["plan_id"].queryset = plans
-            
+
             # Customize the label to match the template's logic: activity (section/bill_no)
             self.fields["plan_id"].label_from_instance = lambda obj: (
                 f"{obj.activity} ({obj.section}/{obj.bill_no})"
@@ -57,7 +56,6 @@ class PlanFilterForm(forms.Form):
 
 
 class DailyProductionForm(forms.ModelForm):
-
     """Form for logging daily notes."""
 
     class Meta:

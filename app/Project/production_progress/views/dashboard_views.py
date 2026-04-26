@@ -8,13 +8,12 @@ from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project
 
+from ..production_forms import PlanFilterForm
 from ..production_models import (
     DailyProduction,
     ProductionPlan,
 )
-from ..production_forms import PlanFilterForm
 from ..utils.production_utils import (
-
     get_activity_detail_data,
     get_dashboard_data,
     get_plan_productivity_data,
@@ -162,10 +161,7 @@ class PlanProductivityDashboardView(
         end_date = self.request.GET.get("end_date")
 
         # Initialize filter form
-        plan_filter_form = PlanFilterForm(
-            self.request.GET, 
-            project_id=project_pk
-        )
+        plan_filter_form = PlanFilterForm(self.request.GET, project_id=project_pk)
 
         all_plans = ProductionPlan.objects.filter(
             project=project, labour_activity__isnull=False
