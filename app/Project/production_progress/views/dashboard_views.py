@@ -12,7 +12,9 @@ from ..production_models import (
     DailyProduction,
     ProductionPlan,
 )
+from ..production_forms import PlanFilterForm
 from ..utils.production_utils import (
+
     get_activity_detail_data,
     get_dashboard_data,
     get_plan_productivity_data,
@@ -159,6 +161,12 @@ class PlanProductivityDashboardView(
         start_date = self.request.GET.get("start_date")
         end_date = self.request.GET.get("end_date")
 
+        # Initialize filter form
+        plan_filter_form = PlanFilterForm(
+            self.request.GET, 
+            project_id=project_pk
+        )
+
         all_plans = ProductionPlan.objects.filter(
             project=project, labour_activity__isnull=False
         ).order_by("activity")
@@ -182,9 +190,11 @@ class PlanProductivityDashboardView(
                 "selected_plan": selected_plan,
                 "start_date": start_date,
                 "end_date": end_date,
+                "plan_filter_form": plan_filter_form,
                 **dashboard_data,
             }
         )
+
         return context
 
     def get_breadcrumbs(self):
