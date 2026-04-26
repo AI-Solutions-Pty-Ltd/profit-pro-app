@@ -1044,20 +1044,6 @@ class BOQItem(models.Model):
         return calculate_contract_amount(self.contract_quantity, self.contract_rate)
 
     @property
-    def new_materials_rate(self):
-        if self.specification:
-            return calculate_materials_rate(None, self.specification.rate_per_unit)
-        if self.material:
-            return self.material.market_rate
-        return None
-
-    @property
-    def new_labour_rate(self):
-        if self.labour_specification:
-            return self.labour_specification.rate_per_unit
-        return None
-
-    @property
     def _wastage_pct(self):
         if not hasattr(self, "_cached_wastage_pct"):
             try:
@@ -1069,32 +1055,54 @@ class BOQItem(models.Model):
         return self._cached_wastage_pct
 
     @property
-    def _material_factor(self):
-        wastage = self._wastage_pct
+    def _wastage_factor(self):
+        return Decimal("1") + self._wastage_pct / Decimal("100")
+
+    @property
+    def _material_markup_factor(self):
         markup = (self.material_markup_pct or Decimal("0")) + (
             self.transport_pct or Decimal("0")
         )
-        return (Decimal("1") + wastage / Decimal("100")) * (
-            Decimal("1") + markup / Decimal("100")
-        )
+        return Decimal("1") + markup / Decimal("100")
 
     @property
-    def _labour_factor(self):
+    def _labour_markup_factor(self):
         markup = self.labour_markup_pct or Decimal("0")
         return Decimal("1") + markup / Decimal("100")
+
+    @property
+    def new_materials_rate(self):
+        if self.specification:
+            base = calculate_materials_rate(None, self.specification.rate_per_unit)
+        elif self.material:
+            base = self.material.market_rate
+        else:
+            return None
+        if base is None:
+            return None
+        return base * self._material_markup_factor
+
+    @property
+    def new_labour_rate(self):
+        if self.labour_specification:
+            base = self.labour_specification.rate_per_unit
+            if base is None:
+                return None
+            return base * self._labour_markup_factor
+        return None
 
     @property
     def new_materials_amount(self):
         rate = self.new_materials_rate
         if rate and self.contract_quantity:
-            return rate * self.contract_quantity * self._material_factor
+            return self.contract_quantity * self._wastage_factor * rate
         return None
 
     @property
     def new_labour_amount(self):
         rate = self.new_labour_rate
         if rate and self.contract_quantity:
-            return rate * self.contract_quantity * self._labour_factor
+            return self.contract_quantity * rate
         return None
 
     @property
@@ -1125,8 +1133,8 @@ class BOQItem(models.Model):
 
     @property
     def baseline_new_price(self):
-        mat = (self.new_materials_rate or Decimal("0")) * self._material_factor
-        lab = (self.new_labour_rate or Decimal("0")) * self._labour_factor
+        mat = (self.new_materials_rate or Decimal("0")) * self._wastage_factor
+        lab = self.new_labour_rate or Decimal("0")
         plant = self.new_plant_rate or Decimal("0")
         prelim = self.new_preliminary_rate or Decimal("0")
         total = mat + lab + plant + prelim

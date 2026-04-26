@@ -1135,6 +1135,7 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
                 "trade_code",
                 "specification",
                 "material",
+                "project__estimator_assumptions",
             )
             .prefetch_related(
                 "specification__spec_components__material",
@@ -1178,15 +1179,15 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
         report_rows = []
 
         for item in context["items"]:
-            quantity = getattr(item, qty_field) or Decimal("0")
+            raw_quantity = getattr(item, qty_field) or Decimal("0")
             if rate_type == "contract":
                 rate = item.contract_rate
+                quantity = raw_quantity
+                amount = rate * quantity if rate and quantity else None
             else:
                 rate = item.new_materials_rate
-            if rate and quantity:
-                amount = rate * quantity
-            else:
-                amount = None
+                quantity = raw_quantity * item._wastage_factor
+                amount = quantity * rate if rate and quantity else None
 
             material_name = ""
             unit = item.unit
@@ -1341,12 +1342,10 @@ class LabourListReportView(ProjectEstimatorMixin, ListView):
             quantity = getattr(item, qty_field) or Decimal("0")
             if rate_type == "contract":
                 rate = item.contract_rate
+                amount = rate * quantity if rate and quantity else None
             else:
-                rate = ls.rate_per_unit if ls else None
-            if rate and quantity:
-                amount = rate * quantity
-            else:
-                amount = None
+                rate = item.new_labour_rate
+                amount = quantity * rate if rate and quantity else None
 
             if amount:
                 grand_total += amount
