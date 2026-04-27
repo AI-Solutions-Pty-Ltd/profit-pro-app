@@ -27,6 +27,7 @@ from .models import (
     ProjectDiscipline,
     ProjectDocument,
     ProjectRole,
+    ProjectStage,
     ProjectSubCategory,
     Signatories,
     SubCategory,
@@ -51,6 +52,20 @@ class ProjectSubCategoryAdmin(SoftDeleteAdmin):
 
 @admin.register(ProjectDiscipline)
 class ProjectDisciplineAdmin(SoftDeleteAdmin):
+    list_display = ["name", "description", "deleted", "created_at"]
+    list_filter = [
+        "deleted",
+        "created_at",
+    ]
+    search_fields = [
+        "name",
+        "description",
+    ]
+    readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(ProjectStage)
+class ProjectStageAdmin(SoftDeleteAdmin):
     list_display = ["name", "description", "deleted", "created_at"]
     list_filter = [
         "deleted",
