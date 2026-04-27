@@ -19,6 +19,42 @@ from .production_models import (
 )
 
 
+class PlanFilterForm(forms.Form):
+    """Form for filtering the productivity dashboard by plan."""
+
+    plan_id = forms.ModelChoiceField(
+        queryset=ProductionPlan.objects.none(),
+        widget=SearchableSelectWidget(
+            attrs={
+                "onchange": "this.form.submit()",
+                "class": "w-full",
+            }
+        ),
+        required=False,
+        label="Select Plan",
+    )
+
+    def __init__(self, *args, **kwargs):
+        project_id = kwargs.pop("project_id", None)
+        super().__init__(*args, **kwargs)
+        if project_id:
+            plans = (
+                ProductionPlan.objects.filter(
+                    project_id=project_id, labour_activity__isnull=False
+                )
+                .select_related("labour_activity")
+                .order_by("activity")
+            )
+            self.fields["plan_id"].queryset = plans
+
+            # Customize the label to match the template's logic: activity (section/bill_no)
+            self.fields["plan_id"].label_from_instance = lambda obj: (
+                f"{obj.activity} ({obj.section}/{obj.bill_no})"
+                if obj.section or obj.bill_no
+                else f"{obj.activity}"
+            )
+
+
 class DailyProductionForm(forms.ModelForm):
     """Form for logging daily notes."""
 
