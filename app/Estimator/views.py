@@ -2482,6 +2482,16 @@ class DeleteSpecComponentView(View):
         )
 
 
+@method_decorator(csrf_exempt, name="dispatch")
+class DeleteSpecificationView(View):
+    """AJAX endpoint to delete a ProjectSpecification (material spec)."""
+
+    def post(self, request, project_pk, pk):
+        spec = get_object_or_404(ProjectSpecification, pk=pk, project_id=project_pk)
+        spec.delete()
+        return JsonResponse({"ok": True})
+
+
 class SystemMaterialSpecListView(ProjectEstimatorMixin, ListView):
     """List System Specifications with form to add new spec (project-scoped view)."""
 
@@ -3171,6 +3181,18 @@ class DeletePlantSpecComponentView(View):
                 "rate_per_unit": str(spec.rate_per_unit),
             }
         )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeletePlantSpecificationView(View):
+    """AJAX endpoint to delete a ProjectPlantSpecification."""
+
+    def post(self, request, project_pk, pk):
+        spec = get_object_or_404(
+            ProjectPlantSpecification, pk=pk, project_id=project_pk
+        )
+        spec.delete()
+        return JsonResponse({"ok": True})
 
 
 # ── Preliminary Costs ──────────────────────────────────────────
