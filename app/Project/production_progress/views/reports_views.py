@@ -1,8 +1,11 @@
 import json
+from decimal import Decimal
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views.generic import TemplateView
 
 from app.Account.subscription_config import Subscription
@@ -19,6 +22,7 @@ from ..production_models import (
 from ..utils.production_utils import (
     get_forecasting_dashboard_data,
     get_premium_productivity_report_data,
+    get_project_performance_summary,
     get_project_productivity_report_data,
 )
 
@@ -64,6 +68,7 @@ class ProductionProductivityReportView(
         context.update(
             {
                 "project": project,
+                "company": project.contractor,
                 "summary": data.get("summary", {}),
                 "sections": data.get("sections", []),
                 "active_horizon": horizon,
@@ -255,6 +260,7 @@ class ProductionForecastDashboardView(
         context.update(
             {
                 "project": project,
+                "company": project.contractor,
                 "all_plans": all_plans,
                 "selected_plan": selected_plan,
                 "start_date": start_date,
@@ -312,6 +318,7 @@ class ProductionPerformanceReportView(
         context.update(
             {
                 "project": project,
+                "company": project.contractor,
                 "summary": data.get("summary", {}),
                 "charts": data.get("charts", {}),
                 "forecasts": data.get("forecasts", {}),
@@ -319,6 +326,96 @@ class ProductionPerformanceReportView(
                 "charts_json": charts_json,
                 "active_history": history_horizon,
                 "active_forecast": forecast_horizon,
+            }
+        )
+        return context
+
+
+class ProductionProgressReportView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """
+    Production Progress Report View.
+    Filtered to show only activities with actual progress.
+    Includes a Progress Gantt Chart and a detailed metrics table.
+    """
+
+    template_name = "production_progress/reports/progress_report.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": "Progress Report", "url": None},
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+        today = timezone.now().date()
+
+        # Fetch basic performance data (PPI etc)
+        perf_data = get_project_performance_summary(project_pk)
+        ppi = perf_data.get("ppi", Decimal("1.0"))
+
+        # Get all plans with progress > 0
+        all_plans = ProductionPlan.objects.filter(
+            project=project, is_archived=False, is_leaf=True
+        ).prefetch_related("daily_entries", "predecessors")
+
+        report_items = []
+
+        for plan in all_plans:
+            progress_pct = plan.progress_percentage
+            if progress_pct <= 0:
+                continue
+
+            total_produced = (
+                plan.daily_entries.aggregate(total=Sum("quantity"))["total"] or 0
+            )
+            remaining_qty = max(0, plan.quantity - total_produced)
+
+            # Forecasting
+            forecast_end_date = plan.finish_date
+            if remaining_qty > 0:
+                current_rate = plan.daily_rate * ppi
+                if current_rate > 0:
+                    days_left = int(remaining_qty / current_rate)
+                    forecast_end_date = today + timezone.timedelta(days=days_left)
+
+            days_variance = 0
+            if plan.finish_date and forecast_end_date:
+                days_variance = (forecast_end_date - plan.finish_date).days
+
+            # Schedule Variance (Simplified for this view: Estimated vs Planned Duration)
+            spi = ppi  # Using PPI as SPI proxy for now
+
+            item = {
+                "plan": plan,
+                "planned_duration": plan.duration,
+                "forecast_end_date": forecast_end_date,
+                "days_variance": days_variance,
+                "progress_pct": progress_pct,
+                "spi": float(spi),
+                "schedule_variance": days_variance * -1,
+            }
+            report_items.append(item)
+
+        context.update(
+            {
+                "project": project,
+                "company": project.contractor,
+                "report_items": report_items,
+                "summary": perf_data,
+                "tab": "production_progress_report",
             }
         )
         return context
