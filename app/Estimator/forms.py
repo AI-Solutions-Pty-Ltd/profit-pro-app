@@ -641,7 +641,7 @@ class SystemPreliminaryCostForm(forms.ModelForm):
 class PreliminarySpecificationForm(forms.ModelForm):
     class Meta:
         model = ProjectPreliminarySpecification
-        fields = ["section", "trade_name", "name", "unit", "amount"]
+        fields = ["section", "trade_name", "name", "unit", "preliminary_type"]
         widgets = {
             "section": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
             "trade_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
@@ -654,16 +654,14 @@ class PreliminarySpecificationForm(forms.ModelForm):
             "unit": forms.TextInput(
                 attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. Sum"}
             ),
-            "amount": forms.NumberInput(
-                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
-            ),
+            "preliminary_type": forms.Select(attrs={"class": TAILWIND_SELECT}),
         }
 
 
 class SystemPreliminarySpecificationForm(forms.ModelForm):
     class Meta:
         model = SystemPreliminarySpecification
-        fields = ["section", "trade_name", "name", "unit", "amount"]
+        fields = ["section", "trade_name", "name", "unit", "preliminary_type"]
         widgets = {
             "section": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
             "trade_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
@@ -676,9 +674,7 @@ class SystemPreliminarySpecificationForm(forms.ModelForm):
             "unit": forms.TextInput(
                 attrs={"class": TAILWIND_INPUT, "placeholder": "e.g. Sum"}
             ),
-            "amount": forms.NumberInput(
-                attrs={"class": TAILWIND_INPUT, "step": "0.01"}
-            ),
+            "preliminary_type": forms.Select(attrs={"class": TAILWIND_SELECT}),
         }
 
 

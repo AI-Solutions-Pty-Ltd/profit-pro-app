@@ -1143,8 +1143,49 @@ class PreliminaryCostImporter:
 class PreliminarySpecImporter:
     """Import Preliminary Specifications from Excel.
 
-    Expected columns: Section | Trade Name | Name | Unit | Amount
+    Expected columns: Section | Trade Name | Name | Unit | Preliminary Type
+
+    The Preliminary Type column is matched against the choices on
+    ``SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES`` (either the value or the
+    display label, case-insensitive). Spec amount is now derived from
+    preliminary costs of the matching type, so it is no longer imported.
     """
+
+    _NAME_TO_TYPE = {
+        "fixed-contractual requirements": "fixed_contractual",
+        "fixed contractual requirements": "fixed_contractual",
+        "fixed-facilities required": "fixed_facilities",
+        "fixed facilities": "fixed_facilities",
+        "time-contractual requirements": "time_contractual",
+        "time contractual requirements": "time_contractual",
+        "time-facilities for contractor": "time_facilities",
+        "time-facilities": "time_facilities",
+        "time-small tools & accessories": "time_small_tools",
+        "time-small tool allowances": "time_small_tools",
+        "time-plant and equipment": "time_plant_equipment",
+        "time-company and head office overheads": "time_company_overheads",
+        "time-company & head office overheads": "time_company_overheads",
+        "time-site personnel": "time_site_personnel",
+    }
+
+    @classmethod
+    def _resolve_type(cls, raw, name):
+        """Resolve a preliminary_type from the cell value, falling back to name."""
+        from .models import SystemPreliminaryCost
+
+        valid_values = {v for v, _ in SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES}
+        valid_labels = {
+            label.strip().lower(): v
+            for v, label in SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
+        }
+        candidate = (_safe_str(raw) or "").strip()
+        if candidate:
+            if candidate in valid_values:
+                return candidate
+            mapped = valid_labels.get(candidate.lower())
+            if mapped:
+                return mapped
+        return cls._NAME_TO_TYPE.get((name or "").strip().lower(), "")
 
     SHEET_KEYWORDS = [
         "preliminary spec",
@@ -1181,12 +1222,12 @@ class PreliminarySpecImporter:
             if not name:
                 continue
 
+            raw_type = row[co + 4] if ncols > co + 4 else None
             defaults = {
                 "section": _safe_str(row[co + 0]) if ncols > co + 0 else "",
                 "trade_name": _safe_str(row[co + 1]) if ncols > co + 1 else "",
                 "unit": _safe_str(row[co + 3]) if ncols > co + 3 else "",
-                "amount": (_safe_decimal(row[co + 4]) if ncols > co + 4 else None)
-                or Decimal("0"),
+                "preliminary_type": self._resolve_type(raw_type, name),
             }
 
             if self.project:

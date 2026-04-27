@@ -168,7 +168,7 @@ def initialize_project_estimator(project):
             trade_name=sps.trade_name,
             name=sps.name,
             unit=sps.unit,
-            amount=sps.amount,
+            preliminary_type=sps.preliminary_type,
         )
         prelim_spec_count += 1
     results["preliminary_specs"] = prelim_spec_count
@@ -394,7 +394,7 @@ def clone_from_project(target_project, source_project):
             trade_name=sps.trade_name,
             name=sps.name,
             unit=sps.unit,
-            amount=sps.amount,
+            preliminary_type=sps.preliminary_type,
         )
         prelim_spec_count += 1
     results["preliminary_specs"] = prelim_spec_count
@@ -991,7 +991,7 @@ def sync_preliminary_specs_from_system(project):
         pps.trade_name = pps.source.trade_name
         pps.name = pps.source.name
         pps.unit = pps.source.unit
-        pps.amount = pps.source.amount
+        pps.preliminary_type = pps.source.preliminary_type
         pps.save()
         updated += 1
 
@@ -1016,7 +1016,7 @@ def sync_preliminary_specs_from_system(project):
             pps.section = sps.section
             pps.trade_name = sps.trade_name
             pps.unit = sps.unit
-            pps.amount = sps.amount
+            pps.preliminary_type = sps.preliminary_type
             pps.save()
             updated += 1
             continue
@@ -1027,7 +1027,7 @@ def sync_preliminary_specs_from_system(project):
             trade_name=sps.trade_name,
             name=sps.name,
             unit=sps.unit,
-            amount=sps.amount,
+            preliminary_type=sps.preliminary_type,
         )
         created += 1
 

@@ -119,8 +119,8 @@ class SystemPreliminaryCostAdmin(admin.ModelAdmin):
 
 @admin.register(SystemPreliminarySpecification)
 class SystemPreliminarySpecificationAdmin(admin.ModelAdmin):
-    list_display = ["section", "name", "unit", "amount"]
-    list_filter = ["section"]
+    list_display = ["section", "name", "unit", "preliminary_type", "amount"]
+    list_filter = ["section", "preliminary_type"]
 
 
 # ── Project-Scoped Admin ─────────────────────────────────────────
@@ -218,8 +218,8 @@ class ProjectPreliminaryCostAdmin(admin.ModelAdmin):
 
 @admin.register(ProjectPreliminarySpecification)
 class ProjectPreliminarySpecificationAdmin(admin.ModelAdmin):
-    list_display = ["project", "section", "name", "unit", "amount"]
-    list_filter = ["project", "section"]
+    list_display = ["project", "section", "name", "unit", "preliminary_type", "amount"]
+    list_filter = ["project", "section", "preliminary_type"]
 
 
 @admin.register(BOQItem)
