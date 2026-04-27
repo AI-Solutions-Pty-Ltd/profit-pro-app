@@ -1,0 +1,139 @@
+{% extends parent_template|default:"estimator/base_materials_estimator.html" %}
+{% load estimator_tags %}
+{% block title %}{{ report_title }} - Project Resource Estimator{% endblock %}
+{% block sub_content %}
+    <div class="mb-4 sm:flex sm:items-center sm:justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">{{ report_title }}</h1>
+        <nav class="mt-3 sm:mt-0 flex space-x-1 rounded-lg bg-gray-100 p-1"
+             aria-label="Material report view">
+            <a href="{% url 'estimator:report_material_list_'|add:variant project_pk=project_pk %}"
+               class="text-gray-500 hover:text-gray-700 rounded-md px-3 py-1.5 text-sm font-medium">By Spec</a>
+            <a href="{% url 'estimator:report_material_components_'|add:variant project_pk=project_pk %}"
+               class="bg-white text-gray-900 shadow rounded-md px-3 py-1.5 text-sm font-medium">By Component</a>
+        </nav>
+    </div>
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-6">
+        <div class="rounded-lg bg-white shadow p-4">
+            <p class="text-xs font-medium text-gray-500 truncate">Procurement Total</p>
+            <p class="text-base font-bold text-gray-900 truncate">{{ grand_total|currency }}</p>
+        </div>
+        <div class="rounded-lg bg-white shadow p-4">
+            <p class="text-xs font-medium text-gray-500 truncate">Distinct Materials</p>
+            <p class="text-base font-bold text-gray-900 truncate">{{ report_rows|length }}</p>
+        </div>
+        <div class="rounded-lg bg-amber-50 shadow p-4">
+            <p class="text-xs font-medium text-amber-700 truncate">Note</p>
+            <p class="text-xs text-amber-700">
+                Quantities include wastage. Rate is the weighted effective rate including each row's material markup + transport %.
+            </p>
+        </div>
+    </div>
+    <!-- Chart -->
+    {% if report_rows %}
+        <div class="bg-white shadow-sm rounded-lg p-4 mb-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-3">Top Materials by Procurement Cost</h3>
+            <div class="relative h-[320px]">
+                <canvas id="componentBar"></canvas>
+            </div>
+        </div>
+    {% endif %}
+    <!-- Data Table -->
+    <div class="bg-white shadow-sm rounded-lg">
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-xs whitespace-nowrap">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[180px]">
+                            Material Code
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[160px]">
+                            Trade
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[60px]">
+                            Unit
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[120px]">
+                            Quantity (incl. wastage)
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[120px]">
+                            Rate
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[140px]">
+                            Amount
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[80px]">
+                            % of Total
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for row in report_rows %}
+                        <tr class="hover:bg-gray-50/50">
+                            <td class="px-3 py-1.5 text-gray-900 font-medium truncate max-w-[180px]"
+                                title="{{ row.material_code }}">{{ row.material_code }}</td>
+                            <td class="px-3 py-1.5 text-gray-600 truncate max-w-[160px]"
+                                title="{{ row.trade_name }}">{{ row.trade_name|default:"-" }}</td>
+                            <td class="px-3 py-1.5 text-gray-500">{{ row.unit }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-teal-700 bg-teal-50/30">{{ row.quantity|qty }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.rate|currency }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-900 font-medium">{{ row.amount|currency }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.pct_of_total|pct }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="px-3 py-8 text-center text-gray-500">
+                                No materials found in any spec or BoQ row for this project.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                {% if report_rows %}
+                    <tfoot>
+                        <tr class="border-t-2 border-gray-300 bg-gray-50 font-semibold">
+                            <td class="px-3 py-2 text-gray-900" colspan="3">Grand Total</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-teal-700 bg-teal-50/30">{{ total_quantity|qty }}</td>
+                            <td class="px-3 py-2"></td>
+                            <td class="px-3 py-2 text-right tabular-nums text-gray-900">{{ grand_total|currency }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-gray-600">100.0%</td>
+                        </tr>
+                    </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+    {% if report_rows %}
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+        <script>
+(function() {
+    const labels = {{ chart_labels|safe }};
+    const values = {{ chart_values|safe }};
+    new Chart(document.getElementById('componentBar'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Cost',
+                data: values,
+                backgroundColor: '#f59e0b',
+                borderWidth: 0,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: {
+                x: {
+                    ticks: {
+                        callback: v => 'R ' + v.toLocaleString('en-ZA', {maximumFractionDigits: 0}),
+                    }
+                }
+            }
+        }
+    });
+})();
+        </script>
+    {% endif %}
+{% endblock %}

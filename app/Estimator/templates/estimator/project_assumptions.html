@@ -84,4 +84,20 @@
             </button>
         </div>
     </form>
+    <form method="post"
+          action="{% url 'estimator:apply_assumptions' project_pk=project_pk %}"
+          class="flex items-center justify-between mt-4 p-4 bg-amber-50 border border-amber-200 rounded-md"
+          onsubmit="return confirm('This will overwrite material, labour, and transport markups on every BoQ item in this project. Continue?');">
+        {% csrf_token %}
+        <div>
+            <h3 class="text-sm font-semibold text-amber-900">Re-apply assumptions to existing BoQ items</h3>
+            <p class="mt-1 text-xs text-amber-700">
+                Overwrites markup % on every BoQ item with the values saved above. Use after editing assumptions if you want existing rows to pick up the new values.
+            </p>
+        </div>
+        <button type="submit"
+                class="ml-4 inline-flex shrink-0 items-center rounded-md bg-amber-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-500">
+            Re-apply to all rows
+        </button>
+    </form>
 {% endblock %}

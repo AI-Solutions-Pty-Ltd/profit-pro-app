@@ -1044,31 +1044,65 @@ class BOQItem(models.Model):
         return calculate_contract_amount(self.contract_quantity, self.contract_rate)
 
     @property
+    def _wastage_pct(self):
+        if not hasattr(self, "_cached_wastage_pct"):
+            try:
+                self._cached_wastage_pct = (
+                    self.project.estimator_assumptions.wastage_pct or Decimal("0")
+                )
+            except Exception:
+                self._cached_wastage_pct = Decimal("0")
+        return self._cached_wastage_pct
+
+    @property
+    def _wastage_factor(self):
+        return Decimal("1") + self._wastage_pct / Decimal("100")
+
+    @property
+    def _material_markup_factor(self):
+        markup = (self.material_markup_pct or Decimal("0")) + (
+            self.transport_pct or Decimal("0")
+        )
+        return Decimal("1") + markup / Decimal("100")
+
+    @property
+    def _labour_markup_factor(self):
+        markup = self.labour_markup_pct or Decimal("0")
+        return Decimal("1") + markup / Decimal("100")
+
+    @property
     def new_materials_rate(self):
         if self.specification:
-            return calculate_materials_rate(None, self.specification.rate_per_unit)
-        if self.material:
-            return self.material.market_rate
-        return None
+            base = calculate_materials_rate(None, self.specification.rate_per_unit)
+        elif self.material:
+            base = self.material.market_rate
+        else:
+            return None
+        if base is None:
+            return None
+        return base * self._material_markup_factor
 
     @property
     def new_labour_rate(self):
         if self.labour_specification:
-            return self.labour_specification.rate_per_unit
+            base = self.labour_specification.rate_per_unit
+            if base is None:
+                return None
+            return base * self._labour_markup_factor
         return None
 
     @property
     def new_materials_amount(self):
         rate = self.new_materials_rate
         if rate and self.contract_quantity:
-            return rate * self.contract_quantity
+            return self.contract_quantity * self._wastage_factor * rate
         return None
 
     @property
     def new_labour_amount(self):
         rate = self.new_labour_rate
         if rate and self.contract_quantity:
-            return rate * self.contract_quantity
+            return self.contract_quantity * rate
         return None
 
     @property
@@ -1099,7 +1133,7 @@ class BOQItem(models.Model):
 
     @property
     def baseline_new_price(self):
-        mat = self.new_materials_rate or Decimal("0")
+        mat = (self.new_materials_rate or Decimal("0")) * self._wastage_factor
         lab = self.new_labour_rate or Decimal("0")
         plant = self.new_plant_rate or Decimal("0")
         prelim = self.new_preliminary_rate or Decimal("0")
@@ -1141,6 +1175,17 @@ def sync_boq_from_lineitems(project):
         )
     }
 
+    assumptions = ProjectAssumptions.objects.filter(project=project).first()
+    markup_defaults = (
+        {
+            "material_markup_pct": assumptions.material_markup_pct,
+            "labour_markup_pct": assumptions.labour_markup_pct,
+            "transport_pct": assumptions.transport_pct,
+        }
+        if assumptions
+        else {}
+    )
+
     seen_ids = set()
     created = 0
     updated = 0
@@ -1173,6 +1218,7 @@ def sync_boq_from_lineitems(project):
                 project=project,
                 source_line_item=li,
                 **baseline_fields,
+                **markup_defaults,
             )
             created += 1
 

@@ -2,6 +2,10 @@
 {% load estimator_tags %}
 {% block title %}Output BoQ - Project Resource Estimator{% endblock %}
 {% block estimator_content %}
+    <style>
+        #boq-table thead tr:first-child > th { position: sticky; top: 0; z-index: 20; }
+        #boq-table thead tr:nth-child(2) > th { position: sticky; top: 26px; z-index: 20; }
+    </style>
     <!-- Page header -->
     <div class="mb-6 sm:flex sm:items-center sm:justify-between">
         <div>
@@ -35,7 +39,7 @@
         </div>
     </div>
     <!-- Summary cards -->
-    <div class="grid grid-cols-2 gap-4 mb-8 lg:grid-cols-6">
+    <div class="grid grid-cols-2 gap-4 mb-8 lg:grid-cols-7">
         <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
             <div class="flex gap-2 items-center min-w-0">
                 <div class="p-1.5 bg-gray-100 rounded-lg shrink-0">
@@ -51,8 +55,8 @@
             <div class="flex gap-2 items-center min-w-0">
                 <div class="p-1.5 bg-amber-50 rounded-lg shrink-0">{% heroicon_outline "cube" class="w-5 h-5 text-amber-600" %}</div>
                 <div class="min-w-0">
-                    <p class="text-xs font-medium text-gray-500 truncate">Material Costs Rate</p>
-                    <p class="text-sm font-bold text-amber-700 whitespace-nowrap">{{ total_materials_rate|currency }}</p>
+                    <p class="text-xs font-medium text-gray-500 truncate">Material Amount</p>
+                    <p class="text-sm font-bold text-amber-700 whitespace-nowrap">{{ total_material_amount|currency }}</p>
                 </div>
             </div>
         </div>
@@ -62,19 +66,28 @@
                     {% heroicon_outline "user-group" class="w-5 h-5 text-purple-600" %}
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xs font-medium text-gray-500 truncate">Labour Rate</p>
-                    <p class="text-sm font-bold text-purple-700 whitespace-nowrap">{{ total_labour_rate|currency }}</p>
+                    <p class="text-xs font-medium text-gray-500 truncate">Labour Amount</p>
+                    <p class="text-sm font-bold text-purple-700 whitespace-nowrap">{{ total_labour_amount|currency }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
+            <div class="flex gap-2 items-center min-w-0">
+                <div class="p-1.5 bg-rose-50 rounded-lg shrink-0">{% heroicon_outline "truck" class="w-5 h-5 text-rose-600" %}</div>
+                <div class="min-w-0">
+                    <p class="text-xs font-medium text-gray-500 truncate">Plant Amount</p>
+                    <p class="text-sm font-bold text-rose-700 whitespace-nowrap">{{ total_plant_amount|currency }}</p>
                 </div>
             </div>
         </div>
         <div class="p-3 bg-white rounded-lg shadow overflow-hidden">
             <div class="flex gap-2 items-center min-w-0">
                 <div class="p-1.5 bg-orange-50 rounded-lg shrink-0">
-                    {% heroicon_outline "truck" class="w-5 h-5 text-orange-600" %}
+                    {% heroicon_outline "clipboard-document-list" class="w-5 h-5 text-orange-600" %}
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xs font-medium text-gray-500 truncate">Plant Rate</p>
-                    <p class="text-sm font-bold text-orange-700 whitespace-nowrap">{{ total_plant_rate|currency }}</p>
+                    <p class="text-xs font-medium text-gray-500 truncate">Preliminary Amount</p>
+                    <p class="text-sm font-bold text-orange-700 whitespace-nowrap">{{ total_preliminary_amount|currency }}</p>
                 </div>
             </div>
         </div>
@@ -556,7 +569,7 @@
                 </button>
             </div>
         </div>
-        <div class="overflow-x-auto">
+        <div class="sticky top-0 overflow-auto max-h-[calc(100vh-100px)]">
             <table class="text-xs min-w-[3335px]"  id="boq-table">
                 <thead>
                     <!-- Column group headers -->
@@ -818,7 +831,11 @@
                                 </td>
                                 <!-- Project Qty -->
                                 <td class="px-1 py-1.5 font-medium tabular-nums text-right text-teal-700 border-r border-gray-100 bg-teal-50/30 column-group-project-qty col-project-qty">
-                                    {{ item.contract_quantity|apply_wastage:wastage_pct|qty }}
+                                    {% if item.material_id or item.specification_id %}
+                                        {{ item.contract_quantity|apply_wastage:wastage_pct|qty }}
+                                    {% else %}
+                                        {{ item.contract_quantity|qty }}
+                                    {% endif %}
                                 </td>
                                 <!-- New Material Rate -->
                                 <td class="px-1 py-1.5 font-medium tabular-nums text-right text-amber-700 bg-amber-50/30 column-group-new-material col-mat-rate"
