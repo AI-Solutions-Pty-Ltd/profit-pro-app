@@ -101,12 +101,16 @@
                         <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[110px]">
                             Quantity
                         </th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50/50 w-[120px]">
-                            Wastage Qty
-                        </th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[120px]">
-                            Rate
-                        </th>
+                        {% if show_wastage %}
+                            <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50/50 w-[120px]">
+                                Wastage Qty
+                            </th>
+                        {% endif %}
+                        {% if show_rate %}
+                            <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[120px]">
+                                Rate
+                            </th>
+                        {% endif %}
                         <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[140px]">
                             Amount
                         </th>
@@ -122,14 +126,18 @@
                                 title="{{ row.material_name }}">{{ row.material_name }}</td>
                             <td class="px-3 py-1.5 text-gray-500">{{ row.unit }}</td>
                             <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.quantity|qty }}</td>
-                            <td class="px-3 py-1.5 text-right tabular-nums text-teal-700 bg-teal-50/30">{{ row.wastage_quantity|qty }}</td>
-                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.rate|currency }}</td>
+                            {% if show_wastage %}
+                                <td class="px-3 py-1.5 text-right tabular-nums text-teal-700 bg-teal-50/30">{{ row.wastage_quantity|qty }}</td>
+                            {% endif %}
+                            {% if show_rate %}
+                                <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.rate|currency }}</td>
+                            {% endif %}
                             <td class="px-3 py-1.5 text-right tabular-nums text-gray-900 font-medium">{{ row.amount|currency }}</td>
                             <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.pct_of_total|pct }}</td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="7" class="px-3 py-8 text-center text-gray-500">No material data available for this report.</td>
+                            <td colspan="7" class="px-3 py-8 text-center text-gray-500">No data available for this report.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -138,8 +146,12 @@
                         <tr class="border-t-2 border-gray-300 bg-gray-50 font-semibold">
                             <td class="px-3 py-2 text-gray-900" colspan="2">Grand Total</td>
                             <td class="px-3 py-2 text-right tabular-nums text-gray-900">{{ total_quantity|qty }}</td>
-                            <td class="px-3 py-2 text-right tabular-nums text-teal-700 bg-teal-50/30">{{ total_wastage_quantity|qty }}</td>
-                            <td class="px-3 py-2"></td>
+                            {% if show_wastage %}
+                                <td class="px-3 py-2 text-right tabular-nums text-teal-700 bg-teal-50/30">{{ total_wastage_quantity|qty }}</td>
+                            {% endif %}
+                            {% if show_rate %}
+                                <td class="px-3 py-2"></td>
+                            {% endif %}
                             <td class="px-3 py-2 text-right tabular-nums text-gray-900">{{ grand_total|currency }}</td>
                             <td class="px-3 py-2 text-right tabular-nums text-gray-600">100.0%</td>
                         </tr>

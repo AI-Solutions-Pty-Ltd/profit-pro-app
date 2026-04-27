@@ -1247,6 +1247,8 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
         context["total_wastage_quantity"] = sum(
             (r["wastage_quantity"] for r in report_rows), Decimal("0")
         )
+        context["show_wastage"] = True
+        context["show_rate"] = True
 
         material_totals: dict[str, Decimal] = {}
         for row in report_rows:
@@ -1500,6 +1502,9 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
     spec_url_prefix = ""
     component_url_prefix = ""
     component_label = "Component"
+    # Wastage applies to materials only; rate column hidden for preliminaries.
+    show_wastage = False
+    show_rate = True
 
     def _get_rate_type(self):
         return self.kwargs.get("rate_type", "new")
@@ -1598,10 +1603,8 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
         context["total_quantity"] = sum(
             (r["quantity"] for r in report_rows), Decimal("0")
         )
-        context["total_wastage_quantity"] = sum(
-            (r.get("wastage_quantity") or Decimal("0") for r in report_rows),
-            Decimal("0"),
-        )
+        context["show_wastage"] = self.show_wastage
+        context["show_rate"] = self.show_rate
 
         name_totals: dict[str, Decimal] = {}
         for row in report_rows:
@@ -1655,6 +1658,7 @@ class PreliminaryListReportView(_SimpleSpecListReportView):
     parent_template_new = "estimator/base_prelim_estimator.html"
     parent_template_contract = "estimator/base_baseline_estimator_prelim.html"
     title_noun = "Preliminary"
+    show_rate = False
 
 
 # ───────────────────────────────────────────────────────────────────
