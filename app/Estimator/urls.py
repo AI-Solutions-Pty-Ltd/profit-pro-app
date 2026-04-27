@@ -12,6 +12,11 @@ urlpatterns = [
         name="project_assumptions",
     ),
     path(
+        "project/<int:project_pk>/assumptions/apply/",
+        views.ApplyAssumptionsView.as_view(),
+        name="apply_assumptions",
+    ),
+    path(
         "project/<int:project_pk>/baseline/",
         views.BaselineBoqView.as_view(),
         name="baseline",
@@ -477,6 +482,61 @@ urlpatterns = [
         views.PreliminaryListReportView.as_view(),
         kwargs={"variant": "forecast", "rate_type": "contract"},
         name="report_prelim_list_forecast_contract",
+    ),
+    # ── Component / Skill aggregated reports (project-wide rollups) ──
+    path(
+        "project/<int:project_pk>/reports/material-components-baseline/",
+        views.MaterialComponentReportView.as_view(),
+        kwargs={"variant": "baseline"},
+        name="report_material_components_baseline",
+    ),
+    path(
+        "project/<int:project_pk>/reports/material-components-progress/",
+        views.MaterialComponentReportView.as_view(),
+        kwargs={"variant": "progress"},
+        name="report_material_components_progress",
+    ),
+    path(
+        "project/<int:project_pk>/reports/material-components-forecast/",
+        views.MaterialComponentReportView.as_view(),
+        kwargs={"variant": "forecast"},
+        name="report_material_components_forecast",
+    ),
+    path(
+        "project/<int:project_pk>/reports/labour-skills-baseline/",
+        views.LabourSkillReportView.as_view(),
+        kwargs={"variant": "baseline"},
+        name="report_labour_skills_baseline",
+    ),
+    path(
+        "project/<int:project_pk>/reports/labour-skills-progress/",
+        views.LabourSkillReportView.as_view(),
+        kwargs={"variant": "progress"},
+        name="report_labour_skills_progress",
+    ),
+    path(
+        "project/<int:project_pk>/reports/labour-skills-forecast/",
+        views.LabourSkillReportView.as_view(),
+        kwargs={"variant": "forecast"},
+        name="report_labour_skills_forecast",
+    ),
+    path(
+        "project/<int:project_pk>/reports/plant-components-baseline/",
+        views.PlantComponentReportView.as_view(),
+        kwargs={"variant": "baseline"},
+        name="report_plant_components_baseline",
+    ),
+    path(
+        "project/<int:project_pk>/reports/plant-components-progress/",
+        views.PlantComponentReportView.as_view(),
+        kwargs={"variant": "progress"},
+        name="report_plant_components_progress",
+    ),
+    path(
+        "project/<int:project_pk>/reports/plant-components-forecast/",
+        views.PlantComponentReportView.as_view(),
+        kwargs={"variant": "forecast"},
+        name="report_plant_components_forecast",
     ),
     # ── System Library ────────────────────────────────────────────
     path("system/", views.SystemTradeCodeListView.as_view(), name="sys_trade_codes"),
