@@ -16,7 +16,7 @@ urlpatterns = [
     path(
         "<int:project_pk>/planning/gantt/",
         views.ProductionPlanGanttView.as_view(),
-        name="production-planning-gantt",
+        name="production-schedule-report",
     ),
     path(
         "<int:project_pk>/planning/create/",
@@ -102,6 +102,11 @@ urlpatterns = [
         "<int:project_pk>/productivity-report/",
         views.ProductionProductivityReportView.as_view(),
         name="productivity-report",
+    ),
+    path(
+        "<int:project_pk>/progress-report/",
+        views.ProductionProgressReportView.as_view(),
+        name="progress-report-view",
     ),
     path(
         "<int:project_pk>/plan/<int:pk>/data/",
