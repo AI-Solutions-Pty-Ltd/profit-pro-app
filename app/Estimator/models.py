@@ -590,6 +590,7 @@ class ProjectSpecification(models.Model):
                     "id": sc.pk,
                     "label": sc.label,
                     "qty_per_unit": sc.qty_per_unit,
+                    "material_id": sc.material_id,
                     "total_quantity": calculate_total_quantity(
                         self.baseline_boq_quantity, sc.qty_per_unit
                     ),
