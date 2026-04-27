@@ -125,9 +125,7 @@ class ApplyAssumptionsView(ProjectEstimatorMixin, View):
         assumptions = ProjectAssumptions.objects.filter(project=project).first()
         if not assumptions:
             messages.error(request, "No project assumptions to apply.")
-            return redirect(
-                "estimator:project_assumptions", project_pk=project_pk
-            )
+            return redirect("estimator:project_assumptions", project_pk=project_pk)
         updated = BOQItem.objects.filter(project=project).update(
             material_markup_pct=assumptions.material_markup_pct,
             labour_markup_pct=assumptions.labour_markup_pct,
@@ -137,9 +135,7 @@ class ApplyAssumptionsView(ProjectEstimatorMixin, View):
             request,
             f"Applied assumptions to {updated} BoQ items.",
         )
-        return redirect(
-            "estimator:project_assumptions", project_pk=project_pk
-        )
+        return redirect("estimator:project_assumptions", project_pk=project_pk)
 
 
 class DashboardView(ProjectEstimatorMixin, ListView):
@@ -1236,9 +1232,7 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
             qty_for_rate = (
                 row["wastage_quantity"] if rate_type != "contract" else row["quantity"]
             )
-            row["rate"] = (
-                row["amount"] / qty_for_rate if qty_for_rate else None
-            )
+            row["rate"] = row["amount"] / qty_for_rate if qty_for_rate else None
             report_rows.append(row)
         report_rows.sort(key=lambda r: r["amount"], reverse=True)
 
@@ -1424,16 +1418,12 @@ class LabourListReportView(ProjectEstimatorMixin, ListView):
 
         context["report_rows"] = report_rows
         context["grand_total"] = grand_total
-        context["total_no_of_crews"] = sum(
-            (r["no_of_crews"] for r in report_rows), 0
-        )
+        context["total_no_of_crews"] = sum((r["no_of_crews"] for r in report_rows), 0)
         context["total_quantity"] = sum(
             (r["quantity"] for r in report_rows), Decimal("0")
         )
         context["total_skilled"] = sum((r["skilled"] for r in report_rows), 0)
-        context["total_semi_skilled"] = sum(
-            (r["semi_skilled"] for r in report_rows), 0
-        )
+        context["total_semi_skilled"] = sum((r["semi_skilled"] for r in report_rows), 0)
         context["total_general"] = sum((r["general"] for r in report_rows), 0)
 
         # Chart data: cost by crew type
@@ -1596,9 +1586,7 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
 
         report_rows = []
         for row in aggregated.values():
-            row["rate"] = (
-                row["amount"] / row["quantity"] if row["quantity"] else None
-            )
+            row["rate"] = row["amount"] / row["quantity"] if row["quantity"] else None
             report_rows.append(row)
         report_rows.sort(key=lambda r: r["amount"], reverse=True)
 
@@ -1708,8 +1696,7 @@ class MaterialComponentReportView(_ComponentReportBase):
             )
             .prefetch_related("specification__spec_components__material")
             .filter(
-                models.Q(specification__isnull=False)
-                | models.Q(material__isnull=False)
+                models.Q(specification__isnull=False) | models.Q(material__isnull=False)
             )
         )
 
@@ -1748,18 +1735,14 @@ class MaterialComponentReportView(_ComponentReportBase):
                 row = bucket(item.material)
                 row["quantity"] += project_qty
                 row["amount"] += (
-                    project_qty
-                    * (item.material.market_rate or Decimal("0"))
-                    * markup
+                    project_qty * (item.material.market_rate or Decimal("0")) * markup
                 )
 
         report_rows = []
         grand_total = Decimal("0")
         for row in components.values():
             row["rate"] = (
-                row["amount"] / row["quantity"]
-                if row["quantity"]
-                else Decimal("0")
+                row["amount"] / row["quantity"] if row["quantity"] else Decimal("0")
             )
             grand_total += row["amount"]
             report_rows.append(row)
@@ -1798,16 +1781,13 @@ class LabourSkillReportView(_ComponentReportBase):
         project = self.get_project()
         variant = self.kwargs["variant"]
 
-        items = (
-            BOQItem.objects.filter(
-                project=project,
-                is_section_header=False,
-                labour_specification__isnull=False,
-            )
-            .select_related(
-                "labour_specification",
-                "labour_specification__crew",
-            )
+        items = BOQItem.objects.filter(
+            project=project,
+            is_section_header=False,
+            labour_specification__isnull=False,
+        ).select_related(
+            "labour_specification",
+            "labour_specification__crew",
         )
 
         # labour_specification_id -> aggregated row
@@ -1859,9 +1839,7 @@ class LabourSkillReportView(_ComponentReportBase):
         for row in report_rows:
             row["pct_of_total"] = calculate_pct_of_total(row["cost"], grand_total)
 
-        context["report_title"] = (
-            f"{config['title_prefix']} Labour by Skill"
-        )
+        context["report_title"] = f"{config['title_prefix']} Labour by Skill"
         context["parent_template"] = "estimator/base_labour_estimator.html"
         context["report_rows"] = report_rows
         context["grand_total"] = grand_total
@@ -1873,9 +1851,7 @@ class LabourSkillReportView(_ComponentReportBase):
         context["variant"] = variant
         context["project_pk"] = project.pk
 
-        context["chart_labels"] = json.dumps(
-            [r["spec_name"] for r in report_rows[:10]]
-        )
+        context["chart_labels"] = json.dumps([r["spec_name"] for r in report_rows[:10]])
         context["chart_skilled"] = json.dumps(
             [float(r["skilled"]) for r in report_rows[:10]]
         )
@@ -1946,15 +1922,11 @@ class PlantComponentReportView(_ComponentReportBase):
         for row in report_rows:
             row["pct_of_total"] = calculate_pct_of_total(row["amount"], grand_total)
 
-        context["report_title"] = (
-            f"{config['title_prefix']} Plant by Component"
-        )
+        context["report_title"] = f"{config['title_prefix']} Plant by Component"
         context["parent_template"] = "estimator/base_plant_estimator.html"
         context["report_rows"] = report_rows
         context["grand_total"] = grand_total
-        context["total_hours"] = sum(
-            (r["hours"] for r in report_rows), Decimal("0")
-        )
+        context["total_hours"] = sum((r["hours"] for r in report_rows), Decimal("0"))
         context["variant"] = variant
         context["project_pk"] = project.pk
 
