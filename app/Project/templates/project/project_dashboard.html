@@ -57,7 +57,8 @@
                             R&nbsp;{{ latest_forecast_value|floatformat:0|intcomma }}
                         </p>
                         <p class="text-xs {% if forecast_variance_percent > 0 %}text-red-600{% elif forecast_variance_percent < 0 %}text-green-600{% else %}text-gray-500{% endif %}">
-                            {% if forecast_variance_percent > 0 %}+{% endif %}{{ forecast_variance_percent }}% variance
+                            {% if forecast_variance_percent > 0 %}+{% endif %}
+                            {{ forecast_variance_percent }}% variance
                         </p>
                     {% else %}
                         <p class="text-base font-bold text-amber-700 mt-1">--</p>

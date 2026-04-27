@@ -294,7 +294,9 @@ class ProjectDashboardView(ProjectMixin, DetailView):
 
         months = get_month_range(start_month, end_month)
 
-        project_start = project.start_date.replace(day=1) if project.start_date else None
+        project_start = (
+            project.start_date.replace(day=1) if project.start_date else None
+        )
         project_end = project.end_date.replace(day=1) if project.end_date else None
 
         if project_start or project_end:
@@ -336,7 +338,9 @@ class ProjectDashboardView(ProjectMixin, DetailView):
                 payment_certificate__status=PaymentCertificate.Status.APPROVED,
                 payment_certificate__approved_on__lt=end_of_month,
             ).aggregate(total=Sum("total_price"))["total"]
-            certified_values.append(float(cumulative_certified) if cumulative_certified else 0)
+            certified_values.append(
+                float(cumulative_certified) if cumulative_certified else 0
+            )
 
         return {
             "labels": labels,
