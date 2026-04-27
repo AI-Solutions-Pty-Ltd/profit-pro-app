@@ -7,6 +7,7 @@ from django.db.models import Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views import View
 from django.views.generic import (
     CreateView,
@@ -32,6 +33,7 @@ from ..production_models import (
     ProductionPlan,
     ProductionResource,
 )
+from ..utils.production_utils import get_project_performance_summary
 
 
 class ProductionPlanGanttView(
@@ -39,7 +41,7 @@ class ProductionPlanGanttView(
 ):
     """Renders a Gantt chart of all production plan activities."""
 
-    template_name = "production_progress/planning/gantt.html"
+    template_name = "production_progress/reports/schedule_report.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_breadcrumbs(self):
@@ -58,7 +60,7 @@ class ProductionPlanGanttView(
                     "project:production-planning", kwargs={"project_pk": project_pk}
                 ),
             },
-            {"title": "Gantt Chart", "url": None},
+            {"title": "Schedule Report", "url": None},
         ]
 
     # ------------------------------------------------------------------
@@ -78,8 +80,14 @@ class ProductionPlanGanttView(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
         context["project"] = project
+        today = timezone.now().date()
+
+        # Fetch basic performance data (PPI etc) for forecasting
+        perf_data = get_project_performance_summary(project_pk)
+        ppi = perf_data.get("ppi", 1.0)
 
         all_plans = list(
             ProductionPlan.objects.filter(
@@ -93,6 +101,7 @@ class ProductionPlanGanttView(
                 "predecessors",
                 "predecessors__predecessor",
                 "children",
+                "daily_entries",
             )
             .order_by("start_date", "activity")
         )
@@ -102,21 +111,43 @@ class ProductionPlanGanttView(
         # Build flat ordered list with depth for the Gantt canvas
         ordered = self._flatten_tree(all_plans)
         edit_url_name = "project:production-plan-edit"
-        project_pk = self.kwargs["project_pk"]
 
         gantt_data = []
         for plan, depth in ordered:
+            # Forecasting Logic
+            progress_pct = plan.progress_percentage
+            forecast_finish_date = plan.finish_date
+
+            if progress_pct > 0 and plan.is_leaf:
+                total_produced = (
+                    plan.daily_entries.aggregate(total=Sum("quantity"))["total"] or 0
+                )
+                remaining_qty = max(0, plan.quantity - total_produced)
+
+                if remaining_qty > 0:
+                    current_rate = float(plan.daily_rate) * float(ppi)
+                    if current_rate > 0:
+                        days_left = int(float(remaining_qty) / current_rate)
+                        forecast_finish_date = today + timezone.timedelta(
+                            days=days_left
+                        )
+
             predecessor_ids = [dep.predecessor_id for dep in plan.predecessors.all()]
             predecessor_names = [
                 dep.predecessor.activity for dep in plan.predecessors.all()
             ]
+
             gantt_data.append(
                 {
                     "id": plan.pk,
                     "activity": plan.activity,
                     "start_date": plan.start_date.isoformat(),
                     "finish_date": plan.finish_date.isoformat(),
+                    "forecast_finish_date": forecast_finish_date.isoformat()
+                    if forecast_finish_date
+                    else None,
                     "duration": plan.duration,
+                    "progress_pct": progress_pct,
                     "depth": depth,
                     "has_children": plan.children.exists(),
                     "is_leaf": plan.is_leaf,
@@ -130,7 +161,14 @@ class ProductionPlanGanttView(
                 }
             )
 
-        context["gantt_data_json"] = json.dumps(gantt_data, default=str)
+        context.update(
+            {
+                "company": project.contractor,
+                "gantt_data_json": json.dumps(gantt_data, default=str),
+                "summary": perf_data,
+                "tab": "schedule_report",
+            }
+        )
         return context
 
 
@@ -422,12 +460,22 @@ class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, 
             unit = sample_item.unit if sample_item else ""
             daily_rate = spec_rate_map.get(item["labour_specification"], 0)
 
+            # Get the labour specification name
+            labour_spec_name = ""
+            if item["labour_specification"]:
+                labour_spec = ProjectLabourSpecification.objects.filter(
+                    id=item["labour_specification"]
+                ).first()
+                if labour_spec:
+                    labour_spec_name = labour_spec.name
+
             # Create the ProductionPlan
             # Note: Save() will trigger _ensure_hierarchy() to build the tree automatically
             ProductionPlan.objects.create(
                 project=project,
                 section=item["section"],
                 bill_no=item["bill_no"],
+                activity=labour_spec_name,
                 labour_activity_id=item["labour_specification"],
                 quantity=item["total_quantity"] or 0,
                 unit=unit,
