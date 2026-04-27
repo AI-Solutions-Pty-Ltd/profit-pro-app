@@ -1,15 +1,15 @@
 <nav class="flex overflow-hidden gap-x-2 mb-4 text-xs bg-white border-b border-gray-300"
      aria-label="Dashboard tabs">
     {% if project or company %}
-        <a href="{% url 'project:plan-productivity-dashboard' project.pk|default:company.pk %}"
-           class="border-b-2 {% if tab == 'production_cost_breakdown' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
+        <a href="{% url 'project:productivity-report' project.pk|default:company.pk %}"
+           class="border-b-2 {% if tab == 'productivity_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
             {% heroicon_outline "calculator" class="inline mr-2 w-5 h-5" %}
             Productivity Report
         </a>
         <a href="#"
            class="border-b-2 {% if tab == 'cashflow_statement' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
             {% heroicon_outline "arrow-path" class="inline mr-2 w-5 h-5" %}
-            Cashflow Statement
+            Cashflow
         </a>
         <a href="{% url 'project:performance-report' project.pk|default:company.pk %}"
            class="border-b-2 {% if tab == 'production_performance_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">

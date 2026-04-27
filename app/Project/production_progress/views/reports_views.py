@@ -18,8 +18,60 @@ from ..production_models import (
 )
 from ..utils.production_utils import (
     get_forecasting_dashboard_data,
+    get_premium_productivity_report_data,
     get_project_productivity_report_data,
 )
+
+
+class ProductionProductivityReportView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """
+    Premium Productivity Report View.
+    Replicates Excel logic for PPI/CPI and impact analysis.
+    """
+
+    template_name = "production_progress/reports/productivity_report.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": "Productivity Report", "url": None},
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+
+        # Filters
+        horizon = self.request.GET.get("horizon", "ptd")
+        active_only = self.request.GET.get("active_only") == "true"
+
+        # Fetch premium report data
+        data = get_premium_productivity_report_data(
+            project_pk, horizon=horizon, active_only=active_only
+        )
+
+        context.update(
+            {
+                "project": project,
+                "summary": data.get("summary", {}),
+                "sections": data.get("sections", []),
+                "active_horizon": horizon,
+                "active_only": active_only,
+                "tab": "productivity_report",
+            }
+        )
+        return context
 
 
 class ProductivityLogsView(

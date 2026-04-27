@@ -1225,3 +1225,246 @@ def get_project_productivity_report_data(
         "forecasts": forecasts,
         "activities": activity_projections,
     }
+
+
+def get_premium_productivity_report_data(project_id, horizon="ptd", active_only=False):
+    """
+    Calculates PPI, CPI, and Impact metrics based on Excel logic.
+    Groups results by Section and Bill with weighted averages.
+    """
+    from collections import defaultdict
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    today = timezone.now().date()
+
+    # Define date filters based on horizon
+    date_filter = {}
+    if horizon == "daily":
+        date_filter["report__date"] = today
+    elif horizon == "weekly":
+        start_of_week = today - timedelta(days=today.weekday())
+        date_filter["report__date__gte"] = start_of_week
+    elif horizon == "mtd":
+        date_filter["report__date__gte"] = today.replace(day=1)
+
+    plans_query = ProductionPlan.objects.filter(
+        project_id=project_id, is_archived=False, is_leaf=True
+    )
+    if active_only:
+        plans_query = plans_query.filter(finish_date__gte=today, start_date__lte=today)
+
+    plans = plans_query.select_related("labour_activity").prefetch_related("resources")
+
+    # Group activities by Section > Bill
+    hierarchy = defaultdict(lambda: defaultdict(list))
+
+    # Project-wide aggregates
+    p_total_weight = Decimal("0")
+    p_total_weighted_ppi = Decimal("0")
+    p_total_weighted_cpi = Decimal("0")
+    p_total_days_impact = Decimal("0")
+    p_total_cost_impact = Decimal("0")
+
+    for plan in plans:
+        # Get entries for this plan
+        entries_query = DailyActivityEntry.objects.filter(
+            production_plan=plan, **date_filter
+        )
+        if not entries_query.exists() and horizon != "ptd":
+            continue
+
+        # For calculation, we want history up to today
+        all_history = DailyActivityEntry.objects.filter(
+            production_plan=plan, report__date__lte=today
+        )
+
+        total_qty = all_history.aggregate(total=Sum("quantity"))["total"] or Decimal(
+            "0"
+        )
+        total_cost = sum((e.total_cost for e in all_history), Decimal("0"))
+        total_days = all_history.values("report__date").distinct().count()
+
+        # Target Values
+        target_prod_rate = plan.daily_rate
+        budgeted_cost = (
+            plan.total_labour_cost + plan.total_plant_cost + plan.total_other_cost
+        )
+        target_unit_cost = (
+            budgeted_cost / plan.quantity if plan.quantity > 0 else Decimal("0")
+        )
+
+        # Actual Values
+        actual_prod_rate = (
+            total_qty / Decimal(total_days) if total_days > 0 else Decimal("0")
+        )
+        actual_unit_cost = total_cost / total_qty if total_qty > 0 else Decimal("0")
+
+        # Indices
+        ppi = (
+            target_prod_rate / actual_prod_rate
+            if actual_prod_rate > 0
+            else Decimal("0")
+        )
+        cpi = (
+            target_unit_cost / actual_unit_cost
+            if actual_unit_cost > 0
+            else Decimal("0")
+        )
+
+        # Impact (always PTD based)
+        duration_days = (
+            (plan.finish_date - plan.start_date).days + 1
+            if plan.start_date and plan.finish_date
+            else 0
+        )
+        duration = Decimal(duration_days)
+        days_affected = duration * (ppi - 1) if ppi > 0 else Decimal("0")
+        cost_impact = budgeted_cost - (budgeted_cost / cpi) if cpi > 0 else Decimal("0")
+
+        # Threshold Colors
+        ppi_color = "emerald"
+        if ppi > 1.2:
+            ppi_color = "rose"
+        elif ppi > 1.0:
+            ppi_color = "amber"
+
+        cpi_color = "emerald"
+        if cpi < 0.9:
+            cpi_color = "rose"
+        elif cpi <= 1.1:
+            cpi_color = "amber"
+
+        # Trend Data (Last 10 entries)
+        trend_labels, trend_ppi, trend_cpi = [], [], []
+        trend_act_prod, trend_tgt_prod = [], []
+        trend_act_cost, trend_tgt_cost = [], []
+
+        last_entries = all_history.order_by("-report__date")[:10][::-1]
+        for e in last_entries:
+            trend_labels.append(e.report.date.strftime("%d %b"))
+            # Indices
+            d_ppi = target_prod_rate / e.quantity if e.quantity > 0 else 0
+            d_cpi = (
+                target_unit_cost / (e.total_cost / e.quantity)
+                if e.quantity > 0 and e.total_cost > 0
+                else 0
+            )
+            trend_ppi.append(float(d_ppi))
+            trend_cpi.append(float(d_cpi))
+            # Raw Values
+            trend_act_prod.append(float(e.quantity))
+            trend_tgt_prod.append(float(target_prod_rate))
+            trend_act_cost.append(
+                float(e.total_cost / e.quantity if e.quantity > 0 else 0)
+            )
+            trend_tgt_cost.append(float(target_unit_cost))
+
+        act_data = {
+            "id": plan.id,
+            "activity": plan.activity,
+            "unit": plan.unit_display,
+            "target_prod": float(target_prod_rate),
+            "actual_prod": float(actual_prod_rate),
+            "target_cost": float(target_unit_cost),
+            "actual_cost": float(actual_unit_cost),
+            "ppi": float(ppi),
+            "ppi_color": ppi_color,
+            "cpi": float(cpi),
+            "cpi_color": cpi_color,
+            "days_affected": float(days_affected),
+            "cost_impact": float(cost_impact),
+            "progress": float(plan.progress_percentage),
+            "budgeted_cost": float(budgeted_cost),
+            "trend": {
+                "labels": trend_labels,
+                "ppi": trend_ppi,
+                "cpi": trend_cpi,
+                "act_prod": trend_act_prod,
+                "tgt_prod": trend_tgt_prod,
+                "act_cost": trend_act_cost,
+                "tgt_cost": trend_tgt_cost,
+            },
+        }
+
+        hierarchy[plan.section or "Uncategorized"][plan.bill_no or "General"].append(
+            act_data
+        )
+
+        # Aggregates for Global Summary
+        p_total_weight += budgeted_cost
+        p_total_weighted_ppi += ppi * budgeted_cost
+        p_total_weighted_cpi += cpi * budgeted_cost
+        p_total_days_impact += days_affected
+        p_total_cost_impact += cost_impact
+
+    # Post-process hierarchy for weighted averages
+    sections_list = []
+    for section_name, bills in hierarchy.items():
+        s_weight, s_ppi_sum, s_cpi_sum, s_days, s_cost = (
+            Decimal("0"),
+            Decimal("0"),
+            Decimal("0"),
+            Decimal("0"),
+            Decimal("0"),
+        )
+        bills_list = []
+
+        for bill_no, activities in bills.items():
+            b_weight, b_ppi_sum, b_cpi_sum, b_days, b_cost = (
+                Decimal("0"),
+                Decimal("0"),
+                Decimal("0"),
+                Decimal("0"),
+                Decimal("0"),
+            )
+            for a in activities:
+                w = Decimal(str(a["budgeted_cost"]))
+                b_weight += w
+                b_ppi_sum += Decimal(str(a["ppi"])) * w
+                b_cpi_sum += Decimal(str(a["cpi"])) * w
+                b_days += Decimal(str(a["days_affected"]))
+                b_cost += Decimal(str(a["cost_impact"]))
+
+            bills_list.append(
+                {
+                    "number": bill_no,
+                    "activities": activities,
+                    "ppi": float(b_ppi_sum / b_weight) if b_weight > 0 else 0,
+                    "cpi": float(b_cpi_sum / b_weight) if b_weight > 0 else 0,
+                    "days_affected": float(b_days),
+                    "cost_impact": float(b_cost),
+                }
+            )
+
+            s_weight += b_weight
+            s_ppi_sum += b_ppi_sum
+            s_cpi_sum += b_cpi_sum
+            s_days += b_days
+            s_cost += b_cost
+
+        sections_list.append(
+            {
+                "name": section_name,
+                "bills": bills_list,
+                "ppi": float(s_ppi_sum / s_weight) if s_weight > 0 else 0,
+                "cpi": float(s_cpi_sum / s_weight) if s_weight > 0 else 0,
+                "days_affected": float(s_days),
+                "cost_impact": float(s_cost),
+            }
+        )
+
+    return {
+        "summary": {
+            "ppi": float(p_total_weighted_ppi / p_total_weight)
+            if p_total_weight > 0
+            else 0,
+            "cpi": float(p_total_weighted_cpi / p_total_weight)
+            if p_total_weight > 0
+            else 0,
+            "days_impact": float(p_total_days_impact),
+            "cost_impact": float(p_total_cost_impact),
+        },
+        "sections": sections_list,
+    }
