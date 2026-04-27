@@ -132,7 +132,9 @@
                                     <option value="" {% if not spec.preliminary_type %}selected{% endif %}>—</option>
                                     {% for value, label in preliminary_type_choices %}
                                         <option value="{{ value }}"
-                                                {% if spec.preliminary_type == value %}selected{% endif %}>{{ label }}</option>
+                                                {% if spec.preliminary_type == value %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
                                     {% endfor %}
                                 </select>
                             </td>
