@@ -1898,15 +1898,14 @@ class PlantComponentReportView(_ComponentReportBase):
             ps = item.plant_specification
             if ps is None:
                 continue
-            output = ps.daily_output
             raw_qty = getattr(item, qty_field) or Decimal("0")
-            if not raw_qty or not output or output <= 0:
+            if not raw_qty:
                 continue
             for comp in ps.components.all():
                 pt = comp.plant_type
                 if pt is None or not comp.hours:
                     continue
-                hours = raw_qty * comp.hours / output
+                hours = raw_qty * comp.hours
                 row = plant_types.setdefault(
                     pt.pk,
                     {
@@ -2033,16 +2032,16 @@ class PlantSpecificationListView(_SimpleSpecCalculatorView):
         for row in context["rows"]:
             spec = row["spec"]
             boq_qty = row["boq_qty"] or Decimal("0")
-            output = spec.daily_output if spec else Decimal("0")
             totals = []
             if spec:
                 for comp in spec.components.all():
                     if comp.plant_type is None:
                         continue
-                    if boq_qty and output and output > 0 and comp.hours:
-                        total_hours = boq_qty * comp.hours / output
-                    else:
-                        total_hours = Decimal("0")
+                    total_hours = (
+                        boq_qty * comp.hours
+                        if boq_qty and comp.hours
+                        else Decimal("0")
+                    )
                     totals.append(
                         {
                             "name": comp.plant_type.name,

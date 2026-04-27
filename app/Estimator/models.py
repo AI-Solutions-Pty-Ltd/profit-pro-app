@@ -277,7 +277,7 @@ class SystemPlantSpecification(models.Model):
         return self.daily_production * self.operator_factor * self.site_factor
 
     @property
-    def daily_cost(self):
+    def rate_per_unit(self):
         total = Decimal("0")
         for comp in self.components.select_related("plant_type").all():
             if comp.plant_type:
@@ -285,11 +285,8 @@ class SystemPlantSpecification(models.Model):
         return total
 
     @property
-    def rate_per_unit(self):
-        output = self.daily_output
-        if output and output > 0:
-            return self.daily_cost / output
-        return Decimal("0")
+    def daily_cost(self):
+        return self.daily_output * self.rate_per_unit
 
 
 class SystemPlantSpecificationComponent(models.Model):
@@ -807,7 +804,7 @@ class ProjectPlantSpecification(models.Model):
         return self.daily_production * self.operator_factor * self.site_factor
 
     @property
-    def daily_cost(self):
+    def rate_per_unit(self):
         total = Decimal("0")
         for comp in self.components.select_related("plant_type").all():
             if comp.plant_type:
@@ -815,11 +812,8 @@ class ProjectPlantSpecification(models.Model):
         return total
 
     @property
-    def rate_per_unit(self):
-        output = self.daily_output
-        if output and output > 0:
-            return self.daily_cost / output
-        return Decimal("0")
+    def daily_cost(self):
+        return self.daily_output * self.rate_per_unit
 
 
 class ProjectPlantSpecificationComponent(models.Model):
