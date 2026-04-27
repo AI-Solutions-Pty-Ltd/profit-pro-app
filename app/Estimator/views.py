@@ -553,6 +553,7 @@ class MaterialSpecListView(ProjectEstimatorMixin, ListView):
             ProjectSpecification.objects.filter(project=project)
             .select_related("trade_code")
             .prefetch_related("spec_components__material")
+            .annotate(_baseline_boq_qty=models.Sum("boq_items__contract_quantity"))
         )
 
         section = self.request.GET.get("section")
@@ -1247,6 +1248,8 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
         context["total_wastage_quantity"] = sum(
             (r["wastage_quantity"] for r in report_rows), Decimal("0")
         )
+        context["show_wastage"] = True
+        context["show_rate"] = True
 
         material_totals: dict[str, Decimal] = {}
         for row in report_rows:
@@ -1500,6 +1503,9 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
     spec_url_prefix = ""
     component_url_prefix = ""
     component_label = "Component"
+    # Wastage applies to materials only; rate column hidden for preliminaries.
+    show_wastage = False
+    show_rate = True
 
     def _get_rate_type(self):
         return self.kwargs.get("rate_type", "new")
@@ -1598,10 +1604,8 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
         context["total_quantity"] = sum(
             (r["quantity"] for r in report_rows), Decimal("0")
         )
-        context["total_wastage_quantity"] = sum(
-            (r.get("wastage_quantity") or Decimal("0") for r in report_rows),
-            Decimal("0"),
-        )
+        context["show_wastage"] = self.show_wastage
+        context["show_rate"] = self.show_rate
 
         name_totals: dict[str, Decimal] = {}
         for row in report_rows:
@@ -1655,6 +1659,7 @@ class PreliminaryListReportView(_SimpleSpecListReportView):
     parent_template_new = "estimator/base_prelim_estimator.html"
     parent_template_contract = "estimator/base_baseline_estimator_prelim.html"
     title_noun = "Preliminary"
+    show_rate = False
 
 
 # ───────────────────────────────────────────────────────────────────
@@ -1893,15 +1898,14 @@ class PlantComponentReportView(_ComponentReportBase):
             ps = item.plant_specification
             if ps is None:
                 continue
-            output = ps.daily_output
             raw_qty = getattr(item, qty_field) or Decimal("0")
-            if not raw_qty or not output or output <= 0:
+            if not raw_qty:
                 continue
             for comp in ps.components.all():
                 pt = comp.plant_type
                 if pt is None or not comp.hours:
                     continue
-                hours = raw_qty * comp.hours / output
+                hours = raw_qty * comp.hours
                 row = plant_types.setdefault(
                     pt.pk,
                     {
@@ -2022,6 +2026,28 @@ class PlantSpecificationListView(_SimpleSpecCalculatorView):
     spec_rate_attr = "rate_per_unit"
     parent_template = "estimator/base_plant_estimator.html"
     title_noun = "Plant"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        for row in context["rows"]:
+            spec = row["spec"]
+            boq_qty = row["boq_qty"] or Decimal("0")
+            totals = []
+            if spec:
+                for comp in spec.components.all():
+                    if comp.plant_type is None:
+                        continue
+                    total_hours = (
+                        boq_qty * comp.hours if boq_qty and comp.hours else Decimal("0")
+                    )
+                    totals.append(
+                        {
+                            "name": comp.plant_type.name,
+                            "total_hours": total_hours,
+                        }
+                    )
+            row["component_totals"] = totals
+        return context
 
 
 class PreliminarySpecificationListView(_SimpleSpecCalculatorView):
@@ -2452,6 +2478,16 @@ class DeleteSpecComponentView(View):
                 "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
             }
         )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeleteSpecificationView(View):
+    """AJAX endpoint to delete a ProjectSpecification (material spec)."""
+
+    def post(self, request, project_pk, pk):
+        spec = get_object_or_404(ProjectSpecification, pk=pk, project_id=project_pk)
+        spec.delete()
+        return JsonResponse({"ok": True})
 
 
 class SystemMaterialSpecListView(ProjectEstimatorMixin, ListView):
@@ -3145,6 +3181,18 @@ class DeletePlantSpecComponentView(View):
         )
 
 
+@method_decorator(csrf_exempt, name="dispatch")
+class DeletePlantSpecificationView(View):
+    """AJAX endpoint to delete a ProjectPlantSpecification."""
+
+    def post(self, request, project_pk, pk):
+        spec = get_object_or_404(
+            ProjectPlantSpecification, pk=pk, project_id=project_pk
+        )
+        spec.delete()
+        return JsonResponse({"ok": True})
+
+
 # ── Preliminary Costs ──────────────────────────────────────────
 
 
@@ -3257,6 +3305,9 @@ class PreliminarySpecDefListView(ProjectEstimatorMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", PreliminarySpecificationForm())
+        context["preliminary_type_choices"] = (
+            SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -3301,7 +3352,7 @@ class UpdatePreliminarySpecView(View):
         "trade_name": "str",
         "name": "str",
         "unit": "str",
-        "amount": "decimal",
+        "preliminary_type": "str",
     }
 
     def post(self, request, project_pk, pk):
@@ -3329,7 +3380,7 @@ class UpdatePreliminarySpecView(View):
             return JsonResponse({"error": "Invalid value"}, status=400)
 
         item.save()
-        return JsonResponse({"ok": True})
+        return JsonResponse({"ok": True, "amount": str(item.amount)})
 
 
 # ── Upload / Download Template Views ──────────────────────────────
@@ -3987,7 +4038,7 @@ class PreliminarySpecUploadView(ProjectEstimatorMixin, FormView):
 class DownloadPreliminarySpecTemplateView(View):
     def get(self, request, project_pk):
         return _generate_template(
-            ["Section", "Trade Name", "Name", "Unit", "Amount"],
+            ["Section", "Trade Name", "Name", "Unit", "Preliminary Type"],
             "PreliminarySpec_Template.xlsx",
         )
 
@@ -4958,6 +5009,9 @@ class SystemPreliminarySpecListView(SystemLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", SystemPreliminarySpecificationForm())
+        context["preliminary_type_choices"] = (
+            SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -4976,7 +5030,7 @@ class UpdateSystemPreliminarySpecView(SystemLibraryMixin, View):
         "trade_name": "str",
         "name": "str",
         "unit": "str",
-        "amount": "decimal",
+        "preliminary_type": "str",
     }
 
     def post(self, request, pk):
@@ -5002,7 +5056,7 @@ class UpdateSystemPreliminarySpecView(SystemLibraryMixin, View):
             return JsonResponse({"error": "Invalid value"}, status=400)
 
         item.save()
-        return JsonResponse({"ok": True})
+        return JsonResponse({"ok": True, "amount": str(item.amount)})
 
 
 class SystemPreliminarySpecUploadView(SystemLibraryMixin, FormView):
@@ -5033,6 +5087,6 @@ class SystemPreliminarySpecUploadView(SystemLibraryMixin, FormView):
 class DownloadSystemPreliminarySpecTemplateView(SystemLibraryMixin, View):
     def get(self, request):
         return _generate_template(
-            ["Section", "Trade Name", "Name", "Unit", "Amount"],
+            ["Section", "Trade Name", "Name", "Unit", "Preliminary Type"],
             "system_preliminary_specs_template.xlsx",
         )

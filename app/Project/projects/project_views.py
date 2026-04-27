@@ -3,6 +3,7 @@
 import json
 from datetime import datetime
 
+from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q, QuerySet, Sum
@@ -24,7 +25,7 @@ from app.BillOfQuantities.models import (
     PaymentCertificate,
     Structure,
 )
-from app.core.Utilities.dates import get_end_of_month, get_previous_n_months
+from app.core.Utilities.dates import get_end_of_month, get_month_range
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import (
     UserHasProjectRoleGenericMixin,
@@ -71,60 +72,43 @@ class ProjectListView(
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
 
-        # Prepare form data and querysets
         form_data = request.GET or {}
-        projects_queryset = None
-        consultant_queryset = None
-        client_queryset = None
-        contractor_queryset = None
-        category_queryset = None
-        area_queryset = None
-        discipline_queryset = None
 
-        if request.user.is_authenticated:
-            from app.Account.models import Municipality
-            from app.Project.models import (
-                Company,
-                ProjectDiscipline,
-            )
+        user: Account = request.user
+        if user.is_superuser or user.is_staff:
+            projects = Project.objects.all().order_by("-created_at")
+        else:
+            projects = user.get_projects.order_by("-created_at")
 
-            # Get user's projects
-            projects_queryset = Project.objects.filter(
-                Q(users=request.user) | Q(is_demo=True),
-                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
-            ).order_by("name")
+        from app.Account.models import Municipality
+        from app.Project.models import Company, ProjectDiscipline
 
-            # Get unique lead consultants from user's projects
-            consultant_ids = (
-                Project.objects.filter(Q(users=request.user) | Q(is_demo=True))
-                .values_list("lead_consultants", flat=True)
-                .distinct()
-            )
-            consultant_queryset = Account.objects.filter(id__in=consultant_ids)
+        consultant_ids = (
+            projects.values_list("lead_consultants", flat=True)
+            .exclude(lead_consultants__isnull=True)
+            .distinct()
+        )
+        consultant_queryset = Account.objects.filter(id__in=consultant_ids).distinct()
 
-            # Get unique clients and contractors from user's projects
-            client_queryset = Company.objects.filter(
-                client_projects__in=projects_queryset
-            ).distinct()
-            contractor_queryset = Company.objects.filter(
-                contractor_projects__in=projects_queryset
-            ).distinct()
+        client_queryset = Company.objects.filter(
+            client_projects__in=projects
+        ).distinct()
+        contractor_queryset = Company.objects.filter(
+            contractor_projects__in=projects
+        ).distinct()
 
-            # Get unique categories, areas and disciplines from user's projects
-            category_queryset = ProjectCategory.objects.filter(
-                projects__in=projects_queryset
-            ).distinct()
-            area_queryset = Municipality.objects.filter(
-                projects__in=projects_queryset
-            ).distinct()
-            discipline_queryset = ProjectDiscipline.objects.filter(
-                projects__in=projects_queryset
-            ).distinct()
+        category_queryset = ProjectCategory.objects.filter(
+            projects__in=projects
+        ).distinct()
+        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
+        discipline_queryset = ProjectDiscipline.objects.filter(
+            projects__in=projects
+        ).distinct()
 
         self.filter_form = ProjectFilterForm(
             form_data,
-            user=self.request.user,  # type: ignore
-            projects_queryset=projects_queryset,
+            user=user,
+            projects_queryset=projects,
             consultant_queryset=consultant_queryset,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
@@ -144,9 +128,12 @@ class ProjectListView(
         """Get filtered projects for dashboard view."""
         # Ensure filter_form exists and is valid
         user: Account = self.request.user  # type: ignore
-        projects = user.get_projects.order_by("-created_at")
+        if user.is_superuser or user.is_staff:
+            projects = Project.objects.all().order_by("-created_at")
+        else:
+            projects = user.get_projects.order_by("-created_at")
+
         if not self.filter_form or not self.filter_form.is_valid():
-            # Return unfiltered queryset if form is invalid
             return projects
 
         # Apply filters from form
@@ -174,7 +161,7 @@ class ProjectListView(
 
         consultant = self.filter_form.cleaned_data.get("consultant")
         if consultant:
-            projects = projects.filter(lead_consultant=consultant)
+            projects = projects.filter(lead_consultants=consultant)
 
         client = self.filter_form.cleaned_data.get("client")
         if client:
@@ -265,8 +252,17 @@ class ProjectDashboardView(ProjectMixin, DetailView):
         context["current_spi"] = project.get_schedule_performance_index(current_date)
         context["current_date"] = current_date
 
-        # Add financial comparison chart data
-        financial_data = self._get_financial_comparison_data(project)
+        term_window = self.request.GET.get("term_window") or "current"
+        context["term_window"] = term_window
+
+        current_month = current_date.replace(day=1)
+        context["current_term_label"] = current_month.strftime("%b %Y")
+
+        financial_data = self._get_financial_comparison_data(
+            project=project,
+            current_month=current_month,
+            term_window=term_window,
+        )
         context["financial_labels"] = json.dumps(financial_data["labels"])
         context["planned_values"] = json.dumps(financial_data["planned_values"])
         context["forecast_values"] = json.dumps(financial_data["forecast_values"])
@@ -275,54 +271,68 @@ class ProjectDashboardView(ProjectMixin, DetailView):
 
         return context
 
-    def _get_financial_comparison_data(self, project: Project) -> dict:
-        """Generate monthly Planned Value, Forecast, and Cumulative Certified data.
+    def _get_financial_comparison_data(
+        self,
+        project: Project,
+        current_month: datetime,
+        term_window: str,
+    ) -> dict:
+        labels: list[str] = []
+        planned_values: list[float] = []
+        forecast_values: list[float] = []
+        certified_values: list[float] = []
 
-        Chart is bounded by project start_date and end_date, showing up to 12 months.
-        """
-        labels = []
-        planned_values = []
-        forecast_values = []
-        certified_values = []
+        if term_window == "past_3":
+            start_month = current_month - relativedelta(months=2)
+            end_month = current_month
+        elif term_window == "next_3":
+            start_month = current_month
+            end_month = current_month + relativedelta(months=2)
+        else:
+            start_month = current_month
+            end_month = current_month
 
-        if not project.start_date or not project.end_date:
-            # No project dates set, return empty data
-            return {
-                "labels": [],
-                "planned_values": [],
-                "forecast_values": [],
-                "certified_values": [],
-            }
+        months = get_month_range(start_month, end_month)
 
-        # Normalize to first of month
-        project_start = project.start_date.replace(day=1)
-        project_end = project.end_date.replace(day=1)
+        project_start = (
+            project.start_date.replace(day=1) if project.start_date else None
+        )
+        project_end = project.end_date.replace(day=1) if project.end_date else None
 
-        # Generate data for each month in the range (oldest to newest)
-        for current_month in get_previous_n_months(
-            starting_date=project_start, end_cap=project_end
-        ):
-            labels.append(current_month.strftime("%b %Y"))
+        if project_start or project_end:
+            months = [
+                m
+                for m in months
+                if (project_start is None or m >= project_start)
+                and (project_end is None or m <= project_end)
+            ]
+
+        if not months and project_start and project_end:
+            if current_month < project_start:
+                months = [project_start]
+            elif current_month > project_end:
+                months = [project_end]
+
+        for month in months:
+            labels.append(month.strftime("%b %Y"))
 
             # Get planned value for this month
             planned_value = PlannedValue.objects.filter(
                 project=project,
-                period__year=current_month.year,
-                period__month=current_month.month,
+                period__year=month.year,
+                period__month=month.month,
             ).first()
             planned_values.append(float(planned_value.value) if planned_value else 0)
 
-            # Get forecast for this month
             forecast = Forecast.objects.filter(
                 project=project,
-                period__year=current_month.year,
-                period__month=current_month.month,
+                period__year=month.year,
+                period__month=month.month,
                 status=Forecast.Status.APPROVED,
             ).first()
             forecast_values.append(float(forecast.total_forecast) if forecast else 0)
 
-            # Get cumulative certified up to end of this month
-            end_of_month = get_end_of_month(current_month)
+            end_of_month = get_end_of_month(month)
             cumulative_certified = ActualTransaction.objects.filter(
                 line_item__project=project,
                 payment_certificate__status=PaymentCertificate.Status.APPROVED,

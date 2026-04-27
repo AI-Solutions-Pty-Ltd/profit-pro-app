@@ -71,8 +71,9 @@
                             <div class="mt-1">{{ form.unit }}</div>
                         </div>
                         <div class="sm:col-span-1">
-                            <label for="id_amount" class="block text-sm font-medium text-gray-700">Amount (R)</label>
-                            <div class="mt-1">{{ form.amount }}</div>
+                            <label for="id_preliminary_type"
+                                   class="block text-sm font-medium text-gray-700">Preliminary Type</label>
+                            <div class="mt-1">{{ form.preliminary_type }}</div>
                         </div>
                     </div>
                     <div class="mt-4 flex justify-end gap-x-3">
@@ -112,6 +113,10 @@
                             Unit
                         </th>
                         <th scope="col"
+                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            Preliminary Type
+                        </th>
+                        <th scope="col"
                             class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">
                             Amount
                         </th>
@@ -148,18 +153,26 @@
                                        data-field="unit"
                                        value="{{ spec.unit }}">
                             </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-gray-900 text-right sm:pr-6">
-                                <input type="number"
-                                       step="0.01"
-                                       class="inline-edit w-24 text-right border-0 bg-transparent text-sm font-semibold text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                       data-item-id="{{ spec.id }}"
-                                       data-field="amount"
-                                       value="{{ spec.amount }}">
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                <select class="inline-edit border-0 bg-transparent text-xs text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                        data-item-id="{{ spec.id }}"
+                                        data-field="preliminary_type">
+                                    <option value="" {% if not spec.preliminary_type %}selected{% endif %}>—</option>
+                                    {% for value, label in preliminary_type_choices %}
+                                        <option value="{{ value }}"
+                                                {% if spec.preliminary_type == value %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-gray-900 text-right sm:pr-6 spec-amount tabular-nums">
+                                {{ spec.amount|currency }}
                             </td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center text-sm text-gray-500">No preliminary specifications found.</td>
+                            <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">No preliminary specifications found.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -167,6 +180,8 @@
         </div>
     </div>
     <script>
+function fmtCurrency(v) { return 'R ' + parseFloat(v).toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+
 document.querySelectorAll('.inline-edit').forEach(input => {
     let original = input.value;
     input.addEventListener('focus', () => { original = input.value; });
@@ -185,6 +200,11 @@ document.querySelectorAll('.inline-edit').forEach(input => {
                 input.classList.add('ring-2', 'ring-green-500');
                 setTimeout(() => input.classList.remove('ring-2', 'ring-green-500'), 800);
                 original = input.value;
+                if (data.amount !== undefined) {
+                    const row = input.closest('tr');
+                    const cell = row && row.querySelector('.spec-amount');
+                    if (cell) cell.textContent = fmtCurrency(data.amount);
+                }
             } else {
                 input.classList.add('ring-2', 'ring-red-500');
                 setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);

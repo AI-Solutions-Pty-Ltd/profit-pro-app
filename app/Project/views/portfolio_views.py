@@ -184,7 +184,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
 
         consultant = self.filter_form.cleaned_data.get("consultant")
         if consultant:
-            projects = projects.filter(lead_consultant=consultant)
+            projects = projects.filter(lead_consultants=consultant)
 
         client = self.filter_form.cleaned_data.get("client")
         if client:
@@ -551,29 +551,27 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         # Get filters for portfolio-level calculations
         if self.filter_form and self.filter_form.is_valid():
             category_filter = self.filter_form.cleaned_data.get("project_category")
-            subcategory_filter = self.filter_form.cleaned_data.get(
-                "project_subcategory"
-            )
+            area_filter = self.filter_form.cleaned_data.get("area")
             discipline_filter = self.filter_form.cleaned_data.get("project_discipline")
         else:
             category_filter = None
-            subcategory_filter = None
+            area_filter = None
             discipline_filter = None
 
         # ==========================================
         # Group 1 - Project Stats
         # ==========================================
         active_projects = portfolio.get_active_projects(
-            category_filter, subcategory_filter, discipline_filter
+            category_filter, area_filter, discipline_filter
         )
         active_count = active_projects.count()
 
         urgent_projects = portfolio.get_projects_requiring_urgent_intervention(
-            current_date, category_filter, subcategory_filter, discipline_filter
+            current_date, category_filter, area_filter, discipline_filter
         )
 
         attention_projects = portfolio.get_projects_requiring_attention(
-            current_date, category_filter, subcategory_filter, discipline_filter
+            current_date, category_filter, area_filter, discipline_filter
         )
 
         urgent_threshold = Decimal("0.96")
@@ -688,13 +686,13 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         # Group 2 - Budgets and Payments
         # ==========================================
         original_budget = portfolio.get_total_original_budget(
-            category_filter, subcategory_filter, discipline_filter
+            category_filter, area_filter, discipline_filter
         )
         approved_variations = portfolio.get_total_approved_variations(
-            category_filter, subcategory_filter, discipline_filter
+            category_filter, area_filter, discipline_filter
         )
         total_certified = portfolio.get_total_certified_value(
-            category_filter, subcategory_filter, discipline_filter
+            category_filter, area_filter, discipline_filter
         )
 
         context["original_budget"] = original_budget
@@ -711,22 +709,22 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         # Cost Forecasts
         # ==========================================
         forecast_at_completion = portfolio.get_forecast_cost_at_completion(
-            current_date, category_filter, subcategory_filter, discipline_filter
+            current_date, category_filter, area_filter, discipline_filter
         )
         cost_variance_at_completion = portfolio.get_cost_variance_at_completion(
-            current_date, category_filter, subcategory_filter, discipline_filter
+            current_date, category_filter, area_filter, discipline_filter
         )
         total_earned_value = portfolio.get_total_earned_value(
-            current_date, category_filter, subcategory_filter, discipline_filter
+            current_date, category_filter, area_filter, discipline_filter
         )
         total_cost_variance = portfolio.get_total_cost_variance(
-            current_date, category_filter, subcategory_filter, discipline_filter
+            current_date, category_filter, area_filter, discipline_filter
         )
         total_schedule_variance = portfolio.get_total_schedule_variance(
-            current_date, category_filter, subcategory_filter, discipline_filter
+            current_date, category_filter, area_filter, discipline_filter
         )
         total_eac = portfolio.get_total_estimate_at_completion(
-            current_date, category_filter, subcategory_filter, discipline_filter
+            current_date, category_filter, area_filter, discipline_filter
         )
 
         context["forecast_at_completion"] = forecast_at_completion
@@ -750,7 +748,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             portfolio,
             months=6,
             category=category_filter,
-            subcategory=subcategory_filter,
+            area=area_filter,
             discipline=discipline_filter,
         )
         context["performance_labels"] = json.dumps(performance_data["labels"])
@@ -763,7 +761,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         cashflow_data = self._get_cashflow_chart_data(
             portfolio,
             category=category_filter,
-            subcategory=subcategory_filter,
+            area=area_filter,
             discipline=discipline_filter,
         )
         context["cashflow_labels"] = json.dumps(cashflow_data["labels"])
@@ -780,7 +778,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         portfolio: Any,
         months: int = 12,
         category=None,
-        subcategory=None,
+        area=None,
         discipline=None,
     ) -> dict:
         """Generate N months of CPI/SPI data for portfolio."""
@@ -801,7 +799,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
 
             try:
                 cpi = portfolio.get_cost_performance_index(
-                    month_date, category, subcategory, discipline
+                    month_date, category, area, discipline
                 )
                 cpi_values.append(float(cpi) if cpi else None)
             except (ZeroDivisionError, TypeError, Exception):
@@ -809,7 +807,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
 
             try:
                 spi = portfolio.get_schedule_performance_index(
-                    month_date, category, subcategory, discipline
+                    month_date, category, area, discipline
                 )
                 spi_values.append(float(spi) if spi else None)
             except (ZeroDivisionError, TypeError, Exception):
@@ -827,7 +825,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         self: "PortfolioDashboardView",
         portfolio: Any,
         category=None,
-        subcategory=None,
+        area=None,
         discipline=None,
     ) -> dict:
         """Generate 12 months of Planned vs Actual vs Forecast vs Budget data."""
@@ -842,9 +840,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
 
         current_date = datetime.now()
         # Monthly budget = total budget / 12 (simplified distribution)
-        total_budget = portfolio.get_total_original_budget(
-            category, subcategory, discipline
-        )
+        total_budget = portfolio.get_total_original_budget(category, area, discipline)
         monthly_budget = float(total_budget / 12) if total_budget else 0
 
         # Running cumulative totals
@@ -866,9 +862,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             actual_total = Decimal("0.00")
             forecast_total = Decimal("0.00")
 
-            for project in portfolio.get_active_projects(
-                category, subcategory, discipline
-            ):
+            for project in portfolio.get_active_projects(category, area, discipline):
                 try:
                     pv = project.get_planned_value(month_date)
                     if pv:
