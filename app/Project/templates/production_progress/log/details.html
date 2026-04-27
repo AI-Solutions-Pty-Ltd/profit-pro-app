@@ -179,7 +179,7 @@
                                         <tr class="bg-gray-50">
                                             <th class="text-[10px] font-bold text-gray-600 uppercase">Equipment</th>
                                             <th class="text-center text-[10px] font-bold text-gray-600 uppercase">Hours</th>
-                                            <th class="text-right text-[10px] font-bold text-gray-600 uppercase">Production</th>
+                                            <th class="text-right text-[10px] font-bold text-gray-600 uppercase">Cost</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -187,7 +187,7 @@
                                             <tr class="transition-colors hover:bg-emerald-50/30">
                                                 <td class="text-xs font-bold text-gray-700">{{ plant.resource.name }}</td>
                                                 <td class="text-center text-xs font-mono text-gray-500">{{ plant.hours }}</td>
-                                                <td class="text-right text-xs font-black text-gray-900 tabular-nums">{{ plant.quantity|qty }}</td>
+                                                <td class="text-right text-xs font-black text-gray-900 tabular-nums">{{ plant.total_cost|currency }}</td>
                                             </tr>
                                         {% empty %}
                                             <tr>

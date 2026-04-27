@@ -99,6 +99,11 @@ urlpatterns = [
         name="performance-report",
     ),
     path(
+        "<int:project_pk>/productivity-report/",
+        views.ProductionProductivityReportView.as_view(),
+        name="productivity-report",
+    ),
+    path(
         "<int:project_pk>/plan/<int:pk>/data/",
         views.ProductionPlanAjaxDetailView.as_view(),
         name="production-plan-data-ajax",
@@ -153,6 +158,11 @@ urlpatterns = [
         "<int:project_pk>/daily-logs/<int:pk>/delete/",
         views.ProductionDailyLogDeleteView.as_view(),
         name="production-daily-log-delete",
+    ),
+    path(
+        "<int:project_pk>/daily-logs/entry/<int:pk>/edit/",
+        views.DailyActivityEntryUpdateView.as_view(),
+        name="production-daily-log-entry-edit",
     ),
     path(
         "<int:project_pk>/ajax/daily-log-activity-data/",

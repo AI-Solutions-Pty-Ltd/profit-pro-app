@@ -20,11 +20,9 @@ from app.BillOfQuantities.models.structure_models import LineItem
 from app.Project.models import Project
 
 from .calculations import (
-    calculate_boq_summary,
     calculate_pct_of_total,
     calculate_variance,
 )
-from .data_adapters import DjangoORMAdapter
 from .forms import (
     ExcelImportForm,
     LabourCrewForm,
@@ -119,6 +117,27 @@ class ProjectAssumptionsView(ProjectEstimatorMixin, TemplateView):
         return self.render_to_response(context)
 
 
+class ApplyAssumptionsView(ProjectEstimatorMixin, View):
+    """Push current project assumption markups to all BOQItems in the project."""
+
+    def post(self, request, project_pk):
+        project = self.get_project()
+        assumptions = ProjectAssumptions.objects.filter(project=project).first()
+        if not assumptions:
+            messages.error(request, "No project assumptions to apply.")
+            return redirect("estimator:project_assumptions", project_pk=project_pk)
+        updated = BOQItem.objects.filter(project=project).update(
+            material_markup_pct=assumptions.material_markup_pct,
+            labour_markup_pct=assumptions.labour_markup_pct,
+            transport_pct=assumptions.transport_pct,
+        )
+        messages.success(
+            request,
+            f"Applied assumptions to {updated} BoQ items.",
+        )
+        return redirect("estimator:project_assumptions", project_pk=project_pk)
+
+
 class DashboardView(ProjectEstimatorMixin, ListView):
     model = BOQItem
     template_name = "estimator/dashboard.html"
@@ -135,6 +154,7 @@ class DashboardView(ProjectEstimatorMixin, ListView):
                 "plant_specification",
                 "preliminary_specification",
                 "material",
+                "project__estimator_assumptions",
             )
             .prefetch_related(
                 "specification__spec_components__material",
@@ -187,16 +207,51 @@ class DashboardView(ProjectEstimatorMixin, ListView):
         context = super().get_context_data(**kwargs)
         project = self.get_project()
 
-        adapter = DjangoORMAdapter(project_id=project.pk)
-        boq_data = adapter.get_boq_items(project_id=project.pk)
-        summary = calculate_boq_summary(boq_data)
+        summary_items = (
+            BOQItem.objects.filter(project=project, is_section_header=False)
+            .select_related(
+                "specification",
+                "labour_specification",
+                "labour_specification__crew",
+                "plant_specification",
+                "preliminary_specification",
+                "material",
+                "project__estimator_assumptions",
+            )
+            .prefetch_related("specification__spec_components__material")
+        )
 
-        context["total_contract_amount"] = summary["total_contract_amount"]
-        context["total_materials_rate"] = summary["total_materials_rate"]
-        context["total_labour_rate"] = summary["total_labour_rate"]
-        context["total_plant_rate"] = summary["total_plant_rate"]
-        context["total_progress_amount"] = summary["total_progress_amount"]
-        context["total_forecast_amount"] = summary["total_forecast_amount"]
+        total_contract = Decimal("0")
+        total_material = Decimal("0")
+        total_labour = Decimal("0")
+        total_plant = Decimal("0")
+        total_preliminary = Decimal("0")
+        total_progress = Decimal("0")
+        total_forecast = Decimal("0")
+
+        for item in summary_items:
+            if item.contract_amount:
+                total_contract += item.contract_amount
+            if item.new_materials_amount:
+                total_material += item.new_materials_amount
+            if item.new_labour_amount:
+                total_labour += item.new_labour_amount
+            if item.new_plant_amount:
+                total_plant += item.new_plant_amount
+            if item.new_preliminary_amount:
+                total_preliminary += item.new_preliminary_amount
+            if item.progress_amount:
+                total_progress += item.progress_amount
+            if item.forecast_amount:
+                total_forecast += item.forecast_amount
+
+        context["total_contract_amount"] = total_contract
+        context["total_material_amount"] = total_material
+        context["total_labour_amount"] = total_labour
+        context["total_plant_amount"] = total_plant
+        context["total_preliminary_amount"] = total_preliminary
+        context["total_progress_amount"] = total_progress
+        context["total_forecast_amount"] = total_forecast
 
         # Filter options (scoped to project)
         project_items = BOQItem.objects.filter(project=project)
@@ -939,6 +994,7 @@ class PricedBoqReportView(ProjectEstimatorMixin, ListView):
                 "plant_specification",
                 "preliminary_specification",
                 "material",
+                "project__estimator_assumptions",
             )
             .prefetch_related(
                 "specification__spec_components__material",
@@ -1075,6 +1131,7 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
                 "trade_code",
                 "specification",
                 "material",
+                "project__estimator_assumptions",
             )
             .prefetch_related(
                 "specification__spec_components__material",
@@ -1113,58 +1170,89 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
             )
         else:
             context["parent_template"] = "estimator/base_materials_estimator.html"
+            variant = self.kwargs["variant"]
+            context["toggle_spec_url"] = reverse(
+                f"estimator:report_material_list_{variant}",
+                kwargs={"project_pk": self.get_project().pk},
+            )
+            context["toggle_alt_url"] = reverse(
+                f"estimator:report_material_components_{variant}",
+                kwargs={"project_pk": self.get_project().pk},
+            )
+            context["toggle_alt_label"] = "Component"
+            context["toggle_active"] = "spec"
 
         grand_total = Decimal("0")
-        report_rows = []
+        aggregated: dict[tuple, dict] = {}
+        section_totals: dict[str, Decimal] = {}
 
         for item in context["items"]:
-            quantity = getattr(item, qty_field) or Decimal("0")
+            raw_quantity = getattr(item, qty_field) or Decimal("0")
+            if not raw_quantity:
+                continue
+            wastage_quantity = raw_quantity * item._wastage_factor
             if rate_type == "contract":
                 rate = item.contract_rate
+                amount = rate * raw_quantity if rate else None
             else:
                 rate = item.new_materials_rate
-            if rate and quantity:
-                amount = rate * quantity
-            else:
-                amount = None
+                amount = wastage_quantity * rate if rate else None
 
-            material_name = ""
-            unit = item.unit
             if item.specification:
+                key = ("spec", item.specification_id)
                 material_name = item.specification.name
+                unit = item.unit
             elif item.material:
+                key = ("mat", item.material_id)
                 material_name = item.material.material_code
                 unit = item.material.unit
+            else:
+                continue
 
-            if amount:
-                grand_total += amount
-
-            report_rows.append(
+            row = aggregated.setdefault(
+                key,
                 {
-                    "section": item.section,
-                    "bill_no": item.bill_no,
                     "material_name": material_name,
                     "unit": unit,
-                    "quantity": quantity if quantity else None,
-                    "rate": rate,
-                    "amount": amount,
-                }
+                    "quantity": Decimal("0"),
+                    "wastage_quantity": Decimal("0"),
+                    "amount": Decimal("0"),
+                },
             )
+            row["quantity"] += raw_quantity
+            row["wastage_quantity"] += wastage_quantity
+            if amount:
+                row["amount"] += amount
+                grand_total += amount
+                s = item.section or "Unassigned"
+                section_totals[s] = section_totals.get(s, Decimal("0")) + amount
 
-        # Add pct_of_total
+        report_rows = []
+        for row in aggregated.values():
+            qty_for_rate = (
+                row["wastage_quantity"] if rate_type != "contract" else row["quantity"]
+            )
+            row["rate"] = row["amount"] / qty_for_rate if qty_for_rate else None
+            report_rows.append(row)
+        report_rows.sort(key=lambda r: r["amount"], reverse=True)
+
         for row in report_rows:
             row["pct_of_total"] = calculate_pct_of_total(row["amount"], grand_total)
 
         context["report_rows"] = report_rows
         context["grand_total"] = grand_total
+        context["total_quantity"] = sum(
+            (r["quantity"] for r in report_rows), Decimal("0")
+        )
+        context["total_wastage_quantity"] = sum(
+            (r["wastage_quantity"] for r in report_rows), Decimal("0")
+        )
+        context["show_wastage"] = True
+        context["show_rate"] = True
 
-        # Chart data: cost by section
-        section_totals = {}
-        material_totals = {}
+        material_totals: dict[str, Decimal] = {}
         for row in report_rows:
             if row["amount"]:
-                s = row["section"] or "Unassigned"
-                section_totals[s] = section_totals.get(s, Decimal("0")) + row["amount"]
                 m = row["material_name"] or "Unknown"
                 material_totals[m] = (
                     material_totals.get(m, Decimal("0")) + row["amount"]
@@ -1271,46 +1359,74 @@ class LabourListReportView(ProjectEstimatorMixin, ListView):
             context["parent_template"] = "estimator/base_baseline_estimator_labour.html"
         else:
             context["parent_template"] = "estimator/base_labour_estimator.html"
+            variant = self.kwargs["variant"]
+            context["toggle_spec_url"] = reverse(
+                f"estimator:report_labour_list_{variant}",
+                kwargs={"project_pk": self.get_project().pk},
+            )
+            context["toggle_alt_url"] = reverse(
+                f"estimator:report_labour_skills_{variant}",
+                kwargs={"project_pk": self.get_project().pk},
+            )
+            context["toggle_alt_label"] = "Skill"
+            context["toggle_active"] = "spec"
 
         grand_total = Decimal("0")
-        report_rows = []
+        aggregated: dict[int, dict] = {}
 
         for item in context["items"]:
             ls = item.labour_specification
-            crew = ls.crew if ls else None
+            if ls is None:
+                continue
+            crew = ls.crew
             quantity = getattr(item, qty_field) or Decimal("0")
+            if not quantity:
+                continue
             if rate_type == "contract":
                 rate = item.contract_rate
+                amount = rate * quantity if rate else None
             else:
-                rate = ls.rate_per_unit if ls else None
-            if rate and quantity:
-                amount = rate * quantity
-            else:
-                amount = None
+                rate = item.new_labour_rate
+                amount = quantity * rate if rate else None
 
-            if amount:
-                grand_total += amount
-
-            report_rows.append(
+            row = aggregated.setdefault(
+                ls.pk,
                 {
-                    "section": item.section,
-                    "bill_no": item.bill_no,
+                    "spec_name": ls.name,
                     "crew_type": crew.crew_type if crew else "-",
                     "no_of_crews": 1,
-                    "crew_rate_per_unit": rate,
-                    "quantity": quantity if quantity else None,
-                    "amount": amount,
+                    "quantity": Decimal("0"),
+                    "amount": Decimal("0"),
                     "skilled": crew.skilled if crew else 0,
                     "semi_skilled": crew.semi_skilled if crew else 0,
                     "general": crew.general if crew else 0,
-                }
+                },
             )
+            row["quantity"] += quantity
+            if amount:
+                row["amount"] += amount
+                grand_total += amount
+
+        report_rows = []
+        for row in aggregated.values():
+            row["crew_rate_per_unit"] = (
+                row["amount"] / row["quantity"] if row["quantity"] else None
+            )
+            report_rows.append(row)
+        report_rows.sort(key=lambda r: r["amount"], reverse=True)
 
         for row in report_rows:
             row["pct_of_total"] = calculate_pct_of_total(row["amount"], grand_total)
 
         context["report_rows"] = report_rows
         context["grand_total"] = grand_total
+        context["total_no_of_crews"] = sum((r["no_of_crews"] for r in report_rows), 0)
+        context["total_quantity"] = sum(
+            (r["quantity"] for r in report_rows), Decimal("0")
+        )
+        context["total_skilled"] = sum((r["skilled"] for r in report_rows), 0)
+        context["total_semi_skilled"] = sum((r["semi_skilled"] for r in report_rows), 0)
+        context["total_general"] = sum((r["general"] for r in report_rows), 0)
 
         # Chart data: cost by crew type
         crew_totals = {}
@@ -1381,6 +1497,14 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
     parent_template_new = ""
     parent_template_contract = ""
     title_noun = ""
+    # Optional URL-name prefixes to enable the "By Spec / By Component" toggle.
+    # Subclass sets both to enable; leave empty to omit (e.g. preliminary).
+    spec_url_prefix = ""
+    component_url_prefix = ""
+    component_label = "Component"
+    # Wastage applies to materials only; rate column hidden for preliminaries.
+    show_wastage = False
+    show_rate = True
 
     def _get_rate_type(self):
         return self.kwargs.get("rate_type", "new")
@@ -1416,42 +1540,75 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
             if rate_type == "contract"
             else self.parent_template_new
         )
+        if (
+            rate_type != "contract"
+            and self.spec_url_prefix
+            and self.component_url_prefix
+        ):
+            context["toggle_spec_url"] = reverse(
+                f"{self.spec_url_prefix}{variant}",
+                kwargs={"project_pk": self.get_project().pk},
+            )
+            context["toggle_alt_url"] = reverse(
+                f"{self.component_url_prefix}{variant}",
+                kwargs={"project_pk": self.get_project().pk},
+            )
+            context["toggle_alt_label"] = self.component_label
+            context["toggle_active"] = "spec"
 
         grand_total = Decimal("0")
-        report_rows = []
+        aggregated: dict[int, dict] = {}
+        section_totals: dict[str, Decimal] = {}
+
         for item in context["items"]:
             spec = getattr(item, self.spec_field)
+            if spec is None:
+                continue
             quantity = getattr(item, qty_field) or Decimal("0")
+            if not quantity:
+                continue
             if rate_type == "contract":
                 rate = item.contract_rate
             else:
-                rate = getattr(spec, self.spec_rate_attr) if spec else None
-            amount = rate * quantity if rate and quantity else None
-            if amount:
-                grand_total += amount
-            report_rows.append(
+                rate = getattr(spec, self.spec_rate_attr)
+            amount = rate * quantity if rate else None
+
+            row = aggregated.setdefault(
+                spec.pk,
                 {
-                    "section": item.section,
-                    "bill_no": item.bill_no,
-                    "material_name": spec.name if spec else "",
+                    "material_name": spec.name,
                     "unit": item.unit,
-                    "quantity": quantity if quantity else None,
-                    "rate": rate,
-                    "amount": amount,
-                }
+                    "quantity": Decimal("0"),
+                    "amount": Decimal("0"),
+                },
             )
+            row["quantity"] += quantity
+            if amount:
+                row["amount"] += amount
+                grand_total += amount
+                s = item.section or "Unassigned"
+                section_totals[s] = section_totals.get(s, Decimal("0")) + amount
+
+        report_rows = []
+        for row in aggregated.values():
+            row["rate"] = row["amount"] / row["quantity"] if row["quantity"] else None
+            report_rows.append(row)
+        report_rows.sort(key=lambda r: r["amount"], reverse=True)
+
         for row in report_rows:
             row["pct_of_total"] = calculate_pct_of_total(row["amount"], grand_total)
 
         context["report_rows"] = report_rows
         context["grand_total"] = grand_total
+        context["total_quantity"] = sum(
+            (r["quantity"] for r in report_rows), Decimal("0")
+        )
+        context["show_wastage"] = self.show_wastage
+        context["show_rate"] = self.show_rate
 
-        section_totals = {}
-        name_totals = {}
+        name_totals: dict[str, Decimal] = {}
         for row in report_rows:
             if row["amount"]:
-                s = row["section"] or "Unassigned"
-                section_totals[s] = section_totals.get(s, Decimal("0")) + row["amount"]
                 m = row["material_name"] or "Unknown"
                 name_totals[m] = name_totals.get(m, Decimal("0")) + row["amount"]
 
@@ -1490,6 +1647,9 @@ class PlantListReportView(_SimpleSpecListReportView):
     parent_template_new = "estimator/base_plant_estimator.html"
     parent_template_contract = "estimator/base_baseline_estimator_plant.html"
     title_noun = "Plant"
+    spec_url_prefix = "estimator:report_plant_list_"
+    component_url_prefix = "estimator:report_plant_components_"
+    component_label = "Component"
 
 
 class PreliminaryListReportView(_SimpleSpecListReportView):
@@ -1498,6 +1658,286 @@ class PreliminaryListReportView(_SimpleSpecListReportView):
     parent_template_new = "estimator/base_prelim_estimator.html"
     parent_template_contract = "estimator/base_baseline_estimator_prelim.html"
     title_noun = "Preliminary"
+    show_rate = False
+
+
+# ───────────────────────────────────────────────────────────────────
+# "By Component" / "By Skill" project-aggregated reports
+# ───────────────────────────────────────────────────────────────────
+
+
+class _ComponentReportBase(ProjectEstimatorMixin, TemplateView):
+    """Shared variant config for the project-aggregated component reports."""
+
+    VARIANT_CONFIGS = {
+        "baseline": {"qty_field": "contract_quantity", "title_prefix": "Baseline"},
+        "progress": {"qty_field": "progress_quantity", "title_prefix": "Progress"},
+        "forecast": {"qty_field": "forecast_quantity", "title_prefix": "Forecast"},
+    }
+
+    def _config(self):
+        return self.VARIANT_CONFIGS[self.kwargs["variant"]]
+
+
+class MaterialComponentReportView(_ComponentReportBase):
+    """Aggregated material/component qtys needed across the whole project."""
+
+    template_name = "estimator/reports/material_components_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        config = self._config()
+        qty_field = config["qty_field"]
+        project = self.get_project()
+        variant = self.kwargs["variant"]
+
+        items = (
+            BOQItem.objects.filter(project=project, is_section_header=False)
+            .select_related(
+                "specification",
+                "material",
+                "project__estimator_assumptions",
+            )
+            .prefetch_related("specification__spec_components__material")
+            .filter(
+                models.Q(specification__isnull=False) | models.Q(material__isnull=False)
+            )
+        )
+
+        # material_code -> aggregated row
+        components: dict[str, dict] = {}
+
+        def bucket(material):
+            key = material.material_code
+            if key not in components:
+                components[key] = {
+                    "material_code": key,
+                    "trade_name": material.trade_name,
+                    "unit": material.unit,
+                    "quantity": Decimal("0"),
+                    "amount": Decimal("0"),
+                }
+            return components[key]
+
+        for item in items:
+            raw_qty = getattr(item, qty_field) or Decimal("0")
+            if not raw_qty:
+                continue
+            project_qty = raw_qty * item._wastage_factor
+            markup = item._material_markup_factor
+            if item.specification:
+                for comp in item.specification.spec_components.all():
+                    if not comp.material or not comp.qty_per_unit:
+                        continue
+                    row = bucket(comp.material)
+                    qty = project_qty * comp.qty_per_unit
+                    row["quantity"] += qty
+                    row["amount"] += (
+                        qty * (comp.material.market_rate or Decimal("0")) * markup
+                    )
+            elif item.material:
+                row = bucket(item.material)
+                row["quantity"] += project_qty
+                row["amount"] += (
+                    project_qty * (item.material.market_rate or Decimal("0")) * markup
+                )
+
+        report_rows = []
+        grand_total = Decimal("0")
+        for row in components.values():
+            row["rate"] = (
+                row["amount"] / row["quantity"] if row["quantity"] else Decimal("0")
+            )
+            grand_total += row["amount"]
+            report_rows.append(row)
+        report_rows.sort(key=lambda r: r["amount"], reverse=True)
+        for row in report_rows:
+            row["pct_of_total"] = calculate_pct_of_total(row["amount"], grand_total)
+
+        context["report_title"] = (
+            f"{config['title_prefix']} Materials by Component (Procurement)"
+        )
+        context["parent_template"] = "estimator/base_materials_estimator.html"
+        context["report_rows"] = report_rows
+        context["grand_total"] = grand_total
+        context["total_quantity"] = sum(
+            (r["quantity"] for r in report_rows), Decimal("0")
+        )
+        context["variant"] = variant
+        context["project_pk"] = project.pk
+
+        # Chart: top 10 components by cost
+        top = report_rows[:10]
+        context["chart_labels"] = json.dumps([r["material_code"] for r in top])
+        context["chart_values"] = json.dumps([float(r["amount"]) for r in top])
+        return context
+
+
+class LabourSkillReportView(_ComponentReportBase):
+    """Per labour-spec breakdown of skilled / semi-skilled / general person-days."""
+
+    template_name = "estimator/reports/labour_skills_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        config = self._config()
+        qty_field = config["qty_field"]
+        project = self.get_project()
+        variant = self.kwargs["variant"]
+
+        items = BOQItem.objects.filter(
+            project=project,
+            is_section_header=False,
+            labour_specification__isnull=False,
+        ).select_related(
+            "labour_specification",
+            "labour_specification__crew",
+        )
+
+        # labour_specification_id -> aggregated row
+        specs: dict[int, dict] = {}
+
+        for item in items:
+            ls = item.labour_specification
+            if ls is None:
+                continue
+            crew = ls.crew
+            raw_qty = getattr(item, qty_field) or Decimal("0")
+            if not raw_qty:
+                continue
+            row = specs.setdefault(
+                ls.pk,
+                {
+                    "spec_name": ls.name,
+                    "unit": ls.unit,
+                    "daily_output": ls.daily_output,
+                    "crew_type": crew.crew_type if crew else "-",
+                    "quantity": Decimal("0"),
+                    "days_required": Decimal("0"),
+                    "skilled": Decimal("0"),
+                    "semi_skilled": Decimal("0"),
+                    "general": Decimal("0"),
+                    "cost": Decimal("0"),
+                },
+            )
+            row["quantity"] += raw_qty
+            output = ls.daily_output
+            if output and output > 0 and crew:
+                days = raw_qty / output
+                markup = Decimal("1") + (
+                    item.labour_markup_pct or Decimal("0")
+                ) / Decimal("100")
+                row["days_required"] += days
+                row["skilled"] += days * Decimal(str(crew.skilled))
+                row["semi_skilled"] += days * Decimal(str(crew.semi_skilled))
+                row["general"] += days * Decimal(str(crew.general))
+                row["cost"] += days * crew.crew_daily_cost * markup
+
+        report_rows = sorted(specs.values(), key=lambda r: r["cost"], reverse=True)
+        grand_total = sum((r["cost"] for r in report_rows), Decimal("0"))
+        total_skilled = sum((r["skilled"] for r in report_rows), Decimal("0"))
+        total_semi = sum((r["semi_skilled"] for r in report_rows), Decimal("0"))
+        total_general = sum((r["general"] for r in report_rows), Decimal("0"))
+        total_quantity = sum((r["quantity"] for r in report_rows), Decimal("0"))
+        total_days = sum((r["days_required"] for r in report_rows), Decimal("0"))
+        for row in report_rows:
+            row["pct_of_total"] = calculate_pct_of_total(row["cost"], grand_total)
+
+        context["report_title"] = f"{config['title_prefix']} Labour by Skill"
+        context["parent_template"] = "estimator/base_labour_estimator.html"
+        context["report_rows"] = report_rows
+        context["grand_total"] = grand_total
+        context["total_skilled"] = total_skilled
+        context["total_semi_skilled"] = total_semi
+        context["total_general"] = total_general
+        context["total_quantity"] = total_quantity
+        context["total_days"] = total_days
+        context["variant"] = variant
+        context["project_pk"] = project.pk
+
+        context["chart_labels"] = json.dumps([r["spec_name"] for r in report_rows[:10]])
+        context["chart_skilled"] = json.dumps(
+            [float(r["skilled"]) for r in report_rows[:10]]
+        )
+        context["chart_semi"] = json.dumps(
+            [float(r["semi_skilled"]) for r in report_rows[:10]]
+        )
+        context["chart_general"] = json.dumps(
+            [float(r["general"]) for r in report_rows[:10]]
+        )
+        return context
+
+
+class PlantComponentReportView(_ComponentReportBase):
+    """Aggregated plant-type hours needed across the whole project."""
+
+    template_name = "estimator/reports/plant_components_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        config = self._config()
+        qty_field = config["qty_field"]
+        project = self.get_project()
+        variant = self.kwargs["variant"]
+
+        items = (
+            BOQItem.objects.filter(
+                project=project,
+                is_section_header=False,
+                plant_specification__isnull=False,
+            )
+            .select_related("plant_specification")
+            .prefetch_related("plant_specification__components__plant_type")
+        )
+
+        # plant_cost_id -> aggregated row
+        plant_types: dict[int, dict] = {}
+
+        for item in items:
+            ps = item.plant_specification
+            if ps is None:
+                continue
+            output = ps.daily_output
+            raw_qty = getattr(item, qty_field) or Decimal("0")
+            if not raw_qty or not output or output <= 0:
+                continue
+            for comp in ps.components.all():
+                pt = comp.plant_type
+                if pt is None or not comp.hours:
+                    continue
+                hours = raw_qty * comp.hours / output
+                row = plant_types.setdefault(
+                    pt.pk,
+                    {
+                        "name": pt.name,
+                        "hours": Decimal("0"),
+                        "rate": pt.hourly_rate or Decimal("0"),
+                    },
+                )
+                row["hours"] += hours
+
+        report_rows = []
+        grand_total = Decimal("0")
+        for row in plant_types.values():
+            row["amount"] = row["hours"] * row["rate"]
+            grand_total += row["amount"]
+            report_rows.append(row)
+        report_rows.sort(key=lambda r: r["amount"], reverse=True)
+        for row in report_rows:
+            row["pct_of_total"] = calculate_pct_of_total(row["amount"], grand_total)
+
+        context["report_title"] = f"{config['title_prefix']} Plant by Component"
+        context["parent_template"] = "estimator/base_plant_estimator.html"
+        context["report_rows"] = report_rows
+        context["grand_total"] = grand_total
+        context["total_hours"] = sum((r["hours"] for r in report_rows), Decimal("0"))
+        context["variant"] = variant
+        context["project_pk"] = project.pk
+
+        top = report_rows[:10]
+        context["chart_labels"] = json.dumps([r["name"] for r in top])
+        context["chart_values"] = json.dumps([float(r["amount"]) for r in top])
+        return context
 
 
 class _SimpleSpecCalculatorView(ProjectEstimatorMixin, TemplateView):
@@ -1587,6 +2027,30 @@ class PlantSpecificationListView(_SimpleSpecCalculatorView):
     parent_template = "estimator/base_plant_estimator.html"
     title_noun = "Plant"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        for row in context["rows"]:
+            spec = row["spec"]
+            boq_qty = row["boq_qty"] or Decimal("0")
+            output = spec.daily_output if spec else Decimal("0")
+            totals = []
+            if spec:
+                for comp in spec.components.all():
+                    if comp.plant_type is None:
+                        continue
+                    if boq_qty and output and output > 0 and comp.hours:
+                        total_hours = boq_qty * comp.hours / output
+                    else:
+                        total_hours = Decimal("0")
+                    totals.append(
+                        {
+                            "name": comp.plant_type.name,
+                            "total_hours": total_hours,
+                        }
+                    )
+            row["component_totals"] = totals
+        return context
+
 
 class PreliminarySpecificationListView(_SimpleSpecCalculatorView):
     template_name = "estimator/preliminary_specification_list.html"
@@ -1611,7 +2075,13 @@ class UpdateBoqItemView(View):
         ),
     }
 
-    DECIMAL_FIELDS = {"material_markup_pct", "labour_markup_pct", "transport_pct"}
+    DECIMAL_FIELDS = {
+        "material_markup_pct",
+        "labour_markup_pct",
+        "transport_pct",
+        "progress_quantity",
+        "forecast_quantity",
+    }
 
     def post(self, request, project_pk, pk):
         item = get_object_or_404(BOQItem, pk=pk, project_id=project_pk)
@@ -2815,6 +3285,9 @@ class PreliminarySpecDefListView(ProjectEstimatorMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", PreliminarySpecificationForm())
+        context["preliminary_type_choices"] = (
+            SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -2859,7 +3332,7 @@ class UpdatePreliminarySpecView(View):
         "trade_name": "str",
         "name": "str",
         "unit": "str",
-        "amount": "decimal",
+        "preliminary_type": "str",
     }
 
     def post(self, request, project_pk, pk):
@@ -2887,7 +3360,7 @@ class UpdatePreliminarySpecView(View):
             return JsonResponse({"error": "Invalid value"}, status=400)
 
         item.save()
-        return JsonResponse({"ok": True})
+        return JsonResponse({"ok": True, "amount": str(item.amount)})
 
 
 # ── Upload / Download Template Views ──────────────────────────────
@@ -3545,7 +4018,7 @@ class PreliminarySpecUploadView(ProjectEstimatorMixin, FormView):
 class DownloadPreliminarySpecTemplateView(View):
     def get(self, request, project_pk):
         return _generate_template(
-            ["Section", "Trade Name", "Name", "Unit", "Amount"],
+            ["Section", "Trade Name", "Name", "Unit", "Preliminary Type"],
             "PreliminarySpec_Template.xlsx",
         )
 
@@ -4516,6 +4989,9 @@ class SystemPreliminarySpecListView(SystemLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", SystemPreliminarySpecificationForm())
+        context["preliminary_type_choices"] = (
+            SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -4534,7 +5010,7 @@ class UpdateSystemPreliminarySpecView(SystemLibraryMixin, View):
         "trade_name": "str",
         "name": "str",
         "unit": "str",
-        "amount": "decimal",
+        "preliminary_type": "str",
     }
 
     def post(self, request, pk):
@@ -4560,7 +5036,7 @@ class UpdateSystemPreliminarySpecView(SystemLibraryMixin, View):
             return JsonResponse({"error": "Invalid value"}, status=400)
 
         item.save()
-        return JsonResponse({"ok": True})
+        return JsonResponse({"ok": True, "amount": str(item.amount)})
 
 
 class SystemPreliminarySpecUploadView(SystemLibraryMixin, FormView):
@@ -4591,6 +5067,6 @@ class SystemPreliminarySpecUploadView(SystemLibraryMixin, FormView):
 class DownloadSystemPreliminarySpecTemplateView(SystemLibraryMixin, View):
     def get(self, request):
         return _generate_template(
-            ["Section", "Trade Name", "Name", "Unit", "Amount"],
+            ["Section", "Trade Name", "Name", "Unit", "Preliminary Type"],
             "system_preliminary_specs_template.xlsx",
         )

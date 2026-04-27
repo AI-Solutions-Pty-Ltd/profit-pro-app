@@ -1,0 +1,148 @@
+{% extends parent_template|default:"estimator/base_labour_estimator.html" %}
+{% load estimator_tags %}
+{% block title %}{{ report_title }} - Project Resource Estimator{% endblock %}
+{% block sub_content %}
+    <div class="mb-4 sm:flex sm:items-center sm:justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">{{ report_title }}</h1>
+        <nav class="mt-3 sm:mt-0 flex space-x-1 rounded-lg bg-gray-100 p-1"
+             aria-label="Labour report view">
+            <a href="{% url 'estimator:report_labour_list_'|add:variant project_pk=project_pk %}"
+               class="text-gray-500 hover:text-gray-700 rounded-md px-3 py-1.5 text-sm font-medium">By Spec</a>
+            <a href="{% url 'estimator:report_labour_skills_'|add:variant project_pk=project_pk %}"
+               class="bg-white text-gray-900 shadow rounded-md px-3 py-1.5 text-sm font-medium">By Skill</a>
+        </nav>
+    </div>
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        <div class="rounded-lg bg-white shadow p-4">
+            <p class="text-xs font-medium text-gray-500 truncate">Total Crew Cost</p>
+            <p class="text-base font-bold text-gray-900 truncate">{{ grand_total|currency }}</p>
+        </div>
+        <div class="rounded-lg bg-white shadow p-4">
+            <p class="text-xs font-medium text-purple-700 truncate">Skilled Person-Days</p>
+            <p class="text-base font-bold text-purple-900 truncate">{{ total_skilled|qty }}</p>
+        </div>
+        <div class="rounded-lg bg-white shadow p-4">
+            <p class="text-xs font-medium text-indigo-700 truncate">Semi-Skilled Person-Days</p>
+            <p class="text-base font-bold text-indigo-900 truncate">{{ total_semi_skilled|qty }}</p>
+        </div>
+        <div class="rounded-lg bg-white shadow p-4">
+            <p class="text-xs font-medium text-teal-700 truncate">General Person-Days</p>
+            <p class="text-base font-bold text-teal-900 truncate">{{ total_general|qty }}</p>
+        </div>
+    </div>
+    <!-- Chart -->
+    {% if report_rows %}
+        <div class="bg-white shadow-sm rounded-lg p-4 mb-6">
+            <h3 class="text-sm font-semibold text-gray-900 mb-3">Person-Days by Spec (top 10)</h3>
+            <div class="relative h-[320px]">
+                <canvas id="skillStack"></canvas>
+            </div>
+        </div>
+    {% endif %}
+    <!-- Data Table -->
+    <div class="bg-white shadow-sm rounded-lg">
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-xs whitespace-nowrap">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[200px]">
+                            Labour Spec
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[140px]">
+                            Crew Type
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[60px]">
+                            Unit
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[100px]">
+                            Project Qty
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[100px]">
+                            Days
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-purple-700 w-[100px] bg-purple-50/40">
+                            Skilled
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-indigo-700 w-[110px] bg-indigo-50/40">
+                            Semi-Skilled
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-teal-700 w-[100px] bg-teal-50/40">
+                            General
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[140px]">
+                            Cost
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[80px]">
+                            % of Total
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for row in report_rows %}
+                        <tr class="hover:bg-gray-50/50">
+                            <td class="px-3 py-1.5 text-gray-900 font-medium truncate max-w-[200px]"
+                                title="{{ row.spec_name }}">{{ row.spec_name }}</td>
+                            <td class="px-3 py-1.5 text-gray-600 truncate max-w-[140px]"
+                                title="{{ row.crew_type }}">{{ row.crew_type }}</td>
+                            <td class="px-3 py-1.5 text-gray-500">{{ row.unit }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.quantity|qty }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.days_required|qty }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-purple-700 bg-purple-50/20">{{ row.skilled|qty }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-indigo-700 bg-indigo-50/20">{{ row.semi_skilled|qty }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-teal-700 bg-teal-50/20">{{ row.general|qty }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-900 font-medium">{{ row.cost|currency }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-600">{{ row.pct_of_total|pct }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="10" class="px-3 py-8 text-center text-gray-500">No labour specs assigned to BoQ items.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                {% if report_rows %}
+                    <tfoot>
+                        <tr class="border-t-2 border-gray-300 bg-gray-50 font-semibold">
+                            <td class="px-3 py-2 text-gray-900" colspan="3">Grand Total</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-gray-900">{{ total_quantity|qty }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-gray-900">{{ total_days|qty }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-purple-900 bg-purple-50/40">{{ total_skilled|qty }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-indigo-900 bg-indigo-50/40">{{ total_semi_skilled|qty }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-teal-900 bg-teal-50/40">{{ total_general|qty }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-gray-900">{{ grand_total|currency }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-gray-600">100.0%</td>
+                        </tr>
+                    </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+    {% if report_rows %}
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+        <script>
+(function() {
+    const labels = {{ chart_labels|safe }};
+    new Chart(document.getElementById('skillStack'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Skilled', data: {{ chart_skilled|safe }}, backgroundColor: '#a855f7' },
+                { label: 'Semi-Skilled', data: {{ chart_semi|safe }}, backgroundColor: '#6366f1' },
+                { label: 'General', data: {{ chart_general|safe }}, backgroundColor: '#14b8a6' },
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            scales: {
+                x: { stacked: true },
+                y: { stacked: true }
+            }
+        }
+    });
+})();
+        </script>
+    {% endif %}
+{% endblock %}

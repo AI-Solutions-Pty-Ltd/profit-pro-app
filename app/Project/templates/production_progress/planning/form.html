@@ -65,7 +65,10 @@
                             <!-- Hierarchical steps hidden by default in favors of direct line item selection -->
                             <div id="section_field_container" class="hidden">{{ form.section|as_crispy_field }}</div>
                             <div id="bill_no_field_container" class="hidden">{{ form.bill_no|as_crispy_field }}</div>
-                            <div id="labour_activity_field_container">{{ form.labour_activity|as_crispy_field }}</div>
+                            <div id="labour_activity_field_container"
+                                 class="{% if form.instance.pk and not form.instance.is_leaf %}hidden{% endif %}">
+                                {{ form.labour_activity|as_crispy_field }}
+                            </div>
                             <div id="plant_specification_field_container" class="hidden">{{ form.plant_specification|as_crispy_field }}</div>
                         </div>
                         <!-- Hidden Activity Title -->
@@ -393,17 +396,26 @@
         function setSearchableSelectValue(fieldId, value, label) {
             const nativeSelect = document.getElementById(fieldId);
             const labelEl = document.getElementById(`${fieldId}-selector-label`);
+            
+            // Safety check for undefined/null strings
+            if (value === undefined || value === null || value === 'undefined' || value === 'null') {
+                value = '';
+            }
+            if (label === undefined || label === null || label === 'undefined' || label === 'null') {
+                label = '';
+            }
+
             if (nativeSelect) {
                 nativeSelect.value = value;
-                if (nativeSelect.value !== String(value)) {
+                if (nativeSelect.value !== String(value) && value !== '') {
                     const opt = document.createElement('option');
                     opt.value = value;
-                    opt.textContent = label;
+                    opt.textContent = label || value;
                     nativeSelect.appendChild(opt);
                     nativeSelect.value = value;
                 }
             }
-            if (labelEl && label) labelEl.textContent = label;
+            if (labelEl) labelEl.textContent = label || (value ? value : `Choose...`);
         }
 
         function updateSearchableSelect(fieldId, options, typeLabel) {

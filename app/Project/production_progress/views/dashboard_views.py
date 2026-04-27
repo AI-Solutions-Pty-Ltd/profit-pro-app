@@ -8,6 +8,7 @@ from app.core.Utilities.mixins import BreadcrumbMixin
 from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
 from app.Project.models import Project
 
+from ..production_forms import PlanFilterForm
 from ..production_models import (
     DailyProduction,
     ProductionPlan,
@@ -159,6 +160,9 @@ class PlanProductivityDashboardView(
         start_date = self.request.GET.get("start_date")
         end_date = self.request.GET.get("end_date")
 
+        # Initialize filter form
+        plan_filter_form = PlanFilterForm(self.request.GET, project_id=project_pk)
+
         all_plans = ProductionPlan.objects.filter(
             project=project, labour_activity__isnull=False
         ).order_by("activity")
@@ -182,9 +186,11 @@ class PlanProductivityDashboardView(
                 "selected_plan": selected_plan,
                 "start_date": start_date,
                 "end_date": end_date,
+                "plan_filter_form": plan_filter_form,
                 **dashboard_data,
             }
         )
+
         return context
 
     def get_breadcrumbs(self):

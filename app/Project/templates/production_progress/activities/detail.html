@@ -3,7 +3,7 @@
 {% load heroicons %}
 {% load estimator_tags %}
 {% block title %}
-    Activity Details - {{ labour_spec.name }}
+    Activity Details - {{ act_name }}
 {% endblock title %}
 {% block content %}
     <div class="pb-12">
@@ -24,7 +24,7 @@
                     </ol>
                 </nav>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight text-gray-900">{{ labour_spec.name }}</h1>
+                    <h1 class="text-xl font-bold tracking-tight text-gray-900">{{ act_name }}</h1>
                     <div class="flex gap-3 items-center mt-1">
                         <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-bold text-blue-700 bg-blue-50 rounded-full ring-1 ring-inset ring-blue-700/10">
                             Section: {{ section|default:"All"|title }}
@@ -39,7 +39,7 @@
                 <div class="relative p-4 bg-gray-50 rounded-lg border border-gray-100 transition-all duration-300 group hover:bg-white hover:shadow-md">
                     <dt class="mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Daily Productivity</dt>
                     <dd class="text-lg font-black text-gray-900">
-                        {{ labour_spec.daily_production|qty }} <span class="text-xs font-medium text-gray-400">{{ labour_spec.unit }} / Day</span>
+                        {{ labour_spec.daily_production|qty|default:"0" }} <span class="text-xs font-medium text-gray-400">{{ act_unit }} / Day</span>
                     </dd>
                     <div class="absolute top-4 right-4 text-gray-200">{% heroicon_outline "bolt" class="w-6 h-6" %}</div>
                 </div>
@@ -120,7 +120,7 @@
                                 </td>
                                 <td class="text-xs text-gray-500 whitespace-nowrap">{{ item.plant_specification.plant_type.name|default:"-" }}</td>
                                 <td class="text-center whitespace-nowrap">
-                                    <span class="text-xs font-bold {% if item.unit == labour_spec.unit %}text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded{% else %}text-gray-400{% endif %}">
+                                    <span class="text-xs font-bold {% if item.unit == act_unit %}text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded{% else %}text-gray-400{% endif %}">
                                         {{ item.unit }}
                                     </span>
                                 </td>
@@ -131,13 +131,13 @@
                                     {{ item.contract_amount|currency }}
                                 </td>
                                 <td class="text-center whitespace-nowrap">
-                                    {% if item.unit == labour_spec.unit %}
+                                    {% if item.unit == act_unit %}
                                         <div class="p-2 font-bold text-white badge badge-success badge-xs">
                                             {% heroicon_outline "check-circle" class="mr-1 w-3 h-3" %} Included
                                         </div>
                                     {% else %}
                                         <div class="p-2 font-bold text-gray-400 border-gray-200 badge badge-ghost badge-xs"
-                                             title="Unit mismatch ({{ item.unit }} vs {{ labour_spec.unit }})">
+                                             title="Unit mismatch ({{ item.unit }} vs {{ act_unit }})">
                                             {% heroicon_outline "no-symbol" class="mr-1 w-3 h-3" %} Mismatch
                                         </div>
                                     {% endif %}
@@ -154,14 +154,14 @@
                         <div>
                             <p class="text-[10px] font-bold text-indigo-500 uppercase ">Aggregate Quantity</p>
                             <p class="text-xs font-medium text-indigo-400">
-                                Sum of all items with unit: <span class="font-bold underline">{{ labour_spec.unit }}</span>
+                                Sum of all items with unit: <span class="font-bold underline">{{ act_unit }}</span>
                             </p>
                         </div>
                     </div>
                     <div class="flex gap-2 items-baseline">
                         <span class="text-xs font-bold text-indigo-400 uppercase">Actual Tracker Total:</span>
                         <span class="text-lg font-black tabular-nums tracking-tighter text-indigo-600">{{ total_tracker|qty }}</span>
-                        <span class="text-lg font-bold text-indigo-400">{{ labour_spec.unit }}</span>
+                        <span class="text-lg font-bold text-indigo-400">{{ act_unit }}</span>
                     </div>
                 </div>
             </div>
