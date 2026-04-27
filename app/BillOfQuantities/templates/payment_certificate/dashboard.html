@@ -128,7 +128,7 @@
                                    data-loading-text="Loading Details..."
                                    data-disable-elements="#edit-certificate-btn">
                                     <h3 class="text-sm font-medium text-blue-900 left-content link">
-                                        Certificate #{{ active_certificate.certificate_number }}: R {{ active_certificate.current_claim_total|default:"0"|floatformat:2|intcomma }}
+                                        Certificate #{{ active_certificate.certificate_number }}: R {{ active_certificate.current_claim_total_including_ledgers|default:"0"|floatformat:2|intcomma }}
                                         |
                                         View
                                     </h3>
@@ -301,7 +301,7 @@
                                     <div class="text-right min-w-[140px]">
                                         <p class="text-xs text-gray-500">Claim Total</p>
                                         <p class="text-sm font-medium text-gray-900 whitespace-nowrap">
-                                            R&nbsp;{{ cert.current_claim_total|default:0|floatformat:2|intcomma }}
+                                            R&nbsp;{{ cert.current_claim_total_including_ledgers|default:0|floatformat:2|intcomma }}
                                         </p>
                                     </div>
                                 </div>

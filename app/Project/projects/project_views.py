@@ -71,60 +71,43 @@ class ProjectListView(
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
 
-        # Prepare form data and querysets
         form_data = request.GET or {}
-        projects_queryset = None
-        consultant_queryset = None
-        client_queryset = None
-        contractor_queryset = None
-        category_queryset = None
-        area_queryset = None
-        discipline_queryset = None
 
-        if request.user.is_authenticated:
-            from app.Account.models import Municipality
-            from app.Project.models import (
-                Company,
-                ProjectDiscipline,
-            )
+        user: Account = request.user
+        if user.is_superuser or user.is_staff:
+            projects = Project.objects.all().order_by("-created_at")
+        else:
+            projects = user.get_projects.order_by("-created_at")
 
-            # Get user's projects
-            projects_queryset = Project.objects.filter(
-                Q(users=request.user) | Q(is_demo=True),
-                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
-            ).order_by("name")
+        from app.Account.models import Municipality
+        from app.Project.models import Company, ProjectDiscipline
 
-            # Get unique lead consultants from user's projects
-            consultant_ids = (
-                Project.objects.filter(Q(users=request.user) | Q(is_demo=True))
-                .values_list("lead_consultants", flat=True)
-                .distinct()
-            )
-            consultant_queryset = Account.objects.filter(id__in=consultant_ids)
+        consultant_ids = (
+            projects.values_list("lead_consultants", flat=True)
+            .exclude(lead_consultants__isnull=True)
+            .distinct()
+        )
+        consultant_queryset = Account.objects.filter(id__in=consultant_ids).distinct()
 
-            # Get unique clients and contractors from user's projects
-            client_queryset = Company.objects.filter(
-                client_projects__in=projects_queryset
-            ).distinct()
-            contractor_queryset = Company.objects.filter(
-                contractor_projects__in=projects_queryset
-            ).distinct()
+        client_queryset = Company.objects.filter(
+            client_projects__in=projects
+        ).distinct()
+        contractor_queryset = Company.objects.filter(
+            contractor_projects__in=projects
+        ).distinct()
 
-            # Get unique categories, areas and disciplines from user's projects
-            category_queryset = ProjectCategory.objects.filter(
-                projects__in=projects_queryset
-            ).distinct()
-            area_queryset = Municipality.objects.filter(
-                projects__in=projects_queryset
-            ).distinct()
-            discipline_queryset = ProjectDiscipline.objects.filter(
-                projects__in=projects_queryset
-            ).distinct()
+        category_queryset = ProjectCategory.objects.filter(
+            projects__in=projects
+        ).distinct()
+        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
+        discipline_queryset = ProjectDiscipline.objects.filter(
+            projects__in=projects
+        ).distinct()
 
         self.filter_form = ProjectFilterForm(
             form_data,
-            user=self.request.user,  # type: ignore
-            projects_queryset=projects_queryset,
+            user=user,
+            projects_queryset=projects,
             consultant_queryset=consultant_queryset,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
@@ -144,9 +127,12 @@ class ProjectListView(
         """Get filtered projects for dashboard view."""
         # Ensure filter_form exists and is valid
         user: Account = self.request.user  # type: ignore
-        projects = user.get_projects.order_by("-created_at")
+        if user.is_superuser or user.is_staff:
+            projects = Project.objects.all().order_by("-created_at")
+        else:
+            projects = user.get_projects.order_by("-created_at")
+
         if not self.filter_form or not self.filter_form.is_valid():
-            # Return unfiltered queryset if form is invalid
             return projects
 
         # Apply filters from form
@@ -174,7 +160,7 @@ class ProjectListView(
 
         consultant = self.filter_form.cleaned_data.get("consultant")
         if consultant:
-            projects = projects.filter(lead_consultant=consultant)
+            projects = projects.filter(lead_consultants=consultant)
 
         client = self.filter_form.cleaned_data.get("client")
         if client:
