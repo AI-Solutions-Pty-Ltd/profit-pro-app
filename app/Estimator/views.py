@@ -1247,6 +1247,12 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
 
         context["report_rows"] = report_rows
         context["grand_total"] = grand_total
+        context["total_quantity"] = sum(
+            (r["quantity"] for r in report_rows), Decimal("0")
+        )
+        context["total_wastage_quantity"] = sum(
+            (r["wastage_quantity"] for r in report_rows), Decimal("0")
+        )
 
         material_totals: dict[str, Decimal] = {}
         for row in report_rows:
@@ -1418,6 +1424,17 @@ class LabourListReportView(ProjectEstimatorMixin, ListView):
 
         context["report_rows"] = report_rows
         context["grand_total"] = grand_total
+        context["total_no_of_crews"] = sum(
+            (r["no_of_crews"] for r in report_rows), 0
+        )
+        context["total_quantity"] = sum(
+            (r["quantity"] for r in report_rows), Decimal("0")
+        )
+        context["total_skilled"] = sum((r["skilled"] for r in report_rows), 0)
+        context["total_semi_skilled"] = sum(
+            (r["semi_skilled"] for r in report_rows), 0
+        )
+        context["total_general"] = sum((r["general"] for r in report_rows), 0)
 
         # Chart data: cost by crew type
         crew_totals = {}
@@ -1590,6 +1607,13 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
 
         context["report_rows"] = report_rows
         context["grand_total"] = grand_total
+        context["total_quantity"] = sum(
+            (r["quantity"] for r in report_rows), Decimal("0")
+        )
+        context["total_wastage_quantity"] = sum(
+            (r.get("wastage_quantity") or Decimal("0") for r in report_rows),
+            Decimal("0"),
+        )
 
         name_totals: dict[str, Decimal] = {}
         for row in report_rows:
@@ -1749,6 +1773,9 @@ class MaterialComponentReportView(_ComponentReportBase):
         context["parent_template"] = "estimator/base_materials_estimator.html"
         context["report_rows"] = report_rows
         context["grand_total"] = grand_total
+        context["total_quantity"] = sum(
+            (r["quantity"] for r in report_rows), Decimal("0")
+        )
         context["variant"] = variant
         context["project_pk"] = project.pk
 
@@ -1827,6 +1854,8 @@ class LabourSkillReportView(_ComponentReportBase):
         total_skilled = sum((r["skilled"] for r in report_rows), Decimal("0"))
         total_semi = sum((r["semi_skilled"] for r in report_rows), Decimal("0"))
         total_general = sum((r["general"] for r in report_rows), Decimal("0"))
+        total_quantity = sum((r["quantity"] for r in report_rows), Decimal("0"))
+        total_days = sum((r["days_required"] for r in report_rows), Decimal("0"))
         for row in report_rows:
             row["pct_of_total"] = calculate_pct_of_total(row["cost"], grand_total)
 
@@ -1839,6 +1868,8 @@ class LabourSkillReportView(_ComponentReportBase):
         context["total_skilled"] = total_skilled
         context["total_semi_skilled"] = total_semi
         context["total_general"] = total_general
+        context["total_quantity"] = total_quantity
+        context["total_days"] = total_days
         context["variant"] = variant
         context["project_pk"] = project.pk
 
@@ -1921,6 +1952,9 @@ class PlantComponentReportView(_ComponentReportBase):
         context["parent_template"] = "estimator/base_plant_estimator.html"
         context["report_rows"] = report_rows
         context["grand_total"] = grand_total
+        context["total_hours"] = sum(
+            (r["hours"] for r in report_rows), Decimal("0")
+        )
         context["variant"] = variant
         context["project_pk"] = project.pk
 

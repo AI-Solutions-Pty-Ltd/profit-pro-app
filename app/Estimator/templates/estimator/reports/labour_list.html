@@ -148,10 +148,15 @@
                 {% if report_rows %}
                     <tfoot>
                         <tr class="border-t-2 border-gray-300 bg-gray-50 font-semibold">
-                            <td class="px-3 py-2 text-gray-900" colspan="5">Grand Total</td>
+                            <td class="px-3 py-2 text-gray-900" colspan="2">Grand Total</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-gray-900">{{ total_no_of_crews }}</td>
+                            <td class="px-3 py-2"></td>
+                            <td class="px-3 py-2 text-right tabular-nums text-gray-900">{{ total_quantity|qty }}</td>
                             <td class="px-3 py-2 text-right tabular-nums text-gray-900">{{ grand_total|currency }}</td>
                             <td class="px-3 py-2 text-right tabular-nums text-gray-600">100.0%</td>
-                            <td class="px-3 py-2" colspan="3"></td>
+                            <td class="px-3 py-2 text-right tabular-nums text-gray-600 border-l border-gray-100">{{ total_skilled }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-gray-600">{{ total_semi_skilled }}</td>
+                            <td class="px-3 py-2 text-right tabular-nums text-gray-600">{{ total_general }}</td>
                         </tr>
                     </tfoot>
                 {% endif %}
