@@ -2023,6 +2023,30 @@ class PlantSpecificationListView(_SimpleSpecCalculatorView):
     parent_template = "estimator/base_plant_estimator.html"
     title_noun = "Plant"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        for row in context["rows"]:
+            spec = row["spec"]
+            boq_qty = row["boq_qty"] or Decimal("0")
+            output = spec.daily_output if spec else Decimal("0")
+            totals = []
+            if spec:
+                for comp in spec.components.all():
+                    if comp.plant_type is None:
+                        continue
+                    if boq_qty and output and output > 0 and comp.hours:
+                        total_hours = boq_qty * comp.hours / output
+                    else:
+                        total_hours = Decimal("0")
+                    totals.append(
+                        {
+                            "name": comp.plant_type.name,
+                            "total_hours": total_hours,
+                        }
+                    )
+            row["component_totals"] = totals
+        return context
+
 
 class PreliminarySpecificationListView(_SimpleSpecCalculatorView):
     template_name = "estimator/preliminary_specification_list.html"
