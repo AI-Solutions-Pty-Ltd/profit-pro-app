@@ -91,22 +91,16 @@
             <table class="min-w-full text-xs whitespace-nowrap">
                 <thead>
                     <tr class="border-b border-gray-200">
-                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[160px]">
-                            Structure
-                        </th>
-                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[120px]">
-                            Bill No.
-                        </th>
-                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[200px]">
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[260px]">
                             Material List
                         </th>
                         <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[60px]">
                             Unit
                         </th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[100px]">
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[110px]">
                             Quantity
                         </th>
-                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50/50 w-[110px]">
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50/50 w-[120px]">
                             Wastage Qty
                         </th>
                         <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500 w-[120px]">
@@ -123,11 +117,7 @@
                 <tbody class="divide-y divide-gray-100">
                     {% for row in report_rows %}
                         <tr class="hover:bg-gray-50/50">
-                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[160px]"
-                                title="{{ row.section }}">{{ row.section }}</td>
-                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[120px]"
-                                title="{{ row.bill_no }}">{{ row.bill_no }}</td>
-                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[200px]"
+                            <td class="px-3 py-1.5 text-gray-700 truncate max-w-[260px]"
                                 title="{{ row.material_name }}">{{ row.material_name }}</td>
                             <td class="px-3 py-1.5 text-gray-500">{{ row.unit }}</td>
                             <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.quantity|qty }}</td>
@@ -138,14 +128,14 @@
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="9" class="px-3 py-8 text-center text-gray-500">No material data available for this report.</td>
+                            <td colspan="7" class="px-3 py-8 text-center text-gray-500">No material data available for this report.</td>
                         </tr>
                     {% endfor %}
                 </tbody>
                 {% if report_rows %}
                     <tfoot>
                         <tr class="border-t-2 border-gray-300 bg-gray-50 font-semibold">
-                            <td class="px-3 py-2 text-gray-900" colspan="7">Grand Total</td>
+                            <td class="px-3 py-2 text-gray-900" colspan="5">Grand Total</td>
                             <td class="px-3 py-2 text-right tabular-nums text-gray-900">{{ grand_total|currency }}</td>
                             <td class="px-3 py-2 text-right tabular-nums text-gray-600">100.0%</td>
                         </tr>

@@ -1187,61 +1187,70 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
             context["toggle_active"] = "spec"
 
         grand_total = Decimal("0")
-        report_rows = []
+        aggregated: dict[tuple, dict] = {}
+        section_totals: dict[str, Decimal] = {}
 
         for item in context["items"]:
             raw_quantity = getattr(item, qty_field) or Decimal("0")
+            if not raw_quantity:
+                continue
+            wastage_quantity = raw_quantity * item._wastage_factor
             if rate_type == "contract":
                 rate = item.contract_rate
-                quantity = raw_quantity
-                wastage_quantity = None
-                amount = rate * quantity if rate and quantity else None
+                amount = rate * raw_quantity if rate else None
             else:
                 rate = item.new_materials_rate
-                quantity = raw_quantity
-                wastage_quantity = raw_quantity * item._wastage_factor
-                amount = (
-                    wastage_quantity * rate if rate and wastage_quantity else None
-                )
+                amount = wastage_quantity * rate if rate else None
 
-            material_name = ""
-            unit = item.unit
             if item.specification:
+                key = ("spec", item.specification_id)
                 material_name = item.specification.name
+                unit = item.unit
             elif item.material:
+                key = ("mat", item.material_id)
                 material_name = item.material.material_code
                 unit = item.material.unit
+            else:
+                continue
 
-            if amount:
-                grand_total += amount
-
-            report_rows.append(
+            row = aggregated.setdefault(
+                key,
                 {
-                    "section": item.section,
-                    "bill_no": item.bill_no,
                     "material_name": material_name,
                     "unit": unit,
-                    "quantity": quantity if quantity else None,
-                    "wastage_quantity": wastage_quantity if wastage_quantity else None,
-                    "rate": rate,
-                    "amount": amount,
-                }
+                    "quantity": Decimal("0"),
+                    "wastage_quantity": Decimal("0"),
+                    "amount": Decimal("0"),
+                },
             )
+            row["quantity"] += raw_quantity
+            row["wastage_quantity"] += wastage_quantity
+            if amount:
+                row["amount"] += amount
+                grand_total += amount
+                s = item.section or "Unassigned"
+                section_totals[s] = section_totals.get(s, Decimal("0")) + amount
 
-        # Add pct_of_total
+        report_rows = []
+        for row in aggregated.values():
+            qty_for_rate = (
+                row["wastage_quantity"] if rate_type != "contract" else row["quantity"]
+            )
+            row["rate"] = (
+                row["amount"] / qty_for_rate if qty_for_rate else None
+            )
+            report_rows.append(row)
+        report_rows.sort(key=lambda r: r["amount"], reverse=True)
+
         for row in report_rows:
             row["pct_of_total"] = calculate_pct_of_total(row["amount"], grand_total)
 
         context["report_rows"] = report_rows
         context["grand_total"] = grand_total
 
-        # Chart data: cost by section
-        section_totals = {}
-        material_totals = {}
+        material_totals: dict[str, Decimal] = {}
         for row in report_rows:
             if row["amount"]:
-                s = row["section"] or "Unassigned"
-                section_totals[s] = section_totals.get(s, Decimal("0")) + row["amount"]
                 m = row["material_name"] or "Unknown"
                 material_totals[m] = (
                     material_totals.get(m, Decimal("0")) + row["amount"]
@@ -1361,36 +1370,48 @@ class LabourListReportView(ProjectEstimatorMixin, ListView):
             context["toggle_active"] = "spec"
 
         grand_total = Decimal("0")
-        report_rows = []
+        aggregated: dict[int, dict] = {}
 
         for item in context["items"]:
             ls = item.labour_specification
-            crew = ls.crew if ls else None
+            if ls is None:
+                continue
+            crew = ls.crew
             quantity = getattr(item, qty_field) or Decimal("0")
+            if not quantity:
+                continue
             if rate_type == "contract":
                 rate = item.contract_rate
-                amount = rate * quantity if rate and quantity else None
+                amount = rate * quantity if rate else None
             else:
                 rate = item.new_labour_rate
-                amount = quantity * rate if rate and quantity else None
+                amount = quantity * rate if rate else None
 
-            if amount:
-                grand_total += amount
-
-            report_rows.append(
+            row = aggregated.setdefault(
+                ls.pk,
                 {
-                    "section": item.section,
-                    "bill_no": item.bill_no,
+                    "spec_name": ls.name,
                     "crew_type": crew.crew_type if crew else "-",
                     "no_of_crews": 1,
-                    "crew_rate_per_unit": rate,
-                    "quantity": quantity if quantity else None,
-                    "amount": amount,
+                    "quantity": Decimal("0"),
+                    "amount": Decimal("0"),
                     "skilled": crew.skilled if crew else 0,
                     "semi_skilled": crew.semi_skilled if crew else 0,
                     "general": crew.general if crew else 0,
-                }
+                },
             )
+            row["quantity"] += quantity
+            if amount:
+                row["amount"] += amount
+                grand_total += amount
+
+        report_rows = []
+        for row in aggregated.values():
+            row["crew_rate_per_unit"] = (
+                row["amount"] / row["quantity"] if row["quantity"] else None
+            )
+            report_rows.append(row)
+        report_rows.sort(key=lambda r: r["amount"], reverse=True)
 
         for row in report_rows:
             row["pct_of_total"] = calculate_pct_of_total(row["amount"], grand_total)
@@ -1524,40 +1545,55 @@ class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
             context["toggle_active"] = "spec"
 
         grand_total = Decimal("0")
-        report_rows = []
+        aggregated: dict[int, dict] = {}
+        section_totals: dict[str, Decimal] = {}
+
         for item in context["items"]:
             spec = getattr(item, self.spec_field)
+            if spec is None:
+                continue
             quantity = getattr(item, qty_field) or Decimal("0")
+            if not quantity:
+                continue
             if rate_type == "contract":
                 rate = item.contract_rate
             else:
-                rate = getattr(spec, self.spec_rate_attr) if spec else None
-            amount = rate * quantity if rate and quantity else None
-            if amount:
-                grand_total += amount
-            report_rows.append(
+                rate = getattr(spec, self.spec_rate_attr)
+            amount = rate * quantity if rate else None
+
+            row = aggregated.setdefault(
+                spec.pk,
                 {
-                    "section": item.section,
-                    "bill_no": item.bill_no,
-                    "material_name": spec.name if spec else "",
+                    "material_name": spec.name,
                     "unit": item.unit,
-                    "quantity": quantity if quantity else None,
-                    "rate": rate,
-                    "amount": amount,
-                }
+                    "quantity": Decimal("0"),
+                    "amount": Decimal("0"),
+                },
             )
+            row["quantity"] += quantity
+            if amount:
+                row["amount"] += amount
+                grand_total += amount
+                s = item.section or "Unassigned"
+                section_totals[s] = section_totals.get(s, Decimal("0")) + amount
+
+        report_rows = []
+        for row in aggregated.values():
+            row["rate"] = (
+                row["amount"] / row["quantity"] if row["quantity"] else None
+            )
+            report_rows.append(row)
+        report_rows.sort(key=lambda r: r["amount"], reverse=True)
+
         for row in report_rows:
             row["pct_of_total"] = calculate_pct_of_total(row["amount"], grand_total)
 
         context["report_rows"] = report_rows
         context["grand_total"] = grand_total
 
-        section_totals = {}
-        name_totals = {}
+        name_totals: dict[str, Decimal] = {}
         for row in report_rows:
             if row["amount"]:
-                s = row["section"] or "Unassigned"
-                section_totals[s] = section_totals.get(s, Decimal("0")) + row["amount"]
                 m = row["material_name"] or "Unknown"
                 name_totals[m] = name_totals.get(m, Decimal("0")) + row["amount"]
 
