@@ -471,6 +471,16 @@ class ProductionPlan(BaseModel):
             or 0
         )
 
+    @property
+    def progress_percentage(self):
+        """Calculates total progress percentage based on actual entries vs quantity."""
+        actual_produced = (
+            self.daily_entries.aggregate(total=models.Sum("quantity"))["total"] or 0
+        )
+        if self.quantity > 0:
+            return min(100, round((actual_produced / self.quantity) * 100, 1))
+        return 0
+
 
 class PlanDependency(BaseModel):
     """Tracks finish-to-start dependencies between production plans."""
