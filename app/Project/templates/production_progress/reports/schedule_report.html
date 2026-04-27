@@ -1,176 +1,171 @@
 {% extends "base.html" %}
 {% load static %}
 {% load heroicons %}
-
-{% block title %}Schedule Report - {{ project.name }}{% endblock title %}
-
+{% block title %}
+    Schedule Report - {{ project.name }}
+{% endblock title %}
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Header -->
-    <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Production Schedule Report</h1>
-            <p class="text-sm text-gray-500">Live visual timeline combining project plan with current performance forecasts.</p>
-        </div>
-        <div class="flex items-center gap-3">
-             <a href="{% if company %}{% url 'project:company-management' company.pk %}{% else %}{% url 'project:company-management' project.pk %}{% endif %}" 
-               class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md ring-1 ring-inset ring-gray-300 hover:bg-gray-50 shadow-sm transition-all">
-                {% heroicon_outline "chevron-left" class="mr-2 w-4 h-4" %}
-                Back to Management
-            </a>
-        </div>
-    </div>
-    
-    <!-- Timeline & Completion Summary -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
-            <div class="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
-                {% heroicon_outline "calendar" class="w-6 h-6" %}
-            </div>
+    <div class="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="flex flex-col gap-4 mb-8 md:flex-row md:items-center md:justify-between">
             <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Est. Completion</p>
-                <p class="text-lg font-black text-gray-900">{{ summary.forecast_completion_date|date:"d M Y"|default:"TBD" }}</p>
-            </div>
-        </div>
-        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
-            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
-                {% heroicon_outline "check-badge" class="w-6 h-6" %}
-            </div>
-            <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Current Progress</p>
-                <p class="text-lg font-black text-gray-900">{{ summary.overall_progress_pct }}%</p>
-            </div>
-        </div>
-        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
-            <div class="p-3 bg-amber-50 text-amber-600 rounded-lg">
-                {% heroicon_outline "clock" class="w-6 h-6" %}
-            </div>
-            <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Days Variance</p>
-                <p class="text-lg font-black {% if summary.days_behind > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
-                    {{ summary.days_behind|stringformat:"+d"|default:"0" }}d
-                </p>
-            </div>
-        </div>
-        <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
-            <div class="p-3 bg-sky-50 text-sky-600 rounded-lg">
-                {% heroicon_outline "presentation-chart-line" class="w-6 h-6" %}
-            </div>
-            <div>
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">PPI (Schedule Index)</p>
-                <p class="text-lg font-black text-gray-900">{{ summary.ppi|floatformat:2|default:"1.00" }}</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Navigation Tabs -->
-    {% include "company/reports_nav.html" %}
-
-    <div class="mt-8">
-        {% if plans %}
-            <!-- Gantt Chart Container -->
-            <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                <!-- Legend & Controls -->
-                <div class="px-5 py-3 bg-gray-50/50 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
-                    <div class="flex flex-wrap gap-4 items-center">
-                        <div class="flex items-center space-x-1.5">
-                            <div class="w-3 h-3 bg-indigo-500 rounded-sm"></div>
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Summary</span>
-                        </div>
-                        <div class="flex items-center space-x-1.5">
-                            <div class="w-3 h-3 bg-sky-400 rounded-sm"></div>
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Planned</span>
-                        </div>
-                        <div class="flex items-center space-x-1.5">
-                            <div class="w-3 h-3 bg-emerald-500 rounded-sm"></div>
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Active</span>
-                        </div>
-                        <div class="flex items-center space-x-1.5">
-                             <div class="w-3 h-3 bg-rose-400 rounded-sm"></div>
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Delayed (Forecast)</span>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-4">
-                        <!-- Zoom controls -->
-                        <div class="flex items-center p-1 bg-white rounded-lg border border-gray-200 shadow-sm">
-                            <button type="button" id="zoom-out-btn" class="p-1.5 text-gray-500 hover:bg-gray-50 rounded-md">
-                                {% heroicon_outline "minus" class="w-4 h-4" %}
-                            </button>
-                            <span id="zoom-label" class="px-3 text-[10px] font-bold uppercase tracking-widest text-gray-600">Day</span>
-                            <button type="button" id="zoom-in-btn" class="p-1.5 text-gray-500 hover:bg-gray-50 rounded-md">
-                                {% heroicon_outline "plus" class="w-4 h-4" %}
-                            </button>
-                        </div>
-                        
-                        <!-- Hierarchy Controls -->
-                        <div class="flex items-center p-1 bg-white rounded-lg border border-gray-200 shadow-sm">
-                            <button type="button" id="expand-all-btn" title="Expand All" class="p-1.5 text-gray-500 hover:bg-gray-50 rounded-md">
-                                {% heroicon_outline "arrows-pointing-out" class="w-4 h-4" %}
-                            </button>
-                            <button type="button" id="collapse-all-btn" title="Collapse All" class="p-1.5 text-gray-500 hover:bg-gray-50 rounded-md">
-                                {% heroicon_outline "arrows-pointing-in" class="w-4 h-4" %}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Gantt body: left label pane + right chart pane -->
-                <div class="flex overflow-hidden" id="gantt-wrapper">
-                    <!-- Label Column (fixed width, sticky-like via container flex) -->
-                    <div class="z-10 flex-shrink-0 w-80 bg-white border-r border-gray-100 flex flex-col" id="gantt-labels-container">
-                        <div class="h-[52px] border-b border-gray-100 flex items-center px-4 bg-gray-50/30">
-                            <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Production Activity</h3>
-                        </div>
-                        <div id="gantt-label-rows" class="overflow-hidden"></div>
-                    </div>
-                    
-                    <!-- Chart Area -->
-                    <div class="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-300" id="gantt-chart-scroll">
-                        <canvas id="gantt-canvas" class="block"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tooltip -->
-            <div id="gantt-tooltip" class="hidden fixed z-50 px-4 py-3 max-w-xs bg-white/95 backdrop-blur-md border border-gray-100 rounded-xl shadow-2xl pointer-events-none transition-opacity duration-200">
-                <div id="tooltip-title" class="mb-1 text-sm font-bold text-gray-900"></div>
-                <div class="space-y-1">
-                    <div class="flex justify-between gap-4">
-                        <span class="text-[9px] font-bold uppercase tracking-widest text-gray-400">Planned</span>
-                        <span id="tooltip-dates" class="text-[10px] font-mono text-gray-600"></span>
-                    </div>
-                    <div id="forecast-row" class="flex justify-between gap-4">
-                        <span class="text-[9px] font-bold uppercase tracking-widest text-rose-500">Forecast</span>
-                        <span id="tooltip-forecast" class="text-[10px] font-mono text-rose-600"></span>
-                    </div>
-                    <div class="flex justify-between gap-4">
-                        <span class="text-[9px] font-bold uppercase tracking-widest text-gray-400">Progress</span>
-                        <span id="tooltip-progress" class="text-[10px] font-bold text-indigo-600"></span>
-                    </div>
-                </div>
-            </div>
-        {% else %}
-            <div class="p-12 text-center bg-white rounded-xl border border-gray-100 shadow-sm">
-                <div class="flex justify-center items-center mx-auto mb-4 w-20 h-20 text-indigo-100 bg-indigo-50 rounded-full">
-                    {% heroicon_outline "calendar-days" class="w-10 h-10 text-indigo-600" %}
-                </div>
-                <h3 class="text-xl font-bold text-gray-900">No active schedule found</h3>
-                <p class="mx-auto mt-2 max-w-sm text-sm text-gray-500">
-                    Ensure your production activities have start and finish dates set in the planning section.
-                </p>
-                <a href="{% url 'project:production-planning' project.pk %}"
-                   class="inline-flex items-center px-6 py-3 mt-8 text-sm font-bold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-500 transition-all">
-                    Go to Production Planning
+                <a href="{% if company %}{% url 'project:company-management' company.pk %}{% else %}{% url 'project:company-management' project.pk %}{% endif %}"
+                   class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ransition-all hover:bg-gray-50">
+                    {% heroicon_outline "chevron-left" class="mr-2 w-4 h-4" %}
+                    Back to Management
                 </a>
+                <h1 class="text-2xl font-bold tracking-tight text-gray-900">Production Schedule Report</h1>
+                <p class="text-sm text-gray-500">Live visual timeline combining project plan with current performance forecasts.</p>
             </div>
-        {% endif %}
+        </div>
+        <!-- Timeline & Completion Summary -->
+        <div class="grid grid-cols-1 gap-4 mb-8 md:grid-cols-2 lg:grid-cols-4">
+            <div class="flex gap-4 items-center p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+                <div class="p-3 text-indigo-600 bg-indigo-50 rounded-lg">{% heroicon_outline "calendar" class="w-6 h-6" %}</div>
+                <div>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Est. Completion</p>
+                    <p class="text-lg font-black text-gray-900">{{ summary.forecast_completion_date|date:"d M Y"|default:"TBD" }}</p>
+                </div>
+            </div>
+            <div class="flex gap-4 items-center p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+                <div class="p-3 text-emerald-600 bg-emerald-50 rounded-lg">{% heroicon_outline "check-badge" class="w-6 h-6" %}</div>
+                <div>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Current Progress</p>
+                    <p class="text-lg font-black text-gray-900">{{ summary.overall_progress_pct }}%</p>
+                </div>
+            </div>
+            <div class="flex gap-4 items-center p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+                <div class="p-3 text-amber-600 bg-amber-50 rounded-lg">{% heroicon_outline "clock" class="w-6 h-6" %}</div>
+                <div>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Days Variance</p>
+                    <p class="text-lg font-black {% if summary.days_behind > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                        {{ summary.days_behind|stringformat:"+d"|default:"0" }}d
+                    </p>
+                </div>
+            </div>
+            <div class="flex gap-4 items-center p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+                <div class="p-3 text-sky-600 bg-sky-50 rounded-lg">
+                    {% heroicon_outline "presentation-chart-line" class="w-6 h-6" %}
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">PPI (Schedule Index)</p>
+                    <p class="text-lg font-black text-gray-900">{{ summary.ppi|floatformat:2|default:"1.00" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="mt-8">
+            {% if plans %}
+                <!-- Gantt Chart Container -->
+                <div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm">
+                    <!-- Legend & Controls -->
+                    <div class="flex flex-wrap gap-4 justify-between items-center px-5 py-3 border-b border-gray-100 bg-gray-50/50">
+                        <div class="flex flex-wrap gap-4 items-center">
+                            <div class="flex items-center space-x-1.5">
+                                <div class="w-3 h-3 bg-indigo-500 rounded-sm"></div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Summary</span>
+                            </div>
+                            <div class="flex items-center space-x-1.5">
+                                <div class="w-3 h-3 bg-sky-400 rounded-sm"></div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Planned</span>
+                            </div>
+                            <div class="flex items-center space-x-1.5">
+                                <div class="w-3 h-3 bg-emerald-500 rounded-sm"></div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Active</span>
+                            </div>
+                            <div class="flex items-center space-x-1.5">
+                                <div class="w-3 h-3 bg-rose-400 rounded-sm"></div>
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Delayed (Forecast)</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 items-center">
+                            <!-- Zoom controls -->
+                            <div class="flex items-center p-1 bg-white rounded-lg border border-gray-200 shadow-sm">
+                                <button type="button"
+                                        id="zoom-out-btn"
+                                        class="p-1.5 text-gray-500 rounded-md hover:bg-gray-50">
+                                    {% heroicon_outline "minus" class="w-4 h-4" %}
+                                </button>
+                                <span id="zoom-label"
+                                      class="px-3 text-[10px] font-bold uppercase tracking-widest text-gray-600">Day</span>
+                                <button type="button"
+                                        id="zoom-in-btn"
+                                        class="p-1.5 text-gray-500 rounded-md hover:bg-gray-50">
+                                    {% heroicon_outline "plus" class="w-4 h-4" %}
+                                </button>
+                            </div>
+                            <!-- Hierarchy Controls -->
+                            <div class="flex items-center p-1 bg-white rounded-lg border border-gray-200 shadow-sm">
+                                <button type="button"
+                                        id="expand-all-btn"
+                                        title="Expand All"
+                                        class="p-1.5 text-gray-500 rounded-md hover:bg-gray-50">
+                                    {% heroicon_outline "arrows-pointing-out" class="w-4 h-4" %}
+                                </button>
+                                <button type="button"
+                                        id="collapse-all-btn"
+                                        title="Collapse All"
+                                        class="p-1.5 text-gray-500 rounded-md hover:bg-gray-50">
+                                    {% heroicon_outline "arrows-pointing-in" class="w-4 h-4" %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Gantt body: left label pane + right chart pane -->
+                    <div class="flex overflow-hidden" id="gantt-wrapper">
+                        <!-- Label Column (fixed width, sticky-like via container flex) -->
+                        <div class="flex z-10 flex-col flex-shrink-0 w-80 bg-white border-r border-gray-100"
+                             id="gantt-labels-container">
+                            <div class="h-[52px] border-b border-gray-100 flex items-center px-4 bg-gray-50/30">
+                                <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Production Activity</h3>
+                            </div>
+                            <div id="gantt-label-rows" class="overflow-hidden"></div>
+                        </div>
+                        <!-- Chart Area -->
+                        <div class="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-300"
+                             id="gantt-chart-scroll">
+                            <canvas id="gantt-canvas" class="block"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <!-- Tooltip -->
+                <div id="gantt-tooltip"
+                     class="hidden fixed z-50 px-4 py-3 max-w-xs rounded-xl border border-gray-100 shadow-2xl backdrop-blur-md transition-opacity duration-200 pointer-events-none bg-white/95">
+                    <div id="tooltip-title" class="mb-1 text-sm font-bold text-gray-900"></div>
+                    <div class="space-y-1">
+                        <div class="flex gap-4 justify-between">
+                            <span class="text-[9px] font-bold uppercase tracking-widest text-gray-400">Planned</span>
+                            <span id="tooltip-dates" class="text-[10px] font-mono text-gray-600"></span>
+                        </div>
+                        <div id="forecast-row" class="flex gap-4 justify-between">
+                            <span class="text-[9px] font-bold uppercase tracking-widest text-rose-500">Forecast</span>
+                            <span id="tooltip-forecast" class="text-[10px] font-mono text-rose-600"></span>
+                        </div>
+                        <div class="flex gap-4 justify-between">
+                            <span class="text-[9px] font-bold uppercase tracking-widest text-gray-400">Progress</span>
+                            <span id="tooltip-progress" class="text-[10px] font-bold text-indigo-600"></span>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="p-12 text-center bg-white rounded-xl border border-gray-100 shadow-sm">
+                    <div class="flex justify-center items-center mx-auto mb-4 w-20 h-20 text-indigo-100 bg-indigo-50 rounded-full">
+                        {% heroicon_outline "calendar-days" class="w-10 h-10 text-indigo-600" %}
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900">No active schedule found</h3>
+                    <p class="mx-auto mt-2 max-w-sm text-sm text-gray-500">
+                        Ensure your production activities have start and finish dates set in the planning section.
+                    </p>
+                    <a href="{% url 'project:production-planning' project.pk %}"
+                       class="inline-flex items-center px-6 py-3 mt-8 text-sm font-bold text-white bg-indigo-600 rounded-lg shadow-sm transition-all hover:bg-indigo-500">
+                        Go to Production Planning
+                    </a>
+                </div>
+            {% endif %}
+        </div>
     </div>
-</div>
 {% endblock content %}
-
 {% block extra_js %}
-<script>
+    <script>
 // ── Data from Django ──────────────────────────────────────────────────────────
 const GANTT_DATA = {{ gantt_data_json|safe }};
 
@@ -518,5 +513,5 @@ if (GANTT_DATA.length && canvas) {
     window.addEventListener('resize', render);
     document.getElementById('zoom-label').textContent = ZOOM_LEVELS[zoomIdx].label;
 }
-</script>
+    </script>
 {% endblock extra_js %}
