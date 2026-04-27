@@ -79,3 +79,25 @@ class ProjectDiscipline(BaseModel):
         verbose_name = "Project Discipline"
         verbose_name_plural = "Project Disciplines"
         ordering = ["name"]
+
+
+class ProjectStage(BaseModel):
+    """Stage for classifying a project lifecycle stage."""
+
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Project stage name (e.g., Planning, Design, Construction)",
+    )
+    description = models.TextField(
+        blank=True,
+        help_text="Optional description of the stage",
+    )
+
+    def __str__(self) -> str:
+        return self.name
+
+    class Meta:
+        verbose_name = "Project Stage"
+        verbose_name_plural = "Project Stages"
+        ordering = ["name"]

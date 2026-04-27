@@ -20,6 +20,7 @@ class BasicProjectCreateForm(forms.ModelForm):
             "project_category",
             "area",
             "project_discipline",
+            "project_stage",
         ]
         widgets = {
             "name": forms.TextInput(
@@ -42,6 +43,7 @@ class ProjectForm(forms.ModelForm):
             "project_category",
             "area",
             "project_discipline",
+            "project_stage",
             "start_date",
             "end_date",
             "contract_number",
@@ -96,7 +98,8 @@ class ProjectForm(forms.ModelForm):
             "name": "Project Name",
             "logo": "Project Logo",
             "project_category": "Sector",
-            "area": "Area",
+            "area": "Municipality",
+            "project_stage": "Project Stage",
             "contract_number": "Payment Certificate Contract Number",
             "contract_clause": "Payment Certificate Contract Clause",
             "bank_account_name": "Account Name",
@@ -109,6 +112,7 @@ class ProjectForm(forms.ModelForm):
             "logo": "Upload a logo for invoices and documents (JPG, PNG, GIF, SVG). Recommended size: 900x600px",
             "project_category": "Select the project sector",
             "area": "Select the project area (Municipality)",
+            "project_stage": "Select the project stage",
         }
 
     def clean(self):
