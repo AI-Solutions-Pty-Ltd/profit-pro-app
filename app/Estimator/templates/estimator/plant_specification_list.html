@@ -63,6 +63,9 @@
                             Rate / Unit
                         </th>
                         <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">BoQ Qty</th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                            Plant &amp; Hours (BoQ Qty)
+                        </th>
                         <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">Amount</th>
                     </tr>
                 </thead>
@@ -85,11 +88,21 @@
                             <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.spec.daily_cost|currency }}</td>
                             <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.rate|currency }}</td>
                             <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.boq_qty|qty }}</td>
+                            <td class="px-3 py-1.5 text-gray-600">
+                                {% for comp in row.component_totals %}
+                                    <div class="flex justify-between text-xs{% if not forloop.last %} mb-1{% endif %}">
+                                        <span class="text-gray-500">{{ comp.name }}:</span>
+                                        <span class="tabular-nums">{{ comp.total_hours|qty }}h</span>
+                                    </div>
+                                {% empty %}
+                                    —
+                                {% endfor %}
+                            </td>
                             <td class="px-3 py-1.5 text-right tabular-nums text-gray-900 font-medium">{{ row.amount|currency }}</td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="9" class="px-3 py-8 text-center text-gray-500">
+                            <td colspan="10" class="px-3 py-8 text-center text-gray-500">
                                 No plant specifications assigned to Output BoQ items yet.
                             </td>
                         </tr>
