@@ -128,7 +128,9 @@ class ProductionPlanGanttView(
                     current_rate = float(plan.daily_rate) * float(ppi)
                     if current_rate > 0:
                         days_left = int(float(remaining_qty) / current_rate)
-                        forecast_finish_date = today + timezone.timedelta(days=days_left)
+                        forecast_finish_date = today + timezone.timedelta(
+                            days=days_left
+                        )
 
             predecessor_ids = [dep.predecessor_id for dep in plan.predecessors.all()]
             predecessor_names = [
@@ -458,12 +460,22 @@ class ProductionPlanAutofillView(SubscriptionRequiredMixin, LoginRequiredMixin, 
             unit = sample_item.unit if sample_item else ""
             daily_rate = spec_rate_map.get(item["labour_specification"], 0)
 
+            # Get the labour specification name
+            labour_spec_name = ""
+            if item["labour_specification"]:
+                labour_spec = ProjectLabourSpecification.objects.filter(
+                    id=item["labour_specification"]
+                ).first()
+                if labour_spec:
+                    labour_spec_name = labour_spec.name
+
             # Create the ProductionPlan
             # Note: Save() will trigger _ensure_hierarchy() to build the tree automatically
             ProductionPlan.objects.create(
                 project=project,
                 section=item["section"],
                 bill_no=item["bill_no"],
+                activity=labour_spec_name,
                 labour_activity_id=item["labour_specification"],
                 quantity=item["total_quantity"] or 0,
                 unit=unit,
