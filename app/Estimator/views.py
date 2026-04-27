@@ -3281,6 +3281,9 @@ class PreliminarySpecDefListView(ProjectEstimatorMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", PreliminarySpecificationForm())
+        context["preliminary_type_choices"] = (
+            SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -3325,7 +3328,7 @@ class UpdatePreliminarySpecView(View):
         "trade_name": "str",
         "name": "str",
         "unit": "str",
-        "amount": "decimal",
+        "preliminary_type": "str",
     }
 
     def post(self, request, project_pk, pk):
@@ -3353,7 +3356,7 @@ class UpdatePreliminarySpecView(View):
             return JsonResponse({"error": "Invalid value"}, status=400)
 
         item.save()
-        return JsonResponse({"ok": True})
+        return JsonResponse({"ok": True, "amount": str(item.amount)})
 
 
 # ── Upload / Download Template Views ──────────────────────────────
@@ -4011,7 +4014,7 @@ class PreliminarySpecUploadView(ProjectEstimatorMixin, FormView):
 class DownloadPreliminarySpecTemplateView(View):
     def get(self, request, project_pk):
         return _generate_template(
-            ["Section", "Trade Name", "Name", "Unit", "Amount"],
+            ["Section", "Trade Name", "Name", "Unit", "Preliminary Type"],
             "PreliminarySpec_Template.xlsx",
         )
 
@@ -4982,6 +4985,9 @@ class SystemPreliminarySpecListView(SystemLibraryMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", SystemPreliminarySpecificationForm())
+        context["preliminary_type_choices"] = (
+            SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -5000,7 +5006,7 @@ class UpdateSystemPreliminarySpecView(SystemLibraryMixin, View):
         "trade_name": "str",
         "name": "str",
         "unit": "str",
-        "amount": "decimal",
+        "preliminary_type": "str",
     }
 
     def post(self, request, pk):
@@ -5026,7 +5032,7 @@ class UpdateSystemPreliminarySpecView(SystemLibraryMixin, View):
             return JsonResponse({"error": "Invalid value"}, status=400)
 
         item.save()
-        return JsonResponse({"ok": True})
+        return JsonResponse({"ok": True, "amount": str(item.amount)})
 
 
 class SystemPreliminarySpecUploadView(SystemLibraryMixin, FormView):
@@ -5057,6 +5063,6 @@ class SystemPreliminarySpecUploadView(SystemLibraryMixin, FormView):
 class DownloadSystemPreliminarySpecTemplateView(SystemLibraryMixin, View):
     def get(self, request):
         return _generate_template(
-            ["Section", "Trade Name", "Name", "Unit", "Amount"],
+            ["Section", "Trade Name", "Name", "Unit", "Preliminary Type"],
             "system_preliminary_specs_template.xlsx",
         )

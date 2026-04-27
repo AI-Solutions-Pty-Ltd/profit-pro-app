@@ -371,7 +371,11 @@ class SystemPreliminarySpecification(models.Model):
     trade_name = models.CharField(max_length=200, blank=True)
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
-    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    preliminary_type = models.CharField(
+        max_length=30,
+        choices=SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES,
+        blank=True,
+    )
 
     class Meta:
         ordering = ["section", "name"]
@@ -379,6 +383,17 @@ class SystemPreliminarySpecification(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def amount(self):
+        if not self.preliminary_type:
+            return Decimal("0")
+        total = Decimal("0")
+        for cost in SystemPreliminaryCost.objects.filter(
+            preliminary_type=self.preliminary_type
+        ):
+            total += cost.computed_amount
+        return total
 
 
 class SystemMaterialSpec(models.Model):
@@ -896,7 +911,11 @@ class ProjectPreliminarySpecification(models.Model):
     trade_name = models.CharField(max_length=200, blank=True)
     name = models.CharField(max_length=200)
     unit = models.CharField(max_length=20, blank=True)
-    amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    preliminary_type = models.CharField(
+        max_length=30,
+        choices=SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES,
+        blank=True,
+    )
 
     class Meta:
         ordering = ["section", "name"]
@@ -905,6 +924,18 @@ class ProjectPreliminarySpecification(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def amount(self):
+        if not self.preliminary_type:
+            return Decimal("0")
+        total = Decimal("0")
+        for cost in ProjectPreliminaryCost.objects.filter(
+            project_id=self.project_id,
+            preliminary_type=self.preliminary_type,
+        ):
+            total += cost.computed_amount
+        return total
 
 
 # ═══════════════════════════════════════════════════════════════════
