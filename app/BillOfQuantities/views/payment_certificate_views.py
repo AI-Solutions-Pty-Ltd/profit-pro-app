@@ -91,10 +91,18 @@ class LineItemDetailMixin:
     def get_context_data(self: "LineItemDetailMixin", **kwargs):
         context = super().get_context_data(**kwargs)  # type: ignore
         context["project"] = self.get_project()  # type: ignore
-        all_line_items = LineItem.abridged_payment_certificate(self.object)  # type: ignore
-        line_items = all_line_items.filter(special_item=False, addendum=False)
-        special_line_items = all_line_items.filter(special_item=True, addendum=False)
-        addendum_line_items = all_line_items.filter(addendum=True, special_item=False)
+
+        abridged_line_items = LineItem.abridged_payment_certificate(self.object)  # type: ignore
+        line_items = abridged_line_items.filter(special_item=False, addendum=False)
+        addendum_line_items = abridged_line_items.filter(
+            addendum=True, special_item=False
+        )
+
+        special_line_items = LineItem.construct_payment_certificate(self.object).filter(  # type: ignore
+            special_item=True,
+            addendum=False,
+        )
+
         context["grouped_line_items"] = group_line_items_by_hierarchy(line_items)
         context["special_line_items"] = special_line_items
         context["addendum_line_items"] = group_line_items_by_hierarchy(
