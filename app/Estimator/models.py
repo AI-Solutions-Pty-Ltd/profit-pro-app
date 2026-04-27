@@ -579,20 +579,24 @@ class ProjectSpecification(models.Model):
 
     @property
     def baseline_boq_quantity(self):
+        if hasattr(self, "_baseline_boq_qty"):
+            return self._baseline_boq_qty or Decimal("0")
         total = self.boq_items.aggregate(total=models.Sum("contract_quantity"))["total"]
         return total or Decimal("0")
 
     def component_totals(self):
+        boq_qty = self.baseline_boq_quantity
         results = []
-        for sc in self.spec_components.select_related("material").all():
+        for sc in self.spec_components.all():
             results.append(
                 {
                     "id": sc.pk,
                     "label": sc.label,
                     "qty_per_unit": sc.qty_per_unit,
                     "material_id": sc.material_id,
+                    "material_code": sc.material.material_code if sc.material else "",
                     "total_quantity": calculate_total_quantity(
-                        self.baseline_boq_quantity, sc.qty_per_unit
+                        boq_qty, sc.qty_per_unit
                     ),
                     "unit": sc.material.unit if sc.material else "",
                 }

@@ -553,6 +553,7 @@ class MaterialSpecListView(ProjectEstimatorMixin, ListView):
             ProjectSpecification.objects.filter(project=project)
             .select_related("trade_code")
             .prefetch_related("spec_components__material")
+            .annotate(_baseline_boq_qty=models.Sum("boq_items__contract_quantity"))
         )
 
         section = self.request.GET.get("section")

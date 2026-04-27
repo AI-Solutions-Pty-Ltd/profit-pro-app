@@ -204,23 +204,16 @@
                                 <div class="space-y-1" data-components-list>
                                     {% for comp in spec.component_totals %}
                                         <div class="flex items-center gap-1" data-component-id="{{ comp.id }}">
-                                            <select class="mat-comp-edit w-36 rounded border-0 bg-transparent text-xs text-gray-700 p-0 pr-5 focus:ring-2 focus:ring-indigo-500"
+                                            <select class="mat-comp-edit mat-comp-material-select w-36 rounded border-0 bg-transparent text-xs text-gray-700 p-0 pr-5 focus:ring-2 focus:ring-indigo-500"
                                                     data-component-id="{{ comp.id }}"
-                                                    data-field="material">
-                                                <option value="">—</option>
-                                                {% for m in materials %}
-                                                    <option value="{{ m.id }}"
-                                                            {% if comp.material_id == m.id %}selected{% endif %}>
-                                                        {{ m.material_code }}
-                                                    </option>
-                                                {% endfor %}
+                                                    data-field="material"
+                                                    data-selected-id="{{ comp.material_id|default_if_none:'' }}">
+                                                {% if comp.material_id %}
+                                                    <option value="{{ comp.material_id }}" selected>{{ comp.material_code }}</option>
+                                                {% else %}
+                                                    <option value="" selected>—</option>
+                                                {% endif %}
                                             </select>
-                                            <input type="text"
-                                                   value="{{ comp.label }}"
-                                                   class="mat-comp-edit w-28 rounded border-0 bg-transparent text-xs text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500"
-                                                   data-component-id="{{ comp.id }}"
-                                                   data-field="label"
-                                                   placeholder="Label">
                                             <input type="number"
                                                    step="0.0001"
                                                    class="mat-comp-edit w-20 text-right rounded border-0 bg-transparent text-xs text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500"
@@ -317,6 +310,22 @@
         });
     }
 
+    function populateMaterialOptions(select) {
+        if (select.dataset.populated === '1') return;
+        const selectedId = select.dataset.selectedId || '';
+        select.innerHTML = materialOptions;
+        if (selectedId) {
+            const opt = select.querySelector(`option[value="${selectedId}"]`);
+            if (opt) opt.selected = true;
+        }
+        select.dataset.populated = '1';
+    }
+
+    document.querySelectorAll('.mat-comp-material-select').forEach(select => {
+        select.addEventListener('mousedown', () => populateMaterialOptions(select));
+        select.addEventListener('focus', () => populateMaterialOptions(select));
+    });
+
     document.querySelectorAll('.mat-comp-edit').forEach(bindComponentEdit);
     document.querySelectorAll('.mat-comp-delete').forEach(bindComponentDelete);
 
@@ -362,7 +371,6 @@
                     <select class="mat-comp-edit w-36 rounded border-0 bg-transparent text-xs text-gray-700 p-0 pr-5 focus:ring-2 focus:ring-indigo-500" data-component-id="${comp.id}" data-field="material">
                         ${materialOptions}
                     </select>
-                    <input type="text" value="${comp.label || ''}" class="mat-comp-edit w-28 rounded border-0 bg-transparent text-xs text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500" data-component-id="${comp.id}" data-field="label" placeholder="Label">
                     <input type="number" step="0.0001" value="${comp.qty_per_unit}" class="mat-comp-edit w-20 text-right rounded border-0 bg-transparent text-xs text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500" data-component-id="${comp.id}" data-field="qty_per_unit">
                     <span class="text-gray-400 text-[10px]">/ ${specUnit}</span>
                     <button type="button" class="mat-comp-delete text-gray-400 hover:text-red-500 ml-0.5" data-component-id="${comp.id}" title="Remove component">✕</button>
