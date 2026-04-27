@@ -99,6 +99,11 @@ urlpatterns = [
         name="performance-report",
     ),
     path(
+        "<int:project_pk>/productivity-report/",
+        views.ProductionProductivityReportView.as_view(),
+        name="productivity-report",
+    ),
+    path(
         "<int:project_pk>/plan/<int:pk>/data/",
         views.ProductionPlanAjaxDetailView.as_view(),
         name="production-plan-data-ajax",

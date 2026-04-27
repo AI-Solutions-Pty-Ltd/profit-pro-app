@@ -39,6 +39,7 @@ from .productivity_views import (
 from .reports_views import (
     ProductionForecastDashboardView,
     ProductionPerformanceReportView,
+    ProductionProductivityReportView,
     ProductivityLogsView,
 )
 from .tracking_views import ProgressTrackingView
@@ -77,5 +78,6 @@ __all__ = [
     "ProductionPlanAutofillView",
     "ProductionCashflowForecastView",
     "ProductionPerformanceReportView",
+    "ProductionProductivityReportView",
     "DailyActivityEntryUpdateView",
 ]
