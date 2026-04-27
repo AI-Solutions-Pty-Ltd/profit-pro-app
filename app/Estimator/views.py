@@ -2038,9 +2038,7 @@ class PlantSpecificationListView(_SimpleSpecCalculatorView):
                     if comp.plant_type is None:
                         continue
                     total_hours = (
-                        boq_qty * comp.hours
-                        if boq_qty and comp.hours
-                        else Decimal("0")
+                        boq_qty * comp.hours if boq_qty and comp.hours else Decimal("0")
                     )
                     totals.append(
                         {
