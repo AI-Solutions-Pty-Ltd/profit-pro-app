@@ -1,4 +1,4 @@
-{% extends "production_progress/base_production.html" %}
+{% extends "base.html" %}
 {% load static %}
 {% load heroicons %}
 {% load humanize %}
@@ -32,10 +32,21 @@
     }
     </style>
 {% endblock extra_css %}
-{% block production_content %}
-    <div>
-        <!-- Header & Selectors -->
-        <div class="flex flex-col gap-6 justify-between items-start mb-10 lg:flex-row lg:items-end">
+{% block content %}
+    <div class="pb-12 min-h-screen bg-gray-50">
+        <!-- Back Navigation -->
+        <div class="px-4 pt-6 mx-auto sm:px-6 lg:px-8">
+            <button onclick="window.history.back()"
+                    class="inline-flex items-center text-sm font-semibold text-gray-500 transition-all hover:text-indigo-600 group">
+                <div class="p-1.5 mr-2.5 bg-gray-100 rounded-lg transition-colors group-hover:bg-indigo-50">
+                    {% heroicon_outline "arrow-left" size="16" %}
+                </div>
+                Back to Management
+            </button>
+        </div>
+        <div class="px-4 py-8 sm:px-6 lg:px-8">
+            <!-- Header & Selectors -->
+            <div class="flex flex-col gap-6 justify-between items-start mb-10 lg:flex-row lg:items-end">
             <div class="max-w-2xl">
                 <h2 class="text-2xl font-bold tracking-tight text-gray-900">CashflowForecast</h2>
                 <p class="mt-3 max-w-md text-sm text-gray-600">
@@ -176,8 +187,32 @@
                 <canvas id="cashflowSCurve"></canvas>
             </div>
         </div>
+
+        <!-- Data Table Section -->
+        <div class="overflow-hidden p-8 mb-10 bg-white rounded-3xl border border-gray-100 shadow-sm">
+            <h3 class="mb-6 text-xl font-black tracking-tight leading-none text-gray-900 uppercase">Cashflow Breakdown</h3>
+            <div class="overflow-x-auto max-h-[calc(100vh-300px)] scrollbar-thin scrollbar-thumb-slate-300">
+                <table class="w-full text-sm text-left text-gray-600">
+                    <thead class="sticky top-0 z-30 bg-gray-50/95 backdrop-blur-sm border-b border-gray-200 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                        <tr>
+                            <th class="px-4 py-3">Month</th>
+                            <th class="px-4 py-3 text-right">Planned Expense</th>
+                            <th class="px-4 py-3 text-right">Actual Expense</th>
+                            <th class="px-4 py-3 text-right">Net Flow</th>
+                            <th class="px-4 py-3 text-right">Cumulative Planned</th>
+                            <th class="px-4 py-3 text-right">Cumulative Actual</th>
+                            <th class="px-4 py-3 text-right">Cumulative Forecast</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cashflowTableBody" class="divide-y divide-gray-50">
+                        <!-- Populated via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        </div>
     </div>
-{% endblock production_content %}
+{% endblock content %}
 {% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -354,6 +389,45 @@
                 chart.update();
             };
             legendContainer.appendChild(item);
+        });
+
+        // Populate Data Table
+        const tableBody = document.getElementById('cashflowTableBody');
+        const formatMoney = (val) => {
+            if (val === null || val === undefined) return '-';
+            return new Intl.NumberFormat('en-ZA', { 
+                style: 'currency', 
+                currency: 'ZAR', 
+                maximumFractionDigits: 0 
+            }).format(val);
+        };
+
+        data.labels.forEach((label, i) => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-indigo-50/30 transition-colors group/row';
+            
+            const plannedInc = data.planned_inc[i] || 0;
+            const actualInc = data.actual_inc[i];
+            const hasActual = actualInc !== null && actualInc !== undefined;
+            const netFlow = hasActual ? (plannedInc - actualInc) : 0;
+            const plannedCum = data.planned_cum[i] || 0;
+            const actualCum = data.actual_cum[i];
+            const forecastCum = data.forecast_cum[i];
+
+            tr.innerHTML = `
+                <td class="px-4 py-3 font-semibold text-gray-900">${label}</td>
+                <td class="px-4 py-3 font-mono tabular-nums text-right">${formatMoney(plannedInc)}</td>
+                <td class="px-4 py-3 font-mono tabular-nums text-right">${formatMoney(actualInc)}</td>
+                <td class="px-4 py-3 font-mono tabular-nums text-right">
+                    ${hasActual ? `<span class="${netFlow >= 0 ? 'text-emerald-600' : 'text-rose-600'}">
+                        ${netFlow > 0 ? '+' : ''}${formatMoney(netFlow)}
+                    </span>` : '-'}
+                </td>
+                <td class="px-4 py-3 font-mono tabular-nums text-right">${formatMoney(plannedCum)}</td>
+                <td class="px-4 py-3 font-mono tabular-nums text-right">${formatMoney(actualCum)}</td>
+                <td class="px-4 py-3 font-mono tabular-nums text-right">${formatMoney(forecastCum)}</td>
+            `;
+            tableBody.appendChild(tr);
         });
     });
     </script>
