@@ -165,8 +165,7 @@ class ProductionPlan(BaseModel):
             .values_list("plant_specification__components__plant_type__name", flat=True)
             .distinct()
         )
-
-        self.plant_types = sorted(types)
+        self.plant_types = sorted(t for t in types if t)
 
     def sync_parent_metrics(self):
         """
