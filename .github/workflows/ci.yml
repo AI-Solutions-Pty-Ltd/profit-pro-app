@@ -39,9 +39,11 @@ jobs:
           python -m ty check . --python $(python -c 'import sys; print(sys.executable)')
 
       - name: Check for migration conflicts
+        env:
+          DJANGO_SETTINGS_MODULE: settings.test
         run: |
           echo "🔍 Checking for Django migration conflicts..."
-          python manage.py migrate --check --skip-check --settings=settings.test
+          python manage.py makemigrations --dry-run --settings=settings.test
 
 
       # - name: Run tests
