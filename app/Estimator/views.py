@@ -438,7 +438,7 @@ class SpecificationListView(ProjectEstimatorMixin, TemplateView):
             spec = group["spec"]
             boq_qty = group["boq_qty"]
             component_totals = []
-            for sc in spec.spec_components.select_related("material").all():
+            for sc in spec.spec_components.all():
                 component_totals.append(
                     {
                         "id": sc.id,

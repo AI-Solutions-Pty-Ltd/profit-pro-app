@@ -239,13 +239,15 @@
                                        value="{{ ls.unit }}">
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
-                                <select class="inline-edit-ls border-0 bg-transparent text-xs text-gray-700 p-0 pr-6 focus:ring-2 focus:ring-indigo-500 rounded"
+                                <select class="inline-edit-ls ls-crew-select border-0 bg-transparent text-xs text-gray-700 p-0 pr-6 focus:ring-2 focus:ring-indigo-500 rounded"
                                         data-item-id="{{ ls.id }}"
-                                        data-field="crew">
-                                    <option value="">-</option>
-                                    {% for c in crews %}
-                                        <option value="{{ c.id }}" {% if ls.crew_id == c.id %}selected{% endif %}>{{ c.crew_type }}</option>
-                                    {% endfor %}
+                                        data-field="crew"
+                                        data-selected-id="{{ ls.crew_id|default_if_none:'' }}">
+                                    {% if ls.crew_id %}
+                                        <option value="{{ ls.crew_id }}" selected>{{ ls.crew.crew_type }}</option>
+                                    {% else %}
+                                        <option value="" selected>-</option>
+                                    {% endif %}
                                 </select>
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
@@ -301,36 +303,56 @@
         </div>
     </div>
     <script>
-document.querySelectorAll('.inline-edit-ls').forEach(input => {
-    let original = input.value;
-    input.addEventListener('focus', () => { original = input.value; });
-    input.addEventListener('change', () => {
-        if (input.value === original) return;
-        const id = input.dataset.itemId;
-        const field = input.dataset.field;
-        fetch(`/estimator/project/{{ project_pk }}/api/labour-spec/${id}/update/`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({field, value: input.value})
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.ok) {
-                input.classList.add('ring-2', 'ring-green-500');
-                setTimeout(() => input.classList.remove('ring-2', 'ring-green-500'), 800);
-                original = input.value;
-            } else {
+(function() {
+    const crewOptions = `<option value="">-</option>{% for c in crews %}<option value="{{ c.id }}">{{ c.crew_type }}</option>{% endfor %}`;
+
+    function populateCrewOptions(select) {
+        if (select.dataset.populated === '1') return;
+        const selectedId = select.dataset.selectedId || '';
+        select.innerHTML = crewOptions;
+        if (selectedId) {
+            const opt = select.querySelector(`option[value="${selectedId}"]`);
+            if (opt) opt.selected = true;
+        }
+        select.dataset.populated = '1';
+    }
+
+    document.querySelectorAll('.ls-crew-select').forEach(select => {
+        select.addEventListener('mousedown', () => populateCrewOptions(select));
+        select.addEventListener('focus', () => populateCrewOptions(select));
+    });
+
+    document.querySelectorAll('.inline-edit-ls').forEach(input => {
+        let original = input.value;
+        input.addEventListener('focus', () => { original = input.value; });
+        input.addEventListener('change', () => {
+            if (input.value === original) return;
+            const id = input.dataset.itemId;
+            const field = input.dataset.field;
+            fetch(`/estimator/project/{{ project_pk }}/api/labour-spec/${id}/update/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({field, value: input.value})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    input.classList.add('ring-2', 'ring-green-500');
+                    setTimeout(() => input.classList.remove('ring-2', 'ring-green-500'), 800);
+                    original = input.value;
+                } else {
+                    input.classList.add('ring-2', 'ring-red-500');
+                    setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);
+                    input.value = original;
+                }
+            })
+            .catch(() => {
                 input.classList.add('ring-2', 'ring-red-500');
                 setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);
                 input.value = original;
-            }
-        })
-        .catch(() => {
-            input.classList.add('ring-2', 'ring-red-500');
-            setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);
-            input.value = original;
+            });
         });
     });
-});
+})();
     </script>
 {% endblock %}
