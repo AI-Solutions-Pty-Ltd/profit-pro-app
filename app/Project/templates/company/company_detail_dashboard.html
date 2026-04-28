@@ -1,0 +1,302 @@
+{% extends "base_full.html" %}
+{% load humanize %}
+{% load static %}
+{% load heroicons %}
+{% block content %}
+    <!-- Dashboard Navigation Tabs -->
+    <div class="bg-white rounded-lg shadow-sm mb-6 sticky top-0 z-10">
+        <div class="border-b border-gray-200">{% include "company/reports_nav.html" with tab="dashboard" %}</div>
+    </div>
+    <!-- Page Header -->
+    <header class="bg-white shadow-sm rounded-lg mb-6">
+        <div class="px-6 py-4">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <!-- Page Title and Description -->
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900 tracking-tight">{{ company.name }} Dashboard</h1>
+                    <p class="mt-1 text-sm text-gray-600">
+                        Financial overview for {{ company.name }} as of {{ current_date|date:"F d, Y" }}
+                    </p>
+                </div>
+                <!-- Actions -->
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:company-management' company.pk %}"
+                       class="inline-flex items-center px-4 py-2 text-xs font-medium text-purple-600 bg-white border border-purple-600 rounded-md hover:bg-purple-50 transition-colors">
+                        {% heroicon_outline "folder-open" size="16" class="mr-2" %}
+                        Business Management
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- Navigation Footer -->
+        <div class="px-6 py-3 bg-gray-50 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:company-dashboard' %}"
+                       class="inline-flex items-center px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+                        {% heroicon_outline "arrow-left" size="16" class="mr-2" %}
+                        Back to Portfolio Dashboard
+                    </a>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:company-list' %}"
+                       class="inline-flex items-center px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+                        {% heroicon_outline "building-office" size="20" class="mr-2" %}
+                        View All Companies
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-4">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2">
+            <h5 class="text-sm font-semibold text-white flex items-center">
+                {% heroicon_outline "briefcase" size="16" class="mr-2" %}
+                Business Status
+            </h5>
+        </div>
+        <div class="p-4">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                <!-- Active Projects -->
+                <span class="bg-blue-50 rounded-lg p-3 text-center border border-blue-100 hover:bg-blue-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-blue-600 transition-colors">
+                        {% heroicon_outline "folder-open" size="16" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Active Projects</p>
+                    <p class="text-xl font-bold text-blue-700 mt-1">{{ active_projects_count }}</p>
+                </span>
+                <!-- Revenue -->
+                <a class="bg-rose-50 rounded-lg p-3 text-center border border-rose-100 hover:bg-rose-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <div class="w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-rose-600 transition-colors">
+                        {% heroicon_outline "currency-dollar" size="16" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-rose-600 uppercase tracking-wider">Revenue</p>
+                    <p class="text-xl font-bold text-rose-700 mt-1">R {{ revenue|default:0|floatformat:0|intcomma }}</p>
+                </a>
+                <!-- Compliance % -->
+                <a href="{% url 'project:compliance-report' %}?contractor={{ company.pk }}"
+                   class="bg-emerald-50 rounded-lg p-3 text-center border border-emerald-100 hover:bg-emerald-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-emerald-600 transition-colors">
+                        {% heroicon_outline "shield-check" size="16" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-emerald-600 uppercase tracking-wider">Compliance %</p>
+                    <p class="text-xl font-bold text-emerald-700 mt-1">{{ compliance_percentage|floatformat:1 }}%</p>
+                    <p class="text-xs text-emerald-500">{{ total_compliance_items }} items</p>
+                </a>
+                <!-- Urgent Compliance -->
+                <a href="{% url 'project:compliance-report' %}?party=overdue&contractor={{ company.pk }}"
+                   class="bg-indigo-50 rounded-lg p-3 text-center border border-indigo-100 hover:bg-indigo-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-indigo-600 transition-colors">
+                        {% heroicon_outline "shield-exclamation" size="16" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-indigo-600 uppercase tracking-wider">Urgent Compliance</p>
+                    <p class="text-xl font-bold text-indigo-700 mt-1">{{ urgent_compliance_count }}</p>
+                    <p class="text-xs text-indigo-500">overdue items</p>
+                </a>
+                <!-- Ledgers -->
+                <a href="{% url 'ledger:ledger-list' company.pk %}"
+                   class="bg-green-50 rounded-lg p-3 text-center border border-green-100 hover:bg-green-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-green-600 transition-colors">
+                        {% heroicon_outline "clipboard-document-list" size="16" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Ledgers</p>
+                    <p class="text-xl font-bold text-green-700 mt-1">View</p>
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- ==========================================
+             Group 2 - Income Statement
+             ========================================== -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-4">
+        <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-4 py-2">
+            <h5 class="text-sm font-semibold text-white flex items-center">
+                {% heroicon_outline "banknotes" size="16" class="mr-2" %}
+                Income Statement Summary
+            </h5>
+        </div>
+        <div class="p-4">
+            <!-- Income Statement Summary -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                <!-- Baseline Profit -->
+                <div class="bg-blue-50 rounded-lg p-2 text-center border border-blue-100">
+                    <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Baseline Profit</p>
+                    <p class="text-lg font-bold text-blue-700 mt-1">R {{ baseline_profit|default:0|floatformat:0|intcomma }}</p>
+                    <p class="text-xs text-blue-500">({{ baseline_profit_margin|default:0|floatformat:1 }}%)</p>
+                </div>
+                <!-- Progress Profit -->
+                <div class="bg-green-50 rounded-lg p-2 text-center border border-green-100">
+                    <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Progress Profit</p>
+                    <p class="text-lg font-bold text-green-700 mt-1">R {{ progress_profit|default:0|floatformat:0|intcomma }}</p>
+                    <p class="text-xs text-green-500">({{ progress_profit_margin|default:0|floatformat:1 }}%)</p>
+                </div>
+                <!-- Forecast Profit -->
+                <div class="bg-amber-50 rounded-lg p-2 text-center border border-amber-100">
+                    <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Forecast Profit</p>
+                    <p class="text-lg font-bold text-amber-700 mt-1">R {{ forecast_profit|default:0|floatformat:0|intcomma }}</p>
+                    <p class="text-xs text-amber-500">({{ forecast_profit_margin|default:0|floatformat:1 }}%)</p>
+                </div>
+                <!-- Overheads -->
+                <div class="bg-rose-50 rounded-lg p-2 text-center border border-rose-100">
+                    <p class="text-xs font-medium text-rose-600 uppercase tracking-wider">Overheads</p>
+                    <p class="text-lg font-bold text-rose-700 mt-1">R {{ total_overheads|default:0|floatformat:0|intcomma }}</p>
+                    <p class="text-xs text-rose-500">({{ overheads_percentage|default:0|floatformat:1 }}%)</p>
+                </div>
+            </div>
+            <!-- Profit Trend Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <!-- Gross Profit Trend -->
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
+                    <h6 class="text-sm font-semibold text-blue-700 mb-3 flex items-center">
+                        {% heroicon_outline "chart-bar-square" size="16" class="mr-2" %}
+                        Gross Profit Trend (6 Months)
+                    </h6>
+                    <div class="h-48">
+                        <canvas id="grossProfitChart"></canvas>
+                    </div>
+                </div>
+                <!-- Net Profit Trend -->
+                <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-100">
+                    <h6 class="text-sm font-semibold text-purple-700 mb-3 flex items-center">
+                        {% heroicon_outline "chart-bar-square" size="16" class="mr-2" %}
+                        Net Profit Trend (6 Months)
+                    </h6>
+                    <div class="h-48">
+                        <canvas id="netProfitChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Footer -->
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 mt-4">
+        <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-500">Dedicated Business Dashboard - {{ company.name }}</span>
+            <a href="{% url 'project:company-management' company.pk %}"
+               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                {% heroicon_outline "folder-open" size="16" class="mr-2" %}
+                Management Center
+                {% heroicon_outline "arrow-right" class="w-4 h-4 ml-2" %}
+            </a>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const profitLabels = {{ profit_labels|safe }};
+            const grossProfitData = {{ gross_profit_percentage_data|safe }};
+            const netProfitData = {{ net_profit_data|safe }};
+            
+            // Gross Profit Chart
+            const grossProfitCtx = document.getElementById('grossProfitChart').getContext('2d');
+            new Chart(grossProfitCtx, {
+                type: 'line',
+                data: {
+                    labels: profitLabels,
+                    datasets: [{
+                        label: 'Gross Profit %',
+                        data: grossProfitData,
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        borderWidth: 2,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 10,
+                            titleFont: { size: 11 },
+                            bodyFont: { size: 10 },
+                            callbacks: {
+                                label: function(context) {
+                                    return `Gross Profit: ${context.parsed.y.toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 9 } }
+                        },
+                        y: {
+                            min: 0,
+                            max: 30,
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                            ticks: { 
+                                font: { size: 9 },
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    },
+                    elements: {
+                        point: { radius: 3, hoverRadius: 5 }
+                    }
+                }
+            });
+
+            // Net Profit Chart
+            const netProfitCtx = document.getElementById('netProfitChart').getContext('2d');
+            new Chart(netProfitCtx, {
+                type: 'line',
+                data: {
+                    labels: profitLabels,
+                    datasets: [{
+                        label: 'Net Profit',
+                        data: netProfitData,
+                        borderColor: 'rgb(147, 51, 234)',
+                        backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                        fill: true,
+                        borderWidth: 2,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 10,
+                            titleFont: { size: 11 },
+                            bodyFont: { size: 10 },
+                            callbacks: {
+                                label: function(context) {
+                                    return `Net Profit: R ${context.parsed.y.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 9 } }
+                        },
+                        y: {
+                            min: 0,
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                            ticks: { 
+                                font: { size: 9 },
+                                callback: function(value) {
+                                    return 'R ' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    elements: {
+                        point: { radius: 3, hoverRadius: 5 }
+                    }
+                }
+            });
+        });
+    </script>
+{% endblock content %}

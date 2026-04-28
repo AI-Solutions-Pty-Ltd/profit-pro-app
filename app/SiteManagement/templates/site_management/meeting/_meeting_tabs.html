@@ -1,0 +1,18 @@
+<nav class="bg-white border-b border-gray-300 overflow-hidden flex gap-x-2 text-xs mb-4"
+     aria-label="Meeting tabs">
+    <a href="{% url 'site_management:meeting-list' project.pk %}"
+       class="border-b-2 {% if tab == 'meetings' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
+        {% heroicon_outline "calendar" class="w-5 h-5 inline mr-2" %}
+        Meetings List
+    </a>
+    <a href="{% url 'project:decision-log-report' project.pk %}"
+       class="border-b-2 {% if tab == 'decision_log' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
+        {% heroicon_outline "clipboard-document-list" class="w-5 h-5 inline mr-2" %}
+        Decision Log
+    </a>
+    <a href="{% url 'project:action-tracker-report' project.pk %}"
+       class="border-b-2 {% if tab == 'action_tracker' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
+        {% heroicon_outline "list-bullet" class="w-5 h-5 inline mr-2" %}
+        Action Tracker
+    </a>
+</nav>

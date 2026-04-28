@@ -1,0 +1,7 @@
+{% load crispy_forms_tags %}
+<div class="space-y-6 duration-500 animate-in fade-in slide-in-from-bottom-4">
+    <input type="hidden" name="resource_type" value="{{ resource_type }}">
+    <div class="px-8 py-8 bg-indigo-50/30">
+        <div class="grid grid-cols-1 gap-5">{{ form|crispy }}</div>
+    </div>
+</div>

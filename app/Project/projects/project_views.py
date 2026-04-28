@@ -1,11 +1,13 @@
 """Views for Project app."""
 
 import json
-from datetime import datetime
+from datetime import date, datetime
+from typing import cast
 
+from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import QuerySet, Sum
+from django.db.models import Q, QuerySet, Sum
 from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -24,7 +26,11 @@ from app.BillOfQuantities.models import (
     PaymentCertificate,
     Structure,
 )
-from app.core.Utilities.dates import get_end_of_month, get_previous_n_months
+from app.core.Utilities.dates import (
+    get_beginning_of_month,
+    get_end_of_month,
+    get_month_range,
+)
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import (
     UserHasProjectRoleGenericMixin,
@@ -47,7 +53,9 @@ class ProjectMixin(
     required_tiers = [Subscription.FREE_TIER]
 
     def get_queryset(self: "ProjectMixin") -> QuerySet[Project]:
-        return Project.objects.filter(users=self.request.user).order_by("-created_at")
+        return Project.objects.filter(
+            Q(users=self.request.user) | Q(is_demo=True)
+        ).order_by("-created_at")
 
     def get_object(self: "ProjectMixin") -> Project:
         return self.get_project()
@@ -69,66 +77,51 @@ class ProjectListView(
         """Initialize filter form during view setup."""
         super().setup(request, *args, **kwargs)
 
-        # Prepare form data and querysets
         form_data = request.GET or {}
-        projects_queryset = None
-        consultant_queryset = None
-        client_queryset = None
-        contractor_queryset = None
-        category_queryset = None
-        subcategory_queryset = None
-        discipline_queryset = None
 
-        if request.user.is_authenticated:
-            from app.Project.models import (
-                Company,
-                ProjectDiscipline,
-                ProjectSubCategory,
-            )
+        user = cast(Account, request.user)
+        if user.is_superuser or user.is_staff:
+            projects = Project.objects.all().order_by("-created_at")
+        else:
+            projects = user.get_projects.order_by("-created_at")
 
-            # Get user's projects
-            projects_queryset = Project.objects.filter(
-                users=request.user,
-                status__in=[Project.Status.ACTIVE, Project.Status.FINAL_ACCOUNT_ISSUED],
-            ).order_by("name")
+        from app.Account.models import Municipality
+        from app.Project.models import Company, ProjectDiscipline, ProjectStage
 
-            # Get unique lead consultants from user's projects
-            consultant_ids = (
-                Project.objects.filter(users=request.user)
-                .values_list("lead_consultants", flat=True)
-                .distinct()
-            )
-            consultant_queryset = Account.objects.filter(id__in=consultant_ids)
+        consultant_ids = (
+            projects.values_list("lead_consultants", flat=True)
+            .exclude(lead_consultants__isnull=True)
+            .distinct()
+        )
+        consultant_queryset = Account.objects.filter(id__in=consultant_ids).distinct()
 
-            # Get unique clients and contractors from user's projects
-            client_queryset = Company.objects.filter(
-                client_projects__in=projects_queryset
-            ).distinct()
-            contractor_queryset = Company.objects.filter(
-                contractor_projects__in=projects_queryset
-            ).distinct()
+        client_queryset = Company.objects.filter(
+            client_projects__in=projects
+        ).distinct()
+        contractor_queryset = Company.objects.filter(
+            contractor_projects__in=projects
+        ).distinct()
 
-            # Get unique categories, subcategories and disciplines from user's projects
-            category_queryset = ProjectCategory.objects.filter(
-                projects__in=projects_queryset
-            ).distinct()
-            subcategory_queryset = ProjectSubCategory.objects.filter(
-                projects__in=projects_queryset
-            ).distinct()
-            discipline_queryset = ProjectDiscipline.objects.filter(
-                projects__in=projects_queryset
-            ).distinct()
+        category_queryset = ProjectCategory.objects.filter(
+            projects__in=projects
+        ).distinct()
+        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
+        discipline_queryset = ProjectDiscipline.objects.filter(
+            projects__in=projects
+        ).distinct()
+        stage_queryset = ProjectStage.objects.filter(projects__in=projects).distinct()
 
         self.filter_form = ProjectFilterForm(
             form_data,
-            user=self.request.user,  # type: ignore
-            projects_queryset=projects_queryset,
+            user=user,
+            projects_queryset=projects,
             consultant_queryset=consultant_queryset,
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
-            subcategory_queryset=subcategory_queryset,
+            area_queryset=area_queryset,
             discipline_queryset=discipline_queryset,
+            stage_queryset=stage_queryset,
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
@@ -141,18 +134,22 @@ class ProjectListView(
     def get_queryset(self: "ProjectListView") -> QuerySet[Project]:
         """Get filtered projects for dashboard view."""
         # Ensure filter_form exists and is valid
-        user: Account = self.request.user  # type: ignore
-        projects = user.get_projects.order_by("-created_at")
+        user = cast(Account, self.request.user)
+        if user.is_superuser or user.is_staff:
+            projects = Project.objects.all().order_by("-created_at")
+        else:
+            projects = user.get_projects.order_by("-created_at")
+
         if not self.filter_form or not self.filter_form.is_valid():
-            # Return unfiltered queryset if form is invalid
             return projects
 
         # Apply filters from form
         search = self.filter_form.cleaned_data.get("search")
         active_only = self.filter_form.cleaned_data.get("active_projects")
         category = self.filter_form.cleaned_data.get("project_category")
-        subcategory = self.filter_form.cleaned_data.get("project_subcategory")
+        area = self.filter_form.cleaned_data.get("area")
         discipline = self.filter_form.cleaned_data.get("project_discipline")
+        stage = self.filter_form.cleaned_data.get("project_stage")
 
         if search:
             projects = projects.filter(name__icontains=search)
@@ -160,11 +157,14 @@ class ProjectListView(
         if category:
             projects = projects.filter(project_category=category)
 
-        if subcategory:
-            projects = projects.filter(project_sub_category=subcategory)
+        if area:
+            projects = projects.filter(area=area)
 
         if discipline:
             projects = projects.filter(project_discipline=discipline)
+
+        if stage:
+            projects = projects.filter(project_stage=stage)
 
         selected_project = self.filter_form.cleaned_data.get("projects")
         if selected_project:
@@ -172,7 +172,7 @@ class ProjectListView(
 
         consultant = self.filter_form.cleaned_data.get("consultant")
         if consultant:
-            projects = projects.filter(lead_consultant=consultant)
+            projects = projects.filter(lead_consultants=consultant)
 
         client = self.filter_form.cleaned_data.get("client")
         if client:
@@ -263,8 +263,17 @@ class ProjectDashboardView(ProjectMixin, DetailView):
         context["current_spi"] = project.get_schedule_performance_index(current_date)
         context["current_date"] = current_date
 
-        # Add financial comparison chart data
-        financial_data = self._get_financial_comparison_data(project)
+        term_window = self.request.GET.get("term_window") or "current"
+        context["term_window"] = term_window
+
+        current_month = current_date.replace(day=1)
+        context["current_term_label"] = current_month.strftime("%b %Y")
+
+        financial_data = self._get_financial_comparison_data(
+            project=project,
+            current_month=current_month,
+            term_window=term_window,
+        )
         context["financial_labels"] = json.dumps(financial_data["labels"])
         context["planned_values"] = json.dumps(financial_data["planned_values"])
         context["forecast_values"] = json.dumps(financial_data["forecast_values"])
@@ -273,54 +282,71 @@ class ProjectDashboardView(ProjectMixin, DetailView):
 
         return context
 
-    def _get_financial_comparison_data(self, project: Project) -> dict:
-        """Generate monthly Planned Value, Forecast, and Cumulative Certified data.
+    def _get_financial_comparison_data(
+        self,
+        project: Project,
+        current_month: datetime | date,
+        term_window: str,
+    ) -> dict:
+        labels: list[str] = []
+        planned_values: list[float] = []
+        forecast_values: list[float] = []
+        certified_values: list[float] = []
 
-        Chart is bounded by project start_date and end_date, showing up to 12 months.
-        """
-        labels = []
-        planned_values = []
-        forecast_values = []
-        certified_values = []
+        current_month_dt = get_beginning_of_month(current_month)
+        if term_window == "past_3":
+            start_month = current_month_dt - relativedelta(months=2)
+            end_month = current_month_dt
+        elif term_window == "next_3":
+            start_month = current_month_dt
+            end_month = current_month_dt + relativedelta(months=2)
+        else:
+            start_month = current_month_dt
+            end_month = current_month_dt
 
-        if not project.start_date or not project.end_date:
-            # No project dates set, return empty data
-            return {
-                "labels": [],
-                "planned_values": [],
-                "forecast_values": [],
-                "certified_values": [],
-            }
+        months = get_month_range(start_month, end_month)
 
-        # Normalize to first of month
-        project_start = project.start_date.replace(day=1)
-        project_end = project.end_date.replace(day=1)
+        project_start = (
+            get_beginning_of_month(project.start_date) if project.start_date else None
+        )
+        project_end = (
+            get_beginning_of_month(project.end_date) if project.end_date else None
+        )
 
-        # Generate data for each month in the range (oldest to newest)
-        for current_month in get_previous_n_months(
-            starting_date=project_start, end_cap=project_end
-        ):
-            labels.append(current_month.strftime("%b %Y"))
+        if project_start or project_end:
+            months = [
+                m
+                for m in months
+                if (project_start is None or m >= project_start)
+                and (project_end is None or m <= project_end)
+            ]
+
+        if not months and project_start and project_end:
+            if current_month_dt < project_start:
+                months = [project_start]
+            elif current_month_dt > project_end:
+                months = [project_end]
+
+        for month in months:
+            labels.append(month.strftime("%b %Y"))
 
             # Get planned value for this month
             planned_value = PlannedValue.objects.filter(
                 project=project,
-                period__year=current_month.year,
-                period__month=current_month.month,
+                period__year=month.year,
+                period__month=month.month,
             ).first()
             planned_values.append(float(planned_value.value) if planned_value else 0)
 
-            # Get forecast for this month
             forecast = Forecast.objects.filter(
                 project=project,
-                period__year=current_month.year,
-                period__month=current_month.month,
+                period__year=month.year,
+                period__month=month.month,
                 status=Forecast.Status.APPROVED,
             ).first()
             forecast_values.append(float(forecast.total_forecast) if forecast else 0)
 
-            # Get cumulative certified up to end of this month
-            end_of_month = get_end_of_month(current_month)
+            end_of_month = get_end_of_month(month)
             cumulative_certified = ActualTransaction.objects.filter(
                 line_item__project=project,
                 payment_certificate__status=PaymentCertificate.Status.APPROVED,
@@ -360,6 +386,81 @@ class ProjectSetupView(ProjectMixin, DetailView):
             ),
             BreadcrumbItem(title="Edit Project", url=None),
         ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = self.object
+        from app.Estimator.models import ProjectMaterial
+
+        if project.contractor_id:
+            context["sibling_projects"] = (
+                Project.objects.filter(contractor_id=project.contractor_id)
+                .exclude(pk=project.pk)
+                .order_by("name")
+            )
+        else:
+            context["sibling_projects"] = Project.objects.none()
+        context["has_estimator_data"] = ProjectMaterial.objects.filter(
+            project=project
+        ).exists()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        project = self.object
+        action = request.POST.get("action")
+
+        if action == "clone_system":
+            from app.Estimator.services import initialize_project_estimator
+
+            try:
+                result = initialize_project_estimator(project)
+                if result.get("status") == "already_initialized":
+                    messages.warning(
+                        request,
+                        "This project already has estimator data. "
+                        "Clear existing data first or use a fresh project.",
+                    )
+                else:
+                    messages.success(
+                        request,
+                        f"System library cloned — "
+                        f"{result['trade_codes']} trade codes, "
+                        f"{result['materials']} materials, "
+                        f"{result['labour_crews']} labour crews, "
+                        f"{result['specifications']} specifications, "
+                        f"{result['labour_specs']} labour specs.",
+                    )
+            except Exception as e:
+                messages.error(request, f"Clone from system failed: {e}")
+
+        elif action == "clone_project":
+            from django.shortcuts import get_object_or_404
+
+            from app.Estimator.services import clone_from_project
+
+            source_pk = request.POST.get("source_project")
+            if not source_pk:
+                messages.error(request, "Please select a project to clone from.")
+            else:
+                source_project = get_object_or_404(Project, pk=source_pk)
+                try:
+                    result = clone_from_project(project, source_project)
+                    messages.success(
+                        request,
+                        f"Cloned from '{source_project.name}' — "
+                        f"{result['trade_codes']} trade codes, "
+                        f"{result['materials']} materials, "
+                        f"{result['labour_crews']} labour crews, "
+                        f"{result['specifications']} specifications, "
+                        f"{result['labour_specs']} labour specs.",
+                    )
+                except Exception as e:
+                    messages.error(request, f"Clone from project failed: {e}")
+
+        return HttpResponseRedirect(
+            reverse("project:project-setup", kwargs={"pk": project.pk})
+        )
 
 
 class ProjectManagementView(ProjectMixin, DetailView):
@@ -627,3 +728,167 @@ class ProjectDeleteView(ProjectMixin, DeleteView):
         from django.shortcuts import redirect
 
         return redirect("project:project-management", pk=self.kwargs["pk"])
+
+
+class OrderAmendmentsView(ProjectMixin, DetailView):
+    """Display Order Amendments register with charts and form."""
+
+    model = Project
+    template_name = "project/order_amendments.html"
+    roles = [Role.USER]
+    project_slug = "pk"
+
+    def get_breadcrumbs(self) -> list[BreadcrumbItem]:
+        return [
+            BreadcrumbItem(
+                title="Projects", url=reverse("project:portfolio-dashboard")
+            ),
+            BreadcrumbItem(
+                title=f"{self.object.name} Dashboard",
+                url=reverse("project:project-dashboard", kwargs={"pk": self.object.pk}),
+            ),
+            BreadcrumbItem(title="Order Amendments", url=None),
+        ]
+
+    def get_context_data(self, **kwargs):
+        """Add amendment data and chart data to context."""
+        context = super().get_context_data(**kwargs)
+        project = self.object
+
+        original_contract_value = float(project.original_contract_value or 0)
+        revised_contract_value = float(project.revised_contract_value or 0)
+
+        # Get amendments from database
+        from app.Project.models import OrderAmendment
+
+        db_amendments = project.order_amendments.filter(
+            status=OrderAmendment.Status.APPROVED
+        ).order_by("amendment_number")
+
+        # Convert to list format for template
+        amendments = []
+        for amendment in db_amendments:
+            amendments.append(
+                {
+                    "amendment_number": amendment.amendment_number,
+                    "name": amendment.name,
+                    "description": amendment.description,
+                    "variation_amount": float(amendment.variation_amount),
+                    "category": amendment.category,
+                    "date_approved": amendment.date_approved,
+                    "status": amendment.status,
+                }
+            )
+
+        # Calculate running totals
+        running_total = original_contract_value
+        for amendment in amendments:
+            running_total += amendment["variation_amount"]
+            amendment["approved_contract_amount"] = running_total
+            amendment["percent_change"] = (
+                (amendment["variation_amount"] / original_contract_value) * 100
+                if original_contract_value > 0
+                else 0
+            )
+
+        # Summary statistics
+        total_variations = revised_contract_value - original_contract_value
+        final_contract_value = revised_contract_value
+        total_percent_change = (
+            (total_variations / original_contract_value) * 100
+            if original_contract_value > 0
+            else 0
+        )
+
+        # Get pending amendments value
+        pending_value = (
+            project.order_amendments.filter(
+                status=OrderAmendment.Status.PENDING
+            ).aggregate(total=Sum("variation_amount"))["total"]
+            or 0
+        )
+
+        # Category data for pie chart
+        category_totals: dict[str, float] = {}
+        category_names = {
+            "scope_change": "Scope Change",
+            "design_change": "Design Change",
+            "rate_adjustment": "Rate Adjustment",
+            "quantity_variance": "Quantity Variance",
+            "delay_costs": "Delay Costs",
+            "other": "Other",
+        }
+        for amendment in amendments:
+            cat = amendment["category"]
+            category_totals[cat] = (
+                category_totals.get(cat, 0) + amendment["variation_amount"]
+            )
+
+        category_labels = [category_names[k] for k in category_names.keys()]
+        category_signed_values = [
+            category_totals.get(k, 0) for k in category_names.keys()
+        ]
+        category_values = [abs(v) for v in category_signed_values]
+
+        # Waterfall chart data
+        waterfall_labels = ["Original Contract"]
+        waterfall_values = [original_contract_value]
+
+        current_value = original_contract_value
+        for a in amendments:
+            waterfall_labels.append(f"Amendment {a['amendment_number']}")
+            variation = a["variation_amount"]
+            waterfall_values.append(variation)
+            current_value += variation
+
+        waterfall_labels.append("Revised Contract Amount")
+        waterfall_values.append(final_contract_value)
+
+        # Initialize form
+        from app.Project.forms import OrderAmendmentForm
+
+        form = OrderAmendmentForm()
+
+        context.update(
+            {
+                "project": project,
+                "amendments": amendments,
+                "form": form,
+                "original_contract_value": original_contract_value,
+                "total_variations": total_variations,
+                "final_contract_value": final_contract_value,
+                "total_percent_change": total_percent_change,
+                "amendments_count": len(amendments),
+                "total_approved_value": total_variations,
+                "pending_value": float(pending_value),
+                "budget_impact_percentage": round(total_percent_change, 1),
+                "category_labels": json.dumps(category_labels),
+                "category_values": json.dumps(category_values),
+                "category_signed_values": json.dumps(category_signed_values),
+                "waterfall_labels": json.dumps(waterfall_labels),
+                "waterfall_values": json.dumps(waterfall_values),
+                "current_date": datetime.now(),
+            }
+        )
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        """Handle form submission for new amendment."""
+        self.object = self.get_object()
+        project = self.object
+
+        from app.Project.forms import OrderAmendmentForm
+
+        form = OrderAmendmentForm(request.POST, project=project, user=request.user)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Amendment added successfully.")
+        else:
+            messages.error(request, "Please correct the errors below.")
+            context = self.get_context_data()
+            context["form"] = form
+            return self.render_to_response(context)
+
+        return HttpResponseRedirect(request.path)

@@ -10,39 +10,18 @@
         <div class="mt-2 sm:mt-0 flex gap-2">
             <a href="{% url 'estimator:sys_download_material_spec_template' %}"
                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     fill="none"
-                     viewBox="0 0 24 24"
-                     stroke-width="1.5"
-                     stroke="currentColor"
-                     class="w-4 h-4 mr-1.5 -ml-0.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
+                {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
                 Template
             </a>
             <a href="{% url 'estimator:sys_material_spec_upload' %}"
                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     fill="none"
-                     viewBox="0 0 24 24"
-                     stroke-width="1.5"
-                     stroke="currentColor"
-                     class="w-4 h-4 mr-1.5 -ml-0.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                </svg>
+                {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
                 Upload
             </a>
             <button type="button"
                     onclick="document.getElementById('spec-form').classList.toggle('hidden')"
                     class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     fill="none"
-                     viewBox="0 0 24 24"
-                     stroke-width="1.5"
-                     stroke="currentColor"
-                     class="w-5 h-5 mr-1.5 -ml-0.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
+                {% heroicon_outline "plus" class="w-5 h-5 mr-1.5 -ml-0.5" %}
                 Add Specification
             </button>
         </div>
@@ -164,14 +143,7 @@
             {% if f_section or f_trade_code or f_name %}
                 <a href="{% url 'estimator:sys_material_specs' %}"
                    class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 ring-1 ring-inset ring-gray-300">
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                         fill="none"
-                         viewBox="0 0 24 24"
-                         stroke-width="1.5"
-                         stroke="currentColor"
-                         class="w-3.5 h-3.5 mr-1">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                    </svg>
+                    {% heroicon_outline "x-mark" class="w-3.5 h-3.5 mr-1" %}
                     Clear
                 </a>
             {% endif %}
@@ -199,6 +171,10 @@
                             class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                             Components
                         </th>
+                        <th scope="col"
+                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">
+                            <span class="sr-only">Actions</span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
@@ -213,29 +189,58 @@
                                 {% endif %}
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ spec.unit_label }}</td>
-                            <td class="px-3 py-3 text-sm text-gray-700">
-                                {% for comp in spec.component_totals %}
-                                    <div class="flex items-center text-xs{% if not forloop.last %} mb-1{% endif %}">
-                                        <span class="text-gray-900 font-medium">{{ comp.label }}</span>
-                                        <span class="mx-1.5 text-gray-400">·</span>
-                                        <span class="flex items-center">
+                            <td class="px-3 py-3 text-sm text-gray-700"
+                                data-spec-components="{{ spec.id }}">
+                                <div class="space-y-1" data-components-list>
+                                    {% for comp in spec.component_totals %}
+                                        <div class="flex items-center gap-1" data-component-id="{{ comp.id }}">
+                                            <select class="mat-comp-edit mat-comp-material-select w-36 rounded border-0 bg-transparent text-xs text-gray-700 p-0 pr-5 focus:ring-2 focus:ring-indigo-500"
+                                                    data-component-id="{{ comp.id }}"
+                                                    data-field="material"
+                                                    data-selected-id="{{ comp.material_id|default_if_none:'' }}">
+                                                {% if comp.material_id %}
+                                                    <option value="{{ comp.material_id }}" selected>{{ comp.material_code }}</option>
+                                                {% else %}
+                                                    <option value="" selected>—</option>
+                                                {% endif %}
+                                            </select>
                                             <input type="number"
                                                    step="0.0001"
-                                                   class="inline-edit-spec w-16 text-right border-0 bg-transparent text-xs p-0 focus:ring-2 focus:ring-indigo-500 rounded"
-                                                   data-item-id="{{ comp.id }}"
+                                                   class="mat-comp-edit w-20 text-right rounded border-0 bg-transparent text-xs text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500"
+                                                   data-component-id="{{ comp.id }}"
                                                    data-field="qty_per_unit"
                                                    value="{{ comp.qty_per_unit }}">
-                                            <span class="text-gray-500 ml-0.5">/ {{ spec.unit_label }}</span>
-                                        </span>
-                                    </div>
-                                {% empty %}
-                                    <span class="text-xs text-gray-400">No components</span>
-                                {% endfor %}
+                                            <span class="text-gray-400 text-[10px]">/ {{ spec.unit_label }}</span>
+                                            <button type="button"
+                                                    class="mat-comp-delete text-gray-400 hover:text-red-500 ml-0.5"
+                                                    data-component-id="{{ comp.id }}"
+                                                    title="Remove component">
+                                                {% heroicon_outline "trash" class="w-3.5 h-3.5" %}
+                                            </button>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <button type="button"
+                                        class="mat-comp-add inline-flex items-center gap-1 mt-1 text-[11px] text-indigo-600 hover:text-indigo-800"
+                                        data-spec-id="{{ spec.id }}"
+                                        data-spec-unit="{{ spec.unit_label }}">
+                                    {% heroicon_outline "plus" class="w-3 h-3" %}
+                                    Add component
+                                </button>
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-right text-sm sm:pr-6">
+                                <button type="button"
+                                        class="spec-delete inline-flex items-center text-gray-400 hover:text-red-600"
+                                        data-spec-id="{{ spec.id }}"
+                                        data-spec-name="{{ spec.name }}"
+                                        title="Delete specification">
+                                    {% heroicon_outline "trash" class="w-4 h-4" %}
+                                </button>
                             </td>
                         </tr>
                     {% empty %}
                         <tr>
-                            <td colspan="4" class="px-6 py-12 text-center text-sm text-gray-500">
+                            <td colspan="5" class="px-6 py-12 text-center text-sm text-gray-500">
                                 No material specifications found. Add one using the button above.
                             </td>
                         </tr>
@@ -245,36 +250,130 @@
         </div>
     </div>
     <script>
-document.querySelectorAll('.inline-edit-spec').forEach(input => {
-    let original = input.value;
-    input.addEventListener('focus', () => { original = input.value; });
-    input.addEventListener('change', () => {
-        if (input.value === original) return;
-        const id = input.dataset.itemId;
-        const field = input.dataset.field;
-        fetch(`/estimator/system/api/spec-component/${id}/update/`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({field, value: input.value})
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.ok) {
-                input.classList.add('ring-2', 'ring-green-500');
-                setTimeout(() => input.classList.remove('ring-2', 'ring-green-500'), 800);
-                original = input.value;
-            } else {
-                input.classList.add('ring-2', 'ring-red-500');
-                setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);
-                input.value = original;
-            }
-        })
-        .catch(() => {
-            input.classList.add('ring-2', 'ring-red-500');
-            setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);
-            input.value = original;
+(function() {
+    const materialOptions = `<option value="">—</option>{% for m in materials %}<option value="{{ m.id }}">{{ m.material_code }}</option>{% endfor %}`;
+
+    function flash(el, ok) {
+        const cls = ok ? 'ring-green-500' : 'ring-red-500';
+        el.classList.add('ring-2', cls);
+        setTimeout(() => el.classList.remove('ring-2', cls), 800);
+    }
+
+    function bindComponentEdit(el) {
+        let original = el.value;
+        el.addEventListener('focus', () => { original = el.value; });
+        el.addEventListener('change', () => {
+            if (el.value === original) return;
+            const id = el.dataset.componentId;
+            const field = el.dataset.field;
+            fetch(`/estimator/system/api/spec-component/${id}/update/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({field, value: el.value})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) { flash(el, true); original = el.value; }
+                else { flash(el, false); el.value = original; }
+            })
+            .catch(() => { flash(el, false); el.value = original; });
+        });
+    }
+
+    function bindComponentDelete(btn) {
+        btn.addEventListener('click', () => {
+            if (!confirm('Remove this component?')) return;
+            const id = btn.dataset.componentId;
+            fetch(`/estimator/system/api/spec-component/${id}/delete/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: '{}'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    const row = btn.closest('[data-component-id]');
+                    if (row) row.remove();
+                }
+            });
+        });
+    }
+
+    function populateMaterialOptions(select) {
+        if (select.dataset.populated === '1') return;
+        const selectedId = select.dataset.selectedId || '';
+        select.innerHTML = materialOptions;
+        if (selectedId) {
+            const opt = select.querySelector(`option[value="${selectedId}"]`);
+            if (opt) opt.selected = true;
+        }
+        select.dataset.populated = '1';
+    }
+
+    document.querySelectorAll('.mat-comp-material-select').forEach(select => {
+        select.addEventListener('mousedown', () => populateMaterialOptions(select));
+        select.addEventListener('focus', () => populateMaterialOptions(select));
+    });
+
+    document.querySelectorAll('.mat-comp-edit').forEach(bindComponentEdit);
+    document.querySelectorAll('.mat-comp-delete').forEach(bindComponentDelete);
+
+    document.querySelectorAll('.spec-delete').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const specId = btn.dataset.specId;
+            const specName = btn.dataset.specName || 'this specification';
+            if (!confirm(`Delete "${specName}"? This will remove it from the system library.`)) return;
+            fetch(`/estimator/system/api/spec/${specId}/delete/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: '{}'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok) {
+                    const row = document.querySelector(`tr[data-spec-id="${specId}"]`);
+                    if (row) row.remove();
+                }
+            });
         });
     });
-});
+
+    document.querySelectorAll('.mat-comp-add').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const specId = btn.dataset.specId;
+            const specUnit = btn.dataset.specUnit || '';
+            fetch(`/estimator/system/api/spec/${specId}/components/add/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({material: '', label: '', qty_per_unit: 0})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) return;
+                const comp = data.component;
+                const list = document.querySelector(`[data-spec-components="${specId}"] [data-components-list]`);
+                if (!list) return;
+                const row = document.createElement('div');
+                row.className = 'flex items-center gap-1';
+                row.dataset.componentId = comp.id;
+                row.innerHTML = `
+                    <select class="mat-comp-edit mat-comp-material-select w-36 rounded border-0 bg-transparent text-xs text-gray-700 p-0 pr-5 focus:ring-2 focus:ring-indigo-500" data-component-id="${comp.id}" data-field="material" data-selected-id="">
+                        <option value="" selected>—</option>
+                    </select>
+                    <input type="number" step="0.0001" value="${comp.qty_per_unit}" class="mat-comp-edit w-20 text-right rounded border-0 bg-transparent text-xs text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500" data-component-id="${comp.id}" data-field="qty_per_unit">
+                    <span class="text-gray-400 text-[10px]">/ ${specUnit}</span>
+                    <button type="button" class="mat-comp-delete text-gray-400 hover:text-red-500 ml-0.5" data-component-id="${comp.id}" title="Remove component">✕</button>
+                `;
+                list.appendChild(row);
+                row.querySelectorAll('.mat-comp-edit').forEach(bindComponentEdit);
+                row.querySelectorAll('.mat-comp-delete').forEach(bindComponentDelete);
+                row.querySelectorAll('.mat-comp-material-select').forEach(select => {
+                    select.addEventListener('mousedown', () => populateMaterialOptions(select));
+                    select.addEventListener('focus', () => populateMaterialOptions(select));
+                });
+            });
+        });
+    });
+})();
     </script>
 {% endblock %}

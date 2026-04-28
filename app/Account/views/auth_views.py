@@ -319,7 +319,7 @@ class PasswordResetConfirmView(BasePasswordResetConfirmView):
         response = super().form_valid(form)
 
         # Get the user object
-        user = self.user
+        user = cast(Account, self.user)
 
         # Verify the user's email
         if not user.email_verified:

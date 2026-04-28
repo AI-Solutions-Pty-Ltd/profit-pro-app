@@ -7,7 +7,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Project Disciplines</h1>
-                    <p class="text-sm text-gray-600 mt-1">Manage project disciplines for expertise classification</p>
+                    <p class="text-sm text-gray-600 mt-1">Manage project disciplines for classification</p>
                 </div>
                 <div class="flex items-center gap-3">
                     <button type="button"
@@ -37,17 +37,22 @@
                 <a href="{% url 'project:category-list' %}"
                    class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
                     {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Categories
+                    Sectors
                 </a>
                 <a href="{% url 'project:subcategory-list' %}"
                    class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
                     {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Sub Categories
+                    Areas
                 </a>
                 <a href="{% url 'project:discipline-list' %}"
                    class="border-indigo-500 text-indigo-600 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
                     {% heroicon_outline "academic-cap" size="16" class="inline mr-1.5" %}
                     Disciplines
+                </a>
+                <a href="{% url 'project:project-stage-list' %}"
+                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
+                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
+                    Project Stages
                 </a>
             </nav>
         </div>
@@ -291,7 +296,7 @@
             document.getElementById('editModal').classList.remove('hidden');
             document.getElementById('edit_name').value = name;
             document.getElementById('edit_description').value = description;
-            document.getElementById('editForm').action = `/project/discipline/${id}/update/`;
+            document.getElementById('editForm').action = `/project/project-discipline/${id}/update/`;
             document.getElementById('edit_name').focus();
         }
 
@@ -306,7 +311,7 @@
         function openDeleteModal(id, name, projectCount) {
             document.getElementById('deleteModal').classList.remove('hidden');
             document.getElementById('delete_discipline_name').textContent = name;
-            document.getElementById('deleteForm').action = `/project/discipline/${id}/delete/`;
+            document.getElementById('deleteForm').action = `/project/project-discipline/${id}/delete/`;
             
             const warning = document.getElementById('delete_warning');
             if (projectCount > 0) {

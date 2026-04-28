@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+{% load humanize %}
+{% block title %}
+    Financial Breakdown - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block content %}
+    <div class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <!-- Header Card -->
+        <div class="mb-6 bg-white rounded-lg border border-gray-200 shadow-sm">
+            <div class="px-6 py-4">
+                <div class="flex justify-between items-center mb-4">
+                    <a href="{% url 'project:profitability-performance-report' project.pk %}"
+                       class="inline-flex items-center py-2 text-sm font-medium text-gray-700 bg-white transition-colors hover:text-indigo-600 focus:outline-none">
+                        {% heroicon_outline "chevron-left" size="20" %}
+                        <span class="ml-2">Back to Performance Dashboard</span>
+                    </a>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Detailed Financial Breakdown</h1>
+                        <p class="mt-1 text-sm text-gray-600">
+                            Full financial performance ledger for {{ project.name }} ({{ start_date|date:"M d, Y" }} - {{ end_date|date:"M d, Y" }})
+                        </p>
+                    </div>
+                    {% comment %} <div class="flex items-center p-1 bg-gray-50 rounded-md border border-gray-200">
+                    <button onclick="window.print()" class="flex items-center px-3 py-1.5 text-xs font-bold text-gray-600 rounded transition-colors hover:bg-white hover:shadow-sm">
+                        {% heroicon_outline "document-arrow-down" size="14" class="mr-1.5" %}
+                        Export PDF
+                    </button>
+                    </div> {% endcomment %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

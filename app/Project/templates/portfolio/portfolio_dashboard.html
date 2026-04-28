@@ -36,7 +36,7 @@
                                 <div class="flex items-center gap-2 pr-3 border-r border-gray-300">
                                     <!-- Category Filter -->
                                     <div class="relative">
-                                        <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-white px-1">Category</span>
+                                        <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-white px-1">Sector</span>
                                         <select name="project_category"
                                                 onchange="this.form.submit()"
                                                 class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
@@ -50,17 +50,17 @@
                                         </select>
                                         {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
                                     </div>
-                                    <!-- Subcategory Filter -->
+                                    <!-- Area Filter -->
                                     <div class="relative">
-                                        <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-white px-1">Subcategory</span>
-                                        <select name="project_subcategory"
+                                        <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-white px-1">Area</span>
+                                        <select name="area"
                                                 onchange="this.form.submit()"
                                                 class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
                                             <option value="">All</option>
-                                            {% for subcategory in filter_form.project_subcategory.field.queryset %}
-                                                <option value="{{ subcategory.pk }}"
-                                                        {% if filter_form.project_subcategory.value|stringformat:"s" == subcategory.pk|stringformat:"s" %}selected{% endif %}>
-                                                    {{ subcategory.name }}
+                                            {% for area in filter_form.area.field.queryset %}
+                                                <option value="{{ area.pk }}"
+                                                        {% if filter_form.area.value|stringformat:"s" == area.pk|stringformat:"s" %}selected{% endif %}>
+                                                    {{ area.province }} - {{ area.municipality_name }}
                                                 </option>
                                             {% endfor %}
                                         </select>
@@ -77,6 +77,22 @@
                                                 <option value="{{ discipline.pk }}"
                                                         {% if filter_form.project_discipline.value|stringformat:"s" == discipline.pk|stringformat:"s" %}selected{% endif %}>
                                                     {{ discipline.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                                    </div>
+                                    <!-- Project Stage Filter -->
+                                    <div class="relative">
+                                        <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-white px-1">Project Stage</span>
+                                        <select name="project_stage"
+                                                onchange="this.form.submit()"
+                                                class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                            <option value="">All</option>
+                                            {% for stage in filter_form.project_stage.field.queryset %}
+                                                <option value="{{ stage.pk }}"
+                                                        {% if filter_form.project_stage.value|stringformat:"s" == stage.pk|stringformat:"s" %}selected{% endif %}>
+                                                    {{ stage.name }}
                                                 </option>
                                             {% endfor %}
                                         </select>
@@ -136,7 +152,7 @@
                                 </div>
                             </div>
                             <!-- Clear Filters Button -->
-                            {% if filter_form.project_category.value or filter_form.project_subcategory.value or filter_form.project_discipline.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
+                            {% if filter_form.project_category.value or filter_form.area.value or filter_form.project_discipline.value or filter_form.project_stage.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
                                 <button type="button"
                                         onclick="window.location.href='{% url 'project:portfolio-dashboard' %}'"
                                         class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 hover:text-indigo-700 transition-all duration-200"
@@ -175,11 +191,14 @@
                            name="project_category"
                            value="{{ filter_form.project_category.value|default:'' }}">
                     <input type="hidden"
-                           name="project_subcategory"
-                           value="{{ filter_form.project_subcategory.value|default:'' }}">
+                           name="area"
+                           value="{{ filter_form.area.value|default:'' }}">
                     <input type="hidden"
                            name="project_discipline"
                            value="{{ filter_form.project_discipline.value|default:'' }}">
+                    <input type="hidden"
+                           name="project_stage"
+                           value="{{ filter_form.project_stage.value|default:'' }}">
                     <input type="hidden"
                            name="client"
                            value="{{ filter_form.client.value|default:'' }}">
@@ -217,7 +236,7 @@
             </h5>
         </div>
         <div class="p-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 <!-- Active Projects -->
                 <a href="{% url 'project:project-list' %}"
                    class="bg-blue-50 rounded-lg p-3 text-center border border-blue-100 hover:bg-blue-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
@@ -227,31 +246,55 @@
                     <p class="text-xs font-medium text-blue-600 uppercase tracking-wider">Active Projects</p>
                     <p class="text-xl font-bold text-blue-700 mt-1">{{ active_projects_count }}</p>
                 </a>
-                <!-- Urgent Intervention -->
+                <!-- Cost Overruns -->
                 <a href="{% url 'project:portfolio-financial-report' %}?sort=cpi_asc"
-                   class="bg-red-50 rounded-lg p-3 text-center border border-red-100 hover:bg-red-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
-                    <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-red-600 transition-colors">
-                        {% heroicon_outline "exclamation-triangle" size="16" class="text-white" %}
+                   class="bg-rose-50 rounded-lg p-3 text-center border border-rose-100 hover:bg-rose-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <div class="w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-rose-600 transition-colors">
+                        {% heroicon_outline "banknotes" size="16" class="text-white" %}
                     </div>
-                    <p class="text-xs font-medium text-red-600 uppercase tracking-wider">Urgent Intervention</p>
-                    <p class="text-xl font-bold text-red-700 mt-1">{{ urgent_projects_count }}</p>
-                    <p class="text-xs text-red-500">({{ urgent_projects_percentage|floatformat:0 }}%)</p>
-                    <p class="text-xs text-red-400 mt-1">
-                        CPI & SPI < 0.96
-                    </p>
+                    <p class="text-xs font-medium text-rose-600 uppercase tracking-wider">Cost Overruns</p>
+                    <p class="text-xl font-bold text-rose-700 mt-1">{{ urgent_cost_projects_count }}</p>
+                    <p class="text-xs text-rose-500">Urgent Cost Matters</p>
                 </a>
-                <!-- Requiring Attention -->
-                <a href="{% url 'project:portfolio-financial-report' %}?sort=cpi_asc"
+                <!-- Schedule Overruns -->
+                <a href="{% url 'project:portfolio-schedule-report' %}"
+                   class="bg-orange-50 rounded-lg p-3 text-center border border-orange-100 hover:bg-orange-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-orange-600 transition-colors">
+                        {% heroicon_outline "clock" size="16" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-orange-600 uppercase tracking-wider">Schedule Overruns</p>
+                    <p class="text-xl font-bold text-orange-700 mt-1">{{ urgent_time_projects_count }}</p>
+                    <p class="text-xs text-orange-500">Urgent Schedule Matters</p>
+                </a>
+                <!-- Compliance -->
+                <a href="{% url 'project:compliance-report' %}"
+                   class="bg-emerald-50 rounded-lg p-3 text-center border border-emerald-100 hover:bg-emerald-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-emerald-600 transition-colors">
+                        {% heroicon_outline "shield-check" size="16" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-emerald-600 uppercase tracking-wider">Compliance</p>
+                    <p class="text-xl font-bold text-emerald-700 mt-1">{{ portfolio_compliance_percentage|default:"--" }}%</p>
+                    <p class="text-xs text-emerald-500">Overall Portfolio Compliance</p>
+                </a>
+                <!-- Total Jobs -->
+                <a href="{% url 'project:impact-report' %}"
                    class="bg-amber-50 rounded-lg p-3 text-center border border-amber-100 hover:bg-amber-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
                     <div class="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-amber-600 transition-colors">
-                        {% heroicon_outline "eye" size="16" class="text-white" %}
+                        {% heroicon_outline "bolt" size="16" class="text-white" %}
                     </div>
-                    <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Requiring Attention</p>
-                    <p class="text-xl font-bold text-amber-700 mt-1">{{ attention_projects_count }}</p>
-                    <p class="text-xs text-amber-500">({{ attention_projects_percentage|floatformat:0 }}%)</p>
-                    <p class="text-xs text-amber-400 mt-1">
-                        0.96 ≤ CPI or SPI < 1.0
-                    </p>
+                    <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Total Jobs</p>
+                    <p class="text-xl font-bold text-amber-700 mt-1">{{ total_jobs_count|default:"0" }}</p>
+                    <p class="text-xs text-amber-500">Total Jobs Created</p>
+                </a>
+                <!-- Local Spend -->
+                <a href="{% url 'project:impact-report' %}"
+                   class="bg-purple-50 rounded-lg p-3 text-center border border-purple-100 hover:bg-purple-100 hover:shadow-md transition-all duration-200 cursor-pointer group">
+                    <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-purple-600 transition-colors">
+                        {% heroicon_outline "currency-dollar" size="16" class="text-white" %}
+                    </div>
+                    <p class="text-xs font-medium text-purple-600 uppercase tracking-wider">Local Spend</p>
+                    <p class="text-xl font-bold text-purple-700 mt-1">R {{ total_local_spend|floatformat:0|intcomma }}</p>
+                    <p class="text-xs text-purple-500">Portfolio Spend</p>
                 </a>
             </div>
         </div>

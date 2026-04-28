@@ -27,6 +27,13 @@ from app.Project.models import (
     Risk,
     Role,
 )
+from app.Project.models.entity_definitions import (
+    LabourEntity,
+    MaterialEntity,
+    OverheadEntity,
+    PlantEntity,
+    SubcontractorEntity,
+)
 
 
 class ProjectCategoryFactory(DjangoModelFactory):
@@ -386,3 +393,61 @@ class DisciplineFactory(DjangoModelFactory):
 
     project = SubFactory(ProjectFactory)
     name = Sequence(lambda n: f"Discipline {n}")
+
+
+class LabourEntityFactory(DjangoModelFactory):
+    """Factory for LabourEntity model."""
+
+    class Meta:
+        model = LabourEntity
+
+    project = SubFactory(ProjectFactory)
+    person_name = Faker("name")
+    id_number = Sequence(lambda n: f"ID{n:06d}")
+    trade = Faker("job")
+
+
+class MaterialEntityFactory(DjangoModelFactory):
+    """Factory for MaterialEntity model."""
+
+    class Meta:
+        model = MaterialEntity
+
+    project = SubFactory(ProjectFactory)
+    name = Sequence(lambda n: f"Material {n}")
+    supplier = Faker("company")
+    unit = "Each"
+    rate = Faker("pydecimal", left_digits=4, right_digits=2, positive=True)
+
+
+class PlantEntityFactory(DjangoModelFactory):
+    """Factory for PlantEntity model."""
+
+    class Meta:
+        model = PlantEntity
+
+    project = SubFactory(ProjectFactory)
+    name = Sequence(lambda n: f"Plant {n}")
+    supplier = Faker("company")
+
+
+class SubcontractorEntityFactory(DjangoModelFactory):
+    """Factory for SubcontractorEntity model."""
+
+    class Meta:
+        model = SubcontractorEntity
+
+    project = SubFactory(ProjectFactory)
+    name = Faker("company")
+    trade = Faker("job")
+
+
+class OverheadEntityFactory(DjangoModelFactory):
+    """Factory for OverheadEntity model."""
+
+    class Meta:
+        model = OverheadEntity
+
+    project = SubFactory(ProjectFactory)
+    name = Sequence(lambda n: f"Overhead {n}")
+    category = "General"

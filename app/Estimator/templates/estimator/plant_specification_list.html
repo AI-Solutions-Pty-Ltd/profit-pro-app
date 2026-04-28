@@ -1,0 +1,114 @@
+{% extends parent_template|default:"estimator/base_plant_estimator.html" %}
+{% load estimator_tags %}
+{% block title %}{{ title_noun }} Calculator - Project Resource Estimator{% endblock %}
+{% block sub_content %}
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">{{ title_noun }} Calculator</h1>
+        <p class="mt-1 text-sm text-gray-500">
+            Plant specifications grouped by section — driven by items assigned in the Output BoQ.
+        </p>
+    </div>
+    <!-- Filters -->
+    <div class="bg-white shadow-sm rounded-lg p-4 mb-4">
+        <form method="get" class="flex flex-wrap items-end gap-3">
+            <div class="min-w-0">
+                <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Section</label>
+                <select name="section"
+                        onchange="this.form.submit()"
+                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                    <option value="">All Sections</option>
+                    {% for s in sections %}
+                        <option value="{{ s }}" {% if f_section == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="min-w-0">
+                <label class="block text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">Plant Spec</label>
+                <select name="name"
+                        onchange="this.form.submit()"
+                        class="block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-xs text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 bg-white">
+                    <option value="">All</option>
+                    {% for n in names %}
+                        <option value="{{ n }}" {% if f_name == n %}selected{% endif %}>{{ n }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if f_section or f_name %}
+                <a href="{{ request.path }}"
+                   class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 ring-1 ring-inset ring-gray-300">
+                    Clear
+                </a>
+            {% endif %}
+        </form>
+    </div>
+    <!-- Table -->
+    <div class="bg-white shadow-sm rounded-lg">
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-xs whitespace-nowrap">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Section</th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Plant Spec</th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                            Plant &amp; Hours
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">Unit</th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                            Daily Output
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                            Daily Cost
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                            Rate / Unit
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">BoQ Qty</th>
+                        <th class="bg-gray-50 px-3 py-2 text-left text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                            Plant &amp; Hours (BoQ Qty)
+                        </th>
+                        <th class="bg-gray-50 px-3 py-2 text-right text-[10px] font-bold uppercase tracking-wider text-gray-500">Amount</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for row in rows %}
+                        <tr class="hover:bg-gray-50/50">
+                            <td class="px-3 py-1.5 text-gray-700">{{ row.section }}</td>
+                            <td class="px-3 py-1.5 text-gray-700">{{ row.spec.name }}</td>
+                            <td class="px-3 py-1.5 text-gray-600">
+                                {% for comp in row.spec.components.all %}
+                                    <div>
+                                        {{ comp.plant_type.name|default:"—" }} <span class="text-gray-400">· {{ comp.hours }}h</span>
+                                    </div>
+                                {% empty %}
+                                    —
+                                {% endfor %}
+                            </td>
+                            <td class="px-3 py-1.5 text-gray-500">{{ row.spec.unit }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.spec.daily_output|qty }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.spec.daily_cost|currency }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.rate|currency }}</td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-700">{{ row.boq_qty|qty }}</td>
+                            <td class="px-3 py-1.5 text-gray-600">
+                                {% for comp in row.component_totals %}
+                                    <div class="flex justify-between text-xs{% if not forloop.last %} mb-1{% endif %}">
+                                        <span class="text-gray-500">{{ comp.name }}:</span>
+                                        <span class="tabular-nums">{{ comp.total_hours|qty }}h</span>
+                                    </div>
+                                {% empty %}
+                                    —
+                                {% endfor %}
+                            </td>
+                            <td class="px-3 py-1.5 text-right tabular-nums text-gray-900 font-medium">{{ row.amount|currency }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="10" class="px-3 py-8 text-center text-gray-500">
+                                No plant specifications assigned to Output BoQ items yet.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

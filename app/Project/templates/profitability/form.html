@@ -1,0 +1,35 @@
+{% extends "profitability/base_form.html" %}
+{% block entity_name %}
+    {% if "journal" in request.path %}
+        Journal Entry
+    {% elif "subcontractor" in request.path %}
+        Subcontractor Record
+    {% elif "labour" in request.path %}
+        Labour Record
+    {% elif "overhead" in request.path %}
+        Overhead Record
+    {% elif "material" in request.path %}
+        Material Record
+    {% elif "plant" in request.path %}
+        Plant Equipment Record
+    {% else %}
+        Record
+    {% endif %}
+{% endblock %}
+{% block entity_display_name %}{{ block.super }}{% endblock %}
+{% block back_url %}
+    {% if "journal" in request.path %}
+        {% url 'project:profitability-journal-list' project.pk %}
+    {% elif "subcontractor" in request.path %}
+        {% url 'project:profitability-subcontractor-list' project.pk %}
+    {% elif "labour" in request.path %}
+        {% url 'project:profitability-labour-list' project.pk %}
+    {% elif "overhead" in request.path %}
+        {% url 'project:profitability-overhead-list' project.pk %}
+    {% elif "material" in request.path %}
+        {% url 'project:profitability-material-list' project.pk %}
+    {% elif "plant" in request.path %}
+        {% url 'project:profitability-plant-list' project.pk %}
+    {% endif %}
+{% endblock %}
+{% block cancel_url %}{{ block.super }}{% endblock %}

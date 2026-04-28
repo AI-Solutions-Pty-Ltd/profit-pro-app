@@ -5,11 +5,12 @@ from django.urls import include, path
 # Hard imports for all URL modules
 from ..categories.category_urls import urlpatterns as category_urls
 from ..categories.discipline_urls import urlpatterns as discipline_urls
+from ..categories.stage_urls import urlpatterns as stage_urls
 from ..categories.subcategory_urls import urlpatterns as subcategory_urls
 from ..company.company_urls import urlpatterns as company_urls
 from ..documents.document_urls import urlpatterns as document_urls
 from ..milestone_schedules.milestone_urls import urlpatterns as milestone_urls
-from ..production_progress.urls.production_urls import urlpatterns as production_urls
+from ..production_progress.urls import urlpatterns as production_urls
 from ..projects.category_urls import urlpatterns as project_category_urls
 from ..projects.project_urls import urlpatterns as project_urls
 from .compliance_urls import urlpatterns as compliance_urls
@@ -20,6 +21,7 @@ from .project_role_urls import urlpatterns as project_role_urls
 from .report_urls import urlpatterns as report_urls
 from .risk_urls import urlpatterns as risk_urls
 from .signatory_urls import urlpatterns as signatory_urls
+from .unit_urls import urlpatterns as unit_urls
 from .user_urls import urlpatterns as user_urls
 
 app_name = "project"
@@ -30,10 +32,13 @@ _path_prefix = "project/"
 urlpatterns = [
     path("portfolio/", include(portfolio_urls)),
     path("", include(project_urls)),
+    path("", include("app.Project.urls.signatory_urls")),
+    path("", include("app.Project.urls.entity_urls")),
     path("", include(project_category_urls)),
     path("project-categories/", include(category_urls)),
     path("project-subcategories/", include(subcategory_urls)),
     path("project-discipline/", include(discipline_urls)),
+    path("project-stage/", include(stage_urls)),
     path("project-role/", include(project_role_urls)),
     path("company/", include(company_urls)),
     path("compliance/", include(compliance_urls)),
@@ -46,4 +51,6 @@ urlpatterns = [
     path("signatory/", include(signatory_urls)),
     path("user/", include(user_urls)),
     path("production/", include(production_urls)),
+    path("", include(unit_urls)),
+    path("", include("app.Project.profitability.urls")),
 ]

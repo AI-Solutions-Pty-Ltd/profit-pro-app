@@ -24,6 +24,15 @@ class SubscriptionRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 
     def test_func(self) -> bool:
         user: Account = self.request.user  # type: ignore
+        get_project = getattr(self, "get_project", None)
+        request = getattr(self, "request", None)
+        if get_project and request and request.method in {"GET", "HEAD", "OPTIONS"}:
+            try:
+                project = get_project()
+            except Exception:
+                project = None
+            if project is not None and getattr(project, "is_demo", False):
+                return True
         return user.has_subscription_tier(self.required_tiers)
 
     def handle_no_permission(self):

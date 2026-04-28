@@ -3,7 +3,7 @@
 from typing import Any
 
 from django.contrib import messages
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -30,7 +30,9 @@ class BaseRoleListView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     def get_project(self) -> Project:
         """Get the project and verify access."""
         return get_object_or_404(
-            Project, pk=self.kwargs["project_pk"], users=self.request.user
+            Project,
+            Q(pk=self.kwargs["project_pk"]),
+            Q(users=self.request.user) | Q(is_demo=True),
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
@@ -82,7 +84,9 @@ class BaseRoleAddView(UserHasGroupGenericMixin, BreadcrumbMixin, ListView):
     def get_project(self) -> Project:
         """Get the project and verify access."""
         return get_object_or_404(
-            Project, pk=self.kwargs["project_pk"], users=self.request.user
+            Project,
+            Q(pk=self.kwargs["project_pk"]),
+            Q(users=self.request.user) | Q(is_demo=True),
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
@@ -175,7 +179,9 @@ class BaseRoleRemoveView(UserHasGroupGenericMixin, BreadcrumbMixin, DeleteView):
     def get_project(self) -> Project:
         """Get the project and verify access."""
         return get_object_or_404(
-            Project, pk=self.kwargs["project_pk"], users=self.request.user
+            Project,
+            Q(pk=self.kwargs["project_pk"]),
+            Q(users=self.request.user) | Q(is_demo=True),
         )
 
     def get_object(self) -> Account:  # type: ignore

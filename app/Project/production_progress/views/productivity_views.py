@@ -1,0 +1,603 @@
+import json
+
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import models
+from django.db.models import (
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    OuterRef,
+    Subquery,
+    Sum,
+    Value,
+)
+from django.db.models.functions import Coalesce
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    TemplateView,
+)
+
+from app.Account.subscription_config import Subscription
+from app.core.Utilities.mixins import BreadcrumbMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
+from app.Project.models import Project
+
+from ..production_forms import (
+    DailyProductionForm,
+)
+from ..production_models import (
+    DailyActivityEntry,
+    DailyActivityReport,
+    DailyProduction,
+    ProductionPlan,
+)
+from ..serializers import DailyLogEntrySerializer, DailyLogReportSerializer
+
+
+class DailyProductionCreateView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, CreateView
+):
+    """Form to log daily quantities."""
+
+    model = DailyProduction
+    form_class = DailyProductionForm
+    template_name = "production_progress/tracking/production_form.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": "Log Daily Quantities", "url": None},
+        ]
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "project:production-dashboard",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        context["project"] = project
+        return context
+
+    def form_valid(self, form):
+        form.instance.project_id = self.kwargs["project_pk"]
+        return super().form_valid(form)
+
+
+class ProductionDailyLogListView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, ListView
+):
+    """List view for Daily Activity Reports."""
+
+    model = DailyActivityEntry
+    template_name = "production_progress/log/list.html"
+    context_object_name = "entries"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_queryset(self):
+        from decimal import Decimal
+
+        from app.Project.production_progress.production_models import (
+            DailyPlantUsage,
+        )
+
+        # Subquery for plant cost sum
+        plant_costs = (
+            DailyPlantUsage.objects.filter(entry=OuterRef("pk"))
+            .annotate(
+                actual_rate=Coalesce(
+                    F("plant_type__hourly_rate"),
+                    F("resource__rate"),
+                    Decimal("0"),
+                    output_field=models.DecimalField(),
+                )
+            )
+            .annotate(
+                cost=ExpressionWrapper(
+                    F("number") * F("hours") * F("actual_rate"),
+                    output_field=models.DecimalField(),
+                )
+            )
+            .values("entry")
+            .annotate(total=Sum("cost"))
+            .values("total")
+        )
+
+        # Annotate with actual summed costs from usage records
+        return (
+            DailyActivityEntry.objects.filter(
+                report__project_id=self.kwargs["project_pk"]
+            )
+            .select_related(
+                "report",
+                "production_plan",
+                "production_plan__labour_activity",
+                "production_plan__labour_activity__crew",
+            )
+            .annotate(
+                # Formula: (skilled * rate + semi * rate + general * rate) / 8.0
+                hourly_labour_rate=ExpressionWrapper(
+                    (
+                        Coalesce(
+                            F("production_plan__labour_activity__crew__skilled"),
+                            Value(0),
+                        )
+                        * Coalesce(
+                            F("production_plan__labour_activity__crew__skilled_rate"),
+                            Value(0),
+                        )
+                        + Coalesce(
+                            F("production_plan__labour_activity__crew__semi_skilled"),
+                            Value(0),
+                        )
+                        * Coalesce(
+                            F(
+                                "production_plan__labour_activity__crew__semi_skilled_rate"
+                            ),
+                            Value(0),
+                        )
+                        + Coalesce(
+                            F("production_plan__labour_activity__crew__general"),
+                            Value(0),
+                        )
+                        * Coalesce(
+                            F("production_plan__labour_activity__crew__general_rate"),
+                            Value(0),
+                        )
+                    )
+                    / Value(
+                        8.0, output_field=DecimalField(max_digits=10, decimal_places=2)
+                    ),
+                    output_field=models.DecimalField(max_digits=10, decimal_places=2),
+                ),
+                actual_labour_cost=Coalesce(
+                    F("hours_on_activity") * F("hourly_labour_rate"),
+                    Value(0, output_field=models.DecimalField()),
+                ),
+                actual_plant_cost=Coalesce(
+                    Subquery(plant_costs), Value(0, output_field=models.DecimalField())
+                ),
+            )
+            .annotate(acc_total_cost=F("actual_labour_cost") + F("actual_plant_cost"))
+            .order_by("-report__date", "-created_at")
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+        context["project"] = project
+
+        # Calculate Aggregate Totals for the footer
+        qs = self.get_queryset()
+        context["totals"] = qs.aggregate(
+            qty=Sum("quantity"),
+            hours=Sum("hours_on_activity"),
+            labour=Sum("actual_labour_cost"),
+            plant=Sum("actual_plant_cost"),
+            total=Sum("acc_total_cost"),
+        )
+        return context
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": "Daily Logs", "url": None},
+        ]
+
+
+class ProductionDailyLogCreateView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """Multi-activity Daily Log Form."""
+
+    template_name = "production_progress/log/form.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+        context["project"] = project
+
+        # Available activities (only those with ProductionPlans)
+        context["plans"] = ProductionPlan.objects.filter(
+            project=project, labour_activity__isnull=False
+        ).order_by("section", "bill_no", "activity")
+
+        return context
+
+    def post(self, request, *args, **kwargs) -> JsonResponse:
+        try:
+            data = json.loads(request.body)
+            data["project_id"] = self.kwargs["project_pk"]
+            serializer = DailyLogReportSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse(
+                    {"status": "success", "message": "Log saved successfully"}
+                )
+            return JsonResponse(
+                {"status": "error", "errors": serializer.errors}, status=400
+            )
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Daily Logs",
+                "url": reverse_lazy(
+                    "project:production-daily-log-list",
+                    kwargs={"project_pk": project_pk},
+                ),
+            },
+            {"title": "Capture Log", "url": None},
+        ]
+
+
+class ProductionDailyLogUpdateView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, DetailView
+):
+    """Multi-activity Daily Log Edit Form."""
+
+    model = DailyActivityReport
+    template_name = "production_progress/log/form.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+    context_object_name = "report"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+        context["project"] = project
+
+        # Available activities (only those with ProductionPlans)
+        context["plans"] = ProductionPlan.objects.filter(
+            project=project, labour_activity__isnull=False
+        ).order_by("section", "bill_no", "activity")
+
+        # Prepare initial data for JS
+        # We prefetch for efficiency
+        report = self.object
+        entries_data = []
+        for entry in report.entries.all().select_related("production_plan"):
+            # Labour
+            labour_details = {
+                "Skilled": {"number": 0.0, "hours": 0.0},
+                "Semi-Skilled": {"number": 0.0, "hours": 0.0},
+                "General": {"number": 0.0, "hours": 0.0},
+            }
+            for usage in entry.labour_usage.all().select_related("resource"):
+                labour_details[usage.resource.name] = {
+                    "number": float(usage.number),
+                    "hours": float(usage.hours),
+                }
+
+            # Plant
+            plant_usage = []
+            for usage in entry.plant_usage.all().select_related(
+                "plant_type", "resource"
+            ):
+                plant_name = "Unknown"
+                if usage.plant_type:
+                    plant_name = usage.plant_type.name
+                elif usage.resource:
+                    plant_name = usage.resource.name
+
+                plant_usage.append(
+                    {
+                        "plant_type_id": usage.plant_type_id,
+                        "resource_id": usage.resource_id,
+                        "plant_name": plant_name,
+                        "number": float(usage.number or 0),
+                        "hours": float(usage.hours or 0),
+                        "quantity": float(usage.quantity or 0),
+                    }
+                )
+
+            # Get available plants for selection (from Spec)
+            available_plants = [
+                {"id": a["id"], "name": a["name"]}
+                for a in entry.production_plan.get_plant_allocations()
+            ]
+
+            entries_data.append(
+                {
+                    "production_plan_id": entry.production_plan_id,
+                    "activity": entry.production_plan.activity
+                    or (
+                        entry.production_plan.labour_activity.name
+                        if entry.production_plan.labour_activity
+                        else f"Activity {entry.production_plan.id}"
+                    ),
+                    "section": entry.production_plan.section or "No Section",
+                    "bill_no": entry.production_plan.bill_no or "No Bill",
+                    "quantity": float(entry.quantity),
+                    "hours_on_activity": float(entry.hours_on_activity),
+                    "labour_details": labour_details,
+                    "plant_usage": plant_usage,
+                    "unit": entry.production_plan.unit_display,
+                    "available_plants": available_plants,
+                }
+            )
+
+        context["initial_data"] = json.dumps(
+            {
+                "date": report.date.isoformat(),
+                "notes": report.notes,
+                "entries": entries_data,
+            }
+        )
+
+        return context
+
+    def post(self, request, *args, **kwargs) -> JsonResponse:
+        try:
+            instance = self.get_object()
+            data = json.loads(request.body)
+            data["project_id"] = self.kwargs["project_pk"]
+            serializer = DailyLogReportSerializer(instance, data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse(
+                    {"status": "success", "message": "Log updated successfully"}
+                )
+            return JsonResponse(
+                {"status": "error", "errors": serializer.errors}, status=400
+            )
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Daily Logs",
+                "url": reverse_lazy(
+                    "project:production-daily-log-list",
+                    kwargs={"project_pk": project_pk},
+                ),
+            },
+            {"title": "Edit Log", "url": None},
+        ]
+
+
+class ProductionDailyLogDeleteView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, DeleteView
+):
+    """Deletes a Daily Activity Report."""
+
+    model = DailyActivityReport
+    template_name = "production_progress/log/confirm_delete.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+    context_object_name = "report"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        context["project"] = get_object_or_404(Project, pk=project_pk)
+        return context
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "project:production-daily-log-list",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+    def get_breadcrumbs(self):
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {"title": "Daily Logs", "url": self.get_success_url()},
+            {"title": "Delete Log", "url": None},
+        ]
+
+
+class DailyActivityEntryUpdateView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, DetailView
+):
+    """Granular Activity Entry Edit Form."""
+
+    model = DailyActivityEntry
+    template_name = "production_progress/log/entry_form.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+    context_object_name = "entry"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+        context["project"] = project
+
+        entry = self.object
+        # Labour
+        labour_details = {
+            "Skilled": {"number": 0.0, "hours": 0.0},
+            "Semi-Skilled": {"number": 0.0, "hours": 0.0},
+            "General": {"number": 0.0, "hours": 0.0},
+        }
+        for usage in entry.labour_usage.all().select_related("resource"):
+            labour_details[usage.resource.name] = {
+                "number": float(usage.number),
+                "hours": float(usage.hours),
+            }
+
+        # Plant
+        plant_usage = []
+        for usage in entry.plant_usage.all().select_related("resource"):
+            plant_usage.append(
+                {
+                    "resource_id": usage.resource_id,
+                    "plant_name": usage.resource.name,
+                    "number": float(usage.number),
+                    "hours": float(usage.hours),
+                    "quantity": float(usage.quantity),
+                }
+            )
+
+        # Get available plants for selection (ID and Name)
+        available_plants = [
+            {"id": r.id, "name": r.name}
+            for r in entry.production_plan.resources.filter(resource_type="PLANT")
+        ]
+
+        context["initial_data"] = json.dumps(
+            {
+                "production_plan_id": entry.production_plan_id,
+                "activity": entry.production_plan.activity
+                or (
+                    entry.production_plan.labour_activity.name
+                    if entry.production_plan.labour_activity
+                    else f"Activity {entry.production_plan.id}"
+                ),
+                "section": entry.production_plan.section or "No Section",
+                "bill_no": entry.production_plan.bill_no or "No Bill",
+                "quantity": float(entry.quantity),
+                "hours_on_activity": float(entry.hours_on_activity),
+                "labour_details": labour_details,
+                "plant_usage": plant_usage,
+                "unit": entry.production_plan.unit_display,
+                "available_plants": available_plants,
+            }
+        )
+        return context
+
+    def post(self, request, *args, **kwargs) -> JsonResponse:
+        try:
+            instance = self.get_object()
+            data = json.loads(request.body)
+            serializer = DailyLogEntrySerializer(instance, data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return JsonResponse(
+                    {
+                        "status": "success",
+                        "message": "Activity entry updated successfully",
+                    }
+                )
+            return JsonResponse(
+                {"status": "error", "errors": serializer.errors}, status=400
+            )
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Daily Logs",
+                "url": reverse_lazy(
+                    "project:production-daily-log-list",
+                    kwargs={"project_pk": project_pk},
+                ),
+            },
+            {"title": "Edit Activity Log", "url": None},
+        ]
+
+
+class ProductionDailyLogDetailView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, DetailView
+):
+    """Detailed view of a Daily Activity Report."""
+
+    model = DailyActivityReport
+    template_name = "production_progress/log/details.html"
+    context_object_name = "report"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["project"] = self.object.project
+        # Prefetch entries and resource usage
+        entries = self.object.entries.select_related(
+            "production_plan"
+        ).prefetch_related("labour_usage__resource", "plant_usage__resource")
+        context["entries"] = entries
+
+        # Calculate daily totals
+        context["report_total_labour_cost"] = sum(
+            entry.total_labour_cost for entry in entries
+        )
+        context["report_total_plant_cost"] = sum(
+            entry.total_plant_cost for entry in entries
+        )
+        context["report_total_cost"] = (
+            context["report_total_labour_cost"] + context["report_total_plant_cost"]
+        )
+        context["report_total_hours"] = sum(
+            entry.hours_on_activity for entry in entries
+        )
+        return context
+
+    def get_breadcrumbs(self):
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Daily Logs",
+                "url": reverse_lazy(
+                    "project:production-daily-log-list",
+                    kwargs={"project_pk": self.object.project_id},
+                ),
+            },
+            {"title": "Log Details", "url": None},
+        ]
+
+
+class DailyLogActivityDataAjaxView(LoginRequiredMixin, TemplateView):
+    """Returns metadata for a specific production plan to facilitate autofill."""
+
+    def get(self, request, *args, **kwargs):
+        plan_id = request.GET.get("plan_id")
+        plan = get_object_or_404(ProductionPlan, pk=plan_id)
+
+        # Crew Info
+        crew_info = {"skilled": 0, "semi_skilled": 0, "general": 0}
+        if plan.labour_activity and plan.labour_activity.crew:
+            crew = plan.labour_activity.crew
+            crew_info = {
+                "skilled": crew.skilled,
+                "semi_skilled": crew.semi_skilled,
+                "general": crew.general,
+            }
+
+        # Get available plants for selection (from Spec)
+        available_plants = [
+            {"id": a["id"], "name": a["name"]} for a in plan.get_plant_allocations()
+        ]
+
+        return JsonResponse(
+            {
+                "activity": plan.activity or str(plan),
+                "section": plan.section or "No Section",
+                "bill_no": plan.bill_no or "No Bill",
+                "unit": plan.unit_display,
+                "available_plants": available_plants,
+                "crew": crew_info,
+            }
+        )

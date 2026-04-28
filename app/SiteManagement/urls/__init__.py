@@ -66,6 +66,63 @@ urlpatterns = [
         views.MeetingDeleteView.as_view(),
         name="meeting-delete",
     ),
+    path(
+        "project/<int:project_pk>/meetings/<int:pk>/add-decision/",
+        views.MeetingAddDecisionView.as_view(),
+        name="meeting-add-decision",
+    ),
+    path(
+        "project/<int:project_pk>/meetings/<int:pk>/add-action/",
+        views.MeetingAddActionView.as_view(),
+        name="meeting-add-action",
+    ),
+    path(
+        "project/<int:project_pk>/meetings/<int:pk>/actions/<int:action_pk>/update-status/",
+        views.MeetingUpdateActionStatusView.as_view(),
+        name="meeting-update-action-status",
+    ),
+    # Non-Conformance Reports (NCR)
+    path(
+        "project/<int:project_pk>/ncrs/",
+        views.NCRListView.as_view(),
+        name="ncr-list",
+    ),
+    path(
+        "project/<int:project_pk>/ncrs/create/",
+        views.NCRCreateView.as_view(),
+        name="ncr-create",
+    ),
+    path(
+        "project/<int:project_pk>/ncrs/<int:pk>/update/",
+        views.NCRUpdateView.as_view(),
+        name="ncr-update",
+    ),
+    path(
+        "project/<int:project_pk>/ncrs/<int:pk>/delete/",
+        views.NCRDeleteView.as_view(),
+        name="ncr-delete",
+    ),
+    # Incidents
+    path(
+        "project/<int:project_pk>/incidents/",
+        views.IncidentListView.as_view(),
+        name="incident-list",
+    ),
+    path(
+        "project/<int:project_pk>/incidents/create/",
+        views.IncidentCreateView.as_view(),
+        name="incident-create",
+    ),
+    path(
+        "project/<int:project_pk>/incidents/<int:pk>/update/",
+        views.IncidentUpdateView.as_view(),
+        name="incident-update",
+    ),
+    path(
+        "project/<int:project_pk>/incidents/<int:pk>/delete/",
+        views.IncidentDeleteView.as_view(),
+        name="incident-delete",
+    ),
     # Requests for Information
     path(
         "project/<int:project_pk>/rfis/",
@@ -117,6 +174,48 @@ urlpatterns = [
         "project/<int:project_pk>/site-instructions/<int:pk>/delete/",
         views.SiteInstructionDeleteView.as_view(),
         name="site-instruction-delete",
+    ),
+    # Bi-Weekly Safety Reports
+    path(
+        "project/<int:project_pk>/biweekly-safety/",
+        views.BiWeeklySafetyReportListView.as_view(),
+        name="biweekly-safety-list",
+    ),
+    path(
+        "project/<int:project_pk>/biweekly-safety/create/",
+        views.BiWeeklySafetyReportCreateView.as_view(),
+        name="biweekly-safety-create",
+    ),
+    path(
+        "project/<int:project_pk>/biweekly-safety/<int:pk>/update/",
+        views.BiWeeklySafetyReportUpdateView.as_view(),
+        name="biweekly-safety-update",
+    ),
+    path(
+        "project/<int:project_pk>/biweekly-safety/<int:pk>/delete/",
+        views.BiWeeklySafetyReportDeleteView.as_view(),
+        name="biweekly-safety-delete",
+    ),
+    # Bi-Weekly Quality Reports
+    path(
+        "project/<int:project_pk>/biweekly-quality/",
+        views.BiWeeklyQualityReportListView.as_view(),
+        name="biweekly-quality-list",
+    ),
+    path(
+        "project/<int:project_pk>/biweekly-quality/create/",
+        views.BiWeeklyQualityReportCreateView.as_view(),
+        name="biweekly-quality-create",
+    ),
+    path(
+        "project/<int:project_pk>/biweekly-quality/<int:pk>/update/",
+        views.BiWeeklyQualityReportUpdateView.as_view(),
+        name="biweekly-quality-update",
+    ),
+    path(
+        "project/<int:project_pk>/biweekly-quality/<int:pk>/delete/",
+        views.BiWeeklyQualityReportDeleteView.as_view(),
+        name="biweekly-quality-delete",
     ),
     # Materials Log
     path(
@@ -474,5 +573,26 @@ urlpatterns = [
         "project/<int:project_pk>/safety-observation/<int:pk>/delete/",
         views.SafetyObservationDeleteView.as_view(),
         name="safety-observation-delete",
+    ),
+    # Overhead Daily Log
+    path(
+        "project/<int:project_pk>/overhead-log/",
+        views.OverheadDailyLogListView.as_view(),
+        name="overhead-log-list",
+    ),
+    path(
+        "project/<int:project_pk>/overhead-log/create/",
+        views.OverheadDailyLogCreateView.as_view(),
+        name="overhead-log-create",
+    ),
+    path(
+        "project/<int:project_pk>/overhead-log/<int:pk>/update/",
+        views.OverheadDailyLogUpdateView.as_view(),
+        name="overhead-log-update",
+    ),
+    path(
+        "project/<int:project_pk>/overhead-log/<int:pk>/delete/",
+        views.OverheadDailyLogDeleteView.as_view(),
+        name="overhead-log-delete",
     ),
 ]

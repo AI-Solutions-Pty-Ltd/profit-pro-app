@@ -11,7 +11,7 @@ from app.Consultant.views.mixins import LeadConsultantMixin
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import UserHasProjectRoleGenericMixin
 from app.Project.forms.forms import ProjectLeadConsultantForm
-from app.Project.models import Role
+from app.Project.models import Company, Role
 
 
 class ProjectAllocateLeadConsultantView(
@@ -36,10 +36,20 @@ class ProjectAllocateLeadConsultantView(
             ),
             BreadcrumbItem(
                 title="Lead Consultants",
-                url=None,  # Update this when lead consultant list view exists
+                url=reverse(
+                    "client:lead-consultant-management:lead-consultant-list",
+                    kwargs={"project_pk": self.project.pk},
+                ),
             ),
             BreadcrumbItem(title="Allocate Lead Consultant", url=None),
         ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["has_lead_consultants"] = Company.objects.filter(
+            type=Company.Type.LEAD_CONSULTANT
+        ).exists()
+        return context
 
     def get_form_kwargs(self):
         """Pass the project to the form."""

@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load heroicons %}
+{% block title %}Bulk Material Entry - {{ project.name }}{% endblock %}
+{% block content %}
+    <div class="px-4 py-8 mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <div class="overflow-hidden bg-white border border-gray-200 shadow-xl sm:rounded-lg">
+            <!-- Header Section -->
+            <div class="px-6 py-5 bg-gray-50 border-b border-gray-200">
+                <a href="{% url 'project:profitability-material-list' project.pk %}"
+                   class="inline-flex items-center text-gray-400 transition-colors hover:text-gray-500 mb-4">
+                    {% heroicon_outline "chevron-left" size="20" class="mr-1" %}
+                    Back to List
+                </a>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="flex items-center text-2xl font-bold text-gray-900">
+                            {% heroicon_outline "cube" size="28" class="mr-3 text-indigo-600" %}
+                            Material Bulk Entry
+                        </h3>
+                        <p class="mt-1 text-sm text-gray-600">Log multiple material expenses for {{ project.name }} in one batch.</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Form Body -->
+            <form method="post" id="bulk-material-form" class="p-6">
+                {% csrf_token %}
+                <!-- Shared Header Info -->
+                <div class="bg-gray-50/50 p-6 rounded-xl border border-gray-100 mb-8">
+                    <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center">
+                        {% heroicon_outline "document-text" size="18" class="mr-2 text-indigo-500" %}
+                        General Information
+                    </h4>
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+                        <div>{{ header_form.date|as_crispy_field }}</div>
+                        <div>{{ header_form.invoice_number|as_crispy_field }}</div>
+                        <div>{{ header_form.supplier|as_crispy_field }}</div>
+                    </div>
+                </div>
+                <!-- Items Formset -->
+                <div class="mt-8">
+                    <div class="flex justify-between items-center px-2 mb-6">
+                        <h4 class="flex items-center text-xl font-bold text-gray-900">
+                            {% heroicon_outline "list-bullet" size="24" class="mr-3 text-indigo-600" %}
+                            Material Items
+                        </h4>
+                        <button type="button"
+                                id="open-modal-btn"
+                                class="inline-flex items-center px-4 py-2 text-sm font-bold text-indigo-600 rounded-md border-2 border-indigo-600 shadow-sm transition-all hover:bg-indigo-600 hover:text-white group">
+                            {% heroicon_outline "plus" size="18" class="mr-2 transition-transform group-hover:scale-110" %}
+                            Add Item
+                        </button>
+                    </div>
+                    <!-- Formset Management -->
+                    {{ formset.management_form }}
+                    {% if formset.non_form_errors %}
+                        <div class="p-4 mb-4 text-red-700 bg-red-50 rounded-md border-l-4 border-red-400">{{ formset.non_form_errors }}</div>
+                    {% endif %}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200" id="form-table">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col"
+                                        class="px-3 py-3.5 w-1/3 text-xs font-bold text-gray-500 uppercase tracking-wider text-left">
+                                        Material Entity
+                                    </th>
+                                    <th scope="col"
+                                        class="px-3 py-3.5 w-24 text-xs font-bold text-gray-500 uppercase tracking-wider text-left text-center">
+                                        Qty
+                                    </th>
+                                    <th scope="col"
+                                        class="px-3 py-3.5 w-32 text-xs font-bold text-gray-500 uppercase tracking-wider text-left">
+                                        Rate
+                                    </th>
+                                    <th scope="col"
+                                        class="px-3 py-3.5 text-xs font-bold text-gray-500 uppercase tracking-wider text-left">
+                                        Usage/Comments
+                                    </th>
+                                    <th scope="col"
+                                        class="px-3 py-3.5 w-32 text-xs font-bold text-gray-500 uppercase tracking-wider text-left">
+                                        Total
+                                    </th>
+                                    <th scope="col"
+                                        class="px-3 py-3.5 w-16 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="formset-container">
+                                <!-- Empty State -->
+                                <tr id="empty-state-row"
+                                    class="{% if formset.total_form_count > 0 %}hidden{% endif %}">
+                                    <td colspan="6" class="px-6 py-12 text-center">
+                                        <div class="flex flex-col items-center">
+                                            <div class="p-3 bg-gray-50 rounded-full mb-4">
+                                                {% heroicon_outline "shopping-cart" size="32" class="text-gray-300" %}
+                                            </div>
+                                            <h5 class="text-base font-bold text-gray-900">No items added to this batch</h5>
+                                            <p class="mt-1 text-sm text-gray-500">Click the 'Add Item' button to start logging materials.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% for form in formset %}
+                                    <tr class="form-row group hover:bg-gray-50/50 transition-colors">
+                                        {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+                                        <td class="px-3 py-4 align-top">
+                                            <div class="entity-display font-medium text-gray-900">
+                                                {% if form.material_entity.value %}{{ form.instance.material_entity.name }}{% endif %}
+                                            </div>
+                                            <div class="hidden">{{ form.material_entity }}</div>
+                                        </td>
+                                        <td class="px-3 py-4 align-top text-center">
+                                            <div class="qty-display font-mono text-gray-600">{{ form.quantity.value|default:"0.00" }}</div>
+                                            <div class="hidden">{{ form.quantity }}</div>
+                                        </td>
+                                        <td class="px-3 py-4 align-top">
+                                            <div class="rate-display font-mono text-gray-600">R{{ form.rate.value|default:"0.00" }}</div>
+                                            <div class="hidden">{{ form.rate }}</div>
+                                        </td>
+                                        <td class="px-3 py-4 align-top">
+                                            <div class="usage-display text-sm text-gray-500">{{ form.intended_usage.value|default:"" }}</div>
+                                            <div class="comments-display text-xs text-gray-400 mt-1">{{ form.comments.value|default:"" }}</div>
+                                            <div class="hidden">{{ form.intended_usage }}{{ form.comments }}</div>
+                                        </td>
+                                        <td class="px-3 py-4 align-top">
+                                            <div class="row-total font-bold text-gray-900 tabular-nums">R0.00</div>
+                                        </td>
+                                        <td class="px-3 py-4 text-center align-top">
+                                            <button type="button"
+                                                    class="remove-row-btn p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all">
+                                                {% heroicon_outline "trash" size="20" %}
+                                            </button>
+                                            <div class="hidden">{{ form.DELETE }}</div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="bg-gray-50/50">
+                                <tr>
+                                    <td colspan="4"
+                                        class="px-3 py-4 text-right text-sm font-bold text-gray-500 uppercase tracking-wider">
+                                        Total Invoice Value
+                                    </td>
+                                    <td class="px-3 py-4 text-lg font-black text-indigo-600 tabular-nums"
+                                        id="grand-total-display">R0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <!-- Form Actions -->
+                <div class="flex justify-end items-center pt-8 mt-10 border-t border-gray-200">
+                    <a href="{% url 'project:profitability-material-list' project.pk %}"
+                       class="px-6 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-md transition-all mr-4">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                            class="px-8 py-2 text-sm font-bold text-white bg-indigo-600 rounded-md shadow-md hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-100 transition-all">
+                        Save Batch Entries
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Modal -->
+    <div id="item-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="fixed inset-0 bg-gray-500/75 transition-opacity"
+                 id="modal-backdrop"></div>
+            <div class="relative bg-white rounded-xl shadow-2xl max-w-2xl w-full overflow-hidden transform transition-all border border-gray-100">
+                <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-gray-900">Add Material Entry</h3>
+                    <button type="button" class="close-modal text-gray-400 hover:text-gray-600">
+                        {% heroicon_outline "x-mark" size="24" %}
+                    </button>
+                </div>
+                <div class="p-6">
+                    <div id="modal-error"
+                         class="hidden mb-4 p-3 bg-red-50 border border-red-100 text-red-700 rounded-lg text-sm font-medium flex items-center">
+                        {% heroicon_outline "exclamation-circle" size="20" class="mr-2" %}
+                        Please ensure all required fields are filled.
+                    </div>
+                    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                        <div class="sm:col-span-2">{{ formset.empty_form.material_entity|as_crispy_field }}</div>
+                        <div>{{ formset.empty_form.quantity|as_crispy_field }}</div>
+                        <div>{{ formset.empty_form.rate|as_crispy_field }}</div>
+                        <div class="sm:col-span-2">{{ formset.empty_form.intended_usage|as_crispy_field }}</div>
+                        <div class="sm:col-span-2">{{ formset.empty_form.comments|as_crispy_field }}</div>
+                    </div>
+                    <div class="mt-8 p-4 bg-indigo-50 rounded-xl border border-indigo-100 flex justify-between items-center">
+                        <div>
+                            <span class="text-xs font-bold text-indigo-400 uppercase tracking-widest">Row Total</span>
+                            <span class="block text-sm font-semibold text-gray-700">Calculated Amount</span>
+                        </div>
+                        <span class="text-2xl font-black text-indigo-600 tabular-nums"
+                              id="modal-total-display">R0.00</span>
+                    </div>
+                </div>
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end space-x-3">
+                    <button type="button"
+                            class="close-modal px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-200 rounded-md transition-all">
+                        Discard
+                    </button>
+                    <button type="button"
+                            id="add-to-batch-btn"
+                            class="px-6 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-md shadow-sm transition-all shadow-indigo-100">
+                        Add to Batch
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <template id="empty-form-template">
+        <tr class="form-row group hover:bg-gray-50/50 transition-colors animate-in fade-in slide-in-from-left-2">
+            <td class="px-3 py-4 align-top">
+                <div class="entity-display font-medium text-gray-900"></div>
+                <input type="hidden" name="form-__prefix__-material_entity">
+            </td>
+            <td class="px-3 py-4 align-top text-center">
+                <div class="qty-display font-mono text-gray-600"></div>
+                <input type="hidden" name="form-__prefix__-quantity">
+            </td>
+            <td class="px-3 py-4 align-top">
+                <div class="rate-display font-mono text-gray-600"></div>
+                <input type="hidden" name="form-__prefix__-rate">
+            </td>
+            <td class="px-3 py-4 align-top">
+                <div class="usage-display text-sm text-gray-500"></div>
+                <div class="comments-display text-xs text-gray-400 mt-1"></div>
+                <input type="hidden" name="form-__prefix__-intended_usage">
+                <input type="hidden" name="form-__prefix__-comments">
+            </td>
+            <td class="px-3 py-4 align-top">
+                <div class="row-total font-bold text-gray-900 tabular-nums">R0.00</div>
+            </td>
+            <td class="px-3 py-4 text-center align-top">
+                <button type="button"
+                        class="remove-row-btn p-1 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all">
+                    {% heroicon_outline "trash" size="20" %}
+                </button>
+                <div class="hidden">
+                    <input type="checkbox" name="form-__prefix__-DELETE">
+                </div>
+            </td>
+        </tr>
+    </template>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const bulkForm = document.querySelector('#bulk-material-form');
+    const formContainer = document.querySelector('#formset-container');
+    const totalForms = document.querySelector('#id_form-TOTAL_FORMS');
+    const template = document.querySelector('#empty-form-template');
+    const emptyStateRow = document.querySelector('#empty-state-row');
+    const grandTotalDisplay = document.querySelector('#grand-total-display');
+    
+    // Modal Elements
+    const itemModal = document.querySelector('#item-modal');
+    const openModalBtn = document.querySelector('#open-modal-btn');
+    const closeModalBtns = document.querySelectorAll('.close-modal');
+    const addToBatchBtn = document.querySelector('#add-to-batch-btn');
+    const modalError = document.querySelector('#modal-error');
+    const modalTotalDisplay = document.querySelector('#modal-total-display');
+    
+    // Modal Inputs
+    const modalEntity = itemModal.querySelector('[name*="material_entity"]');
+    const modalQty = itemModal.querySelector('[name*="quantity"]');
+    const modalRate = itemModal.querySelector('[name*="rate"]');
+    const modalUsage = itemModal.querySelector('[name*="intended_usage"]');
+    const modalComments = itemModal.querySelector('[name*="comments"]');
+
+    const currencyFormatter = new Intl.NumberFormat('en-ZA', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+
+    function formatCurrency(val) {
+        return currencyFormatter.format(val);
+    }
+
+    // Modal Calculation
+    function updateModalTotal() {
+        const qty = parseFloat(modalQty.value) || 0;
+        const rate = parseFloat(modalRate.value) || 0;
+        modalTotalDisplay.textContent = `R ${formatCurrency(qty * rate)}`;
+    }
+
+    modalQty.addEventListener('input', updateModalTotal);
+    modalRate.addEventListener('input', updateModalTotal);
+
+    // Auto-fill rate from choice data
+    $(modalEntity).on('change', function() {
+        const rate = $(this).find(':selected').data('rate');
+        if (rate) {
+            modalRate.value = rate;
+            updateModalTotal();
+        }
+    });
+
+    // Open/Close Modal
+    openModalBtn.addEventListener('click', () => {
+        itemModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    });
+
+    function closeModal() {
+        itemModal.classList.add('hidden');
+        document.body.style.overflow = '';
+        // Reset modal fields (not entity as select2 might need manual reset)
+        modalQty.value = '';
+        modalRate.value = '';
+        modalUsage.value = '';
+        modalComments.value = '';
+        modalTotalDisplay.textContent = 'R 0.00';
+        modalError.classList.add('hidden');
+    }
+
+    closeModalBtns.forEach(btn => btn.addEventListener('click', closeModal));
+
+    // Calculate Grand Total
+    function updateGrandTotal() {
+        let total = 0;
+        formContainer.querySelectorAll('.row-total').forEach(el => {
+            const val = parseFloat(el.textContent.replace(/[^0-9.-]+/g, "")) || 0;
+            total += val;
+        });
+        grandTotalDisplay.textContent = `R ${formatCurrency(total)}`;
+    }
+
+    // Add to Batch
+    addToBatchBtn.addEventListener('click', () => {
+        if (!modalEntity.value || !modalQty.value || !modalRate.value) {
+            modalError.classList.remove('hidden');
+            return;
+        }
+
+        const nextIndex = parseInt(totalForms.value);
+        const clone = template.content.cloneNode(true);
+        const row = clone.querySelector('.form-row');
+
+        // Extract UI elements from row
+        const entityDisp = row.querySelector('.entity-display');
+        const qtyDisp = row.querySelector('.qty-display');
+        const rateDisp = row.querySelector('.rate-display');
+        const usageDisp = row.querySelector('.usage-display');
+        const commentsDisp = row.querySelector('.comments-display');
+        const rowTotal = row.querySelector('.row-total');
+
+        // Extract hidden inputs from row
+        const entityInp = row.querySelector('[name*="-material_entity"]');
+        const qtyInp = row.querySelector('[name*="-quantity"]');
+        const rateInp = row.querySelector('[name*="-rate"]');
+        const usageInp = row.querySelector('[name*="-intended_usage"]');
+        const commentsInp = row.querySelector('[name*="-comments"]');
+
+        const entityLabel = modalEntity.options[modalEntity.selectedIndex].text;
+        
+        // Set values
+        entityDisp.textContent = entityLabel;
+        entityInp.value = modalEntity.value;
+        
+        qtyDisp.textContent = parseFloat(modalQty.value).toFixed(2);
+        qtyInp.value = modalQty.value;
+        
+        rateDisp.textContent = `R ${formatCurrency(modalRate.value)}`;
+        rateInp.value = modalRate.value;
+        
+        usageDisp.textContent = modalUsage.value;
+        usageInp.value = modalUsage.value;
+        
+        commentsDisp.textContent = modalComments.value;
+        commentsInp.value = modalComments.value;
+        
+        const lineTotal = parseFloat(modalQty.value) * parseFloat(modalRate.value);
+        rowTotal.textContent = `R ${formatCurrency(lineTotal)}`;
+
+        // Update prefix
+        row.querySelectorAll('[name]').forEach(el => {
+            el.name = el.name.replace('__prefix__', nextIndex);
+        });
+
+        formContainer.appendChild(row);
+        totalForms.value = nextIndex + 1;
+        
+        if (emptyStateRow) emptyStateRow.classList.add('hidden');
+        updateGrandTotal();
+        closeModal();
+    });
+
+    // Remove item
+    formContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.remove-row-btn');
+        if (btn) {
+            const row = btn.closest('.form-row');
+            const deleteCheck = row.querySelector('[name*="DELETE"]');
+            if (deleteCheck) {
+                // If it's a real model instance, we just hide it and check DELETE
+                deleteCheck.checked = true;
+                row.style.display = 'none';
+            } else {
+                // New row, just remove it
+                row.remove();
+                totalForms.value = parseInt(totalForms.value) - 1;
+                // Re-calculate prefix for everything after if we wanted to be clean, 
+                // but usually Django handles order-less formsets fine if TOTAL_FORMS is correct.
+            }
+            
+            if (formContainer.querySelectorAll('.form-row:not([style*="display: none"])').length === 0) {
+                if (emptyStateRow) emptyStateRow.classList.remove('hidden');
+            }
+            updateGrandTotal();
+        }
+    });
+
+    updateGrandTotal();
+});
+    </script>
+{% endblock %}
+{% block extra_js %}
+    {{ block.super }}
+    {{ formset.media }}
+{% endblock %}

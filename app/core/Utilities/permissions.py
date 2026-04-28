@@ -33,6 +33,7 @@ class UserHasProjectRoleGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
 
     roles: list[Role] = []
     project_slug: str | None = None
+    _safe_methods = {"GET", "HEAD", "OPTIONS"}
 
     def dispatch(self, request, *args, **kwargs):
         """Override dispatch to ensure LoginRequiredMixin runs first."""
@@ -46,6 +47,19 @@ class UserHasProjectRoleGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
                 self.get_login_url(),
                 self.get_redirect_field_name(),
             )
+        if self.project_slug:
+            project = self.get_project()
+            if (
+                getattr(project, "is_demo", False)
+                and request.method not in self._safe_methods
+                and not (request.user.is_staff or request.user.is_superuser)
+            ):
+                if request.headers.get("x-requested-with") == "XMLHttpRequest" or (
+                    request.content_type or ""
+                ).startswith("application/json"):
+                    return HttpResponse("Demo project is read-only.", status=403)
+                messages.error(request, "This is a demo project and is read-only.")
+                return redirect("project:project-management", pk=project.pk)
         # Then run the normal dispatch which will call test_func
         dispatch = super().dispatch(request, *args, **kwargs)
         self.project = self.get_project()
@@ -79,16 +93,28 @@ class UserHasProjectRoleGenericMixin(LoginRequiredMixin, UserPassesTestMixin):
         user = self.get_user()
         if user.is_superuser:
             return True
+        if getattr(project, "is_demo", False):
+            request = getattr(self, "request", None)
+            if request and request.method in self._safe_methods:
+                return True
+            return user.is_staff
         if not self.project_slug:
             raise ValueError("Project slug must be specified.")
         return user.has_project_role(project, self.roles)
 
     def handle_no_permission(self):
         """Redirect to home with error message if user lacks permission."""
-        messages.error(
-            self.request,  # type: ignore
-            f"Page restricted to {self.roles}.",
-        )
+        try:
+            project = self.get_project()
+        except Exception:
+            project = None
+        if project and getattr(project, "is_demo", False):
+            messages.error(
+                self.request,  # type: ignore
+                "This is a demo project and is read-only.",
+            )
+            return redirect("project:project-management", pk=project.pk)
+        messages.error(self.request, f"Page restricted to {self.roles}.")  # type: ignore
         return redirect("home")
 
     def get_context_data(self, **kwargs):

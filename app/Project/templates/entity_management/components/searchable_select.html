@@ -1,0 +1,63 @@
+{% load heroicons %}
+<div class="relative searchable-select-container"
+     id="{{ id_prefix }}-selector-container"
+     x-data="{ open: false, search: '' }">
+    <label class="block mb-1 text-sm font-medium text-gray-700">{{ field.label }}</label>
+    <button type="button"
+            onclick="toggleSearchableDropdown('{{ id_prefix }}')"
+            id="{{ id_prefix }}-selector-btn"
+            class="flex justify-between items-center px-4 py-2 w-full text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm transition-all hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20">
+        <span id="{{ id_prefix }}-selector-label">
+            {% if field.value %}
+                {% for choice_id, choice_label in field.field.choices %}
+                    {% if choice_id|stringformat:"s" == field.value|stringformat:"s" %}{{ choice_label }}{% endif %}
+                {% endfor %}
+            {% else %}
+                {{ field.field.empty_label|default:"Choose options..." }}
+            {% endif %}
+        </span>
+        {% heroicon_outline "chevron-down" size="20" class="text-gray-400 transition-transform" id="{{ id_prefix }}-selector-arrow" %}
+    </button>
+    <!-- Dropdown Menu -->
+    <div id="{{ id_prefix }}-dropdown"
+         class="hidden overflow-hidden absolute left-0 z-50 mt-2 w-full bg-white rounded-lg border border-gray-200 shadow-2xl transition-all transform origin-top">
+        <div class="p-2 bg-gray-50 border-b border-gray-100">
+            <div class="relative">
+                {% heroicon_outline "magnifying-glass" size="18" class="absolute left-3 top-1/2 text-gray-400 -translate-y-1/2" %}
+                <input type="text"
+                       id="{{ id_prefix }}-search"
+                       placeholder="Search {{ field.label|lower }}..."
+                       class="py-2 pr-4 pl-10 w-full text-sm rounded-md border-gray-200 focus:ring-indigo-500 focus:border-indigo-500"
+                       onkeyup="filterSearchableOptions('{{ id_prefix }}')">
+            </div>
+        </div>
+        <div class="overflow-y-auto p-1 max-h-60"
+             id="{{ id_prefix }}-options-list">
+            {% for choice_id, choice_label in field.field.choices %}
+                {% if choice_id %}
+                    <button type="button"
+                            class="flex items-center px-3 py-2 w-full text-left rounded-md transition-colors hover:bg-indigo-50 group option-item"
+                            data-id="{{ choice_id }}"
+                            data-label="{{ choice_label|lower }}"
+                            onclick="selectSearchableOption('{{ id_prefix }}', '{{ choice_id }}', '{{ choice_label|escapejs }}')">
+                        <span class="block text-sm font-medium text-gray-700 group-hover:text-indigo-900">{{ choice_label }}</span>
+                    </button>
+                {% endif %}
+            {% endfor %}
+            <div id="{{ id_prefix }}-no-results"
+                 class="hidden p-4 text-sm italic text-center text-gray-500">No matches found</div>
+        </div>
+        {% if create_url %}
+            <div class="p-2 bg-gray-50 border-t border-gray-100">
+                <button type="button"
+                        onclick="openQuickCreateModal('{{ id_prefix }}')"
+                        class="inline-flex justify-center items-center px-4 py-2 w-full text-xs font-bold text-indigo-600 rounded-md transition-all hover:text-indigo-700 hover:bg-indigo-100/50">
+                    {% heroicon_outline "plus" size="16" class="mr-1.5" %}
+                    Create New {{ field.label }}
+                </button>
+            </div>
+        {% endif %}
+    </div>
+    <!-- Hidden native select for form data -->
+    <div class="hidden">{{ field }}</div>
+</div>

@@ -1,0 +1,421 @@
+import json
+from decimal import Decimal
+
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Sum
+from django.shortcuts import get_object_or_404
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views.generic import TemplateView
+
+from app.Account.subscription_config import Subscription
+from app.core.Utilities.mixins import BreadcrumbMixin
+from app.core.Utilities.subscriptions import SubscriptionRequiredMixin
+from app.core.Utilities.widgets import SearchableSelectWidget
+from app.Project.models import Project
+
+from ..production_models import (
+    DailyActivityEntry,
+    ProductionPlan,
+    ProductionResource,
+)
+from ..utils.production_utils import (
+    get_forecasting_dashboard_data,
+    get_premium_productivity_report_data,
+    get_project_performance_summary,
+    get_project_productivity_report_data,
+)
+
+
+class ProductionProductivityReportView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """
+    Premium Productivity Report View.
+    Replicates Excel logic for PPI/CPI and impact analysis.
+    """
+
+    template_name = "production_progress/reports/productivity_report.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": "Productivity Report", "url": None},
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+
+        # Filters
+        horizon = self.request.GET.get("horizon", "ptd")
+        active_only = self.request.GET.get("active_only") == "true"
+
+        # Fetch premium report data
+        data = get_premium_productivity_report_data(
+            project_pk, horizon=horizon, active_only=active_only
+        )
+
+        context.update(
+            {
+                "project": project,
+                "company": project.contractor,
+                "summary": data.get("summary", {}),
+                "sections": data.get("sections", []),
+                "active_horizon": horizon,
+                "active_only": active_only,
+                "tab": "productivity_report",
+            }
+        )
+        return context
+
+
+class ProductivityLogsView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """Consolidated view for Labour Log, Plant Log, and Productivity Table."""
+
+    template_name = "production_progress/tracking/productivity_logs.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": "Productivity Logs", "url": None},
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+        context["project"] = project
+
+        # Get all plans for this project - only work activities (with labour spec)
+        plans = ProductionPlan.objects.filter(
+            project=project, labour_activity__isnull=False
+        )
+
+        # Get all entries for this project
+        entries = DailyActivityEntry.objects.filter(report__project=project).order_by(
+            "report__date"
+        )
+
+        logs_data = []
+        for plan in plans:
+            plan_entries = entries.filter(production_plan=plan).prefetch_related(
+                "labour_usage",
+                "plant_usage",
+                "labour_usage__resource",
+                "plant_usage__resource",
+            )
+            if not plan_entries.exists():
+                continue
+
+            labour_resources = ProductionResource.objects.filter(
+                production_plan=plan, resource_type="LABOUR"
+            )
+            plant_resources = ProductionResource.objects.filter(
+                production_plan=plan, resource_type="PLANT"
+            )
+
+            # Get unique day numbers from entries
+            day_identifiers = sorted(
+                {entry.day_number for entry in plan_entries},
+                key=lambda x: int(x[1:]) if x[1:].isdigit() else 0,
+            )
+
+            day_data = {}
+            for day_id in day_identifiers:
+                entry = next((e for e in plan_entries if e.day_number == day_id), None)
+                if not entry:
+                    continue
+
+                labour_usage_map = {
+                    usage.resource.id: usage.number
+                    for usage in entry.labour_usage.all()
+                }
+                plant_usage_map = {
+                    usage.resource.id: usage.number for usage in entry.plant_usage.all()
+                }
+
+                day_data[day_id] = {
+                    "entry": entry,
+                    "labour_usage": labour_usage_map,
+                    "plant_usage": plant_usage_map,
+                    "total_labourers": sum(
+                        usage.number for usage in entry.labour_usage.all()
+                    ),
+                    "total_labour_cost": entry.total_labour_cost,
+                    "avg_hours": sum(usage.hours for usage in entry.labour_usage.all())
+                    / entry.labour_usage.count()
+                    if entry.labour_usage.exists()
+                    else 0,
+                    "man_hours": entry.man_hours,
+                    "total_plant_cost": entry.total_plant_cost,
+                    "production": entry.quantity,
+                    "total_cost": entry.total_cost,
+                    "productivity": entry.work_productivity,
+                    "cost_per_item": entry.cost_per_item,
+                }
+
+            logs_data.append(
+                {
+                    "plan": plan,
+                    "days_list": day_identifiers,
+                    "day_data": day_data,
+                    "labour_resources": labour_resources,
+                    "plant_resources": plant_resources,
+                }
+            )
+
+        context["logs_data"] = logs_data
+        return context
+
+
+class ProductionForecastDashboardView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """
+    Costing Forecasting Dashboard.
+    Provides predictive analytics on project completion timelines and budget outcomes.
+    """
+
+    template_name = "production_progress/reports/forecast_dashboard.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": "Forecasting Dashboard", "url": None},
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+
+        # Filters
+        plan_id = self.request.GET.get("plan_id")
+        start_date = self.request.GET.get("start_date")
+        end_date = self.request.GET.get("end_date")
+
+        all_plans = ProductionPlan.objects.filter(
+            project=project, labour_activity__isnull=False
+        ).order_by("activity")
+
+        selected_plan = None
+        if plan_id:
+            try:
+                selected_plan = all_plans.filter(pk=plan_id).first()
+            except (ValueError, TypeError):
+                pass
+        if not selected_plan and all_plans.exists():
+            selected_plan = all_plans.first()
+
+        forecast_data = {}
+        if selected_plan:
+            forecast_data = get_forecasting_dashboard_data(
+                selected_plan.pk, start_date, end_date
+            )
+
+        charts_json = "{}"
+        if "charts" in forecast_data:
+            charts_json = json.dumps(forecast_data["charts"])
+
+        # Prepare Searchable Select Widget
+        plan_choices = []
+        for p in all_plans:
+            plan_choices.append((p.pk, p.activity))
+
+        plan_widget = SearchableSelectWidget(choices=plan_choices)
+        plan_selector_widget = plan_widget.render(
+            "plan_id",
+            selected_plan.pk if selected_plan else None,
+            attrs={"id": "plan_id", "onchange": "this.form.submit()"},
+        )
+
+        context.update(
+            {
+                "project": project,
+                "company": project.contractor,
+                "all_plans": all_plans,
+                "selected_plan": selected_plan,
+                "start_date": start_date,
+                "end_date": end_date,
+                "plan_selector_widget": plan_selector_widget,
+                **forecast_data,
+                "charts_json": charts_json,
+            }
+        )
+        return context
+
+
+class ProductionPerformanceReportView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """
+    Comprehensive Project Performance Report.
+    Focuses on Project-wide Productivity Index (PPI), Cost Performance Index (CPI),
+    and multi-horizon accumulation forecasts.
+    """
+
+    template_name = "production_progress/reports/performance_report.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": "Performance Analytics", "url": None},
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+
+        # Extract horizons from GET parameters
+        history_horizon = self.request.GET.get("history", "3m")
+        forecast_horizon = self.request.GET.get("forecast", "3m")
+
+        # Fetch comprehensive report data
+        data = get_project_productivity_report_data(
+            project_pk, history_horizon, forecast_horizon
+        )
+
+        # JSON serialize charts for Chart.js
+        charts_json = json.dumps(data.get("charts", {}))
+
+        context.update(
+            {
+                "project": project,
+                "company": project.contractor,
+                "summary": data.get("summary", {}),
+                "charts": data.get("charts", {}),
+                "forecasts": data.get("forecasts", {}),
+                "activities": data.get("activities", []),
+                "charts_json": charts_json,
+                "active_history": history_horizon,
+                "active_forecast": forecast_horizon,
+            }
+        )
+        return context
+
+
+class ProductionProgressReportView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """
+    Production Progress Report View.
+    Filtered to show only activities with actual progress.
+    Includes a Progress Gantt Chart and a detailed metrics table.
+    """
+
+    template_name = "production_progress/reports/progress_report.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": "Progress Report", "url": None},
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+        today = timezone.now().date()
+
+        # Fetch basic performance data (PPI etc)
+        perf_data = get_project_performance_summary(project_pk)
+        ppi = perf_data.get("ppi", Decimal("1.0"))
+
+        # Get all plans with progress > 0
+        all_plans = ProductionPlan.objects.filter(
+            project=project, is_archived=False, is_leaf=True
+        ).prefetch_related("daily_entries", "predecessors")
+
+        report_items = []
+
+        for plan in all_plans:
+            progress_pct = plan.progress_percentage
+            if progress_pct <= 0:
+                continue
+
+            total_produced = (
+                plan.daily_entries.aggregate(total=Sum("quantity"))["total"] or 0
+            )
+            remaining_qty = max(0, plan.quantity - total_produced)
+
+            # Forecasting
+            forecast_end_date = plan.finish_date
+            if remaining_qty > 0:
+                current_rate = plan.daily_rate * ppi
+                if current_rate > 0:
+                    days_left = int(remaining_qty / current_rate)
+                    forecast_end_date = today + timezone.timedelta(days=days_left)
+
+            days_variance = 0
+            if plan.finish_date and forecast_end_date:
+                days_variance = (forecast_end_date - plan.finish_date).days
+
+            # Schedule Variance (Simplified for this view: Estimated vs Planned Duration)
+            spi = ppi  # Using PPI as SPI proxy for now
+
+            item = {
+                "plan": plan,
+                "planned_duration": plan.duration,
+                "forecast_end_date": forecast_end_date,
+                "days_variance": days_variance,
+                "progress_pct": progress_pct,
+                "spi": float(spi),
+                "schedule_variance": days_variance * -1,
+            }
+            report_items.append(item)
+
+        context.update(
+            {
+                "project": project,
+                "company": project.contractor,
+                "report_items": report_items,
+                "summary": perf_data,
+                "tab": "production_progress_report",
+            }
+        )
+        return context

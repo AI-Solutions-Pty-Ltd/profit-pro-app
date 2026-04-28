@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+{% load humanize %}
+{% block title %}
+    Production Plan — {{ object.activity }} - {{ project.name }}
+{% endblock title %}
+{% block content %}
+    <div class="pb-12">
+        <!-- Header & Breadcrumbs -->
+        <div class="overflow-hidden mb-8 bg-white rounded-xl border border-gray-100 shadow-sm">
+            <div class="flex flex-col gap-2 justify-between items-start px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <nav class="flex" aria-label="Breadcrumb">
+                    <ol role="list" class="flex items-center space-x-2">
+                        <li>
+                            <div>
+                                <a href="{% url 'project:production-planning' project.pk %}"
+                                   class="flex items-center text-gray-400 transition-colors hover:text-indigo-600">
+                                    {% heroicon_outline "chevron-left" class="mr-1.5 w-4 h-4" %}
+                                    <span class="text-sm font-semibold">Planning List</span>
+                                </a>
+                            </div>
+                        </li>
+                    </ol>
+                </nav>
+                <div class="flex flex-col gap-4 justify-between w-full md:flex-row md:items-end">
+                    <div>
+                        <h2 class="text-xl font-bold tracking-tight text-gray-900">{{ object.activity }}</h2>
+                        <p class="text-sm text-gray-500">Resource allocation and objective monitoring.</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <a href="{% url 'project:production-plan-edit' project.pk object.pk %}"
+                           class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md ring-1 ring-inset ring-gray-300 shadow-sm transition-all hover:bg-gray-50">
+                            {% heroicon_outline "pencil-square" class="mr-2 w-4 h-4 text-gray-400" %}
+                            Edit Plan
+                        </a>
+                        <a href="{% url 'project:production-cost-breakdown' project.pk %}?plan_id={{ object.pk }}"
+                           class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow-sm transition-all hover:bg-indigo-500">
+                            {% heroicon_outline "banknotes" class="mr-2 w-4 h-4" %}
+                            Manage Costs
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <!-- Dashboard Stats Grid -->
+            <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-100 transition-all hover:bg-white hover:shadow-md">
+                    <dt class="mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Duration</dt>
+                    <dd class="text-xl font-black text-gray-900">
+                        {{ object.duration }} <span class="text-xs font-medium text-gray-400">Days</span>
+                    </dd>
+                    <div class="mt-2 text-xs font-semibold text-indigo-600">
+                        {{ object.start_date|date:"d M" }} — {{ object.finish_date|date:"d M, Y" }}
+                    </div>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-100 transition-all hover:bg-white hover:shadow-md">
+                    <dt class="mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Planned Volume</dt>
+                    <dd class="text-xl font-black text-gray-900">
+                        {{ object.quantity|floatformat:1 }} <span class="text-xs font-medium text-gray-400">{{ object.unit }}</span>
+                    </dd>
+                    <div class="mt-2 text-xs font-semibold text-emerald-600">Production Goal</div>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-100 transition-all hover:bg-white hover:shadow-md">
+                    <dt class="mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Labour Budget</dt>
+                    <dd class="text-xl font-black text-gray-900">
+                        R {{ object.total_labour_cost|floatformat:0|intcomma }}
+                    </dd>
+                    <div class="mt-2 text-xs font-semibold text-blue-600">Resource Allocation</div>
+                </div>
+                <div class="p-4 text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-100 transition-all hover:shadow-xl">
+                    <dt class="mb-1 text-[10px] font-bold text-indigo-100 uppercase tracking-widest">Plant Budget</dt>
+                    <dd class="text-xl font-black">
+                        R {{ object.total_plant_cost|floatformat:0|intcomma }}
+                    </dd>
+                    <div class="mt-2 text-xs font-semibold text-indigo-200">Equipment Allocation</div>
+                </div>
+            </div>
+        </div>
+        <!-- Resource Breakdown -->
+        <div class="space-y-8">
+            {% for category in resource_categories %}
+                <div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm">
+                    <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                        <div class="flex gap-2 items-center">
+                            <div class="p-1.5 text-indigo-600 bg-indigo-50 rounded-lg">
+                                {% if category.type_name == "Labour" %}
+                                    {% heroicon_mini "users" class="w-4 h-4" %}
+                                {% else %}
+                                    {% heroicon_mini "truck" class="w-4 h-4" %}
+                                {% endif %}
+                            </div>
+                            <h3 class="text-xs font-bold text-gray-500 uppercase">{{ category.type_name }} Allocation</h3>
+                        </div>
+                        <div class="text-xs font-bold text-indigo-600">
+                            Total: <span class="ml-1 text-sm font-black tabular-nums">R {{ category.total_cost|floatformat:2|intcomma }}</span>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="table table-zebra table-sm">
+                            <thead class="bg-gray-50/80">
+                                <tr>
+                                    <th class="text-xs font-bold text-gray-600 uppercase">Resource</th>
+                                    <th class="text-xs font-bold text-gray-600 uppercase">Count</th>
+                                    <th class="text-xs font-bold text-gray-600 uppercase">Days</th>
+                                    <th class="text-xs font-bold text-gray-600 uppercase">Rate</th>
+                                    <th class="font-bold text-right text-gray-600 uppercase text-xs">Extension</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white">
+                                {% for resource in category.resources %}
+                                    <tr class="transition-all hover:bg-indigo-50/30 group">
+                                        <td class="text-xs font-bold text-gray-700">{{ resource.name }}</td>
+                                        <td class="text-xs text-gray-600">{{ resource.number|floatformat:0 }}</td>
+                                        <td class="text-xs text-gray-600">{{ resource.days|floatformat:0 }}</td>
+                                        <td class="text-xs text-gray-600">R {{ resource.rate|floatformat:2|intcomma }}</td>
+                                        <td class="font-mono text-xs font-black text-right text-gray-900 whitespace-nowrap">
+                                            R {{ resource.total_cost|floatformat:2|intcomma }}
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="px-8 py-12 text-center">
+                                            <div class="inline-flex items-center justify-center p-3 mb-2 bg-gray-50 rounded-xl text-gray-300">
+                                                {% heroicon_outline "document-minus" class="w-6 h-6" %}
+                                            </div>
+                                            <p class="text-xs font-bold text-gray-400">No {{ category.type_name|lower }} resources defined.</p>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <!-- Dashboard Footer -->
+        <div class="flex justify-between items-center py-6 mt-12 border-t border-gray-100">
+            <a href="{% url 'project:production-planning' project.pk %}"
+               class="inline-flex items-center text-xs font-bold text-gray-500 transition-colors hover:text-indigo-600">
+                {% heroicon_mini "chevron-left" class="mr-2 w-4 h-4" %} Back to Planning
+            </a>
+            <div class="flex gap-4">
+                <a href="{% url 'project:production-dashboard' project.pk %}"
+                   class="inline-flex items-center px-4 py-2 text-xs font-bold text-indigo-600 bg-white rounded-lg border border-indigo-100 shadow-sm transition-all hover:bg-indigo-50">
+                    Production Dashboard {% heroicon_mini "chevron-right" class="ml-2 w-4 h-4" %}
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

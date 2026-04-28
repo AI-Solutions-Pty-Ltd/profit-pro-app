@@ -11,7 +11,7 @@
 {% endblock title %}
 {% block content %}
     <!-- Header -->
-    <div class="bg-white shadow-sm rounded-lg mb-6">
+    <div class="mb-6 bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4">
             <h1 class="text-2xl font-bold text-gray-900">
                 {% if object %}
@@ -21,21 +21,21 @@
                 {% endif %}
                 Materials Log
             </h1>
-            <p class="text-sm text-gray-600 mt-1">{{ project.name }}</p>
+            <p class="mt-1 text-sm text-gray-600">{{ project.name }}</p>
         </div>
     </div>
     <!-- Form -->
-    <div class="bg-white shadow-sm rounded-lg">
+    <div class="bg-white rounded-lg shadow-sm">
         <form method="post" class="px-6 py-6">
             {% csrf_token %}
             {{ form|crispy }}
-            <div class="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
+            <div class="flex justify-end pt-6 mt-6 space-x-3 border-t border-gray-200">
                 <a href="{% url 'site_management:materials-log-list' project.pk %}"
-                   class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                   class="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-md border border-gray-300 shadow-sm hover:bg-gray-50">
                     Cancel
                 </a>
                 <button type="submit"
-                        class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md border border-transparent shadow-sm hover:bg-indigo-700">
                     {% if object %}
                         Update
                     {% else %}
@@ -47,13 +47,68 @@
         </form>
     </div>
     <!-- Footer -->
-    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg mt-6">
+    <div class="px-6 py-4 mt-6 bg-gray-50 rounded-lg border-t border-gray-200">
         <div class="flex justify-between items-center">
             <a href="{% url 'site_management:materials-log-list' project.pk %}"
-               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
+               class="inline-flex items-center text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600">
+                {% heroicon_outline "chevron-left" class="mr-1 w-4 h-4" %}
                 Back to Materials Log
             </a>
         </div>
     </div>
 {% endblock content %}
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Materials auto-fill script initialized');
+            const entitySelect = document.getElementById('id_material_entity');
+            if (!entitySelect) {
+                console.warn('id_material_entity not found');
+                return;
+            }
+
+            entitySelect.addEventListener('change', function() {
+                const entityId = this.value;
+                console.log('Material entity selected:', entityId);
+                if (!entityId) return;
+
+                const urlTemplate = "{% url 'project:entity-detail-json' project.pk 'material' 0 %}";
+                const url = urlTemplate.replace(/\/0\/detail\/$/, `/${entityId}/detail/`);
+                console.log('Fetching entity details from:', url);
+
+                fetch(url)
+                    .then(response => {
+                        console.log('API Response status:', response.status);
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('API Data received:', data);
+                        if (data.error) {
+                            console.error('API Error:', data.error);
+                            return;
+                        }
+
+                        // Map API fields to Form fields
+                        const fieldMap = {
+                            'supplier': 'id_supplier',
+                            'items_received': 'id_items_received',
+                            'unit': 'id_unit'
+                        };
+
+                        for (const [apiKey, formId] of Object.entries(fieldMap)) {
+                            const field = document.getElementById(formId);
+                            if (field) {
+                                if (data[apiKey] !== undefined && data[apiKey] !== null) {
+                                    console.log(`Populating ${formId} with ${data[apiKey]}`);
+                                    field.value = data[apiKey];
+                                }
+                            } else {
+                                console.warn(`Form field ${formId} not found`);
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error fetching entity details:', error));
+            });
+        });
+    </script>
+{% endblock extra_js %}

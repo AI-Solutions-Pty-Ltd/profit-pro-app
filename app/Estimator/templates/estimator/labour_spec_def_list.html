@@ -10,41 +10,30 @@
             </p>
         </div>
         <div class="mt-2 sm:mt-0 flex gap-2">
+            <form method="post" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="sync_system">
+                <button type="submit"
+                        class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50"
+                        onclick="return confirm('This will sync labour specifications with the system library. Existing specs linked to system data will be overwritten. Continue?')">
+                    {% heroicon_outline "arrow-path" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                    Sync with System
+                </button>
+            </form>
             <a href="{% url 'estimator:download_labour_spec_template' project_pk=project_pk %}"
                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     fill="none"
-                     viewBox="0 0 24 24"
-                     stroke-width="1.5"
-                     stroke="currentColor"
-                     class="w-4 h-4 mr-1.5 -ml-0.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
+                {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
                 Template
             </a>
             <a href="{% url 'estimator:labour_spec_upload' project_pk=project_pk %}"
                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     fill="none"
-                     viewBox="0 0 24 24"
-                     stroke-width="1.5"
-                     stroke="currentColor"
-                     class="w-4 h-4 mr-1.5 -ml-0.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                </svg>
+                {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
                 Upload
             </a>
             <button type="button"
                     onclick="document.getElementById('labour-spec-form').classList.toggle('hidden')"
                     class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     fill="none"
-                     viewBox="0 0 24 24"
-                     stroke-width="1.5"
-                     stroke="currentColor"
-                     class="w-5 h-5 mr-1.5 -ml-0.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
+                {% heroicon_outline "plus" class="w-5 h-5 mr-1.5 -ml-0.5" %}
                 Add Labour Spec
             </button>
         </div>
@@ -164,14 +153,7 @@
             {% if f_section or f_trade_name or f_name %}
                 <a href="{% url 'estimator:labour_spec_defs' project_pk=project_pk %}"
                    class="inline-flex items-center rounded-md bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 ring-1 ring-inset ring-gray-300">
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                         fill="none"
-                         viewBox="0 0 24 24"
-                         stroke-width="1.5"
-                         stroke="currentColor"
-                         class="w-3.5 h-3.5 mr-1">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                    </svg>
+                    {% heroicon_outline "x-mark" class="w-3.5 h-3.5 mr-1" %}
                     Clear
                 </a>
             {% endif %}
@@ -227,23 +209,85 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
                     {% for ls in labour_specs %}
-                        <tr class="hover:bg-gray-50">
-                            <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">{{ ls.section|default:"-" }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ ls.trade_name|default:"-" }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900">{{ ls.name }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ ls.unit }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
-                                {% if ls.crew %}
-                                    <span class="inline-flex items-center rounded-md bg-teal-50 px-2 py-1 text-xs font-medium text-teal-700 ring-1 ring-inset ring-teal-700/10">{{ ls.crew.crew_type }}</span>
-                                {% else %}
-                                    -
-                                {% endif %}
+                        <tr class="hover:bg-gray-50" data-ls-id="{{ ls.id }}">
+                            <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+                                <input type="text"
+                                       class="inline-edit-ls w-20 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="section"
+                                       value="{{ ls.section }}">
                             </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">{{ ls.daily_production }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">{{ ls.team_mix }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">{{ ls.site_factor }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">{{ ls.tools_factor }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right sm:pr-6">{{ ls.leadership_factor }}</td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                <input type="text"
+                                       class="inline-edit-ls w-32 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="trade_name"
+                                       value="{{ ls.trade_name }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900">
+                                <input type="text"
+                                       class="inline-edit-ls w-40 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="name"
+                                       value="{{ ls.name }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                <input type="text"
+                                       class="inline-edit-ls w-14 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="unit"
+                                       value="{{ ls.unit }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                <select class="inline-edit-ls border-0 bg-transparent text-xs text-gray-700 p-0 pr-6 focus:ring-2 focus:ring-indigo-500 rounded"
+                                        data-item-id="{{ ls.id }}"
+                                        data-field="crew">
+                                    <option value="">-</option>
+                                    {% for c in crews %}
+                                        <option value="{{ c.id }}" {% if ls.crew_id == c.id %}selected{% endif %}>{{ c.crew_type }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                <input type="number"
+                                       step="0.01"
+                                       class="inline-edit-ls w-20 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="daily_production"
+                                       value="{{ ls.daily_production }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                <input type="number"
+                                       step="0.0001"
+                                       class="inline-edit-ls w-16 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="team_mix"
+                                       value="{{ ls.team_mix }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                <input type="number"
+                                       step="0.0001"
+                                       class="inline-edit-ls w-16 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="site_factor"
+                                       value="{{ ls.site_factor }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right">
+                                <input type="number"
+                                       step="0.0001"
+                                       class="inline-edit-ls w-16 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="tools_factor"
+                                       value="{{ ls.tools_factor }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 text-right sm:pr-6">
+                                <input type="number"
+                                       step="0.0001"
+                                       class="inline-edit-ls w-16 text-right border-0 bg-transparent text-sm text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ ls.id }}"
+                                       data-field="leadership_factor"
+                                       value="{{ ls.leadership_factor }}">
+                            </td>
                         </tr>
                     {% empty %}
                         <tr>
@@ -256,4 +300,37 @@
             </table>
         </div>
     </div>
+    <script>
+document.querySelectorAll('.inline-edit-ls').forEach(input => {
+    let original = input.value;
+    input.addEventListener('focus', () => { original = input.value; });
+    input.addEventListener('change', () => {
+        if (input.value === original) return;
+        const id = input.dataset.itemId;
+        const field = input.dataset.field;
+        fetch(`/estimator/project/{{ project_pk }}/api/labour-spec/${id}/update/`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({field, value: input.value})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                input.classList.add('ring-2', 'ring-green-500');
+                setTimeout(() => input.classList.remove('ring-2', 'ring-green-500'), 800);
+                original = input.value;
+            } else {
+                input.classList.add('ring-2', 'ring-red-500');
+                setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);
+                input.value = original;
+            }
+        })
+        .catch(() => {
+            input.classList.add('ring-2', 'ring-red-500');
+            setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);
+            input.value = original;
+        });
+    });
+});
+    </script>
 {% endblock %}

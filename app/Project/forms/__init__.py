@@ -30,11 +30,13 @@ from .forms import (
     SignatoryInviteForm,
     SignatoryLinkForm,
 )
+from .order_amendment_forms import OrderAmendmentForm
 
 __all__ = [
     "ContractualComplianceDialogForm",
     "AdministrativeComplianceDialogForm",
     "FinalAccountComplianceDialogForm",
+    "OrderAmendmentForm",
     "ProjectFilterForm",
     "ProjectCategoryForm",
     "ProjectSubCategoryForm",

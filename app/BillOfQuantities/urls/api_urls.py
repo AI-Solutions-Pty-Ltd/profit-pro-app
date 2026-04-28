@@ -17,4 +17,9 @@ api_urls = [
         apis.GetPackagesByBillView.as_view(),
         name="api-get-packages",
     ),
+    path(
+        "project/<int:project_pk>/api/line-items/",
+        apis.GetLineItemsByPackageView.as_view(),
+        name="api-get-line-items",
+    ),
 ]

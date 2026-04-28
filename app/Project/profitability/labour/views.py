@@ -1,0 +1,84 @@
+from django.urls import reverse
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+
+from app.Project.forms.profitability_forms import LabourCostTrackerForm
+from app.Project.models import LabourCostTracker
+from app.Project.profitability.views import ProfitabilityMixin
+
+
+class LabourCostTrackerListView(ProfitabilityMixin, ListView):
+    model = LabourCostTracker
+    template_name = "profitability/labour/list.html"
+    context_object_name = "logs"
+    auto_import_type = "labour"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from decimal import Decimal
+
+        from django.db.models import Avg, F, Max, Min, Sum
+
+        # Current monthly queryset (already filtered by self.get_queryset via ProfitabilityMixin)
+        logs_qs = self.get_queryset()
+
+        # 1. Total Monthly Cost
+        context["kvi_total_cost"] = (
+            logs_qs.aggregate(total=Sum(F("amount_of_days") * F("salary")))["total"]
+            or 0
+        )
+
+        # 2. Total Monthly Quantity
+        context["kvi_metric_name"] = "Total Monthly Days"
+        context["kvi_metric_value"] = (
+            logs_qs.aggregate(total=Sum("amount_of_days"))["total"] or 0
+        )
+
+        # 3. Rate Statistics (Average, High, Low)
+        rate_stats = logs_qs.aggregate(
+            avg=Avg("salary"), max=Max("salary"), min=Min("salary")
+        )
+        context["kvi_avg_rate"] = rate_stats["avg"] or 0
+        context["kvi_max_rate"] = rate_stats["max"] or 0
+        context["kvi_min_rate"] = rate_stats["min"] or 0
+        context["kvi_rate_label"] = "Daily Salary"
+
+        # Entity budget (look for a Category named "Labour")
+        budget_query = self.project.categories.filter(name__icontains="Labour").first()
+        context["kvi_budget"] = budget_query.budget if budget_query else Decimal("0.00")
+        context["kvi_under_budget"] = context["kvi_budget"] - Decimal(
+            str(context["kvi_total_cost"])
+        )
+
+        return context
+
+
+class LabourCostTrackerCreateView(ProfitabilityMixin, CreateView):
+    model = LabourCostTracker
+    form_class = LabourCostTrackerForm
+    template_name = "profitability/labour/form.html"
+
+    def get_success_url(self):
+        return reverse(
+            "project:profitability-labour-list", kwargs={"project_pk": self.project.pk}
+        )
+
+
+class LabourCostTrackerUpdateView(ProfitabilityMixin, UpdateView):
+    model = LabourCostTracker
+    form_class = LabourCostTrackerForm
+    template_name = "profitability/labour/form.html"
+
+    def get_success_url(self):
+        return reverse(
+            "project:profitability-labour-list", kwargs={"project_pk": self.project.pk}
+        )
+
+
+class LabourCostTrackerDeleteView(ProfitabilityMixin, DeleteView):
+    model = LabourCostTracker
+    template_name = "profitability/confirm_delete.html"
+
+    def get_success_url(self):
+        return reverse(
+            "project:profitability-labour-list", kwargs={"project_pk": self.project.pk}
+        )

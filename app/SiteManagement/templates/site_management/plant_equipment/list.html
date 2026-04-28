@@ -12,13 +12,6 @@
                     <p class="text-sm text-gray-600 mt-1">Equipment management for {{ project.name }}</p>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <a href="{% url 'site_management:plant-type-list' project.pk %}"
-                       class="flex items-center justify-between px-3 py-2 border border-violet-200 rounded-md hover:bg-violet-50 transition-colors group/btn">
-                        <div class="flex items-center">
-                            {% heroicon_outline "tag" class="w-4 h-4 text-violet-500 mr-2" %}
-                            <span class="text-sm font-medium text-violet-700">Manage Plant Types</span>
-                        </div>
-                    </a>
                     <a href="{% url 'site_management:plant-equipment-create' project.pk %}"
                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
                         {% heroicon_outline "plus" class="w-5 h-5 mr-2" %}

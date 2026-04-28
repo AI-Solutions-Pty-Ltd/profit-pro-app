@@ -12,6 +12,11 @@ urlpatterns = [
         name="project_assumptions",
     ),
     path(
+        "project/<int:project_pk>/assumptions/apply/",
+        views.ApplyAssumptionsView.as_view(),
+        name="apply_assumptions",
+    ),
+    path(
         "project/<int:project_pk>/baseline/",
         views.BaselineBoqView.as_view(),
         name="baseline",
@@ -116,6 +121,70 @@ urlpatterns = [
         views.DownloadTradeCodeTemplateView.as_view(),
         name="download_trade_code_template",
     ),
+    # Plant Costs
+    path(
+        "project/<int:project_pk>/plant-costs/",
+        views.PlantCostListView.as_view(),
+        name="plant_costs",
+    ),
+    path(
+        "project/<int:project_pk>/plant-costs/upload/",
+        views.PlantCostUploadView.as_view(),
+        name="plant_cost_upload",
+    ),
+    path(
+        "project/<int:project_pk>/plant-costs/download-template/",
+        views.DownloadPlantCostTemplateView.as_view(),
+        name="download_plant_cost_template",
+    ),
+    # Plant Specs (simple definition)
+    path(
+        "project/<int:project_pk>/plant-spec-defs/",
+        views.PlantSpecDefListView.as_view(),
+        name="plant_spec_defs",
+    ),
+    path(
+        "project/<int:project_pk>/plant-spec-defs/upload/",
+        views.PlantSpecUploadView.as_view(),
+        name="plant_spec_upload",
+    ),
+    path(
+        "project/<int:project_pk>/plant-spec-defs/download-template/",
+        views.DownloadPlantSpecTemplateView.as_view(),
+        name="download_plant_spec_template",
+    ),
+    # Preliminary Costs
+    path(
+        "project/<int:project_pk>/preliminary-costs/",
+        views.PreliminaryCostListView.as_view(),
+        name="preliminary_costs",
+    ),
+    path(
+        "project/<int:project_pk>/preliminary-costs/upload/",
+        views.PreliminaryCostUploadView.as_view(),
+        name="preliminary_cost_upload",
+    ),
+    path(
+        "project/<int:project_pk>/preliminary-costs/download-template/",
+        views.DownloadPreliminaryCostTemplateView.as_view(),
+        name="download_preliminary_cost_template",
+    ),
+    # Preliminary Specs (simple definition)
+    path(
+        "project/<int:project_pk>/preliminary-spec-defs/",
+        views.PreliminarySpecDefListView.as_view(),
+        name="preliminary_spec_defs",
+    ),
+    path(
+        "project/<int:project_pk>/preliminary-spec-defs/upload/",
+        views.PreliminarySpecUploadView.as_view(),
+        name="preliminary_spec_upload",
+    ),
+    path(
+        "project/<int:project_pk>/preliminary-spec-defs/download-template/",
+        views.DownloadPreliminarySpecTemplateView.as_view(),
+        name="download_preliminary_spec_template",
+    ),
     path(
         "project/<int:project_pk>/import/",
         views.ExcelImportView.as_view(),
@@ -154,6 +223,21 @@ urlpatterns = [
         name="update_spec_component",
     ),
     path(
+        "project/<int:project_pk>/api/spec/<int:pk>/components/add/",
+        views.AddSpecComponentView.as_view(),
+        name="add_spec_component",
+    ),
+    path(
+        "project/<int:project_pk>/api/spec-component/<int:pk>/delete/",
+        views.DeleteSpecComponentView.as_view(),
+        name="delete_spec_component",
+    ),
+    path(
+        "project/<int:project_pk>/api/spec/<int:pk>/delete/",
+        views.DeleteSpecificationView.as_view(),
+        name="delete_specification",
+    ),
+    path(
         "project/<int:project_pk>/api/labour-spec/<int:pk>/update/",
         views.UpdateLabourSpecView.as_view(),
         name="update_labour_spec",
@@ -169,9 +253,54 @@ urlpatterns = [
         name="update_system_spec_component",
     ),
     path(
+        "project/<int:project_pk>/api/plant-cost/<int:pk>/update/",
+        views.UpdatePlantCostView.as_view(),
+        name="update_plant_cost",
+    ),
+    path(
+        "project/<int:project_pk>/api/plant-spec/<int:pk>/update/",
+        views.UpdatePlantSpecView.as_view(),
+        name="update_plant_spec",
+    ),
+    path(
+        "project/<int:project_pk>/api/plant-spec/<int:pk>/components/add/",
+        views.AddPlantSpecComponentView.as_view(),
+        name="add_plant_spec_component",
+    ),
+    path(
+        "project/<int:project_pk>/api/plant-spec-component/<int:pk>/update/",
+        views.UpdatePlantSpecComponentView.as_view(),
+        name="update_plant_spec_component",
+    ),
+    path(
+        "project/<int:project_pk>/api/plant-spec-component/<int:pk>/delete/",
+        views.DeletePlantSpecComponentView.as_view(),
+        name="delete_plant_spec_component",
+    ),
+    path(
+        "project/<int:project_pk>/api/plant-spec/<int:pk>/delete/",
+        views.DeletePlantSpecificationView.as_view(),
+        name="delete_plant_specification",
+    ),
+    path(
+        "project/<int:project_pk>/api/preliminary-cost/<int:pk>/update/",
+        views.UpdatePreliminaryCostView.as_view(),
+        name="update_preliminary_cost",
+    ),
+    path(
+        "project/<int:project_pk>/api/preliminary-spec/<int:pk>/update/",
+        views.UpdatePreliminarySpecView.as_view(),
+        name="update_preliminary_spec",
+    ),
+    path(
         "project/<int:project_pk>/api/bulk-markup/",
         views.BulkMarkupUpdateView.as_view(),
         name="bulk_markup_update",
+    ),
+    path(
+        "project/<int:project_pk>/api/bulk-boq-specs/",
+        views.BulkUpdateBoqSpecsView.as_view(),
+        name="bulk_boq_specs_update",
     ),
     # Reports
     path(
@@ -276,6 +405,149 @@ urlpatterns = [
         kwargs={"variant": "forecast", "rate_type": "contract"},
         name="report_labour_list_forecast_contract",
     ),
+    # Plant Estimator (calculator)
+    path(
+        "project/<int:project_pk>/plant-specs/",
+        views.PlantSpecificationListView.as_view(),
+        name="plant_specs",
+    ),
+    # Prelim Estimator (calculator)
+    path(
+        "project/<int:project_pk>/prelim-specs/",
+        views.PreliminarySpecificationListView.as_view(),
+        name="prelim_specs",
+    ),
+    # Plant reports — new rates
+    path(
+        "project/<int:project_pk>/reports/plant-list-baseline/",
+        views.PlantListReportView.as_view(),
+        kwargs={"variant": "baseline"},
+        name="report_plant_list_baseline",
+    ),
+    path(
+        "project/<int:project_pk>/reports/plant-list-progress/",
+        views.PlantListReportView.as_view(),
+        kwargs={"variant": "progress"},
+        name="report_plant_list_progress",
+    ),
+    path(
+        "project/<int:project_pk>/reports/plant-list-forecast/",
+        views.PlantListReportView.as_view(),
+        kwargs={"variant": "forecast"},
+        name="report_plant_list_forecast",
+    ),
+    # Plant reports — contract rates (Baseline Estimator)
+    path(
+        "project/<int:project_pk>/reports/plant-list-baseline/contract/",
+        views.PlantListReportView.as_view(),
+        kwargs={"variant": "baseline", "rate_type": "contract"},
+        name="report_plant_list_baseline_contract",
+    ),
+    path(
+        "project/<int:project_pk>/reports/plant-list-progress/contract/",
+        views.PlantListReportView.as_view(),
+        kwargs={"variant": "progress", "rate_type": "contract"},
+        name="report_plant_list_progress_contract",
+    ),
+    path(
+        "project/<int:project_pk>/reports/plant-list-forecast/contract/",
+        views.PlantListReportView.as_view(),
+        kwargs={"variant": "forecast", "rate_type": "contract"},
+        name="report_plant_list_forecast_contract",
+    ),
+    # Prelim reports — new rates
+    path(
+        "project/<int:project_pk>/reports/prelim-list-baseline/",
+        views.PreliminaryListReportView.as_view(),
+        kwargs={"variant": "baseline"},
+        name="report_prelim_list_baseline",
+    ),
+    path(
+        "project/<int:project_pk>/reports/prelim-list-progress/",
+        views.PreliminaryListReportView.as_view(),
+        kwargs={"variant": "progress"},
+        name="report_prelim_list_progress",
+    ),
+    path(
+        "project/<int:project_pk>/reports/prelim-list-forecast/",
+        views.PreliminaryListReportView.as_view(),
+        kwargs={"variant": "forecast"},
+        name="report_prelim_list_forecast",
+    ),
+    # Prelim reports — contract rates (Baseline Estimator)
+    path(
+        "project/<int:project_pk>/reports/prelim-list-baseline/contract/",
+        views.PreliminaryListReportView.as_view(),
+        kwargs={"variant": "baseline", "rate_type": "contract"},
+        name="report_prelim_list_baseline_contract",
+    ),
+    path(
+        "project/<int:project_pk>/reports/prelim-list-progress/contract/",
+        views.PreliminaryListReportView.as_view(),
+        kwargs={"variant": "progress", "rate_type": "contract"},
+        name="report_prelim_list_progress_contract",
+    ),
+    path(
+        "project/<int:project_pk>/reports/prelim-list-forecast/contract/",
+        views.PreliminaryListReportView.as_view(),
+        kwargs={"variant": "forecast", "rate_type": "contract"},
+        name="report_prelim_list_forecast_contract",
+    ),
+    # ── Component / Skill aggregated reports (project-wide rollups) ──
+    path(
+        "project/<int:project_pk>/reports/material-components-baseline/",
+        views.MaterialComponentReportView.as_view(),
+        kwargs={"variant": "baseline"},
+        name="report_material_components_baseline",
+    ),
+    path(
+        "project/<int:project_pk>/reports/material-components-progress/",
+        views.MaterialComponentReportView.as_view(),
+        kwargs={"variant": "progress"},
+        name="report_material_components_progress",
+    ),
+    path(
+        "project/<int:project_pk>/reports/material-components-forecast/",
+        views.MaterialComponentReportView.as_view(),
+        kwargs={"variant": "forecast"},
+        name="report_material_components_forecast",
+    ),
+    path(
+        "project/<int:project_pk>/reports/labour-skills-baseline/",
+        views.LabourSkillReportView.as_view(),
+        kwargs={"variant": "baseline"},
+        name="report_labour_skills_baseline",
+    ),
+    path(
+        "project/<int:project_pk>/reports/labour-skills-progress/",
+        views.LabourSkillReportView.as_view(),
+        kwargs={"variant": "progress"},
+        name="report_labour_skills_progress",
+    ),
+    path(
+        "project/<int:project_pk>/reports/labour-skills-forecast/",
+        views.LabourSkillReportView.as_view(),
+        kwargs={"variant": "forecast"},
+        name="report_labour_skills_forecast",
+    ),
+    path(
+        "project/<int:project_pk>/reports/plant-components-baseline/",
+        views.PlantComponentReportView.as_view(),
+        kwargs={"variant": "baseline"},
+        name="report_plant_components_baseline",
+    ),
+    path(
+        "project/<int:project_pk>/reports/plant-components-progress/",
+        views.PlantComponentReportView.as_view(),
+        kwargs={"variant": "progress"},
+        name="report_plant_components_progress",
+    ),
+    path(
+        "project/<int:project_pk>/reports/plant-components-forecast/",
+        views.PlantComponentReportView.as_view(),
+        kwargs={"variant": "forecast"},
+        name="report_plant_components_forecast",
+    ),
     # ── System Library ────────────────────────────────────────────
     path("system/", views.SystemTradeCodeListView.as_view(), name="sys_trade_codes"),
     # System Trade Codes
@@ -370,6 +642,21 @@ urlpatterns = [
         name="sys_update_spec_component",
     ),
     path(
+        "system/api/spec/<int:pk>/components/add/",
+        views.AddSysSpecComponentView.as_view(),
+        name="sys_add_spec_component",
+    ),
+    path(
+        "system/api/spec-component/<int:pk>/delete/",
+        views.DeleteSysSpecComponentView.as_view(),
+        name="sys_delete_spec_component",
+    ),
+    path(
+        "system/api/spec/<int:pk>/delete/",
+        views.DeleteSystemSpecificationView.as_view(),
+        name="sys_delete_specification",
+    ),
+    path(
         "system/api/labour-crew/<int:pk>/update/",
         views.UpdateSystemLabourCrewView.as_view(),
         name="sys_update_labour_crew",
@@ -378,5 +665,110 @@ urlpatterns = [
         "system/api/labour-spec/<int:pk>/update/",
         views.UpdateSystemLabourSpecView.as_view(),
         name="sys_update_labour_spec",
+    ),
+    # System Plant Costs
+    path(
+        "system/plant-costs/",
+        views.SystemPlantCostListView.as_view(),
+        name="sys_plant_costs",
+    ),
+    path(
+        "system/plant-costs/upload/",
+        views.SystemPlantCostUploadView.as_view(),
+        name="sys_plant_cost_upload",
+    ),
+    path(
+        "system/plant-costs/download-template/",
+        views.DownloadSystemPlantCostTemplateView.as_view(),
+        name="sys_download_plant_cost_template",
+    ),
+    # System Plant Specs
+    path(
+        "system/plant-specs/",
+        views.SystemPlantSpecListView.as_view(),
+        name="sys_plant_specs",
+    ),
+    path(
+        "system/plant-specs/upload/",
+        views.SystemPlantSpecUploadView.as_view(),
+        name="sys_plant_spec_upload",
+    ),
+    path(
+        "system/plant-specs/download-template/",
+        views.DownloadSystemPlantSpecTemplateView.as_view(),
+        name="sys_download_plant_spec_template",
+    ),
+    # System Preliminary Costs
+    path(
+        "system/preliminary-costs/",
+        views.SystemPreliminaryCostListView.as_view(),
+        name="sys_preliminary_costs",
+    ),
+    path(
+        "system/preliminary-costs/upload/",
+        views.SystemPreliminaryCostUploadView.as_view(),
+        name="sys_preliminary_cost_upload",
+    ),
+    path(
+        "system/preliminary-costs/download-template/",
+        views.DownloadSystemPreliminaryCostTemplateView.as_view(),
+        name="sys_download_preliminary_cost_template",
+    ),
+    # System Preliminary Specs
+    path(
+        "system/preliminary-specs/",
+        views.SystemPreliminarySpecListView.as_view(),
+        name="sys_preliminary_specs",
+    ),
+    path(
+        "system/preliminary-specs/upload/",
+        views.SystemPreliminarySpecUploadView.as_view(),
+        name="sys_preliminary_spec_upload",
+    ),
+    path(
+        "system/preliminary-specs/download-template/",
+        views.DownloadSystemPreliminarySpecTemplateView.as_view(),
+        name="sys_download_preliminary_spec_template",
+    ),
+    # System AJAX (plant & preliminary)
+    path(
+        "system/api/plant-cost/<int:pk>/update/",
+        views.UpdateSystemPlantCostView.as_view(),
+        name="sys_update_plant_cost",
+    ),
+    path(
+        "system/api/plant-spec/<int:pk>/update/",
+        views.UpdateSystemPlantSpecView.as_view(),
+        name="sys_update_plant_spec",
+    ),
+    path(
+        "system/api/plant-spec/<int:pk>/components/add/",
+        views.AddSystemPlantSpecComponentView.as_view(),
+        name="sys_add_plant_spec_component",
+    ),
+    path(
+        "system/api/plant-spec-component/<int:pk>/update/",
+        views.UpdateSystemPlantSpecComponentView.as_view(),
+        name="sys_update_plant_spec_component",
+    ),
+    path(
+        "system/api/plant-spec-component/<int:pk>/delete/",
+        views.DeleteSystemPlantSpecComponentView.as_view(),
+        name="sys_delete_plant_spec_component",
+    ),
+    path(
+        "system/api/plant-spec/<int:pk>/delete/",
+        views.DeleteSystemPlantSpecificationView.as_view(),
+        name="sys_delete_plant_specification",
+    ),
+    path(
+        "system/api/preliminary-cost/<int:pk>/update/",
+        views.UpdateSystemPreliminaryCostView.as_view(),
+        name="sys_update_preliminary_cost",
+    ),
+    path(
+        "system/api/preliminary-spec/<int:pk>/update/",
+        views.UpdateSystemPreliminarySpecView.as_view(),
+        name="sys_update_preliminary_spec",
     ),
 ]

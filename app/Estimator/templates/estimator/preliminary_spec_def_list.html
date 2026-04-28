@@ -1,0 +1,222 @@
+{% extends "estimator/base_prelim_estimator.html" %}
+{% load estimator_tags %}
+{% block title %}Preliminary Specs - Project Resource Estimator{% endblock %}
+{% block sub_content %}
+    <div class="sm:flex sm:items-center sm:justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Preliminary Specifications</h1>
+            <p class="mt-1 text-sm text-gray-500">Preliminary specification definitions.</p>
+        </div>
+        <div class="mt-4 sm:mt-0 flex gap-2">
+            <form method="post" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="sync_system">
+                <button type="submit"
+                        class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-amber-700 shadow-sm ring-1 ring-inset ring-amber-300 hover:bg-amber-50"
+                        onclick="return confirm('This will sync preliminary specifications with the system library. Existing specs linked to system data will be overwritten. Continue?')">
+                    {% heroicon_outline "arrow-path" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                    Sync with System
+                </button>
+            </form>
+            <a href="{% url 'estimator:download_preliminary_spec_template' project_pk=project_pk %}"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                {% heroicon_outline "arrow-down-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                Template
+            </a>
+            <a href="{% url 'estimator:preliminary_spec_upload' project_pk=project_pk %}"
+               class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                {% heroicon_outline "arrow-up-tray" class="w-4 h-4 mr-1.5 -ml-0.5" %}
+                Upload
+            </a>
+            <button type="button"
+                    onclick="document.getElementById('prelim-spec-form').classList.toggle('hidden')"
+                    class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                {% heroicon_outline "plus" class="w-5 h-5 mr-1.5 -ml-0.5" %}
+                Add Spec
+            </button>
+        </div>
+    </div>
+    <!-- Add Spec Form -->
+    <div id="prelim-spec-form"
+         class="{% if not form.errors %}hidden{% endif %} mb-6">
+        <div class="overflow-hidden bg-white shadow-sm rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-base font-semibold text-gray-900 mb-4">New Preliminary Specification</h3>
+                <form method="post">
+                    {% csrf_token %}
+                    {% if form.errors %}
+                        <div class="rounded-md bg-red-50 p-4 mb-4">
+                            <div class="text-sm text-red-700">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}<p>{{ field }}: {{ error }}</p>{% endfor %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
+                        <div class="sm:col-span-1">
+                            <label for="id_section" class="block text-sm font-medium text-gray-700">Section</label>
+                            <div class="mt-1">{{ form.section }}</div>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <label for="id_trade_name" class="block text-sm font-medium text-gray-700">Trade Name</label>
+                            <div class="mt-1">{{ form.trade_name }}</div>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="id_name" class="block text-sm font-medium text-gray-700">Name</label>
+                            <div class="mt-1">{{ form.name }}</div>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <label for="id_unit" class="block text-sm font-medium text-gray-700">Unit</label>
+                            <div class="mt-1">{{ form.unit }}</div>
+                        </div>
+                        <div class="sm:col-span-1">
+                            <label for="id_preliminary_type"
+                                   class="block text-sm font-medium text-gray-700">Preliminary Type</label>
+                            <div class="mt-1">{{ form.preliminary_type }}</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex justify-end gap-x-3">
+                        <button type="button"
+                                onclick="document.getElementById('prelim-spec-form').classList.add('hidden')"
+                                class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                                class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
+                            Save Spec
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="overflow-hidden bg-white shadow-sm rounded-lg">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col"
+                            class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pl-6">
+                            Section
+                        </th>
+                        <th scope="col"
+                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            Trade Name
+                        </th>
+                        <th scope="col"
+                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            Name
+                        </th>
+                        <th scope="col"
+                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            Unit
+                        </th>
+                        <th scope="col"
+                            class="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            Preliminary Type
+                        </th>
+                        <th scope="col"
+                            class="px-3 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 sm:pr-6">
+                            Amount
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 bg-white">
+                    {% for spec in preliminary_specs %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="whitespace-nowrap py-3 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+                                <input type="text"
+                                       class="inline-edit w-20 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ spec.id }}"
+                                       data-field="section"
+                                       value="{{ spec.section }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                <input type="text"
+                                       class="inline-edit w-28 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ spec.id }}"
+                                       data-field="trade_name"
+                                       value="{{ spec.trade_name }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-900">
+                                <input type="text"
+                                       class="inline-edit w-40 border-0 bg-transparent text-sm font-medium text-gray-900 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ spec.id }}"
+                                       data-field="name"
+                                       value="{{ spec.name }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                <input type="text"
+                                       class="inline-edit w-12 border-0 bg-transparent text-sm text-gray-500 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                       data-item-id="{{ spec.id }}"
+                                       data-field="unit"
+                                       value="{{ spec.unit }}">
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">
+                                <select class="inline-edit border-0 bg-transparent text-xs text-gray-700 p-0 focus:ring-2 focus:ring-indigo-500 rounded"
+                                        data-item-id="{{ spec.id }}"
+                                        data-field="preliminary_type">
+                                    <option value="" {% if not spec.preliminary_type %}selected{% endif %}>—</option>
+                                    {% for value, label in preliminary_type_choices %}
+                                        <option value="{{ value }}"
+                                                {% if spec.preliminary_type == value %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm font-semibold text-gray-900 text-right sm:pr-6 spec-amount tabular-nums">
+                                {{ spec.amount|currency }}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">No preliminary specifications found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+function fmtCurrency(v) { return 'R ' + parseFloat(v).toLocaleString('en-ZA', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+
+document.querySelectorAll('.inline-edit').forEach(input => {
+    let original = input.value;
+    input.addEventListener('focus', () => { original = input.value; });
+    input.addEventListener('change', () => {
+        if (input.value === original) return;
+        const id = input.dataset.itemId;
+        const field = input.dataset.field;
+        fetch(`/estimator/project/{{ project_pk }}/api/preliminary-spec/${id}/update/`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({field, value: input.value})
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                input.classList.add('ring-2', 'ring-green-500');
+                setTimeout(() => input.classList.remove('ring-2', 'ring-green-500'), 800);
+                original = input.value;
+                if (data.amount !== undefined) {
+                    const row = input.closest('tr');
+                    const cell = row && row.querySelector('.spec-amount');
+                    if (cell) cell.textContent = fmtCurrency(data.amount);
+                }
+            } else {
+                input.classList.add('ring-2', 'ring-red-500');
+                setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);
+                input.value = original;
+            }
+        })
+        .catch(() => {
+            input.classList.add('ring-2', 'ring-red-500');
+            setTimeout(() => input.classList.remove('ring-2', 'ring-red-500'), 800);
+            input.value = original;
+        });
+    });
+});
+    </script>
+{% endblock %}

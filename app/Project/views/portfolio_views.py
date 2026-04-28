@@ -59,13 +59,17 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         """Handle GET request and check for project redirect."""
         # Initialize filter form with user's projects
         user: Account = self.request.user  # type: ignore
-        projects = user.get_projects.order_by("-created_at")
+        if user.is_superuser or user.is_staff:
+            projects = Project.objects.all().order_by("-created_at")
+        else:
+            projects = user.get_projects.order_by("-created_at")
 
+        from app.Account.models import Municipality
         from app.Project.models import (
             Company,
             ProjectCategory,
             ProjectDiscipline,
-            ProjectSubCategory,
+            ProjectStage,
         )
 
         # Get unique clients and contractors from user's projects
@@ -76,16 +80,15 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique categories, subcategories and disciplines from user's projects
+        # Get unique categories, areas and disciplines from user's projects
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        subcategory_queryset = ProjectSubCategory.objects.filter(
-            projects__in=projects
-        ).distinct()
+        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
+        stage_queryset = ProjectStage.objects.filter(projects__in=projects).distinct()
 
         # Initialize filter form with the base queryset
         filter_form = ProjectFilterForm(
@@ -95,8 +98,9 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
-            subcategory_queryset=subcategory_queryset,
+            area_queryset=area_queryset,
             discipline_queryset=discipline_queryset,
+            stage_queryset=stage_queryset,
         )
 
         if filter_form.is_valid():
@@ -114,14 +118,18 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         """Get filtered projects for dashboard view."""
         # Initialize filter form with user's projects
         user: Account = self.request.user  # type: ignore
-        projects = user.get_projects.order_by("-created_at")
+        if user.is_superuser or user.is_staff:
+            projects = Project.objects.all().order_by("-created_at")
+        else:
+            projects = user.get_projects.order_by("-created_at")
 
         # Initialize filter form with the base queryset
+        from app.Account.models import Municipality
         from app.Project.models import (
             Company,
             ProjectCategory,
             ProjectDiscipline,
-            ProjectSubCategory,
+            ProjectStage,
         )
 
         # Get unique clients and contractors from user's projects
@@ -132,16 +140,15 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             contractor_projects__in=projects
         ).distinct()
 
-        # Get unique categories, subcategories and disciplines from user's projects
+        # Get unique categories, areas and disciplines from user's projects
         category_queryset = ProjectCategory.objects.filter(
             projects__in=projects
         ).distinct()
-        subcategory_queryset = ProjectSubCategory.objects.filter(
-            projects__in=projects
-        ).distinct()
+        area_queryset = Municipality.objects.filter(projects__in=projects).distinct()
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
+        stage_queryset = ProjectStage.objects.filter(projects__in=projects).distinct()
 
         self.filter_form = ProjectFilterForm(
             self.request.GET or {},
@@ -150,8 +157,9 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             client_queryset=client_queryset,
             contractor_queryset=contractor_queryset,
             category_queryset=category_queryset,
-            subcategory_queryset=subcategory_queryset,
+            area_queryset=area_queryset,
             discipline_queryset=discipline_queryset,
+            stage_queryset=stage_queryset,
         )
 
         if not self.filter_form or not self.filter_form.is_valid():
@@ -161,8 +169,9 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         # Apply filters from form
         search = self.filter_form.cleaned_data.get("search")
         category = self.filter_form.cleaned_data.get("project_category")
-        subcategory = self.filter_form.cleaned_data.get("project_subcategory")
+        area = self.filter_form.cleaned_data.get("area")
         discipline = self.filter_form.cleaned_data.get("project_discipline")
+        stage = self.filter_form.cleaned_data.get("project_stage")
 
         if search:
             projects = projects.filter(name__icontains=search)
@@ -170,11 +179,14 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         if category:
             projects = projects.filter(project_category=category)
 
-        if subcategory:
-            projects = projects.filter(project_sub_category=subcategory)
+        if area:
+            projects = projects.filter(area=area)
 
         if discipline:
             projects = projects.filter(project_discipline=discipline)
+
+        if stage:
+            projects = projects.filter(project_stage=stage)
 
         selected_project = self.filter_form.cleaned_data.get("projects")
         if selected_project:
@@ -182,7 +194,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
 
         consultant = self.filter_form.cleaned_data.get("consultant")
         if consultant:
-            projects = projects.filter(lead_consultant=consultant)
+            projects = projects.filter(lead_consultants=consultant)
 
         client = self.filter_form.cleaned_data.get("client")
         if client:
@@ -210,11 +222,11 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
 
         # Initialize filter form if not already done
         if not self.filter_form:
+            from app.Account.models import Municipality
             from app.Project.models import (
                 Company,
                 ProjectCategory,
                 ProjectDiscipline,
-                ProjectSubCategory,
             )
 
             # Get unique clients and contractors from user's projects
@@ -225,11 +237,11 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
                 contractor_projects__in=projects
             ).distinct()
 
-            # Get unique categories, subcategories and disciplines from user's projects
+            # Get unique categories, areas and disciplines from user's projects
             category_queryset = ProjectCategory.objects.filter(
                 projects__in=projects
             ).distinct()
-            subcategory_queryset = ProjectSubCategory.objects.filter(
+            area_queryset = Municipality.objects.filter(
                 projects__in=projects
             ).distinct()
             discipline_queryset = ProjectDiscipline.objects.filter(
@@ -243,12 +255,240 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
                 client_queryset=client_queryset,
                 contractor_queryset=contractor_queryset,
                 category_queryset=category_queryset,
-                subcategory_queryset=subcategory_queryset,
+                area_queryset=area_queryset,
                 discipline_queryset=discipline_queryset,
             )
 
         # Add the already-validated form to context
         context["filter_form"] = self.filter_form
+
+        class _PortfolioScope:
+            def __init__(self, projects: QuerySet[Project]):
+                self._projects = projects
+
+            def get_active_projects(self, category=None, area=None, discipline=None):
+                qs = self._projects.filter(
+                    status__in=[
+                        Project.Status.ACTIVE,
+                        Project.Status.FINAL_ACCOUNT_ISSUED,
+                    ]
+                )
+                if category:
+                    qs = qs.filter(project_category=category)
+                if area:
+                    qs = qs.filter(area=area)
+                if discipline:
+                    qs = qs.filter(project_discipline=discipline)
+                return qs
+
+            def get_projects_requiring_urgent_intervention(
+                self, date=None, category=None, area=None, discipline=None
+            ):
+                if not date:
+                    date = datetime.now()
+                urgent = []
+                for project in self.get_active_projects(category, area, discipline):
+                    try:
+                        cpi = project.get_cost_performance_index(date)
+                        spi = project.get_schedule_performance_index(date)
+                        if (cpi and cpi < Decimal("0.96")) and (
+                            spi and spi < Decimal("0.96")
+                        ):
+                            urgent.append(project)
+                    except (ZeroDivisionError, TypeError):
+                        continue
+                return urgent
+
+            def get_projects_requiring_attention(
+                self, date=None, category=None, area=None, discipline=None
+            ):
+                if not date:
+                    date = datetime.now()
+                urgent_ids = {
+                    p.pk
+                    for p in self.get_projects_requiring_urgent_intervention(
+                        date, category, area, discipline
+                    )
+                }
+                attention = []
+                for project in self.get_active_projects(category, area, discipline):
+                    if project.pk in urgent_ids:
+                        continue
+                    try:
+                        cpi = project.get_cost_performance_index(date)
+                        spi = project.get_schedule_performance_index(date)
+                        cpi_needs_attention = cpi and Decimal("0.96") <= cpi < Decimal(
+                            "1.0"
+                        )
+                        spi_needs_attention = spi and Decimal("0.96") <= spi < Decimal(
+                            "1.0"
+                        )
+                        if cpi_needs_attention or spi_needs_attention:
+                            attention.append(project)
+                    except (ZeroDivisionError, TypeError):
+                        continue
+                return attention
+
+            def get_total_original_budget(
+                self, category=None, area=None, discipline=None
+            ):
+                from app.BillOfQuantities.models.structure_models import LineItem
+
+                line_items = LineItem.objects.filter(
+                    project__in=self.get_active_projects(category, area, discipline),
+                    addendum=False,
+                    special_item=False,
+                )
+                return sum_queryset(line_items, "total_price")
+
+            def get_total_approved_variations(
+                self, category=None, area=None, discipline=None
+            ):
+                from app.BillOfQuantities.models.structure_models import LineItem
+
+                line_items = LineItem.objects.filter(
+                    project__in=self.get_active_projects(category, area, discipline),
+                    addendum=True,
+                    special_item=False,
+                )
+                return sum_queryset(line_items, "total_price")
+
+            def get_total_certified_value(
+                self, category=None, area=None, discipline=None
+            ):
+                return sum_queryset(
+                    self.get_active_projects(category, area, discipline),
+                    "payment_certificates__actual_transactions__total_price",
+                )
+
+            def get_forecast_cost_at_completion(
+                self, date=None, category=None, area=None, discipline=None
+            ):
+                from app.BillOfQuantities.models.forecast_models import Forecast
+
+                if not date:
+                    date = datetime.now()
+                total = Decimal("0.00")
+                valid_count = 0
+                for project in self.get_active_projects(category, area, discipline):
+                    try:
+                        latest_forecast = (
+                            project.forecasts.filter(status=Forecast.Status.APPROVED)
+                            .order_by("-period")
+                            .first()
+                        )
+                        if latest_forecast:
+                            total += latest_forecast.total_forecast or Decimal("0.00")
+                            valid_count += 1
+                    except (ZeroDivisionError, TypeError):
+                        continue
+                return total if valid_count > 0 else None
+
+            def get_cost_variance_at_completion(
+                self, date=None, category=None, area=None, discipline=None
+            ):
+                eac = self.get_forecast_cost_at_completion(
+                    date, category, area, discipline
+                )
+                if not eac:
+                    return None
+                return self.get_total_original_budget(category, area, discipline) - eac
+
+            def get_total_earned_value(
+                self, date=None, category=None, area=None, discipline=None
+            ):
+                if not date:
+                    date = datetime.now()
+                total = Decimal("0.00")
+                valid_count = 0
+                for project in self.get_active_projects(category, area, discipline):
+                    try:
+                        ev = project.get_earned_value(date)
+                        if ev:
+                            total += ev
+                            valid_count += 1
+                    except (ZeroDivisionError, TypeError):
+                        continue
+                return total if valid_count > 0 else None
+
+            def get_total_cost_variance(
+                self, date=None, category=None, area=None, discipline=None
+            ):
+                if not date:
+                    date = datetime.now()
+                total = Decimal("0.00")
+                valid_count = 0
+                for project in self.get_active_projects(category, area, discipline):
+                    try:
+                        cv = project.get_cost_variance(date)
+                        if cv:
+                            total += cv
+                            valid_count += 1
+                    except (ZeroDivisionError, TypeError):
+                        continue
+                return total if valid_count > 0 else None
+
+            def get_total_schedule_variance(
+                self, date=None, category=None, area=None, discipline=None
+            ):
+                if not date:
+                    date = datetime.now()
+                total = Decimal("0.00")
+                valid_count = 0
+                for project in self.get_active_projects(category, area, discipline):
+                    try:
+                        sv = project.get_schedule_variance(date)
+                        if sv:
+                            total += sv
+                            valid_count += 1
+                    except (ZeroDivisionError, TypeError):
+                        continue
+                return total if valid_count > 0 else None
+
+            def get_total_estimate_at_completion(
+                self, date=None, category=None, area=None, discipline=None
+            ):
+                return self.get_forecast_cost_at_completion(
+                    date, category, area, discipline
+                )
+
+            def get_cost_performance_index(
+                self, date=None, category=None, area=None, discipline=None
+            ):
+                if not date:
+                    date = datetime.now()
+                total = Decimal(0)
+                valid = 0
+                for project in self.get_active_projects(category, area, discipline):
+                    try:
+                        v = project.get_cost_performance_index(date)
+                        if v:
+                            total += Decimal(str(v))
+                            valid += 1
+                    except (ZeroDivisionError, TypeError):
+                        continue
+                if valid == 0:
+                    return None
+                return round(total / Decimal(valid), 2)
+
+            def get_schedule_performance_index(
+                self, date=None, category=None, area=None, discipline=None
+            ):
+                if not date:
+                    date = datetime.now()
+                total = Decimal(0)
+                valid = 0
+                for project in self.get_active_projects(category, area, discipline):
+                    try:
+                        v = project.get_schedule_performance_index(date)
+                        if v:
+                            total += Decimal(str(v))
+                            valid += 1
+                    except (ZeroDivisionError, TypeError):
+                        continue
+                if valid == 0:
+                    return None
+                return round(total / Decimal(valid), 2)
 
         dashboard_data = []
         for project in projects:
@@ -304,49 +544,83 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             projects, "forecasts__forecast_transactions__total_price"
         )
         context["dashboard_data"] = dashboard_data
-        # If no portfolio, return early with default values
         if not user.portfolio:
-            new_portfolio: Portfolio = Portfolio.objects.create()  #
+            new_portfolio: Portfolio = Portfolio.objects.create()
             new_portfolio.users.add(user)
-            projects.update(portfolio=new_portfolio)
+            if not (user.is_superuser or user.is_staff):
+                projects.update(portfolio=new_portfolio)
         user.refresh_from_db()
-        portfolio: Portfolio = cast(Portfolio, user.portfolio)
-        context["portfolio"] = portfolio
+        portfolio_obj: Portfolio = cast(Portfolio, user.portfolio)
+        context["portfolio"] = portfolio_obj
         context["current_date"] = current_date
+
+        portfolio: Any = portfolio_obj
+        if user.is_superuser or user.is_staff:
+            portfolio = _PortfolioScope(Project.objects.all())
 
         # Get filters for portfolio-level calculations
         if self.filter_form and self.filter_form.is_valid():
             category_filter = self.filter_form.cleaned_data.get("project_category")
-            subcategory_filter = self.filter_form.cleaned_data.get(
-                "project_subcategory"
-            )
+            area_filter = self.filter_form.cleaned_data.get("area")
             discipline_filter = self.filter_form.cleaned_data.get("project_discipline")
         else:
             category_filter = None
-            subcategory_filter = None
+            area_filter = None
             discipline_filter = None
 
         # ==========================================
         # Group 1 - Project Stats
         # ==========================================
         active_projects = portfolio.get_active_projects(
-            category_filter, subcategory_filter, discipline_filter
+            category_filter, area_filter, discipline_filter
         )
         active_count = active_projects.count()
 
         urgent_projects = portfolio.get_projects_requiring_urgent_intervention(
-            current_date, category_filter, subcategory_filter, discipline_filter
+            current_date, category_filter, area_filter, discipline_filter
         )
 
         attention_projects = portfolio.get_projects_requiring_attention(
-            current_date, category_filter, subcategory_filter, discipline_filter
+            current_date, category_filter, area_filter, discipline_filter
         )
+
+        urgent_threshold = Decimal("0.96")
+        urgent_time_count = 0
+        urgent_cost_count = 0
+        for project in active_projects:
+            try:
+                spi = project.get_schedule_performance_index(current_date)
+            except (ZeroDivisionError, TypeError):
+                spi = None
+            try:
+                cpi = project.get_cost_performance_index(current_date)
+            except (ZeroDivisionError, TypeError):
+                cpi = None
+
+            try:
+                if spi is not None and Decimal(str(spi)) < urgent_threshold:
+                    urgent_time_count += 1
+            except Exception:
+                pass
+            try:
+                if cpi is not None and Decimal(str(cpi)) < urgent_threshold:
+                    urgent_cost_count += 1
+            except Exception:
+                pass
 
         context["active_projects_count"] = active_count
         context["urgent_projects"] = urgent_projects
         context["urgent_projects_count"] = len(urgent_projects)
         context["urgent_projects_percentage"] = (
             (len(urgent_projects) / active_count * 100) if active_count > 0 else 0
+        )
+        context["urgent_time_projects_count"] = urgent_time_count
+        context["urgent_time_projects_percentage"] = (
+            (urgent_time_count / active_count * 100) if active_count > 0 else 0
+        )
+        context["urgent_cost_projects_count"] = urgent_cost_count
+        context["urgent_cost_projects_percentage"] = (
+            (urgent_cost_count / active_count * 100) if active_count > 0 else 0
         )
         context["attention_projects"] = attention_projects
         context["attention_projects_count"] = len(attention_projects)
@@ -357,6 +631,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         # ==========================================
         # Compliance Stats
         # ==========================================
+        # Compliance percentage for filtered projects
         total_compliance_items = ContractualCompliance.objects.filter(
             project__in=active_projects
         ).count()
@@ -374,20 +649,60 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             if total_compliance_items > 0
             else 0
         )
+
+        # Compliance for ALL projects (ignoring filters)
+        all_active_projects = portfolio.get_active_projects()
+        total_portfolio_compliance_items = ContractualCompliance.objects.filter(
+            project__in=all_active_projects
+        ).count()
+        completed_portfolio_compliance_items = ContractualCompliance.objects.filter(
+            project__in=all_active_projects,
+            status=ContractualCompliance.Status.COMPLETED,
+        ).count()
+
+        context["portfolio_compliance_percentage"] = (
+            round(
+                (
+                    completed_portfolio_compliance_items
+                    / total_portfolio_compliance_items
+                    * 100
+                ),
+                1,
+            )
+            if total_portfolio_compliance_items > 0
+            else 0
+        )
+
         context["urgent_compliance_count"] = overdue_compliance_items
         context["total_compliance_items"] = total_compliance_items
+
+        # ==========================================
+        # Impact Stats
+        # ==========================================
+        from django.db.models import F
+
+        from app.Project.models import ProjectImpact
+
+        impact_stats = ProjectImpact.objects.filter(
+            project__in=active_projects
+        ).aggregate(
+            total_jobs=Sum(F("jobs_created") + F("jobs_retained")),
+            total_local_spend=Sum("local_spend_amount"),
+        )
+        context["total_jobs_count"] = impact_stats["total_jobs"] or 0
+        context["total_local_spend"] = impact_stats["total_local_spend"] or 0
 
         # ==========================================
         # Group 2 - Budgets and Payments
         # ==========================================
         original_budget = portfolio.get_total_original_budget(
-            category_filter, subcategory_filter, discipline_filter
+            category_filter, area_filter, discipline_filter
         )
         approved_variations = portfolio.get_total_approved_variations(
-            category_filter, subcategory_filter, discipline_filter
+            category_filter, area_filter, discipline_filter
         )
         total_certified = portfolio.get_total_certified_value(
-            category_filter, subcategory_filter, discipline_filter
+            category_filter, area_filter, discipline_filter
         )
 
         context["original_budget"] = original_budget
@@ -404,22 +719,22 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         # Cost Forecasts
         # ==========================================
         forecast_at_completion = portfolio.get_forecast_cost_at_completion(
-            current_date, category_filter, subcategory_filter, discipline_filter
+            current_date, category_filter, area_filter, discipline_filter
         )
         cost_variance_at_completion = portfolio.get_cost_variance_at_completion(
-            current_date, category_filter, subcategory_filter, discipline_filter
+            current_date, category_filter, area_filter, discipline_filter
         )
         total_earned_value = portfolio.get_total_earned_value(
-            current_date, category_filter, subcategory_filter, discipline_filter
+            current_date, category_filter, area_filter, discipline_filter
         )
         total_cost_variance = portfolio.get_total_cost_variance(
-            current_date, category_filter, subcategory_filter, discipline_filter
+            current_date, category_filter, area_filter, discipline_filter
         )
         total_schedule_variance = portfolio.get_total_schedule_variance(
-            current_date, category_filter, subcategory_filter, discipline_filter
+            current_date, category_filter, area_filter, discipline_filter
         )
         total_eac = portfolio.get_total_estimate_at_completion(
-            current_date, category_filter, subcategory_filter, discipline_filter
+            current_date, category_filter, area_filter, discipline_filter
         )
 
         context["forecast_at_completion"] = forecast_at_completion
@@ -443,7 +758,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             portfolio,
             months=6,
             category=category_filter,
-            subcategory=subcategory_filter,
+            area=area_filter,
             discipline=discipline_filter,
         )
         context["performance_labels"] = json.dumps(performance_data["labels"])
@@ -456,7 +771,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         cashflow_data = self._get_cashflow_chart_data(
             portfolio,
             category=category_filter,
-            subcategory=subcategory_filter,
+            area=area_filter,
             discipline=discipline_filter,
         )
         context["cashflow_labels"] = json.dumps(cashflow_data["labels"])
@@ -470,10 +785,10 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
 
     def _get_performance_chart_data(
         self: "PortfolioDashboardView",
-        portfolio: Portfolio,
+        portfolio: Any,
         months: int = 12,
         category=None,
-        subcategory=None,
+        area=None,
         discipline=None,
     ) -> dict:
         """Generate N months of CPI/SPI data for portfolio."""
@@ -494,7 +809,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
 
             try:
                 cpi = portfolio.get_cost_performance_index(
-                    month_date, category, subcategory, discipline
+                    month_date, category, area, discipline
                 )
                 cpi_values.append(float(cpi) if cpi else None)
             except (ZeroDivisionError, TypeError, Exception):
@@ -502,7 +817,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
 
             try:
                 spi = portfolio.get_schedule_performance_index(
-                    month_date, category, subcategory, discipline
+                    month_date, category, area, discipline
                 )
                 spi_values.append(float(spi) if spi else None)
             except (ZeroDivisionError, TypeError, Exception):
@@ -518,9 +833,9 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
 
     def _get_cashflow_chart_data(
         self: "PortfolioDashboardView",
-        portfolio: Portfolio,
+        portfolio: Any,
         category=None,
-        subcategory=None,
+        area=None,
         discipline=None,
     ) -> dict:
         """Generate 12 months of Planned vs Actual vs Forecast vs Budget data."""
@@ -535,9 +850,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
 
         current_date = datetime.now()
         # Monthly budget = total budget / 12 (simplified distribution)
-        total_budget = portfolio.get_total_original_budget(
-            category, subcategory, discipline
-        )
+        total_budget = portfolio.get_total_original_budget(category, area, discipline)
         monthly_budget = float(total_budget / 12) if total_budget else 0
 
         # Running cumulative totals
@@ -559,9 +872,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             actual_total = Decimal("0.00")
             forecast_total = Decimal("0.00")
 
-            for project in portfolio.get_active_projects(
-                category, subcategory, discipline
-            ):
+            for project in portfolio.get_active_projects(category, area, discipline):
                 try:
                     pv = project.get_planned_value(month_date)
                     if pv:
@@ -646,7 +957,7 @@ class PortfolioReportMixin(
         """Get active projects for the current user."""
         return list(
             Project.objects.filter(
-                users=self.request.user,
+                Q(users=self.request.user) | Q(is_demo=True),
                 status=Project.Status.ACTIVE,
             ).order_by("name")
         )

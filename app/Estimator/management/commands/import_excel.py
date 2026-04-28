@@ -3,6 +3,12 @@ from decimal import Decimal, InvalidOperation
 import openpyxl
 from django.core.management.base import BaseCommand
 
+from app.Estimator.importers import (
+    PlantCostImporter,
+    PlantSpecImporter,
+    PreliminaryCostImporter,
+    PreliminarySpecImporter,
+)
 from app.Estimator.models import (
     BOQItem,
     ProjectLabourCrew,
@@ -32,26 +38,77 @@ class ExcelImporter:
         self.output = output
         self.project = project
         self.results = {}
+        self.sheet_names = []
 
     def log(self, msg):
         if self.output:
             self.output.write(msg + "\n")
 
+    def _find_sheet(self, wb, keywords):
+        """Find a worksheet by fuzzy keyword matching. Returns None if not found."""
+        for name in wb.sheetnames:
+            normalised = name.lower().strip()
+            for kw in keywords:
+                if kw in normalised:
+                    return wb[name]
+        return None
+
     def run(self):
         wb = openpyxl.load_workbook(self.file_path, data_only=True)
+        self.sheet_names = list(wb.sheetnames)
+        self.log(f"  Sheets found: {wb.sheetnames}")
 
-        self.results["trade_codes"] = self._import_trade_codes(wb["Trade Code"])
-        self.results["materials"] = self._import_materials(wb["Materials Cost"])
-        self.results["specifications"] = self._import_material_specifications(
-            wb["Material Specification"]
+        ws = self._find_sheet(wb, ["trade code", "tradecode"])
+        if ws:
+            self.results["trade_codes"] = self._import_trade_codes(ws)
+
+        ws = self._find_sheet(
+            wb, ["materials cost", "material cost", "materials code", "material code"]
         )
-        if "Labour Costs" in wb.sheetnames:
-            self.results["labour_crews"] = self._import_labour_costs(wb["Labour Costs"])
-        if "Labour Specification" in wb.sheetnames:
-            self.results["labour_specs"] = self._import_labour_specifications(
-                wb["Labour Specification"]
-            )
-        self.results["boq_items"] = self._import_boq_items(wb["Output BoQ"])
+        if ws:
+            self.results["materials"] = self._import_materials(ws)
+
+        ws = self._find_sheet(
+            wb,
+            [
+                "material specification",
+                "material specifications",
+                "specification code",
+                "material spec",
+            ],
+        )
+        if ws:
+            self.results["specifications"] = self._import_material_specifications(ws)
+
+        ws = self._find_sheet(wb, ["labour cost", "labour costs", "labor cost"])
+        if ws:
+            self.results["labour_crews"] = self._import_labour_costs(ws)
+
+        ws = self._find_sheet(
+            wb, ["labour specification", "labour spec", "labor specification"]
+        )
+        if ws:
+            self.results["labour_specs"] = self._import_labour_specifications(ws)
+
+        # Plant/preliminary sheets are delegated to the standalone importer
+        # classes which handle both the master hierarchical layout and the
+        # downloaded-template flat layout.
+        self.results["plant_costs"] = self._run_sheet_importer(
+            PlantCostImporter, "Plant Costs"
+        )
+        self.results["plant_specs"] = self._run_sheet_importer(
+            PlantSpecImporter, "Plant Specifications"
+        )
+        self.results["preliminary_costs"] = self._run_sheet_importer(
+            PreliminaryCostImporter, "Preliminary Costs"
+        )
+        self.results["preliminary_specs"] = self._run_sheet_importer(
+            PreliminarySpecImporter, "Preliminary Specifications"
+        )
+
+        ws = self._find_sheet(wb, ["output boq", "output bill"])
+        if ws:
+            self.results["boq_items"] = self._import_boq_items(ws)
 
         wb.close()
         return self.results
@@ -78,18 +135,23 @@ class ExcelImporter:
 
     def _import_trade_codes(self, ws):
         count = 0
-        model = ProjectTradeCode if self.project else SystemTradeCode
         for row in ws.iter_rows(min_row=2, values_only=True):
             vals = (row + (None,) * 4)[:4]
             prefix, trade_name, _, _ = vals
             if not prefix:
                 continue
-            lookup = {"prefix": str(prefix).strip()}
+            prefix_str = str(prefix).strip()
             if self.project:
-                lookup["project"] = self.project
-            model.objects.update_or_create(
-                **lookup, defaults={"trade_name": str(trade_name or "").strip()}
-            )
+                ProjectTradeCode.objects.update_or_create(
+                    project=self.project,
+                    prefix=prefix_str,
+                    defaults={"trade_name": str(trade_name or "").strip()},
+                )
+            else:
+                SystemTradeCode.objects.update_or_create(
+                    prefix=prefix_str,
+                    defaults={"trade_name": str(trade_name or "").strip()},
+                )
             count += 1
         self.log(f"  Trade Codes: {count}")
         return count
@@ -98,7 +160,6 @@ class ExcelImporter:
 
     def _import_materials(self, ws):
         count = 0
-        model = ProjectMaterial if self.project else SystemMaterial
         for row in ws.iter_rows(min_row=2, values_only=True):
             vals = (row + (None,) * 6)[:6]
             trade_name, mat_code, unit, rate, variety, spec = vals
@@ -106,19 +167,22 @@ class ExcelImporter:
                 continue
 
             mat_code_str = self._safe_str(mat_code)
-            lookup = {"material_code": mat_code_str}
+            defaults = {
+                "trade_name": self._safe_str(trade_name),
+                "unit": self._safe_str(unit),
+                "market_rate": self._safe_decimal(rate) or Decimal("0"),
+                "material_variety": self._safe_str(variety),
+                "market_spec": self._safe_str(spec),
+            }
+
             if self.project:
-                lookup["project"] = self.project
-            model.objects.update_or_create(
-                **lookup,
-                defaults={
-                    "trade_name": self._safe_str(trade_name),
-                    "unit": self._safe_str(unit),
-                    "market_rate": self._safe_decimal(rate) or Decimal("0"),
-                    "material_variety": self._safe_str(variety),
-                    "market_spec": self._safe_str(spec),
-                },
-            )
+                ProjectMaterial.objects.update_or_create(
+                    project=self.project, material_code=mat_code_str, defaults=defaults
+                )
+            else:
+                SystemMaterial.objects.update_or_create(
+                    material_code=mat_code_str, defaults=defaults
+                )
             count += 1
         self.log(f"  Materials: {count}")
         return count
@@ -307,6 +371,22 @@ class ExcelImporter:
         self.log(f"  Labour Specifications: {count}")
         return count
 
+    # ── Plant / Preliminary delegation ─────────────────────────
+
+    def _run_sheet_importer(self, importer_cls, label):
+        """Run a standalone importer and log the result.
+
+        Returns the created+updated total to match the legacy return shape.
+        """
+        importer = importer_cls(self.file_path, project=self.project)
+        result = importer.run()
+        created = result.get("created", 0)
+        updated = result.get("updated", 0)
+        sheet_used = result.get("sheet_used")
+        suffix = f" [sheet: {sheet_used}]" if sheet_used else ""
+        self.log(f"  {label}: {created} created, {updated} updated{suffix}")
+        return created + updated
+
     # ── Output BoQ ─────────────────────────────────────────────
 
     def _find_specification(self, spec_name_str):
@@ -328,10 +408,12 @@ class ExcelImporter:
         return SystemLabourSpecification.objects.filter(name=name_str).first()
 
     def _import_boq_items(self, ws):
+        # BOQItem is a single model with a nullable project FK — scope the
+        # wipe so a system-library import never touches project-scoped rows.
         if self.project:
             BOQItem.objects.filter(project=self.project).delete()
         else:
-            BOQItem.objects.all().delete()
+            BOQItem.objects.filter(project__isnull=True).delete()
         count = 0
         for row in ws.iter_rows(min_row=2, values_only=True):
             vals = (row + (None,) * 21)[:21]

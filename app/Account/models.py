@@ -7,13 +7,30 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
 
 from app.Account.subscription_config import Subscription, SubscriptionConfig
 from app.core.Utilities.models import BaseModel
+
+
+class Municipality(BaseModel):
+    province = models.CharField(max_length=255)
+    municipality_name = models.CharField(max_length=255)
+    code = models.CharField(max_length=10)
+    district = models.CharField(max_length=255, blank=True, default="")
+
+    class Meta:
+        verbose_name = "Municipality"
+        verbose_name_plural = "Municipalities"
+        ordering = ["province", "municipality_name"]
+        unique_together = ["province", "municipality_name", "code"]
+
+    def __str__(self):
+        return f"{self.municipality_name} ({self.code})"
+
 
 if TYPE_CHECKING:
     from app.Project.models import Company, Portfolio, Project, ProjectRole, Role
@@ -141,7 +158,7 @@ class Account(AbstractUser, BaseModel):
     email_verified = models.BooleanField(default=False)
     email_verified_at = models.DateTimeField(null=True, blank=True)
 
-    objects: UserManager = UserManager()
+    objects = UserManager()
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -222,28 +239,13 @@ class Account(AbstractUser, BaseModel):
 
     @property
     def get_projects(self: "Account") -> QuerySet["Project"]:
-        if self.is_superuser:
-            print("user is super")
-            # Import here to avoid circular import
-            from app.Project.models import Project
-
-            return Project.objects.all()
-        project_roles = self.project_roles.all()
-        # Get projects through project_roles relationship
-        projects = []
-        for pr in project_roles:
-            projects.append(pr.project)
-        # Return unique projects
-        project_ids = [p.id for p in projects]
-        if project_ids:
-            # Import here to avoid circular import
-            from app.Project.models import Project
-
-            return Project.objects.filter(id__in=project_ids).distinct()
-        # Return empty queryset if no projects
         from app.Project.models import Project
 
-        return Project.objects.none()
+        if self.is_superuser:
+            return Project.objects.all()
+        return Project.objects.filter(
+            Q(users=self) | Q(project_roles__user=self) | Q(is_demo=True)
+        ).distinct()
 
     @property
     def get_clients(self: "Account") -> QuerySet["Company"]:
@@ -287,7 +289,7 @@ class Account(AbstractUser, BaseModel):
             return True
 
         max_projects = self.get_subscription_limit("max_projects")
-        current_projects = self.get_projects.count()
+        current_projects = self.get_projects.filter(is_demo=False).count()
         return current_projects < max_projects
 
     def can_add_user_to_project(self, project) -> bool:

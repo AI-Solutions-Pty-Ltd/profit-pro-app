@@ -5,11 +5,52 @@ from app.Project.views import (
 )
 
 urlpatterns = [
+    # Project Contractual Report
+    path(
+        "project/<int:project_pk>/contractual/",
+        report_views.ContractualReportView.as_view(),
+        name="contractual-report",
+    ),
+    path(
+        "project/<int:project_pk>/compliance/",
+        report_views.ComplianceReportView.as_view(),
+        name="compliance-report",
+    ),
+    path(
+        "project/<int:project_pk>/contractors/",
+        report_views.ContractorsReportView.as_view(),
+        name="contractors-report",
+    ),
+    path(
+        "project/<int:project_pk>/construction-progress/",
+        report_views.ConstructionProgressReportView.as_view(),
+        name="construction-progress-report",
+    ),
+    path(
+        "project/<int:project_pk>/action-tracker/",
+        report_views.ActionTrackerReportView.as_view(),
+        name="action-tracker-report",
+    ),
+    path(
+        "project/<int:project_pk>/decision-log/",
+        report_views.DecisionLogReportView.as_view(),
+        name="decision-log-report",
+    ),
     # Portfolio Reports
     path(
         "portfolio/reports/financial/",
         report_views.FinancialReportView.as_view(),
         name="portfolio-financial-report",
+    ),
+    path(
+        "portfolio/reports/production/",
+        report_views.PortfolioProductionReportView.as_view(),
+        name="portfolio-production-report",
+    ),
+    path(
+        "portfolio/reports/progress/",
+        report_views.PortfolioProgressReportView.as_view(),
+        name="portfolio-progress-report",
     ),
     path(
         "portfolio/reports/schedule/",

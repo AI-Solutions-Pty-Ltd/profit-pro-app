@@ -1,33 +1,31 @@
-<nav class="bg-white border-b border-gray-300 overflow-hidden flex gap-x-2 text-xs mb-4 flex justify-between px-2"
+<nav class="flex overflow-x-auto gap-x-3 mb-4 w-full text-xs bg-white border-b border-gray-300"
      aria-label="Dashboard tabs">
-    <a href="#"
-       class="border-b-2 {% if tab == 'contractual_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
-        {% heroicon_outline "chart-bar" class="w-5 h-5 inline mr-2" %}
+    <a href="{% url 'project:project-dashboard' project.pk %}"
+       class="border-b-2 whitespace-nowrap   {% if tab == 'dashboard' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
+        Project Dashboard
+    </a>
+    <a href="{% url 'project:contractual-report' project.pk %}"
+       class="border-b-2 whitespace-nowrap {% if tab == 'contractual_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
         Contractual Report
     </a>
-    <a href="#"
-       class="border-b-2 {% if tab == 'progress_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
-        {% heroicon_outline "banknotes" class="w-5 h-5 inline mr-2" %}
+    <a href="{% url 'project:construction-progress-report' project.pk %}"
+       class="border-b-2 whitespace-nowrap {% if tab == 'progress_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
         Progress Report
     </a>
-    <a href="#"
-       class="border-b-2 {% if tab == 'compliance_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
-        {% heroicon_outline "clock" class="w-5 h-5 inline mr-2" %}
+    <a href="{% url 'project:compliance-report' project.pk %}"
+       class="border-b-2 whitespace-nowrap {% if tab == 'compliance_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
         Compliance Report
     </a>
-    <a href="#"
-       class="border-b-2 {% if tab == 'contractors_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
-        {% heroicon_outline "chart-bar-square" class="w-5 h-5 inline mr-2" %}
-        Contractor’s Report
+    <a href="{% url 'project:decision-log-report' project.pk %}"
+       class="border-b-2 whitespace-nowrap {% if tab == 'decision_log' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
+        Decision Log
     </a>
-    <a href="#"
-       class="border-b-2 {% if tab == 'planning_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
-        {% heroicon_outline "chart-bar-square" class="w-5 h-5 inline mr-2" %}
-        Planning Report
+    <a href="{% url 'project:action-tracker-report' project.pk %}"
+       class="border-b-2 whitespace-nowrap {% if tab == 'action_tracker' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
+        Action Tracker
     </a>
-    <a href="#"
-       class="border-b-2 {% if tab == 'procurement_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
-        {% heroicon_outline "chart-bar-square" class="w-5 h-5 inline mr-2" %}
-        Procurement Report
+    <a href="{% url 'project:contractors-report' project.pk %}"
+       class="border-b-2 whitespace-nowrap {% if tab == 'contractors_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
+        Contractor's Report
     </a>
 </nav>

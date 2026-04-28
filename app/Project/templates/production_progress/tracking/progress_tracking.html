@@ -1,0 +1,124 @@
+{% extends "production_progress/base_production.html" %}
+{% load static %}
+{% load heroicons %}
+{% load humanize %}
+{% load project_tags %}
+{% block title %}
+    Progress Tracking - {{ project.name }} - {{ block.super }}
+{% endblock title %}
+{% block production_content %}
+    <!-- Actions Header -->
+    <div class="flex flex-wrap gap-4 justify-end items-center mb-8">
+        <a href="{% url 'project:production-list' project.pk %}"
+           class="inline-flex items-center px-4 py-2.5 text-sm font-bold text-indigo-600 bg-white rounded-xl border border-indigo-200 shadow-sm transition-all hover:bg-indigo-50 hover:shadow-md">
+            {% heroicon_outline "clipboard-document-list" class="mr-2 w-5 h-5" %} View Detailed Logs
+        </a>
+    </div>
+    {% for data in logs_data %}
+        {% if not request.GET.plan_id or request.GET.plan_id == data.plan.id|stringformat:"s" %}
+            <div class="overflow-hidden mb-12 bg-white rounded-xl border border-gray-200 shadow-sm">
+                <!-- Activity Header -->
+                <div class="flex flex-col gap-4 justify-between items-start px-6 py-5 bg-gray-50 border-b border-gray-100 sm:flex-row sm:items-center">
+                    <div class="flex items-center">
+                        <div class="flex justify-center items-center mr-4 w-10 h-10 text-indigo-600 bg-indigo-100 rounded-xl">
+                            {% heroicon_outline "chart-pie" class="w-5 h-5" %}
+                        </div>
+                        <div>
+                            <h3 class="text-base font-black tracking-tight text-gray-900 uppercase">{{ data.plan.activity }}</h3>
+                            {% if data.plan.section or data.plan.bill_no %}
+                                <div class="flex gap-1.5 items-center mt-0.5">
+                                    {% if data.plan.section %}
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{{ data.plan.section }}</span>
+                                    {% endif %}
+                                    {% if data.plan.section and data.plan.bill_no %}<span class="text-[10px] text-gray-300">/</span>{% endif %}
+                                    {% if data.plan.bill_no %}
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">{{ data.plan.bill_no }}</span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="inline-flex items-center px-3 py-1 text-xs font-bold text-indigo-700 bg-indigo-100 rounded-lg">
+                        Planned: {{ data.plan.quantity }} {{ data.plan.unit }}
+                    </div>
+                </div>
+                <!-- Metrics Grid/Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50/50">
+                            <tr>
+                                <th class="px-6 py-3 w-64 text-xs font-bold tracking-wider text-left text-gray-500 uppercase">Metric</th>
+                                {% for day in data.days_list %}
+                                    <th class="px-6 py-3 text-xs font-bold tracking-wider text-center text-gray-500 uppercase">{{ day }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr class="transition-colors hover:bg-gray-50/50">
+                                <td class="px-6 py-4 text-sm font-bold text-gray-900 bg-gray-50/30">Production Quantity</td>
+                                {% for day in data.days_list %}
+                                    <td class="px-6 py-4 text-sm font-bold text-center text-gray-900 border-l border-gray-100">
+                                        {{ data.day_data|get_item:day|get_item:'production'|floatformat:0|intcomma }}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                            <tr class="transition-colors hover:bg-gray-50/50">
+                                <td class="px-6 py-4 text-sm text-gray-600 bg-gray-50/30">Total Cost</td>
+                                {% for day in data.days_list %}
+                                    <td class="px-6 py-4 text-sm text-center text-gray-700 border-l border-gray-100">
+                                        R {{ data.day_data|get_item:day|get_item:'total_cost'|floatformat:2|intcomma }}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                            <tr class="transition-colors hover:bg-gray-50/50">
+                                <td class="px-6 py-4 text-sm text-gray-600 bg-gray-50/30">Man Hours</td>
+                                {% for day in data.days_list %}
+                                    <td class="px-6 py-4 text-sm text-center text-gray-700 border-l border-gray-100">
+                                        {{ data.day_data|get_item:day|get_item:'man_hours'|floatformat:1 }}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                            <tr class="transition-colors bg-indigo-50/40 hover:bg-indigo-50/60">
+                                <td class="px-6 py-4 text-sm font-black tracking-tight text-indigo-800 uppercase bg-indigo-50/20">
+                                    Work Productivity (Units/MH)
+                                </td>
+                                {% for day in data.days_list %}
+                                    <td class="px-6 py-4 text-sm font-black text-center text-indigo-600 border-l border-indigo-100">
+                                        {{ data.day_data|get_item:day|get_item:'productivity'|floatformat:4 }}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                            <tr class="transition-colors bg-red-50/40 hover:bg-red-50/60">
+                                <td class="px-6 py-4 text-sm font-black tracking-tight text-red-800 uppercase bg-red-50/20">Cost per Item</td>
+                                {% for day in data.days_list %}
+                                    <td class="px-6 py-4 text-sm font-black text-center text-red-600 border-l border-red-100">
+                                        R {{ data.day_data|get_item:day|get_item:'cost_per_item'|floatformat:2|intcomma }}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% endif %}
+    {% empty %}
+        <div class="px-6 py-24 text-center bg-white rounded-2xl border-2 border-gray-200 border-dashed">
+            <div class="flex justify-center items-center mx-auto mb-6 w-20 h-20 text-indigo-400 bg-indigo-50 rounded-full">
+                {% heroicon_outline "presentation-chart-line" class="w-10 h-10" %}
+            </div>
+            <h3 class="text-xl font-bold text-gray-900">No data available for tracking</h3>
+            <p class="mt-2 text-gray-500">Log your daily activity to see progress metrics.</p>
+        </div>
+    {% endfor %}
+    <!-- Footer Nav -->
+    <div class="flex flex-col gap-4 justify-between items-center px-8 py-6 mt-12 mb-8 bg-white rounded-2xl border border-gray-100 shadow-sm sm:flex-row">
+        <a href="{% url 'project:company-management' project.pk %}"
+           class="inline-flex items-center text-sm font-bold text-gray-400 transition-colors hover:text-indigo-600">
+            {% heroicon_outline "chevron-left" class="mr-2 w-4 h-4" %} Business Management
+        </a>
+        <a href="{% url 'project:production-dashboard' project.pk %}"
+           class="inline-flex items-center px-5 py-2 text-sm font-bold text-indigo-600 bg-indigo-50 rounded-xl transition-all hover:bg-indigo-100">
+            Production Dashboard {% heroicon_outline "chevron-right" class="ml-2 w-4 h-4" %}
+        </a>
+    </div>
+{% endblock production_content %}

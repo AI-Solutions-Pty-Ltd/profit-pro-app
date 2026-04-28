@@ -10,7 +10,11 @@
             <div class="flex items-center justify-between">
                 <div>
                     <div class="flex items-center gap-3">
-                        <h1 class="text-2xl font-bold text-gray-900">{{ object.get_meeting_type_display }} Meeting</h1>
+                        <h1 class="text-2xl font-bold text-gray-900">
+                            {{ object.get_meeting_type_display }}
+                            {% if object.meeting_type == 'OTHER' and object.other_meeting_type %}({{ object.other_meeting_type }}){% endif %}
+                            Meeting
+                        </h1>
                         {% if object.status == 'OPEN' %}
                             <span class="px-2.5 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800">Open</span>
                         {% else %}
@@ -45,15 +49,9 @@
                     <div>
                         <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Type</dt>
                         <dd class="mt-1">
-                            {% if object.meeting_type == 'PROGRESS' %}
-                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Progress</span>
-                            {% elif object.meeting_type == 'CONTRACTUAL' %}
-                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Contractual</span>
-                            {% elif object.meeting_type == 'RISK' %}
-                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Risk</span>
-                            {% else %}
-                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Other</span>
-                            {% endif %}
+                            <span class="px-2 py-1 rounded-full text-xs font-medium {% if object.meeting_type == 'PROGRESS' %}bg-blue-100 text-blue-800 {% elif object.meeting_type == 'CONTRACTUAL' %}bg-purple-100 text-purple-800 {% elif object.meeting_type == 'RISK' %}bg-red-100 text-red-800 {% elif object.meeting_type == 'EARLY_WARNING' %}bg-orange-100 text-orange-800 {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ object.get_meeting_type_display }}
+                            </span>
                         </dd>
                     </div>
                     <div>
@@ -74,9 +72,9 @@
                     </div>
                 </div>
                 <div>
-                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Key Decisions</dt>
+                    <dt class="text-xs font-medium text-gray-500 uppercase tracking-wider">Summary / Minutes Overview</dt>
                     <dd class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">
-                        {{ object.key_decisions|default:"No key decisions recorded." }}
+                        {{ object.key_decisions|default:"No overview recorded." }}
                     </dd>
                 </div>
                 {% if object.attachment %}
@@ -119,35 +117,257 @@
             </div>
             <!-- Actions -->
             <div class="bg-white shadow-sm rounded-lg p-4">
-                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Actions</h3>
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Quick Actions</h3>
                 <div class="space-y-2">
-                    <a href="{% url 'site_management:meeting-update' project.pk object.pk %}"
-                       class="w-full inline-flex items-center justify-center px-3 py-2 border border-indigo-300 rounded-md text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50">
-                        {% heroicon_outline "pencil" class="w-4 h-4 mr-1.5" %}
-                        Edit Meeting
-                    </a>
-                    <a href="{% url 'site_management:meeting-list' project.pk %}"
-                       class="w-full inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                        {% heroicon_outline "list-bullet" class="w-4 h-4 mr-1.5" %}
-                        All Meetings
-                    </a>
+                    <button type="button"
+                            onclick="document.getElementById('addDecisionModal').classList.remove('hidden')"
+                            class="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        {% heroicon_mini "plus" class="w-4 h-4 mr-1.5" %}
+                        Log Decision
+                    </button>
+                    <button type="button"
+                            onclick="openAddActionModal()"
+                            class="w-full inline-flex items-center justify-center px-3 py-2 border border-indigo-300 rounded-md text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50">
+                        {% heroicon_mini "list-bullet" class="w-4 h-4 mr-1.5" %}
+                        Log Action Item
+                    </button>
                 </div>
             </div>
         </div>
     </div>
-    <!-- Footer -->
-    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-lg">
-        <div class="flex justify-between items-center">
-            <a href="{% url 'site_management:meeting-list' project.pk %}"
-               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                {% heroicon_outline "chevron-left" class="w-4 h-4 mr-1" %}
-                Meetings
-            </a>
-            <a href="{% url 'project:project-management' project.pk %}"
-               class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors">
-                Project Management
-                {% heroicon_outline "chevron-right" class="w-4 h-4 ml-1" %}
-            </a>
+    <!-- Key Decisions & Linked Actions Section -->
+    <div class="bg-white shadow-sm rounded-lg mb-6 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+            <h2 class="text-lg font-bold text-gray-900 flex items-center">
+                {% heroicon_outline "clipboard-document-list" class="w-5 h-5 mr-2 text-indigo-600" %}
+                Key Decisions & Actions
+            </h2>
+            <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                {{ decisions.count }} Decisions
+            </span>
+        </div>
+        <div class="p-0">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Decision / Outcome</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Responsible</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Due Date</th>
+                        <th class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for decision in decisions %}
+                        <tr class="bg-white border-t-2 border-indigo-50">
+                            <td class="px-6 py-4 text-sm text-gray-900 font-bold">{{ decision.description }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">{{ decision.responsible_person|default:"-" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                {% if decision.due_date %}
+                                    <span class="{% if decision.due_date < today %}text-red-600 font-bold{% elif decision.due_date == today %}text-amber-600 font-bold{% else %}text-gray-500{% endif %}">
+                                        {{ decision.due_date|date:"d M Y" }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-gray-400 italic">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button type="button"
+                                        onclick="openAddActionModal('{{ decision.pk }}', '{{ decision.description|truncatechars:30|escapejs }}')"
+                                        class="inline-flex items-center px-2 py-1 border border-indigo-600 rounded text-xs font-medium text-indigo-600 hover:bg-indigo-50">
+                                    {% heroicon_mini "plus" class="w-3 h-3 mr-1" %}
+                                    Add Activity
+                                </button>
+                            </td>
+                        </tr>
+                        <!-- Linked Actions -->
+                        {% for action in decision.decision_actions.all %}
+                            <tr class="bg-gray-50/50 border-l-4 border-indigo-200">
+                                <td class="px-10 py-3 text-sm text-gray-700">
+                                    <div class="flex items-center">
+                                        {% heroicon_mini "arrow-turn-down-right" class="w-4 h-4 mr-2 text-gray-400" %}
+                                        {{ action.description }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-3 text-sm text-gray-500 italic">{{ action.assigned_to|default:"-" }}</td>
+                                <td class="px-6 py-3 whitespace-nowrap text-sm">
+                                    {% if action.due_date %}
+                                        <span class="text-xs {% if action.status != 'COMPLETE' and action.due_date < today %}text-red-600{% else %}text-gray-500{% endif %}">
+                                            {{ action.due_date|date:"d M Y" }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-3 text-right">
+                                    <form method="post"
+                                          action="{% url 'site_management:meeting-update-action-status' project.pk object.pk action.pk %}"
+                                          class="inline-block">
+                                        {% csrf_token %}
+                                        <select name="status"
+                                                onchange="this.form.submit()"
+                                                class="block w-full pl-2 pr-8 py-0.5 text-[10px] border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md bg-transparent">
+                                            {% for val, label in action_statuses %}
+                                                <option value="{{ val }}" {% if action.status == val %}selected{% endif %}>{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% empty %}
+                        <tr>
+                            <td colspan="4"
+                                class="px-6 py-8 text-center text-sm text-gray-500 italic">
+                                No key decisions logged for this meeting.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- General Action Items (Unlinked) -->
+    {% if unlinked_actions %}
+        <div class="bg-white shadow-sm rounded-lg mb-6 overflow-hidden border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+                <h2 class="text-sm font-bold text-gray-700 flex items-center">
+                    {% heroicon_outline "check-circle" class="w-4 h-4 mr-2 text-green-600" %}
+                    General Action Items
+                </h2>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-800">
+                    {{ unlinked_actions.count }} Items
+                </span>
+            </div>
+            <div class="p-0">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for action in unlinked_actions %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-3 text-sm text-gray-900">{{ action.description }}</td>
+                                <td class="px-6 py-3 text-sm text-gray-500">{{ action.assigned_to|default:"-" }}</td>
+                                <td class="px-6 py-3 whitespace-nowrap text-sm">
+                                    {% if action.due_date %}
+                                        <span class="{% if action.status != 'COMPLETE' and action.due_date < today %}text-red-600{% endif %}">
+                                            {{ action.due_date|date:"d M Y" }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-3 text-right">
+                                    <form method="post"
+                                          action="{% url 'site_management:meeting-update-action-status' project.pk object.pk action.pk %}"
+                                          class="inline-block">
+                                        {% csrf_token %}
+                                        <select name="status"
+                                                onchange="this.form.submit()"
+                                                class="block w-full pl-2 pr-8 py-0.5 text-[10px] border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md">
+                                            {% for val, label in action_statuses %}
+                                                <option value="{{ val }}" {% if action.status == val %}selected{% endif %}>{{ label }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+    <!-- Add Decision Modal -->
+    <div id="addDecisionModal"
+         class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Log Key Decision</h3>
+            <form method="post"
+                  action="{% url 'site_management:meeting-add-decision' project.pk object.pk %}">
+                {% csrf_token %}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Decision / Outcome</label>
+                        <textarea name="description"
+                                  rows="3"
+                                  required
+                                  class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                  placeholder="Describe the decision made..."></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Responsible</label>
+                            <input type="text"
+                                   name="responsible_person"
+                                   class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                   placeholder="Name / Company">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                            <input type="date"
+                                   name="due_date"
+                                   class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button"
+                            onclick="document.getElementById('addDecisionModal').classList.add('hidden')"
+                            class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        Log Decision
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Add Action Modal -->
+    <div id="addActionModal"
+         class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Add Action Activity</h3>
+            <div id="decisionContext"
+                 class="hidden mb-4 p-2 bg-indigo-50 border border-indigo-100 rounded text-xs text-indigo-700 italic">
+                Linked to: <span id="decisionText"></span>
+            </div>
+            <form method="post"
+                  action="{% url 'site_management:meeting-add-action' project.pk object.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="decision_id" id="modal_decision_id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Activity / Action</label>
+                        <textarea name="description"
+                                  rows="3"
+                                  required
+                                  class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                  placeholder="What needs to be done?"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
+                            <input type="text"
+                                   name="assigned_to"
+                                   class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                   placeholder="Name / Company">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                            <input type="date"
+                                   name="due_date"
+                                   class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button"
+                            onclick="document.getElementById('addActionModal').classList.add('hidden')"
+                            class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        Add Activity
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
     <!-- Delete Confirm Modal -->
@@ -178,4 +398,23 @@
             </div>
         </div>
     </div>
+    <script>
+        function openAddActionModal(decisionId = null, decisionText = '') {
+            const modal = document.getElementById('addActionModal');
+            const idInput = document.getElementById('modal_decision_id');
+            const contextDiv = document.getElementById('decisionContext');
+            const textSpan = document.getElementById('decisionText');
+
+            if (decisionId) {
+                idInput.value = decisionId;
+                textSpan.textContent = decisionText;
+                contextDiv.classList.remove('hidden');
+            } else {
+                idInput.value = '';
+                contextDiv.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+        }
+    </script>
 {% endblock content %}

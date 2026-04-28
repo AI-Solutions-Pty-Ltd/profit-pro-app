@@ -32,17 +32,22 @@
                 <a href="{% url 'project:category-list' %}"
                    class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
                     {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Categories
+                    Sectors
                 </a>
                 <a href="{% url 'project:subcategory-list' %}"
                    class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
                     {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
-                    Sub Categories
+                    Areas
                 </a>
                 <a href="{% url 'project:discipline-list' %}"
                    class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
                     {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
                     Disciplines
+                </a>
+                <a href="{% url 'project:project-stage-list' %}"
+                   class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 whitespace-nowrap border-b-2 py-4 px-6 text-sm font-medium">
+                    {% heroicon_outline "tag" size="16" class="inline mr-1.5" %}
+                    Project Stages
                 </a>
             </nav>
         </div>
@@ -60,15 +65,6 @@
         <!-- Filter Form -->
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50/50">
             <form id="filterForm" method="get" class="space-y-4">
-                <!-- Search Bar -->
-                <div class="flex items-center gap-3">
-                    {% heroicon_outline "magnifying-glass" size="18" class="text-gray-500" %}
-                    <input type="text"
-                           name="search"
-                           value="{{ filter_form.search.value|default:'' }}"
-                           placeholder="Search projects..."
-                           class="flex-1 max-w-md px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
                 <!-- Filter Dropdowns -->
                 <div class="flex items-center gap-3 flex-wrap">
                     <!-- Filter Icon and Label -->
@@ -80,7 +76,7 @@
                     <div class="flex items-center gap-2 pr-3 border-r border-gray-300">
                         <!-- Category Filter -->
                         <div class="relative">
-                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Category</span>
+                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Sector</span>
                             <select name="project_category"
                                     onchange="this.form.submit()"
                                     class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
@@ -94,17 +90,17 @@
                             </select>
                             {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
                         </div>
-                        <!-- Subcategory Filter -->
+                        <!-- Area Filter -->
                         <div class="relative">
-                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Subcategory</span>
-                            <select name="project_subcategory"
+                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Area</span>
+                            <select name="area"
                                     onchange="this.form.submit()"
                                     class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
                                 <option value="">All</option>
-                                {% for subcategory in filter_form.project_subcategory.field.queryset %}
-                                    <option value="{{ subcategory.pk }}"
-                                            {% if filter_form.project_subcategory.value|stringformat:"s" == subcategory.pk|stringformat:"s" %}selected{% endif %}>
-                                        {{ subcategory.name }}
+                                {% for area in filter_form.area.field.queryset %}
+                                    <option value="{{ area.pk }}"
+                                            {% if filter_form.area.value|stringformat:"s" == area.pk|stringformat:"s" %}selected{% endif %}>
+                                        {{ area.province }} - {{ area.municipality_name }}
                                     </option>
                                 {% endfor %}
                             </select>
@@ -126,9 +122,25 @@
                             </select>
                             {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
                         </div>
+                        <!-- Project Stage Filter -->
+                        <div class="relative">
+                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Stage</span>
+                            <select name="project_stage"
+                                    onchange="this.form.submit()"
+                                    class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                <option value="">All</option>
+                                {% for stage in filter_form.project_stage.field.queryset %}
+                                    <option value="{{ stage.pk }}"
+                                            {% if filter_form.project_stage.value|stringformat:"s" == stage.pk|stringformat:"s" %}selected{% endif %}>
+                                        {{ stage.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                        </div>
                     </div>
                     <!-- People Filters -->
-                    <div class="flex items-center gap-2 pr-3 border-r border-gray-300">
+                    <div class="flex items-center gap-2">
                         <!-- Client Filter -->
                         <div class="relative">
                             <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Client</span>
@@ -161,21 +173,22 @@
                             </select>
                             {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
                         </div>
-                    </div>
-                    <!-- Status Filter -->
-                    <div class="relative">
-                        <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Status</span>
-                        <select name="status"
-                                onchange="this.form.submit()"
-                                class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
-                            {% for value, label in filter_form.status.field.choices %}
-                                <option value="{{ value }}"
-                                        {% if filter_form.status.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>
-                                    {{ label }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                        {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                        <!-- Consultant Filter -->
+                        <div class="relative">
+                            <span class="absolute -top-2 left-2 text-xs font-medium text-gray-500 bg-gray-50/50 px-1">Consultant</span>
+                            <select name="consultant"
+                                    onchange="this.form.submit()"
+                                    class="w-32 pl-2 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white">
+                                <option value="">All</option>
+                                {% for consultant in filter_form.consultant.field.queryset %}
+                                    <option value="{{ consultant.pk }}"
+                                            {% if filter_form.consultant.value|stringformat:"s" == consultant.pk|stringformat:"s" %}selected{% endif %}>
+                                        {{ consultant.get_full_name|default:consultant.email }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% heroicon_outline "chevron-down" size="14" class="absolute right-2 top-3 text-gray-400 pointer-events-none" %}
+                        </div>
                     </div>
                 </div>
                 <!-- Filter Actions -->
@@ -185,7 +198,7 @@
                         {% heroicon_outline "funnel" class="w-4 h-4 mr-1.5" %}
                         Filter
                     </button>
-                    {% if filter_form.search.value or filter_form.project_category.value or filter_form.project_subcategory.value or filter_form.project_discipline.value or filter_form.client.value or filter_form.contractor.value or filter_form.status.value and filter_form.status.value != 'ALL' %}
+                    {% if filter_form.project_category.value or filter_form.area.value or filter_form.project_discipline.value or filter_form.project_stage.value or filter_form.client.value or filter_form.contractor.value or filter_form.consultant.value %}
                         <button type="button"
                                 onclick="window.location.href='{% url 'project:project-list' %}'"
                                 class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 hover:text-indigo-700 transition-all duration-200"
@@ -204,7 +217,9 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sector</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discipline</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
@@ -229,37 +244,46 @@
                                 {% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
+                                {% if project.project_discipline %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                                        {{ project.project_discipline.name }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-sm text-gray-400">--</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if project.area %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        {{ project.area.province }} - {{ project.area.municipality_name }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-sm text-gray-400">--</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if project.status == 'ACTIVE' %}bg-green-100 text-green-800 {% elif project.status == 'SETUP' %}bg-yellow-100 text-yellow-800 {% elif project.status == 'FINAL_ACCOUNT_ISSUED' %}bg-blue-100 text-blue-800 {% else %}bg-gray-100 text-gray-800{% endif %}">
                                     {{ project.get_status_display }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end space-x-2">
-                                    <a href="{% url 'project:project-dashboard' project.id %}"
-                                       class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors">
-                                        {% heroicon_outline "chart-bar" size="16" %}
-                                        <span class="ml-1">Dashboard</span>
-                                    </a>
                                     <a href="{% url 'project:project-management' project.id %}"
                                        class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors">
                                         {% heroicon_outline "cog-6-tooth" size="16" %}
-                                        <span class="ml-1">Manage</span>
+                                        <span class="ml-1">Project management</span>
                                     </a>
-                                    {% if request.user|userhassubscription:'SITE_MANAGEMENT' %}
-                                        <a href="{% url 'site_management:site-management' project.pk %}"
-                                           class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-green-600 hover:bg-green-50 rounded transition-colors">
-                                            {% heroicon_outline "clipboard-document-list" size="16" %}
-                                            <span class="ml-1">Sites</span>
+                                    {% if request.user|projectroles:project|userhasrole:'ADMIN' %}
+                                        <a href="{% url 'project:project-setup' project.pk %}"
+                                           class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors">
+                                            {% heroicon_outline "cog-6-tooth" size="16" %}
+                                            <span class="ml-1">Setup</span>
                                         </a>
-                                    {% endif %}
-                                    {% if request.user|userhassubscription:'PROFIT_AND_LOSS' %}
-                                        {% if project.contractor and project.contractor in request.user.get_contractors %}
-                                            <a href="{% url 'project:company-management' project.contractor.pk %}"
-                                               class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
-                                                {% heroicon_outline "building-office" size="16" %}
-                                                <span class="ml-1">Company</span>
-                                            </a>
-                                        {% endif %}
+                                        <a href="{% url 'project:company-management' project.pk %}"
+                                           class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors">
+                                            {% heroicon_outline "cog-6-tooth" size="16" %}
+                                            <span class="ml-1">Business Management</span>
+                                        </a>
                                     {% endif %}
                                 </div>
                             </td>

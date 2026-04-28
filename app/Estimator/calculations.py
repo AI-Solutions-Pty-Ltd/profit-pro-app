@@ -162,6 +162,7 @@ def calculate_boq_summary(items):
     total_forecast = Decimal("0")
     total_materials_rate = Decimal("0")
     total_labour_rate = Decimal("0")
+    total_plant_rate = Decimal("0")
 
     for item in items:
         contract_amt = calculate_contract_amount(
@@ -182,6 +183,10 @@ def calculate_boq_summary(items):
         labour_rate = item.get("labour_rate")
         if labour_rate is not None:
             total_labour_rate += Decimal(str(labour_rate))
+
+        plant_rate = item.get("plant_rate")
+        if plant_rate is not None:
+            total_plant_rate += Decimal(str(plant_rate))
 
         # Baseline new price = materials + labour
         baseline_price = (materials_rate or Decimal("0")) + (
@@ -207,6 +212,7 @@ def calculate_boq_summary(items):
         "total_contract_amount": total_contract,
         "total_materials_rate": total_materials_rate,
         "total_labour_rate": total_labour_rate,
+        "total_plant_rate": total_plant_rate,
         "total_progress_amount": total_progress,
         "total_forecast_amount": total_forecast,
         "item_count": len(items),

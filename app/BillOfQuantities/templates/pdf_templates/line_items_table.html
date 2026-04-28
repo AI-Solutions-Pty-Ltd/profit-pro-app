@@ -84,7 +84,11 @@
     </tbody>
     <tfoot>
         <tr>
-            <td colspan="{{ colSpan|sub:1 }}" class="total-row text-bold text-right">Total</td>
+            <td colspan="4" class="total-row text-bold text-right">Total</td>
+            <td class="total-row text-bold text-right">R{{ contract_value|default:0|floatformat:2|intcomma }}</td>
+            <td colspan="3" class="total-row text-bold text-right"></td>
+            <td class="total-row text-bold text-right">R{{ cumulative_total|default:0|floatformat:2|intcomma }}</td>
+            <td class="total-row text-bold text-right">R{{ previous_total|default:0|floatformat:2|intcomma }}</td>
             <td class="total-row text-bold text-right">R{{ total|default:0|floatformat:2|intcomma }}</td>
         </tr>
     </tfoot>

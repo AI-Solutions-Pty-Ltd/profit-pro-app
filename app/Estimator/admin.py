@@ -5,12 +5,22 @@ from .models import (
     ProjectLabourCrew,
     ProjectLabourSpecification,
     ProjectMaterial,
+    ProjectPlantCost,
+    ProjectPlantSpecification,
+    ProjectPlantSpecificationComponent,
+    ProjectPreliminaryCost,
+    ProjectPreliminarySpecification,
     ProjectSpecification,
     ProjectSpecificationComponent,
     ProjectTradeCode,
     SystemLabourCrew,
     SystemLabourSpecification,
     SystemMaterial,
+    SystemPlantCost,
+    SystemPlantSpecification,
+    SystemPlantSpecificationComponent,
+    SystemPreliminaryCost,
+    SystemPreliminarySpecification,
     SystemSpecification,
     SystemSpecificationComponent,
     SystemTradeCode,
@@ -75,6 +85,44 @@ class SystemLabourSpecificationAdmin(admin.ModelAdmin):
     list_filter = ["section"]
 
 
+@admin.register(SystemPlantCost)
+class SystemPlantCostAdmin(admin.ModelAdmin):
+    list_display = ["name", "hourly_production", "hourly_rate"]
+
+
+class SystemPlantSpecificationComponentInline(admin.TabularInline):
+    model = SystemPlantSpecificationComponent
+    extra = 1
+
+
+@admin.register(SystemPlantSpecification)
+class SystemPlantSpecificationAdmin(admin.ModelAdmin):
+    list_display = ["section", "name", "unit", "daily_production", "rate_per_unit"]
+    list_filter = ["section"]
+    inlines = [SystemPlantSpecificationComponentInline]
+
+
+@admin.register(SystemPreliminaryCost)
+class SystemPreliminaryCostAdmin(admin.ModelAdmin):
+    list_display = [
+        "preliminary_type",
+        "name",
+        "sum_value",
+        "amount",
+        "number_per_month",
+        "monthly_rate",
+        "months",
+        "computed_amount",
+    ]
+    list_filter = ["preliminary_type"]
+
+
+@admin.register(SystemPreliminarySpecification)
+class SystemPreliminarySpecificationAdmin(admin.ModelAdmin):
+    list_display = ["section", "name", "unit", "preliminary_type", "amount"]
+    list_filter = ["section", "preliminary_type"]
+
+
 # ── Project-Scoped Admin ─────────────────────────────────────────
 
 
@@ -129,6 +177,49 @@ class ProjectLabourSpecificationAdmin(admin.ModelAdmin):
         "rate_per_unit",
     ]
     list_filter = ["project", "section"]
+
+
+@admin.register(ProjectPlantCost)
+class ProjectPlantCostAdmin(admin.ModelAdmin):
+    list_display = ["project", "name", "hourly_production", "hourly_rate"]
+    list_filter = ["project"]
+
+
+class ProjectPlantSpecificationComponentInline(admin.TabularInline):
+    model = ProjectPlantSpecificationComponent
+    extra = 1
+
+
+@admin.register(ProjectPlantSpecification)
+class ProjectPlantSpecificationAdmin(admin.ModelAdmin):
+    list_display = [
+        "project",
+        "section",
+        "name",
+        "unit",
+        "daily_production",
+        "rate_per_unit",
+    ]
+    list_filter = ["project", "section"]
+    inlines = [ProjectPlantSpecificationComponentInline]
+
+
+@admin.register(ProjectPreliminaryCost)
+class ProjectPreliminaryCostAdmin(admin.ModelAdmin):
+    list_display = [
+        "project",
+        "preliminary_type",
+        "name",
+        "amount",
+        "computed_amount",
+    ]
+    list_filter = ["project", "preliminary_type"]
+
+
+@admin.register(ProjectPreliminarySpecification)
+class ProjectPreliminarySpecificationAdmin(admin.ModelAdmin):
+    list_display = ["project", "section", "name", "unit", "preliminary_type", "amount"]
+    list_filter = ["project", "section", "preliminary_type"]
 
 
 @admin.register(BOQItem)

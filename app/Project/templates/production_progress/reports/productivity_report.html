@@ -1,0 +1,505 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+{% block content %}
+    <div class="p-6 space-y-6 min-h-screen bg-gray-50/30">
+        <!-- Header -->
+        <div class="flex flex-col gap-4 justify-between md:flex-row md:items-center">
+            <div class="flex flex-col gap-4">
+                <button onclick="window.history.back()"
+                        class="inline-flex items-center text-sm font-semibold text-gray-500 transition-all hover:text-indigo-600 group">
+                    <div class="p-1.5 mr-2.5 bg-gray-100 rounded-lg transition-colors group-hover:bg-indigo-50">
+                        {% heroicon_outline "arrow-left" size="16" %}
+                    </div>
+                    Back to Management
+                </button>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-gray-900">Productivity Performance Report</h1>
+                    <p class="mt-1 text-sm font-semibold tracking-wide text-gray-500 uppercase">Planned vs Actual Analysis</p>
+                </div>
+            </div>
+            <div class="flex gap-3 items-center">
+                <button class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md ring-1 ring-inset ring-gray-300 shadow-sm transition-all hover:bg-gray-50"
+                        onclick="window.print()">
+                    {% heroicon_outline "printer" size="18" class="mr-2" %}
+                    Export Report
+                </button>
+            </div>
+        </div>
+        <!-- KPI Ribbon -->
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <!-- Project PPI -->
+            <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold tracking-widest text-gray-500 uppercase">Global PPI</span>
+                    <div class="p-2 rounded-lg {% if summary.ppi <= 1.0 %}bg-emerald-50 text-emerald-600{% else %}bg-rose-50 text-rose-600{% endif %}">
+                        {% heroicon_outline "chart-bar" size="20" %}
+                    </div>
+                </div>
+                <div class="flex gap-2 items-baseline">
+                    <span class="text-3xl font-bold text-gray-900">{{ summary.ppi|floatformat:2 }}</span>
+                    <span class="text-xs font-bold {% if summary.ppi <= 1.0 %}text-emerald-600{% else %}text-rose-600{% endif %} uppercase">
+                        {% if summary.ppi <= 1.0 %}
+                            Good
+                        {% else %}
+                            Critical
+                        {% endif %}
+                    </span>
+                </div>
+                <p class="mt-2 text-[10px] text-gray-400 font-medium">Average Productivity Performance Index</p>
+            </div>
+            <!-- Project CPI -->
+            <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold tracking-widest text-gray-500 uppercase">Global CPI</span>
+                    <div class="p-2 rounded-lg {% if summary.cpi >= 1.0 %}bg-emerald-50 text-emerald-600{% else %}bg-rose-50 text-rose-600{% endif %}">
+                        {% heroicon_outline "banknotes" size="20" %}
+                    </div>
+                </div>
+                <div class="flex gap-2 items-baseline">
+                    <span class="text-3xl font-bold text-gray-900">{{ summary.cpi|floatformat:2 }}</span>
+                    <span class="text-xs font-bold {% if summary.cpi >= 1.0 %}text-emerald-600{% else %}text-rose-600{% endif %} uppercase">
+                        {% if summary.cpi >= 1.0 %}
+                            Savings
+                        {% else %}
+                            Loss
+                        {% endif %}
+                    </span>
+                </div>
+                <p class="mt-2 text-[10px] text-gray-400 font-medium">Average Cost Performance Index</p>
+            </div>
+            <!-- Schedule Impact -->
+            <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold tracking-widest text-gray-500 uppercase">Schedule Impact</span>
+                    <div class="p-2 rounded-lg {% if summary.days_impact <= 0 %}bg-emerald-50 text-emerald-600{% else %}bg-rose-50 text-rose-600{% endif %}">
+                        {% heroicon_outline "calendar" size="20" %}
+                    </div>
+                </div>
+                <div class="flex gap-2 items-baseline">
+                    <span class="text-3xl font-bold text-gray-900">
+                        {% if summary.days_impact > 0 %}+{% endif %}
+                        {{ summary.days_impact|floatformat:1 }}
+                    </span>
+                    <span class="text-xs font-bold text-gray-500 uppercase">Days</span>
+                </div>
+                <p class="mt-2 text-[10px] text-gray-400 font-medium">Projected delay across all activities</p>
+            </div>
+            <!-- Financial Impact -->
+            <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xs font-bold tracking-widest text-gray-500 uppercase">Financial Impact</span>
+                    <div class="p-2 rounded-lg {% if summary.cost_impact <= 0 %}bg-emerald-50 text-emerald-600{% else %}bg-rose-50 text-rose-600{% endif %}">
+                        {% heroicon_outline "arrow-trending-down" size="20" %}
+                    </div>
+                </div>
+                <div class="flex gap-2 items-baseline">
+                    <span class="font-mono text-2xl font-bold text-gray-900">R {{ summary.cost_impact|floatformat:0|intcomma }}</span>
+                </div>
+                <p class="mt-2 text-[10px] text-gray-400 font-medium">Variance between budget and projected actuals</p>
+            </div>
+        </div>
+        <!-- Controls -->
+        <div class="flex flex-wrap gap-4 items-center p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
+            <div class="flex gap-2 items-center">
+                <span class="mr-2 text-xs font-bold tracking-widest text-gray-500 uppercase">Horizon:</span>
+                <div class="join">
+                    <button onclick="updateParams({horizon: 'daily'})"
+                            class="btn btn-sm join-item {% if active_horizon == 'daily' %}btn-primary{% else %}btn-ghost bg-gray-50{% endif %}">
+                        Daily
+                    </button>
+                    <button onclick="updateParams({horizon: 'weekly'})"
+                            class="btn btn-sm join-item {% if active_horizon == 'weekly' %}btn-primary{% else %}btn-ghost bg-gray-50{% endif %}">
+                        Weekly
+                    </button>
+                    <button onclick="updateParams({horizon: 'mtd'})"
+                            class="btn btn-sm join-item {% if active_horizon == 'mtd' %}btn-primary{% else %}btn-ghost bg-gray-50{% endif %}">
+                        MTD
+                    </button>
+                    <button onclick="updateParams({horizon: 'ptd'})"
+                            class="btn btn-sm join-item {% if active_horizon == 'ptd' %}btn-primary{% else %}btn-ghost bg-gray-50{% endif %}">
+                        Project to Date
+                    </button>
+                </div>
+            </div>
+            <div class="divider divider-horizontal"></div>
+            <div class="form-control">
+                <label class="gap-3 cursor-pointer label">
+                    <span class="text-xs font-bold tracking-widest text-gray-500 uppercase">Show Active Only</span>
+                    <input type="checkbox"
+                           class="toggle toggle-primary toggle-sm"
+                           {% if active_only %}checked{% endif %}
+                           onchange="updateParams({active_only: this.checked})">
+                </label>
+            </div>
+        </div>
+        <!-- Activity Table -->
+        <div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900">Activity Performance Detail</h3>
+                    <p class="text-xs text-gray-500">Breakdown of production and cost indices by bill item</p>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm">
+                    <thead>
+                        <tr class="text-[10px] font-bold text-gray-600 uppercase bg-gray-50/80">
+                            <th class="w-1/4">Activity / Item</th>
+                            <th class="text-center">
+                                Units/Day <span class="ml-1 text-gray-400">(Act [Tgt])</span>
+                            </th>
+                            <th class="text-center">
+                                Cost/Unit <span class="ml-1 text-gray-400">(Act [Tgt])</span>
+                            </th>
+                            <th class="text-center">PPI</th>
+                            <th class="text-center">CPI</th>
+                            <th class="text-right">Days Impact</th>
+                            <th class="text-right">Financial Impact</th>
+                            <th class="text-right">Progress</th>
+                            <th class="w-16"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        {% for section in sections %}
+                            <!-- Section Header -->
+                            <tr class="border-gray-200 transition-colors cursor-pointer bg-gray-100/80 border-y hover:bg-gray-200/80"
+                                onclick="toggleSection('{{ forloop.counter }}')">
+                                <td class="py-3 font-black tracking-wider text-gray-900 uppercase">
+                                    <div class="flex items-center">
+                                        <span id="icon-section-{{ forloop.counter }}"
+                                              class="mr-2 transition-transform duration-200 transform rotate-90">
+                                            {% heroicon_outline "chevron-right" size="16" %}
+                                        </span>
+                                        {{ section.name }}
+                                    </div>
+                                </td>
+                                <td colspan="2"></td>
+                                <td class="text-center">
+                                    <span class="font-bold {% if section.ppi > 1.2 %}text-rose-600{% elif section.ppi > 1.0 %}text-amber-600{% else %}text-emerald-600{% endif %}">
+                                        {{ section.ppi|floatformat:2 }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="font-bold {% if section.cpi < 0.9 %}text-rose-600{% elif section.cpi <= 1.1 %}text-amber-600{% else %}text-emerald-600{% endif %}">
+                                        {{ section.cpi|floatformat:2 }}
+                                    </span>
+                                </td>
+                                <td class="text-right font-mono font-bold {% if section.days_affected > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                                    {% if section.days_affected > 0 %}+{% endif %}
+                                    {{ section.days_affected|floatformat:1 }}d
+                                </td>
+                                <td class="text-right font-mono font-bold {% if section.cost_impact > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                                    R {{ section.cost_impact|floatformat:0|intcomma }}
+                                </td>
+                                <td colspan="2"></td>
+                            </tr>
+                            {% for bill in section.bills %}
+                                <!-- Bill Header -->
+                                <tr class="bg-gray-50/50 border-b border-gray-100 cursor-pointer hover:bg-gray-100/80 transition-colors section-{{ forloop.parentloop.counter }}"
+                                    onclick="toggleBill('{{ forloop.parentloop.counter }}', '{{ forloop.counter }}')">
+                                    <td class="py-2 pl-8 font-bold text-gray-600">
+                                        <div class="flex items-center">
+                                            <span id="icon-bill-{{ forloop.parentloop.counter }}-{{ forloop.counter }}"
+                                                  class="mr-1 transition-transform duration-200 transform rotate-90">
+                                                {% heroicon_outline "chevron-right" size="14" class="text-gray-400" %}
+                                            </span>
+                                            Bill {{ bill.number }}
+                                        </div>
+                                    </td>
+                                    <td colspan="2"></td>
+                                    <td class="text-xs font-semibold text-center text-gray-400">{{ bill.ppi|floatformat:2 }}</td>
+                                    <td class="text-xs font-semibold text-center text-gray-400">{{ bill.cpi|floatformat:2 }}</td>
+                                    <td class="text-right text-xs font-mono font-semibold {% if bill.days_affected > 0 %}text-rose-500{% else %}text-emerald-500{% endif %}">
+                                        {% if bill.days_affected > 0 %}+{% endif %}
+                                        {{ bill.days_affected|floatformat:1 }}d
+                                    </td>
+                                    <td class="text-right text-xs font-mono font-semibold {% if bill.cost_impact > 0 %}text-rose-500{% else %}text-emerald-500{% endif %}">
+                                        R {{ bill.cost_impact|floatformat:0|intcomma }}
+                                    </td>
+                                    <td colspan="2"></td>
+                                </tr>
+                                {% for act in bill.activities %}
+                                    <!-- Activity Row -->
+                                    <tr class="border-b border-gray-50 transition-all hover:bg-indigo-50/30 group last:border-0 act-row section-{{ forloop.parentloop.parentloop.counter }} bill-{{ forloop.parentloop.parentloop.counter }}-{{ forloop.parentloop.counter }}">
+                                        <td class="pl-12">
+                                            <div class="font-bold text-gray-800">{{ act.activity }}</div>
+                                            <div class="text-[10px] text-gray-400 font-medium uppercase">{{ act.unit }}</div>
+                                        </td>
+                                        <td class="font-mono text-xs text-center">
+                                            <span class="font-bold text-gray-900">{{ act.actual_prod|floatformat:1 }}</span>
+                                            <span class="ml-1 text-gray-400">[{{ act.target_prod|floatformat:1 }}]</span>
+                                        </td>
+                                        <td class="font-mono text-xs text-center">
+                                            <span class="font-bold text-gray-900">{{ act.actual_cost|floatformat:0 }}</span>
+                                            <span class="ml-1 text-gray-400">[{{ act.target_cost|floatformat:0 }}]</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-mono font-bold rounded-full ring-1 ring-inset text-{{ act.ppi_color }}-700 bg-{{ act.ppi_color }}-50 ring-{{ act.ppi_color }}-700/10">
+                                                {{ act.ppi|floatformat:2 }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-mono font-bold rounded-full ring-1 ring-inset text-{{ act.cpi_color }}-700 bg-{{ act.cpi_color }}-50 ring-{{ act.cpi_color }}-700/10">
+                                                {{ act.cpi|floatformat:2 }}
+                                            </span>
+                                        </td>
+                                        <td class="text-right font-mono text-xs {% if act.days_affected > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                                            {% if act.days_affected > 0 %}+{% endif %}
+                                            {{ act.days_affected|floatformat:1 }}d
+                                        </td>
+                                        <td class="text-right font-mono text-xs font-bold {% if act.cost_impact > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                                            R {{ act.cost_impact|floatformat:0|intcomma }}
+                                        </td>
+                                        <td class="text-right">
+                                            <div class="flex gap-2 justify-end items-center">
+                                                <span class="text-[9px] font-bold text-gray-400">{{ act.progress|floatformat:0 }}%</span>
+                                                <div class="w-12 h-1 bg-gray-100 rounded-full">
+                                                    <div class="h-1 bg-indigo-500 rounded-full"
+                                                         style="width: {{ act.progress }}%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="p-1.5 text-gray-400 rounded-lg transition-all hover:text-indigo-600 hover:bg-indigo-50"
+                                                    onclick="openTrendModal('{{ act.id }}', '{{ act.activity }}', {{ act.trend|safe }})">
+                                                {% heroicon_outline "presentation-chart-line" size="16" %}
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% endfor %}
+                        {% empty %}
+                            <tr>
+                                <td colspan="9" class="py-12 italic text-center text-gray-400">No activities found for the selected horizon.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- Trend Modal -->
+    <dialog id="trend_modal" class="modal">
+        <div class="overflow-hidden p-0 w-11/12 max-w-4xl bg-white rounded-2xl shadow-2xl modal-box">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/80">
+                <div>
+                    <h3 id="modal_title" class="text-lg font-bold text-gray-900">Activity Trend</h3>
+                    <p class="text-xs font-semibold tracking-widest text-gray-500 uppercase">10-Day Performance Analysis</p>
+                </div>
+                <form method="dialog">
+                    <button class="btn btn-sm btn-circle btn-ghost">✕</button>
+                </form>
+            </div>
+            <div class="p-8 space-y-8 max-h-[80vh] overflow-y-auto">
+                <div class="space-y-4">
+                    <h4 class="text-xs font-black tracking-widest text-indigo-600 uppercase">Production Analysis (Units/Day)</h4>
+                    <div class="h-[250px]">
+                        <canvas id="productionChart"></canvas>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <h4 class="text-xs font-black tracking-widest text-emerald-600 uppercase">Cost Analysis (Cost/Unit)</h4>
+                    <div class="h-[250px]">
+                        <canvas id="costChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function updateParams(newParams) {
+            const url = new URL(window.location.href);
+            for (const [key, value] of Object.entries(newParams)) {
+                if (value === null || value === false) {
+                    url.searchParams.delete(key);
+                } else {
+                    url.searchParams.set(key, value);
+                }
+            }
+            window.location.href = url.href;
+        }
+
+        // Hierarchy Toggle Logic
+        function toggleSection(sectionId) {
+            const icon = document.getElementById(`icon-section-${sectionId}`);
+            const isExpanded = icon.classList.contains('rotate-90');
+            
+            // Toggle icon
+            if (isExpanded) {
+                icon.classList.remove('rotate-90');
+            } else {
+                icon.classList.add('rotate-90');
+            }
+            
+            // Toggle all bills under this section
+            const bills = document.querySelectorAll(`.section-${sectionId}`);
+            bills.forEach(bill => {
+                if (isExpanded) {
+                    bill.style.display = 'none';
+                } else {
+                    bill.style.display = '';
+                }
+            });
+
+            // If we are collapsing the section, also collapse all its activities
+            if (isExpanded) {
+                const activities = document.querySelectorAll(`.act-row.section-${sectionId}`);
+                activities.forEach(act => act.style.display = 'none');
+            } else {
+                // If expanding the section, only expand activities for bills that are currently expanded
+                bills.forEach(bill => {
+                    const onclick = bill.getAttribute('onclick');
+                    if (onclick) {
+                        const match = onclick.match(/toggleBill\('(\d+)',\s*'(\d+)'\)/);
+                        if (match) {
+                            const parentId = match[1];
+                            const childId = match[2];
+                            const billIcon = document.getElementById(`icon-bill-${parentId}-${childId}`);
+                            const billExpanded = billIcon.classList.contains('rotate-90');
+                            if (billExpanded) {
+                                const acts = document.querySelectorAll(`.act-row.bill-${parentId}-${childId}`);
+                                acts.forEach(act => act.style.display = '');
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function toggleBill(sectionId, billId) {
+            const icon = document.getElementById(`icon-bill-${sectionId}-${billId}`);
+            const isExpanded = icon.classList.contains('rotate-90');
+            
+            if (isExpanded) {
+                icon.classList.remove('rotate-90');
+            } else {
+                icon.classList.add('rotate-90');
+            }
+            
+            const activities = document.querySelectorAll(`.act-row.bill-${sectionId}-${billId}`);
+            activities.forEach(act => {
+                act.style.display = isExpanded ? 'none' : '';
+            });
+        }
+    </script>
+    <script>
+    let prodChart = null;
+    let costChart = null;
+
+    function openTrendModal(id, title, trendData) {
+        document.getElementById('modal_title').innerText = title;
+        
+        if (prodChart) prodChart.destroy();
+        if (costChart) costChart.destroy();
+
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', labels: { usePointStyle: true, padding: 15, font: { size: 10, weight: '600' } } },
+                tooltip: { padding: 10, backgroundColor: 'rgba(17, 24, 39, 0.9)', cornerRadius: 6 }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+                y: { beginAtZero: true, position: 'left', title: { display: true, text: 'Units / Cost', font: { size: 10, weight: '700' } } },
+                yIndex: { beginAtZero: true, position: 'right', grid: { display: false }, title: { display: true, text: 'Index (PPI/CPI)', font: { size: 10, weight: '700' } }, min: 0, max: 2 }
+            }
+        };
+
+        // Production Chart
+        prodChart = new Chart(document.getElementById('productionChart'), {
+            data: {
+                labels: trendData.labels,
+                datasets: [
+                    {
+                        type: 'bar',
+                        label: 'Actual Production',
+                        data: trendData.act_prod,
+                        backgroundColor: 'rgba(99, 102, 241, 0.6)',
+                        borderRadius: 4,
+                        order: 2,
+                        yAxisID: 'y'
+                    },
+                    {
+                        type: 'line',
+                        label: 'Target Production',
+                        data: trendData.tgt_prod,
+                        borderColor: '#94a3b8',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        order: 1,
+                        yAxisID: 'y'
+                    },
+                    {
+                        type: 'line',
+                        label: 'PPI (Index)',
+                        data: trendData.ppi,
+                        borderColor: '#6366f1',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        tension: 0.3,
+                        order: 0,
+                        yAxisID: 'yIndex'
+                    }
+                ]
+            },
+            options: commonOptions
+        });
+
+        // Cost Chart
+        costChart = new Chart(document.getElementById('costChart'), {
+            data: {
+                labels: trendData.labels,
+                datasets: [
+                    {
+                        type: 'bar',
+                        label: 'Actual Cost',
+                        data: trendData.act_cost,
+                        backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                        borderRadius: 4,
+                        order: 2,
+                        yAxisID: 'y'
+                    },
+                    {
+                        type: 'line',
+                        label: 'Target Cost',
+                        data: trendData.tgt_cost,
+                        borderColor: '#94a3b8',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        order: 1,
+                        yAxisID: 'y'
+                    },
+                    {
+                        type: 'line',
+                        label: 'CPI (Index)',
+                        data: trendData.cpi,
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        tension: 0.3,
+                        order: 0,
+                        yAxisID: 'yIndex'
+                    }
+                ]
+            },
+            options: {
+                ...commonOptions,
+                scales: {
+                    ...commonOptions.scales,
+                    yIndex: { ...commonOptions.scales.yIndex, reverse: false } // Reversed for CPI? No, keep standard
+                }
+            }
+        });
+
+        document.getElementById('trend_modal').showModal();
+    }
+    </script>
+{% endblock %}

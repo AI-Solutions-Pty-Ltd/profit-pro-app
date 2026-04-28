@@ -7,34 +7,41 @@ from pathlib import Path
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db import models
-from django.http import FileResponse, JsonResponse
+from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView, ListView, TemplateView
+from django.views.generic.base import ContextMixin
 
 from app.BillOfQuantities.models.structure_models import LineItem
 from app.Project.models import Project
 
 from .calculations import (
-    calculate_boq_summary,
     calculate_pct_of_total,
     calculate_variance,
 )
-from .data_adapters import DjangoORMAdapter
 from .forms import (
     ExcelImportForm,
     LabourCrewForm,
     LabourSpecificationForm,
     MaterialForm,
+    PlantCostForm,
+    PlantSpecificationForm,
+    PreliminaryCostForm,
+    PreliminarySpecificationForm,
     ProjectAssumptionsForm,
     SpecificationComponentFormSet,
     SpecificationForm,
     SystemLabourCrewForm,
     SystemLabourSpecificationForm,
     SystemMaterialForm,
+    SystemPlantCostForm,
+    SystemPlantSpecificationForm,
+    SystemPreliminaryCostForm,
+    SystemPreliminarySpecificationForm,
     SystemSpecificationComponentFormSet,
     SystemSpecificationForm,
     SystemTradeCodeForm,
@@ -45,12 +52,22 @@ from .models import (
     ProjectLabourCrew,
     ProjectLabourSpecification,
     ProjectMaterial,
+    ProjectPlantCost,
+    ProjectPlantSpecification,
+    ProjectPlantSpecificationComponent,
+    ProjectPreliminaryCost,
+    ProjectPreliminarySpecification,
     ProjectSpecification,
     ProjectSpecificationComponent,
     ProjectTradeCode,
     SystemLabourCrew,
     SystemLabourSpecification,
     SystemMaterial,
+    SystemPlantCost,
+    SystemPlantSpecification,
+    SystemPlantSpecificationComponent,
+    SystemPreliminaryCost,
+    SystemPreliminarySpecification,
     SystemSpecification,
     SystemSpecificationComponent,
     SystemTradeCode,
@@ -58,18 +75,19 @@ from .models import (
 )
 
 
-class ProjectEstimatorMixin:
+class ProjectEstimatorMixin(ContextMixin):
     """Mixin that loads the project from URL kwargs and adds it to context."""
 
     def get_project(self):
         if not hasattr(self, "_project"):
-            self._project = get_object_or_404(Project, pk=self.kwargs["project_pk"])
+            kwargs = getattr(self, "kwargs", {})
+            self._project = get_object_or_404(Project, pk=kwargs.get("project_pk"))
         return self._project
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["project"] = self.get_project()
-        context["project_pk"] = self.kwargs["project_pk"]
+        context["project_pk"] = getattr(self, "kwargs", {}).get("project_pk")
         return context
 
 
@@ -99,6 +117,27 @@ class ProjectAssumptionsView(ProjectEstimatorMixin, TemplateView):
         return self.render_to_response(context)
 
 
+class ApplyAssumptionsView(ProjectEstimatorMixin, View):
+    """Push current project assumption markups to all BOQItems in the project."""
+
+    def post(self, request, project_pk):
+        project = self.get_project()
+        assumptions = ProjectAssumptions.objects.filter(project=project).first()
+        if not assumptions:
+            messages.error(request, "No project assumptions to apply.")
+            return redirect("estimator:project_assumptions", project_pk=project_pk)
+        updated = BOQItem.objects.filter(project=project).update(
+            material_markup_pct=assumptions.material_markup_pct,
+            labour_markup_pct=assumptions.labour_markup_pct,
+            transport_pct=assumptions.transport_pct,
+        )
+        messages.success(
+            request,
+            f"Applied assumptions to {updated} BoQ items.",
+        )
+        return redirect("estimator:project_assumptions", project_pk=project_pk)
+
+
 class DashboardView(ProjectEstimatorMixin, ListView):
     model = BOQItem
     template_name = "estimator/dashboard.html"
@@ -112,7 +151,10 @@ class DashboardView(ProjectEstimatorMixin, ListView):
                 "specification",
                 "labour_specification",
                 "labour_specification__crew",
+                "plant_specification",
+                "preliminary_specification",
                 "material",
+                "project__estimator_assumptions",
             )
             .prefetch_related(
                 "specification__spec_components__material",
@@ -142,11 +184,22 @@ class DashboardView(ProjectEstimatorMixin, ListView):
         elif mat_spec:
             qs = qs.filter(specification__name=mat_spec)
 
-        lab_spec = self.request.GET.get("lab_spec")
-        if lab_spec == "none":
-            qs = qs.filter(labour_specification__isnull=True)
-        elif lab_spec:
-            qs = qs.filter(labour_specification__name=lab_spec)
+        lab_plant_spec = self.request.GET.get("lab_plant_spec")
+        if lab_plant_spec == "none":
+            qs = qs.filter(
+                labour_specification__isnull=True, plant_specification__isnull=True
+            )
+        elif lab_plant_spec:
+            qs = qs.filter(
+                models.Q(labour_specification__name=lab_plant_spec)
+                | models.Q(plant_specification__name=lab_plant_spec)
+            )
+
+        prelim_spec = self.request.GET.get("prelim_spec")
+        if prelim_spec == "none":
+            qs = qs.filter(preliminary_specification__isnull=True)
+        elif prelim_spec:
+            qs = qs.filter(preliminary_specification__name=prelim_spec)
 
         return qs
 
@@ -154,15 +207,51 @@ class DashboardView(ProjectEstimatorMixin, ListView):
         context = super().get_context_data(**kwargs)
         project = self.get_project()
 
-        adapter = DjangoORMAdapter(project_id=project.pk)
-        boq_data = adapter.get_boq_items(project_id=project.pk)
-        summary = calculate_boq_summary(boq_data)
+        summary_items = (
+            BOQItem.objects.filter(project=project, is_section_header=False)
+            .select_related(
+                "specification",
+                "labour_specification",
+                "labour_specification__crew",
+                "plant_specification",
+                "preliminary_specification",
+                "material",
+                "project__estimator_assumptions",
+            )
+            .prefetch_related("specification__spec_components__material")
+        )
 
-        context["total_contract_amount"] = summary["total_contract_amount"]
-        context["total_materials_rate"] = summary["total_materials_rate"]
-        context["total_labour_rate"] = summary["total_labour_rate"]
-        context["total_progress_amount"] = summary["total_progress_amount"]
-        context["total_forecast_amount"] = summary["total_forecast_amount"]
+        total_contract = Decimal("0")
+        total_material = Decimal("0")
+        total_labour = Decimal("0")
+        total_plant = Decimal("0")
+        total_preliminary = Decimal("0")
+        total_progress = Decimal("0")
+        total_forecast = Decimal("0")
+
+        for item in summary_items:
+            if item.contract_amount:
+                total_contract += item.contract_amount
+            if item.new_materials_amount:
+                total_material += item.new_materials_amount
+            if item.new_labour_amount:
+                total_labour += item.new_labour_amount
+            if item.new_plant_amount:
+                total_plant += item.new_plant_amount
+            if item.new_preliminary_amount:
+                total_preliminary += item.new_preliminary_amount
+            if item.progress_amount:
+                total_progress += item.progress_amount
+            if item.forecast_amount:
+                total_forecast += item.forecast_amount
+
+        context["total_contract_amount"] = total_contract
+        context["total_material_amount"] = total_material
+        context["total_labour_amount"] = total_labour
+        context["total_plant_amount"] = total_plant
+        context["total_preliminary_amount"] = total_preliminary
+        context["total_progress_amount"] = total_progress
+        context["total_forecast_amount"] = total_forecast
 
         # Filter options (scoped to project)
         project_items = BOQItem.objects.filter(project=project)
@@ -193,13 +282,31 @@ class DashboardView(ProjectEstimatorMixin, ListView):
             .distinct()
             .order_by("name")
         )
+        context["plant_spec_names"] = (
+            ProjectPlantSpecification.objects.filter(project=project)
+            .exclude(name="")
+            .values_list("name", flat=True)
+            .distinct()
+            .order_by("name")
+        )
+        context["labour_plant_spec_names"] = sorted(
+            set(context["labour_spec_names"]) | set(context["plant_spec_names"])
+        )
+        context["prelim_spec_names"] = (
+            ProjectPreliminarySpecification.objects.filter(project=project)
+            .exclude(name="")
+            .values_list("name", flat=True)
+            .distinct()
+            .order_by("name")
+        )
 
         # Current filter values
         context["f_section"] = self.request.GET.get("section", "")
         context["f_bill_no"] = self.request.GET.get("bill_no", "")
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_mat_spec"] = self.request.GET.get("mat_spec", "")
-        context["f_lab_spec"] = self.request.GET.get("lab_spec", "")
+        context["f_lab_plant_spec"] = self.request.GET.get("lab_plant_spec", "")
+        context["f_prelim_spec"] = self.request.GET.get("prelim_spec", "")
 
         # Project assumptions (wastage)
         assumptions, _ = ProjectAssumptions.objects.get_or_create(project=project)
@@ -315,7 +422,7 @@ class SpecificationListView(ProjectEstimatorMixin, TemplateView):
 
         groups = OrderedDict()
         for boq in qs.order_by("section", "specification__name"):
-            key = (boq.section, boq.specification_id)
+            key = (boq.section, getattr(boq, "specification_id", None))
             if key not in groups:
                 groups[key] = {
                     "section": boq.section,
@@ -446,6 +553,7 @@ class MaterialSpecListView(ProjectEstimatorMixin, ListView):
             ProjectSpecification.objects.filter(project=project)
             .select_related("trade_code")
             .prefetch_related("spec_components__material")
+            .annotate(_baseline_boq_qty=models.Sum("boq_items__contract_quantity"))
         )
 
         section = self.request.GET.get("section")
@@ -483,6 +591,9 @@ class MaterialSpecListView(ProjectEstimatorMixin, ListView):
         context["names"] = (
             project_specs.values_list("name", flat=True).distinct().order_by("name")
         )
+        context["materials"] = ProjectMaterial.objects.filter(project=project).order_by(
+            "material_code"
+        )
 
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
@@ -492,6 +603,22 @@ class MaterialSpecListView(ProjectEstimatorMixin, ListView):
 
     def post(self, request, *args, **kwargs):
         project = self.get_project()
+        action = request.POST.get("action")
+        if action == "sync_system":
+            from .services import sync_material_specs_from_system
+
+            result = sync_material_specs_from_system(project)
+            messages.success(
+                request,
+                f"Material specs synced with system library — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse(
+                    "estimator:material_specs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
         spec_form = SpecificationForm(request.POST, project=project)
         component_formset = SpecificationComponentFormSet(request.POST)
         if spec_form.is_valid():
@@ -533,16 +660,30 @@ class MaterialsListView(ProjectEstimatorMixin, ListView):
         return context
 
     def post(self, request, *args, **kwargs):
+        project_pk = self.kwargs["project_pk"]
+        action = request.POST.get("action")
+
+        if action == "sync_system":
+            from .services import sync_materials_from_system
+
+            result = sync_materials_from_system(self.get_project())
+            messages.success(
+                request,
+                f"Material costs synced with system library — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse("estimator:materials", kwargs={"project_pk": project_pk})
+            )
+
+        # Default: add material form
         form = MaterialForm(request.POST)
         if form.is_valid():
             obj = form.save(commit=False)
             obj.project = self.get_project()
             obj.save()
             return redirect(
-                reverse(
-                    "estimator:materials",
-                    kwargs={"project_pk": self.kwargs["project_pk"]},
-                )
+                reverse("estimator:materials", kwargs={"project_pk": project_pk})
             )
         self.object_list = self.get_queryset()
         return self.render_to_response(self.get_context_data(form=form))
@@ -562,16 +703,30 @@ class LabourCostListView(ProjectEstimatorMixin, ListView):
         return context
 
     def post(self, request, *args, **kwargs):
+        project_pk = self.kwargs["project_pk"]
+        action = request.POST.get("action")
+
+        if action == "sync_system":
+            from .services import sync_labour_costs_from_system
+
+            result = sync_labour_costs_from_system(self.get_project())
+            messages.success(
+                request,
+                f"Labour costs synced with system library — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse("estimator:labour_costs", kwargs={"project_pk": project_pk})
+            )
+
+        # Default: add crew form
         form = LabourCrewForm(request.POST)
         if form.is_valid():
             obj = form.save(commit=False)
             obj.project = self.get_project()
             obj.save()
             return redirect(
-                reverse(
-                    "estimator:labour_costs",
-                    kwargs={"project_pk": self.kwargs["project_pk"]},
-                )
+                reverse("estimator:labour_costs", kwargs={"project_pk": project_pk})
             )
         self.object_list = self.get_queryset()
         return self.render_to_response(self.get_context_data(form=form))
@@ -608,7 +763,7 @@ class LabourSpecificationListView(ProjectEstimatorMixin, TemplateView):
 
         groups = OrderedDict()
         for boq in qs.order_by("section", "labour_specification__name"):
-            key = (boq.section, boq.labour_specification_id)
+            key = (boq.section, getattr(boq, "labour_specification_id", None))
             if key not in groups:
                 groups[key] = {
                     "section": boq.section,
@@ -630,7 +785,9 @@ class LabourSpecificationListView(ProjectEstimatorMixin, TemplateView):
                     "daily_output": ls.daily_output,
                     "daily_cost": ls.daily_cost,
                     "rate_per_unit": ls.rate_per_unit,
-                    "total_cost": boq_qty * ls.daily_cost if boq_qty else Decimal("0"),
+                    "total_cost": boq_qty * ls.rate_per_unit
+                    if boq_qty
+                    else Decimal("0"),
                 }
             )
         return rows
@@ -738,13 +895,28 @@ class ExcelImportView(ProjectEstimatorMixin, FormView):
                 "specifications": "Material Estimator",
                 "labour_crews": "Labour Crews",
                 "labour_specs": "Labour Specs",
+                "plant_costs": "Plant Costs",
+                "plant_specs": "Plant Specs",
+                "preliminary_costs": "Preliminary Costs",
+                "preliminary_specs": "Preliminary Specs",
                 "boq_items": "Output BoQ Items",
             }
             for key, label in labels.items():
                 if key in results:
                     parts.append(f"{label}: {results[key]}")
 
-            messages.success(self.request, f"Import successful — {', '.join(parts)}")
+            skipped = [
+                label
+                for key, label in labels.items()
+                if key not in results and key != "boq_items"
+            ]
+            msg = f"Import successful — {', '.join(parts)}"
+            if skipped:
+                msg += (
+                    f". Skipped (sheet not found): {', '.join(skipped)}. "
+                    f"Sheets in file: {importer.sheet_names}"
+                )
+            messages.success(self.request, msg)
         except Exception as e:
             messages.error(self.request, f"Import failed: {e}")
         finally:
@@ -820,7 +992,10 @@ class PricedBoqReportView(ProjectEstimatorMixin, ListView):
                 "specification",
                 "labour_specification",
                 "labour_specification__crew",
+                "plant_specification",
+                "preliminary_specification",
                 "material",
+                "project__estimator_assumptions",
             )
             .prefetch_related(
                 "specification__spec_components__material",
@@ -864,13 +1039,19 @@ class PricedBoqReportView(ProjectEstimatorMixin, ListView):
 
             mat_rate = item.new_materials_rate
             lab_rate = item.new_labour_rate
+            plant_rate = item.new_plant_rate
+            prelim_rate = item.new_preliminary_rate
             bnp = item.baseline_new_price
             if bnp and bnp > 0:
                 mat_pct = (Decimal(str(mat_rate or 0)) / bnp) * Decimal("100")
                 lab_pct = (Decimal(str(lab_rate or 0)) / bnp) * Decimal("100")
+                plant_pct = (Decimal(str(plant_rate or 0)) / bnp) * Decimal("100")
+                prelim_pct = (Decimal(str(prelim_rate or 0)) / bnp) * Decimal("100")
             else:
                 mat_pct = None
                 lab_pct = None
+                plant_pct = None
+                prelim_pct = None
 
             if amount_a:
                 total_a += amount_a
@@ -887,6 +1068,8 @@ class PricedBoqReportView(ProjectEstimatorMixin, ListView):
                     "variance_pct": variance_pct,
                     "materials_pct": mat_pct,
                     "labour_pct": lab_pct,
+                    "plant_pct": plant_pct,
+                    "preliminary_pct": prelim_pct,
                 }
             )
 
@@ -949,6 +1132,7 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
                 "trade_code",
                 "specification",
                 "material",
+                "project__estimator_assumptions",
             )
             .prefetch_related(
                 "specification__spec_components__material",
@@ -987,58 +1171,89 @@ class MaterialListReportView(ProjectEstimatorMixin, ListView):
             )
         else:
             context["parent_template"] = "estimator/base_materials_estimator.html"
+            variant = self.kwargs["variant"]
+            context["toggle_spec_url"] = reverse(
+                f"estimator:report_material_list_{variant}",
+                kwargs={"project_pk": self.get_project().pk},
+            )
+            context["toggle_alt_url"] = reverse(
+                f"estimator:report_material_components_{variant}",
+                kwargs={"project_pk": self.get_project().pk},
+            )
+            context["toggle_alt_label"] = "Component"
+            context["toggle_active"] = "spec"
 
         grand_total = Decimal("0")
-        report_rows = []
+        aggregated: dict[tuple, dict] = {}
+        section_totals: dict[str, Decimal] = {}
 
         for item in context["items"]:
-            quantity = getattr(item, qty_field) or Decimal("0")
+            raw_quantity = getattr(item, qty_field) or Decimal("0")
+            if not raw_quantity:
+                continue
+            wastage_quantity = raw_quantity * item._wastage_factor
             if rate_type == "contract":
                 rate = item.contract_rate
+                amount = rate * raw_quantity if rate else None
             else:
                 rate = item.new_materials_rate
-            if rate and quantity:
-                amount = rate * quantity
-            else:
-                amount = None
+                amount = wastage_quantity * rate if rate else None
 
-            material_name = ""
-            unit = item.unit
             if item.specification:
+                key = ("spec", item.specification_id)
                 material_name = item.specification.name
+                unit = item.unit
             elif item.material:
+                key = ("mat", item.material_id)
                 material_name = item.material.material_code
                 unit = item.material.unit
+            else:
+                continue
 
-            if amount:
-                grand_total += amount
-
-            report_rows.append(
+            row = aggregated.setdefault(
+                key,
                 {
-                    "section": item.section,
-                    "bill_no": item.bill_no,
                     "material_name": material_name,
                     "unit": unit,
-                    "quantity": quantity if quantity else None,
-                    "rate": rate,
-                    "amount": amount,
-                }
+                    "quantity": Decimal("0"),
+                    "wastage_quantity": Decimal("0"),
+                    "amount": Decimal("0"),
+                },
             )
+            row["quantity"] += raw_quantity
+            row["wastage_quantity"] += wastage_quantity
+            if amount:
+                row["amount"] += amount
+                grand_total += amount
+                s = item.section or "Unassigned"
+                section_totals[s] = section_totals.get(s, Decimal("0")) + amount
 
-        # Add pct_of_total
+        report_rows = []
+        for row in aggregated.values():
+            qty_for_rate = (
+                row["wastage_quantity"] if rate_type != "contract" else row["quantity"]
+            )
+            row["rate"] = row["amount"] / qty_for_rate if qty_for_rate else None
+            report_rows.append(row)
+        report_rows.sort(key=lambda r: r["amount"], reverse=True)
+
         for row in report_rows:
             row["pct_of_total"] = calculate_pct_of_total(row["amount"], grand_total)
 
         context["report_rows"] = report_rows
         context["grand_total"] = grand_total
+        context["total_quantity"] = sum(
+            (r["quantity"] for r in report_rows), Decimal("0")
+        )
+        context["total_wastage_quantity"] = sum(
+            (r["wastage_quantity"] for r in report_rows), Decimal("0")
+        )
+        context["show_wastage"] = True
+        context["show_rate"] = True
 
-        # Chart data: cost by section
-        section_totals = {}
-        material_totals = {}
+        material_totals: dict[str, Decimal] = {}
         for row in report_rows:
             if row["amount"]:
-                s = row["section"] or "Unassigned"
-                section_totals[s] = section_totals.get(s, Decimal("0")) + row["amount"]
                 m = row["material_name"] or "Unknown"
                 material_totals[m] = (
                     material_totals.get(m, Decimal("0")) + row["amount"]
@@ -1145,46 +1360,74 @@ class LabourListReportView(ProjectEstimatorMixin, ListView):
             context["parent_template"] = "estimator/base_baseline_estimator_labour.html"
         else:
             context["parent_template"] = "estimator/base_labour_estimator.html"
+            variant = self.kwargs["variant"]
+            context["toggle_spec_url"] = reverse(
+                f"estimator:report_labour_list_{variant}",
+                kwargs={"project_pk": self.get_project().pk},
+            )
+            context["toggle_alt_url"] = reverse(
+                f"estimator:report_labour_skills_{variant}",
+                kwargs={"project_pk": self.get_project().pk},
+            )
+            context["toggle_alt_label"] = "Skill"
+            context["toggle_active"] = "spec"
 
         grand_total = Decimal("0")
-        report_rows = []
+        aggregated: dict[int, dict] = {}
 
         for item in context["items"]:
             ls = item.labour_specification
-            crew = ls.crew if ls else None
+            if ls is None:
+                continue
+            crew = ls.crew
             quantity = getattr(item, qty_field) or Decimal("0")
+            if not quantity:
+                continue
             if rate_type == "contract":
                 rate = item.contract_rate
+                amount = rate * quantity if rate else None
             else:
-                rate = ls.rate_per_unit if ls else None
-            if rate and quantity:
-                amount = rate * quantity
-            else:
-                amount = None
+                rate = item.new_labour_rate
+                amount = quantity * rate if rate else None
 
-            if amount:
-                grand_total += amount
-
-            report_rows.append(
+            row = aggregated.setdefault(
+                ls.pk,
                 {
-                    "section": item.section,
-                    "bill_no": item.bill_no,
+                    "spec_name": ls.name,
                     "crew_type": crew.crew_type if crew else "-",
                     "no_of_crews": 1,
-                    "crew_rate_per_unit": rate,
-                    "quantity": quantity if quantity else None,
-                    "amount": amount,
+                    "quantity": Decimal("0"),
+                    "amount": Decimal("0"),
                     "skilled": crew.skilled if crew else 0,
                     "semi_skilled": crew.semi_skilled if crew else 0,
                     "general": crew.general if crew else 0,
-                }
+                },
             )
+            row["quantity"] += quantity
+            if amount:
+                row["amount"] += amount
+                grand_total += amount
+
+        report_rows = []
+        for row in aggregated.values():
+            row["crew_rate_per_unit"] = (
+                row["amount"] / row["quantity"] if row["quantity"] else None
+            )
+            report_rows.append(row)
+        report_rows.sort(key=lambda r: r["amount"], reverse=True)
 
         for row in report_rows:
             row["pct_of_total"] = calculate_pct_of_total(row["amount"], grand_total)
 
         context["report_rows"] = report_rows
         context["grand_total"] = grand_total
+        context["total_no_of_crews"] = sum((r["no_of_crews"] for r in report_rows), 0)
+        context["total_quantity"] = sum(
+            (r["quantity"] for r in report_rows), Decimal("0")
+        )
+        context["total_skilled"] = sum((r["skilled"] for r in report_rows), 0)
+        context["total_semi_skilled"] = sum((r["semi_skilled"] for r in report_rows), 0)
+        context["total_general"] = sum((r["general"] for r in report_rows), 0)
 
         # Chart data: cost by crew type
         crew_totals = {}
@@ -1233,6 +1476,588 @@ class LabourListReportView(ProjectEstimatorMixin, ListView):
         return context
 
 
+class _SimpleSpecListReportView(ProjectEstimatorMixin, ListView):
+    """Shared base: Plant/Prelim report pages mirroring MaterialListReportView.
+
+    Concrete subclasses set spec_field, spec_rate_attr, parent_template_new,
+    parent_template_contract, title_noun.
+    """
+
+    model = BOQItem
+    template_name = "estimator/reports/material_list.html"
+    context_object_name = "items"
+
+    VARIANT_CONFIGS = {
+        "baseline": {"qty_field": "contract_quantity"},
+        "progress": {"qty_field": "progress_quantity"},
+        "forecast": {"qty_field": "forecast_quantity"},
+    }
+
+    spec_field = ""
+    spec_rate_attr = ""
+    parent_template_new = ""
+    parent_template_contract = ""
+    title_noun = ""
+    # Optional URL-name prefixes to enable the "By Spec / By Component" toggle.
+    # Subclass sets both to enable; leave empty to omit (e.g. preliminary).
+    spec_url_prefix = ""
+    component_url_prefix = ""
+    component_label = "Component"
+    # Wastage applies to materials only; rate column hidden for preliminaries.
+    show_wastage = False
+    show_rate = True
+
+    def _get_rate_type(self):
+        return self.kwargs.get("rate_type", "new")
+
+    def get_queryset(self):
+        qs = (
+            BOQItem.objects.filter(project=self.get_project())
+            .select_related("trade_code", self.spec_field)
+            .filter(is_section_header=False)
+            .filter(**{f"{self.spec_field}__isnull": False})
+        )
+        section = self.request.GET.get("section")
+        if section:
+            qs = qs.filter(section=section)
+        trade_code = self.request.GET.get("trade_code")
+        if trade_code:
+            qs = qs.filter(trade_code__id=trade_code)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        variant = self.kwargs["variant"]
+        qty_field = self.VARIANT_CONFIGS[variant]["qty_field"]
+        rate_type = self._get_rate_type()
+        variant_title = variant.capitalize()
+        rate_suffix = "Contract Rates" if rate_type == "contract" else "New Rates"
+        context["report_title"] = (
+            f"{variant_title} {self.title_noun} List ({rate_suffix})"
+        )
+        context["rate_type"] = rate_type
+        context["parent_template"] = (
+            self.parent_template_contract
+            if rate_type == "contract"
+            else self.parent_template_new
+        )
+        if (
+            rate_type != "contract"
+            and self.spec_url_prefix
+            and self.component_url_prefix
+        ):
+            context["toggle_spec_url"] = reverse(
+                f"{self.spec_url_prefix}{variant}",
+                kwargs={"project_pk": self.get_project().pk},
+            )
+            context["toggle_alt_url"] = reverse(
+                f"{self.component_url_prefix}{variant}",
+                kwargs={"project_pk": self.get_project().pk},
+            )
+            context["toggle_alt_label"] = self.component_label
+            context["toggle_active"] = "spec"
+
+        grand_total = Decimal("0")
+        aggregated: dict[int, dict] = {}
+        section_totals: dict[str, Decimal] = {}
+
+        for item in context["items"]:
+            spec = getattr(item, self.spec_field)
+            if spec is None:
+                continue
+            quantity = getattr(item, qty_field) or Decimal("0")
+            if not quantity:
+                continue
+            if rate_type == "contract":
+                rate = item.contract_rate
+            else:
+                rate = getattr(spec, self.spec_rate_attr)
+            amount = rate * quantity if rate else None
+
+            row = aggregated.setdefault(
+                spec.pk,
+                {
+                    "material_name": spec.name,
+                    "unit": item.unit,
+                    "quantity": Decimal("0"),
+                    "amount": Decimal("0"),
+                },
+            )
+            row["quantity"] += quantity
+            if amount:
+                row["amount"] += amount
+                grand_total += amount
+                s = item.section or "Unassigned"
+                section_totals[s] = section_totals.get(s, Decimal("0")) + amount
+
+        report_rows = []
+        for row in aggregated.values():
+            row["rate"] = row["amount"] / row["quantity"] if row["quantity"] else None
+            report_rows.append(row)
+        report_rows.sort(key=lambda r: r["amount"], reverse=True)
+
+        for row in report_rows:
+            row["pct_of_total"] = calculate_pct_of_total(row["amount"], grand_total)
+
+        context["report_rows"] = report_rows
+        context["grand_total"] = grand_total
+        context["total_quantity"] = sum(
+            (r["quantity"] for r in report_rows), Decimal("0")
+        )
+        context["show_wastage"] = self.show_wastage
+        context["show_rate"] = self.show_rate
+
+        name_totals: dict[str, Decimal] = {}
+        for row in report_rows:
+            if row["amount"]:
+                m = row["material_name"] or "Unknown"
+                name_totals[m] = name_totals.get(m, Decimal("0")) + row["amount"]
+
+        sorted_sections = sorted(
+            section_totals.items(), key=lambda x: x[1], reverse=True
+        )
+        context["chart_section_labels"] = json.dumps([s[0] for s in sorted_sections])
+        context["chart_section_values"] = json.dumps(
+            [float(s[1]) for s in sorted_sections]
+        )
+        sorted_names = sorted(name_totals.items(), key=lambda x: x[1], reverse=True)[
+            :10
+        ]
+        context["chart_material_labels"] = json.dumps([m[0] for m in sorted_names])
+        context["chart_material_values"] = json.dumps(
+            [float(m[1]) for m in sorted_names]
+        )
+
+        project = self.get_project()
+        project_items = BOQItem.objects.filter(project=project)
+        context["sections"] = (
+            project_items.exclude(section="")
+            .values_list("section", flat=True)
+            .distinct()
+            .order_by("section")
+        )
+        context["trade_codes"] = ProjectTradeCode.objects.filter(project=project)
+        context["f_section"] = self.request.GET.get("section", "")
+        context["f_trade_code"] = self.request.GET.get("trade_code", "")
+        return context
+
+
+class PlantListReportView(_SimpleSpecListReportView):
+    spec_field = "plant_specification"
+    spec_rate_attr = "rate_per_unit"
+    parent_template_new = "estimator/base_plant_estimator.html"
+    parent_template_contract = "estimator/base_baseline_estimator_plant.html"
+    title_noun = "Plant"
+    spec_url_prefix = "estimator:report_plant_list_"
+    component_url_prefix = "estimator:report_plant_components_"
+    component_label = "Component"
+
+
+class PreliminaryListReportView(_SimpleSpecListReportView):
+    spec_field = "preliminary_specification"
+    spec_rate_attr = "amount"
+    parent_template_new = "estimator/base_prelim_estimator.html"
+    parent_template_contract = "estimator/base_baseline_estimator_prelim.html"
+    title_noun = "Preliminary"
+    show_rate = False
+
+
+# ───────────────────────────────────────────────────────────────────
+# "By Component" / "By Skill" project-aggregated reports
+# ───────────────────────────────────────────────────────────────────
+
+
+class _ComponentReportBase(ProjectEstimatorMixin, TemplateView):
+    """Shared variant config for the project-aggregated component reports."""
+
+    VARIANT_CONFIGS = {
+        "baseline": {"qty_field": "contract_quantity", "title_prefix": "Baseline"},
+        "progress": {"qty_field": "progress_quantity", "title_prefix": "Progress"},
+        "forecast": {"qty_field": "forecast_quantity", "title_prefix": "Forecast"},
+    }
+
+    def _config(self):
+        return self.VARIANT_CONFIGS[self.kwargs["variant"]]
+
+
+class MaterialComponentReportView(_ComponentReportBase):
+    """Aggregated material/component qtys needed across the whole project."""
+
+    template_name = "estimator/reports/material_components_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        config = self._config()
+        qty_field = config["qty_field"]
+        project = self.get_project()
+        variant = self.kwargs["variant"]
+
+        items = (
+            BOQItem.objects.filter(project=project, is_section_header=False)
+            .select_related(
+                "specification",
+                "material",
+                "project__estimator_assumptions",
+            )
+            .prefetch_related("specification__spec_components__material")
+            .filter(
+                models.Q(specification__isnull=False) | models.Q(material__isnull=False)
+            )
+        )
+
+        # material_code -> aggregated row
+        components: dict[str, dict] = {}
+
+        def bucket(material):
+            key = material.material_code
+            if key not in components:
+                components[key] = {
+                    "material_code": key,
+                    "trade_name": material.trade_name,
+                    "unit": material.unit,
+                    "quantity": Decimal("0"),
+                    "amount": Decimal("0"),
+                }
+            return components[key]
+
+        for item in items:
+            raw_qty = getattr(item, qty_field) or Decimal("0")
+            if not raw_qty:
+                continue
+            project_qty = raw_qty * item._wastage_factor
+            markup = item._material_markup_factor
+            if item.specification:
+                for comp in item.specification.spec_components.all():
+                    if not comp.material or not comp.qty_per_unit:
+                        continue
+                    row = bucket(comp.material)
+                    qty = project_qty * comp.qty_per_unit
+                    row["quantity"] += qty
+                    row["amount"] += (
+                        qty * (comp.material.market_rate or Decimal("0")) * markup
+                    )
+            elif item.material:
+                row = bucket(item.material)
+                row["quantity"] += project_qty
+                row["amount"] += (
+                    project_qty * (item.material.market_rate or Decimal("0")) * markup
+                )
+
+        report_rows = []
+        grand_total = Decimal("0")
+        for row in components.values():
+            row["rate"] = (
+                row["amount"] / row["quantity"] if row["quantity"] else Decimal("0")
+            )
+            grand_total += row["amount"]
+            report_rows.append(row)
+        report_rows.sort(key=lambda r: r["amount"], reverse=True)
+        for row in report_rows:
+            row["pct_of_total"] = calculate_pct_of_total(row["amount"], grand_total)
+
+        context["report_title"] = (
+            f"{config['title_prefix']} Materials by Component (Procurement)"
+        )
+        context["parent_template"] = "estimator/base_materials_estimator.html"
+        context["report_rows"] = report_rows
+        context["grand_total"] = grand_total
+        context["total_quantity"] = sum(
+            (r["quantity"] for r in report_rows), Decimal("0")
+        )
+        context["variant"] = variant
+        context["project_pk"] = project.pk
+
+        # Chart: top 10 components by cost
+        top = report_rows[:10]
+        context["chart_labels"] = json.dumps([r["material_code"] for r in top])
+        context["chart_values"] = json.dumps([float(r["amount"]) for r in top])
+        return context
+
+
+class LabourSkillReportView(_ComponentReportBase):
+    """Per labour-spec breakdown of skilled / semi-skilled / general person-days."""
+
+    template_name = "estimator/reports/labour_skills_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        config = self._config()
+        qty_field = config["qty_field"]
+        project = self.get_project()
+        variant = self.kwargs["variant"]
+
+        items = BOQItem.objects.filter(
+            project=project,
+            is_section_header=False,
+            labour_specification__isnull=False,
+        ).select_related(
+            "labour_specification",
+            "labour_specification__crew",
+        )
+
+        # labour_specification_id -> aggregated row
+        specs: dict[int, dict] = {}
+
+        for item in items:
+            ls = item.labour_specification
+            if ls is None:
+                continue
+            crew = ls.crew
+            raw_qty = getattr(item, qty_field) or Decimal("0")
+            if not raw_qty:
+                continue
+            row = specs.setdefault(
+                ls.pk,
+                {
+                    "spec_name": ls.name,
+                    "unit": ls.unit,
+                    "daily_output": ls.daily_output,
+                    "crew_type": crew.crew_type if crew else "-",
+                    "quantity": Decimal("0"),
+                    "days_required": Decimal("0"),
+                    "skilled": Decimal("0"),
+                    "semi_skilled": Decimal("0"),
+                    "general": Decimal("0"),
+                    "cost": Decimal("0"),
+                },
+            )
+            row["quantity"] += raw_qty
+            output = ls.daily_output
+            if output and output > 0 and crew:
+                days = raw_qty / output
+                markup = Decimal("1") + (
+                    item.labour_markup_pct or Decimal("0")
+                ) / Decimal("100")
+                row["days_required"] += days
+                row["skilled"] += days * Decimal(str(crew.skilled))
+                row["semi_skilled"] += days * Decimal(str(crew.semi_skilled))
+                row["general"] += days * Decimal(str(crew.general))
+                row["cost"] += days * crew.crew_daily_cost * markup
+
+        report_rows = sorted(specs.values(), key=lambda r: r["cost"], reverse=True)
+        grand_total = sum((r["cost"] for r in report_rows), Decimal("0"))
+        total_skilled = sum((r["skilled"] for r in report_rows), Decimal("0"))
+        total_semi = sum((r["semi_skilled"] for r in report_rows), Decimal("0"))
+        total_general = sum((r["general"] for r in report_rows), Decimal("0"))
+        total_quantity = sum((r["quantity"] for r in report_rows), Decimal("0"))
+        total_days = sum((r["days_required"] for r in report_rows), Decimal("0"))
+        for row in report_rows:
+            row["pct_of_total"] = calculate_pct_of_total(row["cost"], grand_total)
+
+        context["report_title"] = f"{config['title_prefix']} Labour by Skill"
+        context["parent_template"] = "estimator/base_labour_estimator.html"
+        context["report_rows"] = report_rows
+        context["grand_total"] = grand_total
+        context["total_skilled"] = total_skilled
+        context["total_semi_skilled"] = total_semi
+        context["total_general"] = total_general
+        context["total_quantity"] = total_quantity
+        context["total_days"] = total_days
+        context["variant"] = variant
+        context["project_pk"] = project.pk
+
+        context["chart_labels"] = json.dumps([r["spec_name"] for r in report_rows[:10]])
+        context["chart_skilled"] = json.dumps(
+            [float(r["skilled"]) for r in report_rows[:10]]
+        )
+        context["chart_semi"] = json.dumps(
+            [float(r["semi_skilled"]) for r in report_rows[:10]]
+        )
+        context["chart_general"] = json.dumps(
+            [float(r["general"]) for r in report_rows[:10]]
+        )
+        return context
+
+
+class PlantComponentReportView(_ComponentReportBase):
+    """Aggregated plant-type hours needed across the whole project."""
+
+    template_name = "estimator/reports/plant_components_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        config = self._config()
+        qty_field = config["qty_field"]
+        project = self.get_project()
+        variant = self.kwargs["variant"]
+
+        items = (
+            BOQItem.objects.filter(
+                project=project,
+                is_section_header=False,
+                plant_specification__isnull=False,
+            )
+            .select_related("plant_specification")
+            .prefetch_related("plant_specification__components__plant_type")
+        )
+
+        # plant_cost_id -> aggregated row
+        plant_types: dict[int, dict] = {}
+
+        for item in items:
+            ps = item.plant_specification
+            if ps is None:
+                continue
+            raw_qty = getattr(item, qty_field) or Decimal("0")
+            if not raw_qty:
+                continue
+            for comp in ps.components.all():
+                pt = comp.plant_type
+                if pt is None or not comp.hours:
+                    continue
+                hours = raw_qty * comp.hours
+                row = plant_types.setdefault(
+                    pt.pk,
+                    {
+                        "name": pt.name,
+                        "hours": Decimal("0"),
+                        "rate": pt.hourly_rate or Decimal("0"),
+                    },
+                )
+                row["hours"] += hours
+
+        report_rows = []
+        grand_total = Decimal("0")
+        for row in plant_types.values():
+            row["amount"] = row["hours"] * row["rate"]
+            grand_total += row["amount"]
+            report_rows.append(row)
+        report_rows.sort(key=lambda r: r["amount"], reverse=True)
+        for row in report_rows:
+            row["pct_of_total"] = calculate_pct_of_total(row["amount"], grand_total)
+
+        context["report_title"] = f"{config['title_prefix']} Plant by Component"
+        context["parent_template"] = "estimator/base_plant_estimator.html"
+        context["report_rows"] = report_rows
+        context["grand_total"] = grand_total
+        context["total_hours"] = sum((r["hours"] for r in report_rows), Decimal("0"))
+        context["variant"] = variant
+        context["project_pk"] = project.pk
+
+        top = report_rows[:10]
+        context["chart_labels"] = json.dumps([r["name"] for r in top])
+        context["chart_values"] = json.dumps([float(r["amount"]) for r in top])
+        return context
+
+
+class _SimpleSpecCalculatorView(ProjectEstimatorMixin, TemplateView):
+    """Shared base: Plant/Prelim calculator pages grouping BOQItems by spec."""
+
+    spec_field = ""
+    spec_rate_attr = ""
+    parent_template = ""
+    title_noun = ""
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = self.get_project()
+        f_section = self.request.GET.get("section", "")
+        f_name = self.request.GET.get("name", "")
+
+        qs = BOQItem.objects.filter(
+            project=project,
+            is_section_header=False,
+            **{f"{self.spec_field}__isnull": False},
+        ).select_related(self.spec_field)
+        if f_section:
+            qs = qs.filter(section=f_section)
+        if f_name:
+            qs = qs.filter(**{f"{self.spec_field}__name": f_name})
+
+        from collections import OrderedDict
+
+        groups = OrderedDict()
+        spec_id_field = f"{self.spec_field}_id"
+        order_field = f"{self.spec_field}__name"
+        for boq in qs.order_by("section", order_field):
+            spec = getattr(boq, self.spec_field)
+            key = (boq.section, getattr(boq, spec_id_field, None))
+            if key not in groups:
+                groups[key] = {
+                    "section": boq.section,
+                    "spec": spec,
+                    "boq_qty": Decimal("0"),
+                }
+            if boq.contract_quantity:
+                groups[key]["boq_qty"] += boq.contract_quantity
+
+        rows = []
+        for group in groups.values():
+            spec = group["spec"]
+            boq_qty = group["boq_qty"]
+            rate = getattr(spec, self.spec_rate_attr) or Decimal("0")
+            rows.append(
+                {
+                    "section": group["section"],
+                    "spec": spec,
+                    "boq_qty": boq_qty,
+                    "rate": rate,
+                    "amount": rate * boq_qty if boq_qty else Decimal("0"),
+                }
+            )
+        context["rows"] = rows
+        context["parent_template"] = self.parent_template
+        context["title_noun"] = self.title_noun
+
+        boq_with = BOQItem.objects.filter(
+            project=project,
+            is_section_header=False,
+            **{f"{self.spec_field}__isnull": False},
+        )
+        context["sections"] = (
+            boq_with.exclude(section="")
+            .values_list("section", flat=True)
+            .distinct()
+            .order_by("section")
+        )
+        context["names"] = (
+            boq_with.values_list(f"{self.spec_field}__name", flat=True)
+            .distinct()
+            .order_by(f"{self.spec_field}__name")
+        )
+        context["f_section"] = f_section
+        context["f_name"] = f_name
+        return context
+
+
+class PlantSpecificationListView(_SimpleSpecCalculatorView):
+    template_name = "estimator/plant_specification_list.html"
+    spec_field = "plant_specification"
+    spec_rate_attr = "rate_per_unit"
+    parent_template = "estimator/base_plant_estimator.html"
+    title_noun = "Plant"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        for row in context["rows"]:
+            spec = row["spec"]
+            boq_qty = row["boq_qty"] or Decimal("0")
+            totals = []
+            if spec:
+                for comp in spec.components.all():
+                    if comp.plant_type is None:
+                        continue
+                    total_hours = (
+                        boq_qty * comp.hours if boq_qty and comp.hours else Decimal("0")
+                    )
+                    totals.append(
+                        {
+                            "name": comp.plant_type.name,
+                            "total_hours": total_hours,
+                        }
+                    )
+            row["component_totals"] = totals
+        return context
+
+
+class PreliminarySpecificationListView(_SimpleSpecCalculatorView):
+    template_name = "estimator/preliminary_specification_list.html"
+    spec_field = "preliminary_specification"
+    spec_rate_attr = "amount"
+    parent_template = "estimator/base_prelim_estimator.html"
+    title_noun = "Preliminary"
+
+
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateBoqItemView(View):
     """AJAX endpoint to update FK fields or decimal markup fields on a BOQItem."""
@@ -1241,9 +2066,20 @@ class UpdateBoqItemView(View):
         "trade_code": (ProjectTradeCode, "trade_code"),
         "specification": (ProjectSpecification, "specification"),
         "labour_specification": (ProjectLabourSpecification, "labour_specification"),
+        "plant_specification": (ProjectPlantSpecification, "plant_specification"),
+        "preliminary_specification": (
+            ProjectPreliminarySpecification,
+            "preliminary_specification",
+        ),
     }
 
-    DECIMAL_FIELDS = {"material_markup_pct", "labour_markup_pct", "transport_pct"}
+    DECIMAL_FIELDS = {
+        "material_markup_pct",
+        "labour_markup_pct",
+        "transport_pct",
+        "progress_quantity",
+        "forecast_quantity",
+    }
 
     def post(self, request, project_pk, pk):
         item = get_object_or_404(BOQItem, pk=pk, project_id=project_pk)
@@ -1261,6 +2097,31 @@ class UpdateBoqItemView(View):
                 setattr(item, field, Decimal(str(value or 0)))
             except Exception:
                 return JsonResponse({"error": "Invalid value"}, status=400)
+            item.save()
+            return self._build_response(item)
+
+        if field == "labour_plant_specification":
+            if value is None or value == "" or value == 0:
+                item.labour_specification = None
+                item.plant_specification = None
+            else:
+                name = str(value)
+                item.labour_specification = (
+                    ProjectLabourSpecification.objects.filter(
+                        name=name, section=item.section, project_id=project_pk
+                    ).first()
+                    or ProjectLabourSpecification.objects.filter(
+                        name=name, project_id=project_pk
+                    ).first()
+                )
+                item.plant_specification = (
+                    ProjectPlantSpecification.objects.filter(
+                        name=name, section=item.section, project_id=project_pk
+                    ).first()
+                    or ProjectPlantSpecification.objects.filter(
+                        name=name, project_id=project_pk
+                    ).first()
+                )
             item.save()
             return self._build_response(item)
 
@@ -1321,21 +2182,113 @@ class UpdateBoqItemView(View):
                 "ok": True,
                 "new_materials_rate": fmt(item.new_materials_rate),
                 "new_labour_rate": fmt(item.new_labour_rate),
+                "new_plant_rate": fmt(item.new_plant_rate),
+                "new_preliminary_rate": fmt(item.new_preliminary_rate),
                 "baseline_new_price": fmt(item.baseline_new_price),
                 "progress_amount": fmt(item.progress_amount),
                 "forecast_amount": fmt(item.forecast_amount),
-                "new_materials_amount": fmt(
-                    item.new_materials_rate * item.contract_quantity
-                    if item.new_materials_rate and item.contract_quantity
-                    else None
-                ),
-                "new_labour_amount": fmt(
-                    item.new_labour_rate * item.contract_quantity
-                    if item.new_labour_rate and item.contract_quantity
-                    else None
-                ),
+                "new_materials_amount": fmt(item.new_materials_amount),
+                "new_labour_amount": fmt(item.new_labour_amount),
+                "new_plant_amount": fmt(item.new_plant_amount),
+                "new_preliminary_amount": fmt(item.new_preliminary_amount),
             }
         )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class BulkUpdateBoqSpecsView(View):
+    """AJAX endpoint to apply one or more spec FKs to many BOQItems at once.
+
+    Payload: {"ids": [int, ...], "updates": {field: value, ...}}
+    Allowed fields mirror UpdateBoqItemView; only fields present in `updates`
+    are written. A value of "" (or null) clears that FK on all selected items.
+    """
+
+    FK_FIELDS = {
+        "trade_code": ProjectTradeCode,
+        "specification": ProjectSpecification,
+        "preliminary_specification": ProjectPreliminarySpecification,
+    }
+
+    def post(self, request, project_pk):
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        ids = data.get("ids") or []
+        updates = data.get("updates") or {}
+
+        if not isinstance(ids, list) or not ids:
+            return JsonResponse({"error": "No items selected"}, status=400)
+        if not isinstance(updates, dict) or not updates:
+            return JsonResponse({"error": "No fields to update"}, status=400)
+
+        items = list(
+            BOQItem.objects.filter(
+                pk__in=ids, project_id=project_pk, is_section_header=False
+            )
+        )
+        if not items:
+            return JsonResponse({"error": "No matching items"}, status=404)
+
+        for item in items:
+            for field, value in updates.items():
+                cleared = value is None or value == ""
+
+                if field == "labour_plant_specification":
+                    if cleared:
+                        item.labour_specification = None
+                        item.plant_specification = None
+                    else:
+                        name = str(value)
+                        item.labour_specification = (
+                            ProjectLabourSpecification.objects.filter(
+                                name=name, section=item.section, project_id=project_pk
+                            ).first()
+                            or ProjectLabourSpecification.objects.filter(
+                                name=name, project_id=project_pk
+                            ).first()
+                        )
+                        item.plant_specification = (
+                            ProjectPlantSpecification.objects.filter(
+                                name=name, section=item.section, project_id=project_pk
+                            ).first()
+                            or ProjectPlantSpecification.objects.filter(
+                                name=name, project_id=project_pk
+                            ).first()
+                        )
+                elif field in self.FK_FIELDS:
+                    model_cls = self.FK_FIELDS[field]
+                    if cleared:
+                        setattr(item, field, None)
+                    else:
+                        related = None
+                        try:
+                            related = model_cls.objects.filter(
+                                pk=int(value), project_id=project_pk
+                            ).first()
+                        except (TypeError, ValueError):
+                            pass
+                        if related is None:
+                            related = (
+                                model_cls.objects.filter(
+                                    name=str(value),
+                                    section=item.section,
+                                    project_id=project_pk,
+                                ).first()
+                                or model_cls.objects.filter(
+                                    name=str(value), project_id=project_pk
+                                ).first()
+                            )
+                        setattr(item, field, related)
+                else:
+                    return JsonResponse(
+                        {"error": f'Field "{field}" not allowed'}, status=400
+                    )
+            item.save()
+
+        return JsonResponse({"ok": True, "updated": len(items)})
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -1397,11 +2350,12 @@ class UpdateMaterialView(View):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateSpecComponentView(View):
-    """AJAX endpoint to update qty_per_unit on a ProjectSpecificationComponent."""
+    """AJAX endpoint to update fields on a ProjectSpecificationComponent."""
+
+    ALLOWED_FIELDS = {"qty_per_unit", "material", "label"}
 
     def post(self, request, project_pk, pk):
         item = get_object_or_404(ProjectSpecificationComponent, pk=pk)
-        # Validate project ownership
         if item.specification.project_id != int(project_pk):
             return JsonResponse({"error": "Not found"}, status=404)
         try:
@@ -1412,11 +2366,26 @@ class UpdateSpecComponentView(View):
         field = data.get("field")
         value = data.get("value")
 
-        if field != "qty_per_unit":
+        if field not in self.ALLOWED_FIELDS:
             return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
 
         try:
-            item.qty_per_unit = Decimal(str(value))
+            if field == "qty_per_unit":
+                item.qty_per_unit = Decimal(str(value or 0))
+            elif field == "label":
+                item.label = (value or "").strip()
+            else:  # material
+                if value in (None, "", 0, "0"):
+                    item.material = None
+                else:
+                    material = ProjectMaterial.objects.filter(
+                        pk=int(value), project_id=project_pk
+                    ).first()
+                    if material is None:
+                        return JsonResponse({"error": "Material not found"}, status=404)
+                    item.material = material
+                    if not item.label:
+                        item.label = material.material_code
         except Exception:
             return JsonResponse({"error": "Invalid value"}, status=400)
 
@@ -1426,10 +2395,99 @@ class UpdateSpecComponentView(View):
             {
                 "ok": True,
                 "qty_per_unit": str(round(item.qty_per_unit, 4)),
+                "label": item.label,
+                "material_id": item.material_id,
                 "spec_id": spec.id,
                 "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
             }
         )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class AddSpecComponentView(View):
+    """AJAX endpoint to add a new component to a ProjectSpecification."""
+
+    def post(self, request, project_pk, pk):
+        spec = get_object_or_404(ProjectSpecification, pk=pk, project_id=project_pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            data = {}
+
+        material_id = data.get("material")
+        label = (data.get("label") or "").strip()
+        qty_raw = data.get("qty_per_unit", 0)
+
+        material = None
+        if material_id not in (None, "", 0, "0"):
+            try:
+                material = ProjectMaterial.objects.filter(
+                    pk=int(material_id), project_id=project_pk
+                ).first()
+            except (TypeError, ValueError):
+                material = None
+
+        if not label and material is not None:
+            label = material.material_code
+
+        try:
+            qty = Decimal(str(qty_raw or 0))
+        except Exception:
+            qty = Decimal("0")
+
+        next_order = (
+            spec.spec_components.aggregate(models.Max("sort_order"))["sort_order__max"]
+            or 0
+        ) + 1
+        comp = ProjectSpecificationComponent.objects.create(
+            specification=spec,
+            material=material,
+            label=label,
+            qty_per_unit=qty,
+            sort_order=next_order,
+        )
+        return JsonResponse(
+            {
+                "ok": True,
+                "component": {
+                    "id": comp.id,
+                    "material_id": comp.material_id,
+                    "label": comp.label,
+                    "qty_per_unit": str(comp.qty_per_unit),
+                },
+                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeleteSpecComponentView(View):
+    """AJAX endpoint to delete a ProjectSpecificationComponent."""
+
+    def post(self, request, project_pk, pk):
+        comp = get_object_or_404(
+            ProjectSpecificationComponent,
+            pk=pk,
+            specification__project_id=project_pk,
+        )
+        spec = comp.specification
+        comp.delete()
+        return JsonResponse(
+            {
+                "ok": True,
+                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeleteSpecificationView(View):
+    """AJAX endpoint to delete a ProjectSpecification (material spec)."""
+
+    def post(self, request, project_pk, pk):
+        spec = get_object_or_404(ProjectSpecification, pk=pk, project_id=project_pk)
+        spec.delete()
+        return JsonResponse({"ok": True})
 
 
 class SystemMaterialSpecListView(ProjectEstimatorMixin, ListView):
@@ -1586,7 +2644,20 @@ class DownloadSystemSpecTemplateView(View):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateLabourSpecView(View):
-    """AJAX endpoint to update daily_production on a ProjectLabourSpecification."""
+    """AJAX endpoint to update fields on a ProjectLabourSpecification."""
+
+    ALLOWED_FIELDS = {
+        "section": "str",
+        "trade_name": "str",
+        "name": "str",
+        "unit": "str",
+        "crew": "fk",
+        "daily_production": "decimal",
+        "team_mix": "decimal",
+        "site_factor": "decimal",
+        "tools_factor": "decimal",
+        "leadership_factor": "decimal",
+    }
 
     def post(self, request, project_pk, pk):
         item = get_object_or_404(
@@ -1600,11 +2671,22 @@ class UpdateLabourSpecView(View):
         field = data.get("field")
         value = data.get("value")
 
-        if field != "daily_production":
+        if field not in self.ALLOWED_FIELDS:
             return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
 
+        field_type = self.ALLOWED_FIELDS[field]
         try:
-            item.daily_production = Decimal(str(value))
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            elif field_type == "fk":
+                if value == "" or value is None:
+                    item.crew = None
+                else:
+                    item.crew = get_object_or_404(
+                        ProjectLabourCrew, pk=int(value), project_id=project_pk
+                    )
+            else:
+                setattr(item, field, str(value))
         except Exception:
             return JsonResponse({"error": "Invalid value"}, status=400)
 
@@ -1622,6 +2704,7 @@ class UpdateLabourSpecView(View):
                 "rate_per_unit": fmt(item.rate_per_unit),
                 "daily_cost": fmt(item.daily_cost),
                 "total_cost": fmt(item.total_cost),
+                "crew_type": item.crew.crew_type if item.crew else None,
             }
         )
 
@@ -1729,11 +2812,28 @@ class LabourSpecDefListView(ProjectEstimatorMixin, ListView):
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_name"] = self.request.GET.get("trade_name", "")
         context["f_name"] = self.request.GET.get("name", "")
+        context["crews"] = ProjectLabourCrew.objects.filter(project=project)
 
         return context
 
     def post(self, request, *args, **kwargs):
         project = self.get_project()
+        action = request.POST.get("action")
+        if action == "sync_system":
+            from .services import sync_labour_specs_from_system
+
+            result = sync_labour_specs_from_system(project)
+            messages.success(
+                request,
+                f"Labour specs synced with system library — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse(
+                    "estimator:labour_spec_defs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
         form = LabourSpecificationForm(request.POST, project=project)
         if form.is_valid():
             obj = form.save(commit=False)
@@ -1747,6 +2847,540 @@ class LabourSpecDefListView(ProjectEstimatorMixin, ListView):
             )
         self.object_list = self.get_queryset()
         return self.render_to_response(self.get_context_data(form=form))
+
+
+# ── Plant Costs ─────────────────────────────────────────────────
+
+
+class PlantCostListView(ProjectEstimatorMixin, ListView):
+    model = ProjectPlantCost
+    template_name = "estimator/plant_costs_list.html"
+    context_object_name = "plants"
+
+    def get_queryset(self):
+        return ProjectPlantCost.objects.filter(project=self.get_project())
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", PlantCostForm())
+        return context
+
+    def post(self, request, *args, **kwargs):
+        project_pk = self.kwargs["project_pk"]
+        action = request.POST.get("action")
+
+        if action == "sync_system":
+            from .services import sync_plant_costs_from_system
+
+            result = sync_plant_costs_from_system(self.get_project())
+            messages.success(
+                request,
+                f"Plant costs synced with system library — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse("estimator:plant_costs", kwargs={"project_pk": project_pk})
+            )
+
+        form = PlantCostForm(request.POST)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.project = self.get_project()
+            obj.save()
+            return redirect(
+                reverse("estimator:plant_costs", kwargs={"project_pk": project_pk})
+            )
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdatePlantCostView(View):
+    """AJAX endpoint to update fields on a ProjectPlantCost."""
+
+    ALLOWED_FIELDS = {
+        "name": "str",
+        "hourly_production": "decimal",
+        "hourly_rate": "decimal",
+    }
+
+    def post(self, request, project_pk, pk):
+        item = get_object_or_404(ProjectPlantCost, pk=pk, project_id=project_pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse({"ok": True})
+
+
+# ── Plant Spec Definitions ─────────────────────────────────────
+
+
+class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
+    model = ProjectPlantSpecification
+    template_name = "estimator/plant_spec_def_list.html"
+    context_object_name = "plant_specs"
+
+    def get_queryset(self):
+        project = self.get_project()
+        qs = ProjectPlantSpecification.objects.filter(project=project).prefetch_related(
+            "components__plant_type"
+        )
+        section = self.request.GET.get("section")
+        if section:
+            qs = qs.filter(section=section)
+        trade_name = self.request.GET.get("trade_name")
+        if trade_name:
+            qs = qs.filter(trade_name=trade_name)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project = self.get_project()
+        context["form"] = context.get("form", PlantSpecificationForm(project=project))
+        project_pspecs = ProjectPlantSpecification.objects.filter(project=project)
+        context["sections"] = (
+            project_pspecs.exclude(section="")
+            .values_list("section", flat=True)
+            .distinct()
+            .order_by("section")
+        )
+        context["trade_names"] = (
+            project_pspecs.exclude(trade_name="")
+            .values_list("trade_name", flat=True)
+            .distinct()
+            .order_by("trade_name")
+        )
+        context["plants"] = ProjectPlantCost.objects.filter(project=project)
+        context["f_section"] = self.request.GET.get("section", "")
+        context["f_trade_name"] = self.request.GET.get("trade_name", "")
+        return context
+
+    def post(self, request, *args, **kwargs):
+        project = self.get_project()
+        action = request.POST.get("action")
+        if action == "sync_system":
+            from .services import sync_plant_specs_from_system
+
+            result = sync_plant_specs_from_system(project)
+            messages.success(
+                request,
+                f"Plant specs synced with system library — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse(
+                    "estimator:plant_spec_defs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
+        form = PlantSpecificationForm(request.POST, project=project)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.project = project
+            obj.save()
+            return redirect(
+                reverse(
+                    "estimator:plant_spec_defs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdatePlantSpecView(View):
+    """AJAX endpoint to update fields on a ProjectPlantSpecification."""
+
+    ALLOWED_FIELDS = {
+        "section": "str",
+        "trade_name": "str",
+        "name": "str",
+        "unit": "str",
+        "daily_production": "decimal",
+        "operator_factor": "decimal",
+        "site_factor": "decimal",
+    }
+
+    def post(self, request, project_pk, pk):
+        item = get_object_or_404(
+            ProjectPlantSpecification, pk=pk, project_id=project_pk
+        )
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse(
+            {
+                "ok": True,
+                "daily_output": str(item.daily_output),
+                "daily_cost": str(item.daily_cost),
+                "rate_per_unit": str(item.rate_per_unit),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdatePlantSpecComponentView(View):
+    """AJAX endpoint to update plant_type or hours on a ProjectPlantSpecificationComponent."""
+
+    ALLOWED_FIELDS = {"plant_type", "hours"}
+
+    def post(self, request, project_pk, pk):
+        comp = get_object_or_404(
+            ProjectPlantSpecificationComponent,
+            pk=pk,
+            specification__project_id=project_pk,
+        )
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        try:
+            if field == "hours":
+                comp.hours = Decimal(str(value or 0))
+            else:
+                if value in (None, "", 0, "0"):
+                    comp.plant_type = None
+                else:
+                    comp.plant_type = ProjectPlantCost.objects.filter(
+                        pk=int(value), project_id=project_pk
+                    ).first()
+                    if comp.plant_type is None:
+                        return JsonResponse(
+                            {"error": "Plant type not found"}, status=404
+                        )
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        comp.save()
+        spec = comp.specification
+        return JsonResponse(
+            {
+                "ok": True,
+                "daily_cost": str(spec.daily_cost),
+                "rate_per_unit": str(spec.rate_per_unit),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class AddPlantSpecComponentView(View):
+    """AJAX endpoint to add a new component to a ProjectPlantSpecification."""
+
+    def post(self, request, project_pk, pk):
+        spec = get_object_or_404(
+            ProjectPlantSpecification, pk=pk, project_id=project_pk
+        )
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            data = {}
+
+        plant_type_id = data.get("plant_type")
+        hours_raw = data.get("hours", 0)
+
+        plant_type = None
+        if plant_type_id not in (None, "", 0, "0"):
+            try:
+                plant_type = ProjectPlantCost.objects.filter(
+                    pk=int(plant_type_id), project_id=project_pk
+                ).first()
+            except (TypeError, ValueError):
+                plant_type = None
+
+        try:
+            hours = Decimal(str(hours_raw or 0))
+        except Exception:
+            hours = Decimal("0")
+
+        next_order = (
+            spec.components.aggregate(models.Max("sort_order"))["sort_order__max"] or 0
+        ) + 1
+        comp = ProjectPlantSpecificationComponent.objects.create(
+            specification=spec,
+            plant_type=plant_type,
+            hours=hours,
+            sort_order=next_order,
+        )
+        return JsonResponse(
+            {
+                "ok": True,
+                "component": {
+                    "id": comp.id,
+                    "plant_type_id": comp.plant_type_id,
+                    "plant_type_name": comp.plant_type.name if comp.plant_type else "",
+                    "hours": str(comp.hours),
+                },
+                "daily_cost": str(spec.daily_cost),
+                "rate_per_unit": str(spec.rate_per_unit),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeletePlantSpecComponentView(View):
+    """AJAX endpoint to delete a ProjectPlantSpecificationComponent."""
+
+    def post(self, request, project_pk, pk):
+        comp = get_object_or_404(
+            ProjectPlantSpecificationComponent,
+            pk=pk,
+            specification__project_id=project_pk,
+        )
+        spec = comp.specification
+        comp.delete()
+        return JsonResponse(
+            {
+                "ok": True,
+                "daily_cost": str(spec.daily_cost),
+                "rate_per_unit": str(spec.rate_per_unit),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeletePlantSpecificationView(View):
+    """AJAX endpoint to delete a ProjectPlantSpecification."""
+
+    def post(self, request, project_pk, pk):
+        spec = get_object_or_404(
+            ProjectPlantSpecification, pk=pk, project_id=project_pk
+        )
+        spec.delete()
+        return JsonResponse({"ok": True})
+
+
+# ── Preliminary Costs ──────────────────────────────────────────
+
+
+class PreliminaryCostListView(ProjectEstimatorMixin, ListView):
+    model = ProjectPreliminaryCost
+    template_name = "estimator/preliminary_costs_list.html"
+    context_object_name = "preliminaries"
+
+    def get_queryset(self):
+        return ProjectPreliminaryCost.objects.filter(project=self.get_project())
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", PreliminaryCostForm())
+        return context
+
+    def post(self, request, *args, **kwargs):
+        project_pk = self.kwargs["project_pk"]
+        action = request.POST.get("action")
+
+        if action == "sync_system":
+            from .services import sync_preliminary_costs_from_system
+
+            result = sync_preliminary_costs_from_system(self.get_project())
+            messages.success(
+                request,
+                f"Preliminary costs synced with system library — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse(
+                    "estimator:preliminary_costs",
+                    kwargs={"project_pk": project_pk},
+                )
+            )
+
+        form = PreliminaryCostForm(request.POST)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.project = self.get_project()
+            obj.save()
+            return redirect(
+                reverse(
+                    "estimator:preliminary_costs",
+                    kwargs={"project_pk": project_pk},
+                )
+            )
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdatePreliminaryCostView(View):
+    """AJAX endpoint to update fields on a ProjectPreliminaryCost."""
+
+    ALLOWED_FIELDS = {
+        "name": "str",
+        "preliminary_type": "str",
+        "sum_value": "decimal",
+        "amount": "decimal",
+        "number_per_month": "decimal",
+        "monthly_rate": "decimal",
+        "months": "decimal",
+    }
+
+    def post(self, request, project_pk, pk):
+        item = get_object_or_404(ProjectPreliminaryCost, pk=pk, project_id=project_pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse(
+            {
+                "ok": True,
+                "computed_amount": str(item.computed_amount),
+            }
+        )
+
+
+# ── Preliminary Spec Definitions ───────────────────────────────
+
+
+class PreliminarySpecDefListView(ProjectEstimatorMixin, ListView):
+    model = ProjectPreliminarySpecification
+    template_name = "estimator/preliminary_spec_def_list.html"
+    context_object_name = "preliminary_specs"
+
+    def get_queryset(self):
+        return ProjectPreliminarySpecification.objects.filter(
+            project=self.get_project()
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", PreliminarySpecificationForm())
+        context["preliminary_type_choices"] = (
+            SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
+        )
+        return context
+
+    def post(self, request, *args, **kwargs):
+        project = self.get_project()
+        action = request.POST.get("action")
+        if action == "sync_system":
+            from .services import sync_preliminary_specs_from_system
+
+            result = sync_preliminary_specs_from_system(project)
+            messages.success(
+                request,
+                f"Preliminary specs synced with system library — "
+                f"{result['updated']} updated, {result['created']} new.",
+            )
+            return redirect(
+                reverse(
+                    "estimator:preliminary_spec_defs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
+        form = PreliminarySpecificationForm(request.POST)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.project = project
+            obj.save()
+            return redirect(
+                reverse(
+                    "estimator:preliminary_spec_defs",
+                    kwargs={"project_pk": self.kwargs["project_pk"]},
+                )
+            )
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdatePreliminarySpecView(View):
+    """AJAX endpoint to update fields on a ProjectPreliminarySpecification."""
+
+    ALLOWED_FIELDS = {
+        "section": "str",
+        "trade_name": "str",
+        "name": "str",
+        "unit": "str",
+        "preliminary_type": "str",
+    }
+
+    def post(self, request, project_pk, pk):
+        item = get_object_or_404(
+            ProjectPreliminarySpecification, pk=pk, project_id=project_pk
+        )
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse({"ok": True, "amount": str(item.amount)})
 
 
 # ── Upload / Download Template Views ──────────────────────────────
@@ -1770,9 +3404,11 @@ def _handle_upload(request, importer_class, success_url, entity_name, project=No
 
         created = result.get("created", 0)
         updated = result.get("updated", 0)
-        messages.success(
-            request, f"{entity_name} uploaded — {created} created, {updated} updated"
-        )
+        msg = f"{entity_name} uploaded — {created} created, {updated} updated"
+        sheet_used = result.get("sheet_used")
+        if sheet_used is not None and result.get("fell_back"):
+            msg += f" [sheet used: '{sheet_used}' (fallback — no sheet name matched)]"
+        messages.success(request, msg)
     except Exception as e:
         messages.error(request, f"Import failed: {str(e)}")
     finally:
@@ -1782,39 +3418,72 @@ def _handle_upload(request, importer_class, success_url, entity_name, project=No
 
 
 def _generate_template(headers, filename):
-    """Generate an Excel template with headers and return a FileResponse."""
+    """Generate an Excel template styled to match the master workbook.
+
+    Returns HttpResponse (not FileResponse/BytesIO-streaming) because some
+    WSGI/proxy setups strip Content-Length from streaming responses and the
+    client ends up with a 500.
+    """
     import io
 
     import openpyxl
+    from openpyxl.styles import Alignment, Border, Font, Side
 
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Data"
 
-    from openpyxl.styles import Alignment, Font, PatternFill
-
-    header_font = Font(bold=True, color="FFFFFF", size=11)
-    header_fill = PatternFill(
-        start_color="4472C4", end_color="4472C4", fill_type="solid"
-    )
+    header_font = Font(name="Aptos Narrow", size=11, bold=True)
+    data_font = Font(name="Aptos Narrow", size=11)
+    center = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    medium = Side(style="medium", color="000000")
+    thin = Side(style="thin", color="000000")
+    last_col = len(headers)
 
     for col_idx, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col_idx, value=header)
         cell.font = header_font
-        cell.fill = header_fill
-        cell.alignment = Alignment(horizontal="center")
+        cell.alignment = center
+        cell.border = Border(
+            top=medium,
+            bottom=medium,
+            left=medium if col_idx == 1 else thin,
+            right=medium if col_idx == last_col else thin,
+        )
         ws.column_dimensions[cell.column_letter].width = max(len(header) + 4, 14)
+
+    # Reserve 20 empty data rows framed by the same outer border so the user
+    # sees a clean table outline matching the uploaded sheets.
+    data_row_count = 20
+    for r in range(2, 2 + data_row_count):
+        is_last_row = r == 1 + data_row_count
+        for col_idx in range(1, last_col + 1):
+            cell = ws.cell(row=r, column=col_idx)
+            cell.font = data_font
+            cell.alignment = center
+            cell.border = Border(
+                top=thin,
+                bottom=medium if is_last_row else thin,
+                left=medium if col_idx == 1 else thin,
+                right=medium if col_idx == last_col else thin,
+            )
+
+    ws.row_dimensions[1].height = 20
+    ws.freeze_panes = "A2"
 
     buffer = io.BytesIO()
     wb.save(buffer)
-    buffer.seek(0)
     wb.close()
+    data = buffer.getvalue()
 
-    response = FileResponse(buffer, as_attachment=True)
-    response["Content-Disposition"] = f'attachment; filename="{filename}"'
-    response["Content-Type"] = (
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    response = HttpResponse(
+        data,
+        content_type=(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ),
     )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    response["Content-Length"] = str(len(data))
     return response
 
 
@@ -2157,16 +3826,234 @@ class InitializeEstimatorView(ProjectEstimatorMixin, View):
         )
 
 
+# ── Plant Costs Upload/Download ───────────────────────────────────
+
+
+class PlantCostUploadView(ProjectEstimatorMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_success_url(self):
+        return reverse(
+            "estimator:plant_costs", kwargs={"project_pk": self.kwargs["project_pk"]}
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["parent_template"] = "estimator/base_baseline_costs.html"
+        ctx["upload_title"] = "Upload Plant Costs"
+        ctx["upload_description"] = (
+            "Upload plant & equipment costs with hourly production and rates."
+        )
+        ctx["download_url_name"] = "estimator:download_plant_cost_template"
+        ctx["columns"] = [
+            ("Plant & Equipment", "Name of plant/equipment"),
+            ("Hourly Production", "Production output per hour"),
+            ("Hourly Rate", "Cost per hour (R)"),
+        ]
+        return ctx
+
+    def form_valid(self, form):
+        from .importers import PlantCostImporter
+
+        return _handle_upload(
+            self.request,
+            PlantCostImporter,
+            self.get_success_url(),
+            "Plant Costs",
+            project=self.get_project(),
+        )
+
+
+class DownloadPlantCostTemplateView(View):
+    def get(self, request, project_pk):
+        return _generate_template(
+            ["Plant & Equipment", "Hourly Production", "Hourly Rate"],
+            "PlantCost_Template.xlsx",
+        )
+
+
+# ── Plant Specs Upload/Download ───────────────────────────────────
+
+
+class PlantSpecUploadView(ProjectEstimatorMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_success_url(self):
+        return reverse(
+            "estimator:plant_spec_defs",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["parent_template"] = "estimator/base_plant_estimator.html"
+        ctx["upload_title"] = "Upload Plant Specifications"
+        ctx["upload_description"] = (
+            "Upload plant specification definitions with production factors."
+        )
+        ctx["download_url_name"] = "estimator:download_plant_spec_template"
+        ctx["columns"] = [
+            ("Section", "Section group"),
+            ("Trade Name", "Trade name"),
+            ("Plant Specification", "Specification name"),
+            ("Unit", "Unit of measure"),
+            ("Plant Type", "Name of plant (matches Plant Costs)"),
+            ("Daily Production", "Daily production output"),
+            ("Operator", "Operator factor"),
+            ("Site", "Site factor"),
+        ]
+        return ctx
+
+    def form_valid(self, form):
+        from .importers import PlantSpecImporter
+
+        return _handle_upload(
+            self.request,
+            PlantSpecImporter,
+            self.get_success_url(),
+            "Plant Specifications",
+            project=self.get_project(),
+        )
+
+
+class DownloadPlantSpecTemplateView(View):
+    def get(self, request, project_pk):
+        return _generate_template(
+            [
+                "Section",
+                "Trade Name",
+                "Plant Specification",
+                "Unit",
+                "Plant Type",
+                "Daily Production",
+                "Operator",
+                "Site",
+            ],
+            "PlantSpec_Template.xlsx",
+        )
+
+
+# ── Preliminary Costs Upload/Download ─────────────────────────────
+
+
+class PreliminaryCostUploadView(ProjectEstimatorMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_success_url(self):
+        return reverse(
+            "estimator:preliminary_costs",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["parent_template"] = "estimator/base_baseline_costs.html"
+        ctx["upload_title"] = "Upload Preliminary Costs"
+        ctx["upload_description"] = (
+            "Upload preliminary costs with type, amounts and time-based rates."
+        )
+        ctx["download_url_name"] = "estimator:download_preliminary_cost_template"
+        ctx["columns"] = [
+            ("Preliminary Type", "Type code (e.g. fixed_contractual, time_facilities)"),
+            ("Name", "Name of the preliminary item"),
+            ("Sum", "Sum/lump sum value"),
+            ("Amount", "Amount (fixed items)"),
+            ("Number/Month", "Quantity per month (time items)"),
+            ("Monthly Rate", "Monthly rate (time items)"),
+            ("Months", "Duration in months (time items)"),
+        ]
+        return ctx
+
+    def form_valid(self, form):
+        from .importers import PreliminaryCostImporter
+
+        return _handle_upload(
+            self.request,
+            PreliminaryCostImporter,
+            self.get_success_url(),
+            "Preliminary Costs",
+            project=self.get_project(),
+        )
+
+
+class DownloadPreliminaryCostTemplateView(View):
+    def get(self, request, project_pk):
+        return _generate_template(
+            [
+                "Preliminary Type",
+                "Name",
+                "Sum",
+                "Amount",
+                "Number/Month",
+                "Monthly Rate",
+                "Months",
+            ],
+            "PreliminaryCost_Template.xlsx",
+        )
+
+
+# ── Preliminary Specs Upload/Download ─────────────────────────────
+
+
+class PreliminarySpecUploadView(ProjectEstimatorMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_success_url(self):
+        return reverse(
+            "estimator:preliminary_spec_defs",
+            kwargs={"project_pk": self.kwargs["project_pk"]},
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["parent_template"] = "estimator/base_prelim_estimator.html"
+        ctx["upload_title"] = "Upload Preliminary Specifications"
+        ctx["upload_description"] = "Upload preliminary specification definitions."
+        ctx["download_url_name"] = "estimator:download_preliminary_spec_template"
+        ctx["columns"] = [
+            ("Section", "Section group"),
+            ("Trade Name", "Trade name"),
+            ("Name", "Specification name"),
+            ("Unit", "Unit of measure"),
+            ("Amount", "Amount (R)"),
+        ]
+        return ctx
+
+    def form_valid(self, form):
+        from .importers import PreliminarySpecImporter
+
+        return _handle_upload(
+            self.request,
+            PreliminarySpecImporter,
+            self.get_success_url(),
+            "Preliminary Specifications",
+            project=self.get_project(),
+        )
+
+
+class DownloadPreliminarySpecTemplateView(View):
+    def get(self, request, project_pk):
+        return _generate_template(
+            ["Section", "Trade Name", "Name", "Unit", "Preliminary Type"],
+            "PreliminarySpec_Template.xlsx",
+        )
+
+
 # ══════════════════════════════════════════════════════════════════════
 # System Library Views
 # ══════════════════════════════════════════════════════════════════════
 
 
-class SystemLibraryMixin(UserPassesTestMixin):
+class SystemLibraryMixin(UserPassesTestMixin, ContextMixin):
     """Mixin for system library views: requires staff."""
 
     def test_func(self):
-        return self.request.user.is_staff
+        request = getattr(self, "request", None)
+        return request and request.user.is_staff
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -2355,6 +4242,7 @@ class SysMaterialSpecListView(SystemLibraryMixin, ListView):
         context["names"] = (
             all_specs.values_list("name", flat=True).distinct().order_by("name")
         )
+        context["materials"] = SystemMaterial.objects.all().order_by("material_code")
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_name"] = self.request.GET.get("name", "")
@@ -2438,18 +4326,139 @@ class DownloadSystemMaterialSpecTemplateView(SystemLibraryMixin, View):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateSysSpecComponentView(View):
+    ALLOWED_FIELDS = {"qty_per_unit", "material", "label"}
+
     def post(self, request, pk):
         if not request.user.is_staff:
             return JsonResponse({"error": "Forbidden"}, status=403)
         comp = get_object_or_404(SystemSpecificationComponent, pk=pk)
-        data = json.loads(request.body)
-        field, value = data.get("field"), data.get("value")
-        if field != "qty_per_unit":
-            return JsonResponse({"error": "Invalid field"}, status=400)
-        comp.qty_per_unit = Decimal(value)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        try:
+            if field == "qty_per_unit":
+                comp.qty_per_unit = Decimal(str(value or 0))
+            elif field == "label":
+                comp.label = (value or "").strip()
+            else:  # material
+                if value in (None, "", 0, "0"):
+                    comp.material = None
+                else:
+                    material = SystemMaterial.objects.filter(pk=int(value)).first()
+                    if material is None:
+                        return JsonResponse({"error": "Material not found"}, status=404)
+                    comp.material = material
+                    if not comp.label:
+                        comp.label = material.material_code
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
         comp.save()
         spec = comp.specification
-        return JsonResponse({"ok": True, "rate_per_unit": str(spec.rate_per_unit)})
+        return JsonResponse(
+            {
+                "ok": True,
+                "qty_per_unit": str(round(comp.qty_per_unit, 4)),
+                "label": comp.label,
+                "material_id": comp.material_id,
+                "spec_id": spec.id,
+                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class AddSysSpecComponentView(View):
+    """AJAX endpoint to add a new component to a SystemSpecification."""
+
+    def post(self, request, pk):
+        if not request.user.is_staff:
+            return JsonResponse({"error": "Forbidden"}, status=403)
+        spec = get_object_or_404(SystemSpecification, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            data = {}
+
+        material_id = data.get("material")
+        label = (data.get("label") or "").strip()
+        qty_raw = data.get("qty_per_unit", 0)
+
+        material = None
+        if material_id not in (None, "", 0, "0"):
+            try:
+                material = SystemMaterial.objects.filter(pk=int(material_id)).first()
+            except (TypeError, ValueError):
+                material = None
+
+        if not label and material is not None:
+            label = material.material_code
+
+        try:
+            qty = Decimal(str(qty_raw or 0))
+        except Exception:
+            qty = Decimal("0")
+
+        next_order = (
+            spec.spec_components.aggregate(models.Max("sort_order"))["sort_order__max"]
+            or 0
+        ) + 1
+        comp = SystemSpecificationComponent.objects.create(
+            specification=spec,
+            material=material,
+            label=label,
+            qty_per_unit=qty,
+            sort_order=next_order,
+        )
+        return JsonResponse(
+            {
+                "ok": True,
+                "component": {
+                    "id": comp.id,
+                    "material_id": comp.material_id,
+                    "label": comp.label,
+                    "qty_per_unit": str(comp.qty_per_unit),
+                },
+                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeleteSysSpecComponentView(View):
+    """AJAX endpoint to delete a SystemSpecificationComponent."""
+
+    def post(self, request, pk):
+        if not request.user.is_staff:
+            return JsonResponse({"error": "Forbidden"}, status=403)
+        comp = get_object_or_404(SystemSpecificationComponent, pk=pk)
+        spec = comp.specification
+        comp.delete()
+        return JsonResponse(
+            {
+                "ok": True,
+                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeleteSystemSpecificationView(View):
+    """AJAX endpoint to delete a SystemSpecification (material spec)."""
+
+    def post(self, request, pk):
+        if not request.user.is_staff:
+            return JsonResponse({"error": "Forbidden"}, status=403)
+        spec = get_object_or_404(SystemSpecification, pk=pk)
+        spec.delete()
+        return JsonResponse({"ok": True})
 
 
 # ── System Labour Crews ───────────────────────────────────────────────
@@ -2587,6 +4596,7 @@ class SystemLabourSpecListView(SystemLibraryMixin, ListView):
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_name"] = self.request.GET.get("trade_name", "")
         context["f_name"] = self.request.GET.get("name", "")
+        context["crews"] = SystemLabourCrew.objects.all()
         return context
 
     def post(self, request, *args, **kwargs):
@@ -2601,11 +4611,16 @@ class SystemLabourSpecListView(SystemLibraryMixin, ListView):
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateSystemLabourSpecView(View):
     ALLOWED_FIELDS = {
-        "daily_production",
-        "team_mix",
-        "site_factor",
-        "tools_factor",
-        "leadership_factor",
+        "section": "str",
+        "trade_name": "str",
+        "name": "str",
+        "unit": "str",
+        "crew": "fk",
+        "daily_production": "decimal",
+        "team_mix": "decimal",
+        "site_factor": "decimal",
+        "tools_factor": "decimal",
+        "leadership_factor": "decimal",
     }
 
     def post(self, request, pk):
@@ -2616,7 +4631,21 @@ class UpdateSystemLabourSpecView(View):
         field, value = data.get("field"), data.get("value")
         if field not in self.ALLOWED_FIELDS:
             return JsonResponse({"error": "Invalid field"}, status=400)
-        setattr(ls, field, Decimal(value))
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(ls, field, Decimal(str(value)))
+            elif field_type == "fk":
+                if value == "" or value is None:
+                    ls.crew = None
+                else:
+                    ls.crew = get_object_or_404(SystemLabourCrew, pk=int(value))
+            else:
+                setattr(ls, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
         ls.save()
         return JsonResponse(
             {
@@ -2624,6 +4653,7 @@ class UpdateSystemLabourSpecView(View):
                 "daily_output": str(ls.daily_output),
                 "daily_cost": str(ls.daily_cost),
                 "rate_per_unit": str(ls.rate_per_unit),
+                "crew_type": ls.crew.crew_type if ls.crew else None,
             }
         )
 
@@ -2669,4 +4699,526 @@ class DownloadSystemLabourSpecTemplateView(SystemLibraryMixin, View):
                 "Leadership Factor",
             ],
             "system_labour_specs_template.xlsx",
+        )
+
+
+# ── System Plant Costs ─────────────────────────────────────────────
+
+
+class SystemPlantCostListView(SystemLibraryMixin, ListView):
+    model = SystemPlantCost
+    template_name = "estimator/system/plant_cost_list.html"
+    context_object_name = "plants"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", SystemPlantCostForm())
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = SystemPlantCostForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("estimator:sys_plant_costs")
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateSystemPlantCostView(SystemLibraryMixin, View):
+    ALLOWED_FIELDS = {
+        "name": "str",
+        "hourly_production": "decimal",
+        "hourly_rate": "decimal",
+    }
+
+    def post(self, request, pk):
+        item = get_object_or_404(SystemPlantCost, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse({"ok": True})
+
+
+class SystemPlantCostUploadView(SystemLibraryMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["upload_title"] = "Upload Plant Costs"
+        context["upload_description"] = (
+            "Upload plant & equipment costs with hourly production and rates."
+        )
+        context["parent_template"] = "estimator/system/base_system.html"
+        context["download_url_name"] = "estimator:sys_download_plant_cost_template"
+        return context
+
+    def form_valid(self, form):
+        from .importers import PlantCostImporter
+
+        return _handle_upload(
+            self.request,
+            PlantCostImporter,
+            "estimator:sys_plant_costs",
+            "Plant Costs",
+        )
+
+
+class DownloadSystemPlantCostTemplateView(SystemLibraryMixin, View):
+    def get(self, request):
+        return _generate_template(
+            ["Plant & Equipment", "Hourly Production", "Hourly Rate"],
+            "system_plant_costs_template.xlsx",
+        )
+
+
+# ── System Plant Specs ─────────────────────────────────────────────
+
+
+class SystemPlantSpecListView(SystemLibraryMixin, ListView):
+    model = SystemPlantSpecification
+    template_name = "estimator/system/plant_spec_list.html"
+    context_object_name = "plant_specs"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", SystemPlantSpecificationForm())
+        context["plants"] = SystemPlantCost.objects.all()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = SystemPlantSpecificationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("estimator:sys_plant_specs")
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateSystemPlantSpecView(SystemLibraryMixin, View):
+    ALLOWED_FIELDS = {
+        "section": "str",
+        "trade_name": "str",
+        "name": "str",
+        "unit": "str",
+        "daily_production": "decimal",
+        "operator_factor": "decimal",
+        "site_factor": "decimal",
+    }
+
+    def post(self, request, pk):
+        item = get_object_or_404(SystemPlantSpecification, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse(
+            {
+                "ok": True,
+                "daily_output": str(item.daily_output),
+                "daily_cost": str(item.daily_cost),
+                "rate_per_unit": str(item.rate_per_unit),
+            }
+        )
+
+
+class SystemPlantSpecUploadView(SystemLibraryMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["upload_title"] = "Upload Plant Specifications"
+        context["upload_description"] = (
+            "Upload plant specification definitions with production factors."
+        )
+        context["parent_template"] = "estimator/system/base_system.html"
+        context["download_url_name"] = "estimator:sys_download_plant_spec_template"
+        return context
+
+    def form_valid(self, form):
+        from .importers import PlantSpecImporter
+
+        return _handle_upload(
+            self.request,
+            PlantSpecImporter,
+            "estimator:sys_plant_specs",
+            "Plant Specifications",
+        )
+
+
+class DownloadSystemPlantSpecTemplateView(SystemLibraryMixin, View):
+    def get(self, request):
+        return _generate_template(
+            [
+                "Section",
+                "Trade Name",
+                "Plant Specification",
+                "Unit",
+                "Plant Type",
+                "Daily Production",
+                "Operator",
+                "Site",
+            ],
+            "system_plant_specs_template.xlsx",
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateSystemPlantSpecComponentView(SystemLibraryMixin, View):
+    """AJAX endpoint to update plant_type or hours on a SystemPlantSpecificationComponent."""
+
+    ALLOWED_FIELDS = {"plant_type", "hours"}
+
+    def post(self, request, pk):
+        comp = get_object_or_404(SystemPlantSpecificationComponent, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        try:
+            if field == "hours":
+                comp.hours = Decimal(str(value or 0))
+            else:
+                if value in (None, "", 0, "0"):
+                    comp.plant_type = None
+                else:
+                    comp.plant_type = SystemPlantCost.objects.filter(
+                        pk=int(value)
+                    ).first()
+                    if comp.plant_type is None:
+                        return JsonResponse(
+                            {"error": "Plant type not found"}, status=404
+                        )
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        comp.save()
+        spec = comp.specification
+        return JsonResponse(
+            {
+                "ok": True,
+                "daily_cost": str(spec.daily_cost),
+                "rate_per_unit": str(spec.rate_per_unit),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class AddSystemPlantSpecComponentView(SystemLibraryMixin, View):
+    """AJAX endpoint to add a new component to a SystemPlantSpecification."""
+
+    def post(self, request, pk):
+        spec = get_object_or_404(SystemPlantSpecification, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            data = {}
+
+        plant_type_id = data.get("plant_type")
+        hours_raw = data.get("hours", 0)
+
+        plant_type = None
+        if plant_type_id not in (None, "", 0, "0"):
+            try:
+                plant_type = SystemPlantCost.objects.filter(
+                    pk=int(plant_type_id)
+                ).first()
+            except (TypeError, ValueError):
+                plant_type = None
+
+        try:
+            hours = Decimal(str(hours_raw or 0))
+        except Exception:
+            hours = Decimal("0")
+
+        next_order = (
+            spec.components.aggregate(models.Max("sort_order"))["sort_order__max"] or 0
+        ) + 1
+        comp = SystemPlantSpecificationComponent.objects.create(
+            specification=spec,
+            plant_type=plant_type,
+            hours=hours,
+            sort_order=next_order,
+        )
+        return JsonResponse(
+            {
+                "ok": True,
+                "component": {
+                    "id": comp.id,
+                    "plant_type_id": comp.plant_type_id,
+                    "plant_type_name": comp.plant_type.name if comp.plant_type else "",
+                    "hours": str(comp.hours),
+                },
+                "daily_cost": str(spec.daily_cost),
+                "rate_per_unit": str(spec.rate_per_unit),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeleteSystemPlantSpecComponentView(SystemLibraryMixin, View):
+    """AJAX endpoint to delete a SystemPlantSpecificationComponent."""
+
+    def post(self, request, pk):
+        comp = get_object_or_404(SystemPlantSpecificationComponent, pk=pk)
+        spec = comp.specification
+        comp.delete()
+        return JsonResponse(
+            {
+                "ok": True,
+                "daily_cost": str(spec.daily_cost),
+                "rate_per_unit": str(spec.rate_per_unit),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeleteSystemPlantSpecificationView(SystemLibraryMixin, View):
+    """AJAX endpoint to delete a SystemPlantSpecification."""
+
+    def post(self, request, pk):
+        spec = get_object_or_404(SystemPlantSpecification, pk=pk)
+        spec.delete()
+        return JsonResponse({"ok": True})
+
+
+# ── System Preliminary Costs ──────────────────────────────────────
+
+
+class SystemPreliminaryCostListView(SystemLibraryMixin, ListView):
+    model = SystemPreliminaryCost
+    template_name = "estimator/system/preliminary_cost_list.html"
+    context_object_name = "preliminaries"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", SystemPreliminaryCostForm())
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = SystemPreliminaryCostForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("estimator:sys_preliminary_costs")
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateSystemPreliminaryCostView(SystemLibraryMixin, View):
+    ALLOWED_FIELDS = {
+        "name": "str",
+        "preliminary_type": "str",
+        "sum_value": "decimal",
+        "amount": "decimal",
+        "number_per_month": "decimal",
+        "monthly_rate": "decimal",
+        "months": "decimal",
+    }
+
+    def post(self, request, pk):
+        item = get_object_or_404(SystemPreliminaryCost, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse({"ok": True, "computed_amount": str(item.computed_amount)})
+
+
+class SystemPreliminaryCostUploadView(SystemLibraryMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["upload_title"] = "Upload Preliminary Costs"
+        context["upload_description"] = (
+            "Upload preliminary costs with type, amounts and time-based rates."
+        )
+        context["parent_template"] = "estimator/system/base_system.html"
+        context["download_url_name"] = (
+            "estimator:sys_download_preliminary_cost_template"
+        )
+        return context
+
+    def form_valid(self, form):
+        from .importers import PreliminaryCostImporter
+
+        return _handle_upload(
+            self.request,
+            PreliminaryCostImporter,
+            "estimator:sys_preliminary_costs",
+            "Preliminary Costs",
+        )
+
+
+class DownloadSystemPreliminaryCostTemplateView(SystemLibraryMixin, View):
+    def get(self, request):
+        return _generate_template(
+            [
+                "Preliminary Type",
+                "Name",
+                "Sum",
+                "Amount",
+                "Number/Month",
+                "Monthly Rate",
+                "Months",
+            ],
+            "system_preliminary_costs_template.xlsx",
+        )
+
+
+# ── System Preliminary Specs ──────────────────────────────────────
+
+
+class SystemPreliminarySpecListView(SystemLibraryMixin, ListView):
+    model = SystemPreliminarySpecification
+    template_name = "estimator/system/preliminary_spec_list.html"
+    context_object_name = "preliminary_specs"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = context.get("form", SystemPreliminarySpecificationForm())
+        context["preliminary_type_choices"] = (
+            SystemPreliminaryCost.PRELIMINARY_TYPE_CHOICES
+        )
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = SystemPreliminarySpecificationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("estimator:sys_preliminary_specs")
+        self.object_list = self.get_queryset()
+        return self.render_to_response(self.get_context_data(form=form))
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class UpdateSystemPreliminarySpecView(SystemLibraryMixin, View):
+    ALLOWED_FIELDS = {
+        "section": "str",
+        "trade_name": "str",
+        "name": "str",
+        "unit": "str",
+        "preliminary_type": "str",
+    }
+
+    def post(self, request, pk):
+        item = get_object_or_404(SystemPreliminarySpecification, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        field_type = self.ALLOWED_FIELDS[field]
+        try:
+            if field_type == "decimal":
+                setattr(item, field, Decimal(str(value)))
+            else:
+                setattr(item, field, str(value))
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
+        item.save()
+        return JsonResponse({"ok": True, "amount": str(item.amount)})
+
+
+class SystemPreliminarySpecUploadView(SystemLibraryMixin, FormView):
+    template_name = "estimator/upload_generic.html"
+    form_class = ExcelImportForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["upload_title"] = "Upload Preliminary Specifications"
+        context["upload_description"] = "Upload preliminary specification definitions."
+        context["parent_template"] = "estimator/system/base_system.html"
+        context["download_url_name"] = (
+            "estimator:sys_download_preliminary_spec_template"
+        )
+        return context
+
+    def form_valid(self, form):
+        from .importers import PreliminarySpecImporter
+
+        return _handle_upload(
+            self.request,
+            PreliminarySpecImporter,
+            "estimator:sys_preliminary_specs",
+            "Preliminary Specifications",
+        )
+
+
+class DownloadSystemPreliminarySpecTemplateView(SystemLibraryMixin, View):
+    def get(self, request):
+        return _generate_template(
+            ["Section", "Trade Name", "Name", "Unit", "Preliminary Type"],
+            "system_preliminary_specs_template.xlsx",
         )
