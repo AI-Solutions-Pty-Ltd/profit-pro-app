@@ -43,7 +43,7 @@ jobs:
           DJANGO_SETTINGS_MODULE: settings.local
         run: |
           echo "🔍 Checking for Django migration conflicts..."
-          python manage.py check
+          python manage.py migrate --check
 
 
       # - name: Run tests
