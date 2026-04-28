@@ -5,6 +5,7 @@ from django.urls import include, path
 # Hard imports for all URL modules
 from ..categories.category_urls import urlpatterns as category_urls
 from ..categories.discipline_urls import urlpatterns as discipline_urls
+from ..categories.stage_urls import urlpatterns as stage_urls
 from ..categories.subcategory_urls import urlpatterns as subcategory_urls
 from ..company.company_urls import urlpatterns as company_urls
 from ..documents.document_urls import urlpatterns as document_urls
@@ -37,6 +38,7 @@ urlpatterns = [
     path("project-categories/", include(category_urls)),
     path("project-subcategories/", include(subcategory_urls)),
     path("project-discipline/", include(discipline_urls)),
+    path("project-stage/", include(stage_urls)),
     path("project-role/", include(project_role_urls)),
     path("company/", include(company_urls)),
     path("compliance/", include(compliance_urls)),

@@ -1,5 +1,7 @@
 """Forms for Project app."""
 
+from typing import Any, cast
+
 from django import forms
 from django.db.models import QuerySet
 
@@ -9,18 +11,26 @@ from app.Project.models import (
     Project,
     ProjectCategory,
     ProjectDiscipline,
+    ProjectStage,
 )
 
 
 class BasicProjectCreateForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        area_field = cast(forms.ModelChoiceField, self.fields["area"])
+        cast(Any, area_field).label_from_instance = lambda obj: (
+            f"{obj.province} - {obj.municipality_name}"
+        )
+
     class Meta:
         model = Project
         fields = [
             "name",
             "project_category",
             "area",
-            "project_discipline",
             "project_stage",
+            "project_discipline",
         ]
         widgets = {
             "name": forms.TextInput(
@@ -34,6 +44,13 @@ class BasicProjectCreateForm(forms.ModelForm):
 class ProjectForm(forms.ModelForm):
     """Form for creating and updating projects."""
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        area_field = cast(forms.ModelChoiceField, self.fields["area"])
+        cast(Any, area_field).label_from_instance = lambda obj: (
+            f"{obj.province} - {obj.municipality_name}"
+        )
+
     class Meta:
         model = Project
         fields = [
@@ -42,8 +59,8 @@ class ProjectForm(forms.ModelForm):
             "logo",
             "project_category",
             "area",
-            "project_discipline",
             "project_stage",
+            "project_discipline",
             "start_date",
             "end_date",
             "contract_number",
@@ -100,6 +117,7 @@ class ProjectForm(forms.ModelForm):
             "project_category": "Sector",
             "area": "Municipality",
             "project_stage": "Project Stage",
+            "project_discipline": "Discipline",
             "contract_number": "Payment Certificate Contract Number",
             "contract_clause": "Payment Certificate Contract Clause",
             "bank_account_name": "Account Name",
@@ -113,6 +131,7 @@ class ProjectForm(forms.ModelForm):
             "project_category": "Select the project sector",
             "area": "Select the project area (Municipality)",
             "project_stage": "Select the project stage",
+            "project_discipline": "Select the project discipline",
         }
 
     def clean(self):
@@ -165,6 +184,17 @@ class ProjectFilterForm(forms.Form):
         required=False,
         label="Disciplines",
         empty_label="All Disciplines",
+        widget=forms.Select(
+            attrs={
+                "onchange": "this.form.submit()",
+            }
+        ),
+    )
+    project_stage = forms.ModelChoiceField(
+        queryset=ProjectStage.objects.all(),
+        required=False,
+        label="Project Stages",
+        empty_label="All Project Stages",
         widget=forms.Select(
             attrs={
                 "onchange": "this.form.submit()",
@@ -240,6 +270,7 @@ class ProjectFilterForm(forms.Form):
         category_queryset: QuerySet[ProjectCategory] | None = None,
         area_queryset: QuerySet[Municipality] | None = None,
         discipline_queryset: QuerySet[ProjectDiscipline] | None = None,
+        stage_queryset: QuerySet[ProjectStage] | None = None,
         **kwargs,
     ):
         """Initialize filter form with user-specific querysets."""
@@ -260,3 +291,10 @@ class ProjectFilterForm(forms.Form):
             self.fields["area"].queryset = area_queryset  # type: ignore
         if discipline_queryset is not None:
             self.fields["project_discipline"].queryset = discipline_queryset  # type: ignore
+        if stage_queryset is not None:
+            self.fields["project_stage"].queryset = stage_queryset  # type: ignore
+
+        area_field = cast(forms.ModelChoiceField, self.fields["area"])
+        cast(Any, area_field).label_from_instance = lambda obj: (
+            f"{obj.province} - {obj.municipality_name}"
+        )
