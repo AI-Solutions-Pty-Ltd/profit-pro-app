@@ -15,7 +15,7 @@ from app.core.Utilities.models import BaseModel, sum_queryset
 from app.Project.categories.category_models import (
     ProjectCategory,
 )
-from app.Project.models import Company, ProjectDiscipline
+from app.Project.models import Company, ProjectDiscipline, ProjectStage
 
 if TYPE_CHECKING:
     from app.Account.models import Account
@@ -217,6 +217,14 @@ class Project(BaseModel):
         blank=True,
         related_name="projects",
         help_text="Project discipline",
+    )
+    project_stage = models.ForeignKey(
+        ProjectStage,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="projects",
+        help_text="Project stage",
     )
 
     # Payment Terms

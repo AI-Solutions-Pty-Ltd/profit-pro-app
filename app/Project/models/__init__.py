@@ -1,6 +1,7 @@
 from app.Project.categories.category_models import (
     ProjectCategory,
     ProjectDiscipline,
+    ProjectStage,
     ProjectSubCategory,
 )
 from app.Project.company.company_models import Company
@@ -82,6 +83,7 @@ __all__ = [
     "Discipline",
     "ProjectCategory",
     "ProjectDiscipline",
+    "ProjectStage",
     "ProjectSubCategory",
     "ProjectDocument",
     "ProjectImpact",

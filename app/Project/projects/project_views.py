@@ -1,7 +1,8 @@
 """Views for Project app."""
 
 import json
-from datetime import datetime
+from datetime import date, datetime
+from typing import cast
 
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
@@ -25,7 +26,11 @@ from app.BillOfQuantities.models import (
     PaymentCertificate,
     Structure,
 )
-from app.core.Utilities.dates import get_end_of_month, get_month_range
+from app.core.Utilities.dates import (
+    get_beginning_of_month,
+    get_end_of_month,
+    get_month_range,
+)
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import (
     UserHasProjectRoleGenericMixin,
@@ -74,7 +79,7 @@ class ProjectListView(
 
         form_data = request.GET or {}
 
-        user: Account = request.user
+        user = cast(Account, request.user)
         if user.is_superuser or user.is_staff:
             projects = Project.objects.all().order_by("-created_at")
         else:
@@ -127,7 +132,7 @@ class ProjectListView(
     def get_queryset(self: "ProjectListView") -> QuerySet[Project]:
         """Get filtered projects for dashboard view."""
         # Ensure filter_form exists and is valid
-        user: Account = self.request.user  # type: ignore
+        user = cast(Account, self.request.user)
         if user.is_superuser or user.is_staff:
             projects = Project.objects.all().order_by("-created_at")
         else:
@@ -274,7 +279,7 @@ class ProjectDashboardView(ProjectMixin, DetailView):
     def _get_financial_comparison_data(
         self,
         project: Project,
-        current_month: datetime,
+        current_month: datetime | date,
         term_window: str,
     ) -> dict:
         labels: list[str] = []
@@ -282,22 +287,25 @@ class ProjectDashboardView(ProjectMixin, DetailView):
         forecast_values: list[float] = []
         certified_values: list[float] = []
 
+        current_month_dt = get_beginning_of_month(current_month)
         if term_window == "past_3":
-            start_month = current_month - relativedelta(months=2)
-            end_month = current_month
+            start_month = current_month_dt - relativedelta(months=2)
+            end_month = current_month_dt
         elif term_window == "next_3":
-            start_month = current_month
-            end_month = current_month + relativedelta(months=2)
+            start_month = current_month_dt
+            end_month = current_month_dt + relativedelta(months=2)
         else:
-            start_month = current_month
-            end_month = current_month
+            start_month = current_month_dt
+            end_month = current_month_dt
 
         months = get_month_range(start_month, end_month)
 
         project_start = (
-            project.start_date.replace(day=1) if project.start_date else None
+            get_beginning_of_month(project.start_date) if project.start_date else None
         )
-        project_end = project.end_date.replace(day=1) if project.end_date else None
+        project_end = (
+            get_beginning_of_month(project.end_date) if project.end_date else None
+        )
 
         if project_start or project_end:
             months = [
@@ -308,9 +316,9 @@ class ProjectDashboardView(ProjectMixin, DetailView):
             ]
 
         if not months and project_start and project_end:
-            if current_month < project_start:
+            if current_month_dt < project_start:
                 months = [project_start]
-            elif current_month > project_end:
+            elif current_month_dt > project_end:
                 months = [project_end]
 
         for month in months:
