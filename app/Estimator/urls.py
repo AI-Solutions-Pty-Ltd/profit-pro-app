@@ -642,6 +642,21 @@ urlpatterns = [
         name="sys_update_spec_component",
     ),
     path(
+        "system/api/spec/<int:pk>/components/add/",
+        views.AddSysSpecComponentView.as_view(),
+        name="sys_add_spec_component",
+    ),
+    path(
+        "system/api/spec-component/<int:pk>/delete/",
+        views.DeleteSysSpecComponentView.as_view(),
+        name="sys_delete_spec_component",
+    ),
+    path(
+        "system/api/spec/<int:pk>/delete/",
+        views.DeleteSystemSpecificationView.as_view(),
+        name="sys_delete_specification",
+    ),
+    path(
         "system/api/labour-crew/<int:pk>/update/",
         views.UpdateSystemLabourCrewView.as_view(),
         name="sys_update_labour_crew",
@@ -740,6 +755,11 @@ urlpatterns = [
         "system/api/plant-spec-component/<int:pk>/delete/",
         views.DeleteSystemPlantSpecComponentView.as_view(),
         name="sys_delete_plant_spec_component",
+    ),
+    path(
+        "system/api/plant-spec/<int:pk>/delete/",
+        views.DeleteSystemPlantSpecificationView.as_view(),
+        name="sys_delete_plant_specification",
     ),
     path(
         "system/api/preliminary-cost/<int:pk>/update/",
