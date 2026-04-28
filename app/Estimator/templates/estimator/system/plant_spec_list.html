@@ -222,6 +222,7 @@
             </table>
         </div>
     </div>
+    {% include "estimator/_pagination.html" %}
     <script>
 (function() {
     const plantOptions = `<option value="">—</option>{% for p in plants %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}`;

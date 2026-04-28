@@ -292,6 +292,7 @@
             </table>
         </div>
     </div>
+    {% include "estimator/_pagination.html" %}
     <script>
 (function() {
     const crewOptions = `<option value="">-</option>{% for c in crews %}<option value="{{ c.id }}">{{ c.crew_type }}</option>{% endfor %}`;

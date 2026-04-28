@@ -91,6 +91,13 @@ class ProjectEstimatorMixin(ContextMixin):
         return context
 
 
+def _pagination_query_params(request):
+    """Return GET params (excluding `page`) urlencoded for pagination links."""
+    params = request.GET.copy()
+    params.pop("page", None)
+    return params.urlencode()
+
+
 class ProjectAssumptionsView(ProjectEstimatorMixin, TemplateView):
     template_name = "estimator/project_assumptions.html"
 
@@ -546,6 +553,7 @@ class MaterialSpecListView(ProjectEstimatorMixin, ListView):
     model = ProjectSpecification
     template_name = "estimator/material_spec_list.html"
     context_object_name = "specs"
+    paginate_by = 50
 
     def get_queryset(self):
         project = self.get_project()
@@ -598,6 +606,7 @@ class MaterialSpecListView(ProjectEstimatorMixin, ListView):
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_name"] = self.request.GET.get("name", "")
+        context["query_params"] = _pagination_query_params(self.request)
 
         return context
 
@@ -2766,6 +2775,7 @@ class LabourSpecDefListView(ProjectEstimatorMixin, ListView):
     model = ProjectLabourSpecification
     template_name = "estimator/labour_spec_def_list.html"
     context_object_name = "labour_specs"
+    paginate_by = 50
 
     def get_queryset(self):
         project = self.get_project()
@@ -2813,6 +2823,7 @@ class LabourSpecDefListView(ProjectEstimatorMixin, ListView):
         context["f_trade_name"] = self.request.GET.get("trade_name", "")
         context["f_name"] = self.request.GET.get("name", "")
         context["crews"] = ProjectLabourCrew.objects.filter(project=project)
+        context["query_params"] = _pagination_query_params(self.request)
 
         return context
 
@@ -2937,6 +2948,7 @@ class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
     model = ProjectPlantSpecification
     template_name = "estimator/plant_spec_def_list.html"
     context_object_name = "plant_specs"
+    paginate_by = 50
 
     def get_queryset(self):
         project = self.get_project()
@@ -2971,6 +2983,7 @@ class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
         context["plants"] = ProjectPlantCost.objects.filter(project=project)
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_name"] = self.request.GET.get("trade_name", "")
+        context["query_params"] = _pagination_query_params(self.request)
         return context
 
     def post(self, request, *args, **kwargs):
@@ -4203,6 +4216,7 @@ class SysMaterialSpecListView(SystemLibraryMixin, ListView):
     model = SystemSpecification
     template_name = "estimator/system/material_spec_list.html"
     context_object_name = "specs"
+    paginate_by = 50
 
     def get_queryset(self):
         qs = (
@@ -4246,6 +4260,7 @@ class SysMaterialSpecListView(SystemLibraryMixin, ListView):
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_name"] = self.request.GET.get("name", "")
+        context["query_params"] = _pagination_query_params(self.request)
         return context
 
     def post(self, request, *args, **kwargs):
@@ -4560,6 +4575,7 @@ class SystemLabourSpecListView(SystemLibraryMixin, ListView):
     model = SystemLabourSpecification
     template_name = "estimator/system/labour_spec_list.html"
     context_object_name = "labour_specs"
+    paginate_by = 50
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("crew")
@@ -4597,6 +4613,7 @@ class SystemLabourSpecListView(SystemLibraryMixin, ListView):
         context["f_trade_name"] = self.request.GET.get("trade_name", "")
         context["f_name"] = self.request.GET.get("name", "")
         context["crews"] = SystemLabourCrew.objects.all()
+        context["query_params"] = _pagination_query_params(self.request)
         return context
 
     def post(self, request, *args, **kwargs):
@@ -4798,11 +4815,16 @@ class SystemPlantSpecListView(SystemLibraryMixin, ListView):
     model = SystemPlantSpecification
     template_name = "estimator/system/plant_spec_list.html"
     context_object_name = "plant_specs"
+    paginate_by = 50
+
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related("components__plant_type")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", SystemPlantSpecificationForm())
         context["plants"] = SystemPlantCost.objects.all()
+        context["query_params"] = _pagination_query_params(self.request)
         return context
 
     def post(self, request, *args, **kwargs):
