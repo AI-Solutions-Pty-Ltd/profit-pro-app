@@ -4242,6 +4242,7 @@ class SysMaterialSpecListView(SystemLibraryMixin, ListView):
         context["names"] = (
             all_specs.values_list("name", flat=True).distinct().order_by("name")
         )
+        context["materials"] = SystemMaterial.objects.all().order_by("material_code")
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_name"] = self.request.GET.get("name", "")
@@ -4325,18 +4326,139 @@ class DownloadSystemMaterialSpecTemplateView(SystemLibraryMixin, View):
 
 @method_decorator(csrf_exempt, name="dispatch")
 class UpdateSysSpecComponentView(View):
+    ALLOWED_FIELDS = {"qty_per_unit", "material", "label"}
+
     def post(self, request, pk):
         if not request.user.is_staff:
             return JsonResponse({"error": "Forbidden"}, status=403)
         comp = get_object_or_404(SystemSpecificationComponent, pk=pk)
-        data = json.loads(request.body)
-        field, value = data.get("field"), data.get("value")
-        if field != "qty_per_unit":
-            return JsonResponse({"error": "Invalid field"}, status=400)
-        comp.qty_per_unit = Decimal(value)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+        field = data.get("field")
+        value = data.get("value")
+        if field not in self.ALLOWED_FIELDS:
+            return JsonResponse({"error": f'Field "{field}" not allowed'}, status=400)
+
+        try:
+            if field == "qty_per_unit":
+                comp.qty_per_unit = Decimal(str(value or 0))
+            elif field == "label":
+                comp.label = (value or "").strip()
+            else:  # material
+                if value in (None, "", 0, "0"):
+                    comp.material = None
+                else:
+                    material = SystemMaterial.objects.filter(pk=int(value)).first()
+                    if material is None:
+                        return JsonResponse({"error": "Material not found"}, status=404)
+                    comp.material = material
+                    if not comp.label:
+                        comp.label = material.material_code
+        except Exception:
+            return JsonResponse({"error": "Invalid value"}, status=400)
+
         comp.save()
         spec = comp.specification
-        return JsonResponse({"ok": True, "rate_per_unit": str(spec.rate_per_unit)})
+        return JsonResponse(
+            {
+                "ok": True,
+                "qty_per_unit": str(round(comp.qty_per_unit, 4)),
+                "label": comp.label,
+                "material_id": comp.material_id,
+                "spec_id": spec.id,
+                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class AddSysSpecComponentView(View):
+    """AJAX endpoint to add a new component to a SystemSpecification."""
+
+    def post(self, request, pk):
+        if not request.user.is_staff:
+            return JsonResponse({"error": "Forbidden"}, status=403)
+        spec = get_object_or_404(SystemSpecification, pk=pk)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            data = {}
+
+        material_id = data.get("material")
+        label = (data.get("label") or "").strip()
+        qty_raw = data.get("qty_per_unit", 0)
+
+        material = None
+        if material_id not in (None, "", 0, "0"):
+            try:
+                material = SystemMaterial.objects.filter(pk=int(material_id)).first()
+            except (TypeError, ValueError):
+                material = None
+
+        if not label and material is not None:
+            label = material.material_code
+
+        try:
+            qty = Decimal(str(qty_raw or 0))
+        except Exception:
+            qty = Decimal("0")
+
+        next_order = (
+            spec.spec_components.aggregate(models.Max("sort_order"))["sort_order__max"]
+            or 0
+        ) + 1
+        comp = SystemSpecificationComponent.objects.create(
+            specification=spec,
+            material=material,
+            label=label,
+            qty_per_unit=qty,
+            sort_order=next_order,
+        )
+        return JsonResponse(
+            {
+                "ok": True,
+                "component": {
+                    "id": comp.id,
+                    "material_id": comp.material_id,
+                    "label": comp.label,
+                    "qty_per_unit": str(comp.qty_per_unit),
+                },
+                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeleteSysSpecComponentView(View):
+    """AJAX endpoint to delete a SystemSpecificationComponent."""
+
+    def post(self, request, pk):
+        if not request.user.is_staff:
+            return JsonResponse({"error": "Forbidden"}, status=403)
+        comp = get_object_or_404(SystemSpecificationComponent, pk=pk)
+        spec = comp.specification
+        comp.delete()
+        return JsonResponse(
+            {
+                "ok": True,
+                "spec_rate_per_unit": str(round(spec.rate_per_unit, 2)),
+            }
+        )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeleteSystemSpecificationView(View):
+    """AJAX endpoint to delete a SystemSpecification (material spec)."""
+
+    def post(self, request, pk):
+        if not request.user.is_staff:
+            return JsonResponse({"error": "Forbidden"}, status=403)
+        spec = get_object_or_404(SystemSpecification, pk=pk)
+        spec.delete()
+        return JsonResponse({"ok": True})
 
 
 # ── System Labour Crews ───────────────────────────────────────────────
@@ -4893,6 +5015,16 @@ class DeleteSystemPlantSpecComponentView(SystemLibraryMixin, View):
                 "rate_per_unit": str(spec.rate_per_unit),
             }
         )
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class DeleteSystemPlantSpecificationView(SystemLibraryMixin, View):
+    """AJAX endpoint to delete a SystemPlantSpecification."""
+
+    def post(self, request, pk):
+        spec = get_object_or_404(SystemPlantSpecification, pk=pk)
+        spec.delete()
+        return JsonResponse({"ok": True})
 
 
 # ── System Preliminary Costs ──────────────────────────────────────
