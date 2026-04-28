@@ -1,8 +1,10 @@
 """Views for Project app."""
 
 import json
-from datetime import datetime
+from datetime import date, datetime
+from typing import cast
 
+from dateutil.relativedelta import relativedelta
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q, QuerySet, Sum
@@ -24,7 +26,11 @@ from app.BillOfQuantities.models import (
     PaymentCertificate,
     Structure,
 )
-from app.core.Utilities.dates import get_end_of_month, get_previous_n_months
+from app.core.Utilities.dates import (
+    get_beginning_of_month,
+    get_end_of_month,
+    get_month_range,
+)
 from app.core.Utilities.mixins import BreadcrumbItem, BreadcrumbMixin
 from app.core.Utilities.permissions import (
     UserHasProjectRoleGenericMixin,
@@ -73,7 +79,7 @@ class ProjectListView(
 
         form_data = request.GET or {}
 
-        user: Account = request.user
+        user = cast(Account, request.user)
         if user.is_superuser or user.is_staff:
             projects = Project.objects.all().order_by("-created_at")
         else:
@@ -126,7 +132,7 @@ class ProjectListView(
     def get_queryset(self: "ProjectListView") -> QuerySet[Project]:
         """Get filtered projects for dashboard view."""
         # Ensure filter_form exists and is valid
-        user: Account = self.request.user  # type: ignore
+        user = cast(Account, self.request.user)
         if user.is_superuser or user.is_staff:
             projects = Project.objects.all().order_by("-created_at")
         else:
@@ -251,8 +257,17 @@ class ProjectDashboardView(ProjectMixin, DetailView):
         context["current_spi"] = project.get_schedule_performance_index(current_date)
         context["current_date"] = current_date
 
-        # Add financial comparison chart data
-        financial_data = self._get_financial_comparison_data(project)
+        term_window = self.request.GET.get("term_window") or "current"
+        context["term_window"] = term_window
+
+        current_month = current_date.replace(day=1)
+        context["current_term_label"] = current_month.strftime("%b %Y")
+
+        financial_data = self._get_financial_comparison_data(
+            project=project,
+            current_month=current_month,
+            term_window=term_window,
+        )
         context["financial_labels"] = json.dumps(financial_data["labels"])
         context["planned_values"] = json.dumps(financial_data["planned_values"])
         context["forecast_values"] = json.dumps(financial_data["forecast_values"])
@@ -261,54 +276,71 @@ class ProjectDashboardView(ProjectMixin, DetailView):
 
         return context
 
-    def _get_financial_comparison_data(self, project: Project) -> dict:
-        """Generate monthly Planned Value, Forecast, and Cumulative Certified data.
+    def _get_financial_comparison_data(
+        self,
+        project: Project,
+        current_month: datetime | date,
+        term_window: str,
+    ) -> dict:
+        labels: list[str] = []
+        planned_values: list[float] = []
+        forecast_values: list[float] = []
+        certified_values: list[float] = []
 
-        Chart is bounded by project start_date and end_date, showing up to 12 months.
-        """
-        labels = []
-        planned_values = []
-        forecast_values = []
-        certified_values = []
+        current_month_dt = get_beginning_of_month(current_month)
+        if term_window == "past_3":
+            start_month = current_month_dt - relativedelta(months=2)
+            end_month = current_month_dt
+        elif term_window == "next_3":
+            start_month = current_month_dt
+            end_month = current_month_dt + relativedelta(months=2)
+        else:
+            start_month = current_month_dt
+            end_month = current_month_dt
 
-        if not project.start_date or not project.end_date:
-            # No project dates set, return empty data
-            return {
-                "labels": [],
-                "planned_values": [],
-                "forecast_values": [],
-                "certified_values": [],
-            }
+        months = get_month_range(start_month, end_month)
 
-        # Normalize to first of month
-        project_start = project.start_date.replace(day=1)
-        project_end = project.end_date.replace(day=1)
+        project_start = (
+            get_beginning_of_month(project.start_date) if project.start_date else None
+        )
+        project_end = (
+            get_beginning_of_month(project.end_date) if project.end_date else None
+        )
 
-        # Generate data for each month in the range (oldest to newest)
-        for current_month in get_previous_n_months(
-            starting_date=project_start, end_cap=project_end
-        ):
-            labels.append(current_month.strftime("%b %Y"))
+        if project_start or project_end:
+            months = [
+                m
+                for m in months
+                if (project_start is None or m >= project_start)
+                and (project_end is None or m <= project_end)
+            ]
+
+        if not months and project_start and project_end:
+            if current_month_dt < project_start:
+                months = [project_start]
+            elif current_month_dt > project_end:
+                months = [project_end]
+
+        for month in months:
+            labels.append(month.strftime("%b %Y"))
 
             # Get planned value for this month
             planned_value = PlannedValue.objects.filter(
                 project=project,
-                period__year=current_month.year,
-                period__month=current_month.month,
+                period__year=month.year,
+                period__month=month.month,
             ).first()
             planned_values.append(float(planned_value.value) if planned_value else 0)
 
-            # Get forecast for this month
             forecast = Forecast.objects.filter(
                 project=project,
-                period__year=current_month.year,
-                period__month=current_month.month,
+                period__year=month.year,
+                period__month=month.month,
                 status=Forecast.Status.APPROVED,
             ).first()
             forecast_values.append(float(forecast.total_forecast) if forecast else 0)
 
-            # Get cumulative certified up to end of this month
-            end_of_month = get_end_of_month(current_month)
+            end_of_month = get_end_of_month(month)
             cumulative_certified = ActualTransaction.objects.filter(
                 line_item__project=project,
                 payment_certificate__status=PaymentCertificate.Status.APPROVED,
