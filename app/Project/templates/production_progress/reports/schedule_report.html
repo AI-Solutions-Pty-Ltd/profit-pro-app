@@ -9,11 +9,13 @@
         <!-- Header -->
         <div class="flex flex-col gap-4 mb-8 md:flex-row md:items-center md:justify-between">
             <div>
-                <a href="{% if company %}{% url 'project:company-management' company.pk %}{% else %}{% url 'project:company-management' project.pk %}{% endif %}"
-                   class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ransition-all hover:bg-gray-50">
-                    {% heroicon_outline "chevron-left" class="mr-2 w-4 h-4" %}
-                    Back to Management
-                </a>
+                <button onclick="window.history.back()"
+                        class="inline-flex items-center text-sm font-semibold text-gray-500 transition-all hover:text-indigo-600 group">
+                    <div class="p-1.5 mr-2.5 bg-gray-100 rounded-lg transition-colors group-hover:bg-indigo-50">
+                        {% heroicon_outline "arrow-left" size="16" %}
+                    </div>
+                    Back
+                </button>
                 <h1 class="text-2xl font-bold tracking-tight text-gray-900">Production Schedule Report</h1>
                 <p class="text-sm text-gray-500">Live visual timeline combining project plan with current performance forecasts.</p>
             </div>
