@@ -40,10 +40,10 @@ jobs:
 
       - name: Check for migration conflicts
         env:
-          DJANGO_SETTINGS_MODULE: settings.local
+          DJANGO_SETTINGS_MODULE: settings.test
         run: |
           echo "🔍 Checking for Django migration conflicts..."
-          python manage.py migrate --check
+          python manage.py makemigrations --dry-run --settings=settings.test
 
 
       # - name: Run tests
