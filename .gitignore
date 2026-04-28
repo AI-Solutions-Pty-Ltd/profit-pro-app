@@ -221,3 +221,4 @@ media
 .agents/rules/
 .DS_Store
 .agents/rules/
+test_db.sqlite3
