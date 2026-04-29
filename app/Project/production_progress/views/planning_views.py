@@ -1018,7 +1018,7 @@ class ProductionCashflowForecastView(
 ):
     """Renders a dedicated Cashflow Forecast Dashboard with S-Curve and KPIs."""
 
-    template_name = "production_progress/planning/cashflow_forecast.html"
+    template_name = "production_progress/reports/cashflow_forecast.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_context_data(self, **kwargs):

@@ -67,3 +67,15 @@ GENERAL FEEDBACK
 6. Link Discipline to Levels
    a. We need the ability to discipline to each level 1 and the lowest level (2 or 3)
    b. I think discipline should be set in the setup and added as dropdowns to the respective levels.
+
+ESTIMATOR PERFORMANCE
+
+1. [DONE] Apply the lazy-options pattern to plant + labour spec def pages (project + system equivalents).
+2. [DONE] Material Calculator N+1 — dropped overriding `.select_related("material")` in view loop and in model `components` / `rate_per_unit` properties so prefetch is reused. Verified 3 queries for the page regardless of spec count.
+3. [DONE] Pagination — added `paginate_by = 50` to the six spec ListViews (project + system × material/labour/plant), shared `_pagination.html` partial, `query_params` helper preserves filters across page nav. Calculator TemplateViews skipped for now (filters mitigate; lazy-options + N+1 fixes already help). Output BoQ tracked separately in #4.
+4. Output BoQ (Project Estimator dashboard) — biggest stress page (~2000 rows × 16 cols × inline editors). Pagination or virtual scrolling here likely matters most for power users.
+5. Reports (material_components_list, plant_components_list, etc.) — currently aggregate over all BOQ items in Python. Push the aggregation into the DB with `.values().annotate(Sum())` for larger projects.
+6. Composite indexes (only when data grows further):
+   a. BOQItem(project_id, is_section_header, specification_id) — covers the dominant filter combo
+   b. BOQItem(project_id, section) — only if section filtering becomes hot
+   Skip for now — current single-column FK indexes are sufficient at present row counts.

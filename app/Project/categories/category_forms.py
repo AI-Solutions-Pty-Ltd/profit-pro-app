@@ -5,6 +5,7 @@ from django import forms
 from app.Project.models import (
     ProjectCategory,
     ProjectDiscipline,
+    ProjectStage,
     ProjectSubCategory,
 )
 
@@ -86,5 +87,32 @@ class ProjectDisciplineForm(forms.ModelForm):
         }
         labels = {
             "name": "Discipline Name",
+            "description": "Description (Optional)",
+        }
+
+
+class ProjectStageForm(forms.ModelForm):
+    """Form for creating and updating project stages."""
+
+    class Meta:
+        model = ProjectStage
+        fields = ["name", "description"]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Enter project stage name (e.g., Planning, Design, Construction)",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm",
+                    "placeholder": "Optional description of this project stage",
+                    "rows": 3,
+                }
+            ),
+        }
+        labels = {
+            "name": "Project Stage Name",
             "description": "Description (Optional)",
         }
