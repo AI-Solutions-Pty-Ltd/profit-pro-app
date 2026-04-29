@@ -180,8 +180,14 @@ class FinancialCalculationMixin:
         actual_cogs_this_month = get_tracker_totals(start=this_month_start, code=cos)
         actual_opex_this_month = get_tracker_totals(start=this_month_start, code=opex)
 
-        planned_cogs_to_date = planned_revenue_to_date * Decimal("0.60")
-        planned_opex_to_date = planned_revenue_to_date * Decimal("0.12")
+        # Use Baseline Assumptions for planned values
+        baseline = self.get_baseline_assumptions()
+        planned_cogs_to_date = actual_revenue_to_date * Decimal(
+            str(baseline["cost_of_sales_percent"] / 100)
+        )
+        planned_opex_to_date = actual_revenue_to_date * Decimal(
+            str(baseline["operating_expenses_percent"] / 100)
+        )
 
         # --- CALCULATIONS ---
         actual_gp_to_date = actual_revenue_to_date - actual_cogs_to_date
@@ -217,7 +223,7 @@ class FinancialCalculationMixin:
         return {
             "revenue": {
                 "actual_to_date": actual_revenue_to_date,
-                "planned_to_date": planned_revenue_to_date,
+                "planned_to_date": actual_revenue_to_date,
                 "actual_this_month": actual_revenue_this_month,
                 "forecast": forecast_revenue,
             },
@@ -225,25 +231,29 @@ class FinancialCalculationMixin:
                 "actual_to_date": actual_cogs_to_date,
                 "planned_to_date": planned_cogs_to_date,
                 "actual_this_month": actual_cogs_this_month,
-                "forecast": forecast_revenue * Decimal("0.60"),
+                "forecast": forecast_revenue
+                * Decimal(str(baseline["cost_of_sales_percent"] / 100)),
             },
             "gross_profit": {
                 "actual_to_date": actual_gp_to_date,
                 "planned_to_date": planned_gp_to_date,
                 "actual_this_month": actual_gp_this_month,
-                "forecast": forecast_revenue * Decimal("0.40"),
+                "forecast": forecast_revenue
+                * Decimal(str(1 - baseline["cost_of_sales_percent"] / 100)),
             },
             "operating_expenses": {
                 "actual_to_date": actual_opex_to_date,
                 "planned_to_date": planned_opex_to_date,
                 "actual_this_month": actual_opex_this_month,
-                "forecast": forecast_revenue * Decimal("0.12"),
+                "forecast": forecast_revenue
+                * Decimal(str(baseline["operating_expenses_percent"] / 100)),
             },
             "net_profit": {
                 "actual_to_date": actual_np_to_date,
                 "planned_to_date": planned_np_to_date,
                 "actual_this_month": actual_np_this_month,
-                "forecast": forecast_revenue * Decimal("0.28"),
+                "forecast": forecast_revenue
+                * Decimal(str(baseline["net_profit_percent"] / 100)),
             },
             "gp_margin": {
                 "actual_to_date": gp_margin_actual,
@@ -253,7 +263,7 @@ class FinancialCalculationMixin:
                 )
                 if actual_revenue_this_month > 0
                 else 0,
-                "forecast": 40.0,
+                "forecast": baseline["cost_of_sales_percent"],
             },
             "np_margin": {
                 "actual_to_date": np_margin_actual,
@@ -263,7 +273,7 @@ class FinancialCalculationMixin:
                 )
                 if actual_revenue_this_month > 0
                 else 0,
-                "forecast": 28.0,
+                "forecast": baseline["net_profit_percent"],
             },
         }
 
