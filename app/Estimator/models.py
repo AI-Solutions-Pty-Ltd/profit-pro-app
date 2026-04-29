@@ -86,7 +86,7 @@ class SystemSpecification(models.Model):
     @property
     def components(self):
         comps = []
-        for sc in self.spec_components.select_related("material").all():
+        for sc in self.spec_components.all():
             comps.append(
                 {
                     "name": sc.label,
@@ -99,8 +99,9 @@ class SystemSpecification(models.Model):
 
     @property
     def rate_per_unit(self):
-        if self.spec_components.exists():
-            return calculate_rate_per_unit(self.components)
+        components = self.components
+        if components:
+            return calculate_rate_per_unit(components)
         elif self.system_spec:
             return self.system_spec.rate_per_unit
         return Decimal("0")
@@ -558,7 +559,7 @@ class ProjectSpecification(models.Model):
     @property
     def components(self):
         comps = []
-        for sc in self.spec_components.select_related("material").all():
+        for sc in self.spec_components.all():
             comps.append(
                 {
                     "name": sc.label,
@@ -571,8 +572,9 @@ class ProjectSpecification(models.Model):
 
     @property
     def rate_per_unit(self):
-        if self.spec_components.exists():
-            return calculate_rate_per_unit(self.components)
+        components = self.components
+        if components:
+            return calculate_rate_per_unit(components)
         elif self.source:
             return self.source.rate_per_unit
         return Decimal("0")

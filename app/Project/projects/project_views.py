@@ -86,7 +86,7 @@ class ProjectListView(
             projects = user.get_projects.order_by("-created_at")
 
         from app.Account.models import Municipality
-        from app.Project.models import Company, ProjectDiscipline
+        from app.Project.models import Company, ProjectDiscipline, ProjectStage
 
         consultant_ids = (
             projects.values_list("lead_consultants", flat=True)
@@ -109,6 +109,7 @@ class ProjectListView(
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
+        stage_queryset = ProjectStage.objects.filter(projects__in=projects).distinct()
 
         self.filter_form = ProjectFilterForm(
             form_data,
@@ -120,6 +121,7 @@ class ProjectListView(
             category_queryset=category_queryset,
             area_queryset=area_queryset,
             discipline_queryset=discipline_queryset,
+            stage_queryset=stage_queryset,
         )
 
     def get_breadcrumbs(self) -> list[BreadcrumbItem]:
@@ -147,6 +149,7 @@ class ProjectListView(
         category = self.filter_form.cleaned_data.get("project_category")
         area = self.filter_form.cleaned_data.get("area")
         discipline = self.filter_form.cleaned_data.get("project_discipline")
+        stage = self.filter_form.cleaned_data.get("project_stage")
 
         if search:
             projects = projects.filter(name__icontains=search)
@@ -159,6 +162,9 @@ class ProjectListView(
 
         if discipline:
             projects = projects.filter(project_discipline=discipline)
+
+        if stage:
+            projects = projects.filter(project_stage=stage)
 
         selected_project = self.filter_form.cleaned_data.get("projects")
         if selected_project:
@@ -681,6 +687,7 @@ class ProjectDeleteView(ProjectMixin, DeleteView):
     template_name = "project/project_confirm_delete.html"
     success_url = reverse_lazy("project:portfolio-dashboard")
     roles = [Role.ADMIN]
+    project_slug = "pk"
 
     def get_context_data(self, **kwargs):
         """Add project context to delete confirmation."""

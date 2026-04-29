@@ -3,6 +3,7 @@
 import json
 import random
 from datetime import datetime
+from typing import Any
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import F, QuerySet, Sum
@@ -102,7 +103,7 @@ class CompanyMetricsMixin:
             else 0
         )
 
-        metrics = {
+        metrics: dict[str, Any] = {
             "current_date": current_date,
             "revenue": total_baseline_revenue,
             "baseline_profit": baseline_profit,

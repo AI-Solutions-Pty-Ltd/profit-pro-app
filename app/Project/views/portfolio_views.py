@@ -69,6 +69,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             Company,
             ProjectCategory,
             ProjectDiscipline,
+            ProjectStage,
         )
 
         # Get unique clients and contractors from user's projects
@@ -87,6 +88,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
+        stage_queryset = ProjectStage.objects.filter(projects__in=projects).distinct()
 
         # Initialize filter form with the base queryset
         filter_form = ProjectFilterForm(
@@ -98,6 +100,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             category_queryset=category_queryset,
             area_queryset=area_queryset,
             discipline_queryset=discipline_queryset,
+            stage_queryset=stage_queryset,
         )
 
         if filter_form.is_valid():
@@ -126,6 +129,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             Company,
             ProjectCategory,
             ProjectDiscipline,
+            ProjectStage,
         )
 
         # Get unique clients and contractors from user's projects
@@ -144,6 +148,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         discipline_queryset = ProjectDiscipline.objects.filter(
             projects__in=projects
         ).distinct()
+        stage_queryset = ProjectStage.objects.filter(projects__in=projects).distinct()
 
         self.filter_form = ProjectFilterForm(
             self.request.GET or {},
@@ -154,6 +159,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
             category_queryset=category_queryset,
             area_queryset=area_queryset,
             discipline_queryset=discipline_queryset,
+            stage_queryset=stage_queryset,
         )
 
         if not self.filter_form or not self.filter_form.is_valid():
@@ -165,6 +171,7 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
         category = self.filter_form.cleaned_data.get("project_category")
         area = self.filter_form.cleaned_data.get("area")
         discipline = self.filter_form.cleaned_data.get("project_discipline")
+        stage = self.filter_form.cleaned_data.get("project_stage")
 
         if search:
             projects = projects.filter(name__icontains=search)
@@ -177,6 +184,9 @@ class PortfolioDashboardView(SubscriptionRequiredMixin, BreadcrumbMixin, ListVie
 
         if discipline:
             projects = projects.filter(project_discipline=discipline)
+
+        if stage:
+            projects = projects.filter(project_stage=stage)
 
         selected_project = self.filter_form.cleaned_data.get("projects")
         if selected_project:

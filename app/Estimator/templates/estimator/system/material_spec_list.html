@@ -249,6 +249,7 @@
             </table>
         </div>
     </div>
+    {% include "estimator/_pagination.html" %}
     <script>
 (function() {
     const materialOptions = `<option value="">—</option>{% for m in materials %}<option value="{{ m.id }}">{{ m.material_code }}</option>{% endfor %}`;
