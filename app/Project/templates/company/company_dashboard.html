@@ -140,19 +140,13 @@
                 <!-- Progress Profit -->
                 <div class="bg-green-50 rounded-lg p-2 text-center border border-green-100">
                     <p class="text-xs font-medium text-green-600 uppercase tracking-wider">Progress Profit</p>
-                    <p class="text-lg font-bold text-green-700 mt-1">
-                        R {{ progress_profit|default:0|floatformat:0|intcomma
-                        }}
-                    </p>
+                    <p class="text-lg font-bold text-green-700 mt-1">R {{ progress_profit|default:0|floatformat:0|intcomma }}</p>
                     <p class="text-xs text-green-500">({{ progress_profit_margin|default:0|floatformat:1 }}%)</p>
                 </div>
                 <!-- Forecast Profit -->
                 <div class="bg-amber-50 rounded-lg p-2 text-center border border-amber-100">
                     <p class="text-xs font-medium text-amber-600 uppercase tracking-wider">Forecast Profit</p>
-                    <p class="text-lg font-bold text-amber-700 mt-1">
-                        R {{ forecast_profit|default:0|floatformat:0|intcomma
-                        }}
-                    </p>
+                    <p class="text-lg font-bold text-amber-700 mt-1">R {{ forecast_profit|default:0|floatformat:0|intcomma }}</p>
                     <p class="text-xs text-amber-500">({{ forecast_profit_margin|default:0|floatformat:1 }}%)</p>
                 </div>
                 <!-- Overheads -->
@@ -201,22 +195,10 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-    document.addEventListener('DOMContentLoaded', function () {
-
-        // Performance Index Charts (6 months)
-
-
-
-
-
-        // Profit Trend Charts (6 months)
-
-        const profitLabels = {{ profit_labels| safe
-    }};
-
-    const grossProfitData = {{ gross_profit_percentage_data| safe }};
-
-    const netProfitData = {{ net_profit_data| safe }};
+        document.addEventListener("DOMContentLoaded", function () {
+            const profitLabels = {{ profit_labels|safe }};
+            const grossProfitData = {{ gross_profit_percentage_data|safe }};
+            const netProfitData = {{ net_profit_data|safe }};
 
 
 
