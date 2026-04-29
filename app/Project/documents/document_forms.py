@@ -69,13 +69,13 @@ class ProjectDocumentForm(forms.ModelForm):
             "notes": "Notes (Optional)",
             "project_category": "Sector",
             "area": "Area",
-            "project_discipline": "Project Stage",
+            "project_discipline": "Discipline",
         }
         help_texts = {
             "file": "Accepted formats: PDF, Word, Excel, Images, ZIP",
             "project_category": "Select the project sector",
             "area": "Select the project area (Municipality)",
-            "project_discipline": "Select the project stage",
+            "project_discipline": "Select the discipline",
         }
 
     def __init__(self, *args, **kwargs):
