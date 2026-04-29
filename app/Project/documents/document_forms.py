@@ -94,6 +94,9 @@ class ProjectDocumentForm(forms.ModelForm):
             self.fields["file"].required = False
             self.fields["file"].help_text = "Leave empty to keep the current file"
 
+        self.fields["project_discipline"].label = "Discipline"
+        self.fields["project_discipline"].help_text = "Select the discipline"
+
         if project:
             # Filter categories, areas, and disciplines by project
 
