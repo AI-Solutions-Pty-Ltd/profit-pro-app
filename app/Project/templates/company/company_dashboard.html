@@ -201,22 +201,10 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-    document.addEventListener('DOMContentLoaded', function () {
-
-        // Performance Index Charts (6 months)
-
-
-
-
-
-        // Profit Trend Charts (6 months)
-
-        const profitLabels = {{ profit_labels| safe
-    }};
-
-    const grossProfitData = {{ gross_profit_percentage_data| safe }};
-
-    const netProfitData = {{ net_profit_data| safe }};
+        document.addEventListener("DOMContentLoaded", function () {
+            const profitLabels = {{ profit_labels|safe }};
+            const grossProfitData = {{ gross_profit_percentage_data|safe }};
+            const netProfitData = {{ net_profit_data|safe }};
 
 
 
