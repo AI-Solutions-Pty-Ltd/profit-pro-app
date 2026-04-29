@@ -77,36 +77,51 @@
                 <div class="font-mono text-3xl font-black text-gray-900">
                     R {{ income_statement.revenue.total|floatformat:0|intcomma }}
                 </div>
-                <div class="mt-1 text-xs font-bold text-indigo-600 uppercase">100% of Income Source</div>
+                {% comment %} <div class="mt-1 text-xs font-bold text-indigo-600 uppercase">100% of Income Source</div> {% endcomment %}
             </div>
             <div class="flex-1 p-6 border-b border-gray-100 transition-colors sm:border-b-0 sm:border-r hover:bg-slate-50 group">
                 <div class="flex justify-between items-start mb-2">
-                    <div class="text-xs font-black text-gray-500 uppercase text-emerald-600/60">Gross Operating Profit</div>
+                    <div class="text-xs font-black text-gray-500 uppercase text-emerald-600/60">Production Cost</div>
                     <div class="text-emerald-600">{% heroicon_outline "receipt-percent" size="20" %}</div>
                 </div>
                 <div class="font-mono text-3xl font-black text-emerald-700">
-                    R {{ income_statement.gross_profit.amount|floatformat:0|intcomma }}
+                    R {{ income_statement.cos.total|floatformat:2|intcomma }}
                 </div>
-                <div class="flex gap-1 items-center mt-1 text-xs font-bold text-emerald-600 uppercase">
-                    {% heroicon_outline "arrow-trending-up" size="12" %}
-                    {{ income_statement.gross_profit.margin|floatformat:1 }}% Margin Result
+                <div class="flex gap-1 items-center mt-1 text-xs font-bold text-emerald-600 capitalize">
+                    
+                    {{ income_statement.cos.pct|floatformat:1 }}% of Total Revenue
+                </div> 
+            </div>
+              <div class="flex-1 p-6 border-b border-gray-100 transition-colors sm:border-b-0 sm:border-r hover:bg-slate-50 group">
+                <div class="flex justify-between items-start mb-2">
+                    <div class="text-xs font-black text-gray-500 uppercase text-emerald-600/60">Preliminaries</div>
+                    <div class="text-emerald-600">{% heroicon_outline "receipt-percent" size="20" %}</div>
+                </div>
+                <div class="font-mono text-3xl font-black text-emerald-700">
+                    R {{ income_statement.opex.total|floatformat:2|intcomma }}
+                </div>
+              <div class="flex gap-1 items-center mt-1 text-xs font-bold text-emerald-600 capitalize">
+                    
+                    {{ income_statement.operating_expenses.margin|floatformat:1 }}% of Total Revenue
                 </div>
             </div>
             <div class="flex-1 p-6 transition-colors hover:bg-slate-50 group">
                 <div class="flex justify-between items-start mb-2">
-                    <div class="text-xs font-black text-gray-500 uppercase text-indigo-600/60">Net Profit Margin</div>
+                    <div class="text-xs font-black text-gray-500 uppercase text-indigo-600/60">Net Profit/Loss</div>
                     <div class="text-indigo-600">{% heroicon_outline "chart-pie" size="20" %}</div>
                 </div>
                 <div class="font-mono text-3xl font-black text-indigo-600">
-                    {{ income_statement.net_profit.margin|floatformat:1 }}%
+                     R {{ income_statement.net_profit.amount|floatformat:2|intcomma }}
                 </div>
-                <div class="mt-1 text-xs italic font-bold text-gray-500 uppercase">Net Operating Efficiency</div>
+                <div class="flex gap-1 items-center mt-1 text-xs font-bold text-indigo-600 capitalize">
+                    {{ income_statement.operating_expenses.margin|floatformat:1 }}% of Total Revenue
+                </div>
             </div>
         </div>
         <!-- Main Report Table -->
         <div class="overflow-hidden bg-white border border-gray-100 shadow-md card">
             <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-slate-50/80">
-                <span class="text-xs font-bold text-gray-600 uppercase">Financial Performance Ledger</span>
+                <span class="text-xs font-bold text-gray-600 uppercase">Profit and Loss Statement</span>
                 <div class="flex gap-4 items-center text-xs font-bold text-gray-500 uppercase">
                     <span class="flex gap-1 items-center">
                         <div class="w-2 h-2 bg-indigo-600 rounded-full"></div>
@@ -207,7 +222,7 @@
                         <tr class="bg-red-50/20">
                             <td colspan="3"
                                 class="py-4 pl-6 text-xs font-black text-red-900 uppercase border-l-4 border-red-600 bg-red-50/40">
-                                <span class="flex gap-2 items-center">{% heroicon_outline "presentation-chart-bar" size="14" %} Indirect Operating Overheads (OpEx)</span>
+                                <span class="flex gap-2 items-center uppercase">{% heroicon_outline "presentation-chart-bar" size="14" %} Preliminaries</span>
                             </td>
                         </tr>
                         {% for item in income_statement.opex.items %}
@@ -220,7 +235,7 @@
                             </tr>
                         {% endfor %}
                         <tr class="font-black border-t-2 border-red-100 bg-slate-50">
-                            <td class="py-5 pl-10 text-xs tracking-wider text-red-900 uppercase">TOTAL OPERATING EXPENSES</td>
+                            <td class="py-5 pl-10 text-xs tracking-wider text-red-900 uppercase">TOTAL PRELMINARIES</td>
                             <td class="pr-10 font-mono text-xl font-black text-right text-red-700">
                                 R {{ income_statement.opex.total|floatformat:2|intcomma }}
                             </td>

@@ -191,7 +191,7 @@ class FinancialCalculationMixin:
 
         # --- CALCULATIONS ---
         actual_gp_to_date = actual_revenue_to_date - actual_cogs_to_date
-        planned_gp_to_date = planned_revenue_to_date - planned_cogs_to_date
+        planned_gp_to_date = actual_revenue_to_date - planned_cogs_to_date
         actual_gp_this_month = actual_revenue_this_month - actual_cogs_this_month
 
         actual_np_to_date = actual_gp_to_date - actual_opex_to_date

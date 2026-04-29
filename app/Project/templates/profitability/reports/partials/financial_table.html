@@ -5,18 +5,23 @@
                 <th scope="col" class="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-500">
                     Financial Line Item
                 </th>
+                 <th scope="col" class="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-gray-500">
+                    Planned This Month
+                </th>
+                 <th scope="col" class="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50/30">
+                    Actual This Month
+                </th>
+                 <th scope="col" class="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-amber-600 bg-amber-50/30">
+                    Planned to Date
+                </th>
+                 
                 <th scope="col" class="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-gray-500">
                     Actual to Date
                 </th>
-                <th scope="col" class="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-gray-500">
-                    Baseline
-                </th>
-                <th scope="col" class="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50/30">
-                    Actual Month
-                </th>
-                <th scope="col" class="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-amber-600 bg-amber-50/30">
+                 {% comment %} <th scope="col" class="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-amber-600 bg-amber-50/30">
                     Forecast
-                </th>
+                </th> {% endcomment %}
+            
             </tr>
         </thead>
         <tbody class="divide-y divide-gray-50">
@@ -28,12 +33,14 @@
                         <span class="text-sm font-bold text-gray-900">Revenue</span>
                     </div>
                 </td>
-                <td class="px-4 py-3 font-mono text-sm font-bold tabular-nums text-right text-gray-900">
+                  <td class="px-4 py-3 font-mono text-sm font-bold tabular-nums text-right text-gray-900">
                     R {{ financial_table.revenue.actual_to_date|floatformat:0|intcomma }}
                 </td>
                 <td class="px-4 py-3 font-mono text-sm tabular-nums text-right text-gray-500">
                     R {{ financial_table.revenue.planned_to_date|floatformat:0|intcomma }}
                 </td>
+              
+                
                 <td class="px-4 py-3 font-mono text-sm font-bold tabular-nums text-right text-indigo-600 bg-indigo-50/30">
                     R {{ financial_table.revenue.actual_this_month|floatformat:0|intcomma }}
                 </td>
@@ -47,12 +54,13 @@
                 <td class="px-4 py-3 pl-8 whitespace-nowrap">
                     <span class="text-sm font-medium text-gray-600">Production Cost</span>
                 </td>
+                  <td class="px-4 py-3 font-mono text-sm tabular-nums text-right text-gray-400">
+                    R {{ financial_table.cost_of_sales.planned_to_date|floatformat:0|intcomma }}
+                </td>
                 <td class="px-4 py-3 font-mono text-sm font-semibold tabular-nums text-right text-gray-800">
                     R {{ financial_table.cost_of_sales.actual_to_date|floatformat:0|intcomma }}
                 </td>
-                <td class="px-4 py-3 font-mono text-sm tabular-nums text-right text-gray-400">
-                    R {{ financial_table.cost_of_sales.planned_to_date|floatformat:0|intcomma }}
-                </td>
+              
                 <td class="px-4 py-3 font-mono text-sm font-medium tabular-nums text-right text-gray-700 bg-indigo-50/20">
                     R {{ financial_table.cost_of_sales.actual_this_month|floatformat:0|intcomma }}
                 </td>
@@ -66,12 +74,13 @@
                 <td class="px-4 py-3 whitespace-nowrap">
                     <span class="text-sm font-bold text-gray-900">Gross Profit</span>
                 </td>
+                  <td class="px-4 py-3 font-mono text-sm tabular-nums text-right text-gray-400">
+                    R {{ financial_table.gross_profit.planned_to_date|floatformat:0|intcomma }}
+                </td>
                 <td class="px-4 py-3 font-mono text-sm font-bold tabular-nums text-right text-emerald-700">
                     R {{ financial_table.gross_profit.actual_to_date|floatformat:0|intcomma }}
                 </td>
-                <td class="px-4 py-3 font-mono text-sm font-semibold tabular-nums text-right text-gray-400">
-                    R {{ financial_table.gross_profit.planned_to_date|floatformat:0|intcomma }}
-                </td>
+              
                 <td class="px-4 py-3 font-mono text-sm font-bold tabular-nums text-right text-indigo-700 bg-indigo-100/30">
                     R {{ financial_table.gross_profit.actual_this_month|floatformat:0|intcomma }}
                 </td>
@@ -85,12 +94,13 @@
                 <td class="px-4 py-3 pl-8 whitespace-nowrap">
                     <span class="text-sm font-medium text-gray-600">Preliminaries</span>
                 </td>
+                  <td class="px-4 py-3 font-mono text-sm tabular-nums text-right text-gray-400">
+                    R {{ financial_table.operating_expenses.planned_to_date|floatformat:0|intcomma }}
+                </td>
                 <td class="px-6 py-4 font-mono text-sm font-semibold tabular-nums text-right text-gray-800">
                     R {{ financial_table.operating_expenses.actual_to_date|floatformat:0|intcomma }}
                 </td>
-                <td class="px-4 py-3 font-mono text-sm tabular-nums text-right text-gray-400">
-                    R {{ financial_table.operating_expenses.planned_to_date|floatformat:0|intcomma }}
-                </td>
+            
                 <td class="px-4 py-3 font-mono text-sm font-medium tabular-nums text-right text-gray-700 bg-indigo-50/20">
                     R {{ financial_table.operating_expenses.actual_this_month|floatformat:0|intcomma }}
                 </td>
@@ -104,12 +114,13 @@
                 <td class="px-4 py-4 whitespace-nowrap">
                     <span class="text-sm font-bold text-white">Net Profit</span>
                 </td>
+                 <td class="px-4 py-4 font-mono text-sm font-semibold tabular-nums text-right text-indigo-100">
+                    R {{ financial_table.net_profit.planned_to_date|floatformat:0|intcomma }}
+                </td>
                 <td class="px-4 py-4 font-mono text-base font-bold tabular-nums text-right text-white">
                     R {{ financial_table.net_profit.actual_to_date|floatformat:0|intcomma }}
                 </td>
-                <td class="px-4 py-4 font-mono text-sm font-semibold tabular-nums text-right text-indigo-100">
-                    R {{ financial_table.net_profit.planned_to_date|floatformat:0|intcomma }}
-                </td>
+               
                 <td class="px-4 py-4 font-mono text-base font-bold tabular-nums text-right text-white bg-indigo-700/50">
                     R {{ financial_table.net_profit.actual_this_month|floatformat:0|intcomma }}
                 </td>
