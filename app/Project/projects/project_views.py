@@ -719,6 +719,7 @@ class ProjectDeleteView(ProjectMixin, DeleteView):
     template_name = "project/project_confirm_delete.html"
     success_url = reverse_lazy("project:portfolio-dashboard")
     roles = [Role.ADMIN]
+    project_slug = "pk"
 
     def get_context_data(self, **kwargs):
         """Add project context to delete confirmation."""

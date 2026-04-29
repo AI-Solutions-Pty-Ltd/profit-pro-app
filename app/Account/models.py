@@ -158,7 +158,7 @@ class Account(AbstractUser, BaseModel):
     email_verified = models.BooleanField(default=False)
     email_verified_at = models.DateTimeField(null=True, blank=True)
 
-    objects: UserManager = UserManager()
+    objects = UserManager()
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []

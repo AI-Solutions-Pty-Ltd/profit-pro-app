@@ -7,6 +7,7 @@ from pathlib import Path
 from django.contrib import messages
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.db import models
+from django.db.models import DecimalField, F, Sum, Value
 from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -91,6 +92,13 @@ class ProjectEstimatorMixin(ContextMixin):
         return context
 
 
+def _pagination_query_params(request):
+    """Return GET params (excluding `page`) urlencoded for pagination links."""
+    params = request.GET.copy()
+    params.pop("page", None)
+    return params.urlencode()
+
+
 class ProjectAssumptionsView(ProjectEstimatorMixin, TemplateView):
     template_name = "estimator/project_assumptions.html"
 
@@ -142,6 +150,7 @@ class DashboardView(ProjectEstimatorMixin, ListView):
     model = BOQItem
     template_name = "estimator/dashboard.html"
     context_object_name = "items"
+    paginate_by = 100
 
     def get_queryset(self):
         qs = (
@@ -312,6 +321,8 @@ class DashboardView(ProjectEstimatorMixin, ListView):
         assumptions, _ = ProjectAssumptions.objects.get_or_create(project=project)
         context["wastage_pct"] = assumptions.wastage_pct
 
+        context["query_params"] = _pagination_query_params(self.request)
+
         return context
 
 
@@ -438,7 +449,7 @@ class SpecificationListView(ProjectEstimatorMixin, TemplateView):
             spec = group["spec"]
             boq_qty = group["boq_qty"]
             component_totals = []
-            for sc in spec.spec_components.select_related("material").all():
+            for sc in spec.spec_components.all():
                 component_totals.append(
                     {
                         "id": sc.id,
@@ -546,6 +557,7 @@ class MaterialSpecListView(ProjectEstimatorMixin, ListView):
     model = ProjectSpecification
     template_name = "estimator/material_spec_list.html"
     context_object_name = "specs"
+    paginate_by = 50
 
     def get_queryset(self):
         project = self.get_project()
@@ -598,6 +610,7 @@ class MaterialSpecListView(ProjectEstimatorMixin, ListView):
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_name"] = self.request.GET.get("name", "")
+        context["query_params"] = _pagination_query_params(self.request)
 
         return context
 
@@ -1692,56 +1705,114 @@ class MaterialComponentReportView(_ComponentReportBase):
         project = self.get_project()
         variant = self.kwargs["variant"]
 
-        items = (
-            BOQItem.objects.filter(project=project, is_section_header=False)
-            .select_related(
-                "specification",
-                "material",
-                "project__estimator_assumptions",
+        # Project-level wastage factor (constant across all items) — applied
+        # once after DB aggregation rather than per-row.
+        try:
+            wastage_pct = project.estimator_assumptions.wastage_pct or Decimal("0")
+        except Exception:
+            wastage_pct = Decimal("0")
+        wastage_factor = Decimal("1") + wastage_pct / Decimal("100")
+
+        # Per-item markup is (1 + (mat_markup + transport)/100). To avoid SQLite's
+        # integer-division semantics on (100 + m + t)/100, we sum
+        # (... × (100 + m + t)) inside SQL and divide by 100 in Python.
+        spec_markup_x100 = (
+            Value(Decimal("100"))
+            + F("specification__boq_items__material_markup_pct")
+            + F("specification__boq_items__transport_pct")
+        )
+        direct_markup_x100 = (
+            Value(Decimal("100")) + F("material_markup_pct") + F("transport_pct")
+        )
+
+        # Spec branch: per-(component × boq_item) row, grouped by destination material.
+        # NULL qty_field rows contribute NULL → ignored by Sum (matches original
+        # `if not raw_qty: continue`). qty_per_unit=0 contributes 0 → matches
+        # `if not comp.qty_per_unit: continue` for amount, and zero qty for quantity.
+        spec_aggs = (
+            ProjectSpecificationComponent.objects.filter(
+                specification__boq_items__project=project,
+                specification__boq_items__is_section_header=False,
+                material__isnull=False,
             )
-            .prefetch_related("specification__spec_components__material")
-            .filter(
-                models.Q(specification__isnull=False) | models.Q(material__isnull=False)
+            .values(
+                "material__material_code",
+                "material__trade_name",
+                "material__unit",
+            )
+            .annotate(
+                sum_qty=Sum(
+                    F("qty_per_unit") * F(f"specification__boq_items__{qty_field}"),
+                    output_field=DecimalField(max_digits=24, decimal_places=6),
+                ),
+                sum_amount_x100=Sum(
+                    F("qty_per_unit")
+                    * F(f"specification__boq_items__{qty_field}")
+                    * F("material__market_rate")
+                    * spec_markup_x100,
+                    output_field=DecimalField(max_digits=24, decimal_places=6),
+                ),
             )
         )
 
-        # material_code -> aggregated row
+        # Direct material branch: items with no specification but with a material.
+        direct_aggs = (
+            BOQItem.objects.filter(
+                project=project,
+                is_section_header=False,
+                specification__isnull=True,
+                material__isnull=False,
+            )
+            .values(
+                "material__material_code",
+                "material__trade_name",
+                "material__unit",
+            )
+            .annotate(
+                sum_qty=Sum(
+                    F(qty_field),
+                    output_field=DecimalField(max_digits=24, decimal_places=6),
+                ),
+                sum_amount_x100=Sum(
+                    F(qty_field) * F("material__market_rate") * direct_markup_x100,
+                    output_field=DecimalField(max_digits=24, decimal_places=6),
+                ),
+            )
+        )
+
+        # Merge by material_code, applying the project-wide wastage factor and
+        # the deferred /100 from the markup expression.
         components: dict[str, dict] = {}
 
-        def bucket(material):
-            key = material.material_code
-            if key not in components:
-                components[key] = {
-                    "material_code": key,
-                    "trade_name": material.trade_name,
-                    "unit": material.unit,
+        def merge(agg):
+            code = agg["material__material_code"]
+            if code is None:
+                return
+            sum_qty = agg["sum_qty"]
+            sum_amount_x100 = agg["sum_amount_x100"]
+            # Skip materials with no contribution from this variant — mirrors the
+            # original `if not raw_qty: continue` which never created a bucket.
+            if not sum_qty and not sum_amount_x100:
+                return
+            row = components.setdefault(
+                code,
+                {
+                    "material_code": code,
+                    "trade_name": agg["material__trade_name"],
+                    "unit": agg["material__unit"],
                     "quantity": Decimal("0"),
                     "amount": Decimal("0"),
-                }
-            return components[key]
+                },
+            )
+            row["quantity"] += (sum_qty or Decimal("0")) * wastage_factor
+            row["amount"] += (
+                (sum_amount_x100 or Decimal("0")) / Decimal("100") * wastage_factor
+            )
 
-        for item in items:
-            raw_qty = getattr(item, qty_field) or Decimal("0")
-            if not raw_qty:
-                continue
-            project_qty = raw_qty * item._wastage_factor
-            markup = item._material_markup_factor
-            if item.specification:
-                for comp in item.specification.spec_components.all():
-                    if not comp.material or not comp.qty_per_unit:
-                        continue
-                    row = bucket(comp.material)
-                    qty = project_qty * comp.qty_per_unit
-                    row["quantity"] += qty
-                    row["amount"] += (
-                        qty * (comp.material.market_rate or Decimal("0")) * markup
-                    )
-            elif item.material:
-                row = bucket(item.material)
-                row["quantity"] += project_qty
-                row["amount"] += (
-                    project_qty * (item.material.market_rate or Decimal("0")) * markup
-                )
+        for agg in spec_aggs:
+            merge(agg)
+        for agg in direct_aggs:
+            merge(agg)
 
         report_rows = []
         grand_total = Decimal("0")
@@ -1881,47 +1952,46 @@ class PlantComponentReportView(_ComponentReportBase):
         project = self.get_project()
         variant = self.kwargs["variant"]
 
-        items = (
-            BOQItem.objects.filter(
-                project=project,
-                is_section_header=False,
-                plant_specification__isnull=False,
+        # SUM(comp.hours * boq_item.<qty_field>) per plant_type, GROUP BY plant_type.
+        # NULL qty rows contribute NULL → ignored by Sum, matching the original
+        # `if not raw_qty: continue` semantics.
+        aggs = (
+            ProjectPlantSpecificationComponent.objects.filter(
+                specification__boq_items__project=project,
+                specification__boq_items__is_section_header=False,
+                plant_type__isnull=False,
             )
-            .select_related("plant_specification")
-            .prefetch_related("plant_specification__components__plant_type")
+            .values(
+                "plant_type_id",
+                "plant_type__name",
+                "plant_type__hourly_rate",
+            )
+            .annotate(
+                total_hours=Sum(
+                    F("hours") * F(f"specification__boq_items__{qty_field}"),
+                    output_field=DecimalField(max_digits=18, decimal_places=4),
+                ),
+            )
         )
-
-        # plant_cost_id -> aggregated row
-        plant_types: dict[int, dict] = {}
-
-        for item in items:
-            ps = item.plant_specification
-            if ps is None:
-                continue
-            raw_qty = getattr(item, qty_field) or Decimal("0")
-            if not raw_qty:
-                continue
-            for comp in ps.components.all():
-                pt = comp.plant_type
-                if pt is None or not comp.hours:
-                    continue
-                hours = raw_qty * comp.hours
-                row = plant_types.setdefault(
-                    pt.pk,
-                    {
-                        "name": pt.name,
-                        "hours": Decimal("0"),
-                        "rate": pt.hourly_rate or Decimal("0"),
-                    },
-                )
-                row["hours"] += hours
 
         report_rows = []
         grand_total = Decimal("0")
-        for row in plant_types.values():
-            row["amount"] = row["hours"] * row["rate"]
-            grand_total += row["amount"]
-            report_rows.append(row)
+        for agg in aggs:
+            hours = agg["total_hours"]
+            # Mirror the original `if not raw_qty: continue` — no contribution → no row.
+            if not hours:
+                continue
+            rate = agg["plant_type__hourly_rate"] or Decimal("0")
+            amount = hours * rate
+            grand_total += amount
+            report_rows.append(
+                {
+                    "name": agg["plant_type__name"],
+                    "hours": hours,
+                    "rate": rate,
+                    "amount": amount,
+                }
+            )
         report_rows.sort(key=lambda r: r["amount"], reverse=True)
         for row in report_rows:
             row["pct_of_total"] = calculate_pct_of_total(row["amount"], grand_total)
@@ -2766,6 +2836,7 @@ class LabourSpecDefListView(ProjectEstimatorMixin, ListView):
     model = ProjectLabourSpecification
     template_name = "estimator/labour_spec_def_list.html"
     context_object_name = "labour_specs"
+    paginate_by = 50
 
     def get_queryset(self):
         project = self.get_project()
@@ -2813,6 +2884,7 @@ class LabourSpecDefListView(ProjectEstimatorMixin, ListView):
         context["f_trade_name"] = self.request.GET.get("trade_name", "")
         context["f_name"] = self.request.GET.get("name", "")
         context["crews"] = ProjectLabourCrew.objects.filter(project=project)
+        context["query_params"] = _pagination_query_params(self.request)
 
         return context
 
@@ -2937,6 +3009,7 @@ class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
     model = ProjectPlantSpecification
     template_name = "estimator/plant_spec_def_list.html"
     context_object_name = "plant_specs"
+    paginate_by = 50
 
     def get_queryset(self):
         project = self.get_project()
@@ -2971,6 +3044,7 @@ class PlantSpecDefListView(ProjectEstimatorMixin, ListView):
         context["plants"] = ProjectPlantCost.objects.filter(project=project)
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_name"] = self.request.GET.get("trade_name", "")
+        context["query_params"] = _pagination_query_params(self.request)
         return context
 
     def post(self, request, *args, **kwargs):
@@ -4203,6 +4277,7 @@ class SysMaterialSpecListView(SystemLibraryMixin, ListView):
     model = SystemSpecification
     template_name = "estimator/system/material_spec_list.html"
     context_object_name = "specs"
+    paginate_by = 50
 
     def get_queryset(self):
         qs = (
@@ -4246,6 +4321,7 @@ class SysMaterialSpecListView(SystemLibraryMixin, ListView):
         context["f_section"] = self.request.GET.get("section", "")
         context["f_trade_code"] = self.request.GET.get("trade_code", "")
         context["f_name"] = self.request.GET.get("name", "")
+        context["query_params"] = _pagination_query_params(self.request)
         return context
 
     def post(self, request, *args, **kwargs):
@@ -4560,6 +4636,7 @@ class SystemLabourSpecListView(SystemLibraryMixin, ListView):
     model = SystemLabourSpecification
     template_name = "estimator/system/labour_spec_list.html"
     context_object_name = "labour_specs"
+    paginate_by = 50
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("crew")
@@ -4597,6 +4674,7 @@ class SystemLabourSpecListView(SystemLibraryMixin, ListView):
         context["f_trade_name"] = self.request.GET.get("trade_name", "")
         context["f_name"] = self.request.GET.get("name", "")
         context["crews"] = SystemLabourCrew.objects.all()
+        context["query_params"] = _pagination_query_params(self.request)
         return context
 
     def post(self, request, *args, **kwargs):
@@ -4798,11 +4876,16 @@ class SystemPlantSpecListView(SystemLibraryMixin, ListView):
     model = SystemPlantSpecification
     template_name = "estimator/system/plant_spec_list.html"
     context_object_name = "plant_specs"
+    paginate_by = 50
+
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related("components__plant_type")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["form"] = context.get("form", SystemPlantSpecificationForm())
         context["plants"] = SystemPlantCost.objects.all()
+        context["query_params"] = _pagination_query_params(self.request)
         return context
 
     def post(self, request, *args, **kwargs):
