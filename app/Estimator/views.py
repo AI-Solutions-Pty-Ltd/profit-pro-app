@@ -1724,7 +1724,6 @@ class MaterialComponentReportView(_ComponentReportBase):
         direct_markup_x100 = (
             Value(Decimal("100")) + F("material_markup_pct") + F("transport_pct")
         )
-        ONE_HUNDRED = Decimal("100")
 
         # Spec branch: per-(component × boq_item) row, grouped by destination material.
         # NULL qty_field rows contribute NULL → ignored by Sum (matches original
@@ -1807,7 +1806,7 @@ class MaterialComponentReportView(_ComponentReportBase):
             )
             row["quantity"] += (sum_qty or Decimal("0")) * wastage_factor
             row["amount"] += (
-                (sum_amount_x100 or Decimal("0")) / ONE_HUNDRED * wastage_factor
+                (sum_amount_x100 or Decimal("0")) / Decimal("100") * wastage_factor
             )
 
         for agg in spec_aggs:
