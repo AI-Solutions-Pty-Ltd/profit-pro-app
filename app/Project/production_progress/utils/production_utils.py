@@ -380,6 +380,11 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
             return 0
         return round(((actual - target) / target) * 100, 1)
 
+    def calc_index(actual, target):
+        if not target or target == 0:
+            return 1.0
+        return round(actual / target, 2)
+
     # Productivity Trend (Compare latest day vs previous days average)
     prod_trend_val = 0
     prod_trend_pos = True
@@ -493,6 +498,7 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
                 "actual": actual_avg_productivity,
                 "target": target_productivity,
                 "variance": calc_var(actual_avg_productivity, target_productivity),
+                "index": calc_index(actual_avg_productivity, target_productivity),
                 "trend": prod_trend_val,
                 "trend_pos": prod_trend_pos,
             },
@@ -500,6 +506,7 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
                 "actual": actual_avg_cost_per_item,
                 "target": target_cost_per_item,
                 "variance": calc_var(actual_avg_cost_per_item, target_cost_per_item),
+                "index": calc_index(target_cost_per_item, actual_avg_cost_per_item),  # Cost index: Target / Actual
                 "trend": cost_trend_val,
                 "trend_pos": not cost_trend_pos,  # Inverse: for cost, down is good
             },
@@ -512,6 +519,7 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
                 "actual": actual_avg_daily_output,
                 "target": target_daily_output,
                 "variance": calc_var(actual_avg_daily_output, target_daily_output),
+                "index": calc_index(actual_avg_daily_output, target_daily_output),
                 "trend": output_trend_val,
                 "trend_pos": output_trend_pos,
             },
@@ -689,6 +697,7 @@ def get_forecasting_dashboard_data(plan_id, start_date=None, end_date=None):
             if (time_variance < -2 or budget_variance < -50000)
             else ("amber" if (time_variance < 0 or budget_variance < 0) else "emerald"),
             "progress_pct": round(progress_pct, 1),
+            "completed_units": float(actual_total_qty),
             "forecast_days": round(forecast_total_days, 1),
             "time_variance": round(time_variance, 1),
             "planned_days": int(plan.duration),

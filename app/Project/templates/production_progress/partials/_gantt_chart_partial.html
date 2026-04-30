@@ -1,7 +1,7 @@
 {% load heroicons %}
 
 <!-- Gantt Chart Container -->
-<div class="flex flex-col h-full bg-white border border-gray-100 shadow-sm overflow-hidden gantt-container-section" id="gantt-section-container">
+<div class="flex overflow-hidden flex-col h-full bg-white border border-gray-100 shadow-sm gantt-container-section" id="gantt-section-container">
     <!-- Legend & Controls -->
     <div class="flex flex-wrap gap-4 justify-between items-center px-5 py-3 border-b border-gray-100 bg-gray-50/50">
         <div class="flex flex-wrap gap-4 items-center">
@@ -45,16 +45,16 @@
         </div>
     </div>
     <!-- Gantt body: left label pane + right chart pane -->
-    <div class="flex flex-1 min-h-0 overflow-hidden" id="gantt-wrapper">
+    <div class="flex overflow-hidden flex-1 min-h-0" id="gantt-wrapper">
         <!-- Label Column (fixed width, sticky-like via container flex) -->
-        <div class="flex flex-col flex-shrink-0 w-80 bg-white border-r border-gray-100 z-10" id="gantt-labels-container">
+        <div class="flex z-10 flex-col flex-shrink-0 w-80 bg-white border-r border-gray-100" id="gantt-labels-container">
             <div class="h-[72px] border-b border-gray-100 flex items-center px-4 bg-gray-50/30">
                 <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Production Activity</h3>
             </div>
-            <div id="gantt-label-rows" class="flex-1 overflow-hidden"></div>
+            <div id="gantt-label-rows" class="overflow-hidden flex-1"></div>
         </div>
         <!-- Chart Area -->
-        <div class="flex-1 overflow-auto scrollbar-thin scrollbar-thumb-slate-300" id="gantt-chart-scroll">
+        <div class="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-300" id="gantt-chart-scroll">
             <canvas id="gantt-canvas" class="block"></canvas>
         </div>
     </div>
