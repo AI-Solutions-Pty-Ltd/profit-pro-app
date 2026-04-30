@@ -422,10 +422,9 @@ class ProductionPlan(BaseModel):
                 if not comp.plant_type:
                     continue
 
-                # duration = Decimal(str(self.duration or 0))
+                duration = Decimal(str(self.duration or 0))
                 hours_per_day = comp.hours
-                # total_hours = hours_per_day * duration
-                total_hours = hours_per_day
+                total_hours = hours_per_day * duration
                 rate = comp.plant_type.hourly_rate or Decimal("0")
                 total_cost = total_hours * rate
 

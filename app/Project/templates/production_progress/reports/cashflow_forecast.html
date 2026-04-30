@@ -56,7 +56,6 @@
                     </p>
                 </div>
                 <div class="flex flex-col gap-4 items-center w-full sm:flex-row lg:w-auto">
-                   
                     <button onclick="window.print()"
                             class="mt-auto w-full h-10 text-gray-600 border-gray-200 rounded- btn btn-sm sm:w-auto btn-outline hover:bg-gray-50">
                         {% heroicon_outline "printer" size="18" %}
@@ -64,53 +63,65 @@
                     </button>
                 </div>
             </div>
-                <div class="flex flex-col gap-4 justify-between items-center mb-6 w-full sm:flex-row lg:w-auto">
-                    <!-- Historical Window Slider -->
-                    <div class="flex flex-col gap-2 w-full sm:w-80">
-                        <div class="flex justify-between items-center px-1">
-                            <label class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">History Window</label>
-                            <span id="historyVal" class="text-[10px] font-mono font-bold text-indigo-600">
-                                {% if current_history == 0 %}All Time{% else %}{{ current_history }} Months{% endif %}
-                            </span>
-                        </div>
-                        <div class="px-3">
-                            <input type="range" id="historySlider" min="0" max="4" step="1" 
-                                   value="{% if current_history == 1 %}1{% elif current_history == 3 %}2{% elif current_history == 6 %}3{% elif current_history == 12 %}4{% else %}0{% endif %}" 
-                                   class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                                   onchange="handleHistoryChange(this.value)">
-                            <div class="flex justify-between px-0.5 mt-2">
-                                <span class="text-[8px] font-bold text-gray-400">ALL</span>
-                                <span class="text-[8px] font-bold text-gray-400">1M</span>
-                                <span class="text-[8px] font-bold text-gray-400">3M</span>
-                                <span class="text-[8px] font-bold text-gray-400">6M</span>
-                                <span class="text-[8px] font-bold text-gray-400">12M</span>
-                            </div>
+            <div class="flex flex-col gap-4 justify-between items-center mb-6 w-full sm:flex-row lg:w-auto">
+                <!-- Historical Window Slider -->
+                <div class="flex flex-col gap-2 w-full sm:w-80">
+                    <div class="flex justify-between items-center px-1">
+                        <label class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">History Window</label>
+                        <span id="historyVal"
+                              class="text-[10px] font-mono font-bold text-indigo-600">
+                            {% if current_history == 0 %}
+                                All Time
+                            {% else %}
+                                {{ current_history }} Months
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="px-3">
+                        <input type="range"
+                               id="historySlider"
+                               min="0"
+                               max="4"
+                               step="1"
+                               value="{% if current_history == 1 %}1{% elif current_history == 3 %}2{% elif current_history == 6 %}3{% elif current_history == 12 %}4{% else %}0{% endif %}"
+                               class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                               onchange="handleHistoryChange(this.value)">
+                        <div class="flex justify-between px-0.5 mt-2">
+                            <span class="text-[8px] font-bold text-gray-400">ALL</span>
+                            <span class="text-[8px] font-bold text-gray-400">1M</span>
+                            <span class="text-[8px] font-bold text-gray-400">3M</span>
+                            <span class="text-[8px] font-bold text-gray-400">6M</span>
+                            <span class="text-[8px] font-bold text-gray-400">12M</span>
                         </div>
                     </div>
-
-                    <!-- Forecast Horizon Slider -->
-                    <div class="flex flex-col gap-2 w-full sm:w-80">
-                        <div class="flex justify-between items-center px-1">
-                            <label class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Forecast Horizon</label>
-                            <span id="horizonVal" class="text-[10px] font-mono font-bold text-indigo-600">
-                                {{ current_horizon|capfirst }}
-                            </span>
-                        </div>
-                        <div class="px-3">
-                            <input type="range" id="horizonSlider" min="0" max="3" step="1" 
-                                   value="{% if current_horizon == 'month' %}0{% elif current_horizon == 'term' %}1{% elif current_horizon == 'half' %}2{% elif current_horizon == 'year' %}3{% else %}2{% endif %}" 
-                                   class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                                   onchange="handleHorizonChange(this.value)">
-                            <div class="flex justify-between px-0.5 mt-2">
-                                <span class="text-[8px] font-bold text-gray-400">1M</span>
-                                <span class="text-[8px] font-bold text-gray-400">3M</span>
-                                <span class="text-[8px] font-bold text-gray-400">6M</span>
-                                <span class="text-[8px] font-bold text-gray-400">12M</span>
-                            </div>
-                        </div>
-                    </div>
-                 
                 </div>
+                <!-- Forecast Horizon Slider -->
+                <div class="flex flex-col gap-2 w-full sm:w-80">
+                    <div class="flex justify-between items-center px-1">
+                        <label class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Forecast Horizon</label>
+                        <span id="horizonVal"
+                              class="text-[10px] font-mono font-bold text-indigo-600">
+                            {{ current_horizon|capfirst }}
+                        </span>
+                    </div>
+                    <div class="px-3">
+                        <input type="range"
+                               id="horizonSlider"
+                               min="0"
+                               max="3"
+                               step="1"
+                               value="{% if current_horizon == 'month' %}0{% elif current_horizon == 'term' %}1{% elif current_horizon == 'half' %}2{% elif current_horizon == 'year' %}3{% else %}2{% endif %}"
+                               class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                               onchange="handleHorizonChange(this.value)">
+                        <div class="flex justify-between px-0.5 mt-2">
+                            <span class="text-[8px] font-bold text-gray-400">1M</span>
+                            <span class="text-[8px] font-bold text-gray-400">3M</span>
+                            <span class="text-[8px] font-bold text-gray-400">6M</span>
+                            <span class="text-[8px] font-bold text-gray-400">12M</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- KPI Dashboard -->
             {% comment %} <div class="grid grid-cols-1 gap-6 mb-10 md:grid-cols-2 lg:grid-cols-3">
                 <!-- Total Project Budget -->
@@ -176,23 +187,26 @@
                     </div>
                 </div>
             </div> {% endcomment %}
-              <!-- Prediction Monthly Cards -->
-                <div class="flex relative flex-col lg:col-span-2 group">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Upcoming Monthly Cashflow Forecast</h3>
-                        <div class="flex gap-2">
-                            <button onclick="scrollForecast(-1)" class="p-1.5 text-gray-400 rounded-full border border-gray-200 transition-all hover:bg-gray-50 hover:text-indigo-600">
-                                {% heroicon_mini "chevron-left" size="16" %}
-                            </button>
-                            <button onclick="scrollForecast(1)" class="p-1.5 text-gray-400 rounded-full border border-gray-200 transition-all hover:bg-gray-50 hover:text-indigo-600">
-                                {% heroicon_mini "chevron-right" size="16" %}
-                            </button>
-                        </div>
-                    </div>
-                    <div id="forecastCards" class="flex overflow-x-auto gap-4 pb-4 scroll-smooth scrollbar-hide">
-                        <!-- Populated via JS -->
+            <!-- Prediction Monthly Cards -->
+            <div class="flex relative flex-col lg:col-span-2 group">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Upcoming Monthly Cashflow Forecast</h3>
+                    <div class="flex gap-2">
+                        <button onclick="scrollForecast(-1)"
+                                class="p-1.5 text-gray-400 rounded-full border border-gray-200 transition-all hover:bg-gray-50 hover:text-indigo-600">
+                            {% heroicon_mini "chevron-left" size="16" %}
+                        </button>
+                        <button onclick="scrollForecast(1)"
+                                class="p-1.5 text-gray-400 rounded-full border border-gray-200 transition-all hover:bg-gray-50 hover:text-indigo-600">
+                            {% heroicon_mini "chevron-right" size="16" %}
+                        </button>
                     </div>
                 </div>
+                <div id="forecastCards"
+                     class="flex overflow-x-auto gap-4 pb-4 scroll-smooth scrollbar-hide">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
             <!-- Forecast Dashboard Section -->
             <div class="grid grid-cols-1 gap-6 mb-10 lg:grid-cols-2">
                 <!-- Chart 1: Income vs Expenses -->
@@ -217,7 +231,6 @@
                         <canvas id="barChart"></canvas>
                     </div>
                 </div>
-
                 <!-- Chart 2: Cumulative Balance -->
                 <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
                     <div class="flex justify-between items-center mb-6">
@@ -230,15 +243,13 @@
                         <canvas id="lineChart"></canvas>
                     </div>
                 </div>
-                  {% comment %} <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md lg:col-span-1">
+                {% comment %} <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm transition-all hover:shadow-md lg:col-span-1">
                     <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-4">Monthly Net Flow</h3>
                     <div class="h-[200px]">
                         <canvas id="netFlowChart"></canvas>
                     </div>
                 </div> {% endcomment %}
             </div>
-
-           
             <!-- Data Table Section -->
             <div class="overflow-hidden p-8 mb-10 bg-white rounded-3xl border border-gray-100 shadow-sm">
                 <h3 class="mb-6 text-xl font-black tracking-tight leading-none text-gray-900 uppercase">Cashflow Forecast Table</h3>

@@ -88,11 +88,10 @@
                     R {{ income_statement.cos.total|floatformat:2|intcomma }}
                 </div>
                 <div class="flex gap-1 items-center mt-1 text-xs font-bold text-emerald-600 capitalize">
-                    
                     {{ income_statement.cos.pct|floatformat:1 }}% of Total Revenue
-                </div> 
+                </div>
             </div>
-              <div class="flex-1 p-6 border-b border-gray-100 transition-colors sm:border-b-0 sm:border-r hover:bg-slate-50 group">
+            <div class="flex-1 p-6 border-b border-gray-100 transition-colors sm:border-b-0 sm:border-r hover:bg-slate-50 group">
                 <div class="flex justify-between items-start mb-2">
                     <div class="text-xs font-black text-gray-500 uppercase text-emerald-600/60">Preliminaries</div>
                     <div class="text-emerald-600">{% heroicon_outline "receipt-percent" size="20" %}</div>
@@ -100,8 +99,7 @@
                 <div class="font-mono text-3xl font-black text-emerald-700">
                     R {{ income_statement.opex.total|floatformat:2|intcomma }}
                 </div>
-              <div class="flex gap-1 items-center mt-1 text-xs font-bold text-emerald-600 capitalize">
-                    
+                <div class="flex gap-1 items-center mt-1 text-xs font-bold text-emerald-600 capitalize">
                     {{ income_statement.operating_expenses.margin|floatformat:1 }}% of Total Revenue
                 </div>
             </div>
@@ -111,7 +109,7 @@
                     <div class="text-indigo-600">{% heroicon_outline "chart-pie" size="20" %}</div>
                 </div>
                 <div class="font-mono text-3xl font-black text-indigo-600">
-                     R {{ income_statement.net_profit.amount|floatformat:2|intcomma }}
+                    R {{ income_statement.net_profit.amount|floatformat:2|intcomma }}
                 </div>
                 <div class="flex gap-1 items-center mt-1 text-xs font-bold text-indigo-600 capitalize">
                     {{ income_statement.operating_expenses.margin|floatformat:1 }}% of Total Revenue

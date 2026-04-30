@@ -859,7 +859,7 @@ def get_project_cashflow_data(project_id, horizon_type="month", history_months=3
             month_a_cost += a_cost
         else:
             # Apply burn rate to future planned costs
-            forecast_a_cost = p_cost * burn_rate
+            forecast_a_cost = p_cost * Decimal(str(burn_rate))
             cum_a_cost += forecast_a_cost
             month_a_cost += forecast_a_cost
 
