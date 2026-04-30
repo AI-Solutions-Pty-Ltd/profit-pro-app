@@ -56,37 +56,48 @@
                     </p>
                 </div>
                 <div class="flex flex-col gap-4 items-center w-full sm:flex-row lg:w-auto">
-                    <!-- Historical Window Selector -->
-                    <div class="flex flex-col gap-1.5 w-full sm:w-auto">
-                        <label class="px-1 text-xs font-semibold tracking-wider text-gray-500 uppercase">History Window</label>
-                        <div class="p-1 bg-white rounded border border-gray-200 shadow-sm join">
-                            <button onclick="updateParams({history: 1})"
-                                    class="join-item rounded-sm btn btn-xs h-8 px-3 {% if current_history == 1 %}bg-indigo-50 text-indigo-600{% else %}btn-ghost text-gray-500{% endif %}">
-                                1m
-                            </button>
-                            <button onclick="updateParams({history: 3})"
-                                    class="join-item rounded-sm btn btn-xs h-8 px-3 {% if current_history == 3 %}bg-indigo-50 text-indigo-600{% else %}btn-ghost text-gray-500{% endif %}">
-                                3m
-                            </button>
-                            <button onclick="updateParams({history: 6})"
-                                    class="join-item rounded-sm btn btn-xs h-8 px-3 {% if current_history == 6 %}bg-indigo-50 text-indigo-600{% else %}btn-ghost text-gray-500{% endif %}">
-                                6m
-                            </button>
-                            <button onclick="updateParams({history: 0})"
-                                    class="join-item rounded-sm btn btn-xs h-8 px-3 {% if current_history == 0 %}bg-indigo-50 text-indigo-600{% else %}btn-ghost text-gray-500{% endif %}">
-                                All
-                            </button>
+                    <!-- Historical Window Slider -->
+                    <div class="flex flex-col gap-2 w-full sm:w-80">
+                        <div class="flex justify-between items-center px-1">
+                            <label class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">History Window</label>
+                            <span id="historyVal" class="text-[10px] font-mono font-bold text-indigo-600">
+                                {% if current_history == 0 %}All Time{% else %}{{ current_history }} Months{% endif %}
+                            </span>
+                        </div>
+                        <div class="px-3">
+                            <input type="range" id="historySlider" min="0" max="4" step="1" 
+                                   value="{% if current_history == 1 %}1{% elif current_history == 3 %}2{% elif current_history == 6 %}3{% elif current_history == 12 %}4{% else %}0{% endif %}" 
+                                   class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                   onchange="handleHistoryChange(this.value)">
+                            <div class="flex justify-between px-0.5 mt-2">
+                                <span class="text-[8px] font-bold text-gray-400">ALL</span>
+                                <span class="text-[8px] font-bold text-gray-400">1M</span>
+                                <span class="text-[8px] font-bold text-gray-400">3M</span>
+                                <span class="text-[8px] font-bold text-gray-400">6M</span>
+                                <span class="text-[8px] font-bold text-gray-400">12M</span>
+                            </div>
                         </div>
                     </div>
+
                     <!-- Forecast Horizon Slider -->
-                    <div class="flex flex-col gap-1.5 w-full sm:w-80">
+                    <div class="flex flex-col gap-2 w-full sm:w-80">
                         <div class="flex justify-between items-center px-1">
                             <label class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Forecast Horizon</label>
-                            <span id="horizonVal" class="text-[10px] font-mono font-bold text-indigo-600">6 Months</span>
+                            <span id="horizonVal" class="text-[10px] font-mono font-bold text-indigo-600">
+                                {{ current_horizon|capfirst }}
+                            </span>
                         </div>
-                        <div class="flex gap-3 items-center px-3 py-2 bg-white rounded-lg border border-gray-100 shadow-sm">
-                            <input type="range" id="horizonSlider" min="1" max="12" value="6" 
-                                   class="w-full h-1.5 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                        <div class="px-3">
+                            <input type="range" id="horizonSlider" min="0" max="3" step="1" 
+                                   value="{% if current_horizon == 'month' %}0{% elif current_horizon == 'term' %}1{% elif current_horizon == 'half' %}2{% elif current_horizon == 'year' %}3{% else %}2{% endif %}" 
+                                   class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                   onchange="handleHorizonChange(this.value)">
+                            <div class="flex justify-between px-0.5 mt-2">
+                                <span class="text-[8px] font-bold text-gray-400">1M</span>
+                                <span class="text-[8px] font-bold text-gray-400">3M</span>
+                                <span class="text-[8px] font-bold text-gray-400">6M</span>
+                                <span class="text-[8px] font-bold text-gray-400">12M</span>
+                            </div>
                         </div>
                     </div>
                     <button onclick="window.print()"
@@ -259,6 +270,16 @@
         window.location.href = url.toString();
     }
 
+    window.handleHistoryChange = (val) => {
+        const mapping = {0: 0, 1: 1, 2: 3, 3: 6, 4: 12};
+        updateParams({history: mapping[val]});
+    };
+
+    window.handleHorizonChange = (val) => {
+        const mapping = {0: 'month', 1: 'term', 2: 'half', 3: 'year'};
+        updateParams({horizon: mapping[val]});
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
         const rawData = {{ cashflow_json|safe }};
         let charts = {};
@@ -391,7 +412,7 @@
                             <span class="text-sm font-bold text-gray-900">${monthLabel}</span>
                         </div>
                      
-                      
+                          <div class="text-[10px] opacity-0 font-bold text-gray-500 uppercase tracking-widest">Cumulative Balance</div>
                     </div>
    <div class="mb-6">
                          <div class="mb-1 font-mono text-3xl ${net >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold tracking-tight">  ${net >= 0 ? '+' : ''}${formatK(net)}</div>
@@ -405,11 +426,11 @@
                      <div class="flex justify-between items-center text-[11px]">
                             <span class="font-bold tracking-widest text-gray-500 uppercase">Planned Expense</span>
                             <span class="font-mono text-sm font-bold tabular-nums text-gray-900">${formatK(monthExp)}</span>
-                     </div>
+                        </div>
                     <div class="flex justify-between items-center text-[11px]">
                             <span class="font-bold tracking-widest text-gray-500 uppercase">Net Cashflow</span>
                             <span class="font-mono text-sm font-bold tabular-nums ${net >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatK(net)}</span>
-                    </div>
+                        </div>
                     </div>
                     
                     
@@ -421,7 +442,7 @@
 
         window.scrollForecast = (direction) => {
             const container = document.getElementById('forecastCards');
-            const scrollAmount = 276; // Card width + gap
+            const scrollAmount = 356; // Card width (340) + gap (16)
             container.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
         };
 
