@@ -49,6 +49,7 @@ class FinancialCalculationMixin:
             end_date = date.today()
 
         from django.db.models import Q
+
         # --- REVENUE (CERTIFICATE DRIVEN) ---
         # Actual (Certified) comes from APPROVED certificates based on approval date
         actual_cert_filter = {
@@ -74,8 +75,11 @@ class FinancialCalculationMixin:
             **planned_cert_filter,
             claimed=True,
         ).filter(
-            Q(payment_certificate__assessment_date__date__lte=end_date) |
-            Q(payment_certificate__assessment_date__isnull=True, payment_certificate__approved_on__date__lte=end_date)
+            Q(payment_certificate__assessment_date__date__lte=end_date)
+            | Q(
+                payment_certificate__assessment_date__isnull=True,
+                payment_certificate__approved_on__date__lte=end_date,
+            )
         ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
 
         # Actual Revenue (Certified) To Date - uses approved_on
@@ -93,10 +97,18 @@ class FinancialCalculationMixin:
             **planned_cert_filter,
             claimed=True,
         ).filter(
-            Q(payment_certificate__assessment_date__date__range=(this_month_start, end_date)) |
             Q(
+                payment_certificate__assessment_date__date__range=(
+                    this_month_start,
+                    end_date,
+                )
+            )
+            | Q(
                 payment_certificate__assessment_date__isnull=True,
-                payment_certificate__approved_on__date__range=(this_month_start, end_date)
+                payment_certificate__approved_on__date__range=(
+                    this_month_start,
+                    end_date,
+                ),
             )
         ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
 
