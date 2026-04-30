@@ -40,6 +40,7 @@ from app.Project.models import (
     PlannedValue,
     Project,
     ProjectCategory,
+    ProjectDocument,
     ProjectRole,
     Role,
 )
@@ -403,6 +404,14 @@ class ProjectSetupView(ProjectMixin, DetailView):
         context["has_estimator_data"] = ProjectMaterial.objects.filter(
             project=project
         ).exists()
+        context["boq_documents"] = (
+            ProjectDocument.objects.filter(
+                project=project,
+                category=ProjectDocument.DocumentCategory.BILL_OF_QUANTITIES,
+            )
+            .select_related("uploaded_by")
+            .order_by("-created_at")[:5]
+        )
         return context
 
     def post(self, request, *args, **kwargs):
@@ -457,6 +466,29 @@ class ProjectSetupView(ProjectMixin, DetailView):
                     )
                 except Exception as e:
                     messages.error(request, f"Clone from project failed: {e}")
+
+        elif action == "upload_boq_attachment":
+            boq_file = request.FILES.get("boq_file")
+            if not boq_file:
+                messages.error(request, "Please select a BOQ file to upload.")
+            else:
+                title = (request.POST.get("boq_title") or "").strip()
+                notes = (request.POST.get("boq_notes") or "").strip()
+                if not title:
+                    title = f"BOQ upload - {boq_file.name}"
+
+                ProjectDocument.objects.create(
+                    project=project,
+                    category=ProjectDocument.DocumentCategory.BILL_OF_QUANTITIES,
+                    title=title,
+                    file=boq_file,
+                    uploaded_by=request.user,
+                    notes=notes,
+                )
+                messages.success(
+                    request,
+                    "BOQ file uploaded. Our team will format it and upload it into the system.",
+                )
 
         return HttpResponseRedirect(
             reverse("project:project-setup", kwargs={"pk": project.pk})
