@@ -97,8 +97,8 @@
                                 Daily Total
                             </th>
                             <th scope="col"
-                                class="px-3 py-3.5 text-xs font-bold text-right text-gray-600 uppercase tracking-tighter">
-                                Total Amount
+                                class="px-3 py-3.5 text-xs font-bold tracking-tighter text-right text-gray-600 uppercase">
+                                Contract Amount
                             </th>
                             <th scope="col" class="relative py-3.5 pr-4 pl-3 sm:pr-6">
                                 <span class="sr-only">Actions</span>
@@ -129,7 +129,7 @@
                                                   title="{{ activity.plant_types }}">{{ activity.plant_types }}</span>
                                         </div>
                                     {% else %}
-                                        <span class="text-xs text-gray-400 italic">None</span>
+                                        <span class="text-xs italic text-gray-400">None</span>
                                     {% endif %}
                                 </td>
                                 <td class="px-3 py-4 font-mono text-sm tabular-nums text-right text-gray-600 whitespace-nowrap">
@@ -144,7 +144,7 @@
                                 <td class="px-3 py-4 font-mono text-sm tabular-nums text-right text-emerald-600 whitespace-nowrap">
                                     {{ activity.daily_plant_cost|currency }}
                                 </td>
-                                <td class="px-3 py-4 font-mono text-sm tabular-nums text-right font-black text-gray-900 whitespace-nowrap">
+                                <td class="px-3 py-4 font-mono text-sm font-black tabular-nums text-right text-gray-900 whitespace-nowrap">
                                     {{ activity.total_daily_cost|currency }}
                                 </td>
                                 <td class="px-3 py-4 text-sm font-bold tabular-nums text-right text-gray-500 whitespace-nowrap">

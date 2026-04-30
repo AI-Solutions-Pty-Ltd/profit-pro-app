@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -389,7 +390,7 @@ class ProductionProgressReportView(
                 current_rate = plan.daily_rate * ppi
                 if current_rate > 0:
                     days_left = int(remaining_qty / current_rate)
-                    forecast_end_date = today + timezone.timedelta(days=days_left)
+                    forecast_end_date = today + timedelta(days=days_left)
 
             days_variance = 0
             if plan.finish_date and forecast_end_date:
