@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -128,9 +129,7 @@ class ProductionPlanGanttView(
                     current_rate = float(plan.daily_rate) * float(ppi)
                     if current_rate > 0:
                         days_left = int(float(remaining_qty) / current_rate)
-                        forecast_finish_date = today + timezone.timedelta(
-                            days=days_left
-                        )
+                        forecast_finish_date = today + timedelta(days=days_left)
 
             predecessor_ids = [dep.predecessor_id for dep in plan.predecessors.all()]
             predecessor_names = [

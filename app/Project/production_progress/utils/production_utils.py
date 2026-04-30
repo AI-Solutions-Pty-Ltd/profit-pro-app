@@ -721,13 +721,16 @@ def get_forecasting_dashboard_data(plan_id, start_date=None, end_date=None):
 
 def get_project_cashflow_data(project_id, horizon_type="month", history_months=3):
     """
-    Calculates project-wide cashflow trajectories: Planned, Actual, and Forecast.
-    history_months: number of months back from today to start the graph (0 for project start).
+    Calculates project-wide cashflow trajectories: Planned Income, Planned Expenses,
+    Actual Expenses, and Forecasted trajectory using project burn rate.
     """
     from datetime import timedelta
 
     from dateutil.relativedelta import relativedelta
+    from django.db import models
+    from django.db.models import F, Sum
 
+    from app.Estimator.models import BOQItem
     from app.Project.models import Project
 
     get_object_or_404(Project, pk=project_id)
@@ -742,7 +745,16 @@ def get_project_cashflow_data(project_id, horizon_type="month", history_months=3
     scheduled_plans = plans.filter(start_date__isnull=False, finish_date__isnull=False)
 
     if not scheduled_plans.exists():
-        return {"labels": [], "planned": [], "actual": [], "forecast": [], "kpis": {}}
+        return {
+            "labels": [],
+            "planned_income": [],
+            "cost_planned": [],
+            "cost_actual": [],
+            "cum_cost_planned": [],
+            "cum_cost_actual": [],
+            "cost_forecast_start_index": 0,
+            "kpis": {},
+        }
 
     # Project inception matches the earliest scheduled plan start
     project_start = min(p.start_date for p in scheduled_plans)
@@ -764,156 +776,160 @@ def get_project_cashflow_data(project_id, horizon_type="month", history_months=3
     # Display start date (history window)
     if history_months and history_months > 0:
         display_start = today - relativedelta(months=history_months)
-        # Ensure we don't start before project start if we want to show inception
-        # display_start = max(display_start, project_start)
-        # Actually, let it start exactly at history_months even if before project start (for consistent width)
-        # but capping at project_start is usually cleaner for S-Curves.
-        # However, a fixed 3m window is what the user asked for.
     else:
         display_start = project_start
 
     # Initialize trajectories
-    daily_planned = defaultdict(Decimal)
-    daily_actual = defaultdict(Decimal)
+    daily_planned_cost = defaultdict(Decimal)
+    daily_planned_income = defaultdict(Decimal)
+    daily_actual_cost = defaultdict(Decimal)
 
-    # 1. Map Planned Costs (Only for scheduled plans)
+    # 1. Map Planned Costs & Income (Only for scheduled plans)
     for plan in scheduled_plans:
+        # Cost calculation
         total_p_cost = (
             plan.total_labour_cost + plan.total_plant_cost + plan.total_other_cost
         )
+
+        # Income calculation (from BOQItems)
+        total_p_income = BOQItem.objects.filter(
+            project_id=project_id,
+            section=plan.section,
+            bill_no=plan.bill_no,
+            labour_specification=plan.labour_activity,
+        ).aggregate(
+            total=Sum(
+                F("contract_quantity") * F("contract_rate"),
+                output_field=models.DecimalField(),
+            )
+        )["total"] or Decimal("0")
+
         days = (plan.finish_date - plan.start_date).days + 1
         daily_p_cost = total_p_cost / Decimal(days) if days > 0 else total_p_cost
+        daily_p_income = total_p_income / Decimal(days) if days > 0 else total_p_income
 
         curr = plan.start_date
         while curr <= plan.finish_date:
-            daily_planned[curr] += daily_p_cost
+            daily_planned_cost[curr] += daily_p_cost
+            daily_planned_income[curr] += daily_p_income
             curr += timedelta(days=1)
 
     # 2. Map Actual Costs
     for entry in entries:
-        daily_actual[entry.report.date] += entry.total_cost
+        daily_actual_cost[entry.report.date] += entry.total_cost
 
-    # 3. Build Monthly Data series
+    # 3. Calculate Burn Rate (to date)
+    cum_p_cost_today = sum(v for d, v in daily_planned_cost.items() if d <= today)
+    cum_a_cost_today = sum(v for d, v in daily_actual_cost.items() if d <= today)
+
+    burn_rate = Decimal("1.0")
+    if cum_p_cost_today > 0:
+        burn_rate = cum_a_cost_today / cum_p_cost_today
+
+    # 4. Build Monthly Data series
     labels = []
-    # Incremental (Monthly)
-    planned_inc = []
-    actual_inc = []
-    # Cumulative (S-Curve)
-    planned_cum = []
-    actual_cum = []
-    forecast_cum = []
+    planned_income = []
+    cost_planned = []
+    cost_actual = []
+    cum_cost_planned = []
+    cum_cost_actual = []
 
-    cum_planned = Decimal("0.0")
-    cum_actual = Decimal("0.0")
-    cum_forecast = Decimal("0.0")
+    cost_forecast_start_index = -1
 
-    # Iterate from project START to ensure cumulative totals are accurate
+    cum_p_cost = Decimal("0.0")
+    cum_p_inc = Decimal("0.0")
+    cum_a_cost = Decimal("0.0")
+
     curr = project_start
-    current_month_p = Decimal("0.0")
-    current_month_a = Decimal("0.0")
+    month_p_cost = Decimal("0.0")
+    month_p_inc = Decimal("0.0")
+    month_a_cost = Decimal("0.0")
 
     # Loop day by day to calculate cumulative values
     while curr <= viz_end_date:
-        p_val = daily_planned.get(curr, Decimal("0.0"))
-        a_val = daily_actual.get(curr, Decimal("0.0"))
+        p_cost = daily_planned_cost.get(curr, Decimal("0.0"))
+        p_inc = daily_planned_income.get(curr, Decimal("0.0"))
+        a_cost = daily_actual_cost.get(curr, Decimal("0.0"))
 
-        cum_planned += p_val
+        cum_p_cost += p_cost
+        cum_p_inc += p_inc
+
         if curr <= today:
-            cum_actual += a_val
-            cum_forecast = cum_actual
-            current_month_a += a_val
+            cum_a_cost += a_cost
+            month_a_cost += a_cost
         else:
-            cum_forecast += p_val
+            # Apply burn rate to future planned costs
+            forecast_a_cost = p_cost * Decimal(str(burn_rate))
+            cum_a_cost += forecast_a_cost
+            month_a_cost += forecast_a_cost
 
-        current_month_p += p_val
+        month_p_cost += p_cost
+        month_p_inc += p_inc
 
-        # At the end of the month or at the vized_end_date, snapshot the data
+        # At the end of the month or at the viz_end_date, snapshot the data
         is_month_end = (curr + timedelta(days=1)).month != curr.month
         is_viz_end = curr == viz_end_date
 
         if is_month_end or is_viz_end:
-            # Only record if within display window (OR if it's the very first month of display_start)
+            # Only record if within display window
             if curr >= display_start.replace(day=1):
-                labels.append(curr.strftime("%b %Y"))
+                labels.append(curr.strftime("%b %y"))
 
-                # Monthly Spend (Bars)
-                planned_inc.append(float(current_month_p))
-                if curr <= today or (
-                    curr.month == today.month and curr.year == today.year
-                ):
-                    actual_inc.append(float(current_month_a))
-                else:
-                    actual_inc.append(0.0)  # No actuals for future months
+                if cost_forecast_start_index == -1 and curr >= today.replace(day=1):
+                    cost_forecast_start_index = len(labels) - 1
 
-                # Cumulative To Date (Lines)
-                planned_cum.append(float(cum_planned))
-                if curr <= today:
-                    actual_cum.append(float(cum_actual))
-                    forecast_cum.append(float(cum_forecast))
+                # Monthly series
+                planned_income.append(float(month_p_inc))
+                cost_planned.append(float(month_p_cost))
+
+                # Actual cost is only "actual" up to today, then it's forecast
+                if curr < today.replace(day=1):
+                    cost_actual.append(float(month_a_cost))
+                elif curr.month == today.month and curr.year == today.year:
+                    # Current month is a mix, but we'll show it as actual/current
+                    cost_actual.append(float(month_a_cost))
                 else:
-                    actual_cum.append(None)
-                    forecast_cum.append(float(cum_forecast))
+                    cost_actual.append(
+                        float(month_a_cost)
+                    )  # This is now the forecast portion
+
+                # Cumulative series
+                cum_cost_planned.append(float(cum_p_cost))
+                cum_cost_actual.append(float(cum_a_cost))
 
             # Reset monthly counters
-            current_month_p = Decimal("0.0")
-            current_month_a = Decimal("0.0")
+            month_p_cost = Decimal("0.0")
+            month_p_inc = Decimal("0.0")
+            month_a_cost = Decimal("0.0")
 
         curr += timedelta(days=1)
 
-    # 4. Calculate KPIs (remains the same)
+    # 5. KPIs
     month_start = today.replace(day=1)
-
-    # Current Month Actual so far
-    month_actual = sum(
-        daily_actual.get(d, Decimal("0.0"))
-        for d in [
-            month_start + timedelta(days=i)
-            for i in range((today - month_start).days + 1)
-        ]
-    )
-
-    # Current Month Planned total
     month_end = (month_start + relativedelta(months=1)) - timedelta(days=1)
-    month_planned = sum(
-        daily_planned.get(month_start + timedelta(days=i), Decimal("0.0"))
+
+    current_month_actual = sum(
+        daily_actual_cost.get(month_start + timedelta(days=i), Decimal("0.0"))
+        for i in range((today - month_start).days + 1)
+    )
+    current_month_planned = sum(
+        daily_planned_cost.get(month_start + timedelta(days=i), Decimal("0.0"))
         for i in range((month_end - month_start).days + 1)
     )
 
-    f_end = today + relativedelta(months=1)
-    if horizon_type == "term":
-        f_end = today + relativedelta(months=3)
-    elif horizon_type == "half":
-        f_end = today + relativedelta(months=6)
-    elif horizon_type == "year":
-        f_end = today + relativedelta(years=1)
-
-    f_start = today + timedelta(days=1)
-    period_forecast = (
-        sum(
-            daily_planned.get(f_start + timedelta(days=i), Decimal("0.0"))
-            for i in range((f_end - f_start).days + 1)
-        )
-        if f_end >= f_start
-        else 0
-    )
-
-    monthly_variance = float(month_actual - month_planned)
-    is_healthy = monthly_variance <= 0
-
     return {
         "labels": labels,
-        "planned_cum": planned_cum,
-        "actual_cum": actual_cum,
-        "forecast_cum": forecast_cum,
-        "planned_inc": planned_inc,
-        "actual_inc": actual_inc,
+        "planned_income": planned_income,
+        "cost_planned": cost_planned,
+        "cost_actual": cost_actual,
+        "cum_cost_planned": cum_cost_planned,
+        "cum_cost_actual": cum_cost_actual,
+        "cost_forecast_start_index": cost_forecast_start_index,
         "kpis": {
-            "month_actual": float(month_actual),
-            "month_planned": float(month_planned),
-            "monthly_variance": float(monthly_variance),
-            "is_healthy": is_healthy,
-            "period_forecast": float(period_forecast),
-            "total_budget": float(cum_planned),
+            "month_actual": float(current_month_actual),
+            "month_planned": float(current_month_planned),
+            "burn_rate": float(burn_rate),
+            "total_budget": float(cum_p_cost),
             "today": today.strftime("%Y-%m-%d"),
             "horizon_label": horizon_type.capitalize(),
         },

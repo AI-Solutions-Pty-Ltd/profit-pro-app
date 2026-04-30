@@ -5,7 +5,6 @@ from django.db.models import F, Sum
 
 from app.BillOfQuantities.models import (
     ActualTransaction,
-    BaselineCashflow,
     CashflowForecast,
     PaymentCertificate,
 )
@@ -49,26 +48,76 @@ class FinancialCalculationMixin:
         if not end_date:
             end_date = date.today()
 
-        # --- REVENUE ---
-        # Sum of actual transactions in APPROVED certificates up to end_date
+        from django.db.models import Q
+
+        # --- REVENUE (CERTIFICATE DRIVEN) ---
+        # Actual (Certified) comes from APPROVED certificates based on approval date
+        actual_cert_filter = {
+            "payment_certificate__project_id": project.id,
+            "payment_certificate__status__in": [
+                PaymentCertificate.Status.APPROVED,
+                PaymentCertificate.Status.SIGNATORIES_APPROVED,
+            ],
+        }
+
+        # Planned (Claimed) comes from SUBMITTED or APPROVED certificates based on assessment date
+        planned_cert_filter = {
+            "payment_certificate__project_id": project.id,
+            "payment_certificate__status__in": [
+                PaymentCertificate.Status.SUBMITTED,
+                PaymentCertificate.Status.APPROVED,
+                PaymentCertificate.Status.SIGNATORIES_APPROVED,
+            ],
+        }
+
+        # Planned Revenue (Claimed) To Date - uses assessment_date (fallback to approved_on)
+        planned_revenue_to_date = ActualTransaction.objects.filter(
+            **planned_cert_filter,
+            claimed=True,
+        ).filter(
+            Q(payment_certificate__assessment_date__date__lte=end_date)
+            | Q(
+                payment_certificate__assessment_date__isnull=True,
+                payment_certificate__approved_on__date__lte=end_date,
+            )
+        ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
+
+        # Actual Revenue (Certified) To Date - uses approved_on
         actual_revenue_to_date = ActualTransaction.objects.filter(
-            line_item__project=project,
-            payment_certificate__status=PaymentCertificate.Status.APPROVED,
+            **actual_cert_filter,
             payment_certificate__approved_on__date__lte=end_date,
+            approved=True,
         ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
 
-        this_month_start = date.today().replace(day=1)
+        # This Month Calculations
+        this_month_start = end_date.replace(day=1)
+
+        # Planned This Month - uses assessment_date (fallback to approved_on)
+        planned_revenue_this_month = ActualTransaction.objects.filter(
+            **planned_cert_filter,
+            claimed=True,
+        ).filter(
+            Q(
+                payment_certificate__assessment_date__date__range=(
+                    this_month_start,
+                    end_date,
+                )
+            )
+            | Q(
+                payment_certificate__assessment_date__isnull=True,
+                payment_certificate__approved_on__date__range=(
+                    this_month_start,
+                    end_date,
+                ),
+            )
+        ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
+
+        # Actual This Month - uses approved_on
         actual_revenue_this_month = ActualTransaction.objects.filter(
-            line_item__project=project,
-            payment_certificate__status=PaymentCertificate.Status.APPROVED,
-            payment_certificate__approved_on__gte=this_month_start,
+            **actual_cert_filter,
+            payment_certificate__approved_on__date__range=(this_month_start, end_date),
+            approved=True,
         ).aggregate(total=Sum("total_price"))["total"] or Decimal("0.00")
-
-        planned_revenue_to_date = BaselineCashflow.objects.filter(
-            project=project,
-            status=BaselineCashflow.Status.APPROVED,
-            period__lte=end_date,
-        ).aggregate(total=Sum("planned_value"))["total"] or Decimal("0.00")
 
         forecast_revenue = CashflowForecast.objects.filter(
             project=project,
@@ -177,20 +226,41 @@ class FinancialCalculationMixin:
         actual_opex_to_date = get_tracker_totals(end=end_date, code=opex)
 
         # 2. This Month Totals
-        actual_cogs_this_month = get_tracker_totals(start=this_month_start, code=cos)
-        actual_opex_this_month = get_tracker_totals(start=this_month_start, code=opex)
+        actual_cogs_this_month = get_tracker_totals(
+            start=this_month_start, end=end_date, code=cos
+        )
+        actual_opex_this_month = get_tracker_totals(
+            start=this_month_start, end=end_date, code=opex
+        )
 
-        planned_cogs_to_date = planned_revenue_to_date * Decimal("0.60")
-        planned_opex_to_date = planned_revenue_to_date * Decimal("0.12")
+        # Use Baseline Assumptions for planned values (Based on PLANNED REVENUE)
+        baseline = self.get_baseline_assumptions()
+        planned_cogs_to_date = planned_revenue_to_date * Decimal(
+            str(baseline["cost_of_sales_percent"] / 100)
+        )
+        planned_opex_to_date = planned_revenue_to_date * Decimal(
+            str(baseline["operating_expenses_percent"] / 100)
+        )
+
+        planned_cogs_this_month = planned_revenue_this_month * Decimal(
+            str(baseline["cost_of_sales_percent"] / 100)
+        )
+        planned_opex_this_month = planned_revenue_this_month * Decimal(
+            str(baseline["operating_expenses_percent"] / 100)
+        )
 
         # --- CALCULATIONS ---
         actual_gp_to_date = actual_revenue_to_date - actual_cogs_to_date
         planned_gp_to_date = planned_revenue_to_date - planned_cogs_to_date
+
         actual_gp_this_month = actual_revenue_this_month - actual_cogs_this_month
+        planned_gp_this_month = planned_revenue_this_month - planned_cogs_this_month
 
         actual_np_to_date = actual_gp_to_date - actual_opex_to_date
         planned_np_to_date = planned_gp_to_date - planned_opex_to_date
+
         actual_np_this_month = actual_gp_this_month - actual_opex_this_month
+        planned_np_this_month = planned_gp_this_month - planned_opex_this_month
 
         gp_margin_actual = (
             (actual_gp_to_date / actual_revenue_to_date * 100)
@@ -219,31 +289,40 @@ class FinancialCalculationMixin:
                 "actual_to_date": actual_revenue_to_date,
                 "planned_to_date": planned_revenue_to_date,
                 "actual_this_month": actual_revenue_this_month,
+                "planned_this_month": planned_revenue_this_month,
                 "forecast": forecast_revenue,
             },
             "cost_of_sales": {
                 "actual_to_date": actual_cogs_to_date,
                 "planned_to_date": planned_cogs_to_date,
                 "actual_this_month": actual_cogs_this_month,
-                "forecast": forecast_revenue * Decimal("0.60"),
+                "planned_this_month": planned_cogs_this_month,
+                "forecast": forecast_revenue
+                * Decimal(str(baseline["cost_of_sales_percent"] / 100)),
             },
             "gross_profit": {
                 "actual_to_date": actual_gp_to_date,
                 "planned_to_date": planned_gp_to_date,
                 "actual_this_month": actual_gp_this_month,
-                "forecast": forecast_revenue * Decimal("0.40"),
+                "planned_this_month": planned_gp_this_month,
+                "forecast": forecast_revenue
+                * Decimal(str(1 - baseline["cost_of_sales_percent"] / 100)),
             },
             "operating_expenses": {
                 "actual_to_date": actual_opex_to_date,
                 "planned_to_date": planned_opex_to_date,
                 "actual_this_month": actual_opex_this_month,
-                "forecast": forecast_revenue * Decimal("0.12"),
+                "planned_this_month": planned_opex_this_month,
+                "forecast": forecast_revenue
+                * Decimal(str(baseline["operating_expenses_percent"] / 100)),
             },
             "net_profit": {
                 "actual_to_date": actual_np_to_date,
                 "planned_to_date": planned_np_to_date,
                 "actual_this_month": actual_np_this_month,
-                "forecast": forecast_revenue * Decimal("0.28"),
+                "planned_this_month": planned_np_this_month,
+                "forecast": forecast_revenue
+                * Decimal(str(baseline["net_profit_percent"] / 100)),
             },
             "gp_margin": {
                 "actual_to_date": gp_margin_actual,
@@ -253,7 +332,7 @@ class FinancialCalculationMixin:
                 )
                 if actual_revenue_this_month > 0
                 else 0,
-                "forecast": 40.0,
+                "forecast": baseline["cost_of_sales_percent"],
             },
             "np_margin": {
                 "actual_to_date": np_margin_actual,
@@ -263,7 +342,7 @@ class FinancialCalculationMixin:
                 )
                 if actual_revenue_this_month > 0
                 else 0,
-                "forecast": 28.0,
+                "forecast": baseline["net_profit_percent"],
             },
         }
 

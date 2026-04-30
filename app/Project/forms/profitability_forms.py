@@ -303,8 +303,8 @@ class ProfitabilityBaselineForm(ProfitabilityBaseForm):
             "net_profit_percent",
         ]
         labels = {
-            "cost_of_sales_percent": "Cost of Sales (%)",
-            "operating_expenses_percent": "Operating Expenses (%)",
+            "cost_of_sales_percent": "Production Cost(%)",
+            "operating_expenses_percent": "Preliminaries (%)",
             "net_profit_percent": "Net Profit (%)",
         }
 
