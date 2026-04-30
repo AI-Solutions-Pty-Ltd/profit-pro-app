@@ -420,3 +420,139 @@ class ProductionProgressReportView(
             }
         )
         return context
+
+class ProductionControllerView(
+    SubscriptionRequiredMixin, LoginRequiredMixin, BreadcrumbMixin, TemplateView
+):
+    """
+    Integrated Production Control Center.
+    Combines the Gantt Schedule and Progress Metrics Table into a single synchronized view.
+    """
+
+    template_name = "production_progress/reports/integrated_control.html"
+    required_tiers = [Subscription.PROFIT_AND_LOSS]
+
+    def get_breadcrumbs(self):
+        project_pk = self.kwargs["project_pk"]
+        return [
+            {"title": "Projects", "url": reverse_lazy("project:portfolio-dashboard")},
+            {
+                "title": "Production Dashboard",
+                "url": reverse_lazy(
+                    "project:production-dashboard", kwargs={"project_pk": project_pk}
+                ),
+            },
+            {"title": "Integrated Control Center", "url": None},
+        ]
+
+    @staticmethod
+    def _flatten_tree(plans, parent_id=None, depth=0):
+        """Reused from Gantt view to build ordered list."""
+        rows = []
+        for plan in plans:
+            if plan.parent_id == parent_id:
+                rows.append((plan, depth))
+                rows.extend(
+                    ProductionControllerView._flatten_tree(plans, plan.pk, depth + 1)
+                )
+        return rows
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        project_pk = self.kwargs["project_pk"]
+        project = get_object_or_404(Project, pk=project_pk)
+        today = timezone.now().date()
+
+        # 1. Fetch Performance Summary (PPI etc)
+        perf_data = get_project_performance_summary(project_pk)
+        ppi = perf_data.get("ppi", Decimal("1.0"))
+        context.update({
+            "project": project,
+            "summary": perf_data,
+            "tab": "integrated_control",
+        })
+
+        # 2. Gantt Data Logic (Reused from ProductionPlanGanttView)
+        all_plans = list(
+            ProductionPlan.objects.filter(
+                project=project,
+                is_archived=False,
+                start_date__isnull=False,
+                finish_date__isnull=False,
+            )
+            .select_related("labour_activity", "parent")
+            .prefetch_related(
+                "predecessors",
+                "predecessors__predecessor",
+                "children",
+                "daily_entries",
+            )
+            .order_by("start_date", "activity")
+        )
+        context["plans"] = all_plans
+        ordered = self._flatten_tree(all_plans)
+        
+        gantt_data = []
+        for plan, depth in ordered:
+            progress_pct = plan.progress_percentage
+            forecast_finish_date = plan.finish_date
+
+            if progress_pct > 0 and plan.is_leaf:
+                total_produced = plan.daily_entries.aggregate(total=Sum("quantity"))["total"] or 0
+                remaining_qty = max(0, plan.quantity - total_produced)
+                if remaining_qty > 0:
+                    current_rate = plan.daily_rate * ppi
+                    if current_rate > 0:
+                        days_left = int(remaining_qty / current_rate)
+                        forecast_finish_date = today + timedelta(days=days_left)
+
+            gantt_data.append({
+                "id": str(plan.id),
+                "activity": plan.activity,
+                "start_date": plan.start_date.isoformat(),
+                "finish_date": plan.finish_date.isoformat(),
+                "forecast_finish_date": forecast_finish_date.isoformat() if forecast_finish_date else None,
+                "progress_pct": float(progress_pct),
+                "parent_id": str(plan.parent_id) if plan.parent_id else None,
+                "has_children": plan.children.exists(),
+                "depth": depth,
+                "predecessors": [str(dep.predecessor_id) for dep in plan.predecessors.all()]
+            })
+        context["gantt_data_json"] = json.dumps(gantt_data)
+
+        # 3. Progress Table Logic (Reused from ProductionProgressReportView)
+        # We show only leaf nodes with progress for the table, matching existing report
+        report_items = []
+        for plan in all_plans:
+            if not plan.is_leaf:
+                continue
+            
+            progress_pct = plan.progress_percentage
+            if progress_pct <= 0:
+                continue
+
+            total_produced = plan.daily_entries.aggregate(total=Sum("quantity"))["total"] or 0
+            remaining_qty = max(0, plan.quantity - total_produced)
+            
+            forecast_end_date = plan.finish_date
+            if remaining_qty > 0:
+                current_rate = plan.daily_rate * ppi
+                if current_rate > 0:
+                    days_left = int(remaining_qty / current_rate)
+                    forecast_end_date = today + timedelta(days=days_left)
+
+            days_variance = 0
+            if plan.finish_date and forecast_end_date:
+                days_variance = (forecast_end_date - plan.finish_date).days
+
+            report_items.append({
+                "plan": plan,
+                "progress_pct": progress_pct,
+                "planned_duration": (plan.finish_date - plan.start_date).days if plan.finish_date and plan.start_date else 0,
+                "forecast_end_date": forecast_end_date,
+                "days_variance": days_variance,
+                "spi": ppi,
+            })
+        
+        context["report_items"] = report_items
+        return context

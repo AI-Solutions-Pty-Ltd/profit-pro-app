@@ -1,0 +1,72 @@
+<!-- Detailed Metrics Table Partial -->
+<div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm analytics-table-section" id="table-section-container">
+    <div class="flex justify-between items-center px-6 py-4 border-b border-gray-50 bg-gray-50/50">
+        <h3 class="text-sm font-black tracking-tight text-gray-900 uppercase">Production Analytics Table</h3>
+        <div class="flex gap-2 items-center">
+             <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Click row to focus timeline</span>
+        </div>
+    </div>
+    <div class="overflow-x-auto max-w-full border-t border-gray-100 shadow-inner scrollbar-thin scrollbar-thumb-slate-300" id="table-scroll-container">
+        <table class="table table-xs table-zebra table-pin-rows table-pin-cols w-full min-w-[1200px]">
+            <thead>
+                <tr class="bg-gray-50/50">
+                    <th class="min-w-[250px]">Activity</th>
+                    <th class="text-center">Planned Start</th>
+                    <th class="text-center">Planned End</th>
+                    <th class="text-center">Duration</th>
+                    <th class="text-center">Forecast End</th>
+                    <th class="text-center">Days Var.</th>
+                    <th class="text-center">% Complete</th>
+                    <th class="text-center">SPI</th>
+                    <th class="text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                {% for item in report_items %}
+                    <tr class="transition-colors cursor-pointer hover:bg-indigo-50/30 group" 
+                        onclick="if(window.scrollToTask) window.scrollToTask('{{ item.plan.id }}')"
+                        data-activity-id="{{ item.plan.id }}">
+                        <td class="font-bold text-gray-900 group-hover:text-indigo-600">
+                            {{ item.plan.activity }}
+                        </td>
+                        <td class="font-mono text-center">{{ item.plan.start_date|date:"d/m/Y" }}</td>
+                        <td class="font-mono text-center">{{ item.plan.finish_date|date:"d/m/Y" }}</td>
+                        <td class="font-mono text-center">{{ item.planned_duration }}d</td>
+                        <td class="text-center font-mono {% if item.days_variance > 0 %}text-rose-600 font-bold{% elif item.days_variance < 0 %}text-emerald-600 font-bold{% endif %}">
+                            {{ item.forecast_end_date|date:"d/m/Y" }}
+                        </td>
+                        <td class="text-center font-mono {% if item.days_variance > 0 %}text-rose-600 font-bold{% elif item.days_variance < 0 %}text-emerald-600 font-bold{% endif %}">
+                            {{ item.days_variance|stringformat:"+d" }}d
+                        </td>
+                        <td class="min-w-[140px]">
+                            <div class="flex gap-2 items-center">
+                                <progress class="w-24 progress progress-indigo"
+                                          value="{{ item.progress_pct }}"
+                                          max="100"></progress>
+                                <span class="text-[10px] font-bold text-gray-500">{{ item.progress_pct|floatformat:0 }}%</span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="badge {% if item.spi >= 1 %}badge-success{% elif item.spi >= 0.8 %}badge-warning{% else %}badge-error{% endif %} badge-sm font-mono text-[10px] font-bold">
+                                {{ item.spi|floatformat:2 }}
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            {% if item.progress_pct >= 100 %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">DONE</span>
+                            {% elif item.days_variance > 0 %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 uppercase tracking-wider">Delayed</span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800 uppercase tracking-wider">On Track</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9" class="p-12 italic text-center text-gray-400">No activities with recorded progress found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
