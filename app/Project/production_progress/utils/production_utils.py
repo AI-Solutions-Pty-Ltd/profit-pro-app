@@ -1,5 +1,6 @@
 from collections import defaultdict
 from decimal import Decimal
+import math
 
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404
@@ -548,6 +549,7 @@ def get_plan_forecast_kpis(plan, project_ppi=1.0):
     Returns a dictionary structure compatible with dashboard and table views.
     """
     from datetime import date, timedelta
+
     from django.db.models import Sum
 
     # 1. Base Metrics
@@ -598,7 +600,7 @@ def get_plan_forecast_kpis(plan, project_ppi=1.0):
     forecast_total_days_raw = float(entries_count) + float(days_to_complete)
     # Visual Duration = days worked + rounded days remaining (for user display parity)
     forecast_total_days_visual = float(entries_count) + float(days_to_complete_rounded)
-    
+
     time_variance = planned_duration - forecast_total_days_raw
 
     # Status Determination
@@ -618,7 +620,9 @@ def get_plan_forecast_kpis(plan, project_ppi=1.0):
             "index": round(ppi, 2),
             "variance": round((float(ppi) - 1) * 100, 1),
             "days_remaining": int(days_to_complete_rounded),  # Rounded up
-            "forecast_duration": int(forecast_total_days_visual),  # Rounded up (e.g., 5.4 -> 6)
+            "forecast_duration": int(
+                forecast_total_days_visual
+            ),  # Rounded up (e.g., 5.4 -> 6)
             "forecast_finish": forecast_finish,
             "time_variance": round(time_variance, 1),  # Kept raw (e.g., +2.4d)
             "late_str": f"{'late by' if time_variance < 0 else 'ahead by'} {abs(time_variance):.1f} days",
