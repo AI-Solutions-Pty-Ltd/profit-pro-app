@@ -37,6 +37,7 @@ from .productivity_views import (
     ProductionDailyLogUpdateView,
 )
 from .reports_views import (
+    ProductionControllerView,
     ProductionForecastDashboardView,
     ProductionPerformanceReportView,
     ProductionProductivityReportView,
@@ -82,4 +83,5 @@ __all__ = [
     "ProductionProductivityReportView",
     "ProductionProgressReportView",
     "DailyActivityEntryUpdateView",
+    "ProductionControllerView",
 ]
