@@ -576,6 +576,8 @@ def get_plan_forecast_kpis(plan, project_ppi=1.0):
         actual_avg_out = target_rate * float(project_ppi)
         ppi = project_ppi
 
+    import math
+
     # 3. Time Forecast
     remaining_qty = max(0, float(plan.quantity) - float(actual_total_qty))
     days_to_complete = 0
@@ -586,14 +588,18 @@ def get_plan_forecast_kpis(plan, project_ppi=1.0):
     if forecast_rate > 0:
         days_to_complete = float(remaining_qty) / float(forecast_rate)
 
-    # Forecast Finish Date
-    forecast_finish = today + timedelta(days=days_to_complete)
+    # Brainstorming Refinement: Round up (ceil) days to complete for finish date and duration display
+    days_to_complete_rounded = math.ceil(days_to_complete)
+    forecast_finish = today + timedelta(days=days_to_complete_rounded)
 
     # 4. Variance Calculations
     planned_duration = float(plan.duration)
-    # Total predicted duration = days already worked + days remaining
-    forecast_total_days = float(entries_count) + float(days_to_complete)
-    time_variance = planned_duration - forecast_total_days
+    # Total predicted duration = days already worked + raw days remaining (for accurate variance)
+    forecast_total_days_raw = float(entries_count) + float(days_to_complete)
+    # Visual Duration = days worked + rounded days remaining (for user display parity)
+    forecast_total_days_visual = float(entries_count) + float(days_to_complete_rounded)
+    
+    time_variance = planned_duration - forecast_total_days_raw
 
     # Status Determination
     status = "On Track"
@@ -611,10 +617,10 @@ def get_plan_forecast_kpis(plan, project_ppi=1.0):
             "target": round(target_rate, 1),
             "index": round(ppi, 2),
             "variance": round((float(ppi) - 1) * 100, 1),
-            "days_remaining": round(days_to_complete, 1),
-            "forecast_duration": round(forecast_total_days, 1),
+            "days_remaining": int(days_to_complete_rounded),  # Rounded up
+            "forecast_duration": int(forecast_total_days_visual),  # Rounded up (e.g., 5.4 -> 6)
             "forecast_finish": forecast_finish,
-            "time_variance": round(time_variance, 1),
+            "time_variance": round(time_variance, 1),  # Kept raw (e.g., +2.4d)
             "late_str": f"{'late by' if time_variance < 0 else 'ahead by'} {abs(time_variance):.1f} days",
         },
         "summary": {
@@ -791,13 +797,13 @@ def get_forecasting_dashboard_data(
             else ("amber" if (time_variance < 0 or budget_variance < 0) else "emerald"),
             "progress_pct": round(progress_pct, 1),
             "completed_units": float(actual_total_qty),
-            "forecast_days": round(forecast_total_days, 1),
+            "forecast_days": int(days_elapsed + math.ceil(days_to_complete)),
             "time_variance": round(time_variance, 1),
             "planned_days": int(plan.duration),
             "forecast_cost": float(forecast_total_at_completion),
             "budget_variance": float(budget_variance),
             "budget_allocation": float(budget_allocation),
-            "days_remaining": round(days_to_complete, 1),
+            "days_remaining": int(math.ceil(days_to_complete)),
             "units_remaining": float(remaining_qty),
             "budget_used_pct": round(
                 (float(actual_total_cost) / float(budget_allocation) * 100), 1

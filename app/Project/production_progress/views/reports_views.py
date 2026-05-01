@@ -492,57 +492,46 @@ class ProductionControllerView(
         context["plans"] = all_plans
         ordered = self._flatten_tree(all_plans)
         
+        # 2. Progress Data (Unified KPI Logic for Gantt & Table)
+        from app.Project.production_progress.utils.production_utils import get_plan_forecast_kpis
+        
         gantt_data = []
+        report_items = []
+        
         for plan, depth in ordered:
-            progress_pct = plan.progress_percentage
-            forecast_finish_date = plan.finish_date
+            # Calculate KPIs for all leaf nodes, even if no progress (for consistent Gantt display)
+            kpis = None
+            if plan.is_leaf:
+                kpis = get_plan_forecast_kpis(plan, ppi)
+                
+                # If there's progress, add to report table
+                if kpis["summary"]["progress_pct"] > 0:
+                    report_items.append({
+                        "plan": plan,
+                        "kpis": kpis,
+                        "progress_pct": kpis["summary"]["progress_pct"],
+                        "status": kpis["summary"]["status"],
+                        "status_color": kpis["summary"]["status_color"],
+                        "spi": kpis["daily_output"]["index"],
+                    })
 
-            if progress_pct > 0 and plan.is_leaf:
-                total_produced = plan.daily_entries.aggregate(total=Sum("quantity"))["total"] or 0
-                remaining_qty = max(0, plan.quantity - total_produced)
-                if remaining_qty > 0:
-                    current_rate = plan.daily_rate * ppi
-                    if current_rate > 0:
-                        days_left = int(remaining_qty / current_rate)
-                        forecast_finish_date = today + timedelta(days=days_left)
-
+            # Prepare Gantt JSON Data
+            progress_pct = kpis["summary"]["progress_pct"] if kpis else plan.progress_percentage
+            forecast_finish = kpis["daily_output"]["forecast_finish"] if kpis else plan.finish_date
+            
             gantt_data.append({
                 "id": str(plan.id),
                 "activity": plan.activity,
                 "start_date": plan.start_date.isoformat(),
                 "finish_date": plan.finish_date.isoformat(),
-                "forecast_finish_date": forecast_finish_date.isoformat() if forecast_finish_date else None,
+                "forecast_finish_date": forecast_finish.isoformat() if forecast_finish else None,
                 "progress_pct": float(progress_pct),
                 "parent_id": str(plan.parent_id) if plan.parent_id else None,
                 "has_children": plan.children.exists(),
                 "depth": depth,
                 "predecessors": [str(dep.predecessor_id) for dep in plan.predecessors.all()]
             })
-        context["gantt_data_json"] = json.dumps(gantt_data)
-
-        # 3. Progress Table Logic (Enhanced Analytics with Unified Logic)
-        from app.Project.production_progress.utils.production_utils import get_plan_forecast_kpis
-        
-        report_items = []
-        for plan in all_plans:
-            if not plan.is_leaf:
-                continue
             
-            progress_pct = plan.progress_percentage
-            if progress_pct <= 0:
-                continue
-
-            # Use the unified forecasting utility for 100% parity with the dashboard
-            kpis = get_plan_forecast_kpis(plan, ppi)
-
-            report_items.append({
-                "plan": plan,
-                "kpis": kpis,
-                "progress_pct": kpis["summary"]["progress_pct"],
-                "status": kpis["summary"]["status"],
-                "status_color": kpis["summary"]["status_color"],
-                "spi": kpis["daily_output"]["index"],
-            })
-        
+        context["gantt_data_json"] = json.dumps(gantt_data)
         context["report_items"] = report_items
         return context
