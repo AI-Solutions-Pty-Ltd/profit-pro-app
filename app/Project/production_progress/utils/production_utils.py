@@ -1,3 +1,4 @@
+import math
 from collections import defaultdict
 from decimal import Decimal
 
@@ -380,6 +381,11 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
             return 0
         return round(((actual - target) / target) * 100, 1)
 
+    def calc_index(actual, target):
+        if not target or target == 0:
+            return 1.0
+        return round(actual / target, 2)
+
     # Productivity Trend (Compare latest day vs previous days average)
     prod_trend_val = 0
     prod_trend_pos = True
@@ -493,6 +499,7 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
                 "actual": actual_avg_productivity,
                 "target": target_productivity,
                 "variance": calc_var(actual_avg_productivity, target_productivity),
+                "index": calc_index(actual_avg_productivity, target_productivity),
                 "trend": prod_trend_val,
                 "trend_pos": prod_trend_pos,
             },
@@ -500,6 +507,9 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
                 "actual": actual_avg_cost_per_item,
                 "target": target_cost_per_item,
                 "variance": calc_var(actual_avg_cost_per_item, target_cost_per_item),
+                "index": calc_index(
+                    target_cost_per_item, actual_avg_cost_per_item
+                ),  # Cost index: Target / Actual
                 "trend": cost_trend_val,
                 "trend_pos": not cost_trend_pos,  # Inverse: for cost, down is good
             },
@@ -512,6 +522,7 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
                 "actual": actual_avg_daily_output,
                 "target": target_daily_output,
                 "variance": calc_var(actual_avg_daily_output, target_daily_output),
+                "index": calc_index(actual_avg_daily_output, target_daily_output),
                 "trend": output_trend_val,
                 "trend_pos": output_trend_pos,
             },
@@ -532,7 +543,105 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
     }
 
 
-def get_forecasting_dashboard_data(plan_id, start_date=None, end_date=None):
+def get_plan_forecast_kpis(plan, project_ppi=1.0):
+    """
+    Unified calculation for plan forecasting KPIs.
+    Returns a dictionary structure compatible with dashboard and table views.
+    """
+    from datetime import date, timedelta
+
+    from django.db.models import Sum
+
+    # 1. Base Metrics
+    actual_total_qty = plan.daily_entries.aggregate(total=Sum("quantity"))["total"] or 0
+    entries_count = plan.daily_entries.count()
+    today = date.today()
+
+    # 2. Daily Rate & Productivity (Aligned with Dashboard target_daily_output)
+    target_rate = 0
+    if plan.duration > 0:
+        target_rate = float(plan.quantity) / float(plan.duration)
+    else:
+        target_rate = float(plan.daily_rate)
+
+    # Logic Parity: If plan has data, use its own average output.
+    # If not, use project-wide PPI as a forecast proxy.
+    actual_avg_out = 0
+    ppi = project_ppi
+
+    if entries_count > 0:
+        actual_avg_out = float(actual_total_qty) / float(entries_count)
+        if target_rate > 0:
+            ppi = actual_avg_out / target_rate
+    else:
+        # Fallback to project performance for new items
+        actual_avg_out = target_rate * float(project_ppi)
+        ppi = project_ppi
+
+    # 3. Time Forecast
+    remaining_qty = max(0, float(plan.quantity) - float(actual_total_qty))
+    days_to_complete = 0
+
+    # Use actual average if available, otherwise target
+    forecast_rate = actual_avg_out if actual_avg_out > 0 else target_rate
+
+    if forecast_rate > 0:
+        days_to_complete = float(remaining_qty) / float(forecast_rate)
+
+    # Brainstorming Refinement: Round up (ceil) days to complete for finish date and duration display
+    days_to_complete_rounded = math.ceil(days_to_complete)
+    forecast_finish = today + timedelta(days=days_to_complete_rounded)
+
+    # 4. Variance Calculations
+    planned_duration = float(plan.duration)
+    # Total predicted duration = days already worked + raw days remaining (for accurate variance)
+    forecast_total_days_raw = float(entries_count) + float(days_to_complete)
+    # Visual Duration = days worked + rounded days remaining (for user display parity)
+    forecast_total_days_visual = float(entries_count) + float(days_to_complete_rounded)
+
+    time_variance = planned_duration - forecast_total_days_raw
+
+    # Status Determination
+    status = "On Track"
+    status_color = "emerald"
+    if time_variance < -2:
+        status = "Critical"
+        status_color = "red"
+    elif time_variance < 0:
+        status = "At Risk"
+        status_color = "amber"
+
+    return {
+        "daily_output": {
+            "actual": round(actual_avg_out, 1),
+            "target": round(target_rate, 1),
+            "index": round(ppi, 2),
+            "variance": round((float(ppi) - 1) * 100, 1),
+            "days_remaining": int(days_to_complete_rounded),  # Rounded up
+            "forecast_duration": int(
+                forecast_total_days_visual
+            ),  # Rounded up (e.g., 5.4 -> 6)
+            "forecast_finish": forecast_finish,
+            "time_variance": round(time_variance, 1),  # Kept raw (e.g., +2.4d)
+            "late_str": f"{'late by' if time_variance < 0 else 'ahead by'} {abs(time_variance):.1f} days",
+        },
+        "summary": {
+            "completed_units": float(actual_total_qty),
+            "remaining_units": float(remaining_qty),
+            "progress_pct": round(
+                (float(actual_total_qty) / float(plan.quantity) * 100), 1
+            )
+            if plan.quantity > 0
+            else 0,
+            "status": status,
+            "status_color": status_color,
+        },
+    }
+
+
+def get_forecasting_dashboard_data(
+    plan_id, start_date=None, end_date=None, ppi_override=None
+):
     """
     Calculates predictive forecasting metrics and scenarios for a specific plan.
     """
@@ -689,13 +798,14 @@ def get_forecasting_dashboard_data(plan_id, start_date=None, end_date=None):
             if (time_variance < -2 or budget_variance < -50000)
             else ("amber" if (time_variance < 0 or budget_variance < 0) else "emerald"),
             "progress_pct": round(progress_pct, 1),
-            "forecast_days": round(forecast_total_days, 1),
+            "completed_units": float(actual_total_qty),
+            "forecast_days": int(days_elapsed + math.ceil(days_to_complete)),
             "time_variance": round(time_variance, 1),
             "planned_days": int(plan.duration),
             "forecast_cost": float(forecast_total_at_completion),
             "budget_variance": float(budget_variance),
             "budget_allocation": float(budget_allocation),
-            "days_remaining": round(days_to_complete, 1),
+            "days_remaining": int(math.ceil(days_to_complete)),
             "units_remaining": float(remaining_qty),
             "budget_used_pct": round(
                 (float(actual_total_cost) / float(budget_allocation) * 100), 1

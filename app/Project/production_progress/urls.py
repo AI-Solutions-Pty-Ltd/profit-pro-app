@@ -99,6 +99,11 @@ urlpatterns = [
         name="performance-report",
     ),
     path(
+        "<int:project_pk>/integrated-control/",
+        views.ProductionControllerView.as_view(),
+        name="production-integrated-control",
+    ),
+    path(
         "<int:project_pk>/productivity-report/",
         views.ProductionProductivityReportView.as_view(),
         name="productivity-report",
