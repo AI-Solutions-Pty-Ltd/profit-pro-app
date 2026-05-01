@@ -101,17 +101,17 @@
     </div>
 
     <!-- Integrated Split View -->
-    <div class="flex flex-col" id="split-container">
+    <div class="flex flex-col flex-1" id="split-container">
         <!-- Top Pane: Gantt -->
-        <div class="overflow-hidden relative border-b border-gray-200" id="split-top">
+        <div class="overflow-hidden relative h-[60vh] border-b border-gray-200 transition-all duration-300" id="split-top">
             {% include "production_progress/partials/_gantt_chart_partial.html" %}
         </div>
-    </div>
 
         <!-- Bottom Pane: Table -->
-        <div class="flex overflow-auto flex-col flex-1 mt-8" >
+        <div class="flex overflow-auto flex-col flex-1" id="split-bottom">
             {% include "production_progress/partials/_progress_table_partial.html" %}
         </div>
+    </div>
  
 </div>
 {% endblock content %}
@@ -136,11 +136,11 @@
             
             if (isFS) {
                 splitBottom.classList.add('hidden');
-                splitTop.classList.remove('h-1/2');
+                splitTop.classList.remove('h-[60vh]');
                 splitTop.classList.add('h-full');
             } else {
                 splitBottom.classList.remove('hidden');
-                splitTop.classList.add('h-1/2');
+                splitTop.classList.add('h-[60vh]');
                 splitTop.classList.remove('h-full');
             }
             

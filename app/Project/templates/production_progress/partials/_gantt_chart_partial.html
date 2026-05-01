@@ -61,7 +61,7 @@
 </div>
 
 <!-- Tooltip -->
-<div id="gantt-tooltip" class="hidden fixed z-50 px-4 py-3 max-w-xs rounded-xl border border-gray-100 shadow-2xl backdrop-blur-md transition-opacity duration-200 pointer-events-none bg-white/95">
+<div id="gantt-tooltip" class=" fixed z-[100] px-4 py-3 max-w-xs rounded-xl border border-gray-100 shadow-2xl backdrop-blur-md transition-opacity duration-200 pointer-events-none bg-white/95">
     <div id="tooltip-title" class="mb-1 text-sm font-bold text-gray-900"></div>
     <div class="space-y-1">
         <div class="flex gap-4 justify-between">
@@ -112,6 +112,13 @@ if (GANTT_DATA.length && canvas) {
         d.startTs = new Date(d.start_date).getTime();
         d.endTs   = new Date(d.finish_date).getTime();
         d.forecastTs = d.forecast_finish_date ? new Date(d.forecast_finish_date).getTime() : d.endTs;
+    });
+
+    // Initial Collapse: Hide everything below Bill level (depth 1)
+    GANTT_DATA.forEach(r => {
+        if (r.depth >= 1 && r.has_children) {
+            collapsedState.add(r.id);
+        }
     });
 
     const allStarts = GANTT_DATA.map(d => d.startTs);
@@ -209,7 +216,7 @@ if (GANTT_DATA.length && canvas) {
         const ppd = zoom.ppd;
         const tickMs = zoom.tick;
 
-        // Draw Layer 1: Month/Year Grouping
+        // Draw Layer 1: Month/Year Grouping (Sticky)
         ctx.fillStyle = '#475569';
         ctx.font = 'bold 11px Inter, sans-serif';
         ctx.textAlign = 'left';
@@ -217,6 +224,8 @@ if (GANTT_DATA.length && canvas) {
         let monthPtr = new Date(chartStart);
         monthPtr.setHours(0,0,0,0);
         monthPtr.setDate(1); // Start of month
+
+        const scrollLeft = wrapper.scrollLeft;
 
         while(monthPtr.getTime() < chartEnd) {
             const startX = xForDate(monthPtr.getTime());
@@ -227,12 +236,22 @@ if (GANTT_DATA.length && canvas) {
             const label = monthPtr.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
             const textW = ctx.measureText(label).width;
             
-            if (endX - startX > textW + 20) {
-                ctx.fillText(label, Math.max(startX, 0) + 12, 24);
+            // Calculate sticky position
+            // StartX + 12 (padding)
+            // But don't let it go past endX - textW - 12
+            const drawX = Math.min(
+                Math.max(startX + 12, scrollLeft + 12),
+                endX - textW - 12
+            );
+
+            // Only draw if within current month's bounds
+            if (drawX < endX - 10) {
+                ctx.fillText(label, drawX, 24);
             }
             
             // Month divider
             ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(startX, 0); ctx.lineTo(startX, 36); ctx.stroke();
             
             monthPtr = nextMonth;
@@ -258,10 +277,15 @@ if (GANTT_DATA.length && canvas) {
                 // Only draw text if decimation allows
                 if (i % skip === 0) {
                     let fmt = d => d.getDate();
-                    if (zoom.label === 'Week') fmt = d => 'Week ' + getWeek(d);
+                    if (zoom.label === 'Week') fmt = d => 'Wk ' + getWeek(d);
                     if (zoom.label === 'Hour') fmt = d => d.getHours() + ':00';
                     
-                    ctx.fillText(fmt(cur), x + (ppd * (tickMs/MS_PER_DAY))/2, 58);
+                    const labelStr = fmt(cur);
+                    const labelW = ctx.measureText(labelStr).width;
+                    const tickCenterX = x + (ppd * (tickMs / MS_PER_DAY)) / 2;
+                    
+                    // Don't draw if it hits the next tick or exceeds spacing
+                    ctx.fillText(labelStr, tickCenterX, 58);
                 }
                 
                 // Vertical Grid Line
@@ -296,7 +320,7 @@ if (GANTT_DATA.length && canvas) {
             ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(0, y + ROW_H); ctx.lineTo(W, y + ROW_H); ctx.stroke();
 
-            // Planning vs Forecast
+            // Draw Bars
             const xPlanStart = xForDate(row.startTs);
             const xPlanEnd   = xForDate(row.endTs + MS_PER_DAY);
             const xForeEnd   = xForDate(row.forecastTs + MS_PER_DAY);
@@ -304,54 +328,79 @@ if (GANTT_DATA.length && canvas) {
             const barY = y + PAD_Y;
             const colors = getBarColors(row);
 
-            // Draw Planned Ghost Bar (if different from forecast)
-            if (Math.abs(xForeEnd - xPlanEnd) > 2) {
-                ctx.fillStyle = 'rgba(226, 232, 240, 0.5)';
-                drawRoundedRect(ctx, xPlanStart, barY, xPlanEnd - xPlanStart, BAR_H, 4);
-                ctx.fill();
-            }
-
-            // Draw Main Bar (Forecast/Actual)
-            const mainW = Math.max(xForeEnd - xPlanStart, 6);
-            ctx.fillStyle = colors.fill;
-            
-            // Add focus border if highlighted
-            if (row.id === highlightTaskId) {
-                ctx.save();
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = 'rgba(79, 70, 229, 0.5)';
-                ctx.strokeStyle = '#4f46e5';
-                ctx.lineWidth = 2;
-                drawRoundedRect(ctx, xPlanStart - 1, barY - 1, mainW + 2, BAR_H + 2, 5);
-                ctx.stroke();
-                ctx.restore();
-            }
-
-            drawRoundedRect(ctx, xPlanStart, barY, mainW, BAR_H, 4);
-            ctx.fill();
-
-            // Draw Progress Fill (Indigo)
-            if (row.progress_pct > 0 && !row.has_children) {
-                const progW = mainW * (row.progress_pct / 100);
-                ctx.save();
-                drawRoundedRect(ctx, xPlanStart, barY, progW, BAR_H, 4);
-                ctx.clip();
-                ctx.fillStyle = 'rgba(79, 70, 229, 0.3)'; // Indigo overlay for progress
-                ctx.fillRect(xPlanStart, barY, progW, BAR_H);
-                ctx.restore();
-            }
-
-            // Stripe pattern for parents
             if (row.has_children) {
+                // ── PARENT RENDERING (Sections/Bills) ────────────────────────
+                const planW = Math.max(xPlanEnd - xPlanStart, 6);
+                
+                // 1. Draw Planned Bar (Indigo)
+                ctx.fillStyle = '#6366f1';
+                drawRoundedRect(ctx, xPlanStart, barY, planW, BAR_H, 4);
+                ctx.fill();
+
+                // 2. Draw Forecast extension if delayed (Rose)
+                if (xForeEnd > xPlanEnd + 2) {
+                    const delayW = xForeEnd - xPlanEnd;
+                    ctx.fillStyle = 'rgba(244, 63, 94, 0.6)'; // Semi-transparent Rose
+                    drawRoundedRect(ctx, xPlanEnd, barY, delayW, BAR_H, 4);
+                    ctx.fill();
+                    
+                    // Add distinctive dashed border for forecast part
+                    ctx.setLineDash([4, 2]);
+                    ctx.strokeStyle = '#e11d48';
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+
+                // 3. Draw Stripe Pattern over entire parent span
+                const totalW = Math.max(xForeEnd - xPlanStart, planW);
                 ctx.save();
-                drawRoundedRect(ctx, xPlanStart, barY, mainW, BAR_H, 4);
+                drawRoundedRect(ctx, xPlanStart, barY, totalW, BAR_H, 4);
                 ctx.clip();
-                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                ctx.strokeStyle = 'rgba(255,255,255,0.15)';
                 ctx.lineWidth = 4;
-                for(let sx = xPlanStart - 20; sx < xPlanStart + mainW; sx += 8) {
+                for(let sx = xPlanStart - 20; sx < xPlanStart + totalW; sx += 8) {
                     ctx.beginPath(); ctx.moveTo(sx, barY); ctx.lineTo(sx + 20, barY + BAR_H); ctx.stroke();
                 }
                 ctx.restore();
+
+            } else {
+                // ── ACTIVITY RENDERING ────────────────────────────────────────
+                // Draw Planned Ghost Bar (if different from forecast)
+                if (Math.abs(xForeEnd - xPlanEnd) > 2) {
+                    ctx.fillStyle = 'rgba(226, 232, 240, 0.5)';
+                    drawRoundedRect(ctx, xPlanStart, barY, xPlanEnd - xPlanStart, BAR_H, 4);
+                    ctx.fill();
+                }
+
+                // Draw Main Bar (Forecast/Actual)
+                const mainW = Math.max(xForeEnd - xPlanStart, 6);
+                ctx.fillStyle = colors.fill;
+                
+                // Add focus border if highlighted
+                if (row.id === highlightTaskId) {
+                    ctx.save();
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = 'rgba(79, 70, 229, 0.5)';
+                    ctx.strokeStyle = '#4f46e5';
+                    ctx.lineWidth = 2;
+                    drawRoundedRect(ctx, xPlanStart - 1, barY - 1, mainW + 2, BAR_H + 2, 5);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                drawRoundedRect(ctx, xPlanStart, barY, mainW, BAR_H, 4);
+                ctx.fill();
+
+                // Draw Progress Fill (Indigo)
+                if (row.progress_pct > 0 && !row.has_children) {
+                    const progW = mainW * (row.progress_pct / 100);
+                    ctx.save();
+                    drawRoundedRect(ctx, xPlanStart, barY, progW, BAR_H, 4);
+                    ctx.clip();
+                    ctx.fillStyle = 'rgba(79, 70, 229, 0.3)'; // Indigo overlay for progress
+                    ctx.fillRect(xPlanStart, barY, progW, BAR_H);
+                    ctx.restore();
+                }
             }
         });
 
@@ -465,8 +514,10 @@ if (GANTT_DATA.length && canvas) {
                 document.getElementById('tooltip-dates').textContent = `${row.start_date} → ${row.finish_date}`;
                 
                 const forecastEl = document.getElementById('tooltip-forecast');
-                if (row.forecast_finish_date && row.forecast_finish_date !== row.finish_date) {
-                    forecastEl.textContent = row.forecast_finish_date;
+                const isDelayed = row.forecastTs > row.endTs + (1000 * 60 * 60); // More than 1 hour diff
+                
+                if (isDelayed) {
+                    forecastEl.textContent = row.forecast_finish_date || row.finish_date;
                     document.getElementById('forecast-row').classList.remove('hidden');
                 } else {
                     document.getElementById('forecast-row').classList.add('hidden');
@@ -482,6 +533,7 @@ if (GANTT_DATA.length && canvas) {
             }
         }
         tooltip.classList.add('hidden');
+        tooltip.style.opacity = '0';
     });
 
     canvas.addEventListener('mouseleave', () => tooltip.classList.add('hidden'));
@@ -535,5 +587,26 @@ if (GANTT_DATA.length && canvas) {
     render();
     window.addEventListener('resize', render);
     document.getElementById('zoom-label').textContent = ZOOM_LEVELS[zoomIdx].label;
+
+    // ── Vertical Scroll Synchronization & Sticky Header Update ────────────────
+    let lastScrollLeft = wrapper.scrollLeft;
+    wrapper.addEventListener('scroll', function() {
+        labelEl.scrollTop = wrapper.scrollTop;
+        
+        // Only re-render if we scrolled horizontally (for sticky headers)
+        if (wrapper.scrollLeft !== lastScrollLeft) {
+            lastScrollLeft = wrapper.scrollLeft;
+            render();
+        }
+    });
+
+    // Forward mousewheel from labels to chart
+    labelEl.addEventListener('wheel', function(e) {
+        wrapper.scrollTop += e.deltaY;
+        e.preventDefault();
+    }, { passive: false });
+
+    // Sync labels scrollTop initially
+    labelEl.scrollTop = wrapper.scrollTop;
 }
 </script>
