@@ -179,6 +179,13 @@ class Account(AbstractUser, BaseModel):
     def portfolio(self) -> Optional["Portfolio"]:
         return self.portfolios.first()
 
+    @property
+    def contractor_company(self):
+        """Return the user's first CONTRACTOR-type company, or None."""
+        from app.Project.models import Company
+
+        return self.companies.filter(type=Company.Type.CONTRACTOR).first()
+
     def has_project_role(
         self: "Account", project: "Project", roles: list["Role"]
     ) -> bool:

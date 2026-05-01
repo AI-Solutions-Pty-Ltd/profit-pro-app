@@ -9,9 +9,10 @@ keyword variants (plural/singular, abbreviations, US/UK spelling).
 Falls back to the active sheet when no keyword matches — so single-sheet
 uploads just work.
 
-Each importer accepts an optional `project` parameter:
-- When project is set: creates/updates Project* models scoped to that project
-- When project is None: creates/updates System* models (library/admin mode)
+Each importer accepts optional `project` and `company` parameters:
+- When `project` is set: writes to Project* models scoped to that project.
+- When `company` is set: writes to Contractor* models scoped to that company.
+- When both are None: writes to System* models (library/admin mode).
 """
 
 from decimal import Decimal, InvalidOperation
@@ -19,6 +20,17 @@ from decimal import Decimal, InvalidOperation
 import openpyxl
 
 from .models import (
+    ContractorLabourCrew,
+    ContractorLabourSpecification,
+    ContractorMaterial,
+    ContractorPlantCost,
+    ContractorPlantSpecification,
+    ContractorPlantSpecificationComponent,
+    ContractorPreliminaryCost,
+    ContractorPreliminarySpecification,
+    ContractorSpecification,
+    ContractorSpecificationComponent,
+    ContractorTradeCode,
     ProjectLabourCrew,
     ProjectLabourSpecification,
     ProjectMaterial,
@@ -124,9 +136,10 @@ class TradeCodeImporter:
         "tradecodes",
     ]
 
-    def __init__(self, path, project=None):
+    def __init__(self, path, project=None, company=None):
         self.path = path
         self.project = project
+        self.company = company
 
     def run(self):
         wb = openpyxl.load_workbook(self.path, data_only=True)
@@ -142,6 +155,12 @@ class TradeCodeImporter:
             if self.project:
                 _, is_new = ProjectTradeCode.objects.update_or_create(
                     project=self.project,
+                    prefix=prefix,
+                    defaults={"trade_name": trade_name},
+                )
+            elif self.company:
+                _, is_new = ContractorTradeCode.objects.update_or_create(
+                    company=self.company,
                     prefix=prefix,
                     defaults={"trade_name": trade_name},
                 )
@@ -177,9 +196,10 @@ class MaterialCostImporter:
         "material code",
     ]
 
-    def __init__(self, file_path, project=None):
+    def __init__(self, file_path, project=None, company=None):
         self.file_path = file_path
         self.project = project
+        self.company = company
 
     def run(self):
         wb = openpyxl.load_workbook(self.file_path, data_only=True)
@@ -209,6 +229,12 @@ class MaterialCostImporter:
             if self.project:
                 _, was_created = ProjectMaterial.objects.update_or_create(
                     project=self.project,
+                    material_code=mat_code,
+                    defaults=defaults,
+                )
+            elif self.company:
+                _, was_created = ContractorMaterial.objects.update_or_create(
+                    company=self.company,
                     material_code=mat_code,
                     defaults=defaults,
                 )
@@ -251,9 +277,10 @@ class LabourCostImporter:
         "crew",
     ]
 
-    def __init__(self, file_path, project=None):
+    def __init__(self, file_path, project=None, company=None):
         self.file_path = file_path
         self.project = project
+        self.company = company
 
     def run(self):
         wb = openpyxl.load_workbook(self.file_path, data_only=True)
@@ -296,6 +323,12 @@ class LabourCostImporter:
                     crew_type=crew_type,
                     defaults=defaults,
                 )
+            elif self.company:
+                _, was_created = ContractorLabourCrew.objects.update_or_create(
+                    company=self.company,
+                    crew_type=crew_type,
+                    defaults=defaults,
+                )
             else:
                 _, was_created = SystemLabourCrew.objects.update_or_create(
                     crew_type=crew_type,
@@ -332,17 +365,22 @@ class MaterialSpecImporter:
         "spec code",
     ]
 
-    def __init__(self, file_path, project=None):
+    def __init__(self, file_path, project=None, company=None):
         self.file_path = file_path
         self.project = project
+        self.company = company
 
     def _get_trade_code(self, prefix_str):
-        """Resolve trade code by prefix, using project or system models."""
+        """Resolve trade code by prefix, using project / contractor / system models."""
         if not prefix_str:
             return None
         if self.project:
             return ProjectTradeCode.objects.filter(
                 project=self.project, prefix=prefix_str
+            ).first()
+        if self.company:
+            return ContractorTradeCode.objects.filter(
+                company=self.company, prefix=prefix_str
             ).first()
         tc = SystemTradeCode.objects.filter(prefix=prefix_str).first()
         if not tc:
@@ -352,12 +390,16 @@ class MaterialSpecImporter:
         return tc
 
     def _get_material(self, mat_code):
-        """Resolve material by code, using project or system models."""
+        """Resolve material by code, using project / contractor / system models."""
         if not mat_code:
             return None
         if self.project:
             return ProjectMaterial.objects.filter(
                 project=self.project, material_code=mat_code
+            ).first()
+        if self.company:
+            return ContractorMaterial.objects.filter(
+                company=self.company, material_code=mat_code
             ).first()
         return SystemMaterial.objects.filter(material_code=mat_code).first()
 
@@ -402,6 +444,18 @@ class MaterialSpecImporter:
                 )
                 if not was_created:
                     spec.spec_components.all().delete()
+            elif self.company:
+                spec, was_created = ContractorSpecification.objects.update_or_create(
+                    company=self.company,
+                    name=spec_name,
+                    defaults={
+                        "section": section,
+                        "trade_code": trade_code,
+                        "unit_label": unit,
+                    },
+                )
+                if not was_created:
+                    spec.spec_components.all().delete()
             else:
                 spec, was_created = SystemSpecification.objects.update_or_create(
                     name=spec_name,
@@ -419,11 +473,12 @@ class MaterialSpecImporter:
             else:
                 updated += 1
 
-            component_model = (
-                ProjectSpecificationComponent
-                if self.project
-                else SystemSpecificationComponent
-            )
+            if self.project:
+                component_model = ProjectSpecificationComponent
+            elif self.company:
+                component_model = ContractorSpecificationComponent
+            else:
+                component_model = SystemSpecificationComponent
             for i in range(4):
                 mat_col = 4 + i
                 qty_col = 8 + i
@@ -489,6 +544,18 @@ class MaterialSpecImporter:
                 )
                 if not was_created:
                     spec.spec_components.all().delete()
+            elif self.company:
+                spec, was_created = ContractorSpecification.objects.update_or_create(
+                    company=self.company,
+                    name=name,
+                    defaults={
+                        "section": data["section"],
+                        "trade_code": trade_code,
+                        "unit_label": data["unit"],
+                    },
+                )
+                if not was_created:
+                    spec.spec_components.all().delete()
             else:
                 spec, was_created = SystemSpecification.objects.update_or_create(
                     name=name,
@@ -506,11 +573,12 @@ class MaterialSpecImporter:
             else:
                 updated += 1
 
-            component_model = (
-                ProjectSpecificationComponent
-                if self.project
-                else SystemSpecificationComponent
-            )
+            if self.project:
+                component_model = ProjectSpecificationComponent
+            elif self.company:
+                component_model = ContractorSpecificationComponent
+            else:
+                component_model = SystemSpecificationComponent
             for i, comp in enumerate(data["components"]):
                 mat = self._get_material(comp["material_code"])
                 component_model.objects.create(
@@ -546,9 +614,10 @@ class LabourSpecImporter:
         "labor specifications",
     ]
 
-    def __init__(self, file_path, project=None):
+    def __init__(self, file_path, project=None, company=None):
         self.file_path = file_path
         self.project = project
+        self.company = company
 
     def run(self):
         wb = openpyxl.load_workbook(self.file_path, data_only=True)
@@ -572,6 +641,14 @@ class LabourSpecImporter:
                 crew = (
                     ProjectLabourCrew.objects.filter(
                         project=self.project, crew_type=crew_type_str
+                    ).first()
+                    if crew_type_str
+                    else None
+                )
+            elif self.company:
+                crew = (
+                    ContractorLabourCrew.objects.filter(
+                        company=self.company, crew_type=crew_type_str
                     ).first()
                     if crew_type_str
                     else None
@@ -603,6 +680,12 @@ class LabourSpecImporter:
             if self.project:
                 _, was_created = ProjectLabourSpecification.objects.update_or_create(
                     project=self.project,
+                    name=name,
+                    defaults=defaults,
+                )
+            elif self.company:
+                _, was_created = ContractorLabourSpecification.objects.update_or_create(
+                    company=self.company,
                     name=name,
                     defaults=defaults,
                 )
@@ -638,9 +721,10 @@ class PlantCostImporter:
         "plant & equipment",
     ]
 
-    def __init__(self, file_path, project=None):
+    def __init__(self, file_path, project=None, company=None):
         self.file_path = file_path
         self.project = project
+        self.company = company
 
     def run(self):
         wb = openpyxl.load_workbook(self.file_path, data_only=True)
@@ -670,6 +754,12 @@ class PlantCostImporter:
             if self.project:
                 _, was_created = ProjectPlantCost.objects.update_or_create(
                     project=self.project,
+                    name=name,
+                    defaults=defaults,
+                )
+            elif self.company:
+                _, was_created = ContractorPlantCost.objects.update_or_create(
+                    company=self.company,
                     name=name,
                     defaults=defaults,
                 )
@@ -722,9 +812,10 @@ class PlantSpecImporter:
         "plantspecs",
     ]
 
-    def __init__(self, file_path, project=None):
+    def __init__(self, file_path, project=None, company=None):
         self.file_path = file_path
         self.project = project
+        self.company = company
 
     def _lookup_plant_cost(self, name):
         if not name:
@@ -732,6 +823,10 @@ class PlantSpecImporter:
         if self.project:
             return ProjectPlantCost.objects.filter(
                 project=self.project, name=name
+            ).first()
+        if self.company:
+            return ContractorPlantCost.objects.filter(
+                company=self.company, name=name
             ).first()
         return SystemPlantCost.objects.filter(name=name).first()
 
@@ -755,14 +850,15 @@ class PlantSpecImporter:
         data_start = header_row + 1
         is_master = self._header_is_master(ws, header_row, co)
 
-        spec_model = (
-            ProjectPlantSpecification if self.project else SystemPlantSpecification
-        )
-        comp_model = (
-            ProjectPlantSpecificationComponent
-            if self.project
-            else SystemPlantSpecificationComponent
-        )
+        if self.project:
+            spec_model = ProjectPlantSpecification
+            comp_model = ProjectPlantSpecificationComponent
+        elif self.company:
+            spec_model = ContractorPlantSpecification
+            comp_model = ContractorPlantSpecificationComponent
+        else:
+            spec_model = SystemPlantSpecification
+            comp_model = SystemPlantSpecificationComponent
 
         for row in ws.iter_rows(min_row=data_start, values_only=True):
             ncols = len(row) if row else 0
@@ -805,6 +901,12 @@ class PlantSpecImporter:
             if self.project:
                 spec, was_created = spec_model.objects.update_or_create(
                     project=self.project,
+                    name=name,
+                    defaults=defaults,
+                )
+            elif self.company:
+                spec, was_created = spec_model.objects.update_or_create(
+                    company=self.company,
                     name=name,
                     defaults=defaults,
                 )
@@ -924,9 +1026,10 @@ class PreliminaryCostImporter:
     # the type phrase, col 2 is the item name).
     DEFAULT_NAME_COL = 2
 
-    def __init__(self, file_path, project=None):
+    def __init__(self, file_path, project=None, company=None):
         self.file_path = file_path
         self.project = project
+        self.company = company
 
     def _match_type(self, phrase):
         p = phrase.lower().strip()
@@ -965,6 +1068,13 @@ class PreliminaryCostImporter:
         if self.project:
             _, was_created = ProjectPreliminaryCost.objects.update_or_create(
                 project=self.project,
+                name=name,
+                preliminary_type=ptype,
+                defaults=defaults,
+            )
+        elif self.company:
+            _, was_created = ContractorPreliminaryCost.objects.update_or_create(
+                company=self.company,
                 name=name,
                 preliminary_type=ptype,
                 defaults=defaults,
@@ -1198,9 +1308,10 @@ class PreliminarySpecImporter:
         "prelim specs",
     ]
 
-    def __init__(self, file_path, project=None):
+    def __init__(self, file_path, project=None, company=None):
         self.file_path = file_path
         self.project = project
+        self.company = company
 
     def run(self):
         wb = openpyxl.load_workbook(self.file_path, data_only=True)
@@ -1234,6 +1345,14 @@ class PreliminarySpecImporter:
                 _, was_created = (
                     ProjectPreliminarySpecification.objects.update_or_create(
                         project=self.project,
+                        name=name,
+                        defaults=defaults,
+                    )
+                )
+            elif self.company:
+                _, was_created = (
+                    ContractorPreliminarySpecification.objects.update_or_create(
+                        company=self.company,
                         name=name,
                         defaults=defaults,
                     )
