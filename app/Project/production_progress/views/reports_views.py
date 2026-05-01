@@ -462,7 +462,6 @@ class ProductionControllerView(
         context = super().get_context_data(**kwargs)
         project_pk = self.kwargs["project_pk"]
         project = get_object_or_404(Project, pk=project_pk)
-        today = timezone.now().date()
 
         # 1. Fetch Performance Summary (PPI etc)
         perf_data = get_project_performance_summary(project_pk)
@@ -513,7 +512,7 @@ class ProductionControllerView(
         plan_kpis = {}
 
         # First pass: Calculate leaf node KPIs and collect project totals
-        for plan, depth in ordered:
+        for plan, _depth in ordered:
             if plan.is_leaf:
                 kpis = get_plan_forecast_kpis(plan, ppi)
                 plan_kpis[plan.id] = kpis
@@ -577,7 +576,9 @@ class ProductionControllerView(
                             sum(
                                 [
                                     k["daily_output"]["index"] * float(lc.quantity)
-                                    for k, lc in zip(child_kpis, leaf_children, strict=False)
+                                    for k, lc in zip(
+                                        child_kpis, leaf_children, strict=False
+                                    )
                                 ]
                             )
                         )

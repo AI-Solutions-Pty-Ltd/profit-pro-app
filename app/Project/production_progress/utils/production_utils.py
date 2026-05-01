@@ -1,6 +1,6 @@
+import math
 from collections import defaultdict
 from decimal import Decimal
-import math
 
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404
@@ -577,8 +577,6 @@ def get_plan_forecast_kpis(plan, project_ppi=1.0):
         # Fallback to project performance for new items
         actual_avg_out = target_rate * float(project_ppi)
         ppi = project_ppi
-
-    import math
 
     # 3. Time Forecast
     remaining_qty = max(0, float(plan.quantity) - float(actual_total_qty))

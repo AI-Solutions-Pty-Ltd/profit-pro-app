@@ -68,9 +68,10 @@
                     </div>
                 </div>
                 <div class="mb-6">
-                  
-                    <progress class="w-full h-3 progress progress-primary" value="{{ summary.progress_pct }}" max="100"></progress>
-                      <div class="flex justify-between items-end mt-2">
+                    <progress class="w-full h-3 progress progress-primary"
+                              value="{{ summary.progress_pct }}"
+                              max="100"></progress>
+                    <div class="flex justify-between items-end mt-2">
                         <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                             Completed: <span class="text-gray-900">{{ summary.completed_units|floatformat:1 }}</span>
                         </div>
@@ -142,9 +143,6 @@
                     </div>
                 </div>
             </div>
-
-    
-
             <!-- Avg Daily Output -->
             <div class="p-3 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
                 <div class="flex gap-2 items-center mb-2">
@@ -157,7 +155,6 @@
                     {{ kpis.daily_output.actual|floatformat:1 }} <span class="text-[10px] font-bold text-gray-400">{{ selected_plan.unit_display }}</span>
                 </div>
             </div>
-
             <!-- Cost Per Unit -->
             <div class="p-3 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
                 <div class="flex gap-2 items-center mb-2">
@@ -168,7 +165,6 @@
                 </div>
                 <div class="text-lg font-bold tabular-nums text-gray-900">R {{ kpis.cost.actual|floatformat:0 }}</div>
             </div>
-
             <!-- Work Productivity -->
             <div class="p-3 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
                 <div class="flex gap-2 items-center mb-2">

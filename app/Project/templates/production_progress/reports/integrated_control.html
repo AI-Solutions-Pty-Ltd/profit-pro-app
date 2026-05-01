@@ -2,13 +2,11 @@
 {% load static %}
 {% load heroicons %}
 {% load humanize %}
-
 {% block title %}
     Production Control Center - {{ project.name }} - {{ block.super }}
 {% endblock title %}
-
 {% block extra_css %}
-<style>
+    <style>
     /* Override partial container shadow for seamless look */
     .analytics-table-section {
         border-radius: 0 !important;
@@ -54,135 +52,125 @@
     .fullscreen-mode ~ * {
         display: none !important;
     }
-</style>
+    </style>
 {% endblock extra_css %}
-
 {% block content %}
-<div id="control-center-root" class="flex flex-col min-h-screen 0">
-    
-    <!-- Premium Header -->
-    <div class="flex justify-between items-center px-6 py-4 mb-8 bg-white border-b border-gray-200 shrink-0">
-        <div>
-             <button onclick="window.history.back()"
-                    class="inline-flex items-center text-sm font-semibold text-gray-500 transition-all hover:text-indigo-600 group">
-                <div class="p-1.5 mr-2.5 bg-gray-100 rounded-lg transition-colors group-hover:bg-indigo-50">
-                    {% heroicon_outline "arrow-left" size="16" %}
+    <div id="control-center-root" class="flex flex-col min-h-screen 0">
+        <!-- Premium Header -->
+        <div class="flex justify-between items-center px-6 py-4 mb-8 bg-white border-b border-gray-200 shrink-0">
+            <div>
+                <button onclick="window.history.back()"
+                        class="inline-flex items-center text-sm font-semibold text-gray-500 transition-all hover:text-indigo-600 group">
+                    <div class="p-1.5 mr-2.5 bg-gray-100 rounded-lg transition-colors group-hover:bg-indigo-50">
+                        {% heroicon_outline "arrow-left" size="16" %}
+                    </div>
+                    Back to Management
+                </button>
+                <div class="flex gap-3 items-center">
+                    <h2 class="text-xl font-black tracking-tight text-gray-900">Production Control Center</h2>
+                    <span class="font-bold tracking-widest uppercase badge badge-indigo badge-sm">Live View</span>
                 </div>
-                Back to Management
-            </button>
-            <div class="flex gap-3 items-center">
-                <h2 class="text-xl font-black tracking-tight text-gray-900">Production Control Center</h2>
-                <span class="font-bold tracking-widest uppercase badge badge-indigo badge-sm">Live View</span>
+                <p class="text-xs font-medium text-gray-500">Synchronized Timeline & Performance Analytics</p>
             </div>
-            <p class="text-xs font-medium text-gray-500">Synchronized Timeline & Performance Analytics</p>
-        </div>
-        
-        <div class="flex gap-2 items-center">
-            
             <div class="flex gap-2 items-center">
-                <button id="fullscreen-toggle" class="gap-2 border border-gray-200 shadow-sm btn btn-sm btn-ghost" title="Toggle Fullscreen">
-                    <span id="fs-icon-maximize">{% heroicon_outline "arrows-pointing-out" class="w-4 h-4" %}</span>
-                    <span id="fs-icon-minimize" class="hidden">{% heroicon_outline "arrows-pointing-in" class="w-4 h-4" %}</span>
-                    <span class="text-xs">Fullscreen</span>
-                </button>
-                <button onclick="window.print()" class="gap-2 border border-gray-200 shadow-sm btn btn-sm btn-ghost">
-                    {% heroicon_outline "printer" class="w-4 h-4" %}
-                    <span class="text-xs">Print</span>
-                </button>
-                
-            </div>
-        </div>
-    </div>
-
-    <!-- KPI Metric Grid -->
-    <div class="grid grid-cols-1 gap-4 px-6 mb-8 md:grid-cols-3 lg:grid-cols-5">
-        <!-- Planned Finish -->
-        <div class="flex gap-4 items-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
-            <div class="flex justify-center items-center w-10 h-10 text-indigo-600 bg-indigo-50 rounded-lg shrink-0">
-                {% heroicon_outline "calendar" class="w-6 h-6" %}
-            </div>
-            <div>
-                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Planned Finish</p>
-                <p class="font-mono text-sm font-black text-gray-900">{{ project_kpis.planned_finish|date:"d M Y"|default:"TBD" }}</p>
-            </div>
-        </div>
-
-        <!-- Forecast Finish -->
-        <div class="flex gap-4 items-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
-            <div class="flex justify-center items-center w-10 h-10 text-blue-600 bg-blue-50 rounded-lg shrink-0">
-                {% heroicon_outline "bolt" class="w-6 h-6" %}
-            </div>
-            <div>
-                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Forecast Finish</p>
-                <p class="font-mono text-sm font-black text-gray-900">{{ project_kpis.forecast_finish|date:"d M Y"|default:"TBD" }}</p>
-            </div>
-        </div>
-
-        <!-- Overrun Variance -->
-        <div class="flex gap-4 items-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
-            {% with overrun=project_kpis.overrun_days %}
-            <div class="flex shrink-0 justify-center items-center w-10 h-10 {% if overrun > 0 %}bg-rose-50 text-rose-600{% else %}bg-emerald-50 text-emerald-600{% endif %} rounded-lg">
-                {% heroicon_outline "clock" class="w-6 h-6" %}
-            </div>
-            <div>
-                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Overrun Variance</p>
-                <p class="font-mono text-sm font-black {% if overrun > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
-                    {% if overrun > 0 %}+{% endif %}{{ overrun|floatformat:1 }} Days
-                </p>
-            </div>
-            {% endwith %}
-        </div>
-
-        <!-- Project Progress -->
-        <div class="flex gap-4 items-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
-            <div class="flex justify-center items-center w-10 h-10 text-indigo-600 bg-indigo-50 rounded-lg shrink-0">
-                {% heroicon_outline "chart-pie" class="w-6 h-6" %}
-            </div>
-            <div class="flex-1 min-w-0">
-                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Overall Progress</p>
                 <div class="flex gap-2 items-center">
-                    <p class="font-mono text-sm font-black text-gray-900">{{ project_kpis.progress_pct }}%</p>
-                    <div class="flex-1 h-1.5 bg-gray-100 rounded-full">
-                        <div class="h-1.5 bg-indigo-600 rounded-full" style="width: {{ project_kpis.progress_pct }}%"></div>
+                    <button id="fullscreen-toggle"
+                            class="gap-2 border border-gray-200 shadow-sm btn btn-sm btn-ghost"
+                            title="Toggle Fullscreen">
+                        <span id="fs-icon-maximize">{% heroicon_outline "arrows-pointing-out" class="w-4 h-4" %}</span>
+                        <span id="fs-icon-minimize" class="hidden">{% heroicon_outline "arrows-pointing-in" class="w-4 h-4" %}</span>
+                        <span class="text-xs">Fullscreen</span>
+                    </button>
+                    <button onclick="window.print()"
+                            class="gap-2 border border-gray-200 shadow-sm btn btn-sm btn-ghost">
+                        {% heroicon_outline "printer" class="w-4 h-4" %}
+                        <span class="text-xs">Print</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- KPI Metric Grid -->
+        <div class="grid grid-cols-1 gap-4 px-6 mb-8 md:grid-cols-3 lg:grid-cols-5">
+            <!-- Planned Finish -->
+            <div class="flex gap-4 items-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                <div class="flex justify-center items-center w-10 h-10 text-indigo-600 bg-indigo-50 rounded-lg shrink-0">
+                    {% heroicon_outline "calendar" class="w-6 h-6" %}
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Planned Finish</p>
+                    <p class="font-mono text-sm font-black text-gray-900">{{ project_kpis.planned_finish|date:"d M Y"|default:"TBD" }}</p>
+                </div>
+            </div>
+            <!-- Forecast Finish -->
+            <div class="flex gap-4 items-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                <div class="flex justify-center items-center w-10 h-10 text-blue-600 bg-blue-50 rounded-lg shrink-0">
+                    {% heroicon_outline "bolt" class="w-6 h-6" %}
+                </div>
+                <div>
+                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Forecast Finish</p>
+                    <p class="font-mono text-sm font-black text-gray-900">{{ project_kpis.forecast_finish|date:"d M Y"|default:"TBD" }}</p>
+                </div>
+            </div>
+            <!-- Overrun Variance -->
+            <div class="flex gap-4 items-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                {% with overrun=project_kpis.overrun_days %}
+                    <div class="flex shrink-0 justify-center items-center w-10 h-10 {% if overrun > 0 %}bg-rose-50 text-rose-600{% else %}bg-emerald-50 text-emerald-600{% endif %} rounded-lg">
+                        {% heroicon_outline "clock" class="w-6 h-6" %}
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Overrun Variance</p>
+                        <p class="font-mono text-sm font-black {% if overrun > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                            {% if overrun > 0 %}+{% endif %}
+                            {{ overrun|floatformat:1 }} Days
+                        </p>
+                    </div>
+                {% endwith %}
+            </div>
+            <!-- Project Progress -->
+            <div class="flex gap-4 items-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                <div class="flex justify-center items-center w-10 h-10 text-indigo-600 bg-indigo-50 rounded-lg shrink-0">
+                    {% heroicon_outline "chart-pie" class="w-6 h-6" %}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Overall Progress</p>
+                    <div class="flex gap-2 items-center">
+                        <p class="font-mono text-sm font-black text-gray-900">{{ project_kpis.progress_pct }}%</p>
+                        <div class="flex-1 h-1.5 bg-gray-100 rounded-full">
+                            <div class="h-1.5 bg-indigo-600 rounded-full"
+                                 style="width: {{ project_kpis.progress_pct }}%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
+            <!-- Schedule Performance -->
+            <div class="flex gap-4 items-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
+                {% with spi=project_kpis.spi %}
+                    <div class="flex shrink-0 justify-center items-center w-10 h-10 {% if spi < 0.9 %}bg-rose-50 text-rose-600{% elif spi < 1.0 %}bg-amber-50 text-amber-600{% else %}bg-emerald-50 text-emerald-600{% endif %} rounded-lg">
+                        {% heroicon_outline "arrow-trending-up" class="w-6 h-6" %}
+                    </div>
+                    <div>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Schedule Index (SPI)</p>
+                        <p class="font-mono text-sm font-black {% if spi < 0.9 %}text-rose-600{% elif spi < 1.0 %}text-amber-600{% else %}text-emerald-600{% endif %}">
+                            {{ spi|floatformat:2 }}
+                        </p>
+                    </div>
+                {% endwith %}
+            </div>
         </div>
-
-        <!-- Schedule Performance -->
-        <div class="flex gap-4 items-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm transition-all hover:shadow-md">
-            {% with spi=project_kpis.spi %}
-            <div class="flex shrink-0 justify-center items-center w-10 h-10 {% if spi < 0.9 %}bg-rose-50 text-rose-600{% elif spi < 1.0 %}bg-amber-50 text-amber-600{% else %}bg-emerald-50 text-emerald-600{% endif %} rounded-lg">
-                {% heroicon_outline "arrow-trending-up" class="w-6 h-6" %}
+        <!-- Integrated Split View -->
+        <div class="flex flex-col flex-1" id="split-container">
+            <!-- Top Pane: Gantt -->
+            <div class="overflow-hidden relative h-[60vh] border-b border-gray-200 transition-all duration-300"
+                 id="split-top">{% include "production_progress/partials/_gantt_chart_partial.html" %}</div>
+            <!-- Bottom Pane: Table -->
+            <div class="flex overflow-auto flex-col flex-1" id="split-bottom">
+                {% include "production_progress/partials/_progress_table_partial.html" %}
             </div>
-            <div>
-                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Schedule Index (SPI)</p>
-                <p class="font-mono text-sm font-black {% if spi < 0.9 %}text-rose-600{% elif spi < 1.0 %}text-amber-600{% else %}text-emerald-600{% endif %}">
-                    {{ spi|floatformat:2 }}
-                </p>
-            </div>
-            {% endwith %}
         </div>
     </div>
-
-    <!-- Integrated Split View -->
-    <div class="flex flex-col flex-1" id="split-container">
-        <!-- Top Pane: Gantt -->
-        <div class="overflow-hidden relative h-[60vh] border-b border-gray-200 transition-all duration-300" id="split-top">
-            {% include "production_progress/partials/_gantt_chart_partial.html" %}
-        </div>
-
-        <!-- Bottom Pane: Table -->
-        <div class="flex overflow-auto flex-col flex-1" id="split-bottom">
-            {% include "production_progress/partials/_progress_table_partial.html" %}
-        </div>
-    </div>
- 
-</div>
 {% endblock content %}
-
 {% block extra_js %}
-<script>
+    <script>
     document.addEventListener('DOMContentLoaded', function() {
         const root = document.getElementById('control-center-root');
         const splitTop = document.getElementById('split-top');
@@ -235,5 +223,5 @@
             });
         });
     });
-</script>
+    </script>
 {% endblock extra_js %}

@@ -1,12 +1,17 @@
 {% load heroicons %}
-
+<style>
+    .gantt-legend-summary {
+        background: repeating-linear-gradient(45deg, #6366f1, #6366f1 2px, #818cf8 2px, #818cf8 4px);
+    }
+</style>
 <!-- Gantt Chart Container -->
-<div class="flex overflow-hidden flex-col h-full bg-white border border-gray-100 shadow-sm gantt-container-section" id="gantt-section-container">
+<div class="flex overflow-hidden flex-col h-full bg-white border border-gray-100 shadow-sm gantt-container-section"
+     id="gantt-section-container">
     <!-- Legend & Controls -->
     <div class="flex flex-wrap gap-4 justify-between items-center px-5 py-3 border-b border-gray-100 bg-gray-50/50">
         <div class="flex flex-wrap gap-5 items-center">
             <div class="flex items-center space-x-2">
-                <div class="w-4 h-4 rounded-[3px] border border-indigo-200" style="background: repeating-linear-gradient(45deg, #6366f1, #6366f1 2px, #818cf8 2px, #818cf8 4px);"></div>
+                <div class="w-4 h-4 rounded-[3px] border border-indigo-200 gantt-legend-summary"></div>
                 <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Summary</span>
             </div>
             <div class="flex items-center space-x-2">
@@ -31,20 +36,31 @@
         <div class="flex gap-4 items-center">
             <!-- Zoom controls -->
             <div class="flex items-center p-1 bg-white rounded-lg border border-gray-200 shadow-sm">
-                <button type="button" id="zoom-out-btn" class="p-1.5 text-gray-500 rounded-md hover:bg-gray-50">
+                <button type="button"
+                        id="zoom-out-btn"
+                        class="p-1.5 text-gray-500 rounded-md hover:bg-gray-50">
                     {% heroicon_outline "minus" class="w-4 h-4" %}
                 </button>
-                <span id="zoom-label" class="px-3 text-[10px] font-bold uppercase tracking-widest text-gray-600">Week</span>
-                <button type="button" id="zoom-in-btn" class="p-1.5 text-gray-500 rounded-md hover:bg-gray-50">
+                <span id="zoom-label"
+                      class="px-3 text-[10px] font-bold uppercase tracking-widest text-gray-600">Week</span>
+                <button type="button"
+                        id="zoom-in-btn"
+                        class="p-1.5 text-gray-500 rounded-md hover:bg-gray-50">
                     {% heroicon_outline "plus" class="w-4 h-4" %}
                 </button>
             </div>
             <!-- Hierarchy Controls -->
             <div class="flex items-center p-1 bg-white rounded-lg border border-gray-200 shadow-sm">
-                <button type="button" id="expand-all-btn" title="Expand All" class="p-1.5 text-gray-500 rounded-md hover:bg-gray-50">
+                <button type="button"
+                        id="expand-all-btn"
+                        title="Expand All"
+                        class="p-1.5 text-gray-500 rounded-md hover:bg-gray-50">
                     {% heroicon_outline "arrows-pointing-out" class="w-4 h-4" %}
                 </button>
-                <button type="button" id="collapse-all-btn" title="Collapse All" class="p-1.5 text-gray-500 rounded-md hover:bg-gray-50">
+                <button type="button"
+                        id="collapse-all-btn"
+                        title="Collapse All"
+                        class="p-1.5 text-gray-500 rounded-md hover:bg-gray-50">
                     {% heroicon_outline "arrows-pointing-in" class="w-4 h-4" %}
                 </button>
             </div>
@@ -53,21 +69,23 @@
     <!-- Gantt body: left label pane + right chart pane -->
     <div class="flex overflow-hidden flex-1 min-h-0" id="gantt-wrapper">
         <!-- Label Column (fixed width, sticky-like via container flex) -->
-        <div class="flex z-10 flex-col flex-shrink-0 w-80 bg-white border-r border-gray-100" id="gantt-labels-container">
+        <div class="flex z-10 flex-col flex-shrink-0 w-80 bg-white border-r border-gray-100"
+             id="gantt-labels-container">
             <div class="h-[72px] border-b border-gray-100 flex items-center px-4 bg-gray-50/30">
                 <h3 class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Production Activity</h3>
             </div>
             <div id="gantt-label-rows" class="overflow-hidden flex-1"></div>
         </div>
         <!-- Chart Area -->
-        <div class="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-300" id="gantt-chart-scroll">
+        <div class="overflow-auto flex-1 scrollbar-thin scrollbar-thumb-slate-300"
+             id="gantt-chart-scroll">
             <canvas id="gantt-canvas" class="block"></canvas>
         </div>
     </div>
 </div>
-
 <!-- Tooltip -->
-<div id="gantt-tooltip" class=" fixed z-[100] px-4 py-3 max-w-xs rounded-xl border border-gray-100 shadow-2xl backdrop-blur-md transition-opacity duration-200 pointer-events-none bg-white/95">
+<div id="gantt-tooltip"
+     class=" fixed z-[100] px-4 py-3 max-w-xs rounded-xl border border-gray-100 shadow-2xl backdrop-blur-md transition-opacity duration-200 pointer-events-none bg-white/95">
     <div id="tooltip-title" class="mb-1 text-sm font-bold text-gray-900"></div>
     <div class="space-y-1">
         <div class="flex gap-4 justify-between">
@@ -84,7 +102,6 @@
         </div>
     </div>
 </div>
-
 <script>
 // ── Data from Django ──────────────────────────────────────────────────────────
 const GANTT_DATA = {{ gantt_data_json|safe }};
