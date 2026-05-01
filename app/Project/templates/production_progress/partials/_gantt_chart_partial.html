@@ -4,22 +4,28 @@
 <div class="flex overflow-hidden flex-col h-full bg-white border border-gray-100 shadow-sm gantt-container-section" id="gantt-section-container">
     <!-- Legend & Controls -->
     <div class="flex flex-wrap gap-4 justify-between items-center px-5 py-3 border-b border-gray-100 bg-gray-50/50">
-        <div class="flex flex-wrap gap-4 items-center">
-            <div class="flex items-center space-x-1.5">
-                <div class="w-3 h-3 bg-indigo-500 rounded-sm"></div>
-                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Summary</span>
+        <div class="flex flex-wrap gap-5 items-center">
+            <div class="flex items-center space-x-2">
+                <div class="w-4 h-4 rounded-[3px] border border-indigo-200" style="background: repeating-linear-gradient(45deg, #6366f1, #6366f1 2px, #818cf8 2px, #818cf8 4px);"></div>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Summary</span>
             </div>
-            <div class="flex items-center space-x-1.5">
-                <div class="w-3 h-3 bg-sky-400 rounded-sm"></div>
-                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Planned</span>
+            <div class="flex items-center space-x-2">
+                <div class="w-4 h-4 bg-indigo-600 rounded-[3px]"></div>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Progress</span>
             </div>
-            <div class="flex items-center space-x-1.5">
-                <div class="w-3 h-3 bg-emerald-500 rounded-sm"></div>
-                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Active</span>
+            <div class="flex items-center space-x-2">
+                <div class="w-4 h-4 bg-sky-100 rounded-[3px] border border-sky-200"></div>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Planned</span>
             </div>
-            <div class="flex items-center space-x-1.5">
-                <div class="w-3 h-3 bg-rose-400 rounded-sm"></div>
-                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Delayed (Forecast)</span>
+            <div class="flex items-center space-x-2">
+                <div class="w-4 h-4 bg-rose-500 rounded-[3px]"></div>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Delayed</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <div class="flex flex-col justify-center items-center w-5">
+                    <div class="w-full h-[1.5px] bg-rose-500 border-t border-dashed border-rose-500"></div>
+                </div>
+                <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Today</span>
             </div>
         </div>
         <div class="flex gap-4 items-center">
@@ -159,16 +165,11 @@ if (GANTT_DATA.length && canvas) {
     }
 
     function getBarColors(row) {
-        const today = new Date(); today.setHours(0,0,0,0);
-        const s = new Date(row.start_date); s.setHours(0,0,0,0);
-        const e = new Date(row.finish_date); e.setHours(0,0,0,0);
-        
-        const isDelayed = row.forecastTs > row.endTs;
+        const isDelayed = row.forecastTs > row.endTs + (1000 * 60 * 60);
         
         if (row.has_children) return { fill: '#6366f1', stroke: '#4f46e5', type: 'parent' };
-        if (s <= today && today <= e) return { fill: '#10b981', stroke: '#059669', type: 'active' };
         if (isDelayed) return { fill: '#f43f5e', stroke: '#e11d48', type: 'delayed' };
-        return { fill: '#38bdf8', stroke: '#0ea5e9', type: 'planned' };
+        return { fill: '#e0f2fe', stroke: '#bae6fd', type: 'planned' };
     }
 
     function drawRoundedRect(ctx, x, y, width, height, radius) {
@@ -340,15 +341,9 @@ if (GANTT_DATA.length && canvas) {
                 // 2. Draw Forecast extension if delayed (Rose)
                 if (xForeEnd > xPlanEnd + 2) {
                     const delayW = xForeEnd - xPlanEnd;
-                    ctx.fillStyle = 'rgba(244, 63, 94, 0.6)'; // Semi-transparent Rose
+                    ctx.fillStyle = '#fda4af'; // Light Rose
                     drawRoundedRect(ctx, xPlanEnd, barY, delayW, BAR_H, 4);
                     ctx.fill();
-                    
-                    // Add distinctive dashed border for forecast part
-                    ctx.setLineDash([4, 2]);
-                    ctx.strokeStyle = '#e11d48';
-                    ctx.stroke();
-                    ctx.setLineDash([]);
                 }
 
                 // 3. Draw Stripe Pattern over entire parent span
@@ -356,10 +351,10 @@ if (GANTT_DATA.length && canvas) {
                 ctx.save();
                 drawRoundedRect(ctx, xPlanStart, barY, totalW, BAR_H, 4);
                 ctx.clip();
-                ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+                ctx.strokeStyle = 'rgba(255,255,255,0.25)';
                 ctx.lineWidth = 4;
-                for(let sx = xPlanStart - 20; sx < xPlanStart + totalW; sx += 8) {
-                    ctx.beginPath(); ctx.moveTo(sx, barY); ctx.lineTo(sx + 20, barY + BAR_H); ctx.stroke();
+                for(let sx = xPlanStart - 20; sx < xPlanStart + totalW + 20; sx += 10) {
+                    ctx.beginPath(); ctx.moveTo(sx, barY - 5); ctx.lineTo(sx + 20, barY + BAR_H + 5); ctx.stroke();
                 }
                 ctx.restore();
 
@@ -372,32 +367,31 @@ if (GANTT_DATA.length && canvas) {
                     ctx.fill();
                 }
 
-                // Draw Main Bar (Forecast/Actual)
+                // Draw Main Bar (Background: Planned/Light Blue)
                 const mainW = Math.max(xForeEnd - xPlanStart, 6);
-                ctx.fillStyle = colors.fill;
+                ctx.fillStyle = '#e0f2fe'; // Sky 100
+                drawRoundedRect(ctx, xPlanStart, barY, mainW, BAR_H, 4);
+                ctx.fill();
                 
-                // Add focus border if highlighted
-                if (row.id === highlightTaskId) {
+                // If delayed, color the end part Rose
+                if (xForeEnd > xPlanEnd + 2) {
                     ctx.save();
-                    ctx.shadowBlur = 10;
-                    ctx.shadowColor = 'rgba(79, 70, 229, 0.5)';
-                    ctx.strokeStyle = '#4f46e5';
-                    ctx.lineWidth = 2;
-                    drawRoundedRect(ctx, xPlanStart - 1, barY - 1, mainW + 2, BAR_H + 2, 5);
-                    ctx.stroke();
+                    const delayX = xPlanEnd;
+                    const delayW = xForeEnd - xPlanEnd;
+                    drawRoundedRect(ctx, xPlanStart, barY, mainW, BAR_H, 4);
+                    ctx.clip();
+                    ctx.fillStyle = '#f43f5e'; // Rose 500
+                    ctx.fillRect(delayX, barY, delayW, BAR_H);
                     ctx.restore();
                 }
 
-                drawRoundedRect(ctx, xPlanStart, barY, mainW, BAR_H, 4);
-                ctx.fill();
-
-                // Draw Progress Fill (Indigo)
+                // Draw Progress Fill (Indigo 600)
                 if (row.progress_pct > 0 && !row.has_children) {
                     const progW = mainW * (row.progress_pct / 100);
                     ctx.save();
                     drawRoundedRect(ctx, xPlanStart, barY, progW, BAR_H, 4);
                     ctx.clip();
-                    ctx.fillStyle = 'rgba(79, 70, 229, 0.3)'; // Indigo overlay for progress
+                    ctx.fillStyle = '#4f46e5'; // Indigo 600
                     ctx.fillRect(xPlanStart, barY, progW, BAR_H);
                     ctx.restore();
                 }
@@ -432,11 +426,22 @@ if (GANTT_DATA.length && canvas) {
 
         // Today line
         if (todayX >= 0 && todayX <= W) {
+            ctx.save();
             ctx.strokeStyle = '#ef4444';
+            ctx.setLineDash([4, 3]);
             ctx.lineWidth = 1.5;
             ctx.beginPath(); ctx.moveTo(todayX, HEAD_H); ctx.lineTo(todayX, H); ctx.stroke();
+            
+            // Draw Triangle Marker at top
             ctx.fillStyle = '#ef4444';
-            ctx.beginPath(); ctx.arc(todayX, HEAD_H, 3, 0, Math.PI*2); ctx.fill();
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.moveTo(todayX - 5, HEAD_H);
+            ctx.lineTo(todayX + 5, HEAD_H);
+            ctx.lineTo(todayX, HEAD_H + 8);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
         }
 
         buildLabels();

@@ -1,16 +1,14 @@
 <!-- Detailed Metrics Table Partial -->
 <div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm analytics-table-section" id="table-section-container">
-    <div class="flex justify-between items-center px-6 py-4 border-b border-gray-50 bg-gray-50/50">
-        <h3 class="text-sm font-black tracking-tight text-gray-900 uppercase">Production Analytics Dashboard</h3>
-        <div class="flex gap-2 items-center">
-             <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Interactive Performance View</span>
-        </div>
+    <div class="px-6 py-5 border-b border-gray-50 bg-gray-50/50">
+        <h3 class="text-base font-bold tracking-tight text-gray-900">Activity Completion Forecast</h3>
+        <p class="mt-1 text-xs text-gray-500">Predicted finish dates for ongoing items based on current productivity</p>
     </div>
     <div class="overflow-x-auto max-w-full border-t border-gray-100 shadow-inner scrollbar-thin scrollbar-thumb-slate-300" id="table-scroll-container">
         <table class="table table-xs table-pin-rows table-pin-cols w-full min-w-[1300px]">
             <thead>
                 <tr class="z-20 backdrop-blur-sm bg-gray-50/80">
-                    <th class="min-w-[280px] bg-gray-50/95 z-20 sticky left-0 border-r border-gray-200/50 px-4 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500">Activity</th>
+                    <th class="min-w-[320px] bg-gray-50/95 z-20 sticky left-0 border-r border-gray-200/50 px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500">Activity / Section</th>
                     <th class="text-center px-3 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500">Timeline</th>
                     <th class="text-center px-2 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500">Duration</th>
                     <th class="text-center px-2 py-3 text-[10px] font-bold uppercase tracking-widest text-gray-500">Days Remaining</th>
@@ -23,54 +21,15 @@
             </thead>
             <tbody class="divide-y divide-gray-50">
                 {% for item in report_items %}
-                    
-                    {# Section Header Row #}
-                    {% ifchanged item.plan.section %}
-                        {% if item.plan.section %}
-                        <tr class="border-t border-gray-200 bg-gray-100/95 backdrop-blur-sm sticky top-[39px] z-20 group/header cursor-pointer"
-                            onclick="toggleTableSection('section-{{ item.plan.section|slugify }}', this)">
-                            <td colspan="9" class="px-4 py-2.5 text-[11px] font-black text-gray-700 uppercase tracking-widest sticky left-0 z-10 bg-inherit">
-                                <div class="flex gap-2 items-center">
-                                    <div class="w-1.5 h-4 bg-indigo-600 rounded-sm"></div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 transition-transform duration-200 transform chevron-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                    Section: {{ item.plan.section }}
-                                </div>
-                            </td>
-                        </tr>
-                        {% endif %}
-                    {% endifchanged %}
-
-                    {# Bill Header Row #}
-                    {% ifchanged item.plan.bill_no %}
-                        {% if item.plan.bill_no %}
-                        <tr class="border-t border-gray-100 bg-gray-50/95 backdrop-blur-sm sticky top-[78px] z-10 group/header cursor-pointer section-{{ item.plan.section|slugify }}-child"
-                            data-parent-section="section-{{ item.plan.section|slugify }}"
-                            onclick="toggleTableBill('bill-{{ item.plan.section|slugify }}-{{ item.plan.bill_no|slugify }}', this)">
-                            <td colspan="9" class="px-8 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest sticky left-0 z-10 bg-inherit">
-                                <div class="flex gap-2 items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform duration-200 transform chevron-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                    Bill: {{ item.plan.bill_no }}
-                                </div>
-                            </td>
-                        </tr>
-                        {% endif %}
-                    {% endifchanged %}
-
-                    <tr class="transition-colors cursor-pointer hover:bg-indigo-50/40 group/row section-{{ item.plan.section|slugify }}-child bill-{{ item.plan.section|slugify }}-{{ item.plan.bill_no|slugify }}-child" 
-                        onclick="if(window.scrollToTask) window.scrollToTask('{{ item.plan.id }}')"
-                        data-activity-id="{{ item.plan.id }}"
-                        data-parent-section="section-{{ item.plan.section|slugify }}"
-                        data-parent-bill="bill-{{ item.plan.section|slugify }}-{{ item.plan.bill_no|slugify }}">
+                    <tr class="transition-colors cursor-pointer hover:bg-indigo-50/40 group/row" 
+                        onclick="if(window.scrollToTask) window.scrollToTask('{{ item.plan.id }}')">
                         
-                        {# Activity Name (Sticky) #}
-                        <td class="sticky left-0 z-10 px-4 py-3 font-semibold text-gray-900 bg-white border-r border-gray-100 transition-colors group-hover/row:bg-indigo-50/20 group-hover/row:text-indigo-700">
-                            <div class="flex gap-2 items-center">
-                                <span class="text-[10px] text-gray-400 font-mono tracking-tighter">#{{ forloop.counter }}</span>
-                                {{ item.plan.activity }}
+                        <td class="sticky left-0 z-10 px-6 py-4 font-bold text-gray-900 bg-white border-r border-gray-100 transition-colors group-hover/row:bg-indigo-50/20 group-hover/row:text-indigo-700">
+                            <div class="flex flex-col gap-0.5">
+                                <span class="text-sm font-bold tracking-tight">{{ item.plan.activity }}</span>
+                                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                                    {{ item.plan.section|default:"" }} | {{ item.plan.bill_no|default:"" }}
+                                </span>
                             </div>
                         </td>
 
@@ -104,7 +63,7 @@
 
                         {# Progress with Tooltip #}
                         <td class="px-4">
-                            <div class="flex flex-col gap-1 tooltip tooltip-primary" 
+                            <div class="flex z-30 flex-col gap-1 tooltip tooltip-primary" 
                                  data-tip="Target: {{ item.plan.quantity|floatformat:1 }} | Done: {{ item.kpis.summary.completed_units|floatformat:1 }} | Rem: {{ item.kpis.summary.remaining_units|floatformat:1 }} {{ item.plan.unit }}">
                                 <div class="flex justify-between items-center px-0.5">
                                     <span class="text-[10px] font-black text-gray-700 tabular-nums">{{ item.progress_pct|floatformat:1 }}%</span>
@@ -146,56 +105,4 @@
     </div>
 </div>
 
-<script>
-/**
- * Toggles visibility for a Section and all its child elements.
- */
-function toggleTableSection(sectionId, headerEl) {
-    const isCollapsed = headerEl.classList.toggle('is-collapsed');
-    const chevron = headerEl.querySelector('.chevron-icon');
-    
-    // Rotate Chevron
-    if (chevron) {
-        chevron.style.transform = isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
-    }
 
-    // Find all children (Bills and Activities)
-    const children = document.querySelectorAll(`.${sectionId}-child`);
-    children.forEach(child => {
-        if (isCollapsed) {
-            child.classList.add('hidden');
-        } else {
-            // Only show child if it's not part of a collapsed Bill
-            const parentBill = child.getAttribute('data-parent-bill');
-            const billHeader = document.querySelector(`[onclick*="${parentBill}"]`);
-            
-            if (!billHeader || !billHeader.classList.contains('is-collapsed')) {
-                child.classList.remove('hidden');
-            }
-        }
-    });
-}
-
-/**
- * Toggles visibility for a Bill and its child Activities.
- */
-function toggleTableBill(billId, headerEl) {
-    const isCollapsed = headerEl.classList.toggle('is-collapsed');
-    const chevron = headerEl.querySelector('.chevron-icon');
-
-    // Rotate Chevron
-    if (chevron) {
-        chevron.style.transform = isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
-    }
-
-    // Find all child activities
-    const children = document.querySelectorAll(`.${billId}-child`);
-    children.forEach(child => {
-        if (isCollapsed) {
-            child.classList.add('hidden');
-        } else {
-            child.classList.remove('hidden');
-        }
-    });
-}
-</script>
