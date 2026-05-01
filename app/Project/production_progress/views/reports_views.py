@@ -487,7 +487,7 @@ class ProductionControllerView(
                 "children",
                 "daily_entries",
             )
-            .order_by("start_date", "activity")
+            .order_by("section", "bill_no", "start_date")
         )
         context["plans"] = all_plans
         ordered = self._flatten_tree(all_plans)
@@ -520,8 +520,9 @@ class ProductionControllerView(
             })
         context["gantt_data_json"] = json.dumps(gantt_data)
 
-        # 3. Progress Table Logic (Reused from ProductionProgressReportView)
-        # We show only leaf nodes with progress for the table, matching existing report
+        # 3. Progress Table Logic (Enhanced Analytics with Unified Logic)
+        from app.Project.production_progress.utils.production_utils import get_plan_forecast_kpis
+        
         report_items = []
         for plan in all_plans:
             if not plan.is_leaf:
@@ -531,27 +532,16 @@ class ProductionControllerView(
             if progress_pct <= 0:
                 continue
 
-            total_produced = plan.daily_entries.aggregate(total=Sum("quantity"))["total"] or 0
-            remaining_qty = max(0, plan.quantity - total_produced)
-            
-            forecast_end_date = plan.finish_date
-            if remaining_qty > 0:
-                current_rate = plan.daily_rate * ppi
-                if current_rate > 0:
-                    days_left = int(remaining_qty / current_rate)
-                    forecast_end_date = today + timedelta(days=days_left)
-
-            days_variance = 0
-            if plan.finish_date and forecast_end_date:
-                days_variance = (forecast_end_date - plan.finish_date).days
+            # Use the unified forecasting utility for 100% parity with the dashboard
+            kpis = get_plan_forecast_kpis(plan, ppi)
 
             report_items.append({
                 "plan": plan,
-                "progress_pct": progress_pct,
-                "planned_duration": (plan.finish_date - plan.start_date).days if plan.finish_date and plan.start_date else 0,
-                "forecast_end_date": forecast_end_date,
-                "days_variance": days_variance,
-                "spi": ppi,
+                "kpis": kpis,
+                "progress_pct": kpis["summary"]["progress_pct"],
+                "status": kpis["summary"]["status"],
+                "status_color": kpis["summary"]["status_color"],
+                "spi": kpis["daily_output"]["index"],
             })
         
         context["report_items"] = report_items

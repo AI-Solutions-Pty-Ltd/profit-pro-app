@@ -101,17 +101,18 @@
     </div>
 
     <!-- Integrated Split View -->
-    <div class="flex flex-col h-[calc(100vh-120px)] overflow-hidden" id="split-container">
+    <div class="flex flex-col" id="split-container">
         <!-- Top Pane: Gantt -->
-        <div class="overflow-hidden relative mb-8 h-1/2 border-b border-gray-200" id="split-top">
+        <div class="overflow-hidden relative h-1/2 border-b border-gray-200" id="split-top">
             {% include "production_progress/partials/_gantt_chart_partial.html" %}
         </div>
+    </div>
 
         <!-- Bottom Pane: Table -->
-        <div class="flex overflow-auto flex-col flex-1" >
+        <div class="flex overflow-auto flex-col flex-1 mt-8" >
             {% include "production_progress/partials/_progress_table_partial.html" %}
         </div>
-    </div>
+ 
 </div>
 {% endblock content %}
 

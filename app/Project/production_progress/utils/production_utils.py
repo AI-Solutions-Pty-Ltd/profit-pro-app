@@ -506,7 +506,9 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
                 "actual": actual_avg_cost_per_item,
                 "target": target_cost_per_item,
                 "variance": calc_var(actual_avg_cost_per_item, target_cost_per_item),
-                "index": calc_index(target_cost_per_item, actual_avg_cost_per_item),  # Cost index: Target / Actual
+                "index": calc_index(
+                    target_cost_per_item, actual_avg_cost_per_item
+                ),  # Cost index: Target / Actual
                 "trend": cost_trend_val,
                 "trend_pos": not cost_trend_pos,  # Inverse: for cost, down is good
             },
@@ -540,7 +542,98 @@ def get_plan_productivity_data(plan_id, start_date=None, end_date=None):
     }
 
 
-def get_forecasting_dashboard_data(plan_id, start_date=None, end_date=None):
+def get_plan_forecast_kpis(plan, project_ppi=1.0):
+    """
+    Unified calculation for plan forecasting KPIs.
+    Returns a dictionary structure compatible with dashboard and table views.
+    """
+    from datetime import date, timedelta
+    from django.db.models import Sum
+
+    # 1. Base Metrics
+    actual_total_qty = plan.daily_entries.aggregate(total=Sum("quantity"))["total"] or 0
+    entries_count = plan.daily_entries.count()
+    today = date.today()
+
+    # 2. Daily Rate & Productivity (Aligned with Dashboard target_daily_output)
+    target_rate = 0
+    if plan.duration > 0:
+        target_rate = float(plan.quantity) / float(plan.duration)
+    else:
+        target_rate = float(plan.daily_rate)
+
+    # Logic Parity: If plan has data, use its own average output.
+    # If not, use project-wide PPI as a forecast proxy.
+    actual_avg_out = 0
+    ppi = project_ppi
+
+    if entries_count > 0:
+        actual_avg_out = float(actual_total_qty) / float(entries_count)
+        if target_rate > 0:
+            ppi = actual_avg_out / target_rate
+    else:
+        # Fallback to project performance for new items
+        actual_avg_out = target_rate * float(project_ppi)
+        ppi = project_ppi
+
+    # 3. Time Forecast
+    remaining_qty = max(0, float(plan.quantity) - float(actual_total_qty))
+    days_to_complete = 0
+
+    # Use actual average if available, otherwise target
+    forecast_rate = actual_avg_out if actual_avg_out > 0 else target_rate
+
+    if forecast_rate > 0:
+        days_to_complete = float(remaining_qty) / float(forecast_rate)
+
+    # Forecast Finish Date
+    forecast_finish = today + timedelta(days=days_to_complete)
+
+    # 4. Variance Calculations
+    planned_duration = float(plan.duration)
+    # Total predicted duration = days already worked + days remaining
+    forecast_total_days = float(entries_count) + float(days_to_complete)
+    time_variance = planned_duration - forecast_total_days
+
+    # Status Determination
+    status = "On Track"
+    status_color = "emerald"
+    if time_variance < -2:
+        status = "Critical"
+        status_color = "red"
+    elif time_variance < 0:
+        status = "At Risk"
+        status_color = "amber"
+
+    return {
+        "daily_output": {
+            "actual": round(actual_avg_out, 1),
+            "target": round(target_rate, 1),
+            "index": round(ppi, 2),
+            "variance": round((float(ppi) - 1) * 100, 1),
+            "days_remaining": round(days_to_complete, 1),
+            "forecast_duration": round(forecast_total_days, 1),
+            "forecast_finish": forecast_finish,
+            "time_variance": round(time_variance, 1),
+            "late_str": f"{'late by' if time_variance < 0 else 'ahead by'} {abs(time_variance):.1f} days",
+        },
+        "summary": {
+            "completed_units": float(actual_total_qty),
+            "remaining_units": float(remaining_qty),
+            "progress_pct": round(
+                (float(actual_total_qty) / float(plan.quantity) * 100), 1
+            )
+            if plan.quantity > 0
+            else 0,
+            "status": status,
+            "status_color": status_color,
+        },
+    }
+
+
+def get_forecasting_dashboard_data(
+    plan_id, start_date=None, end_date=None, ppi_override=None
+):
     """
     Calculates predictive forecasting metrics and scenarios for a specific plan.
     """
