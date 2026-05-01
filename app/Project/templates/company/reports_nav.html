@@ -19,11 +19,7 @@
         {% url 'project:production-integrated-control' company.pk as url_integrated %}
     {% endif %}
     {% if project or company %}
-        <a href="{{ url_integrated }}"
-           class="border-b-2 {% if tab == 'integrated_control' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
-            {% heroicon_outline "command-line" class="inline mr-2 w-5 h-5" %}
-            Control Center
-        </a>
+       
         <a href="{{ url_prod }}"
            class="border-b-2 {% if tab == 'productivity_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
             {% heroicon_outline "calculator" class="inline mr-2 w-5 h-5" %}
@@ -39,7 +35,12 @@
             {% heroicon_outline "chart-pie" class="inline mr-2 w-5 h-5" %}
             Performance Report
         </a> {% endcomment %}
-        <a href="{{ url_prog }}"
+         <a href="{{ url_integrated }}"
+           class="border-b-2 {% if tab == 'integrated_control' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
+            {% heroicon_outline "command-line" class="inline mr-2 w-5 h-5" %}
+               Progress Report
+        </a>
+        {% comment %} <a href="{{ url_prog }}"
            class="border-b-2 {% if tab == 'production_progress_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
             {% heroicon_outline "presentation-chart-line" class="inline mr-2 w-5 h-5" %}
             Progress Report
@@ -48,7 +49,7 @@
            class="border-b-2 {% if tab == 'schedule_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
             {% heroicon_outline "calendar-days" class="inline mr-2 w-5 h-5" %}
             Schedule Report
-        </a>
+        </a> {% endcomment %}
         <a href="{{ url_prof }}"
            class="border-b-2 {% if tab == 'profitability_performance_report' %}border-indigo-500 text-indigo-600{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %} py-4 px-1 font-medium transition-colors">
             {% heroicon_outline "presentation-chart-line" class="inline mr-2 w-5 h-5" %}

@@ -21,15 +21,20 @@
             </thead>
             <tbody class="divide-y divide-gray-50">
                 {% for item in report_items %}
-                    <tr class="transition-colors cursor-pointer hover:bg-indigo-50/40 group/row" 
+                    <tr class="transition-colors cursor-pointer hover:bg-indigo-50/40 group/row {% if not item.plan.is_leaf %}bg-gray-50/30{% endif %}" 
                         onclick="if(window.scrollToTask) window.scrollToTask('{{ item.plan.id }}')">
                         
-                        <td class="sticky left-0 z-10 px-6 py-4 font-bold text-gray-900 bg-white border-r border-gray-100 transition-colors group-hover/row:bg-indigo-50/20 group-hover/row:text-indigo-700">
+                        <td class="sticky left-0 z-10 px-6 py-4 font-bold text-gray-900 bg-white border-r border-gray-100 transition-colors group-hover/row:bg-indigo-50/20 group-hover/row:text-indigo-700"
+                            style="padding-left: calc({{ item.depth }} * 1.5rem + 1.5rem)">
                             <div class="flex flex-col gap-0.5">
-                                <span class="text-sm font-bold tracking-tight">{{ item.plan.activity }}</span>
-                                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
-                                    {{ item.plan.section|default:"" }} | {{ item.plan.bill_no|default:"" }}
+                                <span class="text-sm font-bold tracking-tight {% if not item.plan.is_leaf %}text-indigo-900 uppercase{% endif %}">
+                                    {{ item.plan.activity }}
                                 </span>
+                                {% if item.plan.is_leaf %}
+                                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                                        {{ item.plan.section|default:"" }} | {{ item.plan.bill_no|default:"" }}
+                                    </span>
+                                {% endif %}
                             </div>
                         </td>
 
@@ -43,12 +48,12 @@
                             {{ item.plan.duration }}d
                         </td>
 
-                        {# Days Remaining (Aligned with Target Metrics Card) #}
+                        {# Days Remaining #}
                         <td class="font-mono font-black tabular-nums text-center text-indigo-600">
                             {{ item.kpis.daily_output.days_remaining }}
                         </td>
 
-                        {# Time Forecast (Aligned with Dashboard Card - Primary Duration) #}
+                        {# Time Forecast #}
                         <td class="text-center">
                             <div class="text-[11px] font-black text-gray-900 tabular-nums">{{ item.kpis.daily_output.forecast_duration }}d</div>
                             <div class="text-[9px] font-bold text-gray-400 uppercase tabular-nums">{{ item.kpis.daily_output.forecast_finish|date:"d M Y" }}</div>
@@ -61,13 +66,13 @@
                             </div>
                         </td>
 
-                        {# Progress with Tooltip #}
+                        {# Progress #}
                         <td class="px-4">
                             <div class="flex z-30 flex-col gap-1 tooltip tooltip-primary" 
                                  data-tip="Target: {{ item.plan.quantity|floatformat:1 }} | Done: {{ item.kpis.summary.completed_units|floatformat:1 }} | Rem: {{ item.kpis.summary.remaining_units|floatformat:1 }} {{ item.plan.unit }}">
                                 <div class="flex justify-between items-center px-0.5">
                                     <span class="text-[10px] font-black text-gray-700 tabular-nums">{{ item.progress_pct|floatformat:1 }}%</span>
-                                    <span class="text-[9px] font-bold text-gray-400 uppercase">{{ item.plan.unit_display }}</span>
+                                    <span class="text-[9px] font-bold text-gray-400 uppercase">{% if item.plan.is_leaf %}{{ item.plan.unit_display }}{% else %}Overall{% endif %}</span>
                                 </div>
                                 <progress class="w-full h-1.5 shadow-sm progress progress-success"
                                           value="{{ item.progress_pct }}"
