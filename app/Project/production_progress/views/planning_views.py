@@ -839,17 +839,21 @@ class ProductionCostBreakdownDetailView(
 
         # Build BoQ Qty-driven plant rows (mirrors Plant Calculator logic).
         # One row per plant component; grand total = sum of (rate × boq_qty) per spec.
-        boq_qs = BOQItem.objects.filter(
-            project=project,
-            is_section_header=False,
-            plant_specification__isnull=False,
+        boq_qs = (
+            BOQItem.objects.filter(
+                project=project,
+                is_section_header=False,
+                section=selected_plan.section,
+                bill_no=selected_plan.bill_no,
+            )
+            .annotate(
+                act_name_annotated=db_models.functions.Coalesce(
+                    "labour_specification__name", "plant_specification__name"
+                )
+            )
+            .filter(act_name_annotated=selected_plan.activity)
+            .filter(plant_specification__isnull=False)
         )
-        if selected_plan.section:
-            boq_qs = boq_qs.filter(section=selected_plan.section)
-        if selected_plan.bill_no:
-            boq_qs = boq_qs.filter(bill_no=selected_plan.bill_no)
-        if selected_plan.labour_activity:
-            boq_qs = boq_qs.filter(labour_specification=selected_plan.labour_activity)
 
         # Group BOQItems by plant_specification, accumulating BoQ qty.
         spec_groups: OrderedDict = OrderedDict()
@@ -880,15 +884,34 @@ class ProductionCostBreakdownDetailView(
                         "plant_name": comp.plant_type.name,
                         "hours": hours,
                         "unit": spec.unit,
-                        "rate": rate,
+                        "rate": comp.plant_type.hourly_rate,
                         "boq_qty": boq_qty,
                         "plant_hours_boq": hours * boq_qty,
+                        "total_cost": hours * boq_qty * comp.plant_type.hourly_rate,
                         "source_spec": spec.name,
                     }
                 )
 
         context["plant_spec_rows"] = plant_spec_rows
         context["plant_spec_total"] = plant_spec_total
+
+        # Calculate combined total for summary metrics to ensure consistency
+        manual_labour = selected_plan.resources.filter(resource_type="LABOUR").aggregate(
+            total=Sum("total_cost")
+        )["total"] or Decimal("0")
+        spec_labour = (
+            selected_plan.labour_activity.crew.crew_daily_cost * selected_plan.duration
+            if selected_plan.labour_activity and selected_plan.labour_activity.crew
+            else Decimal("0")
+        )
+        
+        manual_plant = selected_plan.resources.filter(resource_type="PLANT").aggregate(
+            total=Sum("total_cost")
+        )["total"] or Decimal("0")
+        
+        context["total_labour_cost_calc"] = manual_labour + spec_labour
+        context["total_plant_cost_calc"] = manual_plant + plant_spec_total
+        context["total_planned_cost"] = context["total_labour_cost_calc"] + context["total_plant_cost_calc"]
 
         return context
 
