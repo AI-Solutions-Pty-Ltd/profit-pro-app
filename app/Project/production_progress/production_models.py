@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
@@ -122,14 +123,26 @@ class ProductionPlan(BaseModel):
         return self.unit
 
     def save(self, *args, **kwargs):
-        # Auto-calculate duration for leaf nodes
+        # 1. Flexible date/duration calculation
         if self.is_leaf:
-            if self.start_date and self.finish_date:
+            if self.start_date and self.duration and not self.finish_date:
+                self.finish_date = self.start_date + timedelta(days=self.duration)
+            elif self.start_date and self.finish_date:
                 self.duration = (self.finish_date - self.start_date).days
-            else:
-                self.duration = 0
 
-        # Handle automatic hierarchy generation for ANY leaf item (Spec linked)
+        # 2. Track changes for propagation
+        is_new = self.pk is None
+        old_start = None
+        old_finish = None
+        if not is_new:
+            try:
+                old_instance = ProductionPlan.objects.get(pk=self.pk)
+                old_start = old_instance.start_date
+                old_finish = old_instance.finish_date
+            except ProductionPlan.DoesNotExist:
+                pass
+
+        # 3. Handle automatic hierarchy generation for ANY leaf item (Spec linked)
         is_leaf_item = (
             self.labour_activity or self.plant_specification
         ) and self.is_leaf
@@ -138,11 +151,18 @@ class ProductionPlan(BaseModel):
             self._ensure_hierarchy()
             self.refresh_plant_types()
 
+        # 4. Standard Save
         super().save(*args, **kwargs)
 
-        # Trigger parent metric sync if we have a parent
-        if self.parent:
-            self.parent.sync_parent_metrics()
+        # 5. Trigger Successor Propagation and Parent Sync
+        deleted_changed = not is_new and self.deleted and not old_instance.deleted
+        if is_new or self.start_date != old_start or self.finish_date != old_finish or deleted_changed:
+            # We delay successors slightly to ensure this instance is fully committed
+            # though in a single request, update_successor_dates is fine.
+            self.update_successor_dates()
+            
+            if self.parent:
+                self.parent.sync_parent_metrics()
 
     def refresh_plant_types(self):
         """Updates plant_types field from BOQItems."""
@@ -221,9 +241,40 @@ class ProductionPlan(BaseModel):
             self.unit = unit
             self.duration = duration
 
-            # 4. Bubble up to grandparent
+            # 4. Trigger successor updates for the parent itself
+            self.update_successor_dates()
+
+            # 5. Bubble up to grandparent
             if self.parent:
                 self.parent.sync_parent_metrics()
+
+    def get_predecessor_end_date(self):
+        """Returns the latest finish_date of all predecessors."""
+        predecessors = [p.predecessor for p in self.predecessors.all() if p.predecessor.finish_date]
+        if not predecessors:
+            return None
+        return max(p.finish_date for p in predecessors)
+
+    def update_successor_dates(self):
+        """Recursively updates start/finish dates for all successors based on dependencies."""
+        for dependency in self.successors.all():
+            successor = dependency.successor
+            latest_pred_end = successor.get_predecessor_end_date()
+            
+            if latest_pred_end and successor.start_date != latest_pred_end:
+                # Update start date to match latest predecessor end date (Finish-to-Start)
+                successor.start_date = latest_pred_end
+                if successor.duration:
+                    successor.finish_date = successor.start_date + timedelta(days=successor.duration)
+                
+                # Use update() to bypass full save signals but keep recursion
+                ProductionPlan.objects.filter(pk=successor.pk).update(
+                    start_date=successor.start_date,
+                    finish_date=successor.finish_date
+                )
+                
+                # Recurse to update this successor's own successors
+                successor.update_successor_dates()
 
     def _ensure_hierarchy(self):
         """Automatically creates Section and Bill levels if they don't exist."""

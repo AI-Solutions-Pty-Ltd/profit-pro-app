@@ -2,149 +2,387 @@
 {% load static %}
 {% load heroicons %}
 {% load humanize %}
+{% load crispy_forms_tags %}
+
 {% block title %}
-    Production Plan — {{ object.activity }} - {{ project.name }}
+    {{ plan.activity }} Detail - {{ project.name }}
 {% endblock title %}
+
 {% block content %}
-    <div class="pb-12">
-        <!-- Header & Breadcrumbs -->
-        <div class="overflow-hidden mb-8 bg-white rounded-xl border border-gray-100 shadow-sm">
-            <div class="flex flex-col gap-2 justify-between items-start px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                <nav class="flex" aria-label="Breadcrumb">
-                    <ol role="list" class="flex items-center space-x-2">
+<div class="pb-12" id="plan-detail-app" 
+     data-plan-id="{{ plan.pk }}" 
+     data-node-type="{{ plan.node_type }}"
+     data-project-id="{{ project.pk }}">
+    
+    <!-- Header Area -->
+    <div class="overflow-hidden mb-8 bg-white rounded-xl border border-gray-100 shadow-sm">
+        <div class="flex flex-col gap-2 justify-between items-start px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+            <nav class="flex mb-2" aria-label="Breadcrumb">
+                <ol role="list" class="flex items-center space-x-2">
+                    <li>
+                        <a href="{% url 'project:production-planning' project.pk %}" class="flex items-center text-gray-400 transition-colors hover:text-indigo-600">
+                            {% heroicon_mini "chevron-left" class="mr-1 w-4 h-4" %}
+                            <span class="text-xs font-bold uppercase tracking-widest">Planning</span>
+                        </a>
+                    </li>
+                    {% if plan.parent %}
                         <li>
-                            <div>
-                                <a href="{% url 'project:production-planning' project.pk %}"
-                                   class="flex items-center text-gray-400 transition-colors hover:text-indigo-600">
-                                    {% heroicon_outline "chevron-left" class="mr-1.5 w-4 h-4" %}
-                                    <span class="text-sm font-semibold">Planning List</span>
+                            <div class="flex items-center">
+                                {% heroicon_mini "chevron-right" class="w-4 h-4 text-gray-300" %}
+                                <a href="{% url 'project:production-plan-detail' project.pk plan.parent.pk %}" class="ml-2 text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-indigo-600">
+                                    {{ plan.parent.activity|truncatechars:20 }}
                                 </a>
                             </div>
                         </li>
-                    </ol>
-                </nav>
-                <div class="flex flex-col gap-4 justify-between w-full md:flex-row md:items-end">
-                    <div>
-                        <h2 class="text-xl font-bold tracking-tight text-gray-900">{{ object.activity }}</h2>
-                        <p class="text-sm text-gray-500">Resource allocation and objective monitoring.</p>
+                    {% endif %}
+                </ol>
+            </nav>
+            
+            <div class="flex flex-col gap-4 justify-between w-full md:flex-row md:items-end">
+                <div>
+                    <div class="flex gap-2 items-center mb-1">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest
+                            {% if plan.node_type == 'SECTION' %}bg-purple-100 text-purple-700{% elif plan.node_type == 'BILL' %}bg-amber-100 text-amber-700{% else %}bg-indigo-100 text-indigo-700{% endif %}">
+                            {{ plan.node_type }}
+                        </span>
+                        {% if plan.section %}
+                            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Section: {{ plan.section }}</span>
+                        {% endif %}
                     </div>
-                    <div class="flex items-center space-x-3">
-                        <a href="{% url 'project:production-plan-edit' project.pk object.pk %}"
-                           class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md ring-1 ring-inset ring-gray-300 shadow-sm transition-all hover:bg-gray-50">
-                            {% heroicon_outline "pencil-square" class="mr-2 w-4 h-4 text-gray-400" %}
-                            Edit Plan
-                        </a>
-                        <a href="{% url 'project:production-cost-breakdown' project.pk %}?plan_id={{ object.pk }}"
+                    <h2 class="text-2xl font-black tracking-tight text-gray-900">{{ plan.activity }}</h2>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <a href="{% url 'project:production-plan-edit' project.pk plan.pk %}"
+                       class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md ring-1 ring-inset ring-gray-300 shadow-sm transition-all hover:bg-gray-50">
+                        {% heroicon_outline "pencil-square" class="mr-2 w-4 h-4 text-gray-400" %}
+                        Edit Settings
+                    </a>
+                    {% if plan.node_type == 'ACTIVITY' %}
+                        <a href="{% url 'project:production-cost-breakdown' project.pk %}?plan_id={{ plan.pk }}"
                            class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow-sm transition-all hover:bg-indigo-500">
                             {% heroicon_outline "banknotes" class="mr-2 w-4 h-4" %}
                             Manage Costs
                         </a>
-                    </div>
-                </div>
-            </div>
-            <!-- Dashboard Stats Grid -->
-            <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
-                <div class="p-4 bg-gray-50 rounded-lg border border-gray-100 transition-all hover:bg-white hover:shadow-md">
-                    <dt class="mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Duration</dt>
-                    <dd class="text-xl font-black text-gray-900">
-                        {{ object.duration }} <span class="text-xs font-medium text-gray-400">Days</span>
-                    </dd>
-                    <div class="mt-2 text-xs font-semibold text-indigo-600">
-                        {{ object.start_date|date:"d M" }} — {{ object.finish_date|date:"d M, Y" }}
-                    </div>
-                </div>
-                <div class="p-4 bg-gray-50 rounded-lg border border-gray-100 transition-all hover:bg-white hover:shadow-md">
-                    <dt class="mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Planned Volume</dt>
-                    <dd class="text-xl font-black text-gray-900">
-                        {{ object.quantity|floatformat:1 }} <span class="text-xs font-medium text-gray-400">{{ object.unit }}</span>
-                    </dd>
-                    <div class="mt-2 text-xs font-semibold text-emerald-600">Production Goal</div>
-                </div>
-                <div class="p-4 bg-gray-50 rounded-lg border border-gray-100 transition-all hover:bg-white hover:shadow-md">
-                    <dt class="mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Labour Budget</dt>
-                    <dd class="text-xl font-black text-gray-900">
-                        R {{ object.total_labour_cost|floatformat:0|intcomma }}
-                    </dd>
-                    <div class="mt-2 text-xs font-semibold text-blue-600">Resource Allocation</div>
-                </div>
-                <div class="p-4 text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-100 transition-all hover:shadow-xl">
-                    <dt class="mb-1 text-[10px] font-bold text-indigo-100 uppercase tracking-widest">Plant Budget</dt>
-                    <dd class="text-xl font-black">
-                        R {{ object.total_plant_cost|floatformat:0|intcomma }}
-                    </dd>
-                    <div class="mt-2 text-xs font-semibold text-indigo-200">Equipment Allocation</div>
+                    {% endif %}
                 </div>
             </div>
         </div>
-        <!-- Resource Breakdown -->
-        <div class="space-y-8">
-            {% for category in resource_categories %}
+
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                <dt class="mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Date Range</dt>
+                <dd class="text-sm font-black text-gray-900">
+                    {% if plan.start_date %}
+                        {{ plan.start_date|date:"d M Y" }} — {{ plan.finish_date|date:"d M Y" }}
+                    {% else %}
+                        <span class="text-gray-400">Dates not set</span>
+                    {% endif %}
+                </dd>
+                <div class="mt-1 text-[10px] font-bold text-indigo-600 uppercase">
+                    Duration: {{ plan.duration }} Days
+                </div>
+            </div>
+
+            {% if plan.node_type == 'ACTIVITY' %}
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                    <dt class="mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Production Quantity</dt>
+                    <dd class="text-sm font-black text-gray-900">
+                        {{ plan.quantity|floatformat:1 }} <span class="text-xs font-medium text-gray-400">{{ plan.unit }}</span>
+                    </dd>
+                    <div class="mt-1 text-[10px] font-bold text-emerald-600 uppercase">
+                        Progress: {{ plan.progress_percentage }}%
+                    </div>
+                </div>
+            {% else %}
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                    <dt class="mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Child Count</dt>
+                    <dd class="text-sm font-black text-gray-900">
+                        {{ children|length }} {{ child_title }}
+                    </dd>
+                    <div class="mt-1 text-[10px] font-bold text-emerald-600 uppercase">
+                        Structural Node
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                <dt class="mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Labour Cost</dt>
+                <dd class="text-sm font-black text-gray-900">R {{ plan.total_labour_cost|floatformat:0|intcomma }}</dd>
+                <div class="mt-1 text-[10px] font-bold text-blue-600 uppercase">Budget Allocation</div>
+            </div>
+
+            <div class="p-4 text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-100">
+                <dt class="mb-1 text-[10px] font-bold text-indigo-100 uppercase tracking-widest">Total Plant Cost</dt>
+                <dd class="text-sm font-black">R {{ plan.total_plant_cost|floatformat:0|intcomma }}</dd>
+                <div class="mt-1 text-[10px] font-bold text-indigo-200 uppercase">Equipment Allocation</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <!-- Main Content (Left 2/3) -->
+        <div class="space-y-8 lg:col-span-2">
+            
+            {% if plan.node_type != 'ACTIVITY' %}
+                <!-- Children Table -->
                 <div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm">
                     <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                        <div class="flex gap-2 items-center">
-                            <div class="p-1.5 text-indigo-600 bg-indigo-50 rounded-lg">
-                                {% if category.type_name == "Labour" %}
-                                    {% heroicon_mini "users" class="w-4 h-4" %}
-                                {% else %}
-                                    {% heroicon_mini "truck" class="w-4 h-4" %}
-                                {% endif %}
-                            </div>
-                            <h3 class="text-xs font-bold text-gray-500 uppercase">{{ category.type_name }} Allocation</h3>
-                        </div>
-                        <div class="text-xs font-bold text-indigo-600">
-                            Total: <span class="ml-1 text-sm font-black tabular-nums">R {{ category.total_cost|floatformat:2|intcomma }}</span>
-                        </div>
+                        <h3 class="text-xs font-bold text-gray-500 uppercase">{{ child_title }} under {{ plan.activity }}</h3>
+                        <a href="{% url 'project:production-plan-create' project.pk %}?parent={{ plan.pk }}&section={{ plan.section }}&bill_no={{ plan.bill_no }}" 
+                           class="text-[10px] font-bold text-indigo-600 uppercase hover:underline">
+                            + Add New {{ plan.node_type|default:"Item" }}
+                        </a>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="table table-zebra table-sm">
-                            <thead class="bg-gray-50/80">
-                                <tr>
-                                    <th class="text-xs font-bold text-gray-600 uppercase">Resource</th>
-                                    <th class="text-xs font-bold text-gray-600 uppercase">Count</th>
-                                    <th class="text-xs font-bold text-gray-600 uppercase">Days</th>
-                                    <th class="text-xs font-bold text-gray-600 uppercase">Rate</th>
-                                    <th class="font-bold text-right text-gray-600 uppercase text-xs">Extension</th>
+                        <table class="table table-sm table-zebra">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Name</th>
+                                    <th class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Date Range</th>
+                                    <th class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Dur</th>
+                                    <th class="text-right text-[10px] font-bold uppercase tracking-widest text-gray-500">Quantity</th>
+                                    <th class="text-right text-[10px] font-bold uppercase tracking-widest text-gray-500">Status</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white">
-                                {% for resource in category.resources %}
-                                    <tr class="transition-all hover:bg-indigo-50/30 group">
-                                        <td class="text-xs font-bold text-gray-700">{{ resource.name }}</td>
-                                        <td class="text-xs text-gray-600">{{ resource.number|floatformat:0 }}</td>
-                                        <td class="text-xs text-gray-600">{{ resource.days|floatformat:0 }}</td>
-                                        <td class="text-xs text-gray-600">R {{ resource.rate|floatformat:2|intcomma }}</td>
-                                        <td class="font-mono text-xs font-black text-right text-gray-900 whitespace-nowrap">
-                                            R {{ resource.total_cost|floatformat:2|intcomma }}
+                            <tbody>
+                                {% for child in children %}
+                                    <tr class="transition-colors hover:bg-indigo-50/30 group cursor-pointer" 
+                                        onclick="window.location='{% url 'project:production-plan-detail' project.pk child.pk %}'">
+                                        <td>
+                                            <div class="font-bold text-gray-900">{{ child.activity }}</div>
+                                            {% if child.node_type == 'BILL' %}
+                                                <div class="text-[9px] text-gray-400 font-bold uppercase">Bill #{{ child.bill_no }}</div>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-xs text-gray-600 whitespace-nowrap">
+                                            {{ child.start_date|date:"d M" }} - {{ child.finish_date|date:"d M Y" }}
+                                        </td>
+                                        <td class="text-xs text-gray-600">{{ child.duration }}d</td>
+                                        <td class="text-right font-mono text-xs text-gray-700">
+                                            {{ child.quantity|floatformat:1 }} <span class="text-[9px] text-gray-400 font-bold">{{ child.unit }}</span>
+                                        </td>
+                                        <td class="text-right">
+                                            {% if child.is_active %}
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-green-100 text-green-700 uppercase">Active</span>
+                                            {% else %}
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-gray-100 text-gray-500 uppercase">Idle</span>
+                                            {% endif %}
                                         </td>
                                     </tr>
                                 {% empty %}
                                     <tr>
-                                        <td colspan="5" class="px-8 py-12 text-center">
-                                            <div class="inline-flex items-center justify-center p-3 mb-2 bg-gray-50 rounded-xl text-gray-300">
-                                                {% heroicon_outline "document-minus" class="w-6 h-6" %}
-                                            </div>
-                                            <p class="text-xs font-bold text-gray-400">No {{ category.type_name|lower }} resources defined.</p>
-                                        </td>
+                                        <td colspan="5" class="py-12 text-center text-gray-400 italic text-xs">No {{ child_title|lower }} created yet.</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
                 </div>
-            {% endfor %}
+            {% else %}
+                <!-- Activity Resource Breakdown -->
+                <div class="space-y-6">
+                    {% for category in resource_categories %}
+                        <div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                                <div class="flex gap-2 items-center">
+                                    <div class="p-1.5 text-indigo-600 bg-indigo-50 rounded-lg">
+                                        {% if category.type_name == "Labour" %}
+                                            {% heroicon_mini "users" class="w-4 h-4" %}
+                                        {% else %}
+                                            {% heroicon_mini "truck" class="w-4 h-4" %}
+                                        {% endif %}
+                                    </div>
+                                    <h3 class="text-xs font-bold text-gray-500 uppercase">{{ category.type_name }} Allocation</h3>
+                                </div>
+                                <div class="text-xs font-bold text-indigo-600">
+                                    Total: <span class="ml-1 text-sm font-black tabular-nums">R {{ category.total_cost|floatformat:2|intcomma }}</span>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="table table-zebra table-sm">
+                                    <thead class="bg-gray-50/80">
+                                        <tr>
+                                            <th class="text-xs font-bold text-gray-600 uppercase">Resource</th>
+                                            <th class="text-xs font-bold text-gray-600 uppercase">Count</th>
+                                            <th class="text-xs font-bold text-gray-600 uppercase">Days</th>
+                                            <th class="text-xs font-bold text-gray-600 uppercase">Rate</th>
+                                            <th class="font-bold text-right text-gray-600 uppercase text-xs">Extension</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white">
+                                        {% for resource in category.resources %}
+                                            <tr class="transition-all hover:bg-indigo-50/30 group">
+                                                <td class="text-xs font-bold text-gray-700">{{ resource.name }}</td>
+                                                <td class="text-xs text-gray-600">{{ resource.number|floatformat:0 }}</td>
+                                                <td class="text-xs text-gray-600">{{ resource.days|floatformat:0 }}</td>
+                                                <td class="text-xs text-gray-600">R {{ resource.rate|floatformat:2|intcomma }}</td>
+                                                <td class="font-mono text-xs font-black text-right text-gray-900 whitespace-nowrap">
+                                                    R {{ resource.total_cost|floatformat:2|intcomma }}
+                                                </td>
+                                            </tr>
+                                        {% empty %}
+                                            <tr>
+                                                <td colspan="5" class="px-8 py-12 text-center">
+                                                    <p class="text-xs font-bold text-gray-400">No {{ category.type_name|lower }} resources defined.</p>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
-        <!-- Dashboard Footer -->
-        <div class="flex justify-between items-center py-6 mt-12 border-t border-gray-100">
-            <a href="{% url 'project:production-planning' project.pk %}"
-               class="inline-flex items-center text-xs font-bold text-gray-500 transition-colors hover:text-indigo-600">
-                {% heroicon_mini "chevron-left" class="mr-2 w-4 h-4" %} Back to Planning
-            </a>
-            <div class="flex gap-4">
-                <a href="{% url 'project:production-progress-dashboard' project.pk %}"
-                   class="inline-flex items-center px-4 py-2 text-xs font-bold text-indigo-600 bg-white rounded-lg border border-indigo-100 shadow-sm transition-all hover:bg-indigo-50">
-                    Progress Tracker {% heroicon_mini "chevron-right" class="ml-2 w-4 h-4" %}
-                </a>
+
+        <!-- Sidebar (Predecessors & Schedule Form) -->
+        <div class="space-y-8">
+            
+            <!-- Dependency / Predecessor Management -->
+            <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm">
+                <h3 class="mb-4 text-xs font-bold text-gray-500 uppercase tracking-widest">Scheduling Dependencies</h3>
+                
+                <form method="post" id="dependency-form">
+                    {% csrf_token %}
+                    {{ dependency_formset.management_form }}
+                    
+                    <div class="space-y-4">
+                        {% for form in dependency_formset %}
+                            <div class="relative p-3 rounded-lg border border-gray-100 bg-gray-50/50 group">
+                                {{ form.id }}
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase">Predecessor {{ forloop.counter }}</label>
+                                    {% if form.instance.pk %}
+                                        <div class="flex items-center">
+                                            {{ form.DELETE }}
+                                            <span class="ml-1 text-[10px] font-bold text-red-500 uppercase">Delete</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                {{ form.predecessor|as_crispy_field }}
+                                
+                                {% if form.instance.predecessor %}
+                                    <div class="mt-2 text-[10px] text-gray-500 italic">
+                                        Finishes: {{ form.instance.predecessor.finish_date|date:"d M Y" }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <button type="submit" class="w-full mt-6 inline-flex justify-center items-center px-4 py-2 text-xs font-bold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 transition-all">
+                        {% heroicon_mini "check" class="mr-2 w-4 h-4" %}
+                        Save Dependencies
+                    </button>
+                </form>
+                
+                <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                    <p class="text-[10px] text-blue-700 leading-relaxed">
+                        <strong>Logic:</strong> Start Date is automatically set to the 
+                        <span class="font-black">MAX Finish Date</span> of all predecessors.
+                    </p>
+                </div>
             </div>
+
+            <!-- Activity Scheduling Form (Only for Activity level) -->
+            {% if plan.node_type == 'ACTIVITY' %}
+                <div class="p-6 bg-white rounded-xl border border-gray-100 shadow-sm">
+                    <h3 class="mb-4 text-xs font-bold text-gray-500 uppercase tracking-widest">Date Control</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Manual Start Date</label>
+                            <input type="date" id="ui-start-date" value="{{ plan.start_date|date:'Y-m-d' }}" 
+                                   class="block w-full text-xs text-gray-900 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            {% if plan.predecessors.exists %}
+                                <p class="mt-1 text-[9px] text-amber-600 font-bold uppercase">Controlled by predecessors</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">Duration (Days)</label>
+                                <input type="number" id="ui-duration" value="{{ plan.duration }}" 
+                                       class="block w-full text-xs text-gray-900 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5">End Date</label>
+                                <input type="date" id="ui-finish-date" value="{{ plan.finish_date|date:'Y-m-d' }}" 
+                                       class="block w-full text-xs text-gray-900 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-gray-50" readonly>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="apply-dates" class="w-full mt-2 inline-flex justify-center items-center px-4 py-2 text-xs font-bold text-gray-700 bg-white rounded-lg border border-gray-300 shadow-sm hover:bg-gray-50 transition-all">
+                            Update Dates
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </div>
+    
+    <!-- Footer Navigation -->
+    <div class="flex justify-between items-center py-6 mt-12 border-t border-gray-100">
+        <a href="{% url 'project:production-planning' project.pk %}"
+           class="inline-flex items-center text-xs font-bold text-gray-500 transition-colors hover:text-indigo-600">
+            {% heroicon_mini "chevron-left" class="mr-2 w-4 h-4" %} Back to Planning
+        </a>
+        <div class="flex gap-4">
+            <a href="{% url 'project:production-tracking' project.pk %}"
+               class="inline-flex items-center px-4 py-2 text-xs font-bold text-indigo-600 bg-white rounded-lg border border-indigo-100 shadow-sm transition-all hover:bg-indigo-50">
+                Progress Tracker {% heroicon_mini "chevron-right" class="ml-2 w-4 h-4" %}
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Scheduling Logic Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const appData = document.getElementById('plan-detail-app').dataset;
+    const isActivity = appData.nodeType === 'ACTIVITY';
+    
+    if (isActivity) {
+        const startDateInput = document.getElementById('ui-start-date');
+        const durationInput = document.getElementById('ui-duration');
+        const finishDateInput = document.getElementById('ui-finish-date');
+        const applyBtn = document.getElementById('apply-dates');
+        
+        function calculateFinishDate() {
+            const start = new Date(startDateInput.value);
+            const duration = parseInt(durationInput.value) || 0;
+            
+            if (startDateInput.value && !isNaN(start.getTime())) {
+                const finish = new Date(start);
+                finish.setDate(finish.getDate() + duration);
+                finishDateInput.value = finish.toISOString().split('T')[0];
+            }
+        }
+        
+        startDateInput.addEventListener('change', calculateFinishDate);
+        durationInput.addEventListener('input', calculateFinishDate);
+        
+        applyBtn.addEventListener('click', function() {
+            // In a real implementation, this would trigger an AJAX update or form submission
+            // For now, we redirect to the edit page with these parameters or just warn that we need to use 'Edit Settings'
+            const editUrl = "{% url 'project:production-plan-edit' project.pk plan.pk %}";
+            const params = `?start_date=${startDateInput.value}&finish_date=${finishDateInput.value}&duration=${durationInput.value}`;
+            window.location.href = editUrl + params;
+        });
+    }
+    
+    // Highlight predecessor end dates if they exist in the UI
+    const dependencyInputs = document.querySelectorAll('select[name$="-predecessor"]');
+    dependencyInputs.forEach(select => {
+        select.addEventListener('change', function() {
+            // Highlight that saving is required
+            document.querySelector('#dependency-form button[type="submit"]').classList.add('animate-pulse', 'ring-2', 'ring-indigo-500');
+        });
+    });
+});
+</script>
+
 {% endblock content %}

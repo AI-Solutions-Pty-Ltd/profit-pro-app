@@ -6,7 +6,6 @@ from .activity_views import (
 from .dashboard_views import (
     PlanProductivityDashboardView,
     ProductionActivityDetailView,
-    ProductionProgressDashboardView,
 )
 from .planning_views import (
     GetProjectBillsAjaxView,
@@ -46,7 +45,6 @@ from .reports_views import (
 from .tracking_views import ProgressTrackingView
 
 __all__ = [
-    "ProductionProgressDashboardView",
     "ProductionActivityDetailView",
     "PlanProductivityDashboardView",
     "ProductionPlanCreateView",

@@ -537,13 +537,25 @@ class BasePlanDependencyFormSet(forms.models.BaseInlineFormSet):
 
     def add_fields(self, form, index):
         super().add_fields(form, index)
-        # Enforce "same level" rule structurally
+        # Enforce relationship rules:
+        # 1. Sections -> Sections (Top level)
+        # 2. Bills -> Bills (Within same Section)
+        # 3. Activities -> Activities (Project-wide / Cross-bill)
+        
         if "predecessor" in form.fields:
             qs = form.fields["predecessor"].queryset
-            if self.parent_id:
-                qs = qs.filter(parent_id=self.parent_id)
-            else:
-                qs = qs.filter(parent__isnull=True)
+            successor = self.instance
+            
+            if successor.node_type == "SECTION":
+                # Sections only depend on other Sections
+                qs = qs.filter(node_type="SECTION")
+            elif successor.node_type == "BILL":
+                # Bills only depend on other Bills within the same Section
+                qs = qs.filter(node_type="BILL", section=successor.section)
+            elif successor.node_type == "ACTIVITY":
+                # Activities can depend on ANY other Activity in the project
+                qs = qs.filter(node_type="ACTIVITY")
+            
             form.fields["predecessor"].queryset = qs.distinct()
 
 

@@ -90,6 +90,8 @@ class ProductionPlanGanttView(
         perf_data = get_project_performance_summary(project_pk)
         ppi = perf_data.get("ppi", 1.0)
 
+        from django.db.models import Prefetch
+
         all_plans = list(
             ProductionPlan.objects.filter(
                 project=project,
@@ -101,13 +103,19 @@ class ProductionPlanGanttView(
             .prefetch_related(
                 "predecessors",
                 "predecessors__predecessor",
-                "children",
+                Prefetch(
+                    "children",
+                    queryset=ProductionPlan.objects.filter(deleted=False).order_by(
+                        "start_date", "activity"
+                    ),
+                ),
                 "daily_entries",
             )
             .order_by("start_date", "activity")
         )
 
         context["plans"] = all_plans
+        context["root_plans"] = [p for p in all_plans if not p.parent_id]
 
         # Build flat ordered list with depth for the Gantt canvas
         ordered = self._flatten_tree(all_plans)
@@ -353,8 +361,25 @@ class ProductionPlanDetailView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         plan = self.get_object()
-        context["project"] = self.object.project
+        project = plan.project
+        context["project"] = project
 
+        # Fetch children based on node type
+        if plan.node_type == "SECTION":
+            context["child_title"] = "Bills"
+            context["children"] = plan.children.filter(
+                deleted=False, node_type="BILL"
+            ).order_by("bill_no")
+        elif plan.node_type == "BILL":
+            context["child_title"] = "Activities"
+            context["children"] = plan.children.filter(
+                deleted=False, node_type="ACTIVITY"
+            ).order_by("start_date")
+        else:
+            context["child_title"] = None
+            context["children"] = []
+
+        # Resources logic (from previous version)
         resource_categories = []
         for type_code, type_name in ProductionResource.RESOURCE_TYPES:
             resources = plan.resources.filter(resource_type=type_code)
@@ -374,9 +399,45 @@ class ProductionPlanDetailView(
                     "total_cost": total_cost,
                 }
             )
-
         context["resource_categories"] = resource_categories
+
+        # Predecessors / Dependencies logic
+        if self.request.POST:
+            context["dependency_formset"] = PlanDependencyFormSet(
+                self.request.POST,
+                instance=plan,
+                project_id=project.pk,
+                plan_id=plan.pk,
+            )
+        else:
+            context["dependency_formset"] = PlanDependencyFormSet(
+                instance=plan,
+                project_id=project.pk,
+                plan_id=plan.pk,
+            )
+
         return context
+
+    def post(self, request, *args, **kwargs):
+        """Handle predecessor/dependency updates from the detail page."""
+        self.object = self.get_object()
+        context = self.get_context_data()
+        dependency_formset = context["dependency_formset"]
+
+        if dependency_formset.is_valid():
+            dependency_formset.save()
+
+            # After saving, trigger date propagation
+            self.object.update_successor_dates()
+
+            messages.success(request, "Dependencies updated successfully.")
+            return redirect(
+                "project:production-plan-detail",
+                project_pk=self.object.project.pk,
+                pk=self.object.pk,
+            )
+
+        return self.render_to_response(context)
 
     def get_breadcrumbs(self):
         project_pk = self.kwargs["project_pk"]
