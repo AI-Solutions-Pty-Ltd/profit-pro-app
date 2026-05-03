@@ -22,7 +22,7 @@
                                     onclick="toggleChildren({{ plan.pk }})"
                                     class="flex-shrink-0 mt-1 p-1 rounded-md text-indigo-600 bg-indigo-50 transition-colors"
                                     title="Toggle Sub-items">
-                                {% heroicon_solid "chevron-right" id="toggle-icon-"|add:plan.pk class="w-4 h-4 transition-transform duration-200 rotate-90" %}
+                                {% heroicon_solid "chevron-right" id="toggle-icon-"|add:plan.pk|slugify class="w-4 h-4 transition-transform duration-200 rotate-90" %}
                             </button>
                         {% else %}
                              <div class="w-6 h-6 flex-shrink-0 mt-1"></div>
@@ -68,6 +68,12 @@
                                     <span class="flex items-center text-indigo-600">
                                         {% heroicon_mini "arrow-up-right" class="mr-1 w-3.5 h-3.5" %}
                                         Part of: {{ plan.parent.activity|truncatechars:30 }}
+                                    </span>
+                                {% endif %}
+                                {% if plan.labour_activity and plan.labour_activity.crew %}
+                                    <span class="flex items-center text-purple-600">
+                                        {% heroicon_mini "user-group" class="mr-1 w-3.5 h-3.5" %}
+                                        Crew: {{ plan.labour_activity.crew.crew_type }}
                                     </span>
                                 {% endif %}
                             </div>

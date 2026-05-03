@@ -401,6 +401,18 @@ class ProductionPlanDetailView(
             )
         context["resource_categories"] = resource_categories
 
+        # Provide granular plant allocations (direct or fallback)
+        context["plant_allocations"] = plan.get_plant_allocations()
+
+        # Fetch related BOQItems for the activity line items section
+        if plan.labour_activity:
+            items = plan.labour_activity.boq_items.all()
+            if plan.section:
+                items = items.filter(section=plan.section)
+            if plan.bill_no:
+                items = items.filter(bill_no=plan.bill_no)
+            context["activity_line_items"] = items
+
         # Predecessors / Dependencies logic
         if self.request.POST:
             context["dependency_formset"] = PlanDependencyFormSet(
