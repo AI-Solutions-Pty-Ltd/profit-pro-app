@@ -589,11 +589,10 @@ class ProductionPlan(BaseModel):
             or 0
         )
 
-        # Specification-based plant cost
-        allocs = self.get_plant_allocations()
-        spec_cost = sum(a["total_cost"] for a in allocs)
+        # BoQ Driven plant cost
+        boq_cost = sum(row["total_cost"] for row in self.get_boq_driven_plant_rows())
 
-        return manual_cost + spec_cost
+        return manual_cost + boq_cost
 
     @property
     def total_other_cost(self):
