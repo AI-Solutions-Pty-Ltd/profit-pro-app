@@ -404,7 +404,9 @@ class ProductionPlanDetailView(
         context["resource_categories"] = resource_categories
 
         # Provide granular BoQ driven plant rows
-        context["boq_plant_rows"] = plan.get_boq_driven_plant_rows()
+        boq_plant_rows = plan.get_boq_driven_plant_rows()
+        context["boq_plant_rows"] = boq_plant_rows
+        context["boq_plant_total"] = sum(row["total_cost"] for row in boq_plant_rows)
 
         # Fetch related BOQItems for the activity line items section
         if plan.labour_activity:

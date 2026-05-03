@@ -137,7 +137,17 @@
                 </div>
             </div>
 
-            <!-- Full width placeholder or nothing -->
+            <!-- BoQ Driven Plant Budget -->
+            <div class="flex gap-3 items-center p-4 bg-white rounded-lg border border-gray-100 shadow-sm">
+                <div class="p-2 bg-purple-50 rounded-lg">
+                    {% heroicon_mini "truck" class="w-5 h-5 text-purple-600" %}
+                </div>
+                <div>
+                    <dt class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Plant Budget</dt>
+                    <dd class="text-sm font-black leading-none">R {{ boq_plant_total|floatformat:0|intcomma }}</dd>
+                    <div class="mt-1 text-[10px] font-bold text-purple-600 uppercase">BoQ Allocation</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -358,6 +368,13 @@
                                         {% endfor %}
                                     </tbody>
                                 </table>
+                                <!-- Table Footer -->
+                                <div class="flex justify-end items-center px-6 py-3 border-t border-gray-100 bg-gray-50/50">
+                                    <div class="flex gap-4 items-center">
+                                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Subtotal Plant (BoQ)</span>
+                                        <span class="font-mono text-sm font-black text-emerald-700">R {{ boq_plant_total|floatformat:2|intcomma }}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     {% endif %}
