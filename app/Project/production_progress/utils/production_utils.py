@@ -1358,19 +1358,19 @@ def get_premium_productivity_report_data(project_id, active_only=False):
     Calculates PPI, CPI, and Impact metrics based on Excel logic.
     Groups results by Section and Bill with weighted averages.
     """
+    import json
     from collections import defaultdict
     from datetime import timedelta
-    import json
 
-    from django.utils import timezone
     from dateutil.relativedelta import relativedelta
+    from django.utils import timezone
 
     today = timezone.now().date()
-    
+
     # 6-Month Window for S-Curve
     start_window = today - relativedelta(months=3)
     end_window = today + relativedelta(months=3)
-    
+
     date_range = []
     curr = start_window
     while curr <= end_window:
@@ -1419,7 +1419,9 @@ def get_premium_productivity_report_data(project_id, active_only=False):
             plan.total_labour_cost + plan.total_plant_cost + plan.total_other_cost
         )
         target_unit_cost = (
-            plan.budget_unit_rate if hasattr(plan, 'budget_unit_rate') else (budgeted_cost / plan.quantity if plan.quantity > 0 else Decimal("0"))
+            plan.budget_unit_rate
+            if hasattr(plan, "budget_unit_rate")
+            else (budgeted_cost / plan.quantity if plan.quantity > 0 else Decimal("0"))
         )
 
         # 2. S-Curve Data Aggregation (Within Window)
@@ -1429,7 +1431,7 @@ def get_premium_productivity_report_data(project_id, active_only=False):
             if plan_days > 0:
                 day_qty = plan.quantity / Decimal(plan_days)
                 day_cost = budgeted_cost / Decimal(plan_days)
-                
+
                 curr_p = max(plan.start_date, start_window)
                 end_p = min(plan.finish_date, end_window)
                 while curr_p <= end_p:
@@ -1439,9 +1441,9 @@ def get_premium_productivity_report_data(project_id, active_only=False):
 
         # Actual (Within Window)
         window_entries = DailyActivityEntry.objects.filter(
-            production_plan=plan, 
+            production_plan=plan,
             report__date__gte=start_window,
-            report__date__lte=end_window
+            report__date__lte=end_window,
         )
         for entry in window_entries:
             daily_actual_qty[entry.report.date] += entry.quantity
@@ -1613,20 +1615,20 @@ def get_premium_productivity_report_data(project_id, active_only=False):
     actual_qty_series = []
     planned_cost_series = []
     actual_cost_series = []
-    
+
     cum_planned_qty = Decimal("0")
     cum_planned_cost = Decimal("0")
     cum_actual_qty = Decimal("0")
     cum_actual_cost = Decimal("0")
-    
+
     for d in date_range:
         labels.append(d.strftime("%d %b"))
         cum_planned_qty += daily_planned_qty[d]
         cum_planned_cost += daily_planned_cost[d]
-        
+
         planned_qty_series.append(float(cum_planned_qty))
         planned_cost_series.append(float(cum_planned_cost))
-        
+
         if d <= today:
             cum_actual_qty += daily_actual_qty[d]
             cum_actual_cost += daily_actual_cost[d]
@@ -1642,7 +1644,7 @@ def get_premium_productivity_report_data(project_id, active_only=False):
             {
                 "label": "Planned Qty",
                 "data": planned_qty_series,
-                "borderColor": "rgb(79, 70, 229)", # indigo-600
+                "borderColor": "rgb(79, 70, 229)",  # indigo-600
                 "backgroundColor": "rgba(79, 70, 229, 0.1)",
                 "yAxisID": "y",
                 "tension": 0.4,
@@ -1651,7 +1653,7 @@ def get_premium_productivity_report_data(project_id, active_only=False):
             {
                 "label": "Actual Qty",
                 "data": actual_qty_series,
-                "borderColor": "rgb(4, 120, 87)", # emerald-700
+                "borderColor": "rgb(4, 120, 87)",  # emerald-700
                 "backgroundColor": "rgba(4, 120, 87, 0.1)",
                 "yAxisID": "y",
                 "tension": 0.4,
@@ -1676,9 +1678,9 @@ def get_premium_productivity_report_data(project_id, active_only=False):
                 "tension": 0.4,
                 "fill": False,
                 "borderWidth": 2,
-            }
+            },
         ],
-        "today_index": date_range.index(today) if today in date_range else -1
+        "today_index": date_range.index(today) if today in date_range else -1,
     }
 
     return {

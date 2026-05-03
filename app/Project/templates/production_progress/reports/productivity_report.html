@@ -2,15 +2,15 @@
 {% load static humanize %}
 {% block content %}
     <div class="p-6 space-y-6 min-h-screen bg-gray-50">
-{% include "company/reports_nav.html" %}
+        {% include "company/reports_nav.html" %}
         <!-- Header -->
         <div class="flex flex-col gap-4 justify-between md:flex-row md:items-center">
             <div class="flex flex-col gap-4">
-               <a href="{% url 'project:company-management' project.pk %}"
-               class="inline-flex items-center py-2 text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600 focus:outline-none">
-                {% heroicon_outline "chevron-left" size="20" %}
-                <span class="ml-2">Back to Management</span>
-            </a>
+                <a href="{% url 'project:company-management' project.pk %}"
+                   class="inline-flex items-center py-2 text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600 focus:outline-none">
+                    {% heroicon_outline "chevron-left" size="20" %}
+                    <span class="ml-2">Back to Management</span>
+                </a>
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight text-gray-900">Productivity Performance Report</h1>
                     <p class="mt-1 text-sm font-semibold tracking-wide text-gray-500 uppercase">Planned vs Actual Analysis</p>
@@ -97,12 +97,13 @@
                 <p class="mt-2 text-[10px] text-gray-400 font-medium">Variance between budget and projected actuals</p>
             </div>
         </div>
-
         <!-- Trajectory Analysis Chart -->
         <div class="overflow-hidden p-6 bg-white rounded-xl border border-gray-100 shadow-sm">
             <div class="flex justify-between items-center mb-6">
                 <div>
-                    <h3 class="text-lg font-bold tracking-tight text-gray-900 uppercase">Trajectory Analysis: 6-Month Performance Trend</h3>
+                    <h3 class="text-lg font-bold tracking-tight text-gray-900 uppercase">
+                        Trajectory Analysis: 6-Month Performance Trend
+                    </h3>
                     <p class="text-xs font-medium text-gray-500">Cumulative Production vs. Financial Value (Sliding 6-Month Window)</p>
                 </div>
                 <div class="flex gap-4">
@@ -120,7 +121,6 @@
                 <canvas id="productivityTrajectoryChart"></canvas>
             </div>
         </div>
-      
         <!-- Activity Table -->
         <div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm">
             <div class="flex justify-between items-center px-6 py-5 border-b border-gray-100 bg-gray-50/30">
@@ -129,18 +129,18 @@
                     <p class="text-xs font-medium text-gray-500">Predicted finish dates for ongoing items based on current productivity</p>
                 </div>
             </div>
-        <!-- Filter Area -->
-        <div class="flex justify-end p-4 border-b border-gray-100">
-            <div class="form-control">
-                <label class="gap-3 cursor-pointer label">
-                    <span class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Show Active Only</span>
-                    <input type="checkbox"
-                           class="toggle toggle-primary toggle-sm"
-                           {% if active_only %}checked{% endif %}
-                           onchange="updateParams({active_only: this.checked})">
-                </label>
+            <!-- Filter Area -->
+            <div class="flex justify-end p-4 border-b border-gray-100">
+                <div class="form-control">
+                    <label class="gap-3 cursor-pointer label">
+                        <span class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Show Active Only</span>
+                        <input type="checkbox"
+                               class="toggle toggle-primary toggle-sm"
+                               {% if active_only %}checked{% endif %}
+                               onchange="updateParams({active_only: this.checked})">
+                    </label>
+                </div>
             </div>
-        </div>
             <div class="overflow-x-auto">
                 <table class="table table-zebra table-sm">
                     <thead>

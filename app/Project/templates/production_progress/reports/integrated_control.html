@@ -56,16 +56,15 @@
 {% endblock extra_css %}
 {% block content %}
     <div id="control-center-root" class="flex flex-col min-h-screen 0">
-         {% include "company/reports_nav.html" %}
+        {% include "company/reports_nav.html" %}
         <!-- Premium Header -->
         <div class="flex justify-between items-center px-6 py-4 mb-8 bg-white border-b border-gray-200 shrink-0">
             <div>
-                
-                  <a href="{% url 'project:company-management' project.pk %}"
-               class="inline-flex items-center py-2 text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600 focus:outline-none">
-                {% heroicon_outline "chevron-left" size="20" %}
-                <span class="ml-2">Back to Management</span>
-            </a>
+                <a href="{% url 'project:company-management' project.pk %}"
+                   class="inline-flex items-center py-2 text-sm font-medium text-gray-700 transition-colors hover:text-indigo-600 focus:outline-none">
+                    {% heroicon_outline "chevron-left" size="20" %}
+                    <span class="ml-2">Back to Management</span>
+                </a>
                 <div class="flex gap-3 items-center">
                     <h2 class="text-xl font-black tracking-tight text-gray-900">Production Control Center</h2>
                     <span class="font-bold tracking-widest uppercase badge badge-indigo badge-sm">Live View</span>
