@@ -97,40 +97,7 @@
                 <p class="mt-2 text-[10px] text-gray-400 font-medium">Variance between budget and projected actuals</p>
             </div>
         </div>
-        <!-- Controls -->
-        <div class="flex flex-wrap gap-4 items-center p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-            <div class="flex gap-2 items-center">
-                <span class="mr-2 text-xs font-bold tracking-widest text-gray-500 uppercase">Horizon:</span>
-                <div class="join">
-                    <button onclick="updateParams({horizon: 'daily'})"
-                            class="btn btn-sm join-item {% if active_horizon == 'daily' %}btn-primary{% else %}btn-ghost bg-gray-50{% endif %}">
-                        Daily
-                    </button>
-                    <button onclick="updateParams({horizon: 'weekly'})"
-                            class="btn btn-sm join-item {% if active_horizon == 'weekly' %}btn-primary{% else %}btn-ghost bg-gray-50{% endif %}">
-                        Weekly
-                    </button>
-                    <button onclick="updateParams({horizon: 'mtd'})"
-                            class="btn btn-sm join-item {% if active_horizon == 'mtd' %}btn-primary{% else %}btn-ghost bg-gray-50{% endif %}">
-                        MTD
-                    </button>
-                    <button onclick="updateParams({horizon: 'ptd'})"
-                            class="btn btn-sm join-item {% if active_horizon == 'ptd' %}btn-primary{% else %}btn-ghost bg-gray-50{% endif %}">
-                        Project to Date
-                    </button>
-                </div>
-            </div>
-            <div class="divider divider-horizontal"></div>
-            <div class="form-control">
-                <label class="gap-3 cursor-pointer label">
-                    <span class="text-xs font-bold tracking-widest text-gray-500 uppercase">Show Active Only</span>
-                    <input type="checkbox"
-                           class="toggle toggle-primary toggle-sm"
-                           {% if active_only %}checked{% endif %}
-                           onchange="updateParams({active_only: this.checked})">
-                </label>
-            </div>
-        </div>
+      
         <!-- Activity Table -->
         <div class="overflow-hidden bg-white rounded-xl border border-gray-100 shadow-sm">
             <div class="flex justify-between items-center px-6 py-5 border-b border-gray-100 bg-gray-50/30">
@@ -139,16 +106,28 @@
                     <p class="text-xs font-medium text-gray-500">Predicted finish dates for ongoing items based on current productivity</p>
                 </div>
             </div>
+        <!-- Filter Area -->
+        <div class="flex justify-end p-4 border-b border-gray-100">
+            <div class="form-control">
+                <label class="gap-3 cursor-pointer label">
+                    <span class="text-[10px] font-bold tracking-widest text-gray-500 uppercase">Show Active Only</span>
+                    <input type="checkbox"
+                           class="toggle toggle-primary toggle-sm"
+                           {% if active_only %}checked{% endif %}
+                           onchange="updateParams({active_only: this.checked})">
+                </label>
+            </div>
+        </div>
             <div class="overflow-x-auto">
                 <table class="table table-zebra table-sm">
                     <thead>
                         <tr class="text-[10px] font-bold tracking-widest text-gray-500 uppercase bg-gray-50/50">
                             <th class="px-6 py-3 w-1/3">ACTIVITY / SECTION</th>
                             <th class="text-center">
-                                UNITS/DAY <span class="ml-1 text-gray-400 font-normal">(ACT [TGT])</span>
+                                UNITS/DAY <span class="ml-1 font-normal text-gray-400">(ACT [TGT])</span>
                             </th>
                             <th class="text-center">
-                                COST/UNIT <span class="ml-1 text-gray-400 font-normal">(ACT [TGT])</span>
+                                COST/UNIT <span class="ml-1 font-normal text-gray-400">(ACT [TGT])</span>
                             </th>
                             <th class="text-center">PPI</th>
                             <th class="text-center">CPI</th>
@@ -198,7 +177,7 @@
                                         <td class="text-right">
                                             <div class="flex gap-2 justify-end items-center">
                                                 <span class="text-[9px] font-mono tabular-nums font-bold text-gray-400">{{ act.progress|floatformat:0 }}%</span>
-                                                <div class="w-12 h-1 bg-gray-100 rounded-full overflow-hidden">
+                                                <div class="overflow-hidden w-12 h-1 bg-gray-100 rounded-full">
                                                     <div class="h-1 bg-indigo-500 rounded-full"
                                                          style="width: {{ act.progress }}%"></div>
                                                 </div>

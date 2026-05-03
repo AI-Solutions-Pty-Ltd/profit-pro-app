@@ -1353,7 +1353,7 @@ def get_project_productivity_report_data(
     }
 
 
-def get_premium_productivity_report_data(project_id, horizon="ptd", active_only=False):
+def get_premium_productivity_report_data(project_id, active_only=False):
     """
     Calculates PPI, CPI, and Impact metrics based on Excel logic.
     Groups results by Section and Bill with weighted averages.
@@ -1365,19 +1365,10 @@ def get_premium_productivity_report_data(project_id, horizon="ptd", active_only=
 
     today = timezone.now().date()
 
-    # Define date filters based on horizon
-    date_filter = {}
-    if horizon == "daily":
-        date_filter["report__date"] = today
-    elif horizon == "weekly":
-        start_of_week = today - timedelta(days=today.weekday())
-        date_filter["report__date__gte"] = start_of_week
-    elif horizon == "mtd":
-        date_filter["report__date__gte"] = today.replace(day=1)
-
     plans_query = ProductionPlan.objects.filter(
         project_id=project_id, is_archived=False, is_leaf=True
     )
+
     if active_only:
         plans_query = plans_query.filter(finish_date__gte=today, start_date__lte=today)
 
@@ -1394,23 +1385,16 @@ def get_premium_productivity_report_data(project_id, horizon="ptd", active_only=
     p_total_cost_impact = Decimal("0")
 
     for plan in plans:
-        # Get entries for this plan
+        # For calculation, we want history up to today (PTD)
         entries_query = DailyActivityEntry.objects.filter(
-            production_plan=plan, **date_filter
-        )
-        if not entries_query.exists() and horizon != "ptd":
-            continue
-
-        # For calculation, we want history up to today
-        all_history = DailyActivityEntry.objects.filter(
             production_plan=plan, report__date__lte=today
         )
 
-        total_qty = all_history.aggregate(total=Sum("quantity"))["total"] or Decimal(
+        total_qty = entries_query.aggregate(total=Sum("quantity"))["total"] or Decimal(
             "0"
         )
-        total_cost = sum((e.total_cost for e in all_history), Decimal("0"))
-        total_days = all_history.values("report__date").distinct().count()
+        total_cost = sum((e.total_cost for e in entries_query), Decimal("0"))
+        total_days = entries_query.values("report__date").distinct().count()
 
         # Target Values
         target_prod_rate = plan.daily_rate
