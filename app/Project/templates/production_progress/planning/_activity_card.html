@@ -54,6 +54,12 @@
                                         Active
                                     </span>
                                 {% endif %}
+                                {% if plan.predecessors.exists %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-700 uppercase tracking-widest" title="Dependent on other activities">
+                                        <span class="mr-1.5 w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                                        Dependent
+                                    </span>
+                                {% endif %}
                             </div>
                             <div class="flex flex-wrap gap-y-1 gap-x-4 mt-1 text-xs text-gray-500">
                                 <span class="flex items-center">

@@ -3,6 +3,9 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.forms import inlineformset_factory
 
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Field, Div, Submit
+
 from app.core.Utilities.widgets import SearchableSelectWidget
 from app.Estimator.models import (
     BOQItem,
@@ -408,6 +411,57 @@ class ProductionPlanForm(forms.ModelForm):
             raise ValidationError({"parent": "An activity cannot be its own parent."})
 
         return cleaned_data
+
+
+class ProductionPlanDateControlForm(forms.ModelForm):
+    """Specialized form for updating activity dates directly from the detail view."""
+
+    class Meta:
+        model = ProductionPlan
+        fields = ["start_date", "duration", "finish_date"]
+        widgets = {
+            "start_date": forms.DateInput(
+                attrs={
+                    "type": "date",
+                    "id": "ui-start-date",
+                    "class": "block w-full text-xs text-gray-900 rounded-md border-0 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 transition-all",
+                }
+            ),
+            "finish_date": forms.DateInput(
+                attrs={
+                    "type": "date",
+                    "id": "ui-finish-date",
+                    "readonly": "readonly",
+                    "class": "block w-full text-xs text-gray-900 bg-gray-50 rounded-md border-0 ring-1 ring-inset ring-gray-300 cursor-not-allowed",
+                }
+            ),
+            "duration": forms.NumberInput(
+                attrs={
+                    "id": "ui-duration",
+                    "readonly": "readonly",
+                    "class": "block w-full text-xs text-gray-900 bg-gray-50 rounded-md border-0 ring-1 ring-inset ring-gray-300 cursor-not-allowed",
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False  # We'll wrap it in a form manually to control ID and structure
+        self.helper.layout = Layout(
+            Div(
+                Field("start_date", label="Manual Start Date"),
+                Div(
+                    Field("duration", label="Duration (Days)"),
+                    Field("finish_date", label="End Date"),
+                    css_class="grid grid-cols-2 gap-3",
+                ),
+                css_class="space-y-4",
+            )
+        )
+        # Customizing labels to match premium look
+        for field in self.fields.values():
+            field.label_suffix = ""
 
 
 class ProductionResourceForm(forms.ModelForm):

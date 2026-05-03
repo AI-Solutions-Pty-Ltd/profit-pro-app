@@ -29,6 +29,7 @@ from app.Project.models import Project
 
 from ..production_forms import (
     PlanDependencyFormSet,
+    ProductionPlanDateControlForm,
     ProductionPlanForm,
     ProductionResourceForm,
 )
@@ -432,26 +433,52 @@ class ProductionPlanDetailView(
                 plan_id=plan.pk,
             )
 
+        # Date Control Form
+        if self.request.POST and "submit_dates" in self.request.POST:
+            context["date_form"] = ProductionPlanDateControlForm(
+                self.request.POST, instance=plan
+            )
+        else:
+            context["date_form"] = ProductionPlanDateControlForm(instance=plan)
+
         return context
 
     def post(self, request, *args, **kwargs):
         """Handle predecessor/dependency updates from the detail page."""
         self.object = self.get_object()
         context = self.get_context_data()
-        dependency_formset = context["dependency_formset"]
 
-        if dependency_formset.is_valid():
-            dependency_formset.save()
+        # Handle Dependencies Formset
+        if "submit_dependencies" in request.POST:
+            dependency_formset = context["dependency_formset"]
+            if dependency_formset.is_valid():
+                dependency_formset.save()
+                # After saving, trigger date propagation
+                self.object.update_successor_dates()
+                messages.success(request, "Dependencies updated successfully.")
+                return redirect(
+                    "project:production-plan-detail",
+                    project_pk=self.object.project.pk,
+                    pk=self.object.pk,
+                )
+            else:
+                messages.error(request, "Please correct the errors in the dependencies form.")
 
-            # After saving, trigger date propagation
-            self.object.update_successor_dates()
+        # Handle Date Control Form
+        if "submit_dates" in request.POST:
+            date_form = context["date_form"]
+            if date_form.is_valid():
+                date_form.save()
+                messages.success(request, "Schedule updated successfully.")
+                return redirect(
+                    "project:production-plan-detail",
+                    project_pk=self.object.project.pk,
+                    pk=self.object.pk,
+                )
+            else:
+                messages.error(request, "Please correct the errors in the schedule form.")
 
-            messages.success(request, "Dependencies updated successfully.")
-            return redirect(
-                "project:production-plan-detail",
-                project_pk=self.object.project.pk,
-                pk=self.object.pk,
-            )
+        return self.render_to_response(context)
 
         return self.render_to_response(context)
 
