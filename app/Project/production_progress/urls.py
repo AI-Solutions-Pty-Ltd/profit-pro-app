@@ -4,11 +4,6 @@ from . import views
 
 urlpatterns = [
     path(
-        "<int:project_pk>/dashboard/",
-        views.ProductionDashboardView.as_view(),
-        name="production-dashboard",
-    ),
-    path(
         "<int:project_pk>/planning/",
         views.ProductionPlanListView.as_view(),
         name="production-planning",

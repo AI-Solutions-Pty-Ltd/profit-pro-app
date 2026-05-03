@@ -58,12 +58,12 @@ class ProductionProductivityReportView(
         project = get_object_or_404(Project, pk=project_pk)
 
         # Filters
-        active_only = self.request.GET.get("active_only", "true").lower() == "true"
+        horizon = self.request.GET.get("horizon", "ptd")
+        active_only = self.request.GET.get("active_only") == "true"
 
         # Fetch premium report data
         data = get_premium_productivity_report_data(
-            project_pk,
-            active_only=active_only,
+            project_pk, horizon=horizon, active_only=active_only
         )
 
         context.update(
@@ -72,7 +72,7 @@ class ProductionProductivityReportView(
                 "company": project.contractor,
                 "summary": data.get("summary", {}),
                 "sections": data.get("sections", []),
-                "trajectory_json": data.get("charts_json", "{}"),
+                "active_horizon": horizon,
                 "active_only": active_only,
                 "tab": "productivity_report",
             }

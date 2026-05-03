@@ -72,12 +72,11 @@
                             <div class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">Scheduled Qty</div>
                         </div>
                         <div class="flex items-center">
-                            <button type="button"
-                                    onclick="toggleDetails('{{ plan.pk }}')"
-                                    class="p-1 text-gray-500 rounded border border-gray-300 transition-colors hover:text-gray-900"
-                                    id="details-btn-{{ plan.pk }}">
+                            <a href="{% url 'project:production-plan-detail' project.pk plan.pk %}"
+                               class="p-1 text-gray-500 rounded border border-gray-300 transition-colors hover:text-gray-900 hover:bg-gray-50"
+                               title="View Details">
                                 {% heroicon_outline "information-circle" class="w-5 h-5" %}
-                            </button>
+                            </a>
                             <!-- Dropdown Menu -->
                             <div class="dropdown dropdown-end">
                                 <div tabindex="0" role="button" class="btn btn-ghost btn-sm">
@@ -119,52 +118,6 @@
                                         </button>
                                     </li>
                                 </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Expanded Details (Section, Bill No, etc) -->
-                <div id="details-{{ plan.pk }}"
-                     class="hidden pt-4 mt-4 border-t border-gray-100 animate-fadeIn">
-                    <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-                        <div class="space-y-3">
-                            <div>
-                                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Section</h4>
-                                <p class="text-sm font-bold text-gray-700">{{ plan.section|default:"General" }}</p>
-                            </div>
-                            <div>
-                                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Bill No</h4>
-                                <p class="text-sm font-bold text-gray-700">{{ plan.bill_no|default:"N/A" }}</p>
-                            </div>
-                        </div>
-                        <div class="space-y-3">
-                            <div>
-                                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Labor Specification</h4>
-                                <p class="text-sm font-bold text-gray-700">{{ plan.labour_activity|default:"Not Linked" }}</p>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Unit</h4>
-                                    <p class="text-sm font-bold text-gray-700">{{ plan.unit_display }}</p>
-                                </div>
-                                <div>
-                                    <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Daily Rate</h4>
-                                    <p class="text-sm font-bold text-gray-700">{{ plan.daily_rate|floatformat:2 }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="space-y-3">
-                            <div>
-                                <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Predecessors</h4>
-                                <div class="flex flex-wrap gap-1 mt-1">
-                                    {% for dep in plan.predecessors.all %}
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-gray-100 text-gray-600 border border-gray-200">
-                                            {{ dep.predecessor.activity }}
-                                        </span>
-                                    {% empty %}
-                                        <span class="text-sm italic text-gray-400">None</span>
-                                    {% endfor %}
-                                </div>
                             </div>
                         </div>
                     </div>
