@@ -283,41 +283,12 @@ class LaborActivityDetailView(
             labour_spec.crew.crew_daily_cost if labour_spec and labour_spec.crew else 0
         )
 
-        # Build BoQ Qty-driven plant spec rows (one row per plant component).
-        spec_groups: OrderedDict = OrderedDict()
-        for boq in group_items.select_related("plant_specification").order_by(
-            "plant_specification__name"
-        ):
-            spec = boq.plant_specification
-            if spec is None:
-                continue
-            if spec.pk not in spec_groups:
-                spec_groups[spec.pk] = {"spec": spec, "boq_qty": Decimal("0")}
-            if boq.contract_quantity:
-                spec_groups[spec.pk]["boq_qty"] += boq.contract_quantity
-
-        plant_spec_rows = []
-        plant_spec_total = Decimal("0")
-        for group in spec_groups.values():
-            spec = group["spec"]
-            boq_qty = group["boq_qty"]
-            rate = getattr(spec, "rate_per_unit", None) or Decimal("0")
-            plant_spec_total += rate * boq_qty
-            for comp in spec.components.all().select_related("plant_type"):
-                if not comp.plant_type:
-                    continue
-                hours = comp.hours or Decimal("0")
-                plant_spec_rows.append(
-                    {
-                        "plant_name": comp.plant_type.name,
-                        "hours": hours,
-                        "unit": spec.unit,
-                        "rate": rate,
-                        "boq_qty": boq_qty,
-                        "plant_hours_boq": hours * boq_qty,
-                        "source_spec": spec.name,
-                    }
-                )
+        # Build BoQ Qty-driven plant spec rows using centralized logic
+        from app.Project.production_progress.production_models import ProductionPlan
+        plant_spec_rows = ProductionPlan.calculate_boq_driven_plant_rows(
+            project, self.f_section, self.f_bill, self.f_activity
+        )
+        plant_spec_total = sum(row["total_cost"] for row in plant_spec_rows)
 
         context["plant_spec_rows"] = plant_spec_rows
         context["plant_spec_total"] = plant_spec_total

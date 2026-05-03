@@ -405,6 +405,7 @@ class ProductionPlanDetailView(
 
         # Provide granular plant allocations (direct or fallback)
         context["plant_allocations"] = plan.get_plant_allocations()
+        context["boq_plant_rows"] = plan.get_boq_driven_plant_rows()
 
         # Fetch related BOQItems for the activity line items section
         if plan.labour_activity:
@@ -837,60 +838,9 @@ class ProductionCostBreakdownDetailView(
                 items = items.filter(bill_no=selected_plan.bill_no)
             context["activity_line_items"] = items
 
-        # Build BoQ Qty-driven plant rows (mirrors Plant Calculator logic).
-        # One row per plant component; grand total = sum of (rate × boq_qty) per spec.
-        boq_qs = (
-            BOQItem.objects.filter(
-                project=project,
-                is_section_header=False,
-                section=selected_plan.section,
-                bill_no=selected_plan.bill_no,
-            )
-            .annotate(
-                act_name_annotated=db_models.functions.Coalesce(
-                    "labour_specification__name", "plant_specification__name"
-                )
-            )
-            .filter(act_name_annotated=selected_plan.activity)
-            .filter(plant_specification__isnull=False)
-        )
-
-        # Group BOQItems by plant_specification, accumulating BoQ qty.
-        spec_groups: OrderedDict = OrderedDict()
-        for boq in boq_qs.select_related(
-            "plant_specification"
-        ).order_by("plant_specification__name"):
-            spec = boq.plant_specification
-            if spec.pk not in spec_groups:
-                spec_groups[spec.pk] = {"spec": spec, "boq_qty": Decimal("0")}
-            if boq.contract_quantity:
-                spec_groups[spec.pk]["boq_qty"] += boq.contract_quantity
-
-        # Expand each spec into one row per component (plant type).
-        plant_spec_rows = []
-        plant_spec_total = Decimal("0")
-        for group in spec_groups.values():
-            spec = group["spec"]
-            boq_qty = group["boq_qty"]
-            rate = getattr(spec, "rate_per_unit", None) or Decimal("0")
-            spec_amount = rate * boq_qty
-            plant_spec_total += spec_amount
-            for comp in spec.components.all().select_related("plant_type"):
-                if not comp.plant_type:
-                    continue
-                hours = comp.hours or Decimal("0")
-                plant_spec_rows.append(
-                    {
-                        "plant_name": comp.plant_type.name,
-                        "hours": hours,
-                        "unit": spec.unit,
-                        "rate": comp.plant_type.hourly_rate,
-                        "boq_qty": boq_qty,
-                        "plant_hours_boq": hours * boq_qty,
-                        "total_cost": hours * boq_qty * comp.plant_type.hourly_rate,
-                        "source_spec": spec.name,
-                    }
-                )
+        # Build BoQ Qty-driven plant rows using model method
+        plant_spec_rows = selected_plan.get_boq_driven_plant_rows()
+        plant_spec_total = sum(row["total_cost"] for row in plant_spec_rows)
 
         context["plant_spec_rows"] = plant_spec_rows
         context["plant_spec_total"] = plant_spec_total

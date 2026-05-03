@@ -377,6 +377,52 @@
                         {% endwith %}
                     {% endfor %}
 
+                    {% if plan.node_type == 'ACTIVITY' and boq_plant_rows %}
+                        <!-- BoQ Driven Plant Allocation Table -->
+                        <div class="overflow-hidden mt-8 bg-white rounded-xl border border-gray-100 shadow-sm">
+                            <div class="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                                <div class="flex gap-2 items-center">
+                                    <div class="p-1.5 text-amber-600 bg-amber-50 rounded-lg">
+                                        {% heroicon_mini "truck" class="w-4 h-4" %}
+                                    </div>
+                                    <h3 class="text-xs font-bold text-gray-500 uppercase">Plant &amp; Equipment (BoQ Driven)</h3>
+                                </div>
+                                <p class="text-[10px] text-gray-400 font-medium italic">Allocation per BoQ component quantity</p>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="table table-sm table-zebra">
+                                    <thead class="bg-gray-50/80">
+                                        <tr class="border-b border-gray-100">
+                                            <th class="px-6 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-widest">Plant Component</th>
+                                            <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">Source Spec</th>
+                                            <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">BoQ Qty</th>
+                                            <th class="px-4 py-3 text-center text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rate/hr</th>
+                                            <th class="px-6 py-3 text-right text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total BoQ Cost</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-50">
+                                        {% for row in boq_plant_rows %}
+                                            <tr class="hover:bg-amber-50/20">
+                                                <td class="px-6 py-3">
+                                                    <div class="flex flex-col">
+                                                        <span class="text-xs font-bold text-gray-700">{{ row.plant_name }}</span>
+                                                        <span class="text-[9px] text-gray-400">{{ row.hours|floatformat:1 }}h per {{ row.unit }}</span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-4 py-3 text-center text-[10px] text-gray-400 italic">{{ row.source_spec }}</td>
+                                                <td class="px-4 py-3 text-xs text-center text-gray-600 font-mono">{{ row.boq_qty|floatformat:1 }}</td>
+                                                <td class="px-4 py-3 text-xs text-center text-gray-600 font-mono">R {{ row.rate|floatformat:2|intcomma }}</td>
+                                                <td class="px-6 py-3 text-right font-mono text-xs font-black text-emerald-700">
+                                                    R {{ row.total_cost|floatformat:2|intcomma }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endif %}
+
                     {% if plan.node_type == 'ACTIVITY' and activity_line_items %}
                         <!-- Linked Bill Items Section -->
                         <div class="overflow-hidden mt-8 bg-white rounded-xl border border-gray-100 shadow-sm">

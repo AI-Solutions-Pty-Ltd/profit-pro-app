@@ -502,6 +502,76 @@ class ProductionPlan(BaseModel):
 
         return allocations
 
+    @staticmethod
+    def calculate_boq_driven_plant_rows(project, section, bill_no, activity):
+        """
+        Calculates granular plant allocations driven by BoQ quantities for a specific activity.
+        Used to display detailed plant resource requirements in both planning and reporting.
+        """
+        from decimal import Decimal
+
+        from django.db import models as db_models
+
+        from app.Estimator.models import BOQItem
+
+        # Filter BOQItems for the project/section/bill that match this activity name
+        boq_qs = (
+            BOQItem.objects.filter(
+                project=project,
+                is_section_header=False,
+                section=section,
+                bill_no=bill_no,
+            )
+            .annotate(
+                act_name_annotated=db_models.functions.Coalesce(
+                    "labour_specification__name", "plant_specification__name"
+                )
+            )
+            .filter(act_name_annotated=activity)
+            .filter(plant_specification__isnull=False)
+        )
+
+        from collections import OrderedDict
+
+        spec_groups = OrderedDict()
+        for boq in boq_qs.select_related("plant_specification").order_by(
+            "plant_specification__name"
+        ):
+            spec = boq.plant_specification
+            if spec.pk not in spec_groups:
+                spec_groups[spec.pk] = {"spec": spec, "boq_qty": Decimal("0")}
+            if boq.contract_quantity:
+                spec_groups[spec.pk]["boq_qty"] += boq.contract_quantity
+
+        rows = []
+        for group in spec_groups.values():
+            spec = group["spec"]
+            boq_qty = group["boq_qty"]
+            for comp in spec.components.all().select_related("plant_type"):
+                if not comp.plant_type:
+                    continue
+                hours = comp.hours or Decimal("0")
+                rate = comp.plant_type.hourly_rate or Decimal("0")
+                rows.append(
+                    {
+                        "plant_name": comp.plant_type.name,
+                        "hours": hours,
+                        "unit": spec.unit,
+                        "rate": rate,
+                        "boq_qty": boq_qty,
+                        "plant_hours_boq": hours * boq_qty,
+                        "total_cost": hours * boq_qty * rate,
+                        "source_spec": spec.name,
+                    }
+                )
+        return rows
+
+    def get_boq_driven_plant_rows(self):
+        """Instance method wrapper for calculate_boq_driven_plant_rows."""
+        return self.calculate_boq_driven_plant_rows(
+            self.project, self.section, self.bill_no, self.activity
+        )
+
     @property
     def total_plant_cost(self):
         # For structural nodes (SECTION/BILL), aggregate from leaf children.
