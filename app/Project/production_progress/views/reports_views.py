@@ -72,6 +72,7 @@ class ProductionProductivityReportView(
                 "company": project.contractor,
                 "summary": data.get("summary", {}),
                 "sections": data.get("sections", []),
+                "trajectory_json": data.get("charts_json", "{}"),
                 "active_only": active_only,
                 "tab": "productivity_report",
             }
