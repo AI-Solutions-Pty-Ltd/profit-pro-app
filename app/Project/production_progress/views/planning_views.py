@@ -1,5 +1,7 @@
 import json
+from collections import OrderedDict
 from datetime import timedelta
+from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -835,8 +837,58 @@ class ProductionCostBreakdownDetailView(
                 items = items.filter(bill_no=selected_plan.bill_no)
             context["activity_line_items"] = items
 
-        # Provide granular plant allocations (direct or fallback)
-        context["plant_allocations"] = selected_plan.get_plant_allocations()
+        # Build BoQ Qty-driven plant rows (mirrors Plant Calculator logic).
+        # One row per plant component; grand total = sum of (rate × boq_qty) per spec.
+        boq_qs = BOQItem.objects.filter(
+            project=project,
+            is_section_header=False,
+            plant_specification__isnull=False,
+        )
+        if selected_plan.section:
+            boq_qs = boq_qs.filter(section=selected_plan.section)
+        if selected_plan.bill_no:
+            boq_qs = boq_qs.filter(bill_no=selected_plan.bill_no)
+        if selected_plan.labour_activity:
+            boq_qs = boq_qs.filter(labour_specification=selected_plan.labour_activity)
+
+        # Group BOQItems by plant_specification, accumulating BoQ qty.
+        spec_groups: OrderedDict = OrderedDict()
+        for boq in boq_qs.select_related(
+            "plant_specification"
+        ).order_by("plant_specification__name"):
+            spec = boq.plant_specification
+            if spec.pk not in spec_groups:
+                spec_groups[spec.pk] = {"spec": spec, "boq_qty": Decimal("0")}
+            if boq.contract_quantity:
+                spec_groups[spec.pk]["boq_qty"] += boq.contract_quantity
+
+        # Expand each spec into one row per component (plant type).
+        plant_spec_rows = []
+        plant_spec_total = Decimal("0")
+        for group in spec_groups.values():
+            spec = group["spec"]
+            boq_qty = group["boq_qty"]
+            rate = getattr(spec, "rate_per_unit", None) or Decimal("0")
+            spec_amount = rate * boq_qty
+            plant_spec_total += spec_amount
+            for comp in spec.components.all().select_related("plant_type"):
+                if not comp.plant_type:
+                    continue
+                hours = comp.hours or Decimal("0")
+                plant_spec_rows.append(
+                    {
+                        "plant_name": comp.plant_type.name,
+                        "hours": hours,
+                        "unit": spec.unit,
+                        "rate": rate,
+                        "boq_qty": boq_qty,
+                        "plant_hours_boq": hours * boq_qty,
+                        "source_spec": spec.name,
+                    }
+                )
+
+        context["plant_spec_rows"] = plant_spec_rows
+        context["plant_spec_total"] = plant_spec_total
 
         return context
 

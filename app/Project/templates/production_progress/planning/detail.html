@@ -178,6 +178,9 @@
                                     <th class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Date Range</th>
                                     <th class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Dur</th>
                                     <th class="text-right text-[10px] font-bold uppercase tracking-widest text-gray-500">Quantity</th>
+                                    <th class="text-right text-[10px] font-bold uppercase tracking-widest text-gray-500">Labour Amt</th>
+                                    <th class="text-right text-[10px] font-bold uppercase tracking-widest text-gray-500">Plant Amt</th>
+                                    <th class="text-right text-[10px] font-bold uppercase tracking-widest text-gray-500">Total Amt</th>
                                     <th class="text-right text-[10px] font-bold uppercase tracking-widest text-gray-500">Status</th>
                                 </tr>
                             </thead>
@@ -198,6 +201,29 @@
                                         <td class="font-mono text-xs text-right text-gray-700">
                                             {{ child.quantity|floatformat:1 }} <span class="text-[9px] text-gray-400 font-bold">{{ child.unit }}</span>
                                         </td>
+                                        <td class="font-mono text-xs text-right text-gray-700">
+                                            {% if child.total_labour_cost %}
+                                                <span class="text-purple-700">R {{ child.total_labour_cost|floatformat:0|intcomma }}</span>
+                                            {% else %}
+                                                <span class="text-gray-300">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="font-mono text-xs text-right text-gray-700">
+                                            {% if child.total_plant_cost %}
+                                                <span class="text-amber-700">R {{ child.total_plant_cost|floatformat:0|intcomma }}</span>
+                                            {% else %}
+                                                <span class="text-gray-300">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="font-mono text-xs font-bold text-right text-gray-900">
+                                            {% with total=child.total_labour_cost|add:child.total_plant_cost %}
+                                                {% if total %}
+                                                    R {{ total|floatformat:0|intcomma }}
+                                                {% else %}
+                                                    <span class="text-gray-300">—</span>
+                                                {% endif %}
+                                            {% endwith %}
+                                        </td>
                                         <td class="text-right">
                                             {% if child.is_active %}
                                                 <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-green-100 text-green-700 uppercase">Active</span>
@@ -208,7 +234,7 @@
                                     </tr>
                                 {% empty %}
                                     <tr>
-                                        <td colspan="5" class="py-12 text-xs italic text-center text-gray-400">No {{ child_title|lower }} created yet.</td>
+                                        <td colspan="8" class="py-12 text-xs italic text-center text-gray-400">No {{ child_title|lower }} created yet.</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -254,14 +280,11 @@
                                         {% if type_code == 'LABOUR' and plan.labour_activity.crew %}
                                             <tr class="bg-indigo-50/20 group/row">
                                                 <td class="px-6 py-3">
-                                                    <div class="flex gap-2 items-center">
-                                                        
-                                                    {% if plan.labour_activity.crew %}
-                                                         <span class="text-xs font-bold text-indigo-900">({{ plan.labour_activity.crew.crew_type }})</span>
-                                                    {% endif %}
+                                                    <div class="flex flex-col">
+                                                        <span class="text-xs font-bold text-indigo-900">{{ plan.labour_activity.crew.crew_type }}</span>
                                                         <div class="flex gap-1.5 mt-1">
                                                             <span class="px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 text-[9px] font-bold uppercase tracking-tight">Crew Spec</span>
-                                                           
+                                                            <span class="text-[9px] text-gray-400 font-medium uppercase tracking-widest">{{ plan.labour_activity.crew.crew_size }} Workers</span>
                                                         </div>
                                                     </div>
                                                 </td>
@@ -278,13 +301,17 @@
                                                             <span class="text-xs font-bold text-amber-900">{{ alloc.name }}</span>
                                                             <div class="flex gap-1.5 mt-1">
                                                                 <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 text-[9px] font-bold uppercase tracking-tight">Plant Spec</span>
-                                                                <span class="text-[9px] text-gray-400 font-medium uppercase tracking-widest">From Components</span>
+                                                                {% if alloc.is_fallback %}
+                                                                    <span class="text-[9px] text-gray-400 font-medium uppercase tracking-widest">From BOQ</span>
+                                                                {% else %}
+                                                                    <span class="text-[9px] text-gray-400 font-medium uppercase tracking-widest">Direct Spec</span>
+                                                                {% endif %}
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td class="px-4 py-3 text-xs font-medium text-center text-gray-500">1</td>
-                                                    <td class="px-4 py-3 text-xs font-medium text-center text-gray-500">{{ plan.duration }}</td>
-                                                    <td class="px-4 py-3 font-mono text-xs tabular-nums text-right text-gray-500">R {{ alloc.daily_rate|floatformat:2|intcomma }}</td>
+                                                    <td class="px-4 py-3 text-xs font-medium text-center text-gray-500">{{ alloc.hours_per_day }}<span class="text-[9px] text-gray-400 ml-0.5">h/day</span></td>
+                                                    <td class="px-4 py-3 text-xs font-medium text-center text-gray-500">{{ alloc.total_hours }} hrs</td>
+                                                    <td class="px-4 py-3 font-mono text-xs tabular-nums text-right text-gray-500">R {{ alloc.rate|floatformat:2|intcomma }}/hr</td>
                                                     <td class="px-6 py-3 font-mono text-xs font-black tabular-nums text-right text-amber-600">R {{ alloc.total_cost|floatformat:2|intcomma }}</td>
                                                 </tr>
                                             {% endfor %}
@@ -318,6 +345,7 @@
                                                             {% heroicon_outline "users" class="w-6 h-6 text-gray-300" %}
                                                         </div>
                                                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No labour resources defined.</p>
+                                                        <p class="mt-1 text-[9px] text-gray-400">Assign a Crew Spec via the Labour Activity or add resources manually.</p>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -330,6 +358,7 @@
                                                             {% heroicon_outline "truck" class="w-6 h-6 text-gray-300" %}
                                                         </div>
                                                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No plant resources defined.</p>
+                                                        <p class="mt-1 text-[9px] text-gray-400">Link a Plant Specification on the BOQ item or assign one directly to this activity.</p>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -515,11 +544,11 @@ document.addEventListener('DOMContentLoaded', function() {
         durationInput.addEventListener('input', calculateFinishDate);
         
         applyBtn.addEventListener('click', function() {
-            // In a real implementation, this would trigger an AJAX update or form submission
-            // For now, we redirect to the edit page with these parameters or just warn that we need to use 'Edit Settings'
+            // Redirect to the edit page with these parameters
             const editUrl = "{% url 'project:production-plan-edit' project.pk plan.pk %}";
             const params = `?start_date=${startDateInput.value}&finish_date=${finishDateInput.value}&duration=${durationInput.value}`;
             window.location.href = editUrl + params;
+        });
     }
 
     // Refresh Plan Resources logic

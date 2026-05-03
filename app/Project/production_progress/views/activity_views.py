@@ -3,8 +3,8 @@ from django.db.models import (
     Case,
     Count,
     DecimalField,
-    ExpressionWrapper,
     F,
+    Max,
     Q,
     Sum,
     Value,
@@ -71,10 +71,14 @@ class LaborActivityListView(
                 "bill_no",
                 "act_name",
                 "act_unit",
-                "labour_specification",  # Still useful for crew lookup if present
-                "labour_specification__crew__crew_type",
             )
             .annotate(
+                # Pick one labour_specification id per group for spec_map lookup
+                labour_spec_id=Max("labour_specification"),
+                # Crew type: annotated (not grouped) so plant-only items don't split the group
+                labour_specification__crew__crew_type=Max(
+                    "labour_specification__crew__crew_type"
+                ),
                 num_items=Count("id"),
                 plant_count=Count(
                     "plant_specification__components__plant_type", distinct=True
@@ -93,8 +97,9 @@ class LaborActivityListView(
                     F("contract_quantity") * F("contract_rate"),
                     output_field=DecimalField(),
                 ),
-                # Confirmed Formula: (skilled * rate + semi * rate + general * rate)
-                daily_labour_cost=ExpressionWrapper(
+                # Daily labour cost: wrap in Max() (aggregate) so it stays out of GROUP BY.
+                # The crew cost is a constant per labour spec — Max picks the non-zero value.
+                daily_labour_cost=Max(
                     Coalesce(F("labour_specification__crew__skilled"), 0)
                     * Coalesce(F("labour_specification__crew__skilled_rate"), 0)
                     + Coalesce(F("labour_specification__crew__semi_skilled"), 0)
@@ -103,7 +108,7 @@ class LaborActivityListView(
                     * Coalesce(F("labour_specification__crew__general_rate"), 0),
                     output_field=DecimalField(),
                 ),
-                # Confirmed Formula: Sum(plant_rate) for all units in group (no longer * 8.0)
+                # Confirmed Formula: Sum(plant_rate) for all units in group
                 daily_plant_cost=Sum(
                     Coalesce(
                         F("plant_specification__components__plant_type__hourly_rate"), 0
@@ -170,7 +175,7 @@ class LaborActivityListView(
             )
 
         for activity in activities:
-            spec_id = activity.get("labour_specification")
+            spec_id = activity.get("labour_spec_id")
             spec = spec_map.get(spec_id) if spec_id else None
             activity["daily_production"] = spec.daily_production if spec else 0
 

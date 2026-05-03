@@ -1,4 +1,6 @@
 from django.urls import path
+# Trigger reload
+
 
 from . import views
 
@@ -87,6 +89,11 @@ urlpatterns = [
         "<int:project_pk>/performance-report/",
         views.ProductionPerformanceReportView.as_view(),
         name="performance-report",
+    ),
+    path(
+        "<int:project_pk>/dashboard/",
+        views.ProductionControllerView.as_view(),
+        name="production-dashboard",
     ),
     path(
         "<int:project_pk>/integrated-control/",
