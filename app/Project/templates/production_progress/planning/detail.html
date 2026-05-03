@@ -59,12 +59,6 @@
                         Edit Settings
                     </a>
                     {% if plan.node_type == 'ACTIVITY' %}
-                        <button type="button" onclick="refreshPlanResources('{{ plan.pk }}', this)"
-                                class="inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 bg-white rounded-md ring-1 ring-inset ring-gray-300 shadow-sm transition-all hover:bg-gray-50">
-                            <span class="hidden mr-2 loading loading-spinner loading-xs"></span>
-                            {% heroicon_outline "arrow-path" class="mr-2 w-4 h-4 text-indigo-600 btn-icon" %}
-                            <span class="btn-text">Sync Resources</span>
-                        </button>
                         <a href="{% url 'project:production-cost-breakdown' project.pk %}?plan_id={{ plan.pk }}"
                            class="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-md shadow-sm transition-all hover:bg-indigo-500">
                             {% heroicon_outline "banknotes" class="mr-2 w-4 h-4" %}
@@ -143,16 +137,7 @@
                 </div>
             </div>
 
-            <div class="flex gap-3 items-center p-4 text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-100">
-                <div class="p-2 rounded-lg bg-white/10">
-                    {% heroicon_mini "truck" class="w-5 h-5 text-white" %}
-                </div>
-                <div>
-                    <dt class="text-[10px] font-bold text-indigo-100 uppercase tracking-widest mb-0.5">Plant Budget</dt>
-                    <dd class="text-sm font-black leading-none">R {{ plan.total_plant_cost|floatformat:0|intcomma }}</dd>
-                    <div class="mt-1 text-[10px] font-bold text-indigo-200 uppercase">Equipment Cost</div>
-                </div>
-            </div>
+            <!-- Full width placeholder or nothing -->
         </div>
     </div>
 
@@ -179,7 +164,6 @@
                                     <th class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Dur</th>
                                     <th class="text-right text-[10px] font-bold uppercase tracking-widest text-gray-500">Quantity</th>
                                     <th class="text-right text-[10px] font-bold uppercase tracking-widest text-gray-500">Labour Amt</th>
-                                    <th class="text-right text-[10px] font-bold uppercase tracking-widest text-gray-500">Plant Amt</th>
                                     <th class="text-right text-[10px] font-bold uppercase tracking-widest text-gray-500">Total Amt</th>
                                     <th class="text-right text-[10px] font-bold uppercase tracking-widest text-gray-500">Status</th>
                                 </tr>
@@ -208,21 +192,12 @@
                                                 <span class="text-gray-300">—</span>
                                             {% endif %}
                                         </td>
-                                        <td class="font-mono text-xs text-right text-gray-700">
-                                            {% if child.total_plant_cost %}
-                                                <span class="text-amber-700">R {{ child.total_plant_cost|floatformat:0|intcomma }}</span>
+                                        <td class="font-mono text-xs font-bold text-right text-gray-900">
+                                            {% if child.total_labour_cost %}
+                                                R {{ child.total_labour_cost|floatformat:0|intcomma }}
                                             {% else %}
                                                 <span class="text-gray-300">—</span>
                                             {% endif %}
-                                        </td>
-                                        <td class="font-mono text-xs font-bold text-right text-gray-900">
-                                            {% with total=child.total_labour_cost|add:child.total_plant_cost %}
-                                                {% if total %}
-                                                    R {{ total|floatformat:0|intcomma }}
-                                                {% else %}
-                                                    <span class="text-gray-300">—</span>
-                                                {% endif %}
-                                            {% endwith %}
                                         </td>
                                         <td class="text-right">
                                             {% if child.is_active %}
@@ -252,8 +227,6 @@
                                     <div class="p-1.5 text-indigo-600 bg-indigo-50 rounded-lg">
                                         {% if type_code == "LABOUR" %}
                                             {% heroicon_mini "users" class="w-4 h-4" %}
-                                        {% elif type_code == "PLANT" %}
-                                            {% heroicon_mini "truck" class="w-4 h-4" %}
                                         {% else %}
                                             {% heroicon_mini "variable" class="w-4 h-4" %}
                                         {% endif %}
@@ -293,28 +266,6 @@
                                                 <td class="px-4 py-3 font-mono text-xs tabular-nums text-right text-gray-500">R {{ plan.labour_activity.crew.crew_daily_cost|floatformat:2|intcomma }}</td>
                                                 <td class="px-6 py-3 font-mono text-xs font-black tabular-nums text-right text-indigo-600">R {{ plan.total_labour_cost|floatformat:2|intcomma }}</td>
                                             </tr>
-                                        {% elif type_code == 'PLANT' %}
-                                            {% for alloc in plant_allocations %}
-                                                <tr class="bg-amber-50/20 group/row">
-                                                    <td class="px-6 py-3">
-                                                        <div class="flex flex-col">
-                                                            <span class="text-xs font-bold text-amber-900">{{ alloc.name }}</span>
-                                                            <div class="flex gap-1.5 mt-1">
-                                                                <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 text-[9px] font-bold uppercase tracking-tight">Plant Spec</span>
-                                                                {% if alloc.is_fallback %}
-                                                                    <span class="text-[9px] text-gray-400 font-medium uppercase tracking-widest">From BOQ</span>
-                                                                {% else %}
-                                                                    <span class="text-[9px] text-gray-400 font-medium uppercase tracking-widest">Direct Spec</span>
-                                                                {% endif %}
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td class="px-4 py-3 text-xs font-medium text-center text-gray-500">{{ alloc.hours_per_day }}<span class="text-[9px] text-gray-400 ml-0.5">h/day</span></td>
-                                                    <td class="px-4 py-3 text-xs font-medium text-center text-gray-500">{{ alloc.total_hours }} hrs</td>
-                                                    <td class="px-4 py-3 font-mono text-xs tabular-nums text-right text-gray-500">R {{ alloc.rate|floatformat:2|intcomma }}/hr</td>
-                                                    <td class="px-6 py-3 font-mono text-xs font-black tabular-nums text-right text-amber-600">R {{ alloc.total_cost|floatformat:2|intcomma }}</td>
-                                                </tr>
-                                            {% endfor %}
                                         {% endif %}
 
                                         <!-- Manual Resources -->
@@ -350,19 +301,7 @@
                                                 </td>
                                             </tr>
                                         {% endif %}
-                                        {% if not category.resources and not plant_allocations and type_code == 'PLANT' %}
-                                            <tr>
-                                                <td colspan="5" class="px-8 py-12 text-center bg-white">
-                                                    <div class="flex flex-col items-center">
-                                                        <div class="p-2 mb-3 bg-gray-50 rounded-full">
-                                                            {% heroicon_outline "truck" class="w-6 h-6 text-gray-300" %}
-                                                        </div>
-                                                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No plant resources defined.</p>
-                                                        <p class="mt-1 text-[9px] text-gray-400">Link a Plant Specification on the BOQ item or assign one directly to this activity.</p>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        {% endif %}
+                                        
                                     </tbody>
                                     <!-- Table Footer -->
                                     <tfoot class="border-t border-gray-100 bg-gray-50/50">
@@ -410,9 +349,9 @@
                                                     </div>
                                                 </td>
                                                 <td class="px-4 py-3 text-center text-[10px] text-gray-400 italic">{{ row.source_spec }}</td>
-                                                <td class="px-4 py-3 text-xs text-center text-gray-600 font-mono">{{ row.boq_qty|floatformat:1 }}</td>
-                                                <td class="px-4 py-3 text-xs text-center text-gray-600 font-mono">R {{ row.rate|floatformat:2|intcomma }}</td>
-                                                <td class="px-6 py-3 text-right font-mono text-xs font-black text-emerald-700">
+                                                <td class="px-4 py-3 font-mono text-xs text-center text-gray-600">{{ row.boq_qty|floatformat:1 }}</td>
+                                                <td class="px-4 py-3 font-mono text-xs text-center text-gray-600">R {{ row.rate|floatformat:2|intcomma }}</td>
+                                                <td class="px-6 py-3 font-mono text-xs font-black text-right text-emerald-700">
                                                     R {{ row.total_cost|floatformat:2|intcomma }}
                                                 </td>
                                             </tr>
@@ -597,46 +536,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Refresh Plan Resources logic
-    window.refreshPlanResources = async function(planId, btn) {
-        const btnText = btn.querySelector('.btn-text');
-        const spinner = btn.querySelector('.loading');
-        const icon = btn.querySelector('.btn-icon');
-        
-        // UI state: loading
-        btn.disabled = true;
-        btnText.classList.add('opacity-50');
-        spinner.classList.remove('hidden');
-        if (icon) icon.classList.add('hidden');
-
-        try {
-            const response = await fetch('{% url "project:production-plan-refresh-ajax" project.pk 999 %}'.replace('999', planId), {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json',
-                }
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                // Success: Reload to show updated resources
-                window.location.reload();
-            } else {
-                alert('Error: ' + (data.message || 'Unknown error occurred.'));
-            }
-        } catch (error) {
-            console.error('Error refreshing plan resources:', error);
-            alert('Network error. Please try again.');
-        } finally {
-            // UI state: reset (though usually reloaded)
-            btn.disabled = false;
-            btnText.classList.remove('opacity-50');
-            spinner.classList.add('hidden');
-            if (icon) icon.classList.remove('hidden');
-        }
-    };
     
     // Highlight predecessor end dates if they exist in the UI
     const dependencyInputs = document.querySelectorAll('select[name$="-predecessor"]');

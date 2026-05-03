@@ -384,12 +384,12 @@ class ProductionPlanDetailView(
         # Resources logic (from previous version)
         resource_categories = []
         for type_code, type_name in ProductionResource.RESOURCE_TYPES:
+            if type_code == "PLANT":
+                continue
+
             resources = plan.resources.filter(resource_type=type_code)
-            total_cost = 0
             if type_code == "LABOUR":
                 total_cost = plan.total_labour_cost
-            elif type_code == "PLANT":
-                total_cost = plan.total_plant_cost
             else:
                 total_cost = plan.total_other_cost
 
@@ -403,8 +403,7 @@ class ProductionPlanDetailView(
             )
         context["resource_categories"] = resource_categories
 
-        # Provide granular plant allocations (direct or fallback)
-        context["plant_allocations"] = plan.get_plant_allocations()
+        # Provide granular BoQ driven plant rows
         context["boq_plant_rows"] = plan.get_boq_driven_plant_rows()
 
         # Fetch related BOQItems for the activity line items section
