@@ -1477,8 +1477,8 @@ def get_premium_productivity_report_data(project_id, active_only=False, horizon=
 
         # Indices
         ppi = (
-            target_prod_rate / actual_prod_rate
-            if actual_prod_rate > 0
+            actual_prod_rate / target_prod_rate
+            if target_prod_rate > 0
             else Decimal("0")
         )
         cpi = (
@@ -1494,20 +1494,22 @@ def get_premium_productivity_report_data(project_id, active_only=False, horizon=
             else 0
         )
         duration = Decimal(duration_days)
-        days_affected = duration * (ppi - 1) if ppi > 0 else Decimal("0")
-        cost_impact = budgeted_cost - (budgeted_cost / cpi) if cpi > 0 else Decimal("0")
+        # Days Impact: (Duration / PPI) - Duration (Positive = Delay)
+        days_affected = (duration / ppi) - duration if ppi > 0 else Decimal("0")
+        # Financial Impact: (Budgeted Cost / CPI) - Budgeted Cost (Positive = Loss)
+        cost_impact = (budgeted_cost / cpi) - budgeted_cost if cpi > 0 else Decimal("0")
 
-        # Threshold Colors
+        # Threshold Colors: Higher is better
         ppi_color = "emerald"
-        if ppi > 1.2:
+        if ppi < 0.8:
             ppi_color = "rose"
-        elif ppi > 1.0:
+        elif ppi < 1.0:
             ppi_color = "amber"
 
         cpi_color = "emerald"
         if cpi < 0.9:
             cpi_color = "rose"
-        elif cpi <= 1.1:
+        elif cpi < 1.0:
             cpi_color = "amber"
 
         # Trend Data (Last 10 entries)
@@ -1518,8 +1520,8 @@ def get_premium_productivity_report_data(project_id, active_only=False, horizon=
         last_entries = all_history.order_by("-date")[:10][::-1]
         for e in last_entries:
             trend_labels.append(e.date.strftime("%d %b"))
-            # Indices
-            d_ppi = target_prod_rate / e.quantity if e.quantity > 0 else 0
+            # Indices: Higher is better (Actual / Target)
+            d_ppi = e.quantity / target_prod_rate if target_prod_rate > 0 else 0
             d_cpi = (
                 target_unit_cost / (e.total_cost / e.quantity)
                 if e.quantity > 0 and e.total_cost > 0
