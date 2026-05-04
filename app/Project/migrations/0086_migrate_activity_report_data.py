@@ -8,14 +8,11 @@ def migrate_report_to_entry(apps, schema_editor):
     DailyActivityEntry = apps.get_model("Project", "DailyActivityEntry")
     for report in DailyActivityReport.objects.all():
         DailyActivityEntry.objects.filter(report=report).update(
-            project=report.project,
-            date=report.date,
-            notes=report.notes
+            project=report.project, date=report.date, notes=report.notes
         )
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("Project", "0085_dailyactivityentry_date_dailyactivityentry_notes_and_more"),
     ]

@@ -120,9 +120,7 @@ class ProductionDailyLogListView(
 
         # Annotate with actual summed costs from usage records
         return (
-            DailyActivityEntry.objects.filter(
-                project_id=self.kwargs["project_pk"]
-            )
+            DailyActivityEntry.objects.filter(project_id=self.kwargs["project_pk"])
             .select_related(
                 "production_plan",
                 "production_plan__labour_activity",
@@ -285,7 +283,7 @@ class ProductionDailyLogUpdateView(
         # and pre-fill the form with it.
         # Since it's now a flat list, we edit entries individually
         # unless we implement a batch edit (which we can do by date).
-        
+
         labour_details = {
             "Skilled": {"number": 0.0, "hours": 0.0},
             "Semi-Skilled": {"number": 0.0, "hours": 0.0},
@@ -305,19 +303,38 @@ class ProductionDailyLogUpdateView(
             elif usage.resource:
                 plant_name = usage.resource.name
 
-            plant_usage.append({
-                "plant_type_id": usage.plant_type_id,
-                "resource_id": usage.resource_id,
-                "plant_name": plant_name,
-                "number": float(usage.number or 0),
-                "hours": float(usage.hours or 0),
-                "quantity": float(usage.quantity or 0),
-            })
+            plant_usage.append(
+                {
+                    "plant_type_id": usage.plant_type_id,
+                    "resource_id": usage.resource_id,
+                    "plant_name": plant_name,
+                    "number": float(usage.number or 0),
+                    "hours": float(usage.hours or 0),
+                    "quantity": float(usage.quantity or 0),
+                }
+            )
 
         available_plants = [
-            {"id": a["id"], "name": a["name"]}
+            {
+                "id": a["id"],
+                "name": a["name"],
+                "hours_per_day": float(a["hours_per_day"]),
+            }
             for a in entry.production_plan.get_plant_allocations()
         ]
+
+        # Fallback to project-wide plant types if no specific allocations found
+        if not available_plants:
+            from app.Estimator.models import ProjectPlantCost
+
+            available_plants = [
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "hours_per_day": 8.0,
+                }
+                for p in ProjectPlantCost.objects.filter(project_id=project_pk)
+            ]
 
         entry_data = {
             "id": entry.id,
@@ -332,9 +349,7 @@ class ProductionDailyLogUpdateView(
             "available_plants": available_plants,
         }
 
-        context["initial_data"] = json.dumps({
-            "entries": [entry_data]
-        })
+        context["initial_data"] = json.dumps({"entries": [entry_data]})
 
         return context
 
@@ -439,11 +454,20 @@ class DailyActivityEntryUpdateView(
 
         # Plant
         plant_usage = []
-        for usage in entry.plant_usage.all().select_related("resource"):
+        for usage in entry.plant_usage.all().select_related("resource", "plant_type"):
+            name = "Unknown"
+            res_id = ""
+            if usage.resource:
+                name = usage.resource.name
+                res_id = usage.resource_id
+            elif usage.plant_type:
+                name = usage.plant_type.name
+                res_id = usage.plant_type_id
+
             plant_usage.append(
                 {
-                    "resource_id": usage.resource_id,
-                    "plant_name": usage.resource.name,
+                    "resource_id": res_id,
+                    "plant_name": name,
                     "number": float(usage.number),
                     "hours": float(usage.hours),
                     "quantity": float(usage.quantity),
@@ -452,8 +476,12 @@ class DailyActivityEntryUpdateView(
 
         # Get available plants for selection (ID and Name)
         available_plants = [
-            {"id": r.id, "name": r.name}
-            for r in entry.production_plan.resources.filter(resource_type="PLANT")
+            {
+                "id": a["id"],
+                "name": a["name"],
+                "hours_per_day": float(a["hours_per_day"]),
+            }
+            for a in entry.production_plan.get_plant_allocations()
         ]
 
         context["initial_data"] = json.dumps(
@@ -525,13 +553,14 @@ class ProductionDailyLogDetailView(
         context = super().get_context_data(**kwargs)
         entry = self.object
         context["project"] = entry.project
-        
+
         # In the detail view, we show the specific entry details.
         # If we want to show other entries on the same day, we can fetch them:
-        context["sibling_entries"] = DailyActivityEntry.objects.filter(
-            project=entry.project,
-            date=entry.date
-        ).exclude(id=entry.id).select_related("production_plan")
+        context["sibling_entries"] = (
+            DailyActivityEntry.objects.filter(project=entry.project, date=entry.date)
+            .exclude(id=entry.id)
+            .select_related("production_plan")
+        )
 
         return context
 
@@ -568,8 +597,26 @@ class DailyLogActivityDataAjaxView(LoginRequiredMixin, TemplateView):
 
         # Get available plants for selection (from Spec)
         available_plants = [
-            {"id": a["id"], "name": a["name"]} for a in plan.get_plant_allocations()
+            {
+                "id": a["id"],
+                "name": a["name"],
+                "hours_per_day": float(a["hours_per_day"]),
+            }
+            for a in plan.get_plant_allocations()
         ]
+
+        # Fallback to project-wide plant types if no specific allocations found
+        if not available_plants:
+            from app.Estimator.models import ProjectPlantCost
+
+            available_plants = [
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "hours_per_day": 8.0,
+                }
+                for p in ProjectPlantCost.objects.filter(project_id=plan.project_id)
+            ]
 
         return JsonResponse(
             {

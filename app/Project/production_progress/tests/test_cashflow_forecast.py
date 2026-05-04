@@ -66,10 +66,10 @@ class TestCashflowForecast:
         # 2. Create actual entries
         # Actual cost on day 1 = 150
         DailyActivityEntryFactory(
-            project=self.project, 
+            project=self.project,
             date=today - timedelta(days=5),
-            production_plan=plan, 
-            quantity=10
+            production_plan=plan,
+            quantity=10,
         )
 
         from app.Project.production_progress.utils.production_utils import (

@@ -165,9 +165,7 @@ class DailyLogEntrySerializer(serializers.ModelSerializer):
                 # Second fallback: search in manual ProductionResources for this plan
                 if not plant_type:
                     resource = ProductionResource.objects.filter(
-                        production_plan_id=plan_id,
-                        name=name,
-                        resource_type="PLANT"
+                        production_plan_id=plan_id, name=name, resource_type="PLANT"
                     ).first()
 
             # Create usage record if we have either a spec plant type or a legacy resource

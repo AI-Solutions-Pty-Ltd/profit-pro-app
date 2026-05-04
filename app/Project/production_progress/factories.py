@@ -39,7 +39,9 @@ class DailyActivityEntryFactory(DjangoModelFactory):
     project = factory.SubFactory(ProjectFactory)
     date = factory.Faker("date_between", start_date="-1y", end_date="today")
     notes = factory.Faker("text")
-    production_plan = factory.SubFactory(ProductionPlanFactory, project=factory.SelfAttribute("..project"))
+    production_plan = factory.SubFactory(
+        ProductionPlanFactory, project=factory.SelfAttribute("..project")
+    )
     quantity = 100
     hours_on_activity = 8.0
 

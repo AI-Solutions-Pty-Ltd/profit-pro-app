@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("estimator", "0014_projectlabourcrew_name_systemlabourcrew_name"),
     ]

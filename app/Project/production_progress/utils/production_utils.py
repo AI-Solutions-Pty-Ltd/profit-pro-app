@@ -59,14 +59,13 @@ def get_dashboard_data(project_id, start_date=None, end_date=None):
     plans = ProductionPlan.objects.filter(
         project_id=project_id, labour_activity__isnull=False
     )
-    entries_qs = (
-        DailyActivityEntry.objects.filter(project_id=project_id)
-        .prefetch_related(
-            "labour_usage",
-            "plant_usage",
-            "labour_usage__resource",
-            "plant_usage__resource",
-        )
+    entries_qs = DailyActivityEntry.objects.filter(
+        project_id=project_id
+    ).prefetch_related(
+        "labour_usage",
+        "plant_usage",
+        "labour_usage__resource",
+        "plant_usage__resource",
     )
 
     if start_date:
@@ -841,9 +840,7 @@ def get_project_cashflow_data(project_id, horizon_type="month", history_months=3
 
     get_object_or_404(Project, pk=project_id)
     plans = ProductionPlan.objects.filter(project_id=project_id, is_archived=False)
-    entries = DailyActivityEntry.objects.filter(
-        project_id=project_id
-    )
+    entries = DailyActivityEntry.objects.filter(project_id=project_id)
 
     today = timezone.now().date()
 
@@ -1115,9 +1112,7 @@ def get_project_productivity_report_data(
 
     summary = get_project_performance_summary(project_id)
     plans = ProductionPlan.objects.filter(project_id=project_id, is_archived=False)
-    entries = DailyActivityEntry.objects.filter(
-        project_id=project_id
-    )
+    entries = DailyActivityEntry.objects.filter(project_id=project_id)
 
     if not entries.exists() and not plans.exists():
         return {"summary": summary, "charts": {}, "forecasts": {}, "activities": []}

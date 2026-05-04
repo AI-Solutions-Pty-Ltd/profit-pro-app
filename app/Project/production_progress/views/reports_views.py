@@ -113,9 +113,7 @@ class ProductivityLogsView(
         )
 
         # Get all entries for this project
-        entries = DailyActivityEntry.objects.filter(project=project).order_by(
-            "date"
-        )
+        entries = DailyActivityEntry.objects.filter(project=project).order_by("date")
 
         logs_data = []
         for plan in plans:

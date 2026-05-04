@@ -147,9 +147,11 @@ class ProductionPlan(BaseModel):
             self.labour_activity or self.plant_specification
         ) and self.is_leaf
 
+        if self.is_leaf:
+            self.refresh_plant_types()
+
         if is_leaf_item and not self.parent and (self.section or self.bill_no):
             self._ensure_hierarchy()
-            self.refresh_plant_types()
 
         # 4. Standard Save
         super().save(*args, **kwargs)
@@ -170,27 +172,10 @@ class ProductionPlan(BaseModel):
                 self.parent.sync_parent_metrics()
 
     def refresh_plant_types(self):
-        """Updates plant_types field from BOQItems."""
-        from django.apps import apps
-
-        BOQItem = apps.get_model("estimator", "BOQItem")
-
-        if not self.labour_activity:
-            self.plant_types = []
-            return
-
-        types = list(
-            BOQItem.objects.filter(
-                project=self.project,
-                section=self.section,
-                bill_no=self.bill_no,
-                labour_specification=self.labour_activity,
-                plant_specification__isnull=False,
-            )
-            .values_list("plant_specification__components__plant_type__name", flat=True)
-            .distinct()
-        )
-        self.plant_types = sorted(t for t in types if t)
+        """Updates plant_types field from BoQ allocations for list view display."""
+        allocations = self.get_plant_allocations()
+        names = sorted(list(set(a["name"] for a in allocations)))
+        self.plant_types = names
 
     def sync_parent_metrics(self):
         """
@@ -452,17 +437,25 @@ class ProductionPlan(BaseModel):
             unique_specs[self.plant_specification.name] = self.plant_specification
         else:
             # Fallback: Pull from related BOQItems
+            from django.db import models as db_models
+
             from app.Estimator.models import BOQItem, ProjectPlantSpecification
 
-            qs = BOQItem.objects.filter(
-                project=self.project,
-                section=self.section,
-                bill_no=self.bill_no,
-                plant_specification__isnull=False,
+            qs = (
+                BOQItem.objects.filter(
+                    project=self.project,
+                    section=self.section,
+                    bill_no=self.bill_no,
+                    is_section_header=False,
+                    plant_specification__isnull=False,
+                )
+                .annotate(
+                    act_name_annotated=db_models.functions.Coalesce(
+                        "labour_specification__name", "plant_specification__name"
+                    )
+                )
+                .filter(act_name_annotated=self.activity)
             )
-
-            if self.labour_activity:
-                qs = qs.filter(labour_specification=self.labour_activity)
 
             spec_ids = qs.values_list("plant_specification", flat=True).distinct()
 
@@ -561,6 +554,7 @@ class ProductionPlan(BaseModel):
                 rate = comp.plant_type.hourly_rate or Decimal("0")
                 rows.append(
                     {
+                        "id": comp.plant_type_id,
                         "plant_name": comp.plant_type.name,
                         "hours": hours,
                         "unit": spec.unit,
@@ -717,8 +711,6 @@ class ProductionResource(BaseModel):
 
         self.total_cost = (self.number or 0) * (self.days or 0) * (self.rate or 0)
         super().save(*args, **kwargs)
-
-
 
 
 class DailyActivityEntry(BaseModel):
