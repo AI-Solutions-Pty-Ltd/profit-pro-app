@@ -45,16 +45,9 @@ class FinancialBaseView(ProfitabilityMixin, FinancialCalculationMixin, TemplateV
         # Handle Query Parameters (from filters)
         start_date_param = request.GET.get("start_date")
         end_date_param = request.GET.get("end_date")
+        lookback_param = request.GET.get("lookback")
 
-        try:
-            start_date = (
-                date.fromisoformat(start_date_param)
-                if start_date_param
-                else default_start_date
-            )
-        except (ValueError, TypeError):
-            start_date = default_start_date
-
+        # end_date always defaults to today if not provided
         try:
             end_date = (
                 date.fromisoformat(end_date_param)
@@ -63,6 +56,22 @@ class FinancialBaseView(ProfitabilityMixin, FinancialCalculationMixin, TemplateV
             )
         except (ValueError, TypeError):
             end_date = default_end_date
+
+        # start_date logic based on lookback or explicit param
+        if lookback_param and lookback_param != "ALL":
+            months_map = {"1M": 1, "3M": 3, "6M": 6, "12M": 12}
+            months = months_map.get(lookback_param, 0)
+            if months > 0:
+                start_date = end_date - relativedelta(months=months)
+            else:
+                start_date = default_start_date
+        elif start_date_param:
+            try:
+                start_date = date.fromisoformat(start_date_param)
+            except (ValueError, TypeError):
+                start_date = default_start_date
+        else:
+            start_date = default_start_date
 
         # Get financial metrics --- ACTUAL LOGIC ---
         context["start_date"] = start_date

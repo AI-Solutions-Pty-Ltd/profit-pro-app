@@ -1,19 +1,7 @@
 <div class="grid grid-cols-1 gap-6 mb-8 lg:grid-cols-2">
-    <!-- Actual Cost Composition -->
-    <div class="card bg-white shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
-            <h3 class="flex items-center text-xs font-black tracking-[0.1em] text-gray-500 uppercase">
-                {% heroicon_outline "chart-pie" size="18" class="mr-2 text-amber-500" %}
-                Actual Cost Composition
-            </h3>
-        </div>
-        <div class="p-6 h-[320px]">
-            <canvas id="costCompositionChart"></canvas>
-        </div>
-    </div>
     <!-- Revenue vs. Cost Trend -->
-    <div class="card bg-white shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+    <div class="overflow-hidden bg-white border border-gray-100 shadow-sm card">
+        <div class="flex justify-between items-center px-6 py-4 border-b border-gray-50 bg-gray-50/30">
             <h3 class="flex items-center text-xs font-black tracking-[0.1em] text-gray-500 uppercase">
                 {% heroicon_outline "chart-bar" size="18" class="mr-2 text-indigo-500" %}
                 Revenue vs Expense Trend
@@ -25,8 +13,8 @@
         </div>
     </div>
     <!-- Monthly Profitability -->
-    <div class="card bg-white shadow-sm border border-gray-100 overflow-hidden lg:col-span-2">
-        <div class="px-6 py-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+    <div class="overflow-hidden bg-white border border-gray-100 shadow-sm card">
+        <div class="flex justify-between items-center px-6 py-4 border-b border-gray-50 bg-gray-50/30">
             <h3 class="flex items-center text-xs font-black tracking-[0.1em] text-gray-500 uppercase">
                 {% heroicon_outline "arrow-trending-up" size="18" class="mr-2 text-emerald-500" %}
                 Net Profitability Trajectory

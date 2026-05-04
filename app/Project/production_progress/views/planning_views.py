@@ -1158,9 +1158,9 @@ class ProductionCashflowForecastView(
         project = get_object_or_404(Project, pk=project_pk)
         context["project"] = project
 
-        horizon = self.request.GET.get("horizon", "month").lower()
+        horizon = self.request.GET.get("horizon", "term").lower()
         if horizon not in ["month", "term", "half", "year"]:
-            horizon = "month"
+            horizon = "term"
 
         try:
             history = int(self.request.GET.get("history", 3))
