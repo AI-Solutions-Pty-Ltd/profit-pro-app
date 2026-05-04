@@ -174,7 +174,7 @@ class ProductionPlan(BaseModel):
     def refresh_plant_types(self):
         """Updates plant_types field from BoQ allocations for list view display."""
         allocations = self.get_plant_allocations()
-        names = sorted(list(set(a["name"] for a in allocations)))
+        names = sorted({a["name"] for a in allocations})
         self.plant_types = names
 
     def sync_parent_metrics(self):

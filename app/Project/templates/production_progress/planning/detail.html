@@ -81,32 +81,32 @@
                 </div>
             </div>
             <!-- Activity Navigation -->
-               {% if plan.node_type == 'ACTIVITY' %}
-            <div class="px-6 py-3 border-t border-gray-100/60 bg-gray-50/50">
-                <div class="flex gap-8 items-center">
-                    <a href="{% url 'project:production-cost-breakdown-detail' project.pk plan.pk %}"
-                       class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-500">
-                        {% heroicon_mini "banknotes" class="inline-block mr-1.5 w-3.5 h-3.5" %}
-                        Costing Breakdown
-                    </a>
-                    <a href="{% url 'project:production-forecast-dashboard' project.pk %}?plan_id={{ plan.pk }}"
-                       class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-500">
-                        {% heroicon_mini "chart-bar" class="inline-block mr-1.5 w-3.5 h-3.5" %}
-                        Forecast Dashboard
-                    </a>
-                    <a href="{% url 'project:production-daily-log-list' project.pk %}?plan_id={{ plan.pk }}"
-                       class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-500">
-                        {% heroicon_mini "clipboard-document-list" class="inline-block mr-1.5 w-3.5 h-3.5" %}
-                        Daily Logs
-                    </a>
-                    <a href="{% url 'project:activity-detail' project.pk plan.pk %}"
-                       class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-500">
-                        {% heroicon_mini "presentation-chart-line" class="inline-block mr-1.5 w-3.5 h-3.5" %}
-                        Progress Analytics
-                    </a>
+            {% if plan.node_type == 'ACTIVITY' %}
+                <div class="px-6 py-3 border-t border-gray-100/60 bg-gray-50/50">
+                    <div class="flex gap-8 items-center">
+                        <a href="{% url 'project:production-cost-breakdown-detail' project.pk plan.pk %}"
+                           class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-500">
+                            {% heroicon_mini "banknotes" class="inline-block mr-1.5 w-3.5 h-3.5" %}
+                            Costing Breakdown
+                        </a>
+                        <a href="{% url 'project:production-forecast-dashboard' project.pk %}?plan_id={{ plan.pk }}"
+                           class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-500">
+                            {% heroicon_mini "chart-bar" class="inline-block mr-1.5 w-3.5 h-3.5" %}
+                            Forecast Dashboard
+                        </a>
+                        <a href="{% url 'project:production-daily-log-list' project.pk %}?plan_id={{ plan.pk }}"
+                           class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-500">
+                            {% heroicon_mini "clipboard-document-list" class="inline-block mr-1.5 w-3.5 h-3.5" %}
+                            Daily Logs
+                        </a>
+                        <a href="{% url 'project:activity-detail' project.pk plan.pk %}"
+                           class="text-[10px] font-bold uppercase tracking-widest transition-all hover:text-indigo-600 text-gray-500">
+                            {% heroicon_mini "presentation-chart-line" class="inline-block mr-1.5 w-3.5 h-3.5" %}
+                            Progress Analytics
+                        </a>
+                    </div>
                 </div>
-            </div>
-              {% endif %} 
+            {% endif %}
             <!-- Metric Cards -->
             <div class="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
                 <!-- Date Range -->
