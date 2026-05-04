@@ -448,9 +448,11 @@
 
             const plantTbody = row.querySelector('.plant-rows');
             plantTbody.innerHTML = '';
+            // Store available plants for selection
             row.dataset.availablePlants = JSON.stringify(data.available_plants || []);
-            
-            if (data.available_plants && data.available_plants.length > 0) {
+
+            // Auto-populate plants ONLY if they are specific to this activity (not generic project-wide)
+            if (!data.is_generic_plant && data.available_plants && data.available_plants.length > 0) {
                 data.available_plants.forEach(plant => {
                     addPlantRow(row, plant.id, plant.name, plant.hours_per_day);
                 });
@@ -731,7 +733,7 @@
                     const pValue = plant.plant_type_id || plant.resource_id;
                     addPlantRow(newRow, pValue, plant.plant_name, plant.hours);
                 });
-            } else if (entryData.available_plants && entryData.available_plants.length > 0) {
+            } else if (!entryData.is_generic_plant && entryData.available_plants && entryData.available_plants.length > 0) {
                 entryData.available_plants.forEach(plant => {
                     addPlantRow(newRow, plant.id, plant.name, plant.hours_per_day);
                 });

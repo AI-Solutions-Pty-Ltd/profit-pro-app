@@ -324,9 +324,11 @@ class ProductionDailyLogUpdateView(
         ]
 
         # Fallback to project-wide plant types if no specific allocations found
+        is_generic_plant = False
         if not available_plants:
             from app.Estimator.models import ProjectPlantCost
 
+            is_generic_plant = True
             available_plants = [
                 {
                     "id": p.id,
@@ -347,6 +349,7 @@ class ProductionDailyLogUpdateView(
             "plant_usage": plant_usage,
             "unit": entry.production_plan.unit_display,
             "available_plants": available_plants,
+            "is_generic_plant": is_generic_plant,
         }
 
         context["initial_data"] = json.dumps({"entries": [entry_data]})
@@ -483,6 +486,18 @@ class DailyActivityEntryUpdateView(
             }
             for a in entry.production_plan.get_plant_allocations()
         ]
+        is_generic_plant = not bool(available_plants)
+        if is_generic_plant:
+            from app.Estimator.models import ProjectPlantCost
+
+            available_plants = [
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "hours_per_day": 8.0,
+                }
+                for p in ProjectPlantCost.objects.filter(project_id=project_pk)
+            ]
 
         context["initial_data"] = json.dumps(
             {
@@ -501,6 +516,7 @@ class DailyActivityEntryUpdateView(
                 "plant_usage": plant_usage,
                 "unit": entry.production_plan.unit_display,
                 "available_plants": available_plants,
+                "is_generic_plant": is_generic_plant,
             }
         )
         return context
@@ -606,9 +622,11 @@ class DailyLogActivityDataAjaxView(LoginRequiredMixin, TemplateView):
         ]
 
         # Fallback to project-wide plant types if no specific allocations found
+        is_generic_plant = False
         if not available_plants:
             from app.Estimator.models import ProjectPlantCost
 
+            is_generic_plant = True
             available_plants = [
                 {
                     "id": p.id,
@@ -625,6 +643,7 @@ class DailyLogActivityDataAjaxView(LoginRequiredMixin, TemplateView):
                 "bill_no": plan.bill_no or "No Bill",
                 "unit": plan.unit_display,
                 "available_plants": available_plants,
+                "is_generic_plant": is_generic_plant,
                 "crew": crew_info,
             }
         )

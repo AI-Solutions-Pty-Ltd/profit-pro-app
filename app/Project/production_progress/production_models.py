@@ -441,21 +441,17 @@ class ProductionPlan(BaseModel):
 
             from app.Estimator.models import BOQItem, ProjectPlantSpecification
 
-            qs = (
-                BOQItem.objects.filter(
-                    project=self.project,
-                    section=self.section,
-                    bill_no=self.bill_no,
-                    is_section_header=False,
-                    plant_specification__isnull=False,
-                )
-                .annotate(
+            qs = BOQItem.objects.filter(
+                project=self.project, plant_specification__isnull=False
+            )
+            if self.labour_activity_id:
+                qs = qs.filter(labour_specification_id=self.labour_activity_id)
+            else:
+                qs = qs.annotate(
                     act_name_annotated=db_models.functions.Coalesce(
                         "labour_specification__name", "plant_specification__name"
                     )
-                )
-                .filter(act_name_annotated=self.activity)
-            )
+                ).filter(act_name_annotated=self.activity)
 
             spec_ids = qs.values_list("plant_specification", flat=True).distinct()
 
@@ -503,10 +499,12 @@ class ProductionPlan(BaseModel):
         return allocations
 
     @staticmethod
-    def calculate_boq_driven_plant_rows(project, section, bill_no, activity):
+    def calculate_boq_driven_plant_rows(
+        project, section, bill_no, activity, labour_activity_id=None
+    ):
         """
-        Calculates granular plant allocations driven by BoQ quantities for a specific activity.
-        Used to display detailed plant resource requirements in both planning and reporting.
+        Calculates granular plant rows driven by BOQItem specifications.
+        Returns a list of dictionaries with plant info and costs.
         """
         from decimal import Decimal
 
@@ -514,22 +512,23 @@ class ProductionPlan(BaseModel):
 
         from app.Estimator.models import BOQItem
 
-        # Filter BOQItems for the project/section/bill that match this activity name
-        boq_qs = (
-            BOQItem.objects.filter(
-                project=project,
-                is_section_header=False,
-                section=section,
-                bill_no=bill_no,
-            )
-            .annotate(
+        # Filter BOQItems for the project/section/bill
+        boq_qs = BOQItem.objects.filter(
+            project=project,
+            is_section_header=False,
+            section=section,
+            bill_no=bill_no,
+            plant_specification__isnull=False,
+        )
+
+        if labour_activity_id:
+            boq_qs = boq_qs.filter(labour_specification_id=labour_activity_id)
+        else:
+            boq_qs = boq_qs.annotate(
                 act_name_annotated=db_models.functions.Coalesce(
                     "labour_specification__name", "plant_specification__name"
                 )
-            )
-            .filter(act_name_annotated=activity)
-            .filter(plant_specification__isnull=False)
-        )
+            ).filter(act_name_annotated=activity)
 
         from collections import OrderedDict
 
@@ -570,7 +569,11 @@ class ProductionPlan(BaseModel):
     def get_boq_driven_plant_rows(self):
         """Instance method wrapper for calculate_boq_driven_plant_rows."""
         return self.calculate_boq_driven_plant_rows(
-            self.project, self.section, self.bill_no, self.activity
+            self.project,
+            self.section,
+            self.bill_no,
+            self.activity,
+            self.labour_activity_id,
         )
 
     @property
