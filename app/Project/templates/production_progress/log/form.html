@@ -54,22 +54,39 @@
         </div>
         <!-- Main Content -->
         <div class="space-y-6">
-            <!-- Report Metadata -->
+            <!-- Bulk Apply Settings -->
             <div class="overflow-hidden relative p-8 bg-white rounded-3xl border border-gray-200 shadow-sm">
                 <div class="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                    {% heroicon_outline "calendar" class="w-24 h-24" %}
+                    {% heroicon_outline "sparkles" class="w-24 h-24" %}
                 </div>
-                <div class="relative z-10 max-w-sm">
-                    <label class="block mb-2 text-xs font-bold tracking-wider text-gray-500 uppercase ml-1">Report Date</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-indigo-500">
-                            {% heroicon_outline "calendar-days" class="w-5 h-5" %}
+                <div class="flex flex-col gap-6 lg:flex-row lg:items-end">
+                    <div class="relative z-10 flex-grow max-w-sm">
+                        <label class="block mb-2 text-xs font-bold tracking-wider text-gray-500 uppercase ml-1">Global Date</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-indigo-500">
+                                {% heroicon_outline "calendar-days" class="w-5 h-5" %}
+                            </div>
+                            <input type="date"
+                                   id="bulk_date"
+                                   value="{% if entry %}{{ entry.date|date:'Y-m-d' }}{% else %}{% now 'Y-m-d' %}{% endif %}"
+                                   class="pl-11 pr-4 py-3.5 w-full text-sm font-bold bg-gray-50 rounded-2xl border-0 ring-1 ring-inset ring-gray-200 transition-all focus:ring-2 focus:ring-indigo-600">
                         </div>
-                        <input type="date"
-                               id="report_date"
-                               value="{% if report %}{{ report.date|date:'Y-m-d' }}{% else %}{% now 'Y-m-d' %}{% endif %}"
-                               class="pl-11 pr-4 py-3.5 w-full text-sm font-bold bg-gray-50 rounded-2xl border-0 ring-1 ring-inset ring-gray-200 transition-all focus:ring-2 focus:ring-indigo-600">
                     </div>
+                    <div class="relative z-10 flex-grow">
+                        <label class="block mb-2 text-xs font-bold tracking-wider text-gray-500 uppercase ml-1">Global Narrative (Optional)</label>
+                        <div class="relative">
+                            <input type="text"
+                                   id="bulk_notes"
+                                   placeholder="Describe work done across all activities..."
+                                   class="px-4 py-3.5 w-full text-sm bg-gray-50 rounded-2xl border-0 ring-1 ring-inset ring-gray-200 transition-all focus:ring-2 focus:ring-indigo-600">
+                        </div>
+                    </div>
+                    <button type="button"
+                            onclick="applyGlobalSettings()"
+                            class="flex items-center px-6 py-3.5 text-sm font-bold text-indigo-600 bg-indigo-50 rounded-2xl border border-indigo-100 transition-all hover:bg-indigo-100 active:scale-95 whitespace-nowrap">
+                        {% heroicon_outline "arrow-down-circle" class="mr-2 w-5 h-5" %}
+                        Apply to All Rows
+                    </button>
                 </div>
             </div>
             <!-- Activities Section -->
@@ -194,29 +211,42 @@
                 <div class="space-y-6">
                     <div>
                         <h4 class="flex items-center mb-4 text-xs font-black tracking-widest text-gray-400 uppercase">
-                            {% heroicon_outline "presentation-chart-line" class="mr-2 w-4 h-4" %} Progress Metrics
+                            {% heroicon_outline "presentation-chart-line" class="mr-2 w-4 h-4" %} Activity Detail
                         </h4>
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-4">
                             <div>
-                                <label class="block mb-1 ml-1 text-xs font-bold text-gray-500 uppercase">Quantity Achieved</label>
-                                <div class="relative">
-                                    <input type="number"
-                                           step="0.01"
-                                           class="px-4 py-2.5 w-full font-mono text-sm bg-gray-50 rounded-xl border-0 ring-1 ring-inset ring-gray-200 transition-all qty-input focus:ring-2 focus:ring-indigo-600"
-                                           placeholder="0.00">
-                                    <div class="flex absolute inset-y-0 right-0 items-center pr-3 pointer-events-none">
-                                        <span class="text-xs font-bold text-gray-400 unit-display">UNIT</span>
+                                <label class="block mb-1 ml-1 text-xs font-bold text-gray-500 uppercase">Activity Date</label>
+                                <input type="date"
+                                       class="px-4 py-2.5 w-full text-sm font-bold bg-gray-50 rounded-xl border-0 ring-1 ring-inset ring-gray-200 transition-all entry-date focus:ring-2 focus:ring-indigo-600">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block mb-1 ml-1 text-xs font-bold text-gray-500 uppercase">Qty Achieved</label>
+                                    <div class="relative">
+                                        <input type="number"
+                                               step="0.01"
+                                               class="px-4 py-2.5 w-full font-mono text-sm bg-gray-50 rounded-xl border-0 ring-1 ring-inset ring-gray-200 transition-all qty-input focus:ring-2 focus:ring-indigo-600"
+                                               placeholder="0.00">
+                                        <div class="flex absolute inset-y-0 right-0 items-center pr-3 pointer-events-none">
+                                            <span class="text-xs font-bold text-gray-400 unit-display">UNIT</span>
+                                        </div>
                                     </div>
+                                </div>
+                                <div>
+                                    <label class="block mb-1 ml-1 text-xs font-bold text-gray-500 uppercase">Total Hours</label>
+                                    <input type="number"
+                                           step="0.5"
+                                           class="px-4 py-2.5 w-full font-mono text-sm bg-indigo-50/30 rounded-xl border-0 ring-1 ring-inset ring-indigo-100 transition-all activity-hours-input focus:ring-0 cursor-not-allowed"
+                                           placeholder="0.0"
+                                           readonly
+                                           tabindex="-1">
                                 </div>
                             </div>
                             <div>
-                                <label class="block mb-1 ml-1 text-xs font-bold text-gray-500 uppercase">Total Activity Hours</label>
-                                <input type="number"
-                                       step="0.5"
-                                       class="px-4 py-2.5 w-full font-mono text-sm bg-indigo-50/30 rounded-xl border-0 ring-1 ring-inset ring-indigo-100 transition-all activity-hours-input focus:ring-0 cursor-not-allowed"
-                                       placeholder="0.0"
-                                       readonly
-                                       tabindex="-1">
+                                <label class="block mb-1 ml-1 text-xs font-bold text-gray-500 uppercase">Entry Notes / Narrative</label>
+                                <textarea rows="2"
+                                          class="px-4 py-2.5 w-full text-xs bg-gray-50 rounded-xl border-0 ring-1 ring-inset ring-gray-200 transition-all entry-notes focus:ring-2 focus:ring-indigo-600"
+                                          placeholder="Specific details about this activity performance..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -468,15 +498,19 @@
         }
     }
 
-    async function submitLogForm() {
-        const reportDate = document.getElementById('report_date').value;
-        const reportNotes = document.getElementById('report_notes') ? document.getElementById('report_notes').value : '';
+    function applyGlobalSettings() {
+        const globalDate = document.getElementById('bulk_date').value;
+        const globalNotes = document.getElementById('bulk_notes').value;
         
-        if (!reportDate) {
-            alert('Please select a date.');
-            return;
-        }
+        document.querySelectorAll('.activity-row').forEach(row => {
+            if (globalDate) row.querySelector('.entry-date').value = globalDate;
+            if (globalNotes && !row.querySelector('.entry-notes').value) {
+                row.querySelector('.entry-notes').value = globalNotes;
+            }
+        });
+    }
 
+    async function submitLogForm() {
         const activityRows = document.querySelectorAll('.activity-row');
         if (activityRows.length === 0) {
             alert('Please add at least one activity.');
@@ -484,8 +518,20 @@
         }
 
         const entries = [];
+        let hasError = false;
+
         activityRows.forEach(row => {
             const planId = row.querySelector('.plan-select').value;
+            const entryDate = row.querySelector('.entry-date').value;
+            const entryNotes = row.querySelector('.entry-notes').value;
+
+            if (!entryDate) {
+                row.querySelector('.entry-date').classList.add('ring-red-500', 'ring-2');
+                hasError = true;
+            } else {
+                row.querySelector('.entry-date').classList.remove('ring-red-500', 'ring-2');
+            }
+
             const labourDetails = {};
             row.querySelectorAll('.labour-group').forEach(group => {
                 const cat = group.dataset.cat;
@@ -510,6 +556,8 @@
 
             entries.push({
                 production_plan_id: planId,
+                date: entryDate,
+                notes: entryNotes,
                 quantity: row.querySelector('.qty-input').value || 0,
                 hours_on_activity: row.querySelector('.activity-hours-input').value || 0,
                 labour_details: labourDetails,
@@ -517,11 +565,16 @@
             });
         });
 
-        const payload = { date: reportDate, notes: reportNotes, entries: entries };
-        const btn = event.target.closest('button');
+        if (hasError) {
+            alert('Please specify a date for all activities.');
+            return;
+        }
+
+        const payload = { entries: entries };
+        const btn = event.currentTarget;
         const originalHtml = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = `<span class="mr-2 loading loading-spinner loading-sm"></span> Saving...`;
+        btn.innerHTML = `<span class="mr-2 loading loading-spinner loading-sm"></span> Saving Batch...`;
 
         try {
             const response = await fetch(window.location.href, {
@@ -622,9 +675,16 @@
         const div = document.createElement('div');
         div.innerHTML = html;
         const newRow = div.firstElementChild;
+        
+        // Pre-fill date from bulk picker
+        const bulkDate = document.getElementById('bulk_date').value;
+        if (bulkDate) newRow.querySelector('.entry-date').value = bulkDate;
+        
         container.appendChild(newRow);
         
         if (entryData) {
+            newRow.querySelector('.entry-date').value = entryData.date;
+            newRow.querySelector('.entry-notes').value = entryData.notes || '';
             newRow.querySelector('.qty-input').value = entryData.quantity;
             newRow.querySelector('.activity-hours-input').value = entryData.hours_on_activity;
             newRow.querySelector('.unit-display').innerText = entryData.unit;

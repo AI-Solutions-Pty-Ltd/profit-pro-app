@@ -284,7 +284,7 @@ class LaborActivityDetailView(
         from app.Project.production_progress.production_models import ProductionPlan
 
         plant_spec_rows = ProductionPlan.calculate_boq_driven_plant_rows(
-            project, self.f_section, self.f_bill, self.f_activity
+            project, self.section, self.bill_no, self.act_name
         )
         plant_spec_total = sum(row["total_cost"] for row in plant_spec_rows)
 

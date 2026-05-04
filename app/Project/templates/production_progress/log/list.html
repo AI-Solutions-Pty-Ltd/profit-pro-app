@@ -65,8 +65,8 @@
                             <tr class="transition-all hover:bg-indigo-50/30 group">
                                 <td class="py-5 pr-3 pl-6 text-sm font-semibold text-gray-900 whitespace-nowrap">
                                     <div class="flex flex-col">
-                                        <span>{{ entry.report.date|date:"d M Y" }}</span>
-                                        <span class="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{{ entry.report.date|date:"l" }}</span>
+                                        <span>{{ entry.date|date:"d M Y" }}</span>
+                                        <span class="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{{ entry.date|date:"l" }}</span>
                                     </div>
                                 </td>
                                 <td class="px-3 py-5 text-sm whitespace-nowrap">
@@ -97,20 +97,20 @@
                                 </td>
                                 <td class="relative py-5 pr-6 pl-3 text-sm font-medium text-right whitespace-nowrap">
                                     <div class="flex justify-end items-center space-x-2">
-                                        <a href="{% url 'project:production-daily-log-detail' project_pk=project.pk pk=entry.report.pk %}"
-                                           title="View Full Report"
+                                        <a href="{% url 'project:production-daily-log-detail' project_pk=project.pk pk=entry.pk %}"
+                                           title="View Details"
                                            class="p-2 text-gray-400 rounded-lg transition-all hover:text-indigo-600 hover:bg-indigo-50">
                                             {% heroicon_outline "eye" class="w-5 h-5" %}
                                         </a>
-                                        <a href="{% url 'project:production-daily-log-entry-edit' project_pk=project.pk pk=entry.pk %}"
-                                           title="Edit Individual Activity"
+                                        <a href="{% url 'project:production-daily-log-edit' project_pk=project.pk pk=entry.pk %}"
+                                           title="Edit Entry"
                                            class="p-2 text-indigo-400 rounded-lg transition-all hover:text-indigo-600 hover:bg-indigo-50">
                                             {% heroicon_outline "pencil" class="w-5 h-5" %}
                                         </a>
-                                        <a href="{% url 'project:production-daily-log-edit' project_pk=project.pk pk=entry.report.pk %}"
-                                           title="Edit Full Report (Batch)"
-                                           class="p-2 text-gray-400 rounded-lg transition-all hover:text-amber-600 hover:bg-amber-50">
-                                            {% heroicon_outline "pencil-square" class="w-5 h-5" %}
+                                        <a href="{% url 'project:production-daily-log-delete' project_pk=project.pk pk=entry.pk %}"
+                                           title="Delete Entry"
+                                           class="p-2 text-gray-400 rounded-lg transition-all hover:text-red-600 hover:bg-red-50">
+                                            {% heroicon_outline "trash" class="w-5 h-5" %}
                                         </a>
                                     </div>
                                 </td>

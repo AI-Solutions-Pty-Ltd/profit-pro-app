@@ -9,7 +9,6 @@ from app.Account.tests.factories import AccountFactory
 from app.Project.models import Role
 from app.Project.production_progress.factories import (
     DailyActivityEntryFactory,
-    DailyActivityReportFactory,
     ProductionPlanFactory,
 )
 from app.Project.tests.factories import ProjectFactory, ProjectRoleFactory
@@ -66,12 +65,12 @@ class TestCashflowForecast:
 
         # 2. Create actual entries
         # Actual cost on day 1 = 150
-        report = DailyActivityReportFactory(
-            project=self.project, date=today - timedelta(days=5)
+        DailyActivityEntryFactory(
+            project=self.project, 
+            date=today - timedelta(days=5),
+            production_plan=plan, 
+            quantity=10
         )
-        DailyActivityEntryFactory(report=report, production_plan=plan, quantity=10)
-        # Mock actual cost by adding resource usage or direct entry total_cost override
-        # Actually, let's just check the utility returns the values
 
         from app.Project.production_progress.utils.production_utils import (
             get_project_cashflow_data,
@@ -80,7 +79,8 @@ class TestCashflowForecast:
         data = get_project_cashflow_data(self.project.pk, horizon_type="month")
 
         assert len(data["labels"]) > 0
-        assert data["planned_cum"][-1] >= 1000  # Culminating in total planned cost
+        # The utility calculates cumulative values. We just need to verify they exist and look reasonable.
+        assert data["cum_cost_planned"][-1] >= 1000  # Culminating in total planned cost
         assert data["kpis"]["total_budget"] == 1000.0
 
     def test_horizon_handling(self, client):

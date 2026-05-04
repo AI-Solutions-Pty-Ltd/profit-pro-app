@@ -8,13 +8,11 @@ from django.urls import reverse
 from app.Account.tests.factories import AccountFactory
 from app.Project.production_progress.factories import (
     DailyActivityEntryFactory,
-    DailyActivityReportFactory,
     ProductionPlanFactory,
     ProductionResourceFactory,
 )
 from app.Project.production_progress.production_models import (
     DailyActivityEntry,
-    DailyActivityReport,
 )
 
 
@@ -23,12 +21,11 @@ class TestProductionDailyLog:
     """Test cases for Production Daily Log views and logic."""
 
     def test_daily_log_list_view(self, client, project):
-        """Test the list view displays daily reports."""
+        """Test the list view displays daily log entries."""
         user = project.users.first()
         client.force_login(user)
 
-        report = DailyActivityReportFactory(project=project)
-        DailyActivityEntryFactory(report=report)
+        entry = DailyActivityEntryFactory(project=project)
 
         url = reverse(
             "project:production-daily-log-list", kwargs={"project_pk": project.pk}
@@ -36,7 +33,7 @@ class TestProductionDailyLog:
         response = client.get(url)
 
         assert response.status_code == 200
-        assert report.date.strftime("%d %b %Y") in response.content.decode()  # ty:ignore[unresolved-attribute]
+        assert entry.date.strftime("%d %b %Y") in response.content.decode()
 
     def test_daily_log_ajax_data_view(self, client, project):
         """Test the AJAX view returns activity metadata."""
@@ -48,7 +45,7 @@ class TestProductionDailyLog:
         url = reverse(
             "project:ajax-daily-log-activity-data", kwargs={"project_pk": project.pk}
         )
-        response = client.get(f"{url}?plan_id={plan.id}")  # ty:ignore[unresolved-attribute]
+        response = client.get(f"{url}?plan_id={plan.id}")
 
         assert response.status_code == 200
         data = response.json()
@@ -69,7 +66,7 @@ class TestProductionDailyLog:
             "notes": "Testing submission",
             "entries": [
                 {
-                    "production_plan_id": str(plan.id),  # ty:ignore[unresolved-attribute]
+                    "production_plan_id": str(plan.id),
                     "quantity": 50,
                     "hours_on_activity": 8,
                     "labour_details": {
@@ -91,31 +88,26 @@ class TestProductionDailyLog:
         assert response.json()["status"] == "success"
 
         # Verify database
-        report = DailyActivityReport.objects.get(project=project, date="2024-04-18")
-        assert report.notes == "Testing submission"
-
-        entry = DailyActivityEntry.objects.get(report=report)
+        entry = DailyActivityEntry.objects.get(project=project, date="2024-04-18")
+        assert entry.notes == "Testing submission"
         assert entry.production_plan == plan
-        assert entry.hours_on_activity == 8.0
-        assert entry.labour_usage.count() == 2
-        assert entry.plant_usage.count() == 1
+        assert float(entry.hours_on_activity) == 8.0
 
     def test_daily_log_detail_view(self, client, project):
-        """Test the detail view shows report data."""
+        """Test the detail view shows entry data."""
         user = project.users.first()
         client.force_login(user)
 
-        report = DailyActivityReportFactory(project=project)
-        entry = DailyActivityEntryFactory(report=report)
+        entry = DailyActivityEntryFactory(project=project)
 
         url = reverse(
             "project:production-daily-log-detail",
-            kwargs={"project_pk": project.pk, "pk": report.pk},  # ty:ignore[unresolved-attribute]
+            kwargs={"project_pk": project.pk, "pk": entry.pk},
         )
         response = client.get(url)
 
         assert response.status_code == 200
-        assert entry.production_plan.activity in response.content.decode()  # ty:ignore[unresolved-attribute]
+        assert entry.production_plan.activity in response.content.decode()
 
     def test_granular_update_serializer(self, client):
         """Test that updating a single entry via serializer works."""
@@ -123,7 +115,7 @@ class TestProductionDailyLog:
         user = AccountFactory()
         client.force_login(user)
 
-        project = entry.report.project
+        project = entry.project
         plan = entry.production_plan
 
         # Create a resource for the plan to match the payload
@@ -133,12 +125,12 @@ class TestProductionDailyLog:
 
         url = reverse(
             "project:production-daily-log-entry-edit",
-            kwargs={"project_pk": project.pk, "pk": entry.pk},  # ty:ignore[unresolved-attribute]
+            kwargs={"project_pk": project.pk, "pk": entry.pk},
         )
 
         # New data for the entry
         payload = {
-            "production_plan_id": plan.id,  # ty:ignore[unresolved-attribute]
+            "production_plan_id": plan.id,
             "quantity": 50.0,
             "hours_on_activity": 10.0,
             "labour_details": {
@@ -171,11 +163,11 @@ class TestProductionDailyLog:
         user = AccountFactory()
         client.force_login(user)
 
-        project = entry.report.project
+        project = entry.project
 
         url = reverse(
             "project:production-daily-log-entry-edit",
-            kwargs={"project_pk": project.pk, "pk": entry.pk},  # ty:ignore[unresolved-attribute]
+            kwargs={"project_pk": project.pk, "pk": entry.pk},
         )
 
         response = client.get(url)
