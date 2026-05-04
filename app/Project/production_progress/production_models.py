@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
@@ -122,50 +123,59 @@ class ProductionPlan(BaseModel):
         return self.unit
 
     def save(self, *args, **kwargs):
-        # Auto-calculate duration for leaf nodes
+        # 1. Flexible date/duration calculation
         if self.is_leaf:
-            if self.start_date and self.finish_date:
+            if self.start_date and self.duration and not self.finish_date:
+                self.finish_date = self.start_date + timedelta(days=self.duration)
+            elif self.start_date and self.finish_date:
                 self.duration = (self.finish_date - self.start_date).days
-            else:
-                self.duration = 0
 
-        # Handle automatic hierarchy generation for ANY leaf item (Spec linked)
+        # 2. Track changes for propagation
+        is_new = self.pk is None
+        old_start = None
+        old_finish = None
+        if not is_new:
+            try:
+                old_instance = ProductionPlan.objects.get(pk=self.pk)
+                old_start = old_instance.start_date
+                old_finish = old_instance.finish_date
+            except ProductionPlan.DoesNotExist:
+                pass
+
+        # 3. Handle automatic hierarchy generation for ANY leaf item (Spec linked)
         is_leaf_item = (
             self.labour_activity or self.plant_specification
         ) and self.is_leaf
 
-        if is_leaf_item and not self.parent and (self.section or self.bill_no):
-            self._ensure_hierarchy()
+        if self.is_leaf:
             self.refresh_plant_types()
 
+        if is_leaf_item and not self.parent and (self.section or self.bill_no):
+            self._ensure_hierarchy()
+
+        # 4. Standard Save
         super().save(*args, **kwargs)
 
-        # Trigger parent metric sync if we have a parent
-        if self.parent:
-            self.parent.sync_parent_metrics()
+        # 5. Trigger Successor Propagation and Parent Sync
+        deleted_changed = not is_new and self.deleted and not old_instance.deleted
+        if (
+            is_new
+            or self.start_date != old_start
+            or self.finish_date != old_finish
+            or deleted_changed
+        ):
+            # We delay successors slightly to ensure this instance is fully committed
+            # though in a single request, update_successor_dates is fine.
+            self.update_successor_dates()
+
+            if self.parent:
+                self.parent.sync_parent_metrics()
 
     def refresh_plant_types(self):
-        """Updates plant_types field from BOQItems."""
-        from django.apps import apps
-
-        BOQItem = apps.get_model("estimator", "BOQItem")
-
-        if not self.labour_activity:
-            self.plant_types = []
-            return
-
-        types = list(
-            BOQItem.objects.filter(
-                project=self.project,
-                section=self.section,
-                bill_no=self.bill_no,
-                labour_specification=self.labour_activity,
-                plant_specification__isnull=False,
-            )
-            .values_list("plant_specification__components__plant_type__name", flat=True)
-            .distinct()
-        )
-        self.plant_types = sorted(t for t in types if t)
+        """Updates plant_types field from BoQ allocations for list view display."""
+        allocations = self.get_plant_allocations()
+        names = sorted({a["name"] for a in allocations})
+        self.plant_types = names
 
     def sync_parent_metrics(self):
         """
@@ -221,9 +231,43 @@ class ProductionPlan(BaseModel):
             self.unit = unit
             self.duration = duration
 
-            # 4. Bubble up to grandparent
+            # 4. Trigger successor updates for the parent itself
+            self.update_successor_dates()
+
+            # 5. Bubble up to grandparent
             if self.parent:
                 self.parent.sync_parent_metrics()
+
+    def get_predecessor_end_date(self):
+        """Returns the latest finish_date of all predecessors."""
+        predecessors = [
+            p.predecessor for p in self.predecessors.all() if p.predecessor.finish_date
+        ]
+        if not predecessors:
+            return None
+        return max(p.finish_date for p in predecessors)
+
+    def update_successor_dates(self):
+        """Recursively updates start/finish dates for all successors based on dependencies."""
+        for dependency in self.successors.all():
+            successor = dependency.successor
+            latest_pred_end = successor.get_predecessor_end_date()
+
+            if latest_pred_end and successor.start_date != latest_pred_end:
+                # Update start date to match latest predecessor end date (Finish-to-Start)
+                successor.start_date = latest_pred_end
+                if successor.duration:
+                    successor.finish_date = successor.start_date + timedelta(
+                        days=successor.duration
+                    )
+
+                # Use update() to bypass full save signals but keep recursion
+                ProductionPlan.objects.filter(pk=successor.pk).update(
+                    start_date=successor.start_date, finish_date=successor.finish_date
+                )
+
+                # Recurse to update this successor's own successors
+                successor.update_successor_dates()
 
     def _ensure_hierarchy(self):
         """Automatically creates Section and Bill levels if they don't exist."""
@@ -363,6 +407,12 @@ class ProductionPlan(BaseModel):
 
     @property
     def total_labour_cost(self):
+        # For structural nodes (SECTION/BILL), aggregate from leaf children.
+        if not self.is_leaf:
+            return sum(
+                child.total_labour_cost for child in self.children.filter(deleted=False)
+            )
+
         # Manual resources cost
         manual_cost = (
             self.resources.filter(resource_type="LABOUR").aggregate(
@@ -387,17 +437,25 @@ class ProductionPlan(BaseModel):
             unique_specs[self.plant_specification.name] = self.plant_specification
         else:
             # Fallback: Pull from related BOQItems
+            from django.db import models as db_models
+
             from app.Estimator.models import BOQItem, ProjectPlantSpecification
 
-            qs = BOQItem.objects.filter(
-                project=self.project,
-                section=self.section,
-                bill_no=self.bill_no,
-                plant_specification__isnull=False,
+            qs = (
+                BOQItem.objects.filter(
+                    project=self.project,
+                    section=self.section,
+                    bill_no=self.bill_no,
+                    is_section_header=False,
+                    plant_specification__isnull=False,
+                )
+                .annotate(
+                    act_name_annotated=db_models.functions.Coalesce(
+                        "labour_specification__name", "plant_specification__name"
+                    )
+                )
+                .filter(act_name_annotated=self.activity)
             )
-
-            if self.labour_activity:
-                qs = qs.filter(labour_specification=self.labour_activity)
 
             spec_ids = qs.values_list("plant_specification", flat=True).distinct()
 
@@ -444,8 +502,85 @@ class ProductionPlan(BaseModel):
 
         return allocations
 
+    @staticmethod
+    def calculate_boq_driven_plant_rows(project, section, bill_no, activity):
+        """
+        Calculates granular plant allocations driven by BoQ quantities for a specific activity.
+        Used to display detailed plant resource requirements in both planning and reporting.
+        """
+        from decimal import Decimal
+
+        from django.db import models as db_models
+
+        from app.Estimator.models import BOQItem
+
+        # Filter BOQItems for the project/section/bill that match this activity name
+        boq_qs = (
+            BOQItem.objects.filter(
+                project=project,
+                is_section_header=False,
+                section=section,
+                bill_no=bill_no,
+            )
+            .annotate(
+                act_name_annotated=db_models.functions.Coalesce(
+                    "labour_specification__name", "plant_specification__name"
+                )
+            )
+            .filter(act_name_annotated=activity)
+            .filter(plant_specification__isnull=False)
+        )
+
+        from collections import OrderedDict
+
+        spec_groups = OrderedDict()
+        for boq in boq_qs.select_related("plant_specification").order_by(
+            "plant_specification__name"
+        ):
+            spec = boq.plant_specification
+            if spec.pk not in spec_groups:
+                spec_groups[spec.pk] = {"spec": spec, "boq_qty": Decimal("0")}
+            if boq.contract_quantity:
+                spec_groups[spec.pk]["boq_qty"] += boq.contract_quantity
+
+        rows = []
+        for group in spec_groups.values():
+            spec = group["spec"]
+            boq_qty = group["boq_qty"]
+            for comp in spec.components.all().select_related("plant_type"):
+                if not comp.plant_type:
+                    continue
+                hours = comp.hours or Decimal("0")
+                rate = comp.plant_type.hourly_rate or Decimal("0")
+                rows.append(
+                    {
+                        "id": comp.plant_type_id,
+                        "plant_name": comp.plant_type.name,
+                        "hours": hours,
+                        "unit": spec.unit,
+                        "rate": rate,
+                        "boq_qty": boq_qty,
+                        "plant_hours_boq": hours * boq_qty,
+                        "total_cost": hours * boq_qty * rate,
+                        "source_spec": spec.name,
+                    }
+                )
+        return rows
+
+    def get_boq_driven_plant_rows(self):
+        """Instance method wrapper for calculate_boq_driven_plant_rows."""
+        return self.calculate_boq_driven_plant_rows(
+            self.project, self.section, self.bill_no, self.activity
+        )
+
     @property
     def total_plant_cost(self):
+        # For structural nodes (SECTION/BILL), aggregate from leaf children.
+        if not self.is_leaf:
+            return sum(
+                child.total_plant_cost for child in self.children.filter(deleted=False)
+            )
+
         # Manual resources cost
         manual_cost = (
             self.resources.filter(resource_type="PLANT").aggregate(
@@ -454,11 +589,10 @@ class ProductionPlan(BaseModel):
             or 0
         )
 
-        # Specification-based plant cost
-        allocs = self.get_plant_allocations()
-        spec_cost = sum(a["total_cost"] for a in allocs)
+        # Plan-level specification cost (budgeted cost based on duration)
+        plan_spec_cost = sum(row["total_cost"] for row in self.get_plant_allocations())
 
-        return manual_cost + spec_cost
+        return manual_cost + plan_spec_cost
 
     @property
     def total_other_cost(self):
@@ -579,34 +713,17 @@ class ProductionResource(BaseModel):
         super().save(*args, **kwargs)
 
 
-class DailyActivityReport(BaseModel):
-    """Daily container for all activities performed on a specific date."""
-
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="daily_reports"
-    )
-    date = models.DateField(default=timezone.now)
-    notes = models.TextField(blank=True, help_text="Optional site-wide remarks")
-
-    class Meta:
-        verbose_name = "Daily Activity Report"
-        verbose_name_plural = "Daily Activity Reports"
-        ordering = ["-date", "-created_at"]
-        unique_together = ["project", "date"]
-
-    def __str__(self):
-        return f"{self.project.name} - {self.date}"
-
-
 class DailyActivityEntry(BaseModel):
     """Specific activity performed during a daily report."""
 
-    report = models.ForeignKey(
-        DailyActivityReport, on_delete=models.CASCADE, related_name="entries"
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="daily_entries"
     )
     production_plan = models.ForeignKey(
         ProductionPlan, on_delete=models.CASCADE, related_name="daily_entries"
     )
+    date = models.DateField(default=timezone.now)
+    notes = models.TextField(blank=True, help_text="Optional activity-specific remarks")
     quantity = models.DecimalField(
         max_digits=15, decimal_places=2, default=0, validators=[MinValueValidator(0)]
     )
@@ -627,13 +744,13 @@ class DailyActivityEntry(BaseModel):
         verbose_name_plural = "Daily Activity Entries"
 
     def __str__(self):
-        return f"{self.production_plan.activity} on {self.report.date}"
+        return f"{self.production_plan.activity} on {self.date}"
 
     @property
     def day_number(self):
         """Calculates D1, D2 etc relative to the plan start date."""
-        if self.report.date and self.production_plan.start_date:
-            delta = (self.report.date - self.production_plan.start_date).days
+        if self.date and self.production_plan.start_date:
+            delta = (self.date - self.production_plan.start_date).days
             return f"D{delta + 1}"
         return "D?"
 

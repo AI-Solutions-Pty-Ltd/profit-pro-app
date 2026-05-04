@@ -11,7 +11,7 @@
             {% if widget.selected_label %}
                 {{ widget.selected_label }}
             {% else %}
-                Choose option...
+                -------
             {% endif %}
         </span>
         <div class="flex items-center text-gray-400 transition-colors group-hover:text-indigo-500">
@@ -34,6 +34,19 @@
         </div>
         <div class="overflow-y-auto p-2 max-h-64 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent"
              id="{{ widget.attrs.id }}-options-list">
+            <!-- Clear Selection Option -->
+            <button type="button"
+                    class="flex items-center px-3 py-2 w-full text-left rounded-md transition-all duration-200 group option-item focus:outline-none hover:bg-gray-100"
+                    data-id=""
+                    data-label="none clear selection empty"
+                    onclick="selectSearchableOption(this, '', '-------')">
+                <div class="flex-1">
+                    <span class="block text-xs font-bold text-gray-400 uppercase tracking-widest group-hover:text-gray-600">-------</span>
+                </div>
+                <div class="opacity-0 transition-opacity group-hover:opacity-100">
+                    {% heroicon_outline "x-mark" size="14" class="text-gray-400" %}
+                </div>
+            </button>
             {% for group, options, index in widget.optgroups %}
                 {% for option in options %}
                     {% if option.value %}

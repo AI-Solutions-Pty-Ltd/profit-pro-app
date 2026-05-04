@@ -59,13 +59,11 @@
                             <td class="px-6 py-4 text-sm font-medium text-right text-gray-700 whitespace-nowrap">
                                 R {{ plan.total_labour_cost|floatformat:2|intcomma }}
                             </td>
-                            <td class="px-6 py-4 text-sm font-medium text-right text-gray-700 whitespace-nowrap">
+                            <td class="px-6 py-4 text-sm font-medium text-right whitespace-nowrap {% if plan.total_plant_cost > 0 %}text-emerald-700{% else %}text-gray-700{% endif %}">
                                 R {{ plan.total_plant_cost|floatformat:2|intcomma }}
                             </td>
                             <td class="px-6 py-4 text-sm font-black text-right text-indigo-700 whitespace-nowrap">
-                                {% with total=plan.total_labour_cost|add:plan.total_plant_cost|add:plan.total_other_cost %}
-                                    R {{ total|floatformat:2|intcomma }}
-                                {% endwith %}
+                                R {{ plan.total_labour_cost|add:plan.total_plant_cost|add:plan.total_other_cost|floatformat:2|intcomma }}
                             </td>
                             <td class="px-6 py-4 text-right whitespace-nowrap"
                                 onclick="event.stopPropagation()">
@@ -100,7 +98,7 @@
                             <td class="px-6 py-4 text-sm font-semibold text-right text-gray-800 whitespace-nowrap">
                                 R {{ total_labour|floatformat:2|intcomma }}
                             </td>
-                            <td class="px-6 py-4 text-sm font-semibold text-right text-gray-800 whitespace-nowrap">
+                            <td class="px-6 py-4 text-sm font-semibold text-right text-emerald-700 whitespace-nowrap">
                                 R {{ total_plant|floatformat:2|intcomma }}
                             </td>
                             <td class="px-6 py-4 text-sm font-black text-right text-indigo-700 whitespace-nowrap">
@@ -120,9 +118,9 @@
                class="inline-flex items-center text-gray-600 transition-colors hover:text-indigo-600">
                 {% heroicon_outline "chevron-left" class="mr-2 w-4 h-4" %} Back to Planning List
             </a>
-            <a href="{% url 'project:production-dashboard' project.pk %}"
+            <a href="{% url 'project:production-tracking' project.pk %}"
                class="inline-flex items-center text-gray-600 transition-colors hover:text-indigo-600">
-                Dashboard {% heroicon_outline "chevron-right" class="ml-2 w-4 h-4" %}
+                Progress Tracker {% heroicon_outline "chevron-right" class="ml-2 w-4 h-4" %}
             </a>
         </div>
     </div>

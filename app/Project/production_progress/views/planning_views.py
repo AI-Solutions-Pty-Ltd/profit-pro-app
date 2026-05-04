@@ -1,5 +1,6 @@
 import json
 from datetime import timedelta
+from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -27,6 +28,7 @@ from app.Project.models import Project
 
 from ..production_forms import (
     PlanDependencyFormSet,
+    ProductionPlanDateControlForm,
     ProductionPlanForm,
     ProductionResourceForm,
 )
@@ -90,6 +92,8 @@ class ProductionPlanGanttView(
         perf_data = get_project_performance_summary(project_pk)
         ppi = perf_data.get("ppi", 1.0)
 
+        from django.db.models import Prefetch
+
         all_plans = list(
             ProductionPlan.objects.filter(
                 project=project,
@@ -101,13 +105,19 @@ class ProductionPlanGanttView(
             .prefetch_related(
                 "predecessors",
                 "predecessors__predecessor",
-                "children",
+                Prefetch(
+                    "children",
+                    queryset=ProductionPlan.objects.filter(deleted=False).order_by(
+                        "start_date", "activity"
+                    ),
+                ),
                 "daily_entries",
             )
             .order_by("start_date", "activity")
         )
 
         context["plans"] = all_plans
+        context["root_plans"] = [p for p in all_plans if not p.parent_id]
 
         # Build flat ordered list with depth for the Gantt canvas
         ordered = self._flatten_tree(all_plans)
@@ -353,16 +363,33 @@ class ProductionPlanDetailView(
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         plan = self.get_object()
-        context["project"] = self.object.project
+        project = plan.project
+        context["project"] = project
 
+        # Fetch children based on node type
+        if plan.node_type == "SECTION":
+            context["child_title"] = "Bills"
+            context["children"] = plan.children.filter(
+                deleted=False, node_type="BILL"
+            ).order_by("bill_no")
+        elif plan.node_type == "BILL":
+            context["child_title"] = "Activities"
+            context["children"] = plan.children.filter(
+                deleted=False, node_type="ACTIVITY"
+            ).order_by("start_date")
+        else:
+            context["child_title"] = None
+            context["children"] = []
+
+        # Resources logic (from previous version)
         resource_categories = []
         for type_code, type_name in ProductionResource.RESOURCE_TYPES:
+            if type_code == "PLANT":
+                continue
+
             resources = plan.resources.filter(resource_type=type_code)
-            total_cost = 0
             if type_code == "LABOUR":
                 total_cost = plan.total_labour_cost
-            elif type_code == "PLANT":
-                total_cost = plan.total_plant_cost
             else:
                 total_cost = plan.total_other_cost
 
@@ -374,9 +401,89 @@ class ProductionPlanDetailView(
                     "total_cost": total_cost,
                 }
             )
-
         context["resource_categories"] = resource_categories
+
+        # Provide granular BoQ driven plant rows
+        boq_plant_rows = plan.get_boq_driven_plant_rows()
+        context["boq_plant_rows"] = boq_plant_rows
+        context["boq_plant_total"] = sum(row["total_cost"] for row in boq_plant_rows)
+
+        # Fetch related BOQItems for the activity line items section
+        if plan.labour_activity:
+            items = plan.labour_activity.boq_items.all()
+            if plan.section:
+                items = items.filter(section=plan.section)
+            if plan.bill_no:
+                items = items.filter(bill_no=plan.bill_no)
+            context["activity_line_items"] = items
+
+        # Predecessors / Dependencies logic
+        if self.request.POST:
+            context["dependency_formset"] = PlanDependencyFormSet(
+                self.request.POST,
+                instance=plan,
+                project_id=project.pk,
+                plan_id=plan.pk,
+            )
+        else:
+            context["dependency_formset"] = PlanDependencyFormSet(
+                instance=plan,
+                project_id=project.pk,
+                plan_id=plan.pk,
+            )
+
+        # Date Control Form
+        if self.request.POST and "submit_dates" in self.request.POST:
+            context["date_form"] = ProductionPlanDateControlForm(
+                self.request.POST, instance=plan
+            )
+        else:
+            context["date_form"] = ProductionPlanDateControlForm(instance=plan)
+
         return context
+
+    def post(self, request, *args, **kwargs):
+        """Handle predecessor/dependency updates from the detail page."""
+        self.object = self.get_object()
+        context = self.get_context_data()
+
+        # Handle Dependencies Formset
+        if "submit_dependencies" in request.POST:
+            dependency_formset = context["dependency_formset"]
+            if dependency_formset.is_valid():
+                dependency_formset.save()
+                # After saving, trigger date propagation
+                self.object.update_successor_dates()
+                messages.success(request, "Dependencies updated successfully.")
+                return redirect(
+                    "project:production-plan-detail",
+                    project_pk=self.object.project.pk,
+                    pk=self.object.pk,
+                )
+            else:
+                messages.error(
+                    request, "Please correct the errors in the dependencies form."
+                )
+
+        # Handle Date Control Form
+        if "submit_dates" in request.POST:
+            date_form = context["date_form"]
+            if date_form.is_valid():
+                date_form.save()
+                messages.success(request, "Schedule updated successfully.")
+                return redirect(
+                    "project:production-plan-detail",
+                    project_pk=self.object.project.pk,
+                    pk=self.object.pk,
+                )
+            else:
+                messages.error(
+                    request, "Please correct the errors in the schedule form."
+                )
+
+        return self.render_to_response(context)
+
+        return self.render_to_response(context)
 
     def get_breadcrumbs(self):
         project_pk = self.kwargs["project_pk"]
@@ -762,8 +869,32 @@ class ProductionCostBreakdownDetailView(
                 items = items.filter(bill_no=selected_plan.bill_no)
             context["activity_line_items"] = items
 
-        # Provide granular plant allocations (direct or fallback)
-        context["plant_allocations"] = selected_plan.get_plant_allocations()
+        # Build BoQ Qty-driven plant rows using model method
+        plant_spec_rows = selected_plan.get_boq_driven_plant_rows()
+        plant_spec_total = sum(row["total_cost"] for row in plant_spec_rows)
+
+        context["plant_spec_rows"] = plant_spec_rows
+        context["plant_spec_total"] = plant_spec_total
+
+        # Calculate combined total for summary metrics to ensure consistency
+        manual_labour = selected_plan.resources.filter(
+            resource_type="LABOUR"
+        ).aggregate(total=Sum("total_cost"))["total"] or Decimal("0")
+        spec_labour = (
+            selected_plan.labour_activity.crew.crew_daily_cost * selected_plan.duration
+            if selected_plan.labour_activity and selected_plan.labour_activity.crew
+            else Decimal("0")
+        )
+
+        manual_plant = selected_plan.resources.filter(resource_type="PLANT").aggregate(
+            total=Sum("total_cost")
+        )["total"] or Decimal("0")
+
+        context["total_labour_cost_calc"] = manual_labour + spec_labour
+        context["total_plant_cost_calc"] = manual_plant + plant_spec_total
+        context["total_planned_cost"] = (
+            context["total_labour_cost_calc"] + context["total_plant_cost_calc"]
+        )
 
         return context
 

@@ -33,11 +33,10 @@ from ..production_forms import (
 )
 from ..production_models import (
     DailyActivityEntry,
-    DailyActivityReport,
     DailyProduction,
     ProductionPlan,
 )
-from ..serializers import DailyLogEntrySerializer, DailyLogReportSerializer
+from ..serializers import DailyLogBatchSerializer, DailyLogEntrySerializer
 
 
 class DailyProductionCreateView(
@@ -121,11 +120,8 @@ class ProductionDailyLogListView(
 
         # Annotate with actual summed costs from usage records
         return (
-            DailyActivityEntry.objects.filter(
-                report__project_id=self.kwargs["project_pk"]
-            )
+            DailyActivityEntry.objects.filter(project_id=self.kwargs["project_pk"])
             .select_related(
-                "report",
                 "production_plan",
                 "production_plan__labour_activity",
                 "production_plan__labour_activity__crew",
@@ -175,7 +171,7 @@ class ProductionDailyLogListView(
                 ),
             )
             .annotate(acc_total_cost=F("actual_labour_cost") + F("actual_plant_cost"))
-            .order_by("-report__date", "-created_at")
+            .order_by("-date", "-created_at")
         )
 
     def get_context_data(self, **kwargs):
@@ -233,7 +229,7 @@ class ProductionDailyLogCreateView(
         try:
             data = json.loads(request.body)
             data["project_id"] = self.kwargs["project_pk"]
-            serializer = DailyLogReportSerializer(data=data)
+            serializer = DailyLogBatchSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
                 return JsonResponse(
@@ -265,10 +261,10 @@ class ProductionDailyLogUpdateView(
 ):
     """Multi-activity Daily Log Edit Form."""
 
-    model = DailyActivityReport
+    model = DailyActivityEntry
     template_name = "production_progress/log/form.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
-    context_object_name = "report"
+    context_object_name = "entry"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -282,77 +278,78 @@ class ProductionDailyLogUpdateView(
         ).order_by("section", "bill_no", "activity")
 
         # Prepare initial data for JS
-        # We prefetch for efficiency
-        report = self.object
-        entries_data = []
-        for entry in report.entries.all().select_related("production_plan"):
-            # Labour
-            labour_details = {
-                "Skilled": {"number": 0.0, "hours": 0.0},
-                "Semi-Skilled": {"number": 0.0, "hours": 0.0},
-                "General": {"number": 0.0, "hours": 0.0},
+        entry = self.object
+        # For the "Edit" view, we fetch the specific entry
+        # and pre-fill the form with it.
+        # Since it's now a flat list, we edit entries individually
+        # unless we implement a batch edit (which we can do by date).
+
+        labour_details = {
+            "Skilled": {"number": 0.0, "hours": 0.0},
+            "Semi-Skilled": {"number": 0.0, "hours": 0.0},
+            "General": {"number": 0.0, "hours": 0.0},
+        }
+        for usage in entry.labour_usage.all().select_related("resource"):
+            labour_details[usage.resource.name] = {
+                "number": float(usage.number),
+                "hours": float(usage.hours),
             }
-            for usage in entry.labour_usage.all().select_related("resource"):
-                labour_details[usage.resource.name] = {
-                    "number": float(usage.number),
-                    "hours": float(usage.hours),
-                }
 
-            # Plant
-            plant_usage = []
-            for usage in entry.plant_usage.all().select_related(
-                "plant_type", "resource"
-            ):
-                plant_name = "Unknown"
-                if usage.plant_type:
-                    plant_name = usage.plant_type.name
-                elif usage.resource:
-                    plant_name = usage.resource.name
+        plant_usage = []
+        for usage in entry.plant_usage.all().select_related("plant_type", "resource"):
+            plant_name = "Unknown"
+            if usage.plant_type:
+                plant_name = usage.plant_type.name
+            elif usage.resource:
+                plant_name = usage.resource.name
 
-                plant_usage.append(
-                    {
-                        "plant_type_id": usage.plant_type_id,
-                        "resource_id": usage.resource_id,
-                        "plant_name": plant_name,
-                        "number": float(usage.number or 0),
-                        "hours": float(usage.hours or 0),
-                        "quantity": float(usage.quantity or 0),
-                    }
-                )
-
-            # Get available plants for selection (from Spec)
-            available_plants = [
-                {"id": a["id"], "name": a["name"]}
-                for a in entry.production_plan.get_plant_allocations()
-            ]
-
-            entries_data.append(
+            plant_usage.append(
                 {
-                    "production_plan_id": entry.production_plan_id,
-                    "activity": entry.production_plan.activity
-                    or (
-                        entry.production_plan.labour_activity.name
-                        if entry.production_plan.labour_activity
-                        else f"Activity {entry.production_plan.id}"
-                    ),
-                    "section": entry.production_plan.section or "No Section",
-                    "bill_no": entry.production_plan.bill_no or "No Bill",
-                    "quantity": float(entry.quantity),
-                    "hours_on_activity": float(entry.hours_on_activity),
-                    "labour_details": labour_details,
-                    "plant_usage": plant_usage,
-                    "unit": entry.production_plan.unit_display,
-                    "available_plants": available_plants,
+                    "plant_type_id": usage.plant_type_id,
+                    "resource_id": usage.resource_id,
+                    "plant_name": plant_name,
+                    "number": float(usage.number or 0),
+                    "hours": float(usage.hours or 0),
+                    "quantity": float(usage.quantity or 0),
                 }
             )
 
-        context["initial_data"] = json.dumps(
+        available_plants = [
             {
-                "date": report.date.isoformat(),
-                "notes": report.notes,
-                "entries": entries_data,
+                "id": a["id"],
+                "name": a["name"],
+                "hours_per_day": float(a["hours_per_day"]),
             }
-        )
+            for a in entry.production_plan.get_plant_allocations()
+        ]
+
+        # Fallback to project-wide plant types if no specific allocations found
+        if not available_plants:
+            from app.Estimator.models import ProjectPlantCost
+
+            available_plants = [
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "hours_per_day": 8.0,
+                }
+                for p in ProjectPlantCost.objects.filter(project_id=project_pk)
+            ]
+
+        entry_data = {
+            "id": entry.id,
+            "production_plan_id": entry.production_plan_id,
+            "date": entry.date.isoformat(),
+            "notes": entry.notes,
+            "quantity": float(entry.quantity),
+            "hours_on_activity": float(entry.hours_on_activity),
+            "labour_details": labour_details,
+            "plant_usage": plant_usage,
+            "unit": entry.production_plan.unit_display,
+            "available_plants": available_plants,
+        }
+
+        context["initial_data"] = json.dumps({"entries": [entry_data]})
 
         return context
 
@@ -360,8 +357,16 @@ class ProductionDailyLogUpdateView(
         try:
             instance = self.get_object()
             data = json.loads(request.body)
-            data["project_id"] = self.kwargs["project_pk"]
-            serializer = DailyLogReportSerializer(instance, data=data)
+            # For a single entry update, we can use the DailyLogEntrySerializer
+            # but usually the frontend sends a batch format.
+            # If it's a batch with one entry, we'll handle it.
+            if "entries" in data and len(data["entries"]) > 0:
+                entry_data = data["entries"][0]
+                entry_data["project_id"] = self.kwargs["project_pk"]
+                serializer = DailyLogEntrySerializer(instance, data=entry_data)
+            else:
+                data["project_id"] = self.kwargs["project_pk"]
+                serializer = DailyLogEntrySerializer(instance, data=data)
             if serializer.is_valid():
                 serializer.save()
                 return JsonResponse(
@@ -393,10 +398,10 @@ class ProductionDailyLogDeleteView(
 ):
     """Deletes a Daily Activity Report."""
 
-    model = DailyActivityReport
+    model = DailyActivityEntry
     template_name = "production_progress/log/confirm_delete.html"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
-    context_object_name = "report"
+    context_object_name = "entry"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -449,11 +454,20 @@ class DailyActivityEntryUpdateView(
 
         # Plant
         plant_usage = []
-        for usage in entry.plant_usage.all().select_related("resource"):
+        for usage in entry.plant_usage.all().select_related("resource", "plant_type"):
+            name = "Unknown"
+            res_id = ""
+            if usage.resource:
+                name = usage.resource.name
+                res_id = usage.resource_id
+            elif usage.plant_type:
+                name = usage.plant_type.name
+                res_id = usage.plant_type_id
+
             plant_usage.append(
                 {
-                    "resource_id": usage.resource_id,
-                    "plant_name": usage.resource.name,
+                    "resource_id": res_id,
+                    "plant_name": name,
                     "number": float(usage.number),
                     "hours": float(usage.hours),
                     "quantity": float(usage.quantity),
@@ -462,8 +476,12 @@ class DailyActivityEntryUpdateView(
 
         # Get available plants for selection (ID and Name)
         available_plants = [
-            {"id": r.id, "name": r.name}
-            for r in entry.production_plan.resources.filter(resource_type="PLANT")
+            {
+                "id": a["id"],
+                "name": a["name"],
+                "hours_per_day": float(a["hours_per_day"]),
+            }
+            for a in entry.production_plan.get_plant_allocations()
         ]
 
         context["initial_data"] = json.dumps(
@@ -526,33 +544,24 @@ class ProductionDailyLogDetailView(
 ):
     """Detailed view of a Daily Activity Report."""
 
-    model = DailyActivityReport
+    model = DailyActivityEntry
     template_name = "production_progress/log/details.html"
-    context_object_name = "report"
+    context_object_name = "entry"
     required_tiers = [Subscription.PROFIT_AND_LOSS]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["project"] = self.object.project
-        # Prefetch entries and resource usage
-        entries = self.object.entries.select_related(
-            "production_plan"
-        ).prefetch_related("labour_usage__resource", "plant_usage__resource")
-        context["entries"] = entries
+        entry = self.object
+        context["project"] = entry.project
 
-        # Calculate daily totals
-        context["report_total_labour_cost"] = sum(
-            entry.total_labour_cost for entry in entries
+        # In the detail view, we show the specific entry details.
+        # If we want to show other entries on the same day, we can fetch them:
+        context["sibling_entries"] = (
+            DailyActivityEntry.objects.filter(project=entry.project, date=entry.date)
+            .exclude(id=entry.id)
+            .select_related("production_plan")
         )
-        context["report_total_plant_cost"] = sum(
-            entry.total_plant_cost for entry in entries
-        )
-        context["report_total_cost"] = (
-            context["report_total_labour_cost"] + context["report_total_plant_cost"]
-        )
-        context["report_total_hours"] = sum(
-            entry.hours_on_activity for entry in entries
-        )
+
         return context
 
     def get_breadcrumbs(self):
@@ -588,8 +597,26 @@ class DailyLogActivityDataAjaxView(LoginRequiredMixin, TemplateView):
 
         # Get available plants for selection (from Spec)
         available_plants = [
-            {"id": a["id"], "name": a["name"]} for a in plan.get_plant_allocations()
+            {
+                "id": a["id"],
+                "name": a["name"],
+                "hours_per_day": float(a["hours_per_day"]),
+            }
+            for a in plan.get_plant_allocations()
         ]
+
+        # Fallback to project-wide plant types if no specific allocations found
+        if not available_plants:
+            from app.Estimator.models import ProjectPlantCost
+
+            available_plants = [
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "hours_per_day": 8.0,
+                }
+                for p in ProjectPlantCost.objects.filter(project_id=plan.project_id)
+            ]
 
         return JsonResponse(
             {

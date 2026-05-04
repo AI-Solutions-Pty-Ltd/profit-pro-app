@@ -208,7 +208,7 @@
     {% endif %}
     <!-- Footer Nav -->
     <div class="flex flex-col gap-4 justify-between items-center px-8 py-6 mt-12 mb-8 bg-white rounded-2xl border border-gray-100 shadow-sm sm:flex-row">
-        <a href="{% url 'project:production-progress-dashboard' project.pk %}"
+        <a href="{% url 'project:production-tracking' project.pk %}"
            class="inline-flex items-center text-sm font-bold transition-colors hover:text-indigo-600">
             {% heroicon_outline "chevron-left" class="mr-2 w-4 h-4" %} Back to Dashboard
         </a>

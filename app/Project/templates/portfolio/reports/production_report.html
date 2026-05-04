@@ -73,7 +73,7 @@
                                 {{ item.efficiency|default:"0.00"|floatformat:2 }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <a href="{% url 'project:production-dashboard' item.project.pk %}"
+                                <a href="{% url 'project:production-tracking' item.project.pk %}"
                                    class="text-indigo-600 hover:text-indigo-900">Details</a>
                             </td>
                         </tr>
